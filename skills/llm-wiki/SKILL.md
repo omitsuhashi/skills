@@ -21,7 +21,7 @@ mixed repo では、wiki 専用の `knowledge root` を 1 つ決めます。repo
 ## Quick Workflow
 
 1. Identify the mode: `bootstrap`, `ingest`, `query`, or `lint`.
-2. Determine the target knowledge root before editing. If the system has multiple roots, use the root registry and `references/federated-knowledge-roots.md`; otherwise follow the repo-root thin router `AGENTS.md` to the knowledge-root `AGENTS.md`.
+2. Determine the wiki topology and target knowledge root before editing. In `single-root` topology, use the knowledge-root `AGENTS.md` as the entrypoint, following a repo-root thin router `AGENTS.md` when one exists, and do not create a root registry. In `multi-root` topology, use the root registry and `references/federated-knowledge-roots.md`.
 3. Read only the matching reference file sections instead of loading everything.
 4. Inspect `index.md` before touching wiki pages unless the task is pure bootstrap.
 5. During `bootstrap`, define in repo-root and knowledge-root `AGENTS.md` where other workflows should save durable docs. Route superpowers-style outputs such as roadmap, ADR, spec, design doc, and implementation plan into the knowledge root instead of leaving them in repo-root `docs/` by default.
@@ -33,7 +33,7 @@ mixed repo では、wiki 専用の `knowledge root` を 1 つ決めます。repo
 
 ### `bootstrap`
 
-wiki / repo の境界を確認し、まず knowledge root を確定します。dedicated wiki repo なら knowledge root は repo root で構いません。mixed repo なら knowledge root を subdirectory に切り出し、repo root の `AGENTS.md` は参照先を示す thin router に留めます。新規 wiki を作るときは `assets/templates/` の雛形を使います。bootstrap 時には、superpowers など他 workflow が出力する durable な spec / ADR / plan / roadmap も knowledge root へ保存する routing を `AGENTS.md` に明示します。構成や命名に複数の妥当案があり、後戻りコストが高いときだけ user と揃えます。
+wiki / repo の境界を確認し、まず `single-root` / `multi-root` topology と knowledge root を確定します。dedicated wiki repo なら knowledge root は repo root で構いません。mixed repo なら wiki 専用 subdirectory を knowledge root に切り出します。`single-root` では root registry を作らず、repo root の `AGENTS.md` は参照先を示す thin router に留めます。`multi-root` では root registry を作り、各 root の owner / access / draft target を明示します。新規 wiki を作るときは `assets/templates/` の雛形を使います。bootstrap 時には、superpowers など他 workflow が出力する durable な spec / ADR / plan / roadmap も knowledge root へ保存する routing を `AGENTS.md` に明示します。構成や命名に複数の妥当案があり、後戻りコストが高いときだけ user と揃えます。
 
 Read:
 
@@ -79,7 +79,7 @@ Read:
 - `references/optional-tooling.md`
   Obsidian Web Clipper, local image handling, Dataview, Marp, `qmd` などの任意ツール。どれも必須ではありません。
 - `assets/templates/`
-  knowledge-root 用 thin `AGENTS.md`, repo root 用 `root-AGENTS.md`, multi-root 用 `root-registry.md`, `index.md`, `log.md`, source/entity/concept/synthesis/query note の初期雛形。
+  knowledge-root 用 thin `AGENTS.md`, repo root 用 `root-AGENTS.md`, multi-root 用 `root-registry.md`, `index.md`, `log.md`, source/entity/concept/synthesis/query note, `draft-note.md` の初期雛形。
 
 ## Common Mistakes
 

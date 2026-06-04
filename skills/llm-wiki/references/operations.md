@@ -20,6 +20,7 @@ raw source を不変に保ちつつ、knowledge root, wiki の page 種別, `AGE
 
 - 既存の local Markdown wiki または Markdown repo はあるか
 - dedicated wiki repo か、mixed repo 内の subdirectory wiki か
+- wiki topology は `single-root` か `multi-root` か
 - knowledge root はどこに置くべきか
 - 複数 knowledge root を持つ system なら、root registry はどこに置き、どの router `AGENTS.md` から参照するか
 - knowledge root の `raw/`, `wiki/`, `index.md`, `log.md`, `AGENTS.md` は既にあるか
@@ -29,19 +30,22 @@ raw source を不変に保ちつつ、knowledge root, wiki の page 種別, `AGE
 
 ### Default Procedure
 
-1. dedicated wiki repo か mixed repo かを決め、knowledge root を確定する。
-2. mixed repo なら `assets/templates/root-AGENTS.md` を元に repo root に thin router `AGENTS.md` を置き、knowledge root の `AGENTS.md` への導線と、他 workflow の durable doc を knowledge root へ保存する routing だけを書く。
-3. 複数 knowledge root を持つ system なら、system/global root か router の近くに `assets/templates/root-registry.md` を元に `root-registry.md` を置く。各 router `AGENTS.md` から registry と canonical root へ辿れるようにする。
-4. 無ければ knowledge root に `assets/templates/AGENTS.md`, `index.md`, `log.md` をコピーする。knowledge root の `AGENTS.md` には skill への導線、local override、superpowers などの durable doc routing を書く。
-5. `references/schema-and-conventions.md` の推奨サブディレクトリを knowledge root 配下に作る。
-6. roadmap, ADR, spec, design doc, implementation plan の default 保存先を `wiki/syntheses/` にするか、project 固有の subdirectory を使うか決めて `AGENTS.md` に明記する。
-7. YAML frontmatter を使うか決める。
-8. 初期構成を knowledge root の `index.md` に記録する。複数 root の場合は registry の所在地と root id も記録する。
-9. knowledge root の `log.md` に `bootstrap` エントリを追加する。複数 root の場合は registry の作成・更新も記録する。
+1. dedicated wiki repo か mixed repo かを決める。
+2. `single-root` / `multi-root` topology を判定し、target knowledge root を確定する。
+3. mixed repo なら `assets/templates/root-AGENTS.md` を元に repo root に thin router `AGENTS.md` を置き、knowledge root の `AGENTS.md` への導線と、他 workflow の durable doc を knowledge root へ保存する routing だけを書く。
+4. `single-root` なら root registry は作らず、repo root または knowledge root の `AGENTS.md` を entrypoint にする。
+5. `multi-root` なら、system/global root か router の近くに `assets/templates/root-registry.md` を元に `root-registry.md` を置く。各 router `AGENTS.md` から registry と canonical root へ辿れるようにする。
+6. 無ければ knowledge root に `assets/templates/AGENTS.md`, `index.md`, `log.md` をコピーする。knowledge root の `AGENTS.md` には skill への導線、local override、superpowers などの durable doc routing を書く。
+7. `references/schema-and-conventions.md` の推奨サブディレクトリを knowledge root 配下に作る。
+8. roadmap, ADR, spec, design doc, implementation plan の default 保存先を `wiki/syntheses/` にするか、project 固有の subdirectory を使うか決めて `AGENTS.md` に明記する。
+9. YAML frontmatter を使うか決める。
+10. 初期構成を knowledge root の `index.md` に記録する。`multi-root` の場合は registry の所在地と root id も記録する。
+11. knowledge root の `log.md` に `bootstrap` エントリを追加する。`multi-root` の場合は registry の作成・更新も記録する。
 
 ### Pause And Align When
 
 - directory layout や naming に複数の妥当案があり、後で rename / relink が多発しそう
+- `single-root` / `multi-root` のどちらにするかで owner / access / durable doc routing が変わる
 - repo root を knowledge root のまま使うべきか、subdirectory に切り出すべきかで運用コストが変わる
 - 既存 wiki と新規ルールのどちらを canonical にするかで運用コストが変わる
 - 1 回の bootstrap で広範囲の page 再配置を伴う
@@ -51,6 +55,7 @@ raw source を不変に保ちつつ、knowledge root, wiki の page 種別, `AGE
 
 - knowledge root に local contract と entrypoint がある
 - repo root から wiki に辿りやすい entrypoint がある
+- `single-root` の場合は root registry なしで entrypoint と write authority が分かる
 - 複数 root の場合は `root-registry.md` があり、root id / URI / owner / read-write policy / draft target が埋まっている
 - 後続 session が ingest / query / lint のやり方を再発明せずに済む
 
