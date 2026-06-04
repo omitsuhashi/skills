@@ -110,7 +110,7 @@ compiled wiki を再利用して根拠付きで素早く答え、その出力自
 - `index.md` のどこが関連 page を指しているか
 - 複数 root の場合、root registry 上で読むべき root と書ける root はどれか
 - durable output を direct write できない場合、`Draft Target` に proposed note として残すべきか
-- session-user override で direct write する場合、`log.md` に override 理由を残せるか
+- session-user override で direct write する場合、許可理由カテゴリに当てはまり、`log.md` に category / approver / reason を残せるか。claim の信頼性、出典、provenance に影響するなら canonical page 側にも短く残せるか
 - 既に必要 topic をまとめている wiki page はあるか
 - 裏取りや dispute resolution に raw source が要るか
 - 回答は一時的なものか、durable page にすべきか
