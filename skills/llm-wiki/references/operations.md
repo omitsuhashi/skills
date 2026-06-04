@@ -78,10 +78,10 @@ raw source を不変に保ちつつ、knowledge root, wiki の page 種別, `AGE
 1. `raw/` から source を読む。
 2. `index.md` を見て関連 page を当てる。
 3. 編集前に直接関係する entity / concept / synthesis page を開く。
-4. source summary page を作るか更新する。
-5. 新しい事実、対立点、cross-link を関係 page に反映する。
-6. 新規 page や大きく変わった page を `index.md` に反映する。
-7. 何を変えたかを `log.md` の `ingest` エントリに記録する。
+4. 書き込み先 root の `Read`, `Write`, owner, `Draft Target` から更新経路を決める。
+5. `Read: allowed`, `Write: owned`, actor が canonical owner のすべてを満たす場合だけ、source summary page と関係 page, `index.md`, `log.md` を直接更新する。
+6. direct update できず `Read: allowed`, `Write: owned` または `propose`, `Draft Target` 解決済みの場合は、`Draft Target` に proposed note を作る。canonical page, `index.md`, `log.md` は直接更新しない。
+7. `closed`, `restricted`, `no-access`, target 不明、または `Draft Target` 未解決の場合は書かずに session user へ確認する。
 
 ### Editing Rules
 
@@ -121,8 +121,9 @@ compiled wiki を再利用して根拠付きで素早く答え、その出力自
 2. 必要最小限の wiki page を読む。
 3. wiki が薄い、争点がある、古い場合だけ raw citation を追加で引く。
 4. 必要に応じて wiki page と raw source を引用して答える。
-5. 再利用価値があれば `wiki/queries/` か `wiki/syntheses/` に page を作るか更新する。
-6. 新しい durable page を `index.md` に登録し、`log.md` に `query` エントリを追加する。
+5. 再利用価値があり、`Read: allowed`, `Write: owned`, actor が canonical owner のすべてを満たす場合だけ、`wiki/queries/` か `wiki/syntheses/` に page を作るか更新する。
+6. direct update できず `Read: allowed`, `Write: owned` または `propose`, `Draft Target` 解決済みの場合は、durable output を `Draft Target` に proposed note として残す。
+7. direct update した場合だけ、新しい durable page を `index.md` に登録し、`log.md` に `query` エントリを追加する。書けない root では canonical page, `index.md`, `log.md` を直接更新しない。
 
 ### Pause And Align When
 
