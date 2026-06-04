@@ -15,7 +15,7 @@
 - `Root ID` is a stable root id used in cross-root links and citations.
 - `Root URI/Path` is a root URI. Allowed forms: `file:/absolute/path`, `repo:<repo-name>:<relative-path>`, `memory:<path>`.
 - `Scope` is one of `system-wide`, `profile`, `role`, `project`, `project-role`.
-- `Canonical Owner` names the profile or team that can promote verified claims.
+- `Canonical Owner` names the authority holder for verified claims. It can be a human, team, role, AI profile, or operating process.
 - `Read` is one of `allowed`, `restricted`, `no-access`.
 - `Write` is one of `write-owned`, `write-with-approval`, `draft-only`, `read-only`, `no-access`.
 - `Draft Target` is where non-owner proposals go when direct verified edits are not allowed. It is required when `Write` is `write-with-approval` or `draft-only`.
