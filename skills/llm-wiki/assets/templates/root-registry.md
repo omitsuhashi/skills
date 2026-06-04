@@ -18,7 +18,7 @@
 - `Canonical Owner` names the profile or team that can promote verified claims.
 - `Read` is one of `allowed`, `restricted`, `no-access`.
 - `Write` is one of `write-owned`, `write-with-approval`, `draft-only`, `read-only`, `no-access`.
-- `Draft Target` is where non-owner proposals go when direct verified edits are not allowed.
+- `Draft Target` is where non-owner proposals go when direct verified edits are not allowed. It is required when `Write` is `write-with-approval` or `draft-only`.
 
 ## Routing Notes
 

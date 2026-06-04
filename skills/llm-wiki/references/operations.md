@@ -66,6 +66,7 @@ raw source を不変に保ちつつ、knowledge root, wiki の page 種別, `AGE
 
 - 新しく入った source file はどれか
 - 複数 root の場合、その source と claim の canonical root はどれか
+- 書き込み先が `write-with-approval` / `draft-only` なら `Draft Target` は解決できるか
 - 影響を受ける既存 page はどれか
 - この source や topic の summary page は既にあるか
 - raw source へ直接 citation すべき claim はどれか
@@ -107,6 +108,7 @@ compiled wiki を再利用して根拠付きで素早く答え、その出力自
 
 - `index.md` のどこが関連 page を指しているか
 - 複数 root の場合、root registry 上で読むべき root と書ける root はどれか
+- durable output を direct write できない場合、`Draft Target` に proposed note として残すべきか
 - 既に必要 topic をまとめている wiki page はあるか
 - 裏取りや dispute resolution に raw source が要るか
 - 回答は一時的なものか、durable page にすべきか
@@ -147,6 +149,7 @@ wiki が断片的な summary の寄せ集めへ劣化する前に、構造的な
 
 - `index.md` が重要 page を網羅しているか
 - 複数 root の場合、root registry が最新で、各 root の access / owner / canonical boundary が解決可能か
+- owner として扱う root では、`Draft Target` に未整理 draft が残っていないか
 - `log.md` に recent ingest はあるのに wiki 更新が追随していない箇所はないか
 - inbound link のない page はどれか
 - 新しい source で superseded されていそうな claim はどれか
@@ -155,11 +158,12 @@ wiki が断片的な summary の寄せ集めへ劣化する前に、構造的な
 ### Default Procedure
 
 1. `index.md` と `log.md` を走査する。
-2. orphan page, stale page, contradiction candidate, recurring unnamed concept を洗う。
-3. 編集前に対象 page を確認して問題を確定する。
-4. link 修正、missing page 追加、stale claim の superseded 明記を行う。
-5. 具体的な gap がある箇所だけ targeted な source 追加や web check を提案する。
-6. 所見と修正を `log.md` の `lint` エントリへ記録する。
+2. owner として扱う root では `Draft Target` を確認し、draft を `promote`, `merge`, `reject`, `defer` のいずれかに分類する。
+3. orphan page, stale page, contradiction candidate, recurring unnamed concept を洗う。
+4. 編集前に対象 page を確認して問題を確定する。
+5. link 修正、missing page 追加、stale claim の superseded 明記を行う。
+6. 具体的な gap がある箇所だけ targeted な source 追加や web check を提案する。
+7. 所見、draft 処理結果、修正を `log.md` の `lint` エントリへ記録する。
 
 ### Common Lint Findings
 
