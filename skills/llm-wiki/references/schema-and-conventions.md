@@ -50,6 +50,10 @@ repo-root/
 
 local Markdown wiki であればこの構成をそのまま使ってよく、Obsidian はその一例です。mixed repo でなければ、この layout でも問題ありません。
 
+## Multiple Knowledge Roots
+
+複数 knowledge root を持つ system でも、各 root の内部 layout はこの default layout を使う。root 間の routing, owner, canonicalization は `references/federated-knowledge-roots.md` に従う。
+
 ### Layer Rules
 
 - `knowledge root` は wiki 運用の単位として扱う。
