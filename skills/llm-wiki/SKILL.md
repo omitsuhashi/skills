@@ -21,14 +21,13 @@ mixed repo では、wiki 専用の `knowledge root` を 1 つ決めます。repo
 ## Quick Workflow
 
 1. Identify the mode: `bootstrap`, `ingest`, `query`, or `lint`.
-2. If the system has multiple knowledge roots, identify the target root before editing. Use `references/federated-knowledge-roots.md`.
-3. Determine the knowledge root first. If repo root has only a thin router `AGENTS.md`, follow it and then read the knowledge-root `AGENTS.md` to pick up local context and overrides.
-4. Read only the matching reference file sections instead of loading everything.
-5. Inspect `index.md` before touching wiki pages unless the task is pure bootstrap.
-6. During `bootstrap`, define in repo-root and knowledge-root `AGENTS.md` where other workflows should save durable docs. Route superpowers-style outputs such as roadmap, ADR, spec, design doc, and implementation plan into the knowledge root instead of leaving them in repo-root `docs/` by default.
-7. Update `log.md` for every ingest, durable query output, or lint pass.
-8. If an answer creates durable value, file it back into the wiki instead of leaving it in chat only.
-9. Pause only for ambiguous, high-impact, or multi-page changes. Routine low-risk updates proceed autonomously.
+2. Determine the target knowledge root before editing. If the system has multiple roots, use the root registry and `references/federated-knowledge-roots.md`; otherwise follow the repo-root thin router `AGENTS.md` to the knowledge-root `AGENTS.md`.
+3. Read only the matching reference file sections instead of loading everything.
+4. Inspect `index.md` before touching wiki pages unless the task is pure bootstrap.
+5. During `bootstrap`, define in repo-root and knowledge-root `AGENTS.md` where other workflows should save durable docs. Route superpowers-style outputs such as roadmap, ADR, spec, design doc, and implementation plan into the knowledge root instead of leaving them in repo-root `docs/` by default.
+6. Update `log.md` for every ingest, durable query output, or lint pass.
+7. If an answer creates durable value, file it back into the wiki instead of leaving it in chat only.
+8. Pause only for ambiguous, high-impact, or multi-page changes. Routine low-risk updates proceed autonomously.
 
 ## Mode Entry Checks
 
@@ -80,7 +79,7 @@ Read:
 - `references/optional-tooling.md`
   Obsidian Web Clipper, local image handling, Dataview, Marp, `qmd` などの任意ツール。どれも必須ではありません。
 - `assets/templates/`
-  knowledge-root 用 thin `AGENTS.md`, repo root 用 `root-AGENTS.md`, `index.md`, `log.md`, source/entity/concept/synthesis/query note の初期雛形。
+  knowledge-root 用 thin `AGENTS.md`, repo root 用 `root-AGENTS.md`, multi-root 用 `root-registry.md`, `index.md`, `log.md`, source/entity/concept/synthesis/query note の初期雛形。
 
 ## Common Mistakes
 

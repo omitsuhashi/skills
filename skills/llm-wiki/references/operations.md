@@ -21,6 +21,7 @@ raw source を不変に保ちつつ、knowledge root, wiki の page 種別, `AGE
 - 既存の local Markdown wiki または Markdown repo はあるか
 - dedicated wiki repo か、mixed repo 内の subdirectory wiki か
 - knowledge root はどこに置くべきか
+- 複数 knowledge root を持つ system なら、root registry はどこに置き、どの router `AGENTS.md` から参照するか
 - knowledge root の `raw/`, `wiki/`, `index.md`, `log.md`, `AGENTS.md` は既にあるか
 - 既存の naming convention を維持すべきか
 - 小規模な personal wiki か、継続的な research / team wiki か
@@ -30,12 +31,13 @@ raw source を不変に保ちつつ、knowledge root, wiki の page 種別, `AGE
 
 1. dedicated wiki repo か mixed repo かを決め、knowledge root を確定する。
 2. mixed repo なら `assets/templates/root-AGENTS.md` を元に repo root に thin router `AGENTS.md` を置き、knowledge root の `AGENTS.md` への導線と、他 workflow の durable doc を knowledge root へ保存する routing だけを書く。
-3. 無ければ knowledge root に `assets/templates/AGENTS.md`, `index.md`, `log.md` をコピーする。knowledge root の `AGENTS.md` には skill への導線、local override、superpowers などの durable doc routing を書く。
-4. `references/schema-and-conventions.md` の推奨サブディレクトリを knowledge root 配下に作る。
-5. roadmap, ADR, spec, design doc, implementation plan の default 保存先を `wiki/syntheses/` にするか、project 固有の subdirectory を使うか決めて `AGENTS.md` に明記する。
-6. YAML frontmatter を使うか決める。
-7. 初期構成を knowledge root の `index.md` に記録する。
-8. knowledge root の `log.md` に `bootstrap` エントリを追加する。
+3. 複数 knowledge root を持つ system なら、system/global root か router の近くに `assets/templates/root-registry.md` を元に `root-registry.md` を置く。各 router `AGENTS.md` から registry と canonical root へ辿れるようにする。
+4. 無ければ knowledge root に `assets/templates/AGENTS.md`, `index.md`, `log.md` をコピーする。knowledge root の `AGENTS.md` には skill への導線、local override、superpowers などの durable doc routing を書く。
+5. `references/schema-and-conventions.md` の推奨サブディレクトリを knowledge root 配下に作る。
+6. roadmap, ADR, spec, design doc, implementation plan の default 保存先を `wiki/syntheses/` にするか、project 固有の subdirectory を使うか決めて `AGENTS.md` に明記する。
+7. YAML frontmatter を使うか決める。
+8. 初期構成を knowledge root の `index.md` に記録する。複数 root の場合は registry の所在地と root id も記録する。
+9. knowledge root の `log.md` に `bootstrap` エントリを追加する。複数 root の場合は registry の作成・更新も記録する。
 
 ### Pause And Align When
 
@@ -49,6 +51,7 @@ raw source を不変に保ちつつ、knowledge root, wiki の page 種別, `AGE
 
 - knowledge root に local contract と entrypoint がある
 - repo root から wiki に辿りやすい entrypoint がある
+- 複数 root の場合は `root-registry.md` があり、root id / URI / owner / read-write policy / draft target が埋まっている
 - 後続 session が ingest / query / lint のやり方を再発明せずに済む
 
 ## `ingest`
@@ -62,6 +65,7 @@ raw source を不変に保ちつつ、knowledge root, wiki の page 種別, `AGE
 ### Check First
 
 - 新しく入った source file はどれか
+- 複数 root の場合、その source と claim の canonical root はどれか
 - 影響を受ける既存 page はどれか
 - この source や topic の summary page は既にあるか
 - raw source へ直接 citation すべき claim はどれか
@@ -102,6 +106,7 @@ compiled wiki を再利用して根拠付きで素早く答え、その出力自
 ### Check First
 
 - `index.md` のどこが関連 page を指しているか
+- 複数 root の場合、root registry 上で読むべき root と書ける root はどれか
 - 既に必要 topic をまとめている wiki page はあるか
 - 裏取りや dispute resolution に raw source が要るか
 - 回答は一時的なものか、durable page にすべきか
@@ -141,6 +146,7 @@ wiki が断片的な summary の寄せ集めへ劣化する前に、構造的な
 ### Check First
 
 - `index.md` が重要 page を網羅しているか
+- 複数 root の場合、root registry が最新で、各 root の access / owner / canonical boundary が解決可能か
 - `log.md` に recent ingest はあるのに wiki 更新が追随していない箇所はないか
 - inbound link のない page はどれか
 - 新しい source で superseded されていそうな claim はどれか
