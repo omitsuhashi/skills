@@ -66,8 +66,9 @@ raw source を不変に保ちつつ、knowledge root, wiki の page 種別, `AGE
 
 - 新しく入った source file はどれか
 - 複数 root の場合、その source と claim の canonical root はどれか
-- 書き込み先が `write-with-approval` / `draft-only` なら `Draft Target` は解決できるか
-- `write-with-approval` の root に直接書くなら owner approval または明示 session-user override はあるか
+- 書き込み先 root の `Read` は `allowed` か
+- 書き込み先 root の `Write` は `owned`, `propose`, `closed` のどれか
+- actor が owner でない場合、`Draft Target` は解決できるか
 - 影響を受ける既存 page はどれか
 - この source や topic の summary page は既にあるか
 - raw source へ直接 citation すべき claim はどれか
@@ -109,8 +110,7 @@ compiled wiki を再利用して根拠付きで素早く答え、その出力自
 
 - `index.md` のどこが関連 page を指しているか
 - 複数 root の場合、root registry 上で読むべき root と書ける root はどれか
-- durable output を direct write できない場合、`Draft Target` に proposed note として残すべきか
-- session-user override で direct write する場合、許可理由カテゴリに当てはまり、`log.md` に category / approver / reason を残せるか。claim の信頼性、出典、provenance に影響するなら canonical page 側にも短く残せるか
+- actor が owner ではない場合、durable output を `Draft Target` に proposed note として残せるか
 - 既に必要 topic をまとめている wiki page はあるか
 - 裏取りや dispute resolution に raw source が要るか
 - 回答は一時的なものか、durable page にすべきか
