@@ -21,7 +21,7 @@ mixed repo では、wiki 専用の `knowledge root` を 1 つ決めます。repo
 ## Quick Workflow
 
 1. Identify the mode: `bootstrap`, `ingest`, `query`, `draft-review`, `canonicalize`, or `lint`.
-2. Determine the wiki topology and target knowledge root before editing. In `single-root` topology, use the knowledge-root `AGENTS.md` as the entrypoint, following a repo-root thin router `AGENTS.md` when one exists, and do not create a root registry. In `multi-root` topology, use the system-specific root registry adapter and `references/federated-knowledge-roots.md`.
+2. Determine the wiki topology and target knowledge root before editing. In `single-root` topology, use the knowledge-root `AGENTS.md` as the entrypoint, record canonical owner and write boundary there, follow a repo-root thin router `AGENTS.md` when one exists, and do not create a root registry. In `multi-root` topology, use the system-specific root registry adapter and `references/federated-knowledge-roots.md`.
 3. Read only the matching reference file sections instead of loading everything.
 4. Inspect `index.md` before touching wiki pages unless the task is pure bootstrap.
 5. During `bootstrap`, define in repo-root and knowledge-root `AGENTS.md` where other workflows should save durable docs. Route superpowers-style outputs such as roadmap, ADR, spec, design doc, and implementation plan into the knowledge root instead of leaving them in repo-root `docs/` by default.

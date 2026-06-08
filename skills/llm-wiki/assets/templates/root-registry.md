@@ -17,6 +17,7 @@
 - `Read` is one of `allowed`, `restricted`, `no-access`.
 - `Write` is the write mode available to the current actor during routine work. It is one of `owned`, `propose`, `closed`.
 - `Draft Target` is where proposed notes go. It is required when `Write` is `propose`, and required for non-owner proposals when `Write` is `owned`.
+- `Draft Target` must resolve as a root-relative directory inside the target root. Prefer `wiki/drafts/`. Do not use absolute paths, `~`, `..`, or paths that resolve outside the target root.
 
 ## Routing Notes
 

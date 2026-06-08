@@ -11,6 +11,9 @@
 ## Local Contract
 
 - knowledge root はこの directory とする
+- Canonical Owner は repository maintainer または maintainer-delegated actor とする
+- Write Boundary は `owned` とし、owner actor だけが verified claim を直接更新できる
+- non-owner actor の durable proposal は `wiki/drafts/` に routing する
 - この repository は single-root topology として扱い、root registry は作らない
 - `raw/` は不変の source material として扱い、読んでも編集しない
 - `wiki/` は maintained knowledge base として扱い、作成と更新はここで行う

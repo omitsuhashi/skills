@@ -57,6 +57,13 @@ owner, actor, session user は人間 / AI の種別ではなく、authority と 
 - `closed`: verified claim も proposed note も書かない。
 - `Read` が `restricted` または `no-access` の root には、verified claim も proposed note も書かない。読む必要がある場合は session user に確認する。
 
+### Draft Target Rules
+
+- `Draft Target` は target root 内の root-relative directory として解決する。
+- 通常は `wiki/drafts/` を使う。
+- absolute path、`~`、`..`、root 外へ解決される path は使わない。
+- `Draft Target` が未設定、未解決、または root 外へ解決される場合は proposed note を書かず、session user に確認する。
+
 ## Root Types As Common Examples
 
 root types は固定 taxonomy ではありません。次はよくある例であり、local adapter は system に合う `Scope` を使ってよい。

@@ -11,6 +11,9 @@
 ## Local Contract
 
 - knowledge root はこの directory とする
+- Canonical Owner:
+- Write Boundary: owned | propose | closed
+- Non-owner proposals route to `wiki/drafts/`
 - `raw/` は不変の source material として扱い、読んでも編集しない
 - `wiki/` は maintained knowledge base として扱い、作成と更新はここで行う
 - `index.md` は active canonical durable wiki page の catalog として扱う

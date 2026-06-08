@@ -35,6 +35,7 @@
 ## Owner Decision
 
 - Decision:
+- Status: promoted | merged | rejected | deferred
 - Decided At:
 - Decided By:
 - Reason:

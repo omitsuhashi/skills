@@ -109,7 +109,7 @@ draft status は owner review の状態を短く表します。
 - `rejected`: 採用しない理由を残して active queue から外した状態。
 - `deferred`: 未判断の理由と次の条件を残して保留した状態。
 
-frontmatter は必須ではありません。local convention が frontmatter を安定運用しているなら `status` や `review_state` を置いてよいが、そうでない場合は draft note の `Owner Decision` section に status、decision date、decider、reason を残します。
+frontmatter は必須ではありません。local convention が frontmatter を安定運用しているなら `status` や `review_state` を置いてよいが、そうでない場合は draft note の `Owner Decision` section に final status、decision date、decider、reason を残します。上部に `Status: proposed` を残す場合でも、review 後は `Owner Decision` の final status を authoritative として扱います。
 
 ## Durable Document Routing
 
