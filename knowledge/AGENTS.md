@@ -1,6 +1,6 @@
 # LLM Wiki Router
 
-この directory は persistent な LLM-maintained wiki の knowledge root です。
+この directory は `skills` repository の persistent な LLM-maintained wiki の knowledge root です。
 
 ## Canonical Procedure
 
@@ -11,20 +11,22 @@
 ## Local Contract
 
 - knowledge root はこの directory とする
-- Canonical Owner:
-- Write Boundary: owned | propose | closed
-- Non-owner proposal target: `wiki/drafts/` when Write Boundary is `owned` or `propose`; `closed` roots accept no canonical or draft writes
+- Canonical Owner は repository maintainer または maintainer-delegated actor とする
+- Write Boundary は `owned` とし、owner actor だけが verified claim を直接更新できる
+- non-owner actor の durable proposal は `wiki/drafts/` に routing する
+- この repository は single-root topology として扱い、root registry は作らない
 - `raw/` は不変の source material として扱い、読んでも編集しない
 - `wiki/` は maintained knowledge base として扱い、作成と更新はここで行う
 - `index.md` は active canonical durable wiki page の catalog として扱う
-- `log.md` は bootstrap, ingest, query, draft-review decision, canonicalize action, lint の append-only timeline として扱う
+- `log.md` は bootstrap, ingest, query, draft-review decision, canonicalize action, lint, Goal command preparation の append-only timeline として扱う
 - wiki documentation の本文は日本語を基本にする
-- superpowers など他 workflow が作る durable な roadmap / ADR / spec / design doc / implementation plan も knowledge root 配下へ保存する
-- default routing は、roadmap / ADR / spec / design doc / implementation plan / briefing / comparison note を `wiki/syntheses/`、質問起点の短い判断メモを `wiki/queries/` とする
+- Goal command 用の長い詳細仕様、実装契約、acceptance criteria は `wiki/syntheses/` に保存する
+- Goal prompt は短く保ち、詳細仕様ファイルを明示的に参照する
 
 ## Local Overrides
 
-- この knowledge root 固有の命名規則、page type の追加、frontmatter 規約、link 規約、durable doc の保存先 override がある場合だけここへ追記する
+- `skills/` 配下の skill 本体は実装対象であり、knowledge root ではない
+- Goal command preparation の成果物は、直接 skill reference に混ぜず、まず `knowledge/wiki/syntheses/` に保存する
 - 汎用運用ルールをここへ再掲しない
 
 ## Conflict Rule

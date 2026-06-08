@@ -4,22 +4,21 @@
 
 | Root ID | Root URI/Path | Scope | Canonical Owner | Read | Write | Draft Target |
 |---|---|---|---|---|---|---|
-| global | file:/absolute/path/to/global-wiki | system-wide | <canonical-owner> | allowed | owned | wiki/drafts/ |
-| profile:<name> | file:/absolute/path/to/profile-wiki | profile | <canonical-owner> | allowed | owned | wiki/drafts/ |
-| role:<name> | file:/absolute/path/to/role-wiki | role | <canonical-owner> | allowed | propose | wiki/drafts/ |
-| project:<name> | repo:<name>:knowledge | project | <canonical-owner> | allowed | propose | wiki/drafts/ |
-| project-role:<project>:<role> | repo:<name>:knowledge/roles/<role> | project-role | <canonical-owner> | allowed | propose | wiki/drafts/ |
+| shared | file:/absolute/path/to/shared-wiki | shared policy and operations | <canonical-owner> | allowed | owned | wiki/drafts/ |
+| actor:<name> | file:/absolute/path/to/actor-wiki | actor working memory | <canonical-owner> | allowed | owned | wiki/drafts/ |
+| domain:<name> | repo:<name>:knowledge | product or domain knowledge | <canonical-owner> | allowed | propose | wiki/drafts/ |
 
 ## Column Rules
 
 - `Root ID` is a stable root id used in cross-root links and citations.
 - `Root URI/Path` is a root URI. Allowed forms: `file:/absolute/path`, `repo:<repo-name>:<relative-path>`, `memory:<path>`.
-- `Scope` is one of `system-wide`, `profile`, `role`, `project`, `project-role`.
+- `Scope` describes the local ownership boundary. Use the taxonomy that matches the system; the examples above are not mandatory categories.
 - `Canonical Owner` names the authority holder for verified claims. Replace `<canonical-owner>` with a human, team, role, AI profile, or operating process before using the registry.
 - `Read` is one of `allowed`, `restricted`, `no-access`.
 - `Write` is the write mode available to the current actor during routine work. It is one of `owned`, `propose`, `closed`.
 - `Draft Target` is where proposed notes go. It is required when `Write` is `propose`, and required for non-owner proposals when `Write` is `owned`.
+- `Draft Target` must resolve as a root-relative directory inside the target root. Prefer `wiki/drafts/`. Do not use absolute paths, `~`, `..`, or paths that resolve outside the target root.
 
 ## Routing Notes
 
-- Example: project-specific customer claims go to `project:<name>`; role-general strategy notes go to `role:<name>` and link back to the project root when needed.
+- Example: domain-specific customer claims go to that domain root; reusable actor workflow notes go to the actor root and link back to the domain root when needed.
