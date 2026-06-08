@@ -2,8 +2,8 @@
 
 ## Status
 
-- Status: proposed
-- Review State:
+- Current Status: proposed | promoted | merged | rejected | deferred
+- Review State: active | closed | deferred
 - Confidence: low | medium | high
 
 ## Target
@@ -35,13 +35,13 @@
 ## Owner Decision
 
 - Decision:
-- Status: promoted | merged | rejected | deferred
 - Decided At:
 - Decided By:
 - Reason:
+- Destination Page:
 - Log Entry:
 
-Allowed status values after owner review: promoted, merged, rejected, deferred.
+Update `Current Status` after owner review. Allowed final status values: promoted, merged, rejected, deferred.
 
 ## Follow-up
 

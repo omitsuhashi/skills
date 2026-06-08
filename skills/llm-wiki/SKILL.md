@@ -25,7 +25,7 @@ mixed repo では、wiki 専用の `knowledge root` を 1 つ決めます。repo
 3. Read only the matching reference file sections instead of loading everything.
 4. Inspect `index.md` before touching wiki pages unless the task is pure bootstrap.
 5. During `bootstrap`, define in repo-root and knowledge-root `AGENTS.md` where other workflows should save durable docs. Route superpowers-style outputs such as roadmap, ADR, spec, design doc, and implementation plan into the knowledge root instead of leaving them in repo-root `docs/` by default.
-6. Use direct durable change only when the actor is the canonical owner and the target root allows `Write: owned`; otherwise route durable proposals to a draft note.
+6. For routine durable changes, update canonical pages directly only when the actor is the canonical owner and the target root allows `Write: owned`; otherwise route durable proposals to a draft note. In owner `draft-review` and `canonicalize` modes, treat owner canonical updates as a separate authority resolved by the local contract or adapter.
 7. Update `index.md` and `log.md` for every direct durable change, `draft-review` decision, `canonicalize` action, ingest, durable query output, or lint pass.
 8. If an answer creates durable value, file it back into the wiki instead of leaving it in chat only.
 9. Pause only for ambiguous, high-impact, or multi-page changes. Routine low-risk updates proceed autonomously.
@@ -61,7 +61,7 @@ Read:
 
 ### `draft-review`
 
-owner actor として proposed note を review queue から閉じるときに使います。対象 draft、canonical page、`index.md`, `log.md` を確認し、decision を `promote`, `merge`, `reject`, `defer` のいずれかにします。`promote` / `merge` では、owner かつ `Write: owned` の場合だけ verified claim として canonical page に反映し、`index.md` と `log.md` を更新します。`reject` / `defer` でも理由と判断履歴を draft 側または `log.md` に残し、履歴なしに削除しません。
+owner actor として proposed note を review queue から閉じるときに使います。対象 draft、canonical page、`index.md`, `log.md` を確認し、decision を `promote`, `merge`, `reject`, `defer` のいずれかにします。`promote` / `merge` では、canonical owner が draft-review authority を持ち、local contract または adapter が owner canonical update を許す場合に verified claim として canonical page に反映し、`index.md` と `log.md` を更新します。`reject` / `defer` でも理由と判断履歴を draft 側または `log.md` に残し、履歴なしに削除しません。
 
 Read:
 
@@ -71,7 +71,7 @@ Read:
 
 ### `canonicalize`
 
-owner actor として page boundary を整理するときに使います。rename, merge, archive, split, rehome のどれかを選び、canonical discoverability を保ちます。action 後に canonical page、関連 link、`index.md`, `log.md` を直接更新できるのは owner かつ `Write: owned` の場合だけです。それ以外の actor や `Write: propose` root では canonical page を直接組み替えず、draft note へ routing します。
+owner actor として page boundary を整理するときに使います。rename, merge, archive, split, rehome のどれかを選び、canonical discoverability を保ちます。action 後に canonical page、関連 link、`index.md`, `log.md` を直接更新できるのは canonical owner が canonicalize authority を持ち、local contract または adapter が owner canonical update を許す場合です。それ以外の actor や owner update が禁止された root では canonical page を直接組み替えず、draft note へ routing します。
 
 Read:
 
@@ -107,7 +107,7 @@ Read:
 - `raw/` の source file を編集すること。
 - 既存 wiki を見ずに記憶だけで答えること。
 - page を更新したのに `index.md` や `log.md` を更新しないこと。
-- owner でも `Write: owned` でもないのに canonical page を直接更新すること。
+- canonical owner authority がない、または local contract / adapter が禁止しているのに canonical page を直接更新すること。
 - proposed draft を判断履歴なしに削除すること。
 - draft を active page として `index.md` の現役一覧に載せること。
 - 価値のある query output を chat にだけ残して wiki に還元しないこと。

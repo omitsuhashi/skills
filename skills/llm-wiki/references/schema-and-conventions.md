@@ -109,7 +109,7 @@ draft status は owner review の状態を短く表します。
 - `rejected`: 採用しない理由を残して active queue から外した状態。
 - `deferred`: 未判断の理由と次の条件を残して保留した状態。
 
-frontmatter は必須ではありません。local convention が frontmatter を安定運用しているなら `status` や `review_state` を置いてよいが、そうでない場合は draft note の `Owner Decision` section に final status、decision date、decider、reason を残します。上部に `Status: proposed` を残す場合でも、review 後は `Owner Decision` の final status を authoritative として扱います。
+frontmatter は必須ではありません。local convention が frontmatter を安定運用しているなら `status` や `review_state` を置いてよい。そうでない場合は draft note の `Status` section にある `Current Status` を authoritative として扱い、`Owner Decision` section に decision date、decider、reason を残します。
 
 ## Durable Document Routing
 
@@ -148,14 +148,14 @@ project 固有の理由で `wiki/syntheses/adr/` や `wiki/syntheses/specs/` の
 - canonical page は標準的な名前、明確な scope、継続参照しやすさを優先して選ぶ。
 - rename / merge / archive / split / rehome は lightweight に扱い、後継 page と discoverability を残す。
 
-owner かつ `Write: owned` の boundary を満たして rename / merge / archive / split / rehome を直接行ったら、最低限次を更新します。boundary を満たさない actor や `Write: propose` root では canonical page を直接編集せず、draft note へ routing します。
+canonical owner が canonicalize authority を持ち、local contract または adapter が owner canonical update を許す状態で rename / merge / archive / split / rehome を直接行ったら、最低限次を更新します。authority を満たさない actor や owner update が禁止された root では canonical page を直接編集せず、draft note へ routing します。
 
 - `index.md`
 - `log.md`
 - 触った page の link
 - canonical page への inbound link
 
-`split` は 1 page に複数の durable topic が混ざったときに使います。`rehome` は page が wrong root / wrong page type / wrong directory にあるときに使います。どちらも direct update boundary を満たさない actor は canonical page を直接編集せず、draft note へ routing します。
+`split` は 1 page に複数の durable topic が混ざったときに使います。`rehome` は page が wrong root / wrong page type / wrong directory にあるときに使います。どちらも canonical owner authority と local contract / adapter の許可を満たさない actor は canonical page を直接編集せず、draft note へ routing します。
 
 ## Linking Rules
 
