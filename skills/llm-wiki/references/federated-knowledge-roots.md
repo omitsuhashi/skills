@@ -14,11 +14,21 @@
 - `index.md` は root 内の lookup surface として扱う。
 - `log.md` は root 内の append-only ledger として扱う。
 
-複数 root を常用する system では、global root か system-level router の近くに `root-registry.md` を 1 つ置く。新規 bootstrap 時は `assets/templates/root-registry.md` を使い、repo/profile/router `AGENTS.md` から registry へ辿れるようにする。
+複数 root を常用する system では、system-specific root registry adapter を用意し、router `AGENTS.md` からその adapter と canonical roots へ辿れるようにする。adapter は Markdown registry, config file, local documentation, runtime lookup のどれでもよいが、generic `llm-wiki` skill は file format や approval workflow を固定しない。
 
-## Root Registry
+## System-Specific Root Registry Adapter Hook
 
-registry は root 発見、path 解決、access 判断の first lookup surface として扱う。各 root 行は安定した `Root ID`, `Root URI/Path`, `Scope`, `Canonical Owner`, `Read`, `Write`, `Draft Target` を持つ。
+adapter は root 発見、path 解決、access 判断の first lookup surface として扱う。generic `llm-wiki` が必要とする field は次に限定する。
+
+- `Root ID`
+- `Root URI/Path`
+- `Scope`
+- `Canonical Owner`
+- `Read`
+- `Write`
+- `Draft Target`
+
+registry file format、approval workflow、root taxonomy、runtime names、owner の実装詳細は local adapter または local `AGENTS.md` に残す。新規 bootstrap で Markdown registry を使う場合だけ、`assets/templates/root-registry.md` を雛形にしてよい。
 
 ## Authority Terms
 
@@ -28,14 +38,14 @@ owner, actor, session user は人間 / AI の種別ではなく、authority と 
 - `actor`: 今回の作業で root を読み書きする実行主体。多くの場合は LLM agent。
 - `session user`: 今回の session で actor に明示指示を出している依頼者。
 
-### Root URI Rules
+### Root URI/Path Rules
 
 - `file:/absolute/path` は local filesystem 上の絶対 path を指す。
-- `repo:<repo-name>:<relative-path>` は registry が属する workspace から識別できる repo root 相対 path を指す。
+- `repo:<repo-name>:<relative-path>` は adapter が属する workspace から識別できる repo root 相対 path を指す。
 - `memory:<path>` は agent memory など、通常の repo 外にある managed knowledge root を指す。
-- bare relative path や環境依存の shell expansion は registry に書かない。
+- bare relative path や環境依存の shell expansion は adapter に書かない。
 - cross-root link や citation では `root-id:path/inside/root.md` を使う。
-- URI が解決できない root には書かない。読む必要がある場合は session user に確認する。
+- URI / path が解決できない root には書かない。読む必要がある場合は session user に確認する。
 
 ### Access Values
 
@@ -43,19 +53,21 @@ owner, actor, session user は人間 / AI の種別ではなく、authority と 
 - `Write`: `owned`, `propose`, `closed`。
 - `Write` は通常作業で actor が取れる write mode を表す。owner が draft review を閉じる権限そのものではない。
 - `owned`: owner actor だけが verified claim を直接更新できる。non-owner actor は `Read: allowed` かつ `Draft Target` がある場合だけ proposed note を書ける。
-- `propose`: actor は verified claim を直接更新できない。`Read: allowed` かつ `Draft Target` がある actor だけ proposed note を書ける。canonical owner は draft review workflow で `promote` / `merge` した内容を verified claim へ反映できる。
+- `propose`: actor は verified claim を直接更新できない。`Read: allowed` かつ `Draft Target` がある actor だけ proposed note を書ける。
 - `closed`: verified claim も proposed note も書かない。
 - `Read` が `restricted` または `no-access` の root には、verified claim も proposed note も書かない。読む必要がある場合は session user に確認する。
 
-## Root Types
+## Root Types As Common Examples
 
-### Global Root
+root types は固定 taxonomy ではありません。次はよくある例であり、local adapter は system に合う `Scope` を使ってよい。
+
+### Shared Root
 
 system 全体で共有する運用知識、agent 設計、共通失敗例、共通 policy を置く。
 
-### Profile Root
+### Actor Root
 
-特定 profile が繰り返し使う経験知、失敗例、調査 pattern、review pattern を置く。
+特定 actor が繰り返し使う経験知、失敗例、調査 pattern、review pattern を置く。
 
 ### Role Root
 
@@ -71,33 +83,34 @@ CMO / CTO / COO など role 固有の判断軸、playbook、strategy pattern を
 
 ## Routing Rules
 
-- project + role に固有の施策、判断、実験ログは project-role root に置く。
-- project の顧客、商品、業務、stakeholder、source、claim、decision は project root に置く。
-- role に一般化された判断軸、playbook、strategy pattern は role root に置く。
-- profile の作業改善知は profile root に置く。
-- project 固有 claim を global root や profile root に置かない。
+- local adapter の `Scope` と `Canonical Owner` を first lookup surface として扱う。
+- project + role に固有の施策、判断、実験ログは、その scope を owner とする root に置く。
+- project の顧客、商品、業務、stakeholder、source、claim、decision は、その project を owner とする root に置く。
+- role に一般化された判断軸、playbook、strategy pattern は、その role を owner とする root に置く。
+- actor の作業改善知は actor root に置く。
+- scope 固有 claim をより広い shared root や別 actor root に置かない。
 - role 固有 strategy を project domain root に混ぜない。
 - source note は、その source が支える claim の所属 root に置く。
 - 複数 root にまたがる場合は、canonical root を 1 つ決め、他 root から link する。
 
 ## Canonical Owner
 
-各 root は canonical owner を持つ。verified claim を通常作業で直接更新できるのは owner actor だけ。owner 以外の actor は、registry が許す場合に draft / proposed note だけを作る。`Write: propose` の root でも、canonical owner は draft review の判断として canonical page, `index.md`, `log.md` を更新できる。
+各 root は canonical owner を持つ。verified claim を通常作業で直接更新できるのは owner actor かつ `Write: owned` の場合だけ。owner 以外の actor は、adapter が許す場合に draft / proposed note だけを作る。`Write: propose` の root では、owner actor でも canonical page, `index.md`, `log.md` を直接更新せず、draft decision と必要な owner action を記録する。
 
 ## Draft Review Workflow
 
 draft は未整理の inbox ではなく、owner が閉じる review queue として扱う。
 
-- non-owner actor は verified claim を直接更新せず、registry の `Draft Target` に proposed note を書く。
+- non-owner actor は verified claim を直接更新せず、adapter が示す `Draft Target` に proposed note を書く。
 - draft を作成できるのは、target root の `Read` が `allowed` で、`Write` が `owned` または `propose` で、`Draft Target` が解決できる actor だけ。
 - proposed note は最低限、対象 root、対象 canonical page / claim、提案内容、根拠 source、作成 actor、owner に求める action、作成日を持つ。
 - owner は定期的に、または `ingest`, `query`, `lint` のタイミングで `Draft Target` を確認する。
 - owner は各 draft を `promote`, `merge`, `reject`, `defer` のどれかに分類する。
-- `promote` は draft を verified claim として canonical page へ反映する。
-- `merge` は draft の unique な内容だけを既存 canonical page へ統合する。
+- `promote` は owner かつ `Write: owned` の場合だけ、draft を verified claim として canonical page へ反映する。
+- `merge` は owner かつ `Write: owned` の場合だけ、draft の unique な内容を既存 canonical page へ統合する。
 - `reject` は採用しない理由を draft 側または `log.md` に残し、現役 queue から外す。
 - `defer` は未判断の理由と次に必要な source / owner action を draft 側に残す。
-- `promote` / `merge` したら対象 root の canonical page, `index.md`, `log.md` を更新する。
+- `promote` / `merge` したら、direct update boundary を満たす場合だけ対象 root の canonical page, `index.md`, `log.md` を更新する。boundary を満たさない場合は decision と必要な owner action を draft 側または `log.md` に残す。
 - `reject` / `defer` も日付、判断者、理由を残す。判断履歴なしに draft を削除しない。
 
 ## Cross-Root Links
@@ -117,7 +130,7 @@ root 間 link は許可するが、copy-paste による重複 canonical page は
 - project 固有の事実を common wiki に書くこと。
 - role 固有の判断を project domain wiki に書くこと。
 - owner 以外の actor が verified claim を直接更新すること。
-- profile root に一回限りの project 調査結果を溜めること。
+- actor root に一回限りの project 調査結果を溜めること。
 - root ごとの `index.md` / `log.md` を更新しないこと。
-- registry に解決不能な相対 path や曖昧な owner / access を残すこと。
+- adapter に解決不能な相対 path や曖昧な owner / access を残すこと。
 - draft を owner review queue として閉じず、第二の未整理 inbox にすること。

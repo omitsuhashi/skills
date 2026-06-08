@@ -1,6 +1,6 @@
 # インデックス
 
-wiki の最初の navigation surface として使います。durable page はすべて 1 回だけ載せ、1 行 summary を付けます。現役一覧には canonical page だけを残します。
+wiki の最初の navigation surface として使います。active canonical durable page はすべて 1 回だけ載せ、1 行 summary を付けます。現役一覧には canonical page だけを残します。draft note、rejected note、deferred note、merged / archived duplicate は active page として載せません。
 
 ## ソース
 

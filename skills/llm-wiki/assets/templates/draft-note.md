@@ -1,17 +1,30 @@
 # Draft Note
 
+## Status
+
+- Status: proposed
+- Review State:
+- Confidence: low | medium | high
+
 ## Target
 
 - Root ID:
 - Canonical Page / Claim:
+- Related Pages:
 - Requested Owner Action: promote | merge | reject | defer
+- Destination Page:
 
 ## Proposal
 
 
-## Evidence
+## Source Summary
 
 - Source:
+- Key Claims:
+
+## Open Questions
+
+- TBD
 
 ## Context
 
@@ -25,3 +38,10 @@
 - Decided At:
 - Decided By:
 - Reason:
+- Log Entry:
+
+Allowed status values after owner review: promoted, merged, rejected, deferred.
+
+## Follow-up
+
+- TBD
