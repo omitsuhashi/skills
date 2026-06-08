@@ -217,9 +217,10 @@ page を増やし続けず、canonical page, discoverability, audit trail を保
 2. 編集前に対象 page、関連 page、`log.md` を読む。
 3. canonical page と action を決める。
 4. owner かつ `Write: owned` の場合だけ canonical page を直接更新する。
-5. direct update できない場合は root 内の `Draft Target` に proposed note を作り、canonical page, `index.md`, `log.md` は直接更新しない。
-6. direct update した場合は、対象 page、関連 link、`index.md`, `log.md` を更新する。
-7. canonical page へ最低 1 本の inbound link が残ることを確認する。
+5. direct update できず `Read: allowed`, `Write: owned` または `propose`, `Draft Target` 解決済みの場合だけ、root 内の `Draft Target` に proposed note を作り、canonical page, `index.md`, `log.md` は直接更新しない。
+6. `closed`, `restricted`, `no-access`, target 不明、または `Draft Target` 未解決の場合は書かずに session user へ確認する。
+7. direct update した場合は、対象 page、関連 link、`index.md`, `log.md` を更新する。
+8. canonical page へ最低 1 本の inbound link が残ることを確認する。
 
 ### Action Set
 
