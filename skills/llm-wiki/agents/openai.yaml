@@ -1,4 +1,4 @@
 interface:
   display_name: "LLM Wiki"
-  short_description: "ローカル Markdown wiki（Obsidian-friendly）で育てる LLM 管理型 wiki 運用"
-  default_prompt: "Use $llm-wiki to bootstrap, ingest, query, or lint a local Markdown wiki (Obsidian-friendly) that compiles raw sources into persistent knowledge, and write durable wiki documentation in Japanese."
+  short_description: "Markdown wiki を育てる LLM knowledge base 運用"
+  default_prompt: "Use $llm-wiki to bootstrap, ingest, query, review drafts, canonicalize, or lint a Japanese local Markdown wiki using minimal core + topology + mode references."

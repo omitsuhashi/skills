@@ -6,6 +6,7 @@
 
 - wiki の `bootstrap`, `ingest`, `query`, `draft-review`, `canonicalize`, `lint` の汎用手順は `llm-wiki` スキルを canonical source として扱う
 - 汎用的な schema, naming, citation, canonicalization, `index.md` / `log.md` 更新規約も `llm-wiki` スキルに従う
+- `llm-wiki` skill の base read set は skill-local `references/core.md` + topology reference + 該当 `references/modes/*.md` とし、detail references は必要時だけ読む
 - この file はスキルの複製ではなく、この knowledge root 固有の前提と差分だけを書く
 
 ## Local Contract

@@ -1,0 +1,96 @@
+# Structure And Routing
+
+knowledge root の layout、page type、durable document routing、naming を決める時だけ読む reference です。routine query では読まない。
+
+## Default Layout
+
+Mixed repository:
+
+```text
+repo-root/
+├── AGENTS.md
+└── <knowledge-root>/
+    ├── raw/
+    │   ├── sources/
+    │   └── assets/
+    ├── wiki/
+    │   ├── sources/
+    │   ├── entities/
+    │   ├── concepts/
+    │   ├── syntheses/
+    │   ├── queries/
+    │   └── drafts/
+    ├── index.md
+    ├── log.md
+    └── AGENTS.md
+```
+
+Dedicated wiki repository:
+
+```text
+repo-root/
+├── raw/
+│   ├── sources/
+│   └── assets/
+├── wiki/
+│   ├── sources/
+│   ├── entities/
+│   ├── concepts/
+│   ├── syntheses/
+│   ├── queries/
+│   └── drafts/
+├── index.md
+├── log.md
+└── AGENTS.md
+```
+
+## Page Types
+
+- `wiki/sources/`: source summary。主要 claim、この source が重要な理由、open question、entity / concept / synthesis への outbound link を持つ。
+- `wiki/entities/`: 人、組織、製品、場所、登場人物などの named thing。
+- `wiki/concepts/`: 複数 source をまたぐ theme, method, argument, framework, recurring idea。
+- `wiki/syntheses/`: 比較、thesis、timeline、due diligence note、briefing、短い report、roadmap、ADR、spec、design doc、implementation plan。
+- `wiki/queries/`: 質問起点で保存価値がある回答、比較メモ、判断材料メモ、短報。
+- `wiki/drafts/`: owner 以外の actor が作る proposed note。
+
+## Durable Document Routing
+
+他 workflow が durable な文書を作る場合も、knowledge root に回収できるようにする。デフォルト routing:
+
+- roadmap, ADR, spec, design doc, implementation plan, briefing, comparison note は `wiki/syntheses/`
+- 質問起点の短い判断メモや比較メモは `wiki/queries/`
+
+project 固有の下位構造を使うなら、knowledge-root `AGENTS.md` に local override として明記する。
+
+## Naming Defaults
+
+- wiki page の filename は読みやすい Title Case を基本にする。
+- 1 file 1 durable topic を守る。
+- raw source の filename はそのまま保つ。
+- chronology が重要な source summary や query note は date prefix を付ける。
+
+推奨 filename パターン:
+
+- `wiki/sources/2026-04-12 Article Title.md`
+- `wiki/entities/Vannevar Bush.md`
+- `wiki/concepts/Persistent Knowledge Base.md`
+- `wiki/syntheses/LLM Wiki Architecture.md`
+- `wiki/syntheses/Checkout API Phase 1 Spec.md`
+- `wiki/queries/2026-04-12 Compare RAG And LLM Wiki.md`
+- `wiki/drafts/2026-04-12 Proposed Update To Checkout Claims.md`
+
+## Frontmatter Guidance
+
+frontmatter は必須ではない。Dataview や構造化 audit を使うなら最小限に保つ。
+
+```yaml
+---
+kind: concept
+created: 2026-04-12
+updated: 2026-04-12
+tags:
+  - llm-wiki
+source_files:
+  - raw/sources/article-title.md
+---
+```
