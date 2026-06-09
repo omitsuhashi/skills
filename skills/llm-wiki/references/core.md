@@ -2,6 +2,19 @@
 
 すべての mode と topology で共有する契約です。ここには root の数に依存しない invariant だけを置きます。
 
+## Contents
+
+- Layers
+- Default Layout
+- Page Types
+- Durable Document Routing
+- Draft Contract
+- Write Boundary
+- Page Boundary And Canonicalization
+- Citation Rules
+- Index Invariant
+- Log Invariant
+
 ## Layers
 
 - `knowledge root`: wiki 運用の単位。dedicated wiki repo なら repo root、mixed repo なら `knowledge/` などの subdirectory に置いてよい。

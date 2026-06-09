@@ -2,6 +2,19 @@
 
 複数の knowledge root を持つ system で、どの知識をどこへ保存するかを決めるための reference です。
 
+## Contents
+
+- Core Rule
+- System-Specific Adapter Hook
+- Authority Terms
+- Root URI/Path Rules
+- Access Values
+- Draft Target Rules
+- Routing Rules
+- Canonical Owner
+- Draft Review Workflow
+- Cross-Root Source Policy
+
 ## Core Rule
 
 各 knowledge root は、独立した llm-wiki root として扱う。
