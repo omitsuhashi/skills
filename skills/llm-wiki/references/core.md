@@ -29,11 +29,11 @@ Draft status values:
 
 ## Write Boundary
 
-direct canonical update は、actor が canonical owner であり、target root が `Write: owned` であり、local contract または adapter がその action を許す場合だけ行う。
+direct canonical update は、actor が canonical owner であり、target root が `Read: allowed` かつ `Write: owned` であり、local contract または adapter がその action を許す場合だけ行う。
 
-non-owner actor は verified claim を直接更新しない。durable proposal は target root の draft note に route する。draft target が未解決、root 外、または write が `closed` の場合は書かずに session user へ確認する。
+non-owner actor は verified claim を直接更新しない。durable proposal は target root が `Read: allowed` で、`Write: owned` または `propose` で、draft target が root 内に解決済みの場合だけ draft note に route する。`Read: restricted`, `Read: no-access`, `Write: closed`, draft target 未解決、または root 外へ解決される場合は verified claim も proposed note も書かずに session user または local governance へ確認する。
 
-owner `draft-review` と `canonicalize` は routine write とは別の authority だが、canonical page へ直接反映できるのは `Write: owned` かつ local contract または adapter が owner canonical update を許す場合に限る。
+owner `draft-review` と `canonicalize` は routine write とは別の authority だが、canonical page へ直接反映できるのは target root が `Read: allowed` かつ `Write: owned` で、local contract または adapter が owner canonical update を許す場合に限る。
 
 ## Index Invariant
 
