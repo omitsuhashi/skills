@@ -45,8 +45,10 @@ Detail references are conditional:
 ## Quick Rules
 
 - Inspect `index.md` before touching wiki pages unless the task is pure bootstrap.
-- Direct canonical update is allowed only when actor is canonical owner, target allows `Write: owned`, and the local contract or adapter allows the action.
-- Non-owner durable proposals route to a draft note; draft is not a verified claim.
+- Direct canonical update is allowed only when actor is canonical owner, target has `Read: allowed`, target allows `Write: owned`, and the local contract or adapter allows the action.
+- In multi-root topology, proposed notes are allowed only when adapter resolution returns `Read: allowed`, `Write: owned` or `propose`, and a resolved in-root `Draft Target`.
+- If adapter resolution returns `Read: restricted`, `Read: no-access`, `Write: closed`, unresolved target root, or unresolved `Draft Target`, do not write a verified claim or proposed note; confirm with the session user or local governance.
+- Non-owner durable proposals route to a draft note only when the write boundary permits it; draft is not a verified claim.
 - Owner `draft-review` decisions are exactly `promote`, `merge`, `reject`, `defer`.
 - `canonicalize` actions are exactly `rename`, `merge`, `archive`, `split`, `rehome`.
 - Update `index.md` and `log.md` for direct durable changes, draft-review decisions, canonicalize actions, ingest, durable query filing, and lint passes.

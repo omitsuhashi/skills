@@ -12,7 +12,7 @@ page を増やし続けず、canonical page, discoverability, audit trail を保
 
 - actor は対象 root の canonical owner か。
 - 対象 root の `Read` は `allowed` か。
-- direct canonical update は canonical owner authority、`Write: owned`、local contract / adapter の許可を満たすか。
+- direct canonical update は canonical owner authority、target root の `Read: allowed`、`Write: owned`、local contract / adapter の許可を満たすか。
 - 対象 page は `index.md` にどう載っているか。
 - 対象 page の inbound / outbound link はどこか。
 - action は `rename`, `merge`, `archive`, `split`, `rehome` のどれか。
@@ -31,9 +31,9 @@ page を増やし続けず、canonical page, discoverability, audit trail を保
 1. `index.md` から対象 page と重なり候補を確認する。
 2. 編集前に対象 page、関連 page、`log.md` を読む。
 3. canonical page と action を決める。
-4. canonical owner authority があり、`Write: owned` で、local contract または adapter が owner canonical update を許す場合だけ canonical page を直接更新する。
+4. canonical owner authority があり、target root が `Read: allowed` かつ `Write: owned` で、local contract または adapter が owner canonical update を許す場合だけ canonical page を直接更新する。
 5. direct update できず `Read: allowed`, `Write: owned` または `propose`, `Draft Target` 解決済みの場合だけ、root 内の `Draft Target` に proposed note を作り、canonical page, `index.md`, `log.md` は直接更新しない。
-6. `closed`, `restricted`, `no-access`, target 不明、または `Draft Target` 未解決の場合は書かずに session user へ確認する。
+6. `closed`, `restricted`, `no-access`, target 不明、または `Draft Target` 未解決の場合は verified claim も proposed note も書かずに session user または local governance へ確認する。
 7. direct update した場合は、対象 page、関連 link、`index.md`, `log.md` を更新する。
 8. canonical page へ最低 1 本の inbound link が残ることを確認する。
 
