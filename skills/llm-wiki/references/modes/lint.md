@@ -2,7 +2,7 @@
 
 単一 source の処理ではなく、wiki 全体の health check をするときに使います。
 
-Read first: `references/core.md`, chosen topology reference, then this file. Read `references/optional-tooling.md` only if better search or reporting is needed.
+Read first: `references/core.md`, chosen topology reference, then this file. Read `references/page-authoring.md` only before applying link, citation, or page-boundary fixes. Read `references/optional-tooling.md` only if better search or reporting is needed.
 
 ## Goal
 

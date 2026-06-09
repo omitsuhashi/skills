@@ -2,7 +2,7 @@
 
 `raw/` に新しい source が入り、wiki へ統合するときに使います。
 
-Read first: `references/core.md`, chosen topology reference, then this file.
+Read first: `references/core.md`, chosen topology reference, then this file. Read `references/structure.md` only when choosing destination page type or naming a new page. Read `references/page-authoring.md` before creating or updating page body text.
 
 ## Goal
 

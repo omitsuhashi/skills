@@ -2,7 +2,7 @@
 
 新規 local Markdown wiki を作るとき、または既存の Markdown repo / vault を LLM Wiki pattern へ寄せるときに使います。
 
-Read first: `references/core.md`, chosen topology reference, then this file.
+Read first: `references/core.md`, chosen topology reference, then this file. Read `references/structure.md` before creating layout, page types, naming rules, durable document routing, or frontmatter guidance.
 
 ## Goal
 
@@ -27,7 +27,7 @@ raw source を不変に保ちつつ、knowledge root, wiki の page 種別, `AGE
 4. `multi-root` なら system-specific root registry adapter を用意し、各 router `AGENTS.md` から adapter と canonical root へ辿れるようにする。Markdown registry を採用する場合だけ `assets/templates/root-registry.md` を元にしてよい。
 5. mixed repo なら `assets/templates/root-AGENTS.md` を元に repo root に thin router `AGENTS.md` を置き、knowledge root への導線と durable doc routing だけを書く。
 6. 無ければ knowledge root に `assets/templates/AGENTS.md`, `index.md`, `log.md` をコピーする。
-7. `references/core.md` の default layout に従って必要な subdirectory を knowledge root 配下に作る。
+7. `references/structure.md` の default layout に従って必要な subdirectory を knowledge root 配下に作る。
 8. roadmap, ADR, spec, design doc, implementation plan の default 保存先を `wiki/syntheses/` にするか、project 固有の subdirectory を使うか決めて `AGENTS.md` に明記する。
 9. YAML frontmatter を使うか決める。
 10. 初期構成を knowledge root の `index.md` に記録する。`multi-root` の場合は registry の所在地と root id も記録する。

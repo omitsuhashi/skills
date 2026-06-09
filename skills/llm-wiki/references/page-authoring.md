@@ -1,0 +1,44 @@
+# Page Authoring
+
+canonical page、draft note、source summary、query note を作成または本文更新する時だけ読む reference です。index/log だけを見る routine query では読まない。
+
+## Page Boundary And Canonicalization
+
+- 1 file 1 durable topic を守る。
+- 強く重なる page を見つけたら、どちらを canonical page にするか決める。
+- canonical page は標準的な名前、明確な scope、継続参照しやすさを優先して選ぶ。
+- `rename`, `merge`, `archive`, `split`, `rehome` は lightweight に扱い、後継 page と discoverability を残す。
+
+direct canonicalize 後は最低限、`index.md`, `log.md`, 触った page の link、canonical page への inbound link を更新する。authority を満たさない actor は canonical page を直接編集せず、draft note へ routing する。
+
+## Linking Rules
+
+- Markdown link を基本にする。
+- `[[LLM Wiki Architecture]]` のような wikilink は使える環境なら歓迎する。
+- summary page から entity / concept / synthesis へ outward link を張る。
+- 新しい durable page には最低 1 本の inbound link を作る。
+- 強く重なる 2 page は明示的に link し、境界を説明する。
+
+## Citation Rules
+
+- durable page には `## 出典` section を置く。
+- 関連する raw file か source summary page へ戻れるようにする。
+- 争点がある claim や驚く claim は、平坦化せず inline で disagreement を書く。
+
+推奨 citation パターン:
+
+```markdown
+## 出典
+
+- [2026-04-12 Article Title](wiki/sources/2026-04-12%20Article%20Title.md)
+- [raw/sources/article-title.md](raw/sources/article-title.md)
+```
+
+wikilink を使う環境なら、次のように置き換えてもよい。
+
+```markdown
+## 出典
+
+- [[2026-04-12 Article Title]]
+- [[raw/sources/article-title.md]]
+```

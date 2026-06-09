@@ -6,8 +6,9 @@
 
 - wiki の `bootstrap`, `ingest`, `query`, `draft-review`, `canonicalize`, `lint` の汎用手順は `llm-wiki` スキルを canonical source として扱う
 - 汎用的な schema, naming, citation, canonicalization, `index.md` / `log.md` 更新規約も `llm-wiki` スキルに従う
-- single-root 作業では `references/core.md` + `references/single-root.md` + 該当 `references/modes/*.md` だけを読む
-- multi-root へ変更した場合だけ `references/multi-root.md` を読む
+- single-root 作業では `llm-wiki` skill の router に従い、skill-local `references/core.md` + `references/single-root.md` + 該当 `references/modes/*.md` を読む
+- `references/structure.md`, `references/page-authoring.md`, `references/optional-tooling.md` は task が必要とする時だけ読む
+- multi-root へ変更した場合だけ skill-local `references/multi-root.md` を読む
 - この file はスキルの複製ではなく、この knowledge root 固有の前提と差分だけを書く
 
 ## Local Contract

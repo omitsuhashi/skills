@@ -2,7 +2,7 @@
 
 owner actor が proposed note を review queue から閉じるときに使います。draft は verified claim ではなく、owner が判断するまで canonical wiki page にはしません。
 
-Read first: `references/core.md`, chosen topology reference, then this file.
+Read first: `references/core.md`, chosen topology reference, then this file. Read `references/page-authoring.md` only when promoting or merging content into canonical page body text.
 
 ## Goal
 

@@ -2,7 +2,7 @@
 
 重複や強い重なり、境界の崩れを見つけたときに、owner actor が page boundary を整理する mode です。
 
-Read first: `references/core.md`, chosen topology reference, then this file.
+Read first: `references/core.md`, chosen topology reference, then this file. Read `references/page-authoring.md` before changing page boundaries, links, or citations.
 
 ## Goal
 

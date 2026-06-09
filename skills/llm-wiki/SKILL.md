@@ -24,26 +24,23 @@ mixed repo では、wiki 専用の `knowledge root` を 1 つ決めます。repo
    - `single-root`: add `references/single-root.md`
    - `multi-root`: add `references/multi-root.md`
    - Add exactly one mode file under `references/modes/`
-   - Optional tooling は必要になった時だけ `references/optional-tooling.md` を読む。
+   - 作業中に必要になった detail reference だけを追加で読む。
 
 Do not read `references/multi-root.md` for ordinary `single-root` ingest or query. Do not read every mode file to start a task.
 
 ## Read Sets
 
-| Task | Required references |
-|---|---|
-| Single-root bootstrap | `core.md`, `single-root.md`, `modes/bootstrap.md` |
-| Single-root ingest | `core.md`, `single-root.md`, `modes/ingest.md` |
-| Single-root query | `core.md`, `single-root.md`, `modes/query.md` |
-| Single-root draft review | `core.md`, `single-root.md`, `modes/draft-review.md` |
-| Single-root canonicalize | `core.md`, `single-root.md`, `modes/canonicalize.md` |
-| Single-root lint | `core.md`, `single-root.md`, `modes/lint.md` |
-| Multi-root bootstrap | `core.md`, `multi-root.md`, `modes/bootstrap.md` |
-| Multi-root ingest | `core.md`, `multi-root.md`, `modes/ingest.md` |
-| Multi-root query | `core.md`, `multi-root.md`, `modes/query.md` |
-| Multi-root draft review | `core.md`, `multi-root.md`, `modes/draft-review.md` |
-| Multi-root canonicalize | `core.md`, `multi-root.md`, `modes/canonicalize.md` |
-| Multi-root lint | `core.md`, `multi-root.md`, `modes/lint.md` |
+Base read set for every task:
+
+- `references/core.md`
+- exactly one topology file: `references/single-root.md` or `references/multi-root.md`
+- exactly one mode file under `references/modes/`
+
+Detail references are conditional:
+
+- `references/structure.md`: read only when choosing or creating layout, page type, durable document routing, naming, or frontmatter.
+- `references/page-authoring.md`: read only before creating/updating page body text, citations, links, or page boundaries.
+- `references/optional-tooling.md`: read only when optional tools are directly useful.
 
 ## Quick Rules
 
@@ -59,11 +56,15 @@ Do not read `references/multi-root.md` for ordinary `single-root` ingest or quer
 ## Reference Map
 
 - `references/core.md`
-  `raw/`, `wiki/`, page types, draft status, citation, page boundary, durable doc routing, `Index Invariant`, `Log Invariant` の共通契約。
+  `raw/`, `wiki/`, draft status, write boundary, `Index Invariant`, `Log Invariant` の最小共通契約。
 - `references/single-root.md`
   root registry を作らない topology。knowledge-root `AGENTS.md` を authority source とし、owner / write boundary / draft target を local contract に置く。
 - `references/multi-root.md`
   複数 knowledge root を持つ system で、adapter の Root ID / URI / Scope / Owner / Read / Write / Draft Target から保存先と cross-root policy を判断するルール。
+- `references/structure.md`
+  layout, page type, durable document routing, naming, frontmatter guidance。必要な時だけ読む。
+- `references/page-authoring.md`
+  page boundary, linking, citation rules。本文作成・更新時だけ読む。
 - `references/modes/*.md`
   mode ごとの check first, default procedure, pause rules。
 - `references/optional-tooling.md`

@@ -1,4 +1,4 @@
 interface:
   display_name: "LLM Wiki"
   short_description: "Markdown wiki を育てる LLM knowledge base 運用"
-  default_prompt: "Use $llm-wiki to bootstrap, ingest, query, review drafts, canonicalize, or lint a local Markdown wiki using core + topology + mode references."
+  default_prompt: "Use $llm-wiki to bootstrap, ingest, query, review drafts, canonicalize, or lint a Japanese local Markdown wiki using minimal core + topology + mode references."

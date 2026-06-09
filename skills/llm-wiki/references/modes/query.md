@@ -2,7 +2,7 @@
 
 maintained wiki に対して質問へ答えるときに使います。
 
-Read first: `references/core.md`, chosen topology reference, then this file.
+Read first: `references/core.md`, chosen topology reference, then this file. Read `references/structure.md` only when filing a new durable output. Read `references/page-authoring.md` only when updating page body text, links, or citations.
 
 ## Goal
 
