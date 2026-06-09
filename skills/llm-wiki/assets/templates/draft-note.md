@@ -1,5 +1,7 @@
 # Draft Note
 
+This is a proposed note, not a verified claim. Do not list it as an active canonical page in `index.md` unless an owner later promotes or merges it.
+
 ## Status
 
 - Current Status: proposed | promoted | merged | rejected | deferred
