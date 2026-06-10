@@ -17,6 +17,7 @@ _現在なし。_
 ## シンセシス
 
 - [[LLM Wiki Draft Review And Canonicalize Goal Spec]] — Goal command で `skills/llm-wiki` を更新するための詳細実装契約。
+- [[Portfolio OS Install Review And Procedure]] — `skills` repo に Portfolio OS 固有 runtime を混ぜないためのレビュー結果と導入手順。
 
 ## クエリ起点成果物
 
