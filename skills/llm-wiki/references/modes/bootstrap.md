@@ -30,7 +30,7 @@ raw source を不変に保ちつつ、knowledge root, wiki の page 種別, `AGE
 7. `references/structure.md` の default layout に従って必要な subdirectory を knowledge root 配下に作る。
 8. roadmap, ADR, spec, design doc, implementation plan の default 保存先を `wiki/syntheses/` にするか、project 固有の subdirectory を使うか決めて `AGENTS.md` に明記する。
 9. YAML frontmatter を使うか決める。
-10. 初期構成を knowledge root の `index.md` に記録する。`multi-root` の場合は registry の所在地と root id も記録する。
+10. 初期構成を knowledge root の `index.md` に記録する。目的別入口は root の代表的 reader task に合わせて seed category を調整し、現役ページ一覧は Active Page Catalog として使う。`multi-root` の場合は registry の所在地と root id も記録する。
 11. knowledge root の `log.md` に `bootstrap` entry を追加する。
 
 ## Pause And Align When

@@ -13,7 +13,7 @@ page を増やし続けず、canonical page, discoverability, audit trail を保
 - actor は対象 root の canonical owner か。
 - 対象 root の `Read` は `allowed` か。
 - direct canonical update は canonical owner authority、target root の `Read: allowed`、`Write: owned`、local contract / adapter の許可を満たすか。
-- 対象 page は `index.md` にどう載っているか。
+- 対象 page は `index.md` の目的別入口と Active Page Catalog にどう載っているか。
 - 対象 page の inbound / outbound link はどこか。
 - action は `rename`, `merge`, `archive`, `split`, `rehome` のどれか。
 - 複数 root をまたぐ場合、canonical owner と draft target はどこか。
@@ -34,7 +34,7 @@ page を増やし続けず、canonical page, discoverability, audit trail を保
 4. canonical owner authority があり、target root が `Read: allowed` かつ `Write: owned` で、local contract または adapter が owner canonical update を許す場合だけ canonical page を直接更新する。
 5. direct update できず `Read: allowed`, `Write: owned` または `propose`, `Draft Target` 解決済みの場合だけ、root 内の `Draft Target` に proposed note を作り、canonical page, `index.md`, `log.md` は直接更新しない。
 6. `closed`, `restricted`, `no-access`, target 不明、または `Draft Target` 未解決の場合は verified claim も proposed note も書かずに session user または local governance へ確認する。
-7. direct update した場合は、対象 page、関連 link、`index.md`, `log.md` を更新する。
+7. direct update した場合は、対象 page、関連 link、`index.md`, `log.md` を更新する。Active Page Catalog では canonical page だけを 1 回残し、目的別入口の shortcut は reader task としてまだ有効なものだけ残す。
 8. canonical page へ最低 1 本の inbound link が残ることを確認する。
 
 ## Pause And Align When

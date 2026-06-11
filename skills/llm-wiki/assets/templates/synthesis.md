@@ -21,6 +21,16 @@ source_files: []
 - 何を意思決定に使えるか
 - どこまでを briefing / short report として再利用できるか
 
+## 手順・運用入口
+
+procedure / operation 系 synthesis の場合だけ使う。該当しない場合は削除する。
+
+- 前提条件:
+- セットアップ / インストール:
+- アップデート / 運用:
+- トラブルシュート:
+- `index.md` の検索語候補: setup, install, update, operate, troubleshoot, セットアップ, インストール, アップデート, 運用, トラブルシュート
+
 ## 反証と留保
 
 - tension, contradiction, or missing piece

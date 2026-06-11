@@ -23,7 +23,7 @@
 - non-owner actor の durable proposal は Draft Target に route する
 - `raw/` は不変の source material として扱い、読んでも編集しない
 - `wiki/` は maintained knowledge base として扱い、作成と更新はここで行う
-- `index.md` は active canonical durable wiki page の catalog として扱う
+- `index.md` は目的別入口と Active Page Catalog を持つ reader-facing discovery surface として扱う
 - `log.md` は bootstrap, ingest, query, draft-review decision, canonicalize action, lint の append-only timeline として扱う
 - wiki documentation の本文は日本語を基本にする
 - superpowers など他 workflow が作る durable な roadmap / ADR / spec / design doc / implementation plan も knowledge root 配下へ保存する
