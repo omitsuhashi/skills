@@ -8,7 +8,7 @@
 - `raw/`: immutable source material. 読んでも編集しない。
 - `wiki/`: maintained knowledge base. durable page を置く。
 - `AGENTS.md`: skill への router と local contract。汎用運用ルールは複写しない。
-- `index.md`: active canonical durable wiki page の catalog。
+- `index.md`: reader-facing discovery surface。目的別入口と active canonical durable wiki page の catalog を持つ。
 - `log.md`: durable change の append-only audit trail。
 
 durable な wiki documentation は本文を日本語で保つ。
@@ -37,14 +37,18 @@ owner `draft-review` と `canonicalize` は routine write とは別の authority
 
 ## Index Invariant
 
-`index.md` は canonical discoverability invariant です。active canonical durable wiki page は `index.md` から発見できなければなりません。
+`index.md` は canonical discoverability invariant です。active canonical durable wiki page は `index.md` から発見できなければなりません。path catalog ではなく、読者と agent が「何をしたいか」から page へ辿るための discovery surface として保つ。
 
-- active canonical durable wiki page を 1 回ずつ載せる。
-- 各 page に 1 行 summary を付ける。
+- 上部に代表的 reader task への curated shortcut を置く。全 page を目的別に完全分類しない。shortcut は短い導線に留め、検索語は Active Page Catalog 側へ集約する。
+- Active Page Catalog では active canonical durable wiki page を 1 回ずつ載せる。目的別入口の shortcut は重複 link を許容する。
+- Active Page Catalog の各 page に 1 行 summary と主要検索語を付ける。
+- Active Page Catalog の entry は 2 行構成を基本にする: `- [[Page]] — summary` の次行に `検索語: ...` を置く。
+- procedure / operation 系 page の検索語は、該当する場合に英日混在にする。例: `setup`, `install`, `update`, `operate`, `troubleshoot`, `セットアップ`, `インストール`, `アップデート`, `運用`, `トラブルシュート`。
 - draft は verified claim ではないため、現役 page 一覧に載せない。
 - rejected note, deferred note, archived duplicate, merged source page は active page として載せない。
 - rename / merge / archive 後は canonical page だけを現役一覧に残す。
 - split / rehome 後は新しい canonical page と保存先だけを現役一覧に残す。
+- Discovery quality は authoring contract であり、mechanical score ではない。Python validator, CI check, graph generator, Dataview requirement, Obsidian plugin dependency を前提にしない。
 
 ## Log Invariant
 

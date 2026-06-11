@@ -10,7 +10,7 @@ compiled wiki を再利用して根拠付きで素早く答え、その出力自
 
 ## Check First
 
-- `index.md` のどこが関連 page を指しているか。
+- `index.md` の目的別入口または現役 page catalog のどこが関連 page を指しているか。
 - actor が owner ではない場合、durable output を `Draft Target` に proposed note として残せるか。
 - 既に必要 topic をまとめている wiki page はあるか。
 - 裏取りや dispute resolution に raw source が要るか。
@@ -24,7 +24,7 @@ compiled wiki を再利用して根拠付きで素早く答え、その出力自
 4. 必要に応じて wiki page と raw source を引用して答える。
 5. 再利用価値があり、`Read: allowed`, `Write: owned`, actor が canonical owner のすべてを満たす場合だけ、`wiki/queries/` か `wiki/syntheses/` に page を作るか更新する。
 6. direct update できず `Read: allowed`, `Write: owned` または `propose`, `Draft Target` 解決済みの場合は、durable output を root 内の `Draft Target` に proposed note として残す。
-7. direct update した場合だけ、新しい durable page を `index.md` に登録し、`log.md` に `query` entry を追加する。書けない root では canonical page, `index.md`, `log.md` を直接更新しない。
+7. direct update した場合だけ、新しい durable page を `index.md` に summary / 検索語付きで登録し、代表的 reader task に当たる場合だけ目的別入口にも shortcut を追加し、`log.md` に `query` entry を追加する。書けない root では canonical page, `index.md`, `log.md` を直接更新しない。
 
 ## File-Back Rule
 

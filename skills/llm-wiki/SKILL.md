@@ -51,7 +51,7 @@ Detail references are conditional:
 - Non-owner durable proposals route to a draft note only when the write boundary permits it; draft is not a verified claim.
 - Owner `draft-review` decisions are exactly `promote`, `merge`, `reject`, `defer`.
 - `canonicalize` actions are exactly `rename`, `merge`, `archive`, `split`, `rehome`.
-- Update `index.md` and `log.md` for direct durable changes, draft-review decisions, canonicalize actions, ingest, durable query filing, and lint passes.
+- Update `index.md` and `log.md` for direct durable changes, draft-review decisions, canonicalize actions, ingest, durable query filing, and lint passes. Treat `index.md` as the reader-facing discovery surface: purpose shortcuts plus an Active Page Catalog with summary and search terms.
 - If an answer creates durable value, file it back into the wiki instead of leaving it in chat only when write boundary permits.
 - Pause only for ambiguous, high-impact, or multi-page changes. Routine low-risk updates proceed autonomously.
 
@@ -82,6 +82,8 @@ Detail references are conditional:
 - canonical owner authority がない、または local contract / adapter が禁止しているのに canonical page を直接更新すること。
 - proposed draft を判断履歴なしに削除すること。
 - draft を active page として `index.md` の現役一覧に載せること。
+- `index.md` を path catalog だけにして、目的別入口、summary、検索語を欠いたままにすること。
+- 発見性を Python validator, CI check, graph generator, Dataview 必須化, Obsidian plugin 依存で機械的に採点しようとすること。
 - 価値のある query output を chat にだけ残して wiki に還元しないこと。
 - superpowers など別 workflow が作る durable な spec / ADR / roadmap / plan を knowledge root の外へ散らし、wiki の catalog と切り離すこと。
 - 重複 page を見つけても canonical page を決めずに増やし続けること。
