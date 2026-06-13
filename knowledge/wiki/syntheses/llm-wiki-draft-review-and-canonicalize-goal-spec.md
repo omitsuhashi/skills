@@ -1,7 +1,7 @@
 ---
 kind: synthesis
 created: 2026-06-08
-updated: 2026-06-09
+updated: 2026-06-13
 source_files:
   - knowledge/raw/sources/2026-06-08 LLM Wiki Draft Review And Canonicalize Design.md
 ---
@@ -122,10 +122,10 @@ rg -n "Portfolio OS|Hermes|work_unit|commander|council|registry-core|governance-
 ## Goal Prompt Draft
 
 ```text
-/goal `knowledge/wiki/syntheses/LLM Wiki Draft Review And Canonicalize Goal Spec.md` を実装契約として読み、`skills/llm-wiki/` の既存文書とテンプレートだけを更新してください。validator/script/test harness は追加しないでください。`draft-review` と `canonicalize` を first-class mode にし、`index.md` / `log.md` invariant、generic root adapter hook、draft-note/log/index/AGENTS templates を spec 通りに反映してください。完了条件は spec の Acceptance Criteria を満たし、Verification Commands の確認結果を報告することです。
+/goal `knowledge/wiki/syntheses/llm-wiki-draft-review-and-canonicalize-goal-spec.md` を実装契約として読み、`skills/llm-wiki/` の既存文書とテンプレートだけを更新してください。validator/script/test harness は追加しないでください。`draft-review` と `canonicalize` を first-class mode にし、`index.md` / `log.md` invariant、generic root adapter hook、draft-note/log/index/AGENTS templates を spec 通りに反映してください。完了条件は spec の Acceptance Criteria を満たし、Verification Commands の確認結果を報告することです。
 ```
 
 ## 出典
 
-- [2026-06-08 LLM Wiki Draft Review And Canonicalize Design](../sources/2026-06-08%20LLM%20Wiki%20Draft%20Review%20And%20Canonicalize%20Design.md)
+- [2026-06-08 LLM Wiki Draft Review And Canonicalize Design](../sources/2026-06-08-llm-wiki-draft-review-and-canonicalize-design.md)
 - [raw source](../../raw/sources/2026-06-08%20LLM%20Wiki%20Draft%20Review%20And%20Canonicalize%20Design.md)

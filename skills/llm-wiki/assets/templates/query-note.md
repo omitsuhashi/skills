@@ -23,8 +23,8 @@ user question か、それを durable に言い換えた形を書く。
 
 ## 関連ページ
 
-- [サンプルシンセシス](../syntheses/サンプルシンセシス.md) — この query の背景になる synthesis。
-- [サンプル概念](../concepts/サンプル概念.md) — 判断材料の前提概念。
+- [サンプルシンセシス](../syntheses/sample-synthesis.md) — この query の背景になる synthesis。
+- [サンプル概念](../concepts/sample-concept.md) — 判断材料の前提概念。
 
 ## 次に反映すべきこと
 
@@ -33,5 +33,5 @@ user question か、それを durable に言い換えた形を書く。
 
 ## 出典
 
-- [2026-04-12 記事タイトル](../sources/2026-04-12%20記事タイトル.md)
-- [サンプルシンセシス](../syntheses/サンプルシンセシス.md)
+- [2026-04-12 記事タイトル](../sources/2026-04-12-article-title.md)
+- [サンプルシンセシス](../syntheses/sample-synthesis.md)

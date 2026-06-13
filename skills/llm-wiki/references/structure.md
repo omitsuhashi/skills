@@ -64,20 +64,21 @@ project 固有の下位構造を使うなら、knowledge-root `AGENTS.md` に lo
 
 ## Naming Defaults
 
-- wiki page の filename は読みやすい Title Case を基本にする。
+- wiki page の filename は URL と CLI で扱いやすい lower-kebab-case slug を基本にする。
+- filename は ASCII slug を優先し、正式名称や日本語 title は page heading と `index.md` の label / summary に残す。
 - 1 file 1 durable topic を守る。
 - raw source の filename はそのまま保つ。
 - chronology が重要な source summary や query note は date prefix を付ける。
 
 推奨 filename パターン:
 
-- `wiki/sources/2026-04-12 Article Title.md`
-- `wiki/entities/Vannevar Bush.md`
-- `wiki/concepts/Persistent Knowledge Base.md`
-- `wiki/syntheses/LLM Wiki Architecture.md`
-- `wiki/syntheses/Checkout API Phase 1 Spec.md`
-- `wiki/queries/2026-04-12 Compare RAG And LLM Wiki.md`
-- `wiki/drafts/2026-04-12 Proposed Update To Checkout Claims.md`
+- `wiki/sources/2026-04-12-article-title.md`
+- `wiki/entities/vannevar-bush.md`
+- `wiki/concepts/persistent-knowledge-base.md`
+- `wiki/syntheses/llm-wiki-architecture.md`
+- `wiki/syntheses/checkout-api-phase-1-spec.md`
+- `wiki/queries/2026-04-12-compare-rag-and-llm-wiki.md`
+- `wiki/drafts/2026-04-12-proposed-update-to-checkout-claims.md`
 
 ## Frontmatter Guidance
 

@@ -44,7 +44,7 @@ canonical page を作成または本文更新したら、direct update が許さ
 ```markdown
 ## 出典
 
-- [2026-04-12 Article Title](wiki/sources/2026-04-12%20Article%20Title.md)
+- [2026-04-12 Article Title](wiki/sources/2026-04-12-article-title.md)
 - [raw/sources/article-title.md](raw/sources/article-title.md)
 ```
 
@@ -53,6 +53,6 @@ wiki page から source summary や raw source へ戻す場合は、現在の fi
 ```markdown
 ## 出典
 
-- [2026-04-12 Article Title](../sources/2026-04-12%20Article%20Title.md)
+- [2026-04-12 Article Title](../sources/2026-04-12-article-title.md)
 - [raw/sources/article-title.md](../../raw/sources/article-title.md)
 ```

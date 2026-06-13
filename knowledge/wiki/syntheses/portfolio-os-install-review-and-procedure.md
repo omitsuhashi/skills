@@ -1,10 +1,10 @@
 ---
 kind: synthesis
 created: 2026-06-10
-updated: 2026-06-10
+updated: 2026-06-13
 source_files:
   - knowledge/AGENTS.md
-  - knowledge/wiki/syntheses/LLM Wiki Draft Review And Canonicalize Goal Spec.md
+  - knowledge/wiki/syntheses/llm-wiki-draft-review-and-canonicalize-goal-spec.md
 ---
 
 # Portfolio OS Install Review And Procedure
