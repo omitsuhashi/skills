@@ -67,7 +67,7 @@ owner, actor, session user は人間 / AI の種別ではなく、authority と 
 - `repo:<repo-name>:<relative-path>` は adapter が属する workspace から識別できる repo root 相対 path を指す。
 - `memory:<path>` は agent memory など、通常の repo 外にある managed knowledge root を指す。
 - bare relative path や環境依存の shell expansion は adapter に書かない。
-- cross-root link や citation では `root-id:path/inside/root.md` を使う。
+- cross-root link や citation では Markdown relative link を使わず、`root-id:path/inside/root.md` を使う。
 - URI / path が解決できない root には書かない。読む必要がある場合は session user に確認する。
 
 ## Access Values

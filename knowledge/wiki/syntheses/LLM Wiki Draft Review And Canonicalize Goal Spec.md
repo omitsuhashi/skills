@@ -127,5 +127,5 @@ rg -n "Portfolio OS|Hermes|work_unit|commander|council|registry-core|governance-
 
 ## 出典
 
-- [[2026-06-08 LLM Wiki Draft Review And Canonicalize Design]]
+- [2026-06-08 LLM Wiki Draft Review And Canonicalize Design](../sources/2026-06-08%20LLM%20Wiki%20Draft%20Review%20And%20Canonicalize%20Design.md)
 - [raw source](../../raw/sources/2026-06-08%20LLM%20Wiki%20Draft%20Review%20And%20Canonicalize%20Design.md)

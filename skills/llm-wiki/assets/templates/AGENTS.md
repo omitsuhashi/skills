@@ -25,6 +25,8 @@
 - `wiki/` は maintained knowledge base として扱い、作成と更新はここで行う
 - `index.md` は目的別入口と Active Page Catalog を持つ reader-facing discovery surface として扱う
 - `log.md` は bootstrap, ingest, query, draft-review decision, canonicalize action, lint の append-only timeline として扱う
+- canonical link style は relative Markdown link とし、Obsidian wikilink `[[...]]` は local override が明示した場合だけ使う
+- root を跨ぐ参照は Markdown link にせず、`root-id:path/inside/root.md` 形式で書く
 - wiki documentation の本文は日本語を基本にする
 - superpowers など他 workflow が作る durable な roadmap / ADR / spec / design doc / implementation plan も knowledge root 配下へ保存する
 - default routing は、roadmap / ADR / spec / design doc / implementation plan / briefing / comparison note を `wiki/syntheses/`、質問起点の短い判断メモを `wiki/queries/` とする

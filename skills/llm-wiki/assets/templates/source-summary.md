@@ -20,9 +20,9 @@ source_files:
 
 ## 関連ページ
 
-- [[サンプルエンティティ]]
-- [[サンプル概念]]
-- [[サンプルシンセシス]]
+- [サンプルエンティティ](../entities/サンプルエンティティ.md) — この source が補強する entity。
+- [サンプル概念](../concepts/サンプル概念.md) — この source が補強する概念。
+- [サンプルシンセシス](../syntheses/サンプルシンセシス.md) — この source を反映すべき synthesis。
 
 ## 未解決点
 
@@ -31,4 +31,4 @@ source_files:
 
 ## 出典
 
-- [[raw/sources/記事タイトル.md]]
+- [raw/sources/記事タイトル.md](../../raw/sources/記事タイトル.md)

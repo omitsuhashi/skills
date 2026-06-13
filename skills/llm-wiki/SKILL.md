@@ -1,13 +1,13 @@
 ---
 name: llm-wiki
-description: Use when building or maintaining a persistent knowledge base in a local Markdown wiki (Obsidian-friendly) where raw sources stay immutable and the LLM incrementally updates wiki pages, index.md, and log.md.
+description: Use when building or maintaining a persistent knowledge base in a local Markdown wiki, with optional Obsidian compatibility, where raw sources stay immutable and the LLM incrementally updates wiki pages, index.md, and log.md.
 ---
 
 # LLM Wiki
 
 ## Overview
 
-この skill は、local Markdown wiki（Obsidian-friendly）を都度再発見する RAG ではなく、蓄積される knowledge base として運用するためのものです。耐久性のある成果物は wiki であり、`raw/` は不変、`index.md` と `log.md` は first-class の運用ファイルとして扱います。wiki documentation は本文を日本語で保つことを基本にします。
+この skill は、local Markdown wiki を都度再発見する RAG ではなく、蓄積される knowledge base として運用するためのものです。canonical な link style は relative Markdown link を基本とし、Obsidian は optional viewer / tooling として扱います。耐久性のある成果物は wiki であり、`raw/` は不変、`index.md` と `log.md` は first-class の運用ファイルとして扱います。wiki documentation は本文を日本語で保つことを基本にします。
 
 mixed repo では、wiki 専用の `knowledge root` を 1 つ決めます。repo root の `AGENTS.md` は thin router に留め、knowledge root の `AGENTS.md` もこの skill への導線と local override だけを書く thin contract として扱います。汎用的な wiki 運用ルールの canonical source はこの skill です。
 

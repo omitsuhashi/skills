@@ -42,7 +42,7 @@ owner `draft-review` と `canonicalize` は routine write とは別の authority
 - 上部に代表的 reader task への curated shortcut を置く。全 page を目的別に完全分類しない。shortcut は短い導線に留め、検索語は Active Page Catalog 側へ集約する。
 - Active Page Catalog では active canonical durable wiki page を 1 回ずつ載せる。目的別入口の shortcut は重複 link を許容する。
 - Active Page Catalog の各 page に 1 行 summary と主要検索語を付ける。
-- Active Page Catalog の entry は 2 行構成を基本にする: `- [[Page]] — summary` の次行に `検索語: ...` を置く。
+- Active Page Catalog の entry は 2 行構成を基本にする: `- [Page](relative/path/to/page.md) — summary` の次行に `検索語: ...` を置く。
 - procedure / operation 系 page の検索語は、該当する場合に英日混在にする。例: `setup`, `install`, `update`, `operate`, `troubleshoot`, `セットアップ`, `インストール`, `アップデート`, `運用`, `トラブルシュート`。
 - draft は verified claim ではないため、現役 page 一覧に載せない。
 - rejected note, deferred note, archived duplicate, merged source page は active page として載せない。

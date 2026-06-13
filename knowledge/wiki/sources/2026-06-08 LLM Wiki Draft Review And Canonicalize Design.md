@@ -24,7 +24,7 @@ source_files:
 
 ## Goal Spec への反映
 
-- Goal command の長さ制限を避けるため、詳細実装契約は [[LLM Wiki Draft Review And Canonicalize Goal Spec]] に保存する。
+- Goal command の長さ制限を避けるため、詳細実装契約は [LLM Wiki Draft Review And Canonicalize Goal Spec](../syntheses/LLM%20Wiki%20Draft%20Review%20And%20Canonicalize%20Goal%20Spec.md) に保存する。
 - Goal prompt は同 spec を参照し、既存 `skills/llm-wiki/` 文書とテンプレートだけを更新する。
 
 ## Open Questions
