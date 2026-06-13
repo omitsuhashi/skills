@@ -28,9 +28,9 @@ source_files: []
 
 ## 関連ページ
 
-- [サンプルエンティティ](../entities/サンプルエンティティ.md) — この概念が現れる entity。
-- [サンプルシンセシス](../syntheses/サンプルシンセシス.md) — この概念を使う synthesis。
+- [サンプルエンティティ](../entities/sample-entity.md) — この概念が現れる entity。
+- [サンプルシンセシス](../syntheses/sample-synthesis.md) — この概念を使う synthesis。
 
 ## 出典
 
-- [2026-04-12 記事タイトル](../sources/2026-04-12%20記事タイトル.md)
+- [2026-04-12 記事タイトル](../sources/2026-04-12-article-title.md)
