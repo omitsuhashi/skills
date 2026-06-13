@@ -16,7 +16,7 @@ direct canonicalize 後は最低限、`index.md`, `log.md`, 触った page の l
 canonical page を作成または本文更新したら、direct update が許される場合だけ次を確認する。
 
 - `index.md` の目的別入口に reader task の代表 shortcut として載せるべきか判断する。全 page を載せる必要はない。
-- `index.md` の Active Page Catalog に 1 回だけ載せ、1 行 summary と主要検索語を付ける。entry は `- [[Page]] — summary` の次行に `検索語: ...` を置く 2 行構成を基本にする。
+- `index.md` の Active Page Catalog に 1 回だけ載せ、1 行 summary と主要検索語を付ける。entry は `- [Page](relative/path/to/page.md) — summary` の次行に `検索語: ...` を置く 2 行構成を基本にする。
 - procedure / operation 系 page は、該当する検索語だけを英日混在で入れる。例: `setup`, `install`, `update`, `operate`, `troubleshoot`, `セットアップ`, `インストール`, `アップデート`, `運用`, `トラブルシュート`。
 - synthesis, query-note, procedure / operation 系 page には `## 関連ページ` または同等の outward links を置く。
 - source summary, entity, concept page でも、読者が次に辿る意味のある page があるなら outward link を置く。
@@ -24,9 +24,12 @@ canonical page を作成または本文更新したら、direct update が許さ
 
 ## Linking Rules
 
-- Markdown link を基本にする。
-- Obsidian-friendly root では `[[LLM Wiki Architecture]]` のような wikilink を推奨標準にする。非 Obsidian 環境や portability を優先する root では Markdown link でもよい。
+- Canonical link style は relative Markdown link とする。
+- 同一 root 内の page link は、現在の file からの relative path で書く。
+- Obsidian wikilink `[[...]]` は、local `AGENTS.md` が wikilink standard を明示した root だけで使う。GitHub / repo review / multi-root runtime で読まれる root では使わない。
+- cross-root link や citation は Markdown link にせず、`root-id:path/inside/root.md` 形式で書く。
 - summary page から entity / concept / synthesis へ outward link を張る。
+- 重要な outward link には、その link が必要な理由を一言添える。
 - 新しい durable page には最低 1 本の inbound link を作る。
 - 強く重なる 2 page は明示的に link し、境界を説明する。
 
@@ -45,11 +48,11 @@ canonical page を作成または本文更新したら、direct update が許さ
 - [raw/sources/article-title.md](raw/sources/article-title.md)
 ```
 
-wikilink を使う環境なら、次のように置き換えてもよい。
+wiki page から source summary や raw source へ戻す場合は、現在の file からの relative path にする。
 
 ```markdown
 ## 出典
 
-- [[2026-04-12 Article Title]]
-- [[raw/sources/article-title.md]]
+- [2026-04-12 Article Title](../sources/2026-04-12%20Article%20Title.md)
+- [raw/sources/article-title.md](../../raw/sources/article-title.md)
 ```
