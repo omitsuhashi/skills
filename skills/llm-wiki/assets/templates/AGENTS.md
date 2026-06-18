@@ -29,7 +29,7 @@
 - root を跨ぐ参照は Markdown link にせず、`root-id:path/inside/root.md` 形式で書く
 - wiki documentation の本文は日本語を基本にする
 - superpowers など他 workflow が作る durable な roadmap / ADR / spec / design doc / implementation plan も knowledge root 配下へ保存する
-- default routing は、roadmap / ADR / spec / design doc / implementation plan / briefing / comparison note を `wiki/syntheses/`、質問起点の短い判断メモを `wiki/queries/` とする
+- default routing は、roadmap / ADR / spec / design doc / implementation plan / implementation progress ledger / briefing / comparison note を `wiki/syntheses/`、質問起点の短い判断メモを `wiki/queries/` とする
 
 ## Local Overrides
 
