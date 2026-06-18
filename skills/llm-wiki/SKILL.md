@@ -72,7 +72,7 @@ Detail references are conditional:
 - `references/optional-tooling.md`
   Obsidian Web Clipper, local image handling, Dataview, Marp, `qmd` などの任意ツール。どれも必須ではありません。
 - `assets/templates/`
-  knowledge-root 用 thin `AGENTS.md`, repo root 用 `root-AGENTS.md`, Markdown registry を採用する multi-root 用 `root-registry.md`, `index.md`, `log.md`, source/entity/concept/synthesis/query note, `draft-note.md` の初期雛形。
+  knowledge-root 用 thin `AGENTS.md`, repo root 用 `root-AGENTS.md`, Markdown registry を採用する multi-root 用 `root-registry.md`, `index.md`, `log.md`, source/entity/concept/synthesis/query note, implementation progress ledger, `draft-note.md` の初期雛形。
 
 ## Common Mistakes
 

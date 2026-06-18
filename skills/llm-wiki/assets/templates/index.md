@@ -14,6 +14,10 @@ root の性質に合わせてカテゴリを変更してよい。全 page をこ
 
 - [サンプル概念](wiki/concepts/sample-concept.md) — 重要な設計概念や判断の入口。
 
+### 実装進捗確認
+
+- [サンプル実装進捗台帳](wiki/syntheses/sample-implementation-progress-ledger.md) — 複数 slice の状態、残 scope、証跡、次回 review 条件の入口。
+
 ### 判断材料・比較
 
 - [2026-04-12 サンプルクエリ](wiki/queries/2026-04-12-sample-query.md) — 比較メモや判断材料の入口。
@@ -45,6 +49,8 @@ Active Page Catalog。active canonical durable page を 1 回ずつ載せる。
 
 - [サンプルシンセシス](wiki/syntheses/sample-synthesis.md) — 複数 page を束ねた比較、論点整理、briefing をまとめる。
   検索語: synthesis, 比較, 論点整理
+- [サンプル実装進捗台帳](wiki/syntheses/sample-implementation-progress-ledger.md) — 複数 implementation slice の状態、残 scope、証跡、次回 review 条件を横断して追う。
+  検索語: implementation progress ledger, roadmap progress, remaining scope, 実装進捗, 残スコープ, レビュー条件
 
 ### クエリ起点成果物
 

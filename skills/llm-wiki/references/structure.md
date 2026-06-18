@@ -49,7 +49,7 @@ repo-root/
 - `wiki/sources/`: source summary。主要 claim、この source が重要な理由、open question、entity / concept / synthesis への outbound link を持つ。
 - `wiki/entities/`: 人、組織、製品、場所、登場人物などの named thing。
 - `wiki/concepts/`: 複数 source をまたぐ theme, method, argument, framework, recurring idea。
-- `wiki/syntheses/`: 比較、thesis、timeline、due diligence note、briefing、短い report、roadmap、ADR、spec、design doc、implementation plan。
+- `wiki/syntheses/`: 比較、thesis、timeline、due diligence note、briefing、短い report、roadmap、ADR、spec、design doc、implementation plan、implementation progress ledger。
 - `wiki/queries/`: 質問起点で保存価値がある回答、比較メモ、判断材料メモ、短報。
 - `wiki/drafts/`: owner 以外の actor が作る proposed note。
 
@@ -58,9 +58,12 @@ repo-root/
 他 workflow が durable な文書を作る場合も、knowledge root に回収できるようにする。デフォルト routing:
 
 - roadmap, ADR, spec, design doc, implementation plan, briefing, comparison note は `wiki/syntheses/`
+- partial implementation, roadmap progress, remaining scope を横断して追う implementation progress ledger は `wiki/syntheses/`
 - 質問起点の短い判断メモや比較メモは `wiki/queries/`
 
 project 固有の下位構造を使うなら、knowledge-root `AGENTS.md` に local override として明記する。
+
+implementation progress ledger は、個別の spec / plan / progress note を置き換えない。複数の implementation slice の状態、残 scope、証跡、次回 review 条件へリンクする discovery surface として扱う。active canonical page なので `index.md` の Active Page Catalog から発見できるようにし、更新時は `log.md` に lifecycle entry を残す。validator, scheduler, Dataview, Obsidian plugin, issue tracker 連携は必須にしない。
 
 ## Naming Defaults
 
@@ -77,6 +80,7 @@ project 固有の下位構造を使うなら、knowledge-root `AGENTS.md` に lo
 - `wiki/concepts/persistent-knowledge-base.md`
 - `wiki/syntheses/llm-wiki-architecture.md`
 - `wiki/syntheses/checkout-api-phase-1-spec.md`
+- `wiki/syntheses/checkout-implementation-progress-ledger.md`
 - `wiki/queries/2026-04-12-compare-rag-and-llm-wiki.md`
 - `wiki/drafts/2026-04-12-proposed-update-to-checkout-claims.md`
 

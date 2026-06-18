@@ -32,6 +32,7 @@ compiled wiki を再利用して根拠付きで素早く答え、その出力自
 
 - 比較や synthesis を後で再利用しそう。
 - taxonomy, table, framing など durable な整理を作れた。
+- 未完了 scope、partial implementation state、複数 slice の進捗を横断整理し、次回 review の入口として再利用できる。
 - query が露出させた gap を新しい page が埋めた。
 - user が durable note, memo, briefing, deck, report を明示的に求めた。
 

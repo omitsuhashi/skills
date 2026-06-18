@@ -16,6 +16,7 @@ Read first: `references/core.md`, chosen topology reference, then this file. Rea
 - actor が owner でない場合、`Draft Target` は解決できるか。
 - 影響を受ける既存 page はどれか。
 - この source や topic の summary page は既にあるか。
+- implementation note, plan, progress artifact を取り込む場合、同じ area の implementation progress ledger は既にあるか。
 - raw source へ直接 citation すべき claim はどれか。
 
 ## Default Procedure
@@ -35,6 +36,7 @@ Read first: `references/core.md`, chosen topology reference, then this file. Rea
 - 古い claim を黙って置き換えず、矛盾を明示する。
 - source summary から entity / concept へ事実を運ぶときも citation を保つ。
 - procedure / operation 系の知識を取り込む場合は、利用者が検索しそうな英日検索語を `index.md` の catalog entry に入れる。
+- implementation note / plan / progress artifact を取り込む場合、既存 ledger があれば更新候補として見る。ledger を更新したら status, landed scope, remaining scope, evidence, next trigger, review-after が実装 slice ごとに追えるかを軽く確認し、`index.md` と `log.md` も更新する。
 
 ## Pause And Align When
 

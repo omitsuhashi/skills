@@ -16,6 +16,7 @@ wiki が断片的な summary の寄せ集めへ劣化する前に、構造的な
 - procedure / operation 系 page の検索語が、該当する英日語彙を含んでいるか。
 - owner として扱う root では、`Draft Target` に未整理 draft が残っていないか。
 - `log.md` に recent ingest はあるのに wiki 更新が追随していない箇所はないか。
+- active な implementation progress ledger がある場合、`index.md` から発見でき、各 slice に status / evidence / review-after または next trigger があるか。
 - inbound link のない page はどれか。
 - 新しい source で superseded されていそうな claim はどれか。
 - 繰り返し言及されるのに独立 page を持たない concept はどれか。
@@ -41,3 +42,4 @@ wiki が断片的な summary の寄せ集めへ劣化する前に、構造的な
 - entity / concept へ波及していない source summary。
 - citation trail のない assertion。
 - newer source を反映していない synthesis page。
+- implementation progress ledger の `verified` に証跡 link がない、または `deferred` / `blocked` に理由と review-after / 解除条件がない。
