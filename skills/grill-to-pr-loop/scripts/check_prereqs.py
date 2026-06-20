@@ -13,7 +13,14 @@ import sys
 
 
 REQUIRED_SKILLS = ("grill-with-docs",)
-OPTIONAL_SKILLS = ("to-prd", "to-issues", "tdd", "grill-me", "handoff")
+OPTIONAL_SKILLS = (
+    "to-prd",
+    "to-issues",
+    "tdd",
+    "grill-me",
+    "handoff",
+    "requesting-code-review",
+)
 
 
 def candidate_roots(extra_roots: list[str]) -> list[Path]:
@@ -35,6 +42,7 @@ def candidate_roots(extra_roots: list[str]) -> list[Path]:
             Path.cwd() / "agents" / "skills",
         ]
     )
+    roots.extend(plugin_skill_roots(home))
 
     unique: list[Path] = []
     seen: set[Path] = set()
@@ -44,6 +52,17 @@ def candidate_roots(extra_roots: list[str]) -> list[Path]:
             unique.append(resolved)
             seen.add(resolved)
     return unique
+
+
+def plugin_skill_roots(home: Path) -> list[Path]:
+    cache_root = home / ".codex" / "plugins" / "cache"
+    if not cache_root.exists():
+        return []
+
+    roots: list[Path] = []
+    for pattern in ("*/skills", "*/*/skills", "*/*/*/skills"):
+        roots.extend(path for path in cache_root.glob(pattern) if path.is_dir())
+    return roots
 
 
 def find_skill(skill_name: str, roots: list[Path]) -> Path | None:
@@ -146,6 +165,12 @@ def main() -> int:
         "checked_roots": [str(path) for path in roots],
         "required": {name: str(path) if path else None for name, path in required.items()},
         "optional": {name: str(path) if path else None for name, path in optional.items()},
+        "reviewer_optional": {
+            "available": optional["requesting-code-review"] is not None,
+            "requesting-code-review": str(optional["requesting-code-review"])
+            if optional["requesting-code-review"]
+            else None,
+        },
         "github_optional": github,
         "missing_required": missing_required,
     }

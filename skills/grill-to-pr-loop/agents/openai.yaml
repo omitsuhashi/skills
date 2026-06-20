@@ -1,4 +1,4 @@
 interface:
   display_name: "Grill to PR Loop"
   short_description: "Grill 起点の設計から PR までの開発ループ"
-  default_prompt: "Use $grill-to-pr-loop to coordinate Grill with Docs, PRD/spec synthesis, issue worktrees, parallel goal-loop waves with visible worktree paths, review gates, and PR review."
+  default_prompt: "Use $grill-to-pr-loop to coordinate Grill with Docs, PRD/spec synthesis, issue worktrees, parallel goal-loop waves with visible worktree paths, issue implementation review gates, and PR review."
