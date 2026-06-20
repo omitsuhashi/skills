@@ -175,9 +175,9 @@ If using `to-issues`, use only its context gathering, draft vertical-slice break
 Propose this table before creating worktrees, and record it after approval:
 
 ```markdown
-| ローカルIssue | GitHub Issue | ブランチ | 作業ツリー | ベース | 実行状態 | 準備状態 | 検証 | PR |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| G2PR-001 | #123 または ローカルのみ | codex/g2pr-001-slug | <path> | <sha> | 実行可能 | 準備済み | <commands> | 未作成 |
+| Wave | ローカルIssue | GitHub Issue | ブランチ | 作業ツリー | Owner/Agent | Write Scope | ベース | 実行状態 | 準備状態 | 検証 | PR |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| W1 | G2PR-001 | #123 または ローカルのみ | codex/g2pr-001-slug | <absolute path> | <agent/thread id または 未割当> | <paths/modules> | <sha> | 実行可能 | 準備済み | <commands> | 未作成 |
 ```
 
 Default branch naming: `codex/<issue-id-or-slug>`. Use the repo's documented convention if it differs.
@@ -203,9 +203,53 @@ Approval must be specific to the current gate packet. Vague approval from an ear
 - Parallelize only `実行可能` issues with no dependency edge between them.
 - Assign exactly one worktree per agent/thread.
 - Do not let two agents edit the same worktree.
+- Do not put issues with overlapping write scopes in the same wave.
 - Keep shared docs changes in a parent/prep issue when possible; otherwise serialize them.
+- Treat the local issue ledger, wave state, and shared worktree map as coordinator-owned unless a specific issue explicitly owns them.
 - Rebase or merge only after checking the repo's contribution policy.
 - Do not start a dependent branch until its blocker is complete unless the user explicitly approves stacked/dependent PR work.
+
+## Parallel Goal Loop Scheduler
+
+After the Initial Verification Gate, run implementation by parallel wave rather than by a single serial loop.
+
+Definitions:
+
+- **Runnable issue**: `レビュー状態: 承認済み`, `実行状態: 実行可能`, no incomplete blockers, and no unresolved stop condition.
+- **Parallel wave**: a set of runnable issues with no dependency edge between them and no overlapping write scope.
+- **Coordinator-owned state**: local issue ledger, worktree map, wave status, shared progress docs, and any other file used to coordinate multiple workers.
+
+Scheduler steps:
+
+1. Recompute runnable issues from the approved local ledger.
+2. Exclude any issue whose write scope overlaps with another candidate; put the lower-priority or dependent issue into a later wave.
+3. Assign a wave ID such as `W1`, `W2`, and exactly one branch/worktree/owner per issue.
+4. Display a launch packet in the parent session before dispatch:
+
+```markdown
+## Parallel Wave Launch
+
+| Wave | ローカルIssue | Branch | Worktree Path | Owner/Agent | Write Scope |
+| --- | --- | --- | --- | --- | --- |
+| W1 | G2PR-001 | codex/g2pr-001-slug | /abs/path/to/worktree | <agent/thread id> | <paths/modules> |
+```
+
+5. Dispatch every issue in the wave in parallel when the platform supports parallel agents or background threads.
+6. Give each worker only its issue, branch, worktree path, write scope, source docs, verification commands, and stop conditions.
+7. Tell each worker it is not alone in the codebase, must not revert other workers' changes, and must not edit coordinator-owned state unless explicitly assigned.
+8. If the platform cannot create independent agents/threads, stop and ask whether to run serially or switch to a parallel-capable surface.
+9. When a worker finishes, inspect its result, run or record required verification, and update coordinator-owned state from the parent session.
+10. After all workers in the wave finish, update blocker status, recompute runnable issues, and start the next wave.
+
+Worker completion reports must include:
+
+- Local issue ID and title.
+- Worktree path and branch.
+- Changed files.
+- Verification commands and results.
+- Commit SHA when committed.
+- PR readiness and known risks.
+- Blockers released or new blockers discovered.
 
 ## Review Gate Packet
 
@@ -213,7 +257,7 @@ Before Goal loops, present:
 
 - Spec path and summary of accepted decisions.
 - Issue list with blocker graph, `実行可能/ブロック中` status, and dependency order.
-- Worktree map.
+- Worktree map with wave ID, owner/agent, write scope, and absolute worktree path for every task.
 - Verification already run.
 - Exact question: whether the user approves starting implementation loops.
 
@@ -221,22 +265,24 @@ Do not proceed on vague approval. Require approval of the current packet.
 
 ## Goal Loop Definition
 
-For each approved issue:
+For each approved issue assigned to a worker:
 
 1. Confirm the worktree path and branch.
-2. Re-read the issue and spec.
-3. Confirm the issue is `実行可能`. If it is `ブロック中`, stop unless the user explicitly approved an override.
-4. Use `tdd` when the issue changes behavior, fixes bugs, refactors behavior-bearing code, or adds tests.
-5. Write or update tests first when behavior changes.
-6. Implement the narrowest change that satisfies the issue.
-7. Run targeted verification.
-8. Update docs/progress required by the repo.
-9. Run fresh final verification.
-10. Request code review or perform a review pass.
-11. Fix actionable findings.
-12. Commit only the issue's scoped changes.
-13. Update the local ledger with completion state, verification result, commit SHA, and remaining risk.
-14. Mark completed blockers and update dependent issues from `ブロック中` to `実行可能` when applicable.
+2. Confirm the assigned wave ID and exclusive write scope.
+3. Re-read the issue and spec.
+4. Confirm the issue is `実行可能`. If it is `ブロック中`, stop unless the user explicitly approved an override.
+5. Do not edit coordinator-owned state such as the local issue ledger unless this issue explicitly owns that file.
+6. Use `tdd` when the issue changes behavior, fixes bugs, refactors behavior-bearing code, or adds tests.
+7. Write or update tests first when behavior changes.
+8. Implement the narrowest change that satisfies the issue.
+9. Run targeted verification.
+10. Update issue-owned docs/progress required by the repo.
+11. Run fresh final verification.
+12. Request code review or perform a review pass.
+13. Fix actionable findings.
+14. Commit only the issue's scoped changes.
+15. Report completion data to the coordinator; the coordinator updates the local ledger with completion state, verification result, commit SHA, and remaining risk.
+16. The coordinator marks completed blockers and updates dependent issues from `ブロック中` to `実行可能` when applicable.
 
 If the platform has a native Goal command, use it with the short prompt and linked docs. If not, execute the same loop manually and report that no native Goal runner was available.
 
@@ -272,6 +318,9 @@ Push and PR creation are remote writes. Use the relevant GitHub/PR skill or repo
 | Treating GitHub as the default issue source | Keep local issues canonical; mirror only after approval. |
 | Letting `to-prd` or `to-issues` publish remotely before this workflow's gate | Use those skills for synthesis and review first; remote publication waits for explicit approval. |
 | Creating GitHub issues or PRs without updating local issue state | Update the local ledger immediately; stop if local state cannot be reconciled. |
+| Running same-wave issues serially by habit | Dispatch all runnable non-conflicting issues in the wave in parallel when the platform supports it. |
+| Hiding worktree paths inside worker prompts | Display every wave member's absolute worktree path in the parent session before dispatch. |
+| Letting workers update the shared local ledger concurrently | Keep coordinator-owned state in the parent session unless a specific issue owns that file. |
 | Starting Goal loops before human review | Stop at the review packet and wait for approval. |
 | Starting Goal loops for blocked issues | Wait until blockers complete or get explicit override for stacked/dependent work. |
 | Reusing one worktree for multiple parallel issues | Create isolated worktrees and branches. |

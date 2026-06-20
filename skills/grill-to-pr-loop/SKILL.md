@@ -40,8 +40,11 @@ Read `references/workflow-contract.md` when executing the workflow, resuming fro
 - Mirror approved local issues to GitHub only when GitHub access is available, the repo has a GitHub remote, and the user explicitly approves remote issue creation.
 - Whenever a GitHub issue is created, a PR is opened, or an issue is completed, update the local issue ledger in the same step so local tracking reflects the remote reality.
 - Create one branch and one worktree per approved `実行可能` issue. Do not create worktrees for `ブロック中` issues until their blockers are complete or the user explicitly overrides the dependency.
+- Before starting implementation, compute parallel waves from approved `実行可能` issues. Dispatch every issue in the same wave in parallel when the platform supports parallel agents or background threads.
+- Before dispatching a wave, display every issue's worktree path in the parent session so the user can see where each task is running.
+- If parallel execution is requested but the platform cannot start independent agents/threads, stop and ask whether to run the wave serially or move to a platform that can run it in parallel.
 - Pause for human approval after spec, issue breakdown, proposed worktree map, and initial verification are ready.
-- After approval, run the Goal loop per issue/worktree with a short prompt and links to durable docs.
+- After approval, run Goal loops by parallel wave with short prompts and links to durable docs.
 - Use `tdd` in each Goal loop when implementation changes behavior, fixes bugs, or refactors behavior-bearing code.
 - Before GitHub issue creation, push, PR creation, or any external write, get explicit user approval, then use the relevant GitHub/PR skill or repo convention. Never hide remote writes, permission, billing, or credential actions inside this workflow.
 
@@ -56,7 +59,7 @@ Read `references/workflow-contract.md` when executing the workflow, resuming fro
 7. **Proposed Worktree Map**: Propose branch/worktree paths for approved `実行可能` local issues before running `git worktree add`.
 8. **Worktree Gate**: Wait for explicit approval of the proposed worktree map, then create isolated worktrees. Record local issue, optional remote issue, branch, worktree path, base commit, owner/agent, and status.
 9. **Initial Verification Gate**: Run available lightweight verification, summarize the spec/issues/worktree map, and ask the user to approve starting implementation loops.
-10. **Goal Loop**: For each approved worktree, run implementation to completion: `tdd` or existing test discipline, focused changes, fresh verification, code review, fixes, and commit.
+10. **Parallel Goal Loop Scheduler**: Build the first runnable wave from approved `実行可能` issues with no dependency or write-scope conflicts. Display the wave's issue IDs, branches, and worktree paths in the parent session, then dispatch all wave members in parallel. When a wave completes, update the local ledger, release blockers, compute the next runnable wave, and repeat.
 11. **PR Review**: After explicit approval for remote writes, open draft or ready PRs according to repo convention and immediately record the PR URL/status in the local ledger. If a remote issue exists, link the PR to it with the repo's preferred `Closes` or `Refs` syntax. Monitor checks/review comments, address actionable feedback, update local issue completion status when the implementation is done, and report remaining risks.
 
 ## Goal Prompt Contract
@@ -65,9 +68,11 @@ For each issue, keep the prompt short and point at source artifacts:
 
 - Local issue identifier and title.
 - GitHub issue URL or number if a remote mirror was created.
+- Wave ID and whether the issue is running in parallel or serial override mode.
 - ブロッカー状態: `実行可能` または `ブロック中`、および `ブロック元` のIssue ID.
 - Spec path and any ADR/glossary paths from Grill with Docs / `to-prd`.
 - Worktree path and branch.
+- Exclusive write scope for this worker/agent, and any coordinator-owned files it must not edit directly.
 - Required behavior and acceptance criteria.
 - Verification commands to run fresh after docs/progress updates.
 - Local ledger path and the exact ledger fields that must be updated after GitHub issue creation, PR creation, and issue completion.
@@ -96,6 +101,7 @@ End with:
 - Local issue list and status.
 - GitHub issue links when created, or explicit local-only reason.
 - Worktree/branch map.
+- Parallel wave execution summary, including every issue's worktree path shown in the parent session.
 - Local ledger updates made for GitHub issue creation, PR creation, and issue completion.
 - Verification commands and results.
 - PR URLs or explicit reason PR creation was not done.
