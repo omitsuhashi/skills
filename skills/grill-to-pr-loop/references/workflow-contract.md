@@ -10,7 +10,7 @@ This workflow coordinates existing skills instead of replacing them.
 - Use `to-prd` after Grill with Docs when the next artifact should be a PRD, spec packet, or product requirement summary. Keep its result local-first unless the current gate explicitly approves publishing.
 - Use `to-issues` after the spec is approved to draft vertical slices and quiz the user about granularity and dependencies. Do not allow its publish phase to create remote issues until the GitHub Mirror Gate passes.
 - Use `tdd` inside each implementation Goal loop for features, bug fixes, refactors, or behavior changes.
-- Use `superpowers:requesting-code-review` when available after each issue's fresh final verification and scoped local commit. The review must check the implementation against the approved local issue, spec, acceptance criteria, write scope, and verification evidence before local completion, blocker release, or PR creation.
+- Use `superpowers:requesting-code-review` when available after each issue's fresh final verification and scoped local commit. The review must check only for gaps against the approved local issue, requirements, spec, acceptance criteria, write scope, and verification evidence before local completion, blocker release, or PR creation.
 
 When a sub-skill's default workflow assumes remote issue tracker writes, this workflow's local-first and explicit-approval gates override it.
 
@@ -22,7 +22,7 @@ Update the local ledger immediately after:
 
 - Creating a GitHub issue: record the GitHub issue URL or number.
 - Creating a PR: record the PR URL, PR state, and whether it uses `Closes` or `Refs`.
-- Passing issue implementation review: record `実装レビュー`, `レビュー範囲`, `レビュー結果`, reviewer used or manual fallback, and any human risk acceptance.
+- Passing issue implementation review: record `実装レビュー`, `レビュー範囲`, `レビュー結果`, reviewer used or manual fallback, in-scope findings, and any human risk acceptance.
 - Completing an issue implementation: update completion state, verification result, commit SHA, implementation review result, and any blocker changes.
 - Closing or merging a PR when known: update PR state and issue completion/closure state.
 
@@ -308,6 +308,8 @@ Do not proceed on vague approval. Require approval of the current packet.
 
 Run this gate after a worker's fresh final verification and before local issue completion, blocker release, or PR creation. This is separate from PR review and later check monitoring.
 
+Review scope is intentionally narrow. The reviewer may report only findings that show the implementation is missing, contradicts, or does not sufficiently prove something from the approved local issue, requirements, spec, acceptance criteria, non-goals, or write scope. Do not request general code quality, architecture, style, performance, refactor, documentation, or "ideal implementation" changes unless the concern directly proves one of those source artifacts is unmet. If a broader observation is not tied to an explicit source artifact, omit it from the findings.
+
 Default path:
 
 1. Confirm the local issue is still `レビュー状態: 承認済み` and `実行状態: 実行可能`, or that the user explicitly approved an override.
@@ -321,12 +323,12 @@ Default path:
    - acceptance criteria, non-goals, and write scope
    - verification commands and results
    - `BASE_SHA` and `HEAD_SHA`
-   - exact review intent: `<local issue id> の実装について、issue の内容が実装が正しく、理想的に実装されているかレビューしてください。`
+   - exact review intent: `<local issue id> の実装について、issue / 要件 / 仕様 / 受け入れ条件 / write scope から漏れている、逸脱している、または検証証跡が不足している点だけを指摘してください。一般的な code quality、architecture、style、performance、refactor、documentation、理想実装の提案は、明示された source artifact の未達を示す場合だけ指摘してください。`
 7. Record the ledger state as `実装レビュー: 依頼済み`.
-8. Fix every Critical and Important finding, or stop for explicit human risk acceptance. After fixes, rerun targeted verification and fresh final verification, update the local commit, and rerun review with the same base and new head.
-9. Minor findings may remain only when they are recorded in `レビュー結果` with a reason.
+8. Fix every Critical and Important in-scope finding, or stop for explicit human risk acceptance. After fixes, rerun targeted verification and fresh final verification, update the local commit, and rerun review with the same base and new head.
+9. Minor in-scope findings may remain only when they are recorded in `レビュー結果` with a reason. Out-of-scope observations must not be recorded as findings.
 10. Mark `実装レビュー: 承認済み` for reviewer approval, or `手動レビュー済み` only when the user approved manual fallback and the same packet was reviewed manually.
-11. Record `レビュー範囲`, `レビュー結果`, reviewer or fallback, fixed findings, and any risk acceptance before marking the issue complete or releasing blockers.
+11. Record `レビュー範囲`, `レビュー結果`, reviewer or fallback, fixed in-scope findings, and any risk acceptance before marking the issue complete or releasing blockers.
 
 Manual fallback is not a silent downgrade. If the user does not explicitly approve it, stop. PR review, CI checks, or a later GitHub review do not replace this gate.
 
@@ -347,7 +349,7 @@ For each approved issue assigned to a worker:
 11. Run fresh final verification.
 12. Commit only the issue's scoped changes locally so the review has a base/head range.
 13. Run the Issue Implementation Review Gate.
-14. Fix actionable findings; for Critical or Important findings, rerun targeted verification, fresh final verification, update the local commit, and repeat review or get explicit human risk acceptance.
+14. Fix actionable in-scope findings; for Critical or Important in-scope findings, rerun targeted verification, fresh final verification, update the local commit, and repeat review or get explicit human risk acceptance.
 15. Report completion data to the coordinator; the coordinator updates the local ledger with completion state, verification result, commit SHA, implementation review result, and remaining risk.
 16. The coordinator marks completed blockers and updates dependent issues from `ブロック中` to `実行可能` only after implementation review passes.
 
@@ -391,7 +393,8 @@ Push and PR creation are remote writes. Use the relevant GitHub/PR skill or repo
 | Starting Goal loops before human review | Stop at the review packet and wait for approval. |
 | Starting Goal loops for blocked issues | Wait until blockers complete or get explicit override for stacked/dependent work. |
 | Treating PR review, CI checks, or GitHub review comments as a substitute for issue implementation review | Run the Issue Implementation Review Gate before local completion, blocker release, or PR creation. |
-| Releasing blockers while Critical or Important implementation review findings remain unresolved | Fix the findings or record explicit human risk acceptance before completion. |
+| Letting issue implementation review become a general code quality review | Limit findings to gaps against the approved issue, requirements, spec, acceptance criteria, write scope, or verification evidence. |
+| Releasing blockers while Critical or Important in-scope implementation review findings remain unresolved | Fix the findings or record explicit human risk acceptance before completion. |
 | Reusing one worktree for multiple parallel issues | Create isolated worktrees and branches. |
 | Putting full specs into Goal prompts | Keep prompts short and link durable docs. |
 | Treating PR creation as implicit | Get explicit approval first, then use the repo's PR skill/convention. |

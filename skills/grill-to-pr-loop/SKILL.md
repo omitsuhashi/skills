@@ -15,7 +15,7 @@ This skill is an orchestrator. Do not duplicate the detailed behavior of the exi
 - **PRD/spec synthesis:** use `to-prd` when turning the approved conversation and docs into product requirements or a spec packet.
 - **Issue decomposition:** use `to-issues` for vertical-slice draft breakdown and user quiz/review.
 - **Implementation discipline:** use `tdd` when a Goal loop changes behavior or fixes bugs.
-- **Issue implementation review:** use `superpowers:requesting-code-review` when available to review each issue implementation against its local issue, spec, acceptance criteria, write scope, and verification evidence before completion.
+- **Issue implementation review:** use `superpowers:requesting-code-review` when available to review each issue implementation only for gaps against its local issue, requirements, spec, acceptance criteria, write scope, and verification evidence before completion.
 
 ## Immediate Guard
 
@@ -52,7 +52,7 @@ Read `references/workflow-contract.md` when executing the workflow, resuming fro
 - After approval, run Goal loops by parallel wave with short prompts and links to durable docs.
 - Use `tdd` in each Goal loop when implementation changes behavior, fixes bugs, or refactors behavior-bearing code.
 - Before marking a local issue complete, releasing its blockers, or creating a PR for it, run the Issue Implementation Review Gate from `references/workflow-contract.md`. PR review, CI checks, or later review monitoring do not replace this issue-level review.
-- Fix Critical and Important issue implementation review findings before proceeding, unless the human explicitly accepts the risk and the local ledger records that decision.
+- Fix Critical and Important in-scope issue implementation review findings before proceeding, unless the human explicitly accepts the risk and the local ledger records that decision. Findings are in scope only when they show something missing from, contradicting, or insufficiently proving the approved issue, requirements, spec, acceptance criteria, or write scope.
 - Before GitHub issue creation, push, PR creation, or any external write, get explicit user approval, then use the relevant GitHub/PR skill or repo convention. Never hide remote writes, permission, billing, or credential actions inside this workflow.
 
 ## State Machine
@@ -67,7 +67,7 @@ Read `references/workflow-contract.md` when executing the workflow, resuming fro
 8. **Worktree Gate**: Wait for explicit approval of the proposed worktree map, then create isolated worktrees. Record Epic ID, local issue, optional remote issue, branch, worktree path, base commit, owner/agent, and status.
 9. **Initial Verification Gate**: Run available lightweight verification, summarize the spec/issues/worktree map, and ask the user to approve starting implementation loops.
 10. **Parallel Goal Loop Scheduler**: Build the first runnable wave from approved `実行可能` issues with no dependency or write-scope conflicts. Display the wave's issue IDs, branches, and worktree paths in the parent session, then dispatch all wave members in parallel. When a worker reports implementation complete, run the Issue Implementation Review Gate before ledger completion, blocker release, or PR readiness.
-11. **Issue Implementation Review Gate**: Review each completed issue implementation with `superpowers:requesting-code-review` when available, using the local issue, spec, acceptance criteria, write scope, verification results, and base/head SHA range. Fix or explicitly accept Critical and Important findings, then update the local ledger with `実装レビュー`, `レビュー範囲`, and `レビュー結果`.
+11. **Issue Implementation Review Gate**: Review each completed issue implementation with `superpowers:requesting-code-review` when available, using the local issue, requirements, spec, acceptance criteria, write scope, verification results, and base/head SHA range. Report only in-scope gaps: missing required behavior, requirement/spec deviations, acceptance criteria failures, write-scope violations, or missing verification evidence. Fix or explicitly accept Critical and Important in-scope findings, then update the local ledger with `実装レビュー`, `レビュー範囲`, and `レビュー結果`.
 12. **PR Review**: After issue implementation review passes and after explicit approval for remote writes, open draft or ready PRs according to repo convention and immediately record the PR URL/status in the local ledger. If a remote issue exists, link the PR to it with the repo's preferred `Closes` or `Refs` syntax. Monitor checks/review comments, address actionable feedback, and report remaining risks.
 
 ## Goal Prompt Contract
@@ -101,7 +101,7 @@ Stop and ask the user before continuing if:
 - The blocker graph is cyclic, ambiguous, or makes parallel work unsafe.
 - A Goal loop is requested for a `ブロック中` issue without explicit override.
 - Issue implementation review is required but `requesting-code-review` or an equivalent review subagent is unavailable and the user has not approved a manual fallback.
-- Issue implementation review returns Critical or Important findings that are not fixed or explicitly accepted by the human.
+- Issue implementation review returns Critical or Important in-scope findings that are not fixed or explicitly accepted by the human.
 - The user requested GitHub issue/PR linkage but GitHub access, repo remote, or permission is unavailable; ask whether to continue local-only.
 - Tests fail in a way unrelated to the issue and no local contract explains it.
 - A GitHub issue, PR, push, credential, permission, production, billing, or external-write action is required and has not been approved.
