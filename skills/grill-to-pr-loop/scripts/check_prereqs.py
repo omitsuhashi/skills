@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail-fast prerequisite check for the grill-to-pr-loop skill."""
+"""Fail-fast prerequisite check for the grill-to-pr-loop composition skill."""
 
 from __future__ import annotations
 
@@ -12,7 +12,8 @@ import subprocess
 import sys
 
 
-REQUIRED_SKILLS = ("grill-with-docs",)
+PLANNING_REQUIRED_SKILLS = ("grill-with-docs",)
+EXECUTION_REQUIRED_SKILLS = ("issue-implementation-loop",)
 OPTIONAL_SKILLS = (
     "to-prd",
     "to-issues",
@@ -21,6 +22,17 @@ OPTIONAL_SKILLS = (
     "handoff",
     "requesting-code-review",
 )
+
+
+def plugin_skill_roots(home: Path) -> list[Path]:
+    cache_root = home / ".codex" / "plugins" / "cache"
+    if not cache_root.exists():
+        return []
+
+    roots: list[Path] = []
+    for pattern in ("*/skills", "*/*/skills", "*/*/*/skills"):
+        roots.extend(path for path in cache_root.glob(pattern) if path.is_dir())
+    return roots
 
 
 def candidate_roots(extra_roots: list[str]) -> list[Path]:
@@ -54,17 +66,6 @@ def candidate_roots(extra_roots: list[str]) -> list[Path]:
     return unique
 
 
-def plugin_skill_roots(home: Path) -> list[Path]:
-    cache_root = home / ".codex" / "plugins" / "cache"
-    if not cache_root.exists():
-        return []
-
-    roots: list[Path] = []
-    for pattern in ("*/skills", "*/*/skills", "*/*/*/skills"):
-        roots.extend(path for path in cache_root.glob(pattern) if path.is_dir())
-    return roots
-
-
 def find_skill(skill_name: str, roots: list[Path]) -> Path | None:
     for root in roots:
         skill_file = root / skill_name / "SKILL.md"
@@ -86,12 +87,7 @@ def git_github_remotes() -> list[str]:
 
     if completed.returncode != 0:
         return []
-
-    remotes: list[str] = []
-    for line in completed.stdout.splitlines():
-        if "github.com" in line:
-            remotes.append(line)
-    return remotes
+    return [line for line in completed.stdout.splitlines() if "github.com" in line]
 
 
 def gh_auth_status(gh_path: str | None) -> dict[str, str | int | None]:
@@ -132,9 +128,21 @@ def gh_auth_status(gh_path: str | None) -> dict[str, str | int | None]:
     }
 
 
+def required_for_phase(phase: str) -> tuple[str, ...]:
+    if phase == "planning":
+        return PLANNING_REQUIRED_SKILLS
+    return PLANNING_REQUIRED_SKILLS + EXECUTION_REQUIRED_SKILLS
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Check that required skills for grill-to-pr-loop are installed."
+    )
+    parser.add_argument(
+        "--phase",
+        choices=("planning", "execution"),
+        default="planning",
+        help="planning requires grill-with-docs; execution also requires issue-implementation-loop.",
     )
     parser.add_argument(
         "--skills-root",
@@ -142,15 +150,12 @@ def main() -> int:
         default=[],
         help="Additional skills root to search. May be repeated.",
     )
-    parser.add_argument(
-        "--json",
-        action="store_true",
-        help="Emit machine-readable JSON.",
-    )
+    parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON.")
     args = parser.parse_args()
 
     roots = candidate_roots(args.skills_root)
-    required = {name: find_skill(name, roots) for name in REQUIRED_SKILLS}
+    required_names = required_for_phase(args.phase)
+    required = {name: find_skill(name, roots) for name in required_names}
     optional = {name: find_skill(name, roots) for name in OPTIONAL_SKILLS}
     missing_required = [name for name, path in required.items() if path is None]
     gh_path = shutil.which("gh")
@@ -159,12 +164,20 @@ def main() -> int:
         "gh_auth_status": gh_auth_status(gh_path),
         "github_remotes": git_github_remotes(),
     }
+    execution_skill = find_skill("issue-implementation-loop", roots)
 
     result = {
         "ok": not missing_required,
+        "phase": args.phase,
         "checked_roots": [str(path) for path in roots],
         "required": {name: str(path) if path else None for name, path in required.items()},
         "optional": {name: str(path) if path else None for name, path in optional.items()},
+        "execution_required": {
+            "available": execution_skill is not None,
+            "issue-implementation-loop": str(execution_skill)
+            if execution_skill
+            else None,
+        },
         "reviewer_optional": {
             "available": optional["requesting-code-review"] is not None,
             "requesting-code-review": str(optional["requesting-code-review"])
@@ -178,11 +191,16 @@ def main() -> int:
     if args.json:
         print(json.dumps(result, indent=2, sort_keys=True))
     else:
+        print(f"Phase: {args.phase}")
         for name, path in required.items():
             if path:
                 print(f"OK required skill: {name} ({path})")
             else:
                 print(f"ERROR missing required skill: {name}")
+        if args.phase == "planning" and execution_skill:
+            print(f"OK execution skill available for later: issue-implementation-loop ({execution_skill})")
+        elif args.phase == "planning":
+            print("WARN execution skill missing for later: issue-implementation-loop")
         for name, path in optional.items():
             if path:
                 print(f"OK optional skill: {name} ({path})")
@@ -204,7 +222,7 @@ def main() -> int:
         else:
             print("WARN optional GitHub remote not detected in current directory")
         if missing_required:
-            print("STOP: install grill-with-docs before using grill-to-pr-loop.")
+            print("STOP: install missing required skills before continuing.")
             print("Checked roots:")
             for root in roots:
                 print(f"- {root}")

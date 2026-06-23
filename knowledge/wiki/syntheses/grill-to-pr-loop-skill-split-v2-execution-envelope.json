@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "epic_id": "issue-implementation-loop",
+  "revision": 1,
+  "epic_base": {
+    "ref": "main",
+    "sha": "dd22cd8b7cb518d3838c612c24e0164c31dfd986"
+  },
+  "execution_policy": {
+    "parallel_preferred": true,
+    "serial_fallback_preapproved": true,
+    "implementation_slots": 4,
+    "review_slots": 2,
+    "wave_is_barrier": false
+  },
+  "review_policy": {
+    "primary": "requesting-code-review",
+    "fallbacks": [
+      "manual"
+    ],
+    "manual_fallback_preapproved": false,
+    "max_fix_cycles": 3,
+    "same_finding_limit": 2
+  },
+  "human_policy": {
+    "default_scope": "issue",
+    "epic_scope_requires_reason": true
+  },
+  "remote_write_policy": {
+    "mode": "local_only",
+    "approved_actions": []
+  },
+  "work_items": {
+    "G2PR-001": {
+      "branch": "codex/issue-implementation-loop/G2PR-001-wiki-spec",
+      "worktree_path": "/Users/omitsuhashi/.codex/worktrees/issue-implementation-loop/skills/G2PR-001-wiki-spec",
+      "worktree_state": "create_on_run",
+      "base_policy": {
+        "type": "epic_base"
+      },
+      "write_scope": [
+        "path:knowledge"
+      ],
+      "dependencies": []
+    },
+    "G2PR-002": {
+      "branch": "codex/issue-implementation-loop/G2PR-002-execution-skill",
+      "worktree_path": "/Users/omitsuhashi/.codex/worktrees/issue-implementation-loop/skills/G2PR-002-execution-skill",
+      "worktree_state": "reserved",
+      "base_policy": {
+        "type": "epic_base"
+      },
+      "write_scope": [
+        "path:skills/issue-implementation-loop"
+      ],
+      "dependencies": [
+        {
+          "issue": "G2PR-001",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "none"
+        }
+      ]
+    },
+    "G2PR-003": {
+      "branch": "codex/issue-implementation-loop/G2PR-003-composition-skill",
+      "worktree_path": "/Users/omitsuhashi/.codex/worktrees/issue-implementation-loop/skills/G2PR-003-composition-skill",
+      "worktree_state": "reserved",
+      "base_policy": {
+        "type": "epic_base"
+      },
+      "write_scope": [
+        "path:skills/grill-to-pr-loop"
+      ],
+      "dependencies": [
+        {
+          "issue": "G2PR-002",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "none"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Issue Implementation Loop Execution Envelope",
+  "type": "object",
+  "required": ["schema_version", "epic_id", "revision", "epic_base", "execution_policy", "review_policy", "human_policy", "remote_write_policy", "work_items"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "epic_id": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"},
+    "revision": {"type": "integer", "minimum": 1},
+    "epic_base": {
+      "type": "object",
+      "required": ["ref", "sha"],
+      "properties": {
+        "ref": {"type": "string"},
+        "sha": {"type": "string"}
+      }
+    },
+    "execution_policy": {"type": "object"},
+    "review_policy": {"type": "object"},
+    "human_policy": {"type": "object"},
+    "remote_write_policy": {
+      "type": "object",
+      "required": ["mode", "approved_actions"],
+      "properties": {
+        "mode": {"enum": ["local_only", "per_action", "batch_draft_prs"]},
+        "approved_actions": {"type": "array"}
+      }
+    },
+    "work_items": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["branch", "worktree_path", "worktree_state", "base_policy", "write_scope", "dependencies"],
+        "properties": {
+          "branch": {"type": "string"},
+          "worktree_path": {"type": "string"},
+          "worktree_state": {"enum": ["reserved", "create_on_run", "active", "missing"]},
+          "base_policy": {"type": "object"},
+          "write_scope": {"type": "array", "items": {"type": "string"}},
+          "dependencies": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["issue", "strength", "release_on", "base_effect"],
+              "properties": {
+                "issue": {"type": "string"},
+                "strength": {"enum": ["hard", "soft"]},
+                "release_on": {"enum": ["artifact_ready", "review_approved", "integrated", "pr_opened", "pr_merged", "human_decision", "external_condition"]},
+                "base_effect": {"enum": ["none", "branch_from_blocker_head", "branch_from_integration_head"]}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

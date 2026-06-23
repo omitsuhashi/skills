@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Issue Implementation Loop Human Request",
+  "type": "object",
+  "required": ["id", "scope", "reason"],
+  "properties": {
+    "id": {"type": "string"},
+    "scope": {"enum": ["issue", "descendants", "resource", "epic"]},
+    "issue": {"type": "string"},
+    "resource": {"type": "string"},
+    "reason": {"type": "string"},
+    "created_at": {"type": "string"}
+  }
+}
