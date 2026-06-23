@@ -19,7 +19,7 @@ Give each worker a short packet:
 - Do not edit coordinator-owned envelope, runtime snapshot, event log, or shared ledger unless explicitly assigned.
 - Use `tdd` or an approved equivalent for behavior changes.
 - Run targeted verification, update issue-owned docs/progress, then run fresh final verification.
-- Produce a local scoped commit when review needs a base/head range.
+- Produce a local scoped commit before issue review, blocker release, completion, or PR readiness. Review ranges use committed `BASE_SHA..HEAD_SHA`, not `working-tree`.
 
 ## Worker Report
 

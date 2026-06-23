@@ -28,5 +28,18 @@
     "mode": "local_only",
     "approved_actions": []
   },
-  "work_items": {}
+  "work_items": {
+    "G2PR-001": {
+      "branch": "codex/<epic-id>/G2PR-001-<slug>",
+      "worktree_path": "/abs/path/to/worktree",
+      "worktree_state": "create_on_run",
+      "base_policy": {
+        "type": "epic_base"
+      },
+      "write_scope": [
+        "path:<scope>"
+      ],
+      "dependencies": []
+    }
+  }
 }

@@ -25,6 +25,7 @@ RELEASE_ON = {
     "external_condition",
 }
 BASE_EFFECTS = {"none", "branch_from_blocker_head", "branch_from_integration_head"}
+BASE_POLICY_TYPES = {"epic_base", "blocker_head", "integration_head"}
 WORKTREE_STATES = {"reserved", "create_on_run", "active", "missing"}
 REMOTE_MODES = {"local_only", "per_action", "batch_draft_prs"}
 
@@ -171,6 +172,18 @@ def validate_execution_envelope(envelope: dict[str, Any]) -> list[str]:
             worktrees[worktree_path] = issue_id
         if item.get("worktree_state") not in WORKTREE_STATES:
             errors.append(f"{prefix}.worktree_state must be one of {sorted(WORKTREE_STATES)}")
+        base_policy = item.get("base_policy")
+        base_policy_type = None
+        if not isinstance(base_policy, dict):
+            errors.append(f"{prefix}.base_policy must be an object")
+        else:
+            base_policy_type = base_policy.get("type")
+            if base_policy_type not in BASE_POLICY_TYPES:
+                errors.append(f"{prefix}.base_policy.type must be one of {sorted(BASE_POLICY_TYPES)}")
+            if base_policy_type == "blocker_head" and base_policy.get("issue") not in work_items:
+                errors.append(f"{prefix}.base_policy.issue must reference a work item")
+            if base_policy_type == "integration_head" and base_policy.get("integration_issue") not in work_items:
+                errors.append(f"{prefix}.base_policy.integration_issue must reference a work item")
         write_scope = item.get("write_scope")
         if not isinstance(write_scope, list) or not write_scope:
             errors.append(f"{prefix}.write_scope must be a non-empty list")
@@ -194,6 +207,41 @@ def validate_execution_envelope(envelope: dict[str, Any]) -> list[str]:
                 errors.append(f"{dep_prefix}.release_on must be one of {sorted(RELEASE_ON)}")
             if dep.get("base_effect") not in BASE_EFFECTS:
                 errors.append(f"{dep_prefix}.base_effect must be one of {sorted(BASE_EFFECTS)}")
+        if isinstance(base_policy, dict) and isinstance(dependencies, list):
+            blocker_head_deps = [
+                dep.get("issue")
+                for dep in dependencies
+                if isinstance(dep, dict) and dep.get("base_effect") == "branch_from_blocker_head"
+            ]
+            integration_head_deps = [
+                dep.get("issue")
+                for dep in dependencies
+                if isinstance(dep, dict) and dep.get("base_effect") == "branch_from_integration_head"
+            ]
+            if len(blocker_head_deps) > 1:
+                errors.append(
+                    f"{prefix} uses branch_from_blocker_head with multiple blocker heads; "
+                    "use an integration work item and branch_from_integration_head"
+                )
+            if blocker_head_deps:
+                blocker_issue = blocker_head_deps[0]
+                if base_policy_type != "blocker_head":
+                    errors.append(f"{prefix}.base_policy.type must be blocker_head")
+                elif base_policy.get("issue") != blocker_issue:
+                    errors.append(f"{prefix}.base_policy.issue must match dependency {blocker_issue}")
+            elif base_policy_type == "blocker_head":
+                errors.append(f"{prefix}.base_policy.type blocker_head requires branch_from_blocker_head dependency")
+            if integration_head_deps:
+                if base_policy_type != "integration_head":
+                    errors.append(f"{prefix}.base_policy.type must be integration_head")
+                elif base_policy.get("integration_issue") not in integration_head_deps:
+                    errors.append(
+                        f"{prefix}.base_policy.integration_issue must match a branch_from_integration_head dependency"
+                    )
+            elif base_policy_type == "integration_head":
+                errors.append(
+                    f"{prefix}.base_policy.type integration_head requires branch_from_integration_head dependency"
+                )
 
     cycle = dependency_cycle(work_items)
     if cycle:
@@ -210,6 +258,19 @@ def validate_runtime_state(state: dict[str, Any]) -> list[str]:
         errors.append("epic_id must be lower-kebab-case ASCII")
     if not isinstance(state.get("issues", {}), dict):
         errors.append("issues must be an object")
+    else:
+        for issue_id, record in state.get("issues", {}).items():
+            if not isinstance(record, dict):
+                errors.append(f"issues.{issue_id} must be an object")
+                continue
+            status = record.get("status")
+            review = record.get("review", {})
+            if status in {"PR_READY", "COMPLETE", "DONE"} and isinstance(review, dict):
+                review_range = review.get("range") or review.get("review_range")
+                if isinstance(review_range, str) and "working-tree" in review_range:
+                    errors.append(
+                        f"issues.{issue_id}.review.range must use committed BASE_SHA..HEAD_SHA, not working-tree"
+                    )
     human_requests = state.get("human_requests", [])
     if not isinstance(human_requests, list):
         errors.append("human_requests must be a list")

@@ -78,6 +78,16 @@ Load `issue-implementation-loop` for those execution responsibilities.
 - Do not let `to-prd` or `to-issues` publish remotely before this skill's remote-write gate.
 - Do not create GitHub issues for `下書き`, `差し戻し`, or `未解決` local issues.
 
+## Branch / Base / Commit Policy
+
+- Treat planning branches as optional workspace isolation, not as the execution source of truth.
+- Treat Execution Envelope `epic_base.ref` + `epic_base.sha` as the immutable base for the run.
+- Prefer issue branches named `codex/<epic-id>/<local-id>-<slug>`.
+- Reserve one branch/worktree path per approved issue before execution; create physical worktrees only for runnable issues.
+- Express downstream code dependencies through typed dependency edges and work item `base_policy`, not ad hoc merges into a mutable development main branch.
+- Use an approved integration work item/branch when a downstream issue needs multiple blocker heads.
+- Before issue completion, blocker release, or `PR_READY`, run fresh verification, create/update a scoped local commit, and review the committed `BASE_SHA..HEAD_SHA` range.
+
 ## Normalized Execution Packet
 
 Build a normalized input packet file for `issue-implementation-loop`; do not paste the packet body into the prompt when a file can hold it. Include:

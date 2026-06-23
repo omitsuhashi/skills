@@ -23,6 +23,16 @@ The Execution Envelope is the approved execution contract. It is more specific t
 - Use `scripts/validate_execution_envelope.py` before asking for approval.
 - Use `scripts/reconcile_git_state.py` before creating or activating worktrees.
 
+## Base Policy
+
+Every work item declares how its branch is created:
+
+- `{"type": "epic_base"}`: branch from immutable `epic_base.ref` / `epic_base.sha`.
+- `{"type": "blocker_head", "issue": "G2PR-001"}`: branch from exactly one prerequisite issue head whose dependency edge uses `base_effect: "branch_from_blocker_head"`.
+- `{"type": "integration_head", "integration_issue": "G2PR-010"}`: branch from an approved integration work item whose dependency edge uses `base_effect: "branch_from_integration_head"`.
+
+Do not branch from multiple blocker heads. Add an integration work item or integration branch when downstream code needs more than one prerequisite head.
+
 ## Revision Required
 
 Create a new envelope revision before changing:

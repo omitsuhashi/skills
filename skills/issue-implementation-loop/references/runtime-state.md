@@ -34,3 +34,5 @@ Validate snapshots with:
 ```bash
 python3 <skill-dir>/scripts/validate_runtime_state.py <runtime-state.json>
 ```
+
+For `PR_READY`, `COMPLETE`, or `DONE` issues, any recorded review range must point at committed `BASE_SHA..HEAD_SHA`. Do not record `working-tree` as the review head for new PR-ready state.

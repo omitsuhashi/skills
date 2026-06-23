@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "repo_root": "/Users/omitsuhashi/repos/omitsuhashi/skills",
+  "epic_id": "grill-to-pr-branch-policy",
+  "artifact_root": "knowledge/wiki/syntheses",
+  "spec": {
+    "path": "knowledge/wiki/syntheses/grill-to-pr-loop-branch-policy-spec.md",
+    "approved_revision": 1,
+    "approved_hash": "sha256:local-conversation"
+  },
+  "work_items": [
+    {
+      "id": "G2PR-001",
+      "title": "branch / worktree / commit policy を契約化する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/grill-to-pr-loop-branch-policy-issues.md"
+      },
+      "acceptance_criteria": [
+        "grill-to-pr-loop が epic_base を実行契約の中心として説明している",
+        "issue branch naming、worktree reservation、blocked issue の physical worktree delay が明示されている",
+        "scoped local commit の順序が fresh verification -> scoped local commit -> issue review -> fixes/re-review -> PR_READY として明示されている",
+        "envelope validation が base_policy type を検証する",
+        "branch_from_blocker_head を複数 blocker へ同時に使う envelope を拒否する",
+        "branch_from_integration_head を使う dependency が integration base policy と一致しない envelope を拒否する",
+        "PR_READY issue の review range に working-tree が明示された runtime state を拒否する"
+      ],
+      "non_goals": [
+        "GitHub issue、push、PR、merge は実行しない",
+        "standalone worktree manager skill は作らない",
+        "main へ merge しない"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests",
+        "UV_CACHE_DIR=/private/tmp/uv-cache uv run --isolated --python 3.12 --with 'PyYAML==6.0.2' python /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_validate.py skills/issue-implementation-loop",
+        "UV_CACHE_DIR=/private/tmp/uv-cache uv run --isolated --python 3.12 --with 'PyYAML==6.0.2' python /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_validate.py skills/grill-to-pr-loop",
+        "PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 skills/grill-to-pr-loop/scripts/check_prereqs.py --phase execution --json",
+        "PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/validate_input_packet.py knowledge/wiki/syntheses/grill-to-pr-loop-branch-policy-input-packet.json",
+        "PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/validate_execution_envelope.py knowledge/wiki/syntheses/grill-to-pr-loop-branch-policy-execution-envelope.json",
+        "PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/reconcile_git_state.py knowledge/wiki/syntheses/grill-to-pr-loop-branch-policy-execution-envelope.json --json"
+      ],
+      "write_scope": [
+        "path:skills/grill-to-pr-loop",
+        "path:skills/issue-implementation-loop",
+        "path:knowledge/wiki/syntheses/grill-to-pr-loop-branch-policy-spec.md",
+        "path:knowledge/wiki/syntheses/grill-to-pr-loop-branch-policy-issues.md",
+        "path:knowledge/wiki/syntheses/grill-to-pr-loop-branch-policy-input-packet.json",
+        "path:knowledge/wiki/syntheses/grill-to-pr-loop-branch-policy-execution-envelope.json",
+        "path:knowledge/index.md",
+        "path:knowledge/log.md"
+      ],
+      "dependencies": []
+    }
+  ],
+  "delivery_intent": "local_only"
+}

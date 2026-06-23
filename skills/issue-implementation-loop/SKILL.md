@@ -48,6 +48,7 @@ Do not load every reference by default.
 - Use the same parent coordinator for global state, blocker release, human requests, and final reporting.
 - Keep central runtime state out of tracked issue branches. Default to `$(git rev-parse --git-common-dir)/agent-runs/issue-implementation-loop/<epic-id>/`.
 - Reserve branch and worktree paths for every approved issue before execution. Create physical worktrees only when the issue is runnable.
+- Require every work item to declare `base_policy`; use an integration work item/branch instead of merging multiple blocker heads ad hoc.
 - Recompute runnable work after every event. A wave is a launch cohort, not a completion barrier.
 - Use `tdd` or an approved equivalent when implementation changes behavior, fixes bugs, refactors behavior-bearing code, or adds tests.
 - Keep workers inside their issue write scope. Workers and reviewers must not edit coordinator-owned runtime state, ledger, or envelope files unless the issue explicitly owns those files.

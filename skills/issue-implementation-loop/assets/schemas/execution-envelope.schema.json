@@ -35,7 +35,15 @@
           "branch": {"type": "string"},
           "worktree_path": {"type": "string"},
           "worktree_state": {"enum": ["reserved", "create_on_run", "active", "missing"]},
-          "base_policy": {"type": "object"},
+          "base_policy": {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+              "type": {"enum": ["epic_base", "blocker_head", "integration_head"]},
+              "issue": {"type": "string"},
+              "integration_issue": {"type": "string"}
+            }
+          },
           "write_scope": {"type": "array", "items": {"type": "string"}},
           "dependencies": {
             "type": "array",
