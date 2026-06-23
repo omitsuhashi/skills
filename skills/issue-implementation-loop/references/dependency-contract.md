@@ -2,17 +2,9 @@
 
 Represent dependency edges as `blocked issue -> required prerequisite`.
 
-```json
-{
-  "issue": "G2PR-001",
-  "strength": "hard",
-  "release_on": "review_approved",
-  "base_effect": "branch_from_blocker_head"
-}
-```
-
 ## Edge Fields
 
+- `issue`: prerequisite issue ID.
 - `strength`: `hard` or `soft`
 - `release_on`: `artifact_ready`, `review_approved`, `integrated`, `pr_opened`, `pr_merged`, `human_decision`, or `external_condition`
 - `base_effect`: `none`, `branch_from_blocker_head`, or `branch_from_integration_head`

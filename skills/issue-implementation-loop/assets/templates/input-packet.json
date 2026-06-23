@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "repo_root": "/abs/path/to/repo",
+  "epic_id": "issue-implementation-loop",
+  "artifact_root": "knowledge/wiki/syntheses/issue-implementation-loop",
+  "spec": {
+    "path": "knowledge/wiki/syntheses/spec.md",
+    "approved_revision": 1,
+    "approved_hash": "sha256:..."
+  },
+  "work_items": [
+    {
+      "id": "G2PR-001",
+      "title": "Short issue title",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/issues.md"
+      },
+      "acceptance_criteria": ["observable condition"],
+      "non_goals": ["excluded behavior"],
+      "verification": ["python3 -m unittest discover -s tests"],
+      "write_scope": ["path:skills/example"],
+      "dependencies": []
+    }
+  ],
+  "delivery_intent": "local_only"
+}

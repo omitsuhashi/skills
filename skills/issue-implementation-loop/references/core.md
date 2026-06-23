@@ -14,32 +14,12 @@ Workers own only their assigned issue worktree, branch, write scope, and verific
 
 Normalize local or remote issues before execution:
 
-```json
-{
-  "schema_version": 1,
-  "repo_root": "/abs/path/to/repo",
-  "epic_id": "issue-implementation-loop",
-  "artifact_root": "knowledge/wiki/syntheses/issue-implementation-loop",
-  "spec": {
-    "path": "knowledge/wiki/syntheses/spec.md",
-    "approved_revision": 1,
-    "approved_hash": "sha256:..."
-  },
-  "work_items": [
-    {
-      "id": "G2PR-001",
-      "title": "短い日本語タイトル",
-      "source": {"type": "local", "path": "knowledge/wiki/syntheses/issues.md"},
-      "acceptance_criteria": ["observable condition"],
-      "non_goals": ["excluded behavior"],
-      "verification": ["python3 -m unittest discover -s tests"],
-      "write_scope": ["path:skills/example"],
-      "dependencies": []
-    }
-  ],
-  "delivery_intent": "local_only"
-}
-```
+- `schema_version`, `repo_root`, `epic_id`, optional `artifact_root`
+- `spec.path`, plus approved revision/hash when available
+- `work_items[]` with ID, title, source, acceptance criteria, non-goals, verification, write scope, and dependencies
+- `delivery_intent`
+
+Use `assets/templates/input-packet.json` for the concrete shape and `assets/schemas/input-packet.schema.json` for the field contract.
 
 Validate with:
 
@@ -51,29 +31,11 @@ python3 <skill-dir>/scripts/validate_input_packet.py <packet.json>
 
 Return a local execution result:
 
-```json
-{
-  "schema_version": 1,
-  "epic_id": "issue-implementation-loop",
-  "status": "local_complete",
-  "envelope_revision": 1,
-  "issues": {
-    "G2PR-001": {
-      "status": "PR_READY",
-      "branch": "codex/issue-implementation-loop/G2PR-001-example",
-      "worktree": "/abs/worktree",
-      "base_sha": "abc123",
-      "head_sha": "def456",
-      "verification": "passed",
-      "implementation_review": "approved",
-      "residual_risks": []
-    }
-  },
-  "pending_human_requests": [],
-  "delivery_candidates": ["G2PR-001"],
-  "runtime_state_root": "/repo/.git/agent-runs/issue-implementation-loop/issue-implementation-loop"
-}
-```
+- `schema_version`, `epic_id`, `status`, and `envelope_revision`
+- per-issue status, branch, worktree, base/head SHA, verification, implementation review, and residual risks
+- `pending_human_requests`, `delivery_candidates`, and `runtime_state_root`
+
+Use `assets/templates/execution-result.json` for the concrete shape.
 
 ## Non-Goals
 

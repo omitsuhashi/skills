@@ -80,36 +80,14 @@ Load `issue-implementation-loop` for those execution responsibilities.
 
 ## Normalized Execution Packet
 
-Build this packet for `issue-implementation-loop`:
+Build a normalized input packet file for `issue-implementation-loop`; do not paste the packet body into the prompt when a file can hold it. Include:
 
-```json
-{
-  "schema_version": 1,
-  "repo_root": "/abs/path/to/repo",
-  "epic_id": "issue-implementation-loop",
-  "artifact_root": "knowledge/wiki/syntheses",
-  "spec": {
-    "path": "knowledge/wiki/syntheses/spec.md",
-    "approved_revision": 1,
-    "approved_hash": "sha256:..."
-  },
-  "work_items": [
-    {
-      "id": "G2PR-001",
-      "title": "日本語のIssueタイトル",
-      "source": {"type": "local", "path": "knowledge/wiki/syntheses/issues.md"},
-      "acceptance_criteria": ["observable condition"],
-      "non_goals": ["excluded behavior"],
-      "verification": ["python3 -m unittest discover -s tests"],
-      "write_scope": ["path:skills/example"],
-      "dependencies": []
-    }
-  ],
-  "delivery_intent": "local_only"
-}
-```
+- `schema_version`, `repo_root`, `epic_id`, optional `artifact_root`
+- `spec.path`, plus approved revision/hash when available
+- `work_items[]` with ID, title, source, acceptance criteria, non-goals, verification, write scope, and dependencies
+- `delivery_intent`
 
-Validate it through `issue-implementation-loop/scripts/validate_input_packet.py` before execution.
+Use `issue-implementation-loop/assets/templates/input-packet.json` for the concrete shape and `issue-implementation-loop/assets/schemas/input-packet.schema.json` for the field contract. Validate it through `issue-implementation-loop/scripts/validate_input_packet.py` before execution.
 
 ## Stop Conditions
 
