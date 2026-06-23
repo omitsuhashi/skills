@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import re
 import subprocess
 import sys
 import tempfile
@@ -9,7 +10,11 @@ import unittest
 
 
 SKILL_DIR = Path(__file__).resolve().parents[1]
+SKILL_FILE = SKILL_DIR / "SKILL.md"
 SCRIPTS_DIR = SKILL_DIR / "scripts"
+BASE_SHA = "0123456789abcdef0123456789abcdef01234567"
+HEAD_SHA = "89abcdef0123456789abcdef0123456789abcdef"
+REVIEW_RANGE = f"{BASE_SHA}..{HEAD_SHA}"
 
 
 def run_script(script_name: str, *args: str) -> subprocess.CompletedProcess[str]:
@@ -30,7 +35,7 @@ def base_envelope() -> dict:
         "schema_version": 1,
         "epic_id": "issue-implementation-loop",
         "revision": 1,
-        "epic_base": {"ref": "main", "sha": "0123456789abcdef"},
+        "epic_base": {"ref": "main", "sha": BASE_SHA},
         "execution_policy": {
             "parallel_preferred": True,
             "serial_fallback_preapproved": True,
@@ -48,6 +53,13 @@ def base_envelope() -> dict:
         "human_policy": {
             "default_scope": "issue",
             "epic_scope_requires_reason": True,
+        },
+        "context_policy": {
+            "paths_first": True,
+            "max_worker_packet_words": 450,
+            "max_worker_report_words": 350,
+            "include_full_spec_text": False,
+            "include_full_ledger_text": False,
         },
         "remote_write_policy": {"mode": "local_only", "approved_actions": []},
         "work_items": {
@@ -90,6 +102,77 @@ def base_envelope() -> dict:
 
 
 class IssueImplementationLoopTests(unittest.TestCase):
+    def test_skill_entrypoint_is_bounded_and_trigger_only(self) -> None:
+        text = SKILL_FILE.read_text(encoding="utf-8")
+        description = re.search(r"^description: (.+)$", text, re.MULTILINE)
+
+        self.assertIsNotNone(description)
+        self.assertEqual(
+            description.group(1),
+            "Use when implementing approved repository issues after spec, acceptance criteria, and issue decomposition are approved.",
+        )
+        self.assertLessEqual(len(re.findall(r"\S+", text)), 520)
+
+    def test_skill_entrypoint_names_session_and_worker_semantics(self) -> None:
+        text = SKILL_FILE.read_text(encoding="utf-8")
+
+        for required in (
+            "same parent coordinator session",
+            "Do not create user-owned Codex threads",
+            "serial fallback",
+        ):
+            self.assertIn(required, text)
+
+    def test_validate_execution_envelope_requires_context_policy(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            envelope = base_envelope()
+            del envelope["context_policy"]
+            path = Path(tmp) / "missing-context-policy.json"
+            write_json(path, envelope)
+
+            result = run_script("validate_execution_envelope.py", str(path))
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("context_policy", result.stderr)
+
+    def test_validate_execution_envelope_rejects_invalid_context_policy(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cases = [
+                ("paths_first", {"paths_first": False}, "paths_first"),
+                ("packet_budget", {"max_worker_packet_words": 0}, "max_worker_packet_words"),
+                ("report_budget", {"max_worker_report_words": 0}, "max_worker_report_words"),
+                ("full_spec", {"include_full_spec_text": True}, "include_full_spec_text"),
+                ("full_ledger", {"include_full_ledger_text": True}, "include_full_ledger_text"),
+            ]
+            for name, patch, expected in cases:
+                envelope = base_envelope()
+                envelope["context_policy"].update(patch)
+                path = Path(tmp) / f"{name}.json"
+                write_json(path, envelope)
+
+                result = run_script("validate_execution_envelope.py", str(path))
+
+                self.assertNotEqual(result.returncode, 0, name)
+                self.assertIn(expected, result.stderr)
+
+    def test_validate_execution_envelope_rejects_invalid_epic_base(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cases = [
+                ("missing_ref", {"sha": BASE_SHA}, "epic_base.ref"),
+                ("missing_sha", {"ref": "main"}, "epic_base.sha"),
+                ("short_sha", {"ref": "main", "sha": "0123456789abcdef"}, "epic_base.sha"),
+            ]
+            for name, epic_base, expected in cases:
+                envelope = base_envelope()
+                envelope["epic_base"] = epic_base
+                path = Path(tmp) / f"{name}.json"
+                write_json(path, envelope)
+
+                result = run_script("validate_execution_envelope.py", str(path))
+
+                self.assertNotEqual(result.returncode, 0, name)
+                self.assertIn(expected, result.stderr)
+
     def test_validate_execution_envelope_rejects_cycles(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             envelope = base_envelope()
@@ -109,6 +192,136 @@ class IssueImplementationLoopTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("cycle", result.stderr.lower())
 
+    def test_validate_execution_envelope_rejects_multiple_blocker_heads_without_integration(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            envelope = base_envelope()
+            envelope["work_items"]["G2PR-003"]["base_policy"] = {
+                "type": "blocker_head",
+                "issue": "G2PR-001",
+            }
+            envelope["work_items"]["G2PR-003"]["dependencies"] = [
+                {
+                    "issue": "G2PR-001",
+                    "strength": "hard",
+                    "release_on": "review_approved",
+                    "base_effect": "branch_from_blocker_head",
+                },
+                {
+                    "issue": "G2PR-002",
+                    "strength": "hard",
+                    "release_on": "review_approved",
+                    "base_effect": "branch_from_blocker_head",
+                },
+            ]
+            path = Path(tmp) / "envelope.json"
+            write_json(path, envelope)
+
+            result = run_script("validate_execution_envelope.py", str(path))
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("multiple blocker heads", result.stderr.lower())
+
+    def test_validate_execution_envelope_requires_integration_base_policy_for_integration_head(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            envelope = base_envelope()
+            envelope["work_items"]["G2PR-003"]["base_policy"] = {"type": "epic_base"}
+            envelope["work_items"]["G2PR-003"]["dependencies"] = [
+                {
+                    "issue": "G2PR-001",
+                    "strength": "hard",
+                    "release_on": "integrated",
+                    "base_effect": "branch_from_integration_head",
+                }
+            ]
+            path = Path(tmp) / "envelope.json"
+            write_json(path, envelope)
+
+            result = run_script("validate_execution_envelope.py", str(path))
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("integration_head", result.stderr)
+
+    def test_validate_execution_envelope_rejects_multiple_integration_heads(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            envelope = base_envelope()
+            envelope["work_items"]["G2PR-003"]["base_policy"] = {
+                "type": "integration_head",
+                "integration_issue": "G2PR-001",
+            }
+            envelope["work_items"]["G2PR-003"]["dependencies"] = [
+                {
+                    "issue": "G2PR-001",
+                    "strength": "hard",
+                    "release_on": "integrated",
+                    "base_effect": "branch_from_integration_head",
+                },
+                {
+                    "issue": "G2PR-002",
+                    "strength": "hard",
+                    "release_on": "integrated",
+                    "base_effect": "branch_from_integration_head",
+                },
+            ]
+            path = Path(tmp) / "envelope.json"
+            write_json(path, envelope)
+
+            result = run_script("validate_execution_envelope.py", str(path))
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("multiple integration heads", result.stderr.lower())
+
+    def test_validate_runtime_state_requires_committed_review_range_for_success_statuses(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            for status in ("PR_READY", "COMPLETE", "DONE"):
+                runtime_path = Path(tmp) / f"{status}.json"
+                write_json(
+                    runtime_path,
+                    {
+                        "schema_version": 1,
+                        "epic_id": "issue-implementation-loop",
+                        "envelope_revision": 1,
+                        "issues": {
+                            "G2PR-001": {
+                                "status": status,
+                                "review": {"status": "approved"},
+                            }
+                        },
+                        "human_requests": [],
+                    },
+                )
+
+                result = run_script("validate_runtime_state.py", str(runtime_path))
+
+                self.assertNotEqual(result.returncode, 0, status)
+                self.assertIn("review.range", result.stderr)
+
+    def test_validate_runtime_state_rejects_pr_ready_working_tree_review_range(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            runtime_path = Path(tmp) / "runtime.json"
+            write_json(
+                runtime_path,
+                {
+                    "schema_version": 1,
+                    "epic_id": "issue-implementation-loop",
+                    "envelope_revision": 1,
+                    "issues": {
+                        "G2PR-001": {
+                            "status": "PR_READY",
+                            "review": {
+                                "status": "approved",
+                                "range": f"{BASE_SHA}..working-tree",
+                            },
+                        }
+                    },
+                    "human_requests": [],
+                },
+            )
+
+            result = run_script("validate_runtime_state.py", str(runtime_path))
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("working-tree", result.stderr)
+
     def test_compute_next_actions_does_not_wait_for_wave_barrier(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             envelope_path = Path(tmp) / "envelope.json"
@@ -123,7 +336,10 @@ class IssueImplementationLoopTests(unittest.TestCase):
                     "issues": {
                         "G2PR-001": {
                             "status": "PR_READY",
-                            "review": {"status": "approved"},
+                            "review": {
+                                "status": "approved",
+                                "range": REVIEW_RANGE,
+                            },
                         },
                         "G2PR-002": {"status": "RUNNING"},
                         "G2PR-003": {"status": "PENDING"},

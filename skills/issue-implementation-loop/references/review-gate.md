@@ -28,4 +28,4 @@ Ignore general code quality, architecture, style, performance, refactor, or docu
 9. Rerun review until approved, retry budget is exhausted, or human accepts risk.
 10. Coordinator records review range, verdict, fixed findings, and residual risks.
 
-Manual fallback must be approved before use. PR review, CI checks, and later GitHub comments do not replace this gate.
+Manual fallback must be approved before use. PR review, CI checks, later GitHub comments, and uncommitted `working-tree` review ranges do not replace this gate.

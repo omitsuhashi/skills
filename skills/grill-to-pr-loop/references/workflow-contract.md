@@ -75,6 +75,33 @@ Build a blocker graph before execution planning:
 - Detect cycles before producing the normalized execution packet.
 - Do not hand blocked issues to execution as runnable work. Put dependencies in the packet and let `issue-implementation-loop` reserve them.
 
+## Branch / Base / Commit Policy
+
+Do not model the run as a mutable development main branch that receives ad hoc merges from issue branches. Model it as:
+
+1. Optional planning branch for workspace isolation.
+2. Immutable `epic_base.ref` + `epic_base.sha` in the Execution Envelope.
+3. One branch/worktree reservation per approved issue.
+4. Typed dependency edge plus work item `base_policy` when downstream code needs upstream code.
+5. Local `PR_READY` as the default terminal state until remote delivery is explicitly approved.
+
+Use branch names like `codex/<epic-id>/<local-id>-<slug>`. Blocked issues may reserve names and paths, but their physical worktrees stay absent until release.
+
+Base policies:
+
+- `epic_base`: branch from the immutable epic base.
+- `blocker_head`: branch from exactly one prerequisite issue head.
+- `integration_head`: branch from an approved integration work item / branch.
+
+Do not let a downstream worker merge multiple blocker heads. Add an integration work item when multiple prerequisite heads must be combined.
+
+Commit policy:
+
+- Run targeted verification and fresh final verification.
+- Create or update a scoped local commit before issue implementation review.
+- Review committed `BASE_SHA..HEAD_SHA`; do not use `working-tree` as the new PR-ready review head.
+- After fixes, rerun verification and update the commit/head before re-review.
+
 ## Gates
 
 ### Spec Gate
@@ -105,6 +132,7 @@ Build and present:
 - normalized input packet path
 - `issue-implementation-loop` capability preflight result
 - issue list, write scopes, dependencies, and delivery intent
+- `epic_base`, branch/worktree reservations, and base policies
 - reviewer capability and approved fallback policy
 - parallel/serial fallback policy
 - remote-write policy
@@ -170,5 +198,8 @@ Push, GitHub issue creation, PR creation, ready-for-review, merge, force push, d
 | Letting `to-prd` or `to-issues` publish remotely before the gate | Use them for local synthesis/review first. |
 | Creating GitHub issues or PRs without updating the ledger | Update the local ledger immediately. |
 | Starting execution without a validated input packet | Validate and present the Execution Plan Gate first. |
+| Treating a planning branch as the execution source of truth | Pin `epic_base` in the envelope and reserve issue branches/worktrees. |
+| Merging multiple blocker heads inside a downstream worker | Create an approved integration work item or integration branch. |
+| Marking an issue PR-ready from an uncommitted diff | Create/update a scoped local commit and review `BASE_SHA..HEAD_SHA`. |
 | Treating PR review as issue implementation review | Let `issue-implementation-loop` run the issue-scoped review gate before PR readiness. |
 | Treating PR creation as implicit | Get explicit approval first. |
