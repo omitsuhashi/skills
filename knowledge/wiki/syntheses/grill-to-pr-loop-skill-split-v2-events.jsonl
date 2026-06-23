@@ -1,0 +1,6 @@
+{"event_id":"E-001","epic_id":"issue-implementation-loop","envelope_revision":1,"type":"issue_status_changed","issue":"G2PR-001","status":"PR_READY"}
+{"event_id":"E-002","epic_id":"issue-implementation-loop","envelope_revision":1,"type":"review_status_changed","issue":"G2PR-001","status":"approved"}
+{"event_id":"E-003","epic_id":"issue-implementation-loop","envelope_revision":1,"type":"issue_status_changed","issue":"G2PR-002","status":"PR_READY"}
+{"event_id":"E-004","epic_id":"issue-implementation-loop","envelope_revision":1,"type":"review_status_changed","issue":"G2PR-002","status":"approved"}
+{"event_id":"E-005","epic_id":"issue-implementation-loop","envelope_revision":1,"type":"issue_status_changed","issue":"G2PR-003","status":"PR_READY"}
+{"event_id":"E-006","epic_id":"issue-implementation-loop","envelope_revision":1,"type":"review_status_changed","issue":"G2PR-003","status":"approved"}

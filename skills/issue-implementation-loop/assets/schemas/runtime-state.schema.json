@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Issue Implementation Loop Runtime State",
+  "type": "object",
+  "required": ["schema_version", "epic_id", "envelope_revision", "issues", "human_requests"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "epic_id": {"type": "string"},
+    "envelope_revision": {"type": "integer"},
+    "issues": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "status": {"type": "string"},
+          "review": {"type": "object"},
+          "signals": {"type": "array", "items": {"type": "string"}},
+          "branch": {"type": "string"},
+          "worktree": {"type": "string"},
+          "base_sha": {"type": "string"},
+          "head_sha": {"type": "string"}
+        }
+      }
+    },
+    "human_requests": {
+      "type": "array",
+      "items": {"$ref": "human-request.schema.json"}
+    }
+  }
+}

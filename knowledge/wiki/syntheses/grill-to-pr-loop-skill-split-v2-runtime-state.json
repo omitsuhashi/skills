@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "epic_id": "issue-implementation-loop",
+  "envelope_revision": 1,
+  "issues": {
+    "G2PR-001": {
+      "status": "PR_READY",
+      "review": {
+        "status": "approved"
+      }
+    },
+    "G2PR-002": {
+      "status": "PR_READY",
+      "review": {
+        "status": "approved"
+      }
+    },
+    "G2PR-003": {
+      "status": "PR_READY",
+      "review": {
+        "status": "approved"
+      }
+    }
+  },
+  "human_requests": []
+}

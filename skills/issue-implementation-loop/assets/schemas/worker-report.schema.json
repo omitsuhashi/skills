@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Issue Implementation Loop Worker Report",
+  "type": "object",
+  "required": ["epic_id", "issue_id", "branch", "worktree", "changed_files", "verification", "status"],
+  "properties": {
+    "epic_id": {"type": "string"},
+    "issue_id": {"type": "string"},
+    "branch": {"type": "string"},
+    "worktree": {"type": "string"},
+    "changed_files": {"type": "array", "items": {"type": "string"}},
+    "verification": {"type": "array", "items": {"type": "object"}},
+    "base_sha": {"type": "string"},
+    "head_sha": {"type": "string"},
+    "implementation_review": {"type": "object"},
+    "status": {"type": "string"},
+    "residual_risks": {"type": "array", "items": {"type": "string"}}
+  }
+}

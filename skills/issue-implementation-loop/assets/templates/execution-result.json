@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "epic_id": "issue-implementation-loop",
+  "status": "local_complete",
+  "envelope_revision": 1,
+  "issues": {
+    "G2PR-001": {
+      "status": "PR_READY",
+      "branch": "codex/issue-implementation-loop/G2PR-001-example",
+      "worktree": "/abs/worktree",
+      "base_sha": "abc123",
+      "head_sha": "def456",
+      "verification": "passed",
+      "implementation_review": "approved",
+      "residual_risks": []
+    }
+  },
+  "pending_human_requests": [],
+  "delivery_candidates": ["G2PR-001"],
+  "runtime_state_root": "/repo/.git/agent-runs/issue-implementation-loop/issue-implementation-loop"
+}

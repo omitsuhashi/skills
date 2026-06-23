@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "repo_root": "/Users/omitsuhashi/repos/omitsuhashi/skills",
+  "epic_id": "issue-implementation-loop",
+  "artifact_root": "knowledge/wiki/syntheses",
+  "spec": {
+    "path": "knowledge/wiki/syntheses/grill-to-pr-loop-skill-split-v2-spec.md",
+    "approved_revision": 1,
+    "approved_hash": "sha256:local-fixture"
+  },
+  "work_items": [
+    {
+      "id": "G2PR-001",
+      "title": "v2仕様をrepo wikiへ正本化する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/grill-to-pr-loop-skill-split-v2-issues.md"
+      },
+      "acceptance_criteria": [
+        "添付 v2 が knowledge/raw/sources/ に保存されている",
+        "source summary と implementation spec が relative Markdown link で接続されている",
+        "knowledge/index.md と knowledge/log.md から発見できる"
+      ],
+      "non_goals": [
+        "GitHub issue を作成しない"
+      ],
+      "verification": [
+        "rg -n \"grill-to-pr-loop-skill-split-v2|issue-implementation-loop\" knowledge/index.md knowledge/log.md knowledge/wiki"
+      ],
+      "write_scope": [
+        "path:knowledge"
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "G2PR-002",
+      "title": "`issue-implementation-loop` を追加する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/grill-to-pr-loop-skill-split-v2-issues.md"
+      },
+      "acceptance_criteria": [
+        "SKILL.md が direct invocation と mode router を説明している",
+        "references が selective read set で分割されている",
+        "schemas / templates / scripts が存在し stdlib だけで動く",
+        "pressure scenario を unittest で確認できる"
+      ],
+      "non_goals": [
+        "generic scheduler skill を作らない",
+        "remote write を自動化しない"
+      ],
+      "verification": [
+        "python3 -m unittest discover -s skills/issue-implementation-loop/tests",
+        "python3 /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_validate.py skills/issue-implementation-loop"
+      ],
+      "write_scope": [
+        "path:skills/issue-implementation-loop"
+      ],
+      "dependencies": [
+        {
+          "issue": "G2PR-001",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "none"
+        }
+      ]
+    },
+    {
+      "id": "G2PR-003",
+      "title": "`grill-to-pr-loop` をcompositionへ縮小する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/grill-to-pr-loop-skill-split-v2-issues.md"
+      },
+      "acceptance_criteria": [
+        "grill-to-pr-loop が worktree lifecycle / scheduler / runtime state を直接所有しない",
+        "execution phase で issue-implementation-loop を required として扱う",
+        "check_prereqs.py --phase execution --json が execution skill availability を報告する"
+      ],
+      "non_goals": [
+        "PR を作成しない"
+      ],
+      "verification": [
+        "python3 /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_validate.py skills/grill-to-pr-loop",
+        "python3 skills/grill-to-pr-loop/scripts/check_prereqs.py --phase execution --json"
+      ],
+      "write_scope": [
+        "path:skills/grill-to-pr-loop"
+      ],
+      "dependencies": [
+        {
+          "issue": "G2PR-002",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "none"
+        }
+      ]
+    }
+  ],
+  "delivery_intent": "local_only"
+}
