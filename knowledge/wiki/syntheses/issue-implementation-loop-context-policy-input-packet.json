@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "repo_root": "/Users/omitsuhashi/.codex/worktrees/1ce2/skills",
+  "epic_id": "issue-implementation-loop-context-policy",
+  "artifact_root": "knowledge/wiki/syntheses",
+  "spec": {
+    "path": "knowledge/wiki/syntheses/issue-implementation-loop-context-policy-spec.md",
+    "approved_revision": 1,
+    "approved_hash": "local-draft"
+  },
+  "work_items": [
+    {
+      "id": "G2PR-001",
+      "title": "context / session policy を契約化する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/issue-implementation-loop-context-policy-issues.md"
+      },
+      "acceptance_criteria": [
+        "SKILL.md の description が trigger-only で、workflow 要約語を含まない",
+        "SKILL.md 本体が 520 words 以下である",
+        "SKILL.md が同一 coordinator、ユーザー-owned thread 非作成、serial fallback を明記している",
+        "execution-envelope reference / schema / template が context_policy を持つ",
+        "validate_execution_envelope.py が context_policy 欠落と不正 budget を拒否する",
+        "worker-contract が durable paths-first packet と全文貼り付け禁止を説明している",
+        "既存の branch/base/commit policy tests が引き続き通る",
+        "skill validation が issue-implementation-loop を通す"
+      ],
+      "non_goals": [
+        "scheduler / runtime recovery の挙動変更",
+        "GitHub issue、push、PR、merge",
+        "worker を必ず parallel / subagent 実行する契約"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests",
+        "UV_CACHE_DIR=/private/tmp/uv-cache uv run --isolated --python 3.12 --with 'PyYAML==6.0.2' python /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_validate.py skills/issue-implementation-loop",
+        "PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 skills/grill-to-pr-loop/scripts/check_prereqs.py --phase execution --json",
+        "PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/validate_input_packet.py knowledge/wiki/syntheses/issue-implementation-loop-context-policy-input-packet.json"
+      ],
+      "write_scope": [
+        "path:skills/issue-implementation-loop",
+        "path:knowledge/wiki/syntheses/issue-implementation-loop-context-policy-spec.md",
+        "path:knowledge/wiki/syntheses/issue-implementation-loop-context-policy-issues.md",
+        "path:knowledge/wiki/syntheses/issue-implementation-loop-context-policy-input-packet.json",
+        "path:knowledge/index.md",
+        "path:knowledge/log.md"
+      ],
+      "dependencies": []
+    }
+  ],
+  "delivery_intent": "local_only"
+}

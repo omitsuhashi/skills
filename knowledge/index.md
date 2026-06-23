@@ -28,6 +28,10 @@ _現在なし。_
   検索語: grill-to-pr-loop, issue-implementation-loop, branch policy, worktree reservation, epic_base, scoped commit, integration branch, PR_READY, ブランチ, コミット
 - [Grill To PR Loop Branch Policy Issues](wiki/syntheses/grill-to-pr-loop-branch-policy-issues.md) — branch policy 実装のローカルIssue ledger。
   検索語: grill-to-pr-loop, branch policy, local issue, blocker graph, ローカルIssue, ブランチ運用
+- [Issue Implementation Loop Context Policy Spec](wiki/syntheses/issue-implementation-loop-context-policy-spec.md) — `issue-implementation-loop` の context/session policy と entrypoint budget を契約化する spec。
+  検索語: issue-implementation-loop, context policy, session semantics, worker packet, Execution Envelope, コンテキスト, セッション
+- [Issue Implementation Loop Context Policy Issues](wiki/syntheses/issue-implementation-loop-context-policy-issues.md) — context/session policy 実装のローカルIssue ledger。
+  検索語: issue-implementation-loop, context policy, local issue, blocker graph, ローカルIssue, コンテキスト
 - [Portfolio OS Install Review And Procedure](wiki/syntheses/portfolio-os-install-review-and-procedure.md) — `skills` repo に Portfolio OS 固有 runtime を混ぜないためのレビュー結果と導入手順。
 
 ## クエリ起点成果物

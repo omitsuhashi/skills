@@ -24,6 +24,13 @@
     "default_scope": "issue",
     "epic_scope_requires_reason": true
   },
+  "context_policy": {
+    "paths_first": true,
+    "max_worker_packet_words": 450,
+    "max_worker_report_words": 350,
+    "include_full_spec_text": false,
+    "include_full_ledger_text": false
+  },
   "remote_write_policy": {
     "mode": "local_only",
     "approved_actions": []

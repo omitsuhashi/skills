@@ -165,6 +165,23 @@ def validate_execution_envelope(envelope: dict[str, Any]) -> list[str]:
     if remote_policy.get("mode") not in REMOTE_MODES:
         errors.append(f"remote_write_policy.mode must be one of {sorted(REMOTE_MODES)}")
 
+    context_policy = envelope.get("context_policy")
+    if not isinstance(context_policy, dict):
+        errors.append("context_policy is required")
+    else:
+        if context_policy.get("paths_first") is not True:
+            errors.append("context_policy.paths_first must be true")
+        packet_words = context_policy.get("max_worker_packet_words")
+        if not isinstance(packet_words, int) or packet_words < 1:
+            errors.append("context_policy.max_worker_packet_words must be a positive integer")
+        report_words = context_policy.get("max_worker_report_words")
+        if not isinstance(report_words, int) or report_words < 1:
+            errors.append("context_policy.max_worker_report_words must be a positive integer")
+        if context_policy.get("include_full_spec_text") is not False:
+            errors.append("context_policy.include_full_spec_text must be false")
+        if context_policy.get("include_full_ledger_text") is not False:
+            errors.append("context_policy.include_full_ledger_text must be false")
+
     work_items = envelope.get("work_items")
     if not isinstance(work_items, dict) or not work_items:
         errors.append("work_items must be a non-empty object")

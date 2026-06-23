@@ -7,7 +7,7 @@ Give each worker a short packet:
 - branch and worktree path
 - exclusive write scope
 - spec, issue ledger, ADR/glossary paths
-- required behavior and acceptance criteria
+- short required behavior and acceptance criteria summary
 - verification commands
 - stop conditions
 - report format
@@ -15,6 +15,8 @@ Give each worker a short packet:
 ## Rules
 
 - Re-read assigned issue and spec from durable paths.
+- Keep the packet paths-first and within `context_policy.max_worker_packet_words`.
+- Do not paste full spec, ledger, ADR, glossary, or unrelated code into the worker packet unless the approved context policy explicitly allows it.
 - Stay inside write scope.
 - Do not edit coordinator-owned envelope, runtime snapshot, event log, or shared ledger unless explicitly assigned.
 - Use `tdd` or an approved equivalent for behavior changes.
@@ -34,3 +36,5 @@ Report:
 - fixed findings and accepted residual risks
 - PR readiness
 - new blockers or released blockers
+
+Keep normal reports within `context_policy.max_worker_report_words`; write bulky evidence to report files and cite paths.

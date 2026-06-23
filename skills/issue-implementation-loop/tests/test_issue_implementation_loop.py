@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import re
 import subprocess
 import sys
 import tempfile
@@ -9,6 +10,7 @@ import unittest
 
 
 SKILL_DIR = Path(__file__).resolve().parents[1]
+SKILL_FILE = SKILL_DIR / "SKILL.md"
 SCRIPTS_DIR = SKILL_DIR / "scripts"
 BASE_SHA = "0123456789abcdef0123456789abcdef01234567"
 HEAD_SHA = "89abcdef0123456789abcdef0123456789abcdef"
@@ -52,6 +54,13 @@ def base_envelope() -> dict:
             "default_scope": "issue",
             "epic_scope_requires_reason": True,
         },
+        "context_policy": {
+            "paths_first": True,
+            "max_worker_packet_words": 450,
+            "max_worker_report_words": 350,
+            "include_full_spec_text": False,
+            "include_full_ledger_text": False,
+        },
         "remote_write_policy": {"mode": "local_only", "approved_actions": []},
         "work_items": {
             "G2PR-001": {
@@ -93,6 +102,59 @@ def base_envelope() -> dict:
 
 
 class IssueImplementationLoopTests(unittest.TestCase):
+    def test_skill_entrypoint_is_bounded_and_trigger_only(self) -> None:
+        text = SKILL_FILE.read_text(encoding="utf-8")
+        description = re.search(r"^description: (.+)$", text, re.MULTILINE)
+
+        self.assertIsNotNone(description)
+        self.assertEqual(
+            description.group(1),
+            "Use when implementing approved repository issues after spec, acceptance criteria, and issue decomposition are approved.",
+        )
+        self.assertLessEqual(len(re.findall(r"\S+", text)), 520)
+
+    def test_skill_entrypoint_names_session_and_worker_semantics(self) -> None:
+        text = SKILL_FILE.read_text(encoding="utf-8")
+
+        for required in (
+            "same parent coordinator session",
+            "Do not create user-owned Codex threads",
+            "serial fallback",
+        ):
+            self.assertIn(required, text)
+
+    def test_validate_execution_envelope_requires_context_policy(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            envelope = base_envelope()
+            del envelope["context_policy"]
+            path = Path(tmp) / "missing-context-policy.json"
+            write_json(path, envelope)
+
+            result = run_script("validate_execution_envelope.py", str(path))
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("context_policy", result.stderr)
+
+    def test_validate_execution_envelope_rejects_invalid_context_policy(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cases = [
+                ("paths_first", {"paths_first": False}, "paths_first"),
+                ("packet_budget", {"max_worker_packet_words": 0}, "max_worker_packet_words"),
+                ("report_budget", {"max_worker_report_words": 0}, "max_worker_report_words"),
+                ("full_spec", {"include_full_spec_text": True}, "include_full_spec_text"),
+                ("full_ledger", {"include_full_ledger_text": True}, "include_full_ledger_text"),
+            ]
+            for name, patch, expected in cases:
+                envelope = base_envelope()
+                envelope["context_policy"].update(patch)
+                path = Path(tmp) / f"{name}.json"
+                write_json(path, envelope)
+
+                result = run_script("validate_execution_envelope.py", str(path))
+
+                self.assertNotEqual(result.returncode, 0, name)
+                self.assertIn(expected, result.stderr)
+
     def test_validate_execution_envelope_rejects_invalid_epic_base(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             cases = [
