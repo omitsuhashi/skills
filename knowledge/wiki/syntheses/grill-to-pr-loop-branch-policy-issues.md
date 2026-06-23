@@ -4,7 +4,7 @@
 
 | Epic ID | ローカルID | タイトル | レビュー状態 | 実行状態 | 実装結果 | ブロック元 | ブロック先 | GitHub Issue | 実装レビュー | PR |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| grill-to-pr-branch-policy | G2PR-001 | branch / worktree / commit policy を契約化する | 承認済み | 実行可能 | 実装済み | なし | なし | 未作成 | 未実施 | 未作成 |
+| grill-to-pr-branch-policy | G2PR-001 | branch / worktree / commit policy を契約化する | 承認済み | 実行可能 | 実装済み | なし | なし | 未作成 | 指摘対応中 | 未作成 |
 
 ## ブロッカーグラフ
 
@@ -29,10 +29,12 @@ branch / worktree / commit policy を契約化する
 - [x] `grill-to-pr-loop` が「開発メインブランチ」ではなく `epic_base` を実行契約の中心として説明している。
 - [x] issue branch naming、worktree reservation、blocked issue の physical worktree delay が明示されている。
 - [x] scoped local commit の順序が `fresh verification -> scoped local commit -> issue review -> fixes/re-review -> PR_READY` として明示されている。
+- [x] `epic_base.ref` / `epic_base.sha` の欠落または短縮 SHA を envelope validation が拒否する。
 - [x] envelope validation が `base_policy` type を検証する。
 - [x] `branch_from_blocker_head` を複数 blocker へ同時に使う envelope を拒否する。
+- [x] `branch_from_integration_head` を複数 integration head へ同時に使う envelope を拒否する。
 - [x] `branch_from_integration_head` を使う dependency が integration base policy と一致しない envelope を拒否する。
-- [x] `PR_READY` issue の review range に `working-tree` が明示された runtime state を拒否する。
+- [x] `PR_READY` / `COMPLETE` / `DONE` issue の review range 欠落または `working-tree` が明示された runtime state を拒否する。
 - [x] 既存の `issue-implementation-loop` テストと skill validation が通る。
 
 ### 非目標
@@ -65,7 +67,7 @@ branch / worktree / commit policy を契約化する
 
 ### 実装レビュー
 
-- 状態: 未実施
-- レビュー範囲: 未作成。subagent review はユーザーの明示承認が必要なため未実行。
-- レビュー結果: 未作成。local verification は通過済みだが、Issue Implementation Review Gate は未完了。
+- 状態: 指摘対応中
+- レビュー範囲: `main...codex/grill-to-pr-branch-policy/G2PR-001-branch-policy-contract`
+- レビュー結果: `epic_base` field validation、success terminal review range validation、複数 `branch_from_integration_head` rejection の不足を確認し、方針を grilling で確定して対応中。
 - PR: 未作成。remote write 未承認かつ今回の delivery intent は local-only。

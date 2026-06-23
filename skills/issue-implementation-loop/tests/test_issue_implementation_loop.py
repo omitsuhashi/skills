@@ -10,6 +10,9 @@ import unittest
 
 SKILL_DIR = Path(__file__).resolve().parents[1]
 SCRIPTS_DIR = SKILL_DIR / "scripts"
+BASE_SHA = "0123456789abcdef0123456789abcdef01234567"
+HEAD_SHA = "89abcdef0123456789abcdef0123456789abcdef"
+REVIEW_RANGE = f"{BASE_SHA}..{HEAD_SHA}"
 
 
 def run_script(script_name: str, *args: str) -> subprocess.CompletedProcess[str]:
@@ -30,7 +33,7 @@ def base_envelope() -> dict:
         "schema_version": 1,
         "epic_id": "issue-implementation-loop",
         "revision": 1,
-        "epic_base": {"ref": "main", "sha": "0123456789abcdef"},
+        "epic_base": {"ref": "main", "sha": BASE_SHA},
         "execution_policy": {
             "parallel_preferred": True,
             "serial_fallback_preapproved": True,
@@ -90,6 +93,24 @@ def base_envelope() -> dict:
 
 
 class IssueImplementationLoopTests(unittest.TestCase):
+    def test_validate_execution_envelope_rejects_invalid_epic_base(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cases = [
+                ("missing_ref", {"sha": BASE_SHA}, "epic_base.ref"),
+                ("missing_sha", {"ref": "main"}, "epic_base.sha"),
+                ("short_sha", {"ref": "main", "sha": "0123456789abcdef"}, "epic_base.sha"),
+            ]
+            for name, epic_base, expected in cases:
+                envelope = base_envelope()
+                envelope["epic_base"] = epic_base
+                path = Path(tmp) / f"{name}.json"
+                write_json(path, envelope)
+
+                result = run_script("validate_execution_envelope.py", str(path))
+
+                self.assertNotEqual(result.returncode, 0, name)
+                self.assertIn(expected, result.stderr)
+
     def test_validate_execution_envelope_rejects_cycles(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             envelope = base_envelope()
@@ -158,6 +179,60 @@ class IssueImplementationLoopTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("integration_head", result.stderr)
 
+    def test_validate_execution_envelope_rejects_multiple_integration_heads(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            envelope = base_envelope()
+            envelope["work_items"]["G2PR-003"]["base_policy"] = {
+                "type": "integration_head",
+                "integration_issue": "G2PR-001",
+            }
+            envelope["work_items"]["G2PR-003"]["dependencies"] = [
+                {
+                    "issue": "G2PR-001",
+                    "strength": "hard",
+                    "release_on": "integrated",
+                    "base_effect": "branch_from_integration_head",
+                },
+                {
+                    "issue": "G2PR-002",
+                    "strength": "hard",
+                    "release_on": "integrated",
+                    "base_effect": "branch_from_integration_head",
+                },
+            ]
+            path = Path(tmp) / "envelope.json"
+            write_json(path, envelope)
+
+            result = run_script("validate_execution_envelope.py", str(path))
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("multiple integration heads", result.stderr.lower())
+
+    def test_validate_runtime_state_requires_committed_review_range_for_success_statuses(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            for status in ("PR_READY", "COMPLETE", "DONE"):
+                runtime_path = Path(tmp) / f"{status}.json"
+                write_json(
+                    runtime_path,
+                    {
+                        "schema_version": 1,
+                        "epic_id": "issue-implementation-loop",
+                        "envelope_revision": 1,
+                        "issues": {
+                            "G2PR-001": {
+                                "status": status,
+                                "review": {"status": "approved"},
+                            }
+                        },
+                        "human_requests": [],
+                    },
+                )
+
+                result = run_script("validate_runtime_state.py", str(runtime_path))
+
+                self.assertNotEqual(result.returncode, 0, status)
+                self.assertIn("review.range", result.stderr)
+
     def test_validate_runtime_state_rejects_pr_ready_working_tree_review_range(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             runtime_path = Path(tmp) / "runtime.json"
@@ -172,7 +247,7 @@ class IssueImplementationLoopTests(unittest.TestCase):
                             "status": "PR_READY",
                             "review": {
                                 "status": "approved",
-                                "range": "0123456789abcdef..working-tree",
+                                "range": f"{BASE_SHA}..working-tree",
                             },
                         }
                     },
@@ -199,7 +274,10 @@ class IssueImplementationLoopTests(unittest.TestCase):
                     "issues": {
                         "G2PR-001": {
                             "status": "PR_READY",
-                            "review": {"status": "approved"},
+                            "review": {
+                                "status": "approved",
+                                "range": REVIEW_RANGE,
+                            },
                         },
                         "G2PR-002": {"status": "RUNNING"},
                         "G2PR-003": {"status": "PENDING"},

@@ -13,6 +13,11 @@ from typing import Any
 
 EPIC_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 ISSUE_RE = re.compile(r"^[A-Z0-9]+-[0-9]+$")
+FULL_SHA_RE = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$", re.IGNORECASE)
+COMMIT_RANGE_RE = re.compile(
+    r"^(?:[0-9a-f]{40}|[0-9a-f]{64})\.\.(?:[0-9a-f]{40}|[0-9a-f]{64})$",
+    re.IGNORECASE,
+)
 
 EDGE_STRENGTHS = {"hard", "soft"}
 RELEASE_ON = {
@@ -31,6 +36,7 @@ REMOTE_MODES = {"local_only", "per_action", "batch_draft_prs"}
 
 ACTIVE_STATUSES = {"RUNNING", "FIXING"}
 TERMINAL_STATUSES = {"PR_READY", "COMPLETE", "DONE", "FAILED", "CANCELLED"}
+SUCCESS_STATUSES = {"PR_READY", "COMPLETE", "DONE"}
 REVIEWABLE_STATUSES = {"IMPLEMENTED", "VERIFICATION_PASSED"}
 WAITING_STATUSES = {"WAITING_HUMAN"}
 
@@ -58,6 +64,17 @@ def is_lower_kebab(value: str) -> bool:
 
 def is_issue_id(value: str) -> bool:
     return bool(ISSUE_RE.fullmatch(value))
+
+
+def is_full_commit_sha(value: str) -> bool:
+    return bool(FULL_SHA_RE.fullmatch(value)) and set(value.lower()) != {"0"}
+
+
+def is_commit_range(value: str) -> bool:
+    if not COMMIT_RANGE_RE.fullmatch(value):
+        return False
+    base, head = value.split("..", 1)
+    return is_full_commit_sha(base) and is_full_commit_sha(head)
 
 
 def validate_input_packet(packet: dict[str, Any]) -> list[str]:
@@ -133,8 +150,16 @@ def validate_execution_envelope(envelope: dict[str, Any]) -> list[str]:
     if not isinstance(envelope.get("revision"), int) or envelope.get("revision", 0) < 1:
         errors.append("revision must be a positive integer")
 
-    if not isinstance(envelope.get("epic_base"), dict):
+    epic_base = envelope.get("epic_base")
+    if not isinstance(epic_base, dict):
         errors.append("epic_base is required")
+    else:
+        epic_base_ref = epic_base.get("ref")
+        if not isinstance(epic_base_ref, str) or not epic_base_ref.strip():
+            errors.append("epic_base.ref must be a non-empty string")
+        epic_base_sha = epic_base.get("sha")
+        if not isinstance(epic_base_sha, str) or not is_full_commit_sha(epic_base_sha):
+            errors.append("epic_base.sha must be a full 40- or 64-character hex commit SHA")
 
     remote_policy = envelope.get("remote_write_policy", {})
     if remote_policy.get("mode") not in REMOTE_MODES:
@@ -232,6 +257,11 @@ def validate_execution_envelope(envelope: dict[str, Any]) -> list[str]:
             elif base_policy_type == "blocker_head":
                 errors.append(f"{prefix}.base_policy.type blocker_head requires branch_from_blocker_head dependency")
             if integration_head_deps:
+                if len(integration_head_deps) > 1:
+                    errors.append(
+                        f"{prefix} uses branch_from_integration_head with multiple integration heads; "
+                        "use one integration work item as the base and set other dependencies to base_effect none"
+                    )
                 if base_policy_type != "integration_head":
                     errors.append(f"{prefix}.base_policy.type must be integration_head")
                 elif base_policy.get("integration_issue") not in integration_head_deps:
@@ -265,9 +295,14 @@ def validate_runtime_state(state: dict[str, Any]) -> list[str]:
                 continue
             status = record.get("status")
             review = record.get("review", {})
-            if status in {"PR_READY", "COMPLETE", "DONE"} and isinstance(review, dict):
+            if status in SUCCESS_STATUSES and not isinstance(review, dict):
+                errors.append(
+                    f"issues.{issue_id}.review.range must use committed BASE_SHA..HEAD_SHA"
+                )
+                continue
+            if status in SUCCESS_STATUSES and isinstance(review, dict):
                 review_range = review.get("range") or review.get("review_range")
-                if isinstance(review_range, str) and "working-tree" in review_range:
+                if not isinstance(review_range, str) or not is_commit_range(review_range):
                     errors.append(
                         f"issues.{issue_id}.review.range must use committed BASE_SHA..HEAD_SHA, not working-tree"
                     )

@@ -13,13 +13,14 @@
 ## 受け入れた判断
 
 - planning 用 branch は任意。実行契約上の親は mutable branch ではなく `epic_base.ref` + `epic_base.sha`。
+- `epic_base.sha` は full 40/64-character hex SHA として契約検証し、Git object の実在確認は git state reconciliation に分離する。
 - issue branch は `codex/<epic-id>/<local-id>-<slug>` を基本形にする。
 - approved issue は 1 issue につき 1 branch / worktree reservation を持つ。
 - blocked issue は branch / path を予約できるが、物理 worktree は release まで作らない。
 - downstream が前段の code を必要とする場合は、merge ではなく dependency edge の `base_effect` と work item の `base_policy` で表現する。
 - 複数 blocker head を downstream worker が任意 merge してはならない。必要な場合は integration work item / integration branch を明示的に作る。
 - issue 完了、blocker release、PR readiness の前に、fresh verification 後の scoped local commit を作り、`BASE_SHA..HEAD_SHA` を review range として記録する。
-- `working-tree` を review range とする状態は移行期の記録としてはあり得るが、新規 `PR_READY` の推奨状態にはしない。
+- `PR_READY` / `COMPLETE` / `DONE` は committed `BASE_SHA..HEAD_SHA` review range を必須にし、`working-tree` や欠落 range は拒否する。
 - remote push / GitHub issue / PR / merge は引き続き明示承認が必要。
 
 ## 実装範囲
@@ -43,10 +44,12 @@
 - `grill-to-pr-loop` が「開発メインブランチ」ではなく `epic_base` を実行契約の中心として説明している。
 - issue branch naming、worktree reservation、blocked issue の physical worktree delay が明示されている。
 - scoped local commit の順序が `fresh verification -> scoped local commit -> issue review -> fixes/re-review -> PR_READY` として明示されている。
+- `epic_base.ref` / `epic_base.sha` の欠落または短縮 SHA を envelope validation が拒否する。
 - `issue-implementation-loop` の envelope validation が `base_policy` type を検証する。
 - `branch_from_blocker_head` を複数 blocker へ同時に使う envelope を拒否する。
+- `branch_from_integration_head` を複数 integration head へ同時に使う envelope を拒否する。
 - `branch_from_integration_head` を使う dependency が integration base policy と一致しない envelope を拒否する。
-- `PR_READY` issue の review range に `working-tree` が明示された runtime state を拒否する。
+- `PR_READY` / `COMPLETE` / `DONE` issue の review range 欠落または `working-tree` が明示された runtime state を拒否する。
 - 既存の `issue-implementation-loop` テストと skill validation が通る。
 
 ## 検証コマンド

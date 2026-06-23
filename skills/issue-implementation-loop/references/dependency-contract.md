@@ -16,6 +16,6 @@ Represent dependency edges as `blocked issue -> required prerequisite`.
 - `release_on` must be observable from a coordinator event or runtime state.
 - `base_effect` must describe whether downstream branch creation needs blocker code.
 - `branch_from_blocker_head` is valid for exactly one prerequisite head and must match the work item's `base_policy.type: blocker_head`.
-- `branch_from_integration_head` must point at the approved integration work item and must match `base_policy.type: integration_head`.
+- `branch_from_integration_head` is valid for exactly one prerequisite head and must match `base_policy.type: integration_head`.
 - Do not let downstream workers merge multiple blocker heads ad hoc. Use an approved integration work item or integration branch.
 - Release descendants immediately after the release condition is observed; do not wait for unrelated wave siblings.

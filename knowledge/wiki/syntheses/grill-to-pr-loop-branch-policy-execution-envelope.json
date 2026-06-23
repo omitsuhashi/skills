@@ -33,7 +33,7 @@
   "work_items": {
     "G2PR-001": {
       "branch": "codex/grill-to-pr-branch-policy/G2PR-001-branch-policy-contract",
-      "worktree_path": "/Users/omitsuhashi/repos/omitsuhashi/skills",
+      "worktree_path": "/Users/omitsuhashi/.codex/worktrees/1ce2/skills",
       "worktree_state": "active",
       "base_policy": {
         "type": "epic_base"
