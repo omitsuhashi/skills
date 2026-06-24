@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import importlib.util
-import os
 import json
 from pathlib import Path
 import re
@@ -9,13 +7,11 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from unittest import mock
 
 
 SKILL_DIR = Path(__file__).resolve().parents[1]
 SKILL_FILE = SKILL_DIR / "SKILL.md"
 SCRIPTS_DIR = SKILL_DIR / "scripts"
-COMMON_SCRIPT = SCRIPTS_DIR / "_common.py"
 ENVELOPE_SCHEMA_FILE = SKILL_DIR / "assets" / "schemas" / "execution-envelope.schema.json"
 BASE_SHA = "0123456789abcdef0123456789abcdef01234567"
 HEAD_SHA = "89abcdef0123456789abcdef0123456789abcdef"
@@ -33,14 +29,6 @@ def run_script(script_name: str, *args: str) -> subprocess.CompletedProcess[str]
 
 def write_json(path: Path, value: object) -> None:
     path.write_text(json.dumps(value, indent=2), encoding="utf-8")
-
-
-def load_common_module():
-    spec = importlib.util.spec_from_file_location("issue_loop_common_under_test", COMMON_SCRIPT)
-    assert spec and spec.loader
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
 
 
 def base_envelope() -> dict:
@@ -205,35 +193,6 @@ class IssueImplementationLoopTests(unittest.TestCase):
             "bounded worker-context jobs",
         ):
             self.assertIn(required, text)
-
-    def test_skill_roots_prefers_repo_local_over_global(self) -> None:
-        common = load_common_module()
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            repo = root / "repo"
-            home = root / "home"
-            local_skill = repo / "skills" / "example" / "SKILL.md"
-            global_skill = home / ".agents" / "skills" / "example" / "SKILL.md"
-            local_skill.parent.mkdir(parents=True)
-            global_skill.parent.mkdir(parents=True)
-            local_skill.write_text("---\nname: example\ndescription: local\n---\n", encoding="utf-8")
-            global_skill.write_text("---\nname: example\ndescription: global\n---\n", encoding="utf-8")
-
-            previous_cwd = Path.cwd()
-            try:
-                os.chdir(repo)
-                with mock.patch.object(common.Path, "home", return_value=home):
-                    roots = common.skill_roots()
-                    found = common.find_skill("example")
-            finally:
-                os.chdir(previous_cwd)
-
-        self.assertEqual(roots[:3], [
-            repo.resolve() / "skills",
-            repo.resolve() / ".agents" / "skills",
-            repo.resolve() / "agents" / "skills",
-        ])
-        self.assertEqual(found, str(local_skill.resolve()))
 
     def test_validate_execution_envelope_requires_context_policy(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
