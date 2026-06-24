@@ -7,7 +7,7 @@ The Execution Envelope is the approved execution contract. It is more specific t
 - `schema_version`: `1`
 - `epic_id`: lower-kebab-case ASCII
 - `revision`: positive integer
-- `epic_base`: per-epic base branch ref `codex/<epic-id>/epic-base` and immutable initial full 40- or 64-character hex SHA
+- `epic_base`: per-epic base branch ref, immutable initial full 40- or 64-character hex SHA, and `branch_state` for `batch_issue_prs`
 - `execution_policy`: parallel preference, serial fallback, slots, `wave_is_barrier`, and worker-context boundary
 - `review_policy`: primary reviewer, fallbacks, manual fallback, `max_review_cycles: 2`, and fix-cycle limits
 - `human_policy`: default scope and epic-scope reason requirement
@@ -32,6 +32,8 @@ Serial fallback means worker jobs run one at a time. It does not authorize coord
 ## Reservation Rules
 
 - Reserve branch and worktree path for every approved issue before execution.
+- For `batch_issue_prs`, record `epic_base.branch_state` and reconcile the epic base branch before delivery.
+- `epic_base.worktree_path` is optional; when present it must be an absolute path and is reconciled like a branch resource, not an issue work item.
 - Do not silently add suffixes to avoid collisions.
 - A blocked issue may have a reserved branch/path, but its physical worktree stays absent until release.
 - Dependent worktree state should normally be `reserved`.
@@ -71,6 +73,8 @@ Required shape:
 ```
 
 For this mode, `epic_base.ref` must be `codex/<epic-id>/epic-base`. Issue PR merges may be agent-run only while checks, review, permissions, and mergeability are unambiguous. Final PR merge is always human-only.
+
+`epic_base.branch_state` must be one of `reserved`, `create_on_run`, `active`, or `missing`. Treat a missing `epic_base.ref` branch as a reconciliation failure before final PR delivery.
 
 ## Context Policy
 

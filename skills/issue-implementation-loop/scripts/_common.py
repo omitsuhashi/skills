@@ -205,6 +205,15 @@ def validate_execution_envelope(envelope: dict[str, Any]) -> list[str]:
         epic_base_sha = epic_base.get("sha")
         if not isinstance(epic_base_sha, str) or not is_full_commit_sha(epic_base_sha):
             errors.append("epic_base.sha must be a full 40- or 64-character hex commit SHA")
+        epic_base_branch_state = epic_base.get("branch_state")
+        if epic_base_branch_state is not None and epic_base_branch_state not in WORKTREE_STATES:
+            errors.append(f"epic_base.branch_state must be one of {sorted(WORKTREE_STATES)}")
+        epic_base_worktree_path = epic_base.get("worktree_path")
+        if epic_base_worktree_path is not None and (
+            not isinstance(epic_base_worktree_path, str)
+            or not os.path.isabs(epic_base_worktree_path)
+        ):
+            errors.append("epic_base.worktree_path must be an absolute path when provided")
 
     review_policy = envelope.get("review_policy")
     if not isinstance(review_policy, dict):
@@ -235,6 +244,10 @@ def validate_execution_envelope(envelope: dict[str, Any]) -> list[str]:
             expected_epic_base_ref = f"codex/{epic_id}/epic-base" if isinstance(epic_id, str) else None
             if isinstance(epic_base, dict) and epic_base.get("ref") != expected_epic_base_ref:
                 errors.append(f"epic_base.ref must be {expected_epic_base_ref} for batch_issue_prs")
+            if isinstance(epic_base, dict) and epic_base.get("branch_state") not in WORKTREE_STATES:
+                errors.append(
+                    f"epic_base.branch_state must be one of {sorted(WORKTREE_STATES)} for batch_issue_prs"
+                )
             issue_prs = remote_policy.get("issue_prs")
             if not isinstance(issue_prs, dict):
                 errors.append("remote_write_policy.issue_prs is required for batch_issue_prs")

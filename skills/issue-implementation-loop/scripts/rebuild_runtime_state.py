@@ -39,6 +39,24 @@ def apply_event(state: dict[str, Any], event: dict[str, Any]) -> None:
         review_range = event.get("range") or event.get("review_range")
         if isinstance(review_range, str):
             review["range"] = review_range
+    elif event_type == "pr_created" and isinstance(issue, str):
+        record = state["issues"].setdefault(issue, {})
+        copy_issue_metadata(record, event)
+        pr = event.get("pr")
+        if isinstance(pr, str):
+            record["pr"] = pr
+        record["pr_opened"] = True
+    elif event_type == "pr_merged" and isinstance(issue, str):
+        record = state["issues"].setdefault(issue, {})
+        copy_issue_metadata(record, event)
+        pr = event.get("pr")
+        if isinstance(pr, str):
+            record["pr"] = pr
+        merge_commit = event.get("merge_commit")
+        if isinstance(merge_commit, str):
+            record["merge_commit"] = merge_commit
+        record["pr_opened"] = True
+        record["pr_merged"] = True
     elif event_type == "signal_recorded" and isinstance(issue, str):
         record = state["issues"].setdefault(issue, {})
         signals = record.setdefault("signals", [])

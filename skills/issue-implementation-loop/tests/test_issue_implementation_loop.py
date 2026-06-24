@@ -303,6 +303,7 @@ class IssueImplementationLoopTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             envelope = base_envelope()
             envelope["epic_base"]["ref"] = "codex/issue-implementation-loop/epic-base"
+            envelope["epic_base"]["branch_state"] = "reserved"
             envelope["remote_write_policy"] = {
                 "mode": "batch_issue_prs",
                 "approved_actions": [],
@@ -322,6 +323,58 @@ class IssueImplementationLoopTests(unittest.TestCase):
             result = run_script("validate_execution_envelope.py", str(path))
 
             self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_validate_execution_envelope_requires_epic_base_branch_state_for_batch_issue_prs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            envelope = base_envelope()
+            envelope["epic_base"]["ref"] = "codex/issue-implementation-loop/epic-base"
+            envelope["remote_write_policy"] = {
+                "mode": "batch_issue_prs",
+                "approved_actions": [],
+                "issue_prs": {
+                    "base": "epic_base.ref",
+                    "merge": "agent_default_with_human_escalation",
+                },
+                "final_pr": {
+                    "head": "epic_base.ref",
+                    "base": "main",
+                    "merge": "human_only",
+                },
+            }
+            path = Path(tmp) / "envelope.json"
+            write_json(path, envelope)
+
+            result = run_script("validate_execution_envelope.py", str(path))
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("epic_base.branch_state", result.stderr)
+
+    def test_validate_execution_envelope_rejects_relative_epic_base_worktree_path(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            envelope = base_envelope()
+            envelope["epic_base"]["ref"] = "codex/issue-implementation-loop/epic-base"
+            envelope["epic_base"]["branch_state"] = "reserved"
+            envelope["epic_base"]["worktree_path"] = "relative/worktree"
+            envelope["remote_write_policy"] = {
+                "mode": "batch_issue_prs",
+                "approved_actions": [],
+                "issue_prs": {
+                    "base": "epic_base.ref",
+                    "merge": "agent_default_with_human_escalation",
+                },
+                "final_pr": {
+                    "head": "epic_base.ref",
+                    "base": "main",
+                    "merge": "human_only",
+                },
+            }
+            path = Path(tmp) / "envelope.json"
+            write_json(path, envelope)
+
+            result = run_script("validate_execution_envelope.py", str(path))
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("epic_base.worktree_path", result.stderr)
 
     def test_validate_execution_envelope_rejects_batch_issue_prs_without_epic_base_branch(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -351,6 +404,7 @@ class IssueImplementationLoopTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             envelope = base_envelope()
             envelope["epic_base"]["ref"] = "codex/issue-implementation-loop/epic-base"
+            envelope["epic_base"]["branch_state"] = "reserved"
             envelope["remote_write_policy"] = {
                 "mode": "batch_issue_prs",
                 "approved_actions": [],
@@ -389,6 +443,17 @@ class IssueImplementationLoopTests(unittest.TestCase):
         self.assertEqual(
             remote_schema["properties"]["final_pr"]["required"],
             ["head", "base", "merge"],
+        )
+
+    def test_execution_envelope_schema_defines_epic_base_branch_lifecycle(self) -> None:
+        schema = json.loads(ENVELOPE_SCHEMA_FILE.read_text(encoding="utf-8"))
+        epic_base_schema = schema["properties"]["epic_base"]
+
+        self.assertIn("branch_state", epic_base_schema["properties"])
+        self.assertIn("worktree_path", epic_base_schema["properties"])
+        self.assertEqual(
+            epic_base_schema["properties"]["branch_state"]["enum"],
+            ["reserved", "create_on_run", "active", "missing"],
         )
 
     def test_validate_execution_envelope_rejects_cycles(self) -> None:
@@ -726,6 +791,93 @@ class IssueImplementationLoopTests(unittest.TestCase):
             self.assertEqual(issue["base_sha"], BASE_SHA)
             self.assertEqual(issue["head_sha"], HEAD_SHA)
             self.assertEqual(issue["review"]["range"], REVIEW_RANGE)
+
+    def test_rebuild_runtime_state_records_pr_created_and_merged_events(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            events_path = Path(tmp) / "events.jsonl"
+            events_path.write_text(
+                "\n".join(
+                    [
+                        json.dumps(
+                            {
+                                "event_id": "E-001",
+                                "epic_id": "issue-implementation-loop",
+                                "envelope_revision": 1,
+                                "type": "pr_created",
+                                "issue": "G2PR-001",
+                                "pr": "https://github.com/org/repo/pull/1",
+                            }
+                        ),
+                        json.dumps(
+                            {
+                                "event_id": "E-002",
+                                "epic_id": "issue-implementation-loop",
+                                "envelope_revision": 1,
+                                "type": "pr_merged",
+                                "issue": "G2PR-001",
+                                "pr": "https://github.com/org/repo/pull/1",
+                                "merge_commit": HEAD_SHA,
+                            }
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            result = run_script("rebuild_runtime_state.py", str(events_path))
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            issue = json.loads(result.stdout)["issues"]["G2PR-001"]
+            self.assertEqual(issue["pr"], "https://github.com/org/repo/pull/1")
+            self.assertTrue(issue["pr_opened"])
+            self.assertTrue(issue["pr_merged"])
+            self.assertEqual(issue["merge_commit"], HEAD_SHA)
+
+    def test_reconcile_git_state_reports_missing_epic_base_branch_for_batch_issue_prs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            repo.mkdir()
+            subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+            envelope = base_envelope()
+            envelope["epic_id"] = "missing-epic-base"
+            envelope["epic_base"] = {
+                "ref": "codex/missing-epic-base/epic-base",
+                "sha": BASE_SHA,
+                "branch_state": "reserved",
+            }
+            envelope["remote_write_policy"] = {
+                "mode": "batch_issue_prs",
+                "approved_actions": [],
+                "issue_prs": {
+                    "base": "epic_base.ref",
+                    "merge": "agent_default_with_human_escalation",
+                },
+                "final_pr": {
+                    "head": "epic_base.ref",
+                    "base": "main",
+                    "merge": "human_only",
+                },
+            }
+            envelope["work_items"]["G2PR-001"]["branch"] = "codex/missing-epic-base/G2PR-001-a"
+            envelope["work_items"]["G2PR-002"]["branch"] = "codex/missing-epic-base/G2PR-002-b"
+            envelope["work_items"]["G2PR-003"]["branch"] = "codex/missing-epic-base/G2PR-003-c"
+            envelope_path = Path(tmp) / "envelope.json"
+            write_json(envelope_path, envelope)
+
+            result = run_script(
+                "reconcile_git_state.py",
+                str(envelope_path),
+                "--repo",
+                str(repo),
+                "--json",
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            payload = json.loads(result.stdout)
+            self.assertFalse(payload["ok"])
+            self.assertFalse(payload["epic_base"]["branch_exists"])
+            self.assertEqual(payload["collisions"][0]["type"], "missing_epic_base_branch")
 
     def test_compute_next_actions_does_not_wait_for_wave_barrier(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

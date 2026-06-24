@@ -29,6 +29,8 @@ worker/reviewer report
 
 Worker branches must not include `runtime-state.json` or `events.jsonl` unless the approved issue explicitly owns coordinator-state tooling.
 
+`pr_created` events set `pr` and `pr_opened` on the issue record. `pr_merged` events set `pr`, `pr_opened`, `pr_merged`, and `merge_commit` when provided. Delivery decisions must read this state rather than inferring epic-base integration from local `PR_READY`.
+
 Validate snapshots with:
 
 ```bash

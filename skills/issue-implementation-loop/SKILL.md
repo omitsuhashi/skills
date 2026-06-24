@@ -41,7 +41,7 @@ Do not load every reference by default.
 - Require `execution_policy.worker_context_required=true`, `coordinator_may_implement=false`, and `serial_fallback_mode=worker_context_only`.
 - Keep coordinator runtime state out of tracked issue branches; default to `$(git rev-parse --git-common-dir)/agent-runs/issue-implementation-loop/<epic-id>/`.
 - Reserve branch/worktree paths for every approved issue before execution; create physical worktrees only when runnable.
-- Require `epic_base`, `base_policy`, and typed dependency edges; default `epic_base.ref` for PR delivery is `codex/<epic-id>/epic-base`.
+- Require `epic_base`, `base_policy`, and typed dependency edges; require `epic_base.branch_state` for `batch_issue_prs`.
 - Recompute runnable work after every event. A wave is a launch cohort, not a completion barrier.
 - Use `tdd` or an approved equivalent for behavior changes, bug fixes, behavior-bearing refactors, and tests.
 - Send workers bounded paths-first packets; do not paste full specs or ledgers when durable paths suffice.

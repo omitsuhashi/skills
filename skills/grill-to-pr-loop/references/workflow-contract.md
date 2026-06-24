@@ -80,7 +80,7 @@ Build a blocker graph before execution planning:
 Do not model the run as a shared mutable development main branch that receives ad hoc merges from issue branches. Model it as:
 
 1. Optional planning branch for workspace isolation.
-2. Per-epic `epic_base.ref` branch named `codex/<epic-id>/epic-base`, plus immutable initial `epic_base.sha` in the Execution Envelope.
+2. Per-epic `epic_base.ref` branch named `codex/<epic-id>/epic-base`, plus immutable initial `epic_base.sha` and delivery `branch_state` in the Execution Envelope.
 3. One branch/worktree reservation per approved issue.
 4. Typed dependency edge plus work item `base_policy` when downstream code needs upstream code.
 5. Local `PR_READY` as the implementation terminal state until remote delivery is explicitly approved.
@@ -190,7 +190,7 @@ For `batch_issue_prs`:
 - The agent may merge issue PRs when checks/review/mergeability pass and the approved policy says `agent_default_with_human_escalation`.
 - Escalate to the human for scope drift, spec ambiguity, failed checks, conflicts, unresolved review, missing permissions, or any uncertain judgment.
 - After every issue PR creation or merge, update the local ledger and runtime state before continuing.
-- After all issue PRs are merged, create the final PR from `epic_base.ref` to `main`.
+- After all issue PRs are merged and `epic_base.ref` reconciles as an existing branch, create the final PR from `epic_base.ref` to `main`.
 - Final PR merge is human-only.
 
 Include:

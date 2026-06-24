@@ -32,6 +32,7 @@ python3 <skill-dir>/scripts/validate_input_packet.py <packet.json>
 Return a local execution result:
 
 - `schema_version`, `epic_id`, `status`, and `envelope_revision`
+- epic base branch status when delivery mode uses `batch_issue_prs`
 - per-issue status, branch, worktree, base/head SHA, verification, implementation review, and residual risks
 - `pending_human_requests`, `delivery_candidates`, and `runtime_state_root`
 

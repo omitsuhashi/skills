@@ -6,6 +6,7 @@
 - Envelope:
 - Runtime state root:
 - Delivery mode:
+- Epic base:
 
 ## Issues
 

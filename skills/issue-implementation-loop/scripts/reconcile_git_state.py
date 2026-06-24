@@ -51,6 +51,39 @@ def main() -> int:
     branches = set(branch_result.stdout.splitlines())
     reservations = {}
     collisions = []
+    epic_base = envelope.get("epic_base", {})
+    epic_base_ref = epic_base.get("ref") if isinstance(epic_base, dict) else None
+    epic_base_path = epic_base.get("worktree_path") if isinstance(epic_base, dict) else None
+    epic_base_branch_exists = isinstance(epic_base_ref, str) and epic_base_ref in branches
+    epic_base_registered_record = registered.get(epic_base_path) if isinstance(epic_base_path, str) else None
+    epic_base_path_exists = Path(epic_base_path).exists() if isinstance(epic_base_path, str) else False
+    epic_base_path_registered = epic_base_registered_record is not None
+    epic_base_branch_registered = bool(
+        epic_base_registered_record and epic_base_registered_record.get("branch") == epic_base_ref
+    )
+    if envelope.get("remote_write_policy", {}).get("mode") == "batch_issue_prs" and not epic_base_branch_exists:
+        collisions.append(
+            {
+                "type": "missing_epic_base_branch",
+                "branch": epic_base_ref,
+            }
+        )
+    if epic_base_path_exists and not epic_base_path_registered:
+        collisions.append(
+            {
+                "type": "epic_base_filesystem_path",
+                "path": epic_base_path,
+            }
+        )
+    if epic_base_path_registered and not epic_base_branch_registered:
+        collisions.append(
+            {
+                "type": "epic_base_worktree_branch_mismatch",
+                "path": epic_base_path,
+                "branch": epic_base_ref,
+                "actual_branch": epic_base_registered_record.get("branch"),
+            }
+        )
     for issue_id, item in envelope["work_items"].items():
         path = item["worktree_path"]
         branch = item["branch"]
@@ -84,6 +117,15 @@ def main() -> int:
         "git_common_dir": common_dir_result.stdout.strip()
         if common_dir_result.returncode == 0
         else None,
+        "epic_base": {
+            "branch": epic_base_ref,
+            "branch_exists": epic_base_branch_exists,
+            "worktree_path": epic_base_path,
+            "path_exists": epic_base_path_exists,
+            "path_registered": epic_base_path_registered,
+            "branch_registered_at_path": epic_base_branch_registered,
+            "expected_state": epic_base.get("branch_state") if isinstance(epic_base, dict) else None,
+        },
         "reservations": reservations,
         "collisions": collisions,
     }

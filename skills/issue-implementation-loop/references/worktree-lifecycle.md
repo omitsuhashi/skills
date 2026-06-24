@@ -1,6 +1,6 @@
 # Worktree Lifecycle
 
-Use one branch/worktree reservation per approved issue. The coordinator owns creation and activation decisions.
+Use one branch/worktree reservation per approved issue. For `batch_issue_prs`, also track `epic_base` as a top-level delivery branch resource. The coordinator owns creation and activation decisions.
 
 ## States
 
@@ -8,6 +8,8 @@ Use one branch/worktree reservation per approved issue. The coordinator owns cre
 - `create_on_run`: create the worktree when dispatching the issue.
 - `active`: worktree exists and is assigned.
 - `missing`: expected worktree is absent during recovery.
+
+`epic_base` uses the same state names but is not an issue work item. It may omit `worktree_path` when no physical epic-base checkout is needed.
 
 ## Procedure
 
@@ -17,6 +19,8 @@ Use one branch/worktree reservation per approved issue. The coordinator owns cre
 4. Create physical worktrees only for runnable issues.
 5. Never reuse one active worktree for multiple concurrent issues.
 6. Do not reset, clean, delete, or move worktrees without explicit approval.
+
+For `batch_issue_prs`, do not create the final PR until `epic_base.ref` exists and issue PR merge state has been recorded.
 
 Use:
 

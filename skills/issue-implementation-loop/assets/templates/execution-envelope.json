@@ -4,7 +4,8 @@
   "revision": 1,
   "epic_base": {
     "ref": "codex/<epic-id>/epic-base",
-    "sha": "<initial-full-sha>"
+    "sha": "<initial-full-sha>",
+    "branch_state": "reserved"
   },
   "execution_policy": {
     "parallel_preferred": true,

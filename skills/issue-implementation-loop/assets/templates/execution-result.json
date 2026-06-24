@@ -3,6 +3,12 @@
   "epic_id": "issue-implementation-loop",
   "status": "local_complete",
   "envelope_revision": 1,
+  "epic_base": {
+    "branch": "codex/issue-implementation-loop/epic-base",
+    "initial_sha": "0123456789abcdef0123456789abcdef01234567",
+    "current_sha": "89abcdef0123456789abcdef0123456789abcdef",
+    "branch_exists": true
+  },
   "issues": {
     "G2PR-001": {
       "status": "PR_READY",
