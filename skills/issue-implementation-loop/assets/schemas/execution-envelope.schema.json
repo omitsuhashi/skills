@@ -16,7 +16,14 @@
       }
     },
     "execution_policy": {"type": "object"},
-    "review_policy": {"type": "object"},
+    "review_policy": {
+      "type": "object",
+      "required": ["max_review_cycles"],
+      "properties": {
+        "max_review_cycles": {"type": "integer", "minimum": 1, "maximum": 2},
+        "max_fix_cycles": {"type": "integer", "minimum": 0, "maximum": 2}
+      }
+    },
     "human_policy": {"type": "object"},
     "context_policy": {
       "type": "object",
@@ -33,9 +40,37 @@
       "type": "object",
       "required": ["mode", "approved_actions"],
       "properties": {
-        "mode": {"enum": ["local_only", "per_action", "batch_draft_prs"]},
-        "approved_actions": {"type": "array"}
-      }
+        "mode": {"enum": ["local_only", "per_action", "batch_draft_prs", "batch_issue_prs"]},
+        "approved_actions": {"type": "array"},
+        "issue_prs": {
+          "type": "object",
+          "required": ["base", "merge"],
+          "properties": {
+            "base": {"const": "epic_base.ref"},
+            "merge": {"const": "agent_default_with_human_escalation"}
+          }
+        },
+        "final_pr": {
+          "type": "object",
+          "required": ["head", "base", "merge"],
+          "properties": {
+            "head": {"const": "epic_base.ref"},
+            "base": {"const": "main"},
+            "merge": {"const": "human_only"}
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"mode": {"const": "batch_issue_prs"}},
+            "required": ["mode"]
+          },
+          "then": {
+            "required": ["issue_prs", "final_pr"]
+          }
+        }
+      ]
     },
     "work_items": {
       "type": "object",

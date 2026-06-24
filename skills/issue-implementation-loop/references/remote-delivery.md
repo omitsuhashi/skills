@@ -7,10 +7,24 @@ Default terminal state is local `PR_READY`. Remote writes are optional and requi
 - `local_only`: no remote writes.
 - `per_action`: approve each push/PR/link action separately.
 - `batch_draft_prs`: approve exact branches, target, draft PR creation, and issue linkage as a batch.
+- `batch_issue_prs`: approve issue PR creation/guarded issue PR merge into `codex/<epic-id>/epic-base`, plus final PR creation to `main`.
+
+## Batch Issue PRs
+
+Required policy:
+
+- `epic_base.ref`: `codex/<epic-id>/epic-base`
+- issue PR base: `epic_base.ref`
+- issue PR merge: `agent_default_with_human_escalation`
+- final PR head: `epic_base.ref`
+- final PR base: `main`
+- final PR merge: `human_only`
+
+Agent issue PR merge is allowed only when the PR is mergeable, required checks pass, issue implementation review is approved, scope is unchanged, and no unresolved review or permission ambiguity remains. Escalate to the human when judgment is needed.
 
 ## Always Separate Approval
 
-- merge
+- final PR merge
 - force push
 - ready-for-review change
 - deploy

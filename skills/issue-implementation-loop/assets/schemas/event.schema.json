@@ -11,6 +11,8 @@
       "enum": [
         "issue_status_changed",
         "review_status_changed",
+        "pr_created",
+        "pr_merged",
         "signal_recorded",
         "human_request_opened",
         "human_request_resolved"
@@ -18,6 +20,14 @@
     },
     "issue": {"type": "string"},
     "status": {"type": "string"},
+    "branch": {"type": "string"},
+    "worktree": {"type": "string"},
+    "base_sha": {"type": "string"},
+    "head_sha": {"type": "string"},
+    "range": {"type": "string"},
+    "review_range": {"type": "string"},
+    "pr": {"type": "string"},
+    "merge_commit": {"type": "string"},
     "signal": {"type": "string"},
     "id": {"type": "string"},
     "scope": {"enum": ["issue", "descendants", "resource", "epic"]},

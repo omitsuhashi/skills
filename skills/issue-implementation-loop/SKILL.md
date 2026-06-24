@@ -40,15 +40,16 @@ Do not load every reference by default.
 - Treat the input packet as approved scope; do not redesign issues or acceptance criteria here.
 - Keep coordinator runtime state out of tracked issue branches; default to `$(git rev-parse --git-common-dir)/agent-runs/issue-implementation-loop/<epic-id>/`.
 - Reserve branch/worktree paths for every approved issue before execution; create physical worktrees only when runnable.
-- Require `epic_base`, `base_policy`, and typed dependency edges; use an integration issue instead of ad hoc multi-head merges.
+- Require `epic_base`, `base_policy`, and typed dependency edges; default `epic_base.ref` for PR delivery is `codex/<epic-id>/epic-base`.
 - Recompute runnable work after every event. A wave is a launch cohort, not a completion barrier.
 - Use `tdd` or an approved equivalent for behavior changes, bug fixes, behavior-bearing refactors, and tests.
 - Send workers bounded paths-first packets; do not paste full specs or ledgers when durable paths suffice.
 - Keep workers inside write scope; only the coordinator writes envelope, runtime snapshot, event log, and shared ledger unless explicitly assigned.
+- Require a local scoped commit before review, blocker release, issue completion, or any success status.
 - Run issue-scoped implementation review before issue completion, blocker release, or PR readiness.
-- Fix Critical and Important in-scope review findings, or stop for explicit human risk acceptance.
+- Run at most two issue implementation review cycles. Fix Critical and Important in-scope findings, or stop for explicit human risk acceptance after the second review still finds in-scope issues.
 - Scope human waits to the smallest affected set; use `epic` only for envelope/DAG/runtime corruption, shared-base safety, credential/security incidents, or external contract changes affecting every issue.
-- Never perform GitHub issue creation, push, PR creation, merge, force push, deployment, destructive action, billing, credential, or permission changes without explicit current approval.
+- Never perform GitHub issue creation, push, PR creation, issue PR merge, force push, deployment, destructive action, billing, credential, or permission changes without approved remote policy. Never merge the final PR; final merge is human-only.
 
 ## Completion Report
 

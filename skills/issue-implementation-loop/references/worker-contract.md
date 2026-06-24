@@ -22,6 +22,7 @@ Give each worker a short packet:
 - Use `tdd` or an approved equivalent for behavior changes.
 - Run targeted verification, update issue-owned docs/progress, then run fresh final verification.
 - Produce a local scoped commit before issue review, blocker release, completion, or PR readiness. Review ranges use committed `BASE_SHA..HEAD_SHA`, not `working-tree`.
+- For `PR_READY`, `COMPLETE`, or `DONE`, report matching `base_sha`, `head_sha`, and implementation review range.
 
 ## Worker Report
 
@@ -31,10 +32,16 @@ Report:
 - branch and worktree path
 - changed files
 - verification commands and results
-- base/head SHA when committed
+- base/head SHA for success statuses
 - implementation review state and range
 - fixed findings and accepted residual risks
 - PR readiness
 - new blockers or released blockers
 
 Keep normal reports within `context_policy.max_worker_report_words`; write bulky evidence to report files and cite paths.
+
+Validate before coordinator intake:
+
+```bash
+python3 <skill-dir>/scripts/validate_worker_report.py <worker-report.json>
+```

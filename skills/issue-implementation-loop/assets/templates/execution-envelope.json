@@ -3,8 +3,8 @@
   "epic_id": "<epic-id>",
   "revision": 1,
   "epic_base": {
-    "ref": "main",
-    "sha": "<immutable-sha>"
+    "ref": "codex/<epic-id>/epic-base",
+    "sha": "<initial-full-sha>"
   },
   "execution_policy": {
     "parallel_preferred": true,
@@ -17,7 +17,8 @@
     "primary": "requesting-code-review",
     "fallbacks": ["equivalent-independent-reviewer"],
     "manual_fallback_preapproved": false,
-    "max_fix_cycles": 3,
+    "max_review_cycles": 2,
+    "max_fix_cycles": 2,
     "same_finding_limit": 2
   },
   "human_policy": {
@@ -32,8 +33,17 @@
     "include_full_ledger_text": false
   },
   "remote_write_policy": {
-    "mode": "local_only",
-    "approved_actions": []
+    "mode": "batch_issue_prs",
+    "approved_actions": [],
+    "issue_prs": {
+      "base": "epic_base.ref",
+      "merge": "agent_default_with_human_escalation"
+    },
+    "final_pr": {
+      "head": "epic_base.ref",
+      "base": "main",
+      "merge": "human_only"
+    }
   },
   "work_items": {
     "G2PR-001": {

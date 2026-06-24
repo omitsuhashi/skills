@@ -23,5 +23,5 @@
       "dependencies": []
     }
   ],
-  "delivery_intent": "local_only"
+  "delivery_intent": "batch_issue_prs"
 }

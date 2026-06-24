@@ -77,19 +77,21 @@ Build a blocker graph before execution planning:
 
 ## Branch / Base / Commit Policy
 
-Do not model the run as a mutable development main branch that receives ad hoc merges from issue branches. Model it as:
+Do not model the run as a shared mutable development main branch that receives ad hoc merges from issue branches. Model it as:
 
 1. Optional planning branch for workspace isolation.
-2. Immutable `epic_base.ref` + `epic_base.sha` in the Execution Envelope.
+2. Per-epic `epic_base.ref` branch named `codex/<epic-id>/epic-base`, plus immutable initial `epic_base.sha` in the Execution Envelope.
 3. One branch/worktree reservation per approved issue.
 4. Typed dependency edge plus work item `base_policy` when downstream code needs upstream code.
-5. Local `PR_READY` as the default terminal state until remote delivery is explicitly approved.
+5. Local `PR_READY` as the implementation terminal state until remote delivery is explicitly approved.
+6. Issue PRs from issue branches to `epic_base.ref`, with guarded agent merge when the remote policy allows it.
+7. A final PR from `epic_base.ref` to `main`; final PR merge is human-only.
 
 Use branch names like `codex/<epic-id>/<local-id>-<slug>`. Blocked issues may reserve names and paths, but their physical worktrees stay absent until release.
 
 Base policies:
 
-- `epic_base`: branch from the immutable epic base.
+- `epic_base`: branch from `codex/<epic-id>/epic-base` at the recorded base head.
 - `blocker_head`: branch from exactly one prerequisite issue head.
 - `integration_head`: branch from an approved integration work item / branch.
 
@@ -101,6 +103,7 @@ Commit policy:
 - Create or update a scoped local commit before issue implementation review.
 - Review committed `BASE_SHA..HEAD_SHA`; do not use `working-tree` as the new PR-ready review head.
 - After fixes, rerun verification and update the commit/head before re-review.
+- Run at most two issue implementation review cycles; if the second review still has in-scope findings, stop and ask the human.
 
 ## Gates
 
@@ -136,6 +139,7 @@ Build and present:
 - reviewer capability and approved fallback policy
 - parallel/serial fallback policy
 - remote-write policy
+- issue PR base/merge policy and final PR human-only merge policy
 
 Validate with:
 
@@ -171,7 +175,17 @@ Do not report remote or local completion when the ledger contradicts reality. If
 
 ## PR Delivery
 
-Create PRs only after `issue-implementation-loop` returns `PR_READY` for every issue in the PR scope and after explicit remote-write approval.
+Create issue PRs only after `issue-implementation-loop` returns `PR_READY` for every issue in the PR scope and after explicit remote-write approval.
+
+For `batch_issue_prs`:
+
+- `epic_base.ref` must be `codex/<epic-id>/epic-base`.
+- Issue PRs use head `codex/<epic-id>/<local-id>-<slug>` and base `epic_base.ref`.
+- The agent may merge issue PRs when checks/review/mergeability pass and the approved policy says `agent_default_with_human_escalation`.
+- Escalate to the human for scope drift, spec ambiguity, failed checks, conflicts, unresolved review, missing permissions, or any uncertain judgment.
+- After every issue PR creation or merge, update the local ledger and runtime state before continuing.
+- After all issue PRs are merged, create the final PR from `epic_base.ref` to `main`.
+- Final PR merge is human-only.
 
 Include:
 
@@ -184,7 +198,7 @@ Include:
 
 Use `Closes #<n>` only when merge should close the issue. Use `Refs #<n>` for partial, stacked, exploratory, or non-closing PRs.
 
-Push, GitHub issue creation, PR creation, ready-for-review, merge, force push, deploy, credential, permission, billing, production, and destructive actions all require explicit current approval.
+Push, GitHub issue creation, PR creation, ready-for-review, issue PR merge, force push, deploy, credential, permission, billing, production, and destructive actions require approved remote policy. Final PR merge always requires current human action.
 
 ## Common Mistakes
 
@@ -203,3 +217,4 @@ Push, GitHub issue creation, PR creation, ready-for-review, merge, force push, d
 | Marking an issue PR-ready from an uncommitted diff | Create/update a scoped local commit and review `BASE_SHA..HEAD_SHA`. |
 | Treating PR review as issue implementation review | Let `issue-implementation-loop` run the issue-scoped review gate before PR readiness. |
 | Treating PR creation as implicit | Get explicit approval first. |
+| Merging final PRs automatically | Create the final PR, then leave final merge to the human. |
