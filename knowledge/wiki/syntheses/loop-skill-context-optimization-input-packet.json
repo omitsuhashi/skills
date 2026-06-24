@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "repo_root": "/Users/omitsuhashi/.codex/worktrees/dfa4/skills",
+  "epic_id": "loop-skill-context-optimization",
+  "artifact_root": "knowledge/wiki/syntheses",
+  "spec": {
+    "path": "knowledge/wiki/syntheses/loop-skill-context-optimization-spec.md",
+    "approved_hash": "git:9430e1b3d085832cda76075218c89cb02b0b7388"
+  },
+  "work_items": [
+    {
+      "id": "G2PR-001",
+      "title": "context optimization spec と local ledger を正本化する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/loop-skill-context-optimization-issues.md"
+      },
+      "acceptance_criteria": [
+        "spec, local issue ledger, and input packet exist under knowledge/wiki/syntheses",
+        "knowledge/index.md and knowledge/log.md discover the new durable artifacts",
+        "input packet validates"
+      ],
+      "non_goals": [
+        "remote write",
+        "GitHub issue or PR creation"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/validate_input_packet.py knowledge/wiki/syntheses/loop-skill-context-optimization-input-packet.json",
+        "rg -n \"Loop Skill Context Optimization|loop-skill-context-optimization\" knowledge/index.md knowledge/log.md knowledge/wiki/syntheses"
+      ],
+      "write_scope": [
+        "path:knowledge/wiki/syntheses/loop-skill-context-optimization-spec.md",
+        "path:knowledge/wiki/syntheses/loop-skill-context-optimization-issues.md",
+        "path:knowledge/wiki/syntheses/loop-skill-context-optimization-input-packet.json",
+        "path:knowledge/index.md",
+        "path:knowledge/log.md"
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "G2PR-002",
+      "title": "grill-to-pr-loop の workflow reference を分割する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/loop-skill-context-optimization-issues.md"
+      },
+      "acceptance_criteria": [
+        "workflow-contract.md routes to one-level detail references",
+        "planning, local issue ledger, execution handoff, remote delivery, and common mistakes references exist",
+        "SKILL.md explains reference routing",
+        "grill-to-pr-loop tests cover reference routing"
+      ],
+      "non_goals": [
+        "new user-facing skill",
+        "remote write"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/grill-to-pr-loop/tests",
+        "wc -w skills/grill-to-pr-loop/references/*.md"
+      ],
+      "write_scope": [
+        "path:skills/grill-to-pr-loop/SKILL.md",
+        "path:skills/grill-to-pr-loop/references",
+        "path:skills/grill-to-pr-loop/tests"
+      ],
+      "dependencies": [
+        {
+          "issue": "G2PR-001",
+          "strength": "hard",
+          "release_on": "artifact_ready",
+          "base_effect": "none"
+        }
+      ]
+    },
+    {
+      "id": "G2PR-003",
+      "title": "repo-local skill root 優先と回帰テストを追加する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/loop-skill-context-optimization-issues.md"
+      },
+      "acceptance_criteria": [
+        "explicit --skills-root remains first",
+        "Path.cwd()/skills is searched before home-level skill roots",
+        "plugin cache roots remain discoverable",
+        "preflight selects repo-local issue-implementation-loop in this repo"
+      ],
+      "non_goals": [
+        "large _common.py lib split",
+        "test suite file split"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/grill-to-pr-loop/tests",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/grill-to-pr-loop/scripts/check_prereqs.py --phase execution --json",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/check_capabilities.py --json"
+      ],
+      "write_scope": [
+        "path:skills/grill-to-pr-loop/scripts/check_prereqs.py",
+        "path:skills/grill-to-pr-loop/tests",
+        "path:skills/issue-implementation-loop/scripts/_common.py",
+        "path:skills/issue-implementation-loop/tests/test_issue_implementation_loop.py"
+      ],
+      "dependencies": [
+        {
+          "issue": "G2PR-001",
+          "strength": "hard",
+          "release_on": "artifact_ready",
+          "base_effect": "none"
+        },
+        {
+          "issue": "G2PR-002",
+          "strength": "soft",
+          "release_on": "artifact_ready",
+          "base_effect": "none"
+        }
+      ]
+    }
+  ],
+  "delivery_intent": "local_only"
+}

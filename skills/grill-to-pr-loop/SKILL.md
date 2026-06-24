@@ -27,7 +27,7 @@ python3 <skill-dir>/scripts/check_prereqs.py --phase execution
 
 If planning reports missing `grill-with-docs`, stop. If execution reports missing `issue-implementation-loop`, stop before implementation and install or add the execution skill. GitHub authentication is optional and required only for approved remote writes.
 
-Read `references/workflow-contract.md` when executing the workflow, resuming from a middle state, preparing an execution packet, or coordinating PR delivery.
+Read `references/workflow-contract.md` first when executing the workflow, resuming from a middle state, preparing an execution packet, or coordinating PR delivery. It is a router; load only the phase-specific references it names.
 
 ## Responsibilities
 
