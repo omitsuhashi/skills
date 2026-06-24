@@ -49,7 +49,7 @@ def main() -> int:
         },
         "parallel_execution": {
             "available": None,
-            "note": "Platform-dependent; approve serial fallback in the Execution Envelope when uncertain.",
+            "note": "Platform-dependent. Serial fallback is allowed only as worker-context jobs; stop if worker contexts are unavailable.",
         },
         "remote_delivery": {
             "gh": shutil.which("gh"),

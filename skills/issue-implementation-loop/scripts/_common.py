@@ -184,6 +184,17 @@ def validate_execution_envelope(envelope: dict[str, Any]) -> list[str]:
     if not isinstance(envelope.get("revision"), int) or envelope.get("revision", 0) < 1:
         errors.append("revision must be a positive integer")
 
+    execution_policy = envelope.get("execution_policy")
+    if not isinstance(execution_policy, dict):
+        errors.append("execution_policy is required")
+    else:
+        if execution_policy.get("worker_context_required") is not True:
+            errors.append("execution_policy.worker_context_required must be true")
+        if execution_policy.get("coordinator_may_implement") is not False:
+            errors.append("execution_policy.coordinator_may_implement must be false")
+        if execution_policy.get("serial_fallback_mode") != "worker_context_only":
+            errors.append("execution_policy.serial_fallback_mode must be worker_context_only")
+
     epic_base = envelope.get("epic_base")
     if not isinstance(epic_base, dict):
         errors.append("epic_base is required")

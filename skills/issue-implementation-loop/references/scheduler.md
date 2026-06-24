@@ -23,5 +23,6 @@ python3 <skill-dir>/scripts/compute_next_actions.py <execution-envelope.json> <r
 - Dispatch only issues whose dependencies are released and whose write scope does not conflict with active implementation/fix work.
 - Keep review lane separate from implementation lane.
 - Do not let issue-scoped human wait block unrelated runnable issues.
-- If parallel workers are unavailable and `serial_fallback_preapproved=true`, continue serially.
+- If parallel workers are unavailable and `serial_fallback_preapproved=true`, continue serially only through worker contexts.
+- If worker contexts are unavailable, stop before implementation.
 - If parallel execution is mandatory, stop before execution during capability preflight.

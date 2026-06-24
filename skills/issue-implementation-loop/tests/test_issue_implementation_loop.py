@@ -40,6 +40,9 @@ def base_envelope() -> dict:
         "execution_policy": {
             "parallel_preferred": True,
             "serial_fallback_preapproved": True,
+            "worker_context_required": True,
+            "coordinator_may_implement": False,
+            "serial_fallback_mode": "worker_context_only",
             "implementation_slots": 4,
             "review_slots": 2,
             "wave_is_barrier": False,
@@ -139,9 +142,10 @@ class IssueImplementationLoopTests(unittest.TestCase):
         text = SKILL_FILE.read_text(encoding="utf-8")
 
         for required in (
-            "same parent coordinator session",
+            "one execution coordinator context",
+            "planning/grill session must not implement issue work",
             "Do not create user-owned Codex threads",
-            "serial fallback",
+            "bounded worker-context jobs",
         ):
             self.assertIn(required, text)
 
@@ -238,6 +242,44 @@ class IssueImplementationLoopTests(unittest.TestCase):
 
                 self.assertNotEqual(result.returncode, 0, name)
                 self.assertIn(expected, result.stderr)
+
+    def test_validate_execution_envelope_requires_worker_context_boundaries(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cases = [
+                ("missing_worker_required", "worker_context_required", None, "worker_context_required"),
+                ("worker_not_required", "worker_context_required", False, "worker_context_required"),
+                ("missing_coordinator", "coordinator_may_implement", None, "coordinator_may_implement"),
+                ("coordinator_allowed", "coordinator_may_implement", True, "coordinator_may_implement"),
+                ("missing_serial_mode", "serial_fallback_mode", None, "serial_fallback_mode"),
+                ("coordinator_serial", "serial_fallback_mode", "coordinator_direct", "serial_fallback_mode"),
+            ]
+            for name, field, value, expected in cases:
+                envelope = base_envelope()
+                if value is None:
+                    del envelope["execution_policy"][field]
+                else:
+                    envelope["execution_policy"][field] = value
+                path = Path(tmp) / f"{name}.json"
+                write_json(path, envelope)
+
+                result = run_script("validate_execution_envelope.py", str(path))
+
+                self.assertNotEqual(result.returncode, 0, name)
+                self.assertIn(expected, result.stderr)
+
+    def test_execution_envelope_schema_requires_worker_context_boundaries(self) -> None:
+        schema = json.loads(ENVELOPE_SCHEMA_FILE.read_text(encoding="utf-8"))
+        execution_schema = schema["properties"]["execution_policy"]
+
+        self.assertIn("worker_context_required", execution_schema["required"])
+        self.assertIn("coordinator_may_implement", execution_schema["required"])
+        self.assertIn("serial_fallback_mode", execution_schema["required"])
+        self.assertEqual(execution_schema["properties"]["worker_context_required"]["const"], True)
+        self.assertEqual(execution_schema["properties"]["coordinator_may_implement"]["const"], False)
+        self.assertEqual(
+            execution_schema["properties"]["serial_fallback_mode"]["const"],
+            "worker_context_only",
+        )
 
     def test_validate_execution_envelope_rejects_invalid_epic_base(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

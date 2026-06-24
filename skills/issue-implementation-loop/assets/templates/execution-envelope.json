@@ -9,6 +9,9 @@
   "execution_policy": {
     "parallel_preferred": true,
     "serial_fallback_preapproved": true,
+    "worker_context_required": true,
+    "coordinator_may_implement": false,
+    "serial_fallback_mode": "worker_context_only",
     "implementation_slots": 4,
     "review_slots": 2,
     "wave_is_barrier": false

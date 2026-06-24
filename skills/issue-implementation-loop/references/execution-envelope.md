@@ -8,12 +8,26 @@ The Execution Envelope is the approved execution contract. It is more specific t
 - `epic_id`: lower-kebab-case ASCII
 - `revision`: positive integer
 - `epic_base`: per-epic base branch ref `codex/<epic-id>/epic-base` and immutable initial full 40- or 64-character hex SHA
-- `execution_policy`: parallel preference, serial fallback, slots, and `wave_is_barrier`
+- `execution_policy`: parallel preference, serial fallback, slots, `wave_is_barrier`, and worker-context boundary
 - `review_policy`: primary reviewer, fallbacks, manual fallback, `max_review_cycles: 2`, and fix-cycle limits
 - `human_policy`: default scope and epic-scope reason requirement
 - `context_policy`: paths-first worker packet and report budgets
 - `remote_write_policy`: `local_only`, `per_action`, `batch_draft_prs`, or `batch_issue_prs`
 - `work_items`: one entry per approved issue
+
+## Execution Context Boundary
+
+Use this required shape:
+
+```json
+{
+  "worker_context_required": true,
+  "coordinator_may_implement": false,
+  "serial_fallback_mode": "worker_context_only"
+}
+```
+
+Serial fallback means worker jobs run one at a time. It does not authorize coordinator-direct implementation. If worker contexts are unavailable, stop before implementation.
 
 ## Reservation Rules
 

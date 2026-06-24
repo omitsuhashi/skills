@@ -7,7 +7,7 @@ description: Use when a user wants an end-to-end repository change beginning wit
 
 ## Overview
 
-Coordinate a repo change from design interrogation to PR delivery without skipping durable docs or approval gates. This is now a composition skill: it owns design, spec, issue decomposition, normalized execution input, and optional remote delivery coordination. It delegates approved issue implementation, worktree lifecycle, scheduling, runtime state, scoped human wait, and issue-scoped implementation review to `issue-implementation-loop`.
+Coordinate a repo change from design interrogation to PR delivery without skipping durable docs or approval gates. This is an end-to-end composition skill, not a same-session implementation skill. It owns design, spec, issue decomposition, normalized execution input, and delivery coordination. It delegates approved issue implementation, worktree lifecycle, scheduling, runtime state, scoped human wait, and issue-scoped implementation review to `issue-implementation-loop`.
 
 Treat `grill-with-docs` as the required front door. If it is unavailable, stop instead of approximating the workflow.
 
@@ -44,6 +44,7 @@ This skill owns:
 
 This skill does not own:
 
+- issue-owned implementation edits in the main planning/grill session
 - worktree lifecycle
 - runtime state / event log / leases
 - runnable calculation
@@ -64,8 +65,8 @@ Load `issue-implementation-loop` for those execution responsibilities.
 6. **Issue Gate**: Present issue list, blocker graph, `実行可能/ブロック中` status, dependency order, and acceptance criteria. Wait for approval before GitHub mirroring or execution planning.
 7. **Execution Plan Packet**: Build a normalized input packet for `issue-implementation-loop`, including spec path, approved revision/hash when available, work items, acceptance criteria, non-goals, verification, write scopes, dependency edges, and delivery intent.
 8. **Execution Plan Gate**: Run planning/execution prerequisites. Present the packet, capability preflight summary, remote policy, and whether serial fallback or manual review fallback is approved. Wait for explicit approval before execution unless the user has already authorized implementation and all actions remain local.
-9. **Issue Implementation Loop**: Load and follow `issue-implementation-loop` for envelope creation, worktree reservation, scheduling, verification, issue implementation review, scoped human waits, recovery, and `PR_READY` result.
-10. **Optional PR Delivery**: After execution returns `PR_READY` candidates, use the approved remote policy. Issue PRs target `codex/<epic-id>/epic-base`; issue PR merge may be agent-run when guardrails pass. Final PRs target `main`, and final PR merge is always human-only.
+9. **Issue Implementation Loop**: Start or hand off to an execution coordinator context and follow `issue-implementation-loop` for envelope creation, worktree reservation, scheduling, verification, issue implementation review, scoped human waits, recovery, and `PR_READY` result. Do not implement issues in the main planning/grill session.
+10. **Optional PR Delivery**: Prefer `issue-implementation-loop` `deliver` mode in the execution coordinator or a fresh delivery context using the completion artifact. Issue PRs target `codex/<epic-id>/epic-base`; issue PR merge may be agent-run when guardrails pass. Final PRs target `main`, and final PR merge is always human-only.
 11. **Completion Report**: Reconcile local ledger with execution output and any approved remote actions.
 
 ## Local-First Rules
@@ -111,6 +112,7 @@ Stop and ask the user before continuing if:
 - Issue granularity or dependency order is rejected.
 - GitHub issue/PR linkage is requested but access, remote, auth, or permission is unavailable; ask whether to continue local-only.
 - Execution requires changing approved spec, acceptance criteria, issue scope, or write scope.
+- Worker contexts are unavailable for implementation; do not degrade into main-session implementation.
 - Execution reports unresolved Critical/Important in-scope findings without human risk acceptance.
 - Tests fail in a way unrelated to the issue and no local contract explains it.
 - Any external write, credential, permission, billing, production, destructive, push, PR, or merge action is required without approved remote policy. Final PR merge always requires current human action.

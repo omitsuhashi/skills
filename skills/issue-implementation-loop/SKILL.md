@@ -7,9 +7,9 @@ description: Use when implementing approved repository issues after spec, accept
 
 ## Overview
 
-Run approved repository work items from a normalized input packet to local `PR_READY`. Keep one same parent coordinator session responsible for global state, blocker release, human requests, review decisions, and final reporting. Dispatch workers or reviewers only for isolated implementation and review tasks.
+Run approved repository work items from a normalized input packet to local `PR_READY`. Keep one execution coordinator context responsible for global state, blocker release, human requests, review decisions, and final reporting. The planning/grill session must not implement issue work. Dispatch workers or reviewers only for isolated implementation and review tasks.
 
-Do not create user-owned Codex threads. If platform parallel workers are unavailable, continue through approved serial fallback when the Execution Envelope allows it.
+Do not create user-owned Codex threads. If worker contexts are unavailable, stop before implementation. If parallel workers are unavailable, continue through approved serial fallback only as bounded worker-context jobs.
 
 Use `grill-to-pr-loop` before this skill for design interrogation, PRD/spec creation, and issue decomposition.
 
@@ -38,6 +38,7 @@ Do not load every reference by default.
 ## Required Rules
 
 - Treat the input packet as approved scope; do not redesign issues or acceptance criteria here.
+- Require `execution_policy.worker_context_required=true`, `coordinator_may_implement=false`, and `serial_fallback_mode=worker_context_only`.
 - Keep coordinator runtime state out of tracked issue branches; default to `$(git rev-parse --git-common-dir)/agent-runs/issue-implementation-loop/<epic-id>/`.
 - Reserve branch/worktree paths for every approved issue before execution; create physical worktrees only when runnable.
 - Require `epic_base`, `base_policy`, and typed dependency edges; default `epic_base.ref` for PR delivery is `codex/<epic-id>/epic-base`.

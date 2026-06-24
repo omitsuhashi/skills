@@ -1,6 +1,6 @@
 # Core Contract
 
-Use this skill only after issues and acceptance criteria are approved. The parent coordinator owns:
+Use this skill only after issues and acceptance criteria are approved. The execution coordinator owns:
 
 - input packet and approved Execution Envelope
 - append-only event log and mutable runtime snapshot
@@ -8,7 +8,7 @@ Use this skill only after issues and acceptance criteria are approved. The paren
 - issue completion and PR-ready decisions
 - final report and remote-write approval boundary
 
-Workers own only their assigned issue worktree, branch, write scope, and verification evidence. Reviewers own only review findings for the issue packet they receive.
+The original planning/grill session must not implement issue work. Workers own only their assigned issue worktree, branch, write scope, and verification evidence. Reviewers own only review findings for the issue packet they receive.
 
 ## Input Packet
 
@@ -40,6 +40,7 @@ Use `assets/templates/execution-result.json` for the concrete shape.
 ## Non-Goals
 
 - Do not create or redesign issues.
+- Do not let the coordinator become the implementation worker, even in serial fallback.
 - Do not create a generic workflow framework.
 - Do not route work through a separate LLM node scheduler.
 - Do not perform remote writes unless the envelope and the human both approve the exact action.

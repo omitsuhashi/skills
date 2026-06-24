@@ -1,6 +1,6 @@
 # Grill to PR Loop Workflow Contract
 
-Use this reference after loading `grill-to-pr-loop`. Keep execution mechanics delegated to `issue-implementation-loop`; do not duplicate its scheduler, runtime state, recovery, or review/fix loop.
+Use this reference after loading `grill-to-pr-loop`. Keep execution mechanics delegated to `issue-implementation-loop`; do not duplicate its scheduler, runtime state, recovery, or review/fix loop. End-to-end coordination does not authorize same-session issue implementation.
 
 ## Sub-Skill Contract
 
@@ -159,7 +159,13 @@ After the Execution Plan Gate, load `issue-implementation-loop` and follow its m
 - `status`: report current execution state.
 - `deliver`: prepare PR-ready branches for approved remote delivery.
 
-The parent coordinator keeps final responsibility for the end-to-end workflow and local ledger consistency.
+Recommended context split:
+
+1. The planning/grill session creates the approved packet and envelope, then stops doing implementation work.
+2. An execution coordinator context runs `prepare`, `execute`, `resume`, and `status`, dispatching bounded workers/reviewers.
+3. PR delivery runs in `deliver` mode from the execution coordinator or a fresh delivery context that reads the completion artifact and runtime summary.
+
+The workflow keeps final responsibility for ledger consistency, but the main planning/grill session must not become an implementation worker. If worker contexts are unavailable, stop before implementation.
 
 ## Local Ledger Update Invariant
 
@@ -206,6 +212,7 @@ Push, GitHub issue creation, PR creation, ready-for-review, issue PR merge, forc
 | --- | --- |
 | Skipping Grill with Docs because the design seems obvious | Run it or stop if unavailable. |
 | Keeping execution mechanics in this skill | Move worktree/scheduler/runtime/recovery/review loop details to `issue-implementation-loop`. |
+| Implementing issue code in the planning/grill session | Stop and hand off to an execution coordinator with worker contexts. |
 | Creating horizontal layer issues | Rewrite as vertical slices that are independently verifiable. |
 | Writing generated issue labels in English | Use Japanese labels/status values; keep code symbols and paths unchanged. |
 | Treating GitHub as the default issue source | Keep local issues canonical; mirror only after approval. |
