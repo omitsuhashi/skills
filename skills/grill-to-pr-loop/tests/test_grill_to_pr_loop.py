@@ -38,6 +38,24 @@ class GrillToPrLoopTests(unittest.TestCase):
             self.assertIn(reference, text)
             self.assertTrue((SKILL_DIR / "references" / reference).exists(), reference)
 
+    def test_github_mirror_read_set_contains_remote_gate(self) -> None:
+        router_text = WORKFLOW_ROUTER.read_text(encoding="utf-8")
+        remote_text = (SKILL_DIR / "references" / "remote-delivery.md").read_text(encoding="utf-8")
+
+        self.assertIn(
+            "`GitHub mirror`, `issue PR`, `final PR`, or delivery: read `remote-delivery.md`.",
+            router_text,
+        )
+        self.assertIn("## GitHub Mirror Gate", remote_text)
+        for required in (
+            "Confirm the remote points to GitHub.",
+            "Confirm GitHub tool/CLI auth.",
+            "Present exact local issues to publish.",
+            "Ask for explicit approval.",
+            "Update the local ledger before continuing.",
+        ):
+            self.assertIn(required, remote_text)
+
     def test_skill_entrypoint_points_to_workflow_router(self) -> None:
         text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
 

@@ -4,6 +4,19 @@ Use this reference for GitHub issue mirroring, issue PR delivery, final PR creat
 
 Remote writes are optional. Push, GitHub issue creation, PR creation, ready-for-review, issue PR merge, force push, deploy, credential, permission, billing, production, and destructive actions require approved remote policy. Final PR merge always requires current human action.
 
+## GitHub Mirror Gate
+
+Optional. Before creating GitHub issues:
+
+1. Confirm the remote points to GitHub.
+2. Confirm GitHub tool/CLI auth.
+3. Present exact local issues to publish.
+4. Ask for explicit approval.
+5. Create one issue per approved local issue.
+6. Update the local ledger before continuing.
+
+If publication fails, keep the local ledger intact and ask whether to continue local-only.
+
 ## PR Delivery
 
 Create issue PRs only after `issue-implementation-loop` returns `PR_READY` for every issue in the PR scope and after explicit remote-write approval.

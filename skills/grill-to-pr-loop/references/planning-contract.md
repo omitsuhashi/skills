@@ -45,15 +45,8 @@ Present spec path, `Epic ID`, accepted decisions, non-goals, acceptance criteria
 
 Present local issues with `Epic ID`, blocker graph, dependency order, `実行可能/ブロック中` status, and acceptance criteria. Wait for approval before GitHub mirroring or execution planning.
 
-### GitHub Mirror Gate
+### GitHub Mirror Gate Preparation
 
-Optional. Before creating GitHub issues:
+Optional. If the user wants GitHub issue mirroring after Issue Gate, stop planning work and load `remote-delivery.md`.
 
-1. Confirm the remote points to GitHub.
-2. Confirm GitHub tool/CLI auth.
-3. Present exact local issues to publish.
-4. Ask for explicit approval.
-5. Create one issue per approved local issue.
-6. Update local ledger before continuing.
-
-If publication fails, keep the local ledger intact and ask whether to continue local-only.
+Do not create GitHub issues from this planning reference alone. The remote reference owns the remote/auth checks, exact publication set, explicit approval, write action, and local ledger update invariant.

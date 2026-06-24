@@ -4,9 +4,9 @@
 
 | Epic ID | ローカルID | タイトル | レビュー状態 | 実行状態 | 実装結果 | ブロック元 | ブロック先 | GitHub Issue | 実装レビュー | PR |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| loop-skill-context-optimization | G2PR-001 | context optimization spec と local ledger を正本化する | 承認済み | 実行可能 | 実装済み | なし | G2PR-002, G2PR-003 | 未作成 | 未実施 | 未作成 |
-| loop-skill-context-optimization | G2PR-002 | `grill-to-pr-loop` の workflow reference を分割する | 承認済み | 実行可能 | 実装済み | G2PR-001 | G2PR-003 | 未作成 | 未実施 | 未作成 |
-| loop-skill-context-optimization | G2PR-003 | repo-local skill root 優先と回帰テストを追加する | 承認済み | 実行可能 | 実装済み | G2PR-001, G2PR-002 | なし | 未作成 | 未実施 | 未作成 |
+| loop-skill-context-optimization | G2PR-001 | context optimization spec と local ledger を正本化する | 承認済み | 実行可能 | 実装済み | なし | G2PR-002, G2PR-003 | 未作成 | 実施済み | draft PR #15 |
+| loop-skill-context-optimization | G2PR-002 | `grill-to-pr-loop` の workflow reference を分割する | 承認済み | 実行可能 | 実装済み | G2PR-001 | G2PR-003 | 未作成 | 実施済み | draft PR #15 |
+| loop-skill-context-optimization | G2PR-003 | repo-local skill root 優先と回帰テストを追加する | 承認済み | 実行可能 | 実装済み | G2PR-001, G2PR-002 | なし | 未作成 | 実施済み | draft PR #15 |
 
 ## ブロッカーグラフ
 
@@ -54,10 +54,10 @@ context optimization spec と local ledger を正本化する
 
 ### 実装レビュー
 
-- 状態: 未実施
-- レビュー範囲: 未作成
-- 理由: 今回はユーザーが subagent / delegation を明示しておらず、remote write も未承認のため、local verification で完了状態を記録する。
-- 検証結果: `validate_input_packet.py` は `INPUT PACKET OK`。`rg` で `knowledge/index.md`, `knowledge/log.md`, `knowledge/wiki/syntheses` から新規成果物を確認。
+- 状態: 実施済み
+- レビュー範囲: `9430e1b3d085832cda76075218c89cb02b0b7388..73d4f1b57075e11d5540b8c2b8c648ea49789626`
+- 理由: ユーザーが `$superpowers:requesting-code-review` を明示したため、read-only reviewer で PR 差分を確認した。
+- 検証結果: Critical 0。Important 1 件は `GitHub Mirror Gate` の routing 不整合で、review-fix で `remote-delivery.md` へ gate 手順を集約した。`validate_input_packet.py` は `INPUT PACKET OK`。
 
 ## G2PR-002
 
@@ -83,7 +83,7 @@ context optimization spec と local ledger を正本化する
 
 ### ブロッカー
 
-- 実行状態: ブロック中
+- 実行状態: 実行可能
 - ブロック元: G2PR-001
 - ブロック先: G2PR-003
 
@@ -99,10 +99,10 @@ context optimization spec と local ledger を正本化する
 
 ### 実装レビュー
 
-- 状態: 未実施
-- レビュー範囲: 未作成
-- 理由: 今回はユーザーが subagent / delegation を明示しておらず、local verification で完了状態を記録する。
-- 検証結果: `python3 -m unittest discover -s skills/grill-to-pr-loop/tests` は 4 tests OK。`wc -w` で `workflow-contract.md` は 368 words、分割後 reference 合計は bounded。
+- 状態: 実施済み
+- レビュー範囲: `9430e1b3d085832cda76075218c89cb02b0b7388..73d4f1b57075e11d5540b8c2b8c648ea49789626`
+- 理由: ユーザーが `$superpowers:requesting-code-review` を明示したため、read-only reviewer で PR 差分を確認した。
+- 検証結果: Critical 0。Important 1 件は `GitHub Mirror Gate` の routing 不整合で、review-fix で修正し、`skills/grill-to-pr-loop/tests` に mirror gate routing regression を追加した。
 
 ## G2PR-003
 
@@ -128,7 +128,7 @@ repo-local skill root 優先と回帰テストを追加する
 
 ### ブロッカー
 
-- 実行状態: ブロック中
+- 実行状態: 実行可能
 - ブロック元: G2PR-001, G2PR-002
 - ブロック先: なし
 
@@ -146,7 +146,7 @@ repo-local skill root 優先と回帰テストを追加する
 
 ### 実装レビュー
 
-- 状態: 未実施
-- レビュー範囲: 未作成
-- 理由: 今回はユーザーが subagent / delegation を明示しておらず、local verification で完了状態を記録する。
-- 検証結果: `python3 -m unittest discover -s skills/grill-to-pr-loop/tests` は 4 tests OK。`python3 -m unittest discover -s skills/issue-implementation-loop/tests` は 47 tests OK。`check_prereqs.py --phase execution --json` は repo-local `skills/issue-implementation-loop/SKILL.md` を選択。
+- 状態: 実施済み
+- レビュー範囲: `9430e1b3d085832cda76075218c89cb02b0b7388..73d4f1b57075e11d5540b8c2b8c648ea49789626`
+- 理由: ユーザーが `$superpowers:requesting-code-review` を明示したため、read-only reviewer で PR 差分を確認した。
+- 検証結果: Critical 0。repo-local root precedence は reviewer 再実行でも問題なし。`python3 -m unittest discover -s skills/issue-implementation-loop/tests` は 47 tests OK。`check_prereqs.py --phase execution --json` は repo-local `skills/issue-implementation-loop/SKILL.md` を選択。
