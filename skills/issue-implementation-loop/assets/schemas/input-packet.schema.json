@@ -35,6 +35,6 @@
         }
       }
     },
-    "delivery_intent": {"enum": ["local_only", "per_action", "batch_draft_prs"]}
+    "delivery_intent": {"enum": ["local_only", "per_action", "batch_draft_prs", "batch_issue_prs"]}
   }
 }

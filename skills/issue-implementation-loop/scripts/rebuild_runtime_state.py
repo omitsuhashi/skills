@@ -12,6 +12,13 @@ from typing import Any
 from _common import dump_json
 
 
+def copy_issue_metadata(record: dict[str, Any], event: dict[str, Any]) -> None:
+    for field in ("branch", "worktree", "base_sha", "head_sha"):
+        value = event.get(field)
+        if isinstance(value, str):
+            record[field] = value
+
+
 def apply_event(state: dict[str, Any], event: dict[str, Any]) -> None:
     event_type = event.get("type")
     issue = event.get("issue")
@@ -23,10 +30,15 @@ def apply_event(state: dict[str, Any], event: dict[str, Any]) -> None:
     if event_type == "issue_status_changed" and isinstance(issue, str):
         record = state["issues"].setdefault(issue, {})
         record["status"] = event.get("status", record.get("status", "PENDING"))
+        copy_issue_metadata(record, event)
     elif event_type == "review_status_changed" and isinstance(issue, str):
         record = state["issues"].setdefault(issue, {})
+        copy_issue_metadata(record, event)
         review = record.setdefault("review", {})
         review["status"] = event.get("status", review.get("status", "pending"))
+        review_range = event.get("range") or event.get("review_range")
+        if isinstance(review_range, str):
+            review["range"] = review_range
     elif event_type == "signal_recorded" and isinstance(issue, str):
         record = state["issues"].setdefault(issue, {})
         signals = record.setdefault("signals", [])

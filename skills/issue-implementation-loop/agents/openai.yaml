@@ -1,4 +1,4 @@
 interface:
   display_name: "Issue Implementation Loop"
   short_description: "依存関係対応の非停止型Issue実装ループ"
-  default_prompt: "Use $issue-implementation-loop to implement approved repository issues with base_policy-aware worktrees, verification, issue-scoped review, and resumable local state."
+  default_prompt: "Use $issue-implementation-loop to implement approved issues with base_policy-aware worktrees, two-cycle issue review, guarded issue PR merge, and human-only final PR merge."

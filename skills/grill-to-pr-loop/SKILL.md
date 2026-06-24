@@ -40,7 +40,7 @@ This skill owns:
 - Local issue ledger as the planning source of truth.
 - Optional GitHub issue mirror proposal and explicit remote-write gate.
 - Normalized input packet for `issue-implementation-loop`.
-- Final composition report and optional PR delivery coordination after execution returns `PR_READY` candidates.
+- Final composition report and optional PR delivery coordination after execution returns `PR_READY` candidates, including issue PRs to the approved epic base branch and final PR creation.
 
 This skill does not own:
 
@@ -65,7 +65,7 @@ Load `issue-implementation-loop` for those execution responsibilities.
 7. **Execution Plan Packet**: Build a normalized input packet for `issue-implementation-loop`, including spec path, approved revision/hash when available, work items, acceptance criteria, non-goals, verification, write scopes, dependency edges, and delivery intent.
 8. **Execution Plan Gate**: Run planning/execution prerequisites. Present the packet, capability preflight summary, remote policy, and whether serial fallback or manual review fallback is approved. Wait for explicit approval before execution unless the user has already authorized implementation and all actions remain local.
 9. **Issue Implementation Loop**: Load and follow `issue-implementation-loop` for envelope creation, worktree reservation, scheduling, verification, issue implementation review, scoped human waits, recovery, and `PR_READY` result.
-10. **Optional PR Delivery**: After execution returns `PR_READY` candidates, ask for explicit current approval before push, GitHub issue creation, PR creation, ready-for-review transition, merge, or any other external write.
+10. **Optional PR Delivery**: After execution returns `PR_READY` candidates, use the approved remote policy. Issue PRs target `codex/<epic-id>/epic-base`; issue PR merge may be agent-run when guardrails pass. Final PRs target `main`, and final PR merge is always human-only.
 11. **Completion Report**: Reconcile local ledger with execution output and any approved remote actions.
 
 ## Local-First Rules
@@ -81,10 +81,10 @@ Load `issue-implementation-loop` for those execution responsibilities.
 ## Branch / Base / Commit Policy
 
 - Treat planning branches as optional workspace isolation, not as the execution source of truth.
-- Treat Execution Envelope `epic_base.ref` + `epic_base.sha` as the immutable base for the run.
+- Treat Execution Envelope `epic_base.ref` as the per-epic base branch `codex/<epic-id>/epic-base` and `epic_base.sha` as its immutable initial SHA.
 - Prefer issue branches named `codex/<epic-id>/<local-id>-<slug>`.
 - Reserve one branch/worktree path per approved issue before execution; create physical worktrees only for runnable issues.
-- Express downstream code dependencies through typed dependency edges and work item `base_policy`, not ad hoc merges into a mutable development main branch.
+- Express downstream code dependencies through typed dependency edges and work item `base_policy`, not ad hoc merges into a shared mutable development branch.
 - Use an approved integration work item/branch when a downstream issue needs multiple blocker heads.
 - Before issue completion, blocker release, or `PR_READY`, run fresh verification, create/update a scoped local commit, and review the committed `BASE_SHA..HEAD_SHA` range.
 
@@ -113,7 +113,7 @@ Stop and ask the user before continuing if:
 - Execution requires changing approved spec, acceptance criteria, issue scope, or write scope.
 - Execution reports unresolved Critical/Important in-scope findings without human risk acceptance.
 - Tests fail in a way unrelated to the issue and no local contract explains it.
-- Any external write, credential, permission, billing, production, destructive, push, PR, or merge action is required without explicit current approval.
+- Any external write, credential, permission, billing, production, destructive, push, PR, or merge action is required without approved remote policy. Final PR merge always requires current human action.
 
 ## Completion Report
 

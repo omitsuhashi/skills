@@ -15,5 +15,16 @@
     "implementation_review": {"type": "object"},
     "status": {"type": "string"},
     "residual_risks": {"type": "array", "items": {"type": "string"}}
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"status": {"enum": ["PR_READY", "COMPLETE", "DONE"]}},
+        "required": ["status"]
+      },
+      "then": {
+        "required": ["base_sha", "head_sha", "implementation_review"]
+      }
+    }
+  ]
 }

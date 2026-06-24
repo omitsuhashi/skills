@@ -18,8 +18,23 @@
           "branch": {"type": "string"},
           "worktree": {"type": "string"},
           "base_sha": {"type": "string"},
-          "head_sha": {"type": "string"}
-        }
+          "head_sha": {"type": "string"},
+          "pr": {"type": "string"},
+          "pr_opened": {"type": "boolean"},
+          "pr_merged": {"type": "boolean"},
+          "merge_commit": {"type": "string"}
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {"status": {"enum": ["PR_READY", "COMPLETE", "DONE"]}},
+              "required": ["status"]
+            },
+            "then": {
+              "required": ["base_sha", "head_sha", "review"]
+            }
+          }
+        ]
       }
     },
     "human_requests": {

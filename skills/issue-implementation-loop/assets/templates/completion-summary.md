@@ -9,8 +9,8 @@
 
 ## Issues
 
-| Issue | Status | Branch | Worktree | Verification | Review | PR |
-| --- | --- | --- | --- | --- | --- | --- |
+| Issue | Status | Branch | Worktree | Base..Head | Verification | Review | PR |
+| --- | --- | --- | --- | --- | --- | --- | --- |
 
 ## Human Requests
 

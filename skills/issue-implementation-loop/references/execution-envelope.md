@@ -7,12 +7,12 @@ The Execution Envelope is the approved execution contract. It is more specific t
 - `schema_version`: `1`
 - `epic_id`: lower-kebab-case ASCII
 - `revision`: positive integer
-- `epic_base`: immutable base ref and full 40- or 64-character hex SHA
+- `epic_base`: per-epic base branch ref `codex/<epic-id>/epic-base` and immutable initial full 40- or 64-character hex SHA
 - `execution_policy`: parallel preference, serial fallback, slots, and `wave_is_barrier`
-- `review_policy`: primary reviewer, fallbacks, manual fallback, and fix-cycle limits
+- `review_policy`: primary reviewer, fallbacks, manual fallback, `max_review_cycles: 2`, and fix-cycle limits
 - `human_policy`: default scope and epic-scope reason requirement
 - `context_policy`: paths-first worker packet and report budgets
-- `remote_write_policy`: `local_only`, `per_action`, or `batch_draft_prs`
+- `remote_write_policy`: `local_only`, `per_action`, `batch_draft_prs`, or `batch_issue_prs`
 - `work_items`: one entry per approved issue
 
 ## Reservation Rules
@@ -28,11 +28,35 @@ The Execution Envelope is the approved execution contract. It is more specific t
 
 Every work item declares how its branch is created:
 
-- `{"type": "epic_base"}`: branch from immutable `epic_base.ref` / `epic_base.sha`.
+- `{"type": "epic_base"}`: branch from `epic_base.ref` at the recorded base head.
 - `{"type": "blocker_head", "issue": "G2PR-001"}`: branch from exactly one prerequisite issue head whose dependency edge uses `base_effect: "branch_from_blocker_head"`.
 - `{"type": "integration_head", "integration_issue": "G2PR-010"}`: branch from exactly one approved integration work item whose dependency edge uses `base_effect: "branch_from_integration_head"`.
 
 Do not branch from multiple blocker or integration heads. Add an integration work item or integration branch when downstream code needs more than one prerequisite head.
+
+## Remote Delivery Policy
+
+Use `batch_issue_prs` when the approved delivery path is issue PRs into the epic base branch plus a final PR to `main`.
+
+Required shape:
+
+```json
+{
+  "mode": "batch_issue_prs",
+  "approved_actions": [],
+  "issue_prs": {
+    "base": "epic_base.ref",
+    "merge": "agent_default_with_human_escalation"
+  },
+  "final_pr": {
+    "head": "epic_base.ref",
+    "base": "main",
+    "merge": "human_only"
+  }
+}
+```
+
+For this mode, `epic_base.ref` must be `codex/<epic-id>/epic-base`. Issue PR merges may be agent-run only while checks, review, permissions, and mergeability are unambiguous. Final PR merge is always human-only.
 
 ## Context Policy
 
@@ -55,6 +79,7 @@ Create a new envelope revision before changing:
 - write scope
 - base strategy
 - remote action policy
+- issue PR merge policy or final PR policy
 - retry or review fallback policy
 - human wait policy
 - context policy

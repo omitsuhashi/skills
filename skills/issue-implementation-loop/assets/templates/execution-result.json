@@ -8,10 +8,16 @@
       "status": "PR_READY",
       "branch": "codex/issue-implementation-loop/G2PR-001-example",
       "worktree": "/abs/worktree",
-      "base_sha": "abc123",
-      "head_sha": "def456",
+      "base_sha": "0123456789abcdef0123456789abcdef01234567",
+      "head_sha": "89abcdef0123456789abcdef0123456789abcdef",
       "verification": "passed",
-      "implementation_review": "approved",
+      "implementation_review": {
+        "status": "approved",
+        "range": "0123456789abcdef0123456789abcdef01234567..89abcdef0123456789abcdef0123456789abcdef"
+      },
+      "pr": "https://github.com/org/repo/pull/123",
+      "pr_opened": true,
+      "pr_merged": true,
       "residual_risks": []
     }
   },
