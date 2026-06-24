@@ -20,7 +20,7 @@ Required policy:
 - final PR base: `main`
 - final PR merge: `human_only`
 
-Before creating any issue PR or final PR, write the exact action to a delivery plan file and validate it. Use `assets/templates/delivery-plan.json` as the starting point for final PRs:
+Before creating any issue PR or final PR, write the exact action to a delivery plan file, validate it with `--json`, and record/report the `ok: true` output before creating the PR. Use `assets/templates/delivery-plan.json` as the starting point for final PRs:
 
 ```bash
 python3 <skill-dir>/scripts/validate_delivery_plan.py <execution-envelope.json> <runtime-state.json> <delivery-plan.json>

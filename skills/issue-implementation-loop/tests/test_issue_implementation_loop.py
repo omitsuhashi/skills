@@ -1096,6 +1096,32 @@ class IssueImplementationLoopTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn("DELIVERY PLAN OK", result.stdout)
 
+    def test_validate_delivery_plan_defaults_final_pr_scope_to_all_work_items(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            envelope_path = Path(tmp) / "envelope.json"
+            runtime_path = Path(tmp) / "runtime.json"
+            plan_path = Path(tmp) / "delivery-plan.json"
+            write_json(envelope_path, batch_issue_prs_envelope())
+            write_json(runtime_path, merged_runtime_state(missing_merge="G2PR-003"))
+            write_json(
+                plan_path,
+                {
+                    "action": "final_pr",
+                    "head": "codex/issue-implementation-loop/epic-base",
+                    "base": "main",
+                },
+            )
+
+            result = run_script(
+                "validate_delivery_plan.py",
+                str(envelope_path),
+                str(runtime_path),
+                str(plan_path),
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("issues.G2PR-003.pr_merged must be true before final PR", result.stderr)
+
     def test_compute_next_actions_does_not_wait_for_wave_barrier(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             envelope_path = Path(tmp) / "envelope.json"
