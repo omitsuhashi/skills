@@ -33,11 +33,13 @@ BASE_EFFECTS = {"none", "branch_from_blocker_head", "branch_from_integration_hea
 BASE_POLICY_TYPES = {"epic_base", "blocker_head", "integration_head"}
 WORKTREE_STATES = {"reserved", "create_on_run", "active", "missing"}
 REMOTE_MODES = {"local_only", "per_action", "batch_draft_prs", "batch_issue_prs"}
+DELIVERY_INTENTS = REMOTE_MODES
 ISSUE_PR_BASES = {"epic_base.ref"}
 ISSUE_PR_MERGE_POLICIES = {"agent_default_with_human_escalation"}
 FINAL_PR_HEADS = {"epic_base.ref"}
 FINAL_PR_MERGE_POLICIES = {"human_only"}
 MAX_REVIEW_CYCLES = 2
+APPROVED_REVIEW_STATUSES = {"approved", "承認済み"}
 
 ACTIVE_STATUSES = {"RUNNING", "FIXING"}
 TERMINAL_STATUSES = {"PR_READY", "COMPLETE", "DONE", "FAILED", "CANCELLED"}
@@ -89,6 +91,22 @@ def commit_range_parts(value: str) -> tuple[str, str] | None:
     return base, head
 
 
+def has_human_risk_acceptance(record: dict[str, Any], review: dict[str, Any]) -> bool:
+    return bool(
+        record.get("human_risk_accepted")
+        or record.get("human_risk_acceptance")
+        or review.get("human_risk_accepted")
+        or review.get("human_risk_acceptance")
+    )
+
+
+def review_approved_or_accepted(record: dict[str, Any], field: str) -> bool:
+    review = record.get(field)
+    if not isinstance(review, dict):
+        return False
+    return review.get("status") in APPROVED_REVIEW_STATUSES or has_human_risk_acceptance(record, review)
+
+
 def validate_input_packet(packet: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     if packet.get("schema_version") != 1:
@@ -105,6 +123,10 @@ def validate_input_packet(packet: dict[str, Any]) -> list[str]:
     spec = packet.get("spec")
     if not isinstance(spec, dict) or not spec.get("path"):
         errors.append("spec.path is required")
+
+    delivery_intent = packet.get("delivery_intent")
+    if delivery_intent not in DELIVERY_INTENTS:
+        errors.append(f"delivery_intent must be one of {sorted(DELIVERY_INTENTS)}")
 
     work_items = packet.get("work_items")
     if not isinstance(work_items, list) or not work_items:
@@ -192,33 +214,36 @@ def validate_execution_envelope(envelope: dict[str, Any]) -> list[str]:
         ):
             errors.append("review_policy.max_fix_cycles must be an integer between 0 and 2")
 
-    remote_policy = envelope.get("remote_write_policy", {})
-    if remote_policy.get("mode") not in REMOTE_MODES:
-        errors.append(f"remote_write_policy.mode must be one of {sorted(REMOTE_MODES)}")
-    elif remote_policy.get("mode") == "batch_issue_prs":
-        expected_epic_base_ref = f"codex/{epic_id}/epic-base" if isinstance(epic_id, str) else None
-        if isinstance(epic_base, dict) and epic_base.get("ref") != expected_epic_base_ref:
-            errors.append(f"epic_base.ref must be {expected_epic_base_ref} for batch_issue_prs")
-        issue_prs = remote_policy.get("issue_prs")
-        if not isinstance(issue_prs, dict):
-            errors.append("remote_write_policy.issue_prs is required for batch_issue_prs")
-        else:
-            if issue_prs.get("base") not in ISSUE_PR_BASES:
-                errors.append("remote_write_policy.issue_prs.base must be epic_base.ref")
-            if issue_prs.get("merge") not in ISSUE_PR_MERGE_POLICIES:
-                errors.append(
-                    "remote_write_policy.issue_prs.merge must be agent_default_with_human_escalation"
-                )
-        final_pr = remote_policy.get("final_pr")
-        if not isinstance(final_pr, dict):
-            errors.append("remote_write_policy.final_pr is required for batch_issue_prs")
-        else:
-            if final_pr.get("head") not in FINAL_PR_HEADS:
-                errors.append("remote_write_policy.final_pr.head must be epic_base.ref")
-            if final_pr.get("base") != "main":
-                errors.append("remote_write_policy.final_pr.base must be main")
-            if final_pr.get("merge") not in FINAL_PR_MERGE_POLICIES:
-                errors.append("remote_write_policy.final_pr.merge must be human_only")
+    remote_policy = envelope.get("remote_write_policy")
+    if not isinstance(remote_policy, dict):
+        errors.append("remote_write_policy must be an object")
+    else:
+        if remote_policy.get("mode") not in REMOTE_MODES:
+            errors.append(f"remote_write_policy.mode must be one of {sorted(REMOTE_MODES)}")
+        elif remote_policy.get("mode") == "batch_issue_prs":
+            expected_epic_base_ref = f"codex/{epic_id}/epic-base" if isinstance(epic_id, str) else None
+            if isinstance(epic_base, dict) and epic_base.get("ref") != expected_epic_base_ref:
+                errors.append(f"epic_base.ref must be {expected_epic_base_ref} for batch_issue_prs")
+            issue_prs = remote_policy.get("issue_prs")
+            if not isinstance(issue_prs, dict):
+                errors.append("remote_write_policy.issue_prs is required for batch_issue_prs")
+            else:
+                if issue_prs.get("base") not in ISSUE_PR_BASES:
+                    errors.append("remote_write_policy.issue_prs.base must be epic_base.ref")
+                if issue_prs.get("merge") not in ISSUE_PR_MERGE_POLICIES:
+                    errors.append(
+                        "remote_write_policy.issue_prs.merge must be agent_default_with_human_escalation"
+                    )
+            final_pr = remote_policy.get("final_pr")
+            if not isinstance(final_pr, dict):
+                errors.append("remote_write_policy.final_pr is required for batch_issue_prs")
+            else:
+                if final_pr.get("head") not in FINAL_PR_HEADS:
+                    errors.append("remote_write_policy.final_pr.head must be epic_base.ref")
+                if final_pr.get("base") != "main":
+                    errors.append("remote_write_policy.final_pr.base must be main")
+                if final_pr.get("merge") not in FINAL_PR_MERGE_POLICIES:
+                    errors.append("remote_write_policy.final_pr.merge must be human_only")
 
     context_policy = envelope.get("context_policy")
     if not isinstance(context_policy, dict):
@@ -394,6 +419,10 @@ def validate_runtime_state(state: dict[str, Any]) -> list[str]:
                     and (base_sha.lower(), head_sha.lower()) != (range_parts[0].lower(), range_parts[1].lower())
                 ):
                     errors.append(f"issues.{issue_id}.review.range must match base_sha..head_sha")
+                if not review_approved_or_accepted(record, "review"):
+                    errors.append(
+                        f"issues.{issue_id}.review.status must be approved or have human risk acceptance"
+                    )
     human_requests = state.get("human_requests", [])
     if not isinstance(human_requests, list):
         errors.append("human_requests must be a list")
@@ -454,6 +483,8 @@ def validate_worker_report(report: dict[str, Any]) -> list[str]:
             and (base_sha.lower(), head_sha.lower()) != (range_parts[0].lower(), range_parts[1].lower())
         ):
             errors.append("implementation_review.range must match base_sha..head_sha")
+        if not review_approved_or_accepted(report, "implementation_review"):
+            errors.append("implementation_review.status must be approved or have human risk acceptance")
     return errors
 
 
@@ -514,11 +545,7 @@ def dependency_satisfied(dep: dict[str, Any], runtime: dict[str, Any]) -> bool:
     if release_on in signals:
         return True
     if release_on == "review_approved":
-        review = record.get("review", {})
-        return (
-            isinstance(review, dict)
-            and review.get("status") in {"approved", "承認済み"}
-        ) or record.get("status") in {"PR_READY", "COMPLETE", "DONE"}
+        return review_approved_or_accepted(record, "review")
     if release_on == "artifact_ready":
         return record.get("status") in {
             "ARTIFACT_READY",

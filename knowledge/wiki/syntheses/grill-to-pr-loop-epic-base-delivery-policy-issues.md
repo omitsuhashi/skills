@@ -4,7 +4,7 @@
 
 | Epic ID | ローカルID | タイトル | レビュー状態 | 実行状態 | 実装結果 | ブロック元 | ブロック先 | GitHub Issue | 実装レビュー | PR |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| grill-to-pr-epic-base-delivery | G2PR-001 | epic-base delivery と issue PR merge policy を契約化する | 承認済み | 実行可能 | 実装済み | なし | なし | 未作成 | 未実施 | 未作成 |
+| grill-to-pr-epic-base-delivery | G2PR-001 | epic-base delivery と issue PR merge policy を契約化する | 承認済み | 実行可能 | 実装済み | なし | なし | 未作成 | 2回目レビュー通過 | 未作成 |
 
 ## ブロッカーグラフ
 
@@ -60,14 +60,19 @@ epic-base delivery と issue PR merge policy を契約化する
 
 ### 実装レビュー
 
-- 状態: 未実施
-- レビュー範囲: 未作成
+- 状態: 2回目レビュー通過
+- 1回目レビュー範囲: `b719b58bae053e27dd2462a26ad5421c2ce58e69..830fec56af12d63b656236bf363e0213194f898b`
+- 1回目レビュー結果: success status が未承認 review でも通る点、`delivery_intent` 未検証、`batch_issue_prs` schema required 漏れ、`remote_write_policy` 型エラーの traceback を確認。
+- 対応: success status には approved review または human risk acceptance を必須化し、`release_on: review_approved` の success-status fallback を削除。`delivery_intent` と `remote_write_policy` 型検証、`batch_issue_prs` schema required を追加。
+- 2回目レビュー範囲: `830fec56af12d63b656236bf363e0213194f898b..working-tree`
+- 2回目レビュー結果: Critical / Important / Minor なし。Ready to merge。
 - PR: 未作成。remote write 未実行。
 
 ### 検証結果
 
-- `PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 -m unittest skills.issue-implementation-loop.tests.test_issue_implementation_loop` -> OK, 25 tests.
-- `PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests` -> OK, 25 tests.
+- `PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 -m unittest skills.issue-implementation-loop.tests.test_issue_implementation_loop` -> OK, 32 tests.
+- `PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests` -> OK, 32 tests.
 - `UV_CACHE_DIR=/private/tmp/uv-cache uv run --isolated --python 3.12 --with 'PyYAML==6.0.2' python /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_validate.py skills/issue-implementation-loop` -> OK, Skill is valid.
 - `UV_CACHE_DIR=/private/tmp/uv-cache uv run --isolated --python 3.12 --with 'PyYAML==6.0.2' python /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_validate.py skills/grill-to-pr-loop` -> OK, Skill is valid.
 - `git diff --check` -> OK.
+- `python3 -m json.tool skills/issue-implementation-loop/assets/schemas/execution-envelope.schema.json >/tmp/execution-envelope-schema-check.json` -> OK.
