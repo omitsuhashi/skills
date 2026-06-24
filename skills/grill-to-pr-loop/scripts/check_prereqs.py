@@ -40,14 +40,6 @@ def candidate_roots(extra_roots: list[str]) -> list[Path]:
     for root in extra_roots:
         roots.append(Path(root).expanduser())
 
-    roots.extend(
-        [
-            Path.cwd() / "skills",
-            Path.cwd() / ".agents" / "skills",
-            Path.cwd() / "agents" / "skills",
-        ]
-    )
-
     codex_home = os.environ.get("CODEX_HOME")
     if codex_home:
         roots.append(Path(codex_home).expanduser() / "skills")
@@ -57,6 +49,9 @@ def candidate_roots(extra_roots: list[str]) -> list[Path]:
         [
             home / ".agents" / "skills",
             home / ".codex" / "skills",
+            Path.cwd() / "skills",
+            Path.cwd() / ".agents" / "skills",
+            Path.cwd() / "agents" / "skills",
         ]
     )
     roots.extend(plugin_skill_roots(home))

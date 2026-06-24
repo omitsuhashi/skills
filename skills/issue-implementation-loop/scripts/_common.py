@@ -849,11 +849,9 @@ def git_output(args: list[str], cwd: str | None = None) -> subprocess.CompletedP
 def skill_roots() -> list[Path]:
     home = Path.home()
     roots = [
-        Path.cwd() / "skills",
-        Path.cwd() / ".agents" / "skills",
-        Path.cwd() / "agents" / "skills",
         home / ".agents" / "skills",
         home / ".codex" / "skills",
+        Path.cwd() / "skills",
     ]
     cache = home / ".codex" / "plugins" / "cache"
     if cache.exists():
