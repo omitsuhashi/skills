@@ -42,7 +42,7 @@
     "human_policy": {"type": "object"},
     "context_policy": {
       "type": "object",
-      "required": ["paths_first", "max_worker_packet_words", "max_worker_report_words", "include_full_spec_text", "include_full_ledger_text", "worker_packet_schema", "worker_packet_template", "worker_packet_validator"],
+      "required": ["paths_first", "max_worker_packet_words", "max_worker_report_words", "include_full_spec_text", "include_full_ledger_text"],
       "properties": {
         "paths_first": {"const": true},
         "max_worker_packet_words": {"type": "integer", "minimum": 1},
@@ -52,6 +52,11 @@
         "worker_packet_schema": {"type": "string", "minLength": 1},
         "worker_packet_template": {"type": "string", "minLength": 1},
         "worker_packet_validator": {"type": "string", "minLength": 1}
+      },
+      "dependentRequired": {
+        "worker_packet_schema": ["worker_packet_schema", "worker_packet_template", "worker_packet_validator"],
+        "worker_packet_template": ["worker_packet_schema", "worker_packet_template", "worker_packet_validator"],
+        "worker_packet_validator": ["worker_packet_schema", "worker_packet_template", "worker_packet_validator"]
       }
     },
     "remote_write_policy": {
