@@ -2,7 +2,7 @@
 
 ## 状態
 
-Issue Gate 承認済み。Execution Packet 作成へ進める。GitHub issue mirror、実装、push、PR 作成は Execution Plan Gate 承認後まで行わない。
+Issue Gate / Execution Plan Gate 承認済み。Execution Packet は [loop-skill-architecture-v3-input-packet.json](loop-skill-architecture-v3-input-packet.json) に置く。`issue-implementation-loop prepare` へ進める。GitHub issue mirror、push、PR 作成、merge は未承認のため行わない。
 
 ## Ledger
 
@@ -332,7 +332,18 @@ G2PR-002 から G2PR-005 までの成果を統合し、context validation、oper
 
 ## Remote Policy
 
-`local_only`。GitHub auth は optional failure であり、Issue Gate / Execution Plan Gate / Remote Gate の明示承認もないため、GitHub issue / PR / push / merge は実行しない。
+`local_only`。GitHub auth は optional failure であり、Remote Gate の明示承認もないため、GitHub issue / PR / push / merge は実行しない。
+
+## Execution Plan Gate 承認事項
+
+- Packet: [loop-skill-architecture-v3-input-packet.json](loop-skill-architecture-v3-input-packet.json)
+- Capability preflight: `ok: true`
+- Delivery intent: `local_only`
+- reviewer capability: `requesting-code-review` available
+- TDD capability: available
+- remote writes: 未承認のため実行しない
+- parallel execution: platform-dependent。worker contexts が使えない場合は実装前に停止
+- G2PR-006 は複数 blocker head を直接 merge しないよう、dependency `base_effect` を `none` にする
 
 ## Issue Gate 承認事項
 
