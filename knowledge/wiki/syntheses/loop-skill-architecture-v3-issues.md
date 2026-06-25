@@ -2,27 +2,54 @@
 
 ## 状態
 
-Issue Gate / Execution Plan Gate 承認済み。Execution Packet は [loop-skill-architecture-v3-input-packet.json](loop-skill-architecture-v3-input-packet.json) に置く。`issue-implementation-loop prepare` へ進める。GitHub issue mirror、push、PR 作成、merge は未承認のため行わない。
+Issue Gate / Execution Plan Gate 承認済み。Execution Packet は [loop-skill-architecture-v3-input-packet.json](loop-skill-architecture-v3-input-packet.json) に置く。G2PR-001 から G2PR-005 は実装レビュー承認済み、G2PR-006 は統合 evidence / ledger 更新を完了。GitHub issue mirror、push、PR 作成、merge は未承認のため行わない。
 
 ## Ledger
 
 | Epic ID | ローカルID | タイトル | レビュー状態 | 実行状態 | ブロック元 | ブロック先 | GitHub Issue | 実装レビュー | PR |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| loop-skill-architecture-v3 | G2PR-001 | context contract と検証基盤を導入する | 承認済み | 実行可能 | なし | G2PR-002, G2PR-003, G2PR-004, G2PR-005 | 未作成 | 未実施 | 未作成 |
-| loop-skill-architecture-v3 | G2PR-002 | entrypoint と reference ownership を圧縮整理する | 承認済み | ブロック中 | G2PR-001 | G2PR-006 | 未作成 | 未実施 | 未作成 |
-| loop-skill-architecture-v3 | G2PR-003 | operation selection を構造化 state で決定する | 承認済み | ブロック中 | G2PR-001 | G2PR-006 | 未作成 | 未実施 | 未作成 |
-| loop-skill-architecture-v3 | G2PR-004 | worker packet を正規化し context budget を強制する | 承認済み | ブロック中 | G2PR-001 | G2PR-006 | 未作成 | 未実施 | 未作成 |
-| loop-skill-architecture-v3 | G2PR-005 | resume brief を派生 artifact として追加する | 承認済み | ブロック中 | G2PR-001 | G2PR-006 | 未作成 | 未実施 | 未作成 |
-| loop-skill-architecture-v3 | G2PR-006 | 統合テストと wiki ledger を仕上げる | 承認済み | ブロック中 | G2PR-002, G2PR-003, G2PR-004, G2PR-005 | なし | 未作成 | 未実施 | 未作成 |
+| loop-skill-architecture-v3 | G2PR-001 | context contract と検証基盤を導入する | 承認済み | 完了 | なし | G2PR-002, G2PR-003, G2PR-004, G2PR-005 | 未作成 | 承認済み | 未作成 |
+| loop-skill-architecture-v3 | G2PR-002 | entrypoint と reference ownership を圧縮整理する | 承認済み | 完了 | G2PR-001 | G2PR-006 | 未作成 | 承認済み | 未作成 |
+| loop-skill-architecture-v3 | G2PR-003 | operation selection を構造化 state で決定する | 承認済み | 完了 | G2PR-001 | G2PR-006 | 未作成 | 承認済み | 未作成 |
+| loop-skill-architecture-v3 | G2PR-004 | worker packet を正規化し context budget を強制する | 承認済み | 完了 | G2PR-001 | G2PR-006 | 未作成 | 承認済み | 未作成 |
+| loop-skill-architecture-v3 | G2PR-005 | resume brief を派生 artifact として追加する | 承認済み | 完了 | G2PR-001 | G2PR-006 | 未作成 | 承認済み | 未作成 |
+| loop-skill-architecture-v3 | G2PR-006 | 統合テストと wiki ledger を仕上げる | 承認済み | 完了 | G2PR-002, G2PR-003, G2PR-004, G2PR-005 | なし | 未作成 | ローカル確認済み | 未作成 |
 
 ## ブロッカーグラフ
 
-- G2PR-001: 実行可能; ブロック元 なし; ブロック先 G2PR-002, G2PR-003, G2PR-004, G2PR-005
-- G2PR-002: ブロック中; ブロック元 G2PR-001; ブロック先 G2PR-006
-- G2PR-003: ブロック中; ブロック元 G2PR-001; ブロック先 G2PR-006
-- G2PR-004: ブロック中; ブロック元 G2PR-001; ブロック先 G2PR-006
-- G2PR-005: ブロック中; ブロック元 G2PR-001; ブロック先 G2PR-006
-- G2PR-006: ブロック中; ブロック元 G2PR-002, G2PR-003, G2PR-004, G2PR-005; ブロック先 なし
+- G2PR-001: 完了; ブロック元 なし; ブロック先 G2PR-002, G2PR-003, G2PR-004, G2PR-005
+- G2PR-002: 完了; ブロック元 G2PR-001; ブロック先 G2PR-006
+- G2PR-003: 完了; ブロック元 G2PR-001; ブロック先 G2PR-006
+- G2PR-004: 完了; ブロック元 G2PR-001; ブロック先 G2PR-006
+- G2PR-005: 完了; ブロック元 G2PR-001; ブロック先 G2PR-006
+- G2PR-006: 完了; ブロック元 G2PR-002, G2PR-003, G2PR-004, G2PR-005; ブロック先 なし
+
+## 実装・検証 evidence
+
+Runtime root は `/Users/omitsuhashi/repos/omitsuhashi/skills/.git/agent-runs/issue-implementation-loop/loop-skill-architecture-v3`。G2PR-006 の依存 edge は G2PR-002 から G2PR-005 まで全て `base_effect: none` のため、G2PR-006 branch へ各 blocker head は merge していない。
+
+| Issue | 実装状態 | Base | Head | Verification evidence | Implementation review |
+| --- | --- | --- | --- | --- | --- |
+| G2PR-001 | COMPLETE | `84a2278e9692a3b592fa3195cb956cf74f075a39` | `2b5637cbecbc044c3a341696e2e9824930f11c81` | `validate_loop_skill_context.py --all` passed; `inspect_loop_skill_context.py` returned `budget_headroom=496`; grill tests `Ran 7 tests OK`; issue tests `Ran 55 tests OK` | approved; range `84a2278e9692a3b592fa3195cb956cf74f075a39..2b5637cbecbc044c3a341696e2e9824930f11c81`; Critical/Important/Minor 0 |
+| G2PR-002 | COMPLETE | `2b5637cbecbc044c3a341696e2e9824930f11c81` | `d99f16c63b9500034216830f4d824adbe53ff156` | `validate_loop_skill_context.py --all` passed; grill tests `Ran 10 tests OK`; word counts `551 / 507 / 389`; `git diff --check` passed | approved; range `2b5637cbecbc044c3a341696e2e9824930f11c81..d99f16c63b9500034216830f4d824adbe53ff156`; Critical/Important/Minor 0 |
+| G2PR-003 | COMPLETE | `2b5637cbecbc044c3a341696e2e9824930f11c81` | `25d4cddbefaad7521a671316aa0dc9057164c742` | `select_operation.py` representative CLI passed; issue tests `Ran 65 tests OK`; `validate_loop_skill_context.py --all` passed; `git diff --check` passed | approved; range `2b5637cbecbc044c3a341696e2e9824930f11c81..25d4cddbefaad7521a671316aa0dc9057164c742`; Critical/Important/Minor 0 |
+| G2PR-004 | COMPLETE | `2b5637cbecbc044c3a341696e2e9824930f11c81` | `bc8193584108a7bf56f702284da6fe49702c815f` | issue tests `Ran 65 tests OK`; `build_worker_packet.py` representative CLI passed; `validate_worker_packet.py` returned `ok: true`; `validate_execution_envelope.py` passed; `git diff --check` passed | approved; range `2b5637cbecbc044c3a341696e2e9824930f11c81..bc8193584108a7bf56f702284da6fe49702c815f`; Critical/Important/Minor 0 |
+| G2PR-005 | COMPLETE | `2b5637cbecbc044c3a341696e2e9824930f11c81` | `56955c790ffcc98852e519403d695534bfb1749a` | `build_resume_brief.py` representative CLI passed; issue tests `Ran 61 tests OK`; `validate_loop_skill_context.py --all` passed; `git diff --check` passed | approved; range `2b5637cbecbc044c3a341696e2e9824930f11c81..56955c790ffcc98852e519403d695534bfb1749a`; Critical/Important/Minor 0 |
+| G2PR-006 | COMPLETE | `2b5637cbecbc044c3a341696e2e9824930f11c81` | local ledger commit | Fresh representative verification below passed, except `quick_validate.py` dependency cache unavailable | local scoped review: no acceptance gap found in ledger/evidence diff; formal subagent review was unavailable in this environment |
+
+### G2PR-006 fresh verification
+
+- G2PR-006 worktree: `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_loop_skill_context.py --all` passed with `OK: validated 2 loop skill context contract(s)`.
+- G2PR-006 worktree: `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/inspect_loop_skill_context.py --skill skills/issue-implementation-loop --operation execute.review --json` returned `word_count=1404`, `word_budget=1900`, `budget_headroom=496`, `file_count=5`.
+- G2PR-002 worktree: `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/grill-to-pr-loop/tests` passed with `Ran 10 tests`.
+- G2PR-003 worktree: `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/select_operation.py --envelope /Users/omitsuhashi/.codex/worktrees/d8af/skills/knowledge/wiki/syntheses/loop-skill-architecture-v3-execution-envelope.json --runtime /Users/omitsuhashi/repos/omitsuhashi/skills/.git/agent-runs/issue-implementation-loop/loop-skill-architecture-v3/runtime-state.json --requested-mode execute --json` passed; output selected `operation=resume`, `priority=reconcile`, `budget_headroom=855`.
+- G2PR-004 worktree: `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/build_worker_packet.py ... --output /private/tmp/g2pr-006-worker-packet.json` wrote a representative packet; `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/validate_worker_packet.py /private/tmp/g2pr-006-worker-packet.json --json` returned `ok: true`.
+- G2PR-005 worktree: `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/build_resume_brief.py /Users/omitsuhashi/repos/omitsuhashi/skills/.git/agent-runs/issue-implementation-loop/loop-skill-architecture-v3 --envelope /Users/omitsuhashi/.codex/worktrees/d8af/skills/knowledge/wiki/syntheses/loop-skill-architecture-v3-execution-envelope.json --output /private/tmp/g2pr-006-resume-brief.md --stdout` passed; output reported `COMPLETE=5`, `RUNNING=1`, active `G2PR-006`, pending remote action `none - remote policy local_only`.
+- Issue tests passed in relevant worktrees: G2PR-003 `Ran 65 tests`, G2PR-004 `Ran 65 tests`, G2PR-005 `Ran 61 tests`, G2PR-006 `Ran 55 tests`.
+- G2PR-002 worktree: `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/grill-to-pr-loop/scripts/check_prereqs.py --phase execution --json` returned `ok: true`; GitHub auth failure remained optional.
+- G2PR-006 worktree: `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/check_capabilities.py --input knowledge/wiki/syntheses/loop-skill-architecture-v3-input-packet.json --json` returned `ok: true`.
+- `quick_validate.py` for `skills/grill-to-pr-loop` and `skills/issue-implementation-loop` was attempted in the G2PR-002 worktree and was not verified because the dependency cache was unavailable: both commands failed with `ModuleNotFoundError: No module named 'yaml'`.
+- Remote writes were not executed because the approved execution envelope has `remote_write_policy.mode=local_only`, `approved_actions=[]`, and there is no Remote Gate approval.
 
 ## G2PR-001
 
@@ -292,14 +319,14 @@ G2PR-002 から G2PR-005 までの成果を統合し、context validation、oper
 
 ### 受け入れ条件
 
-- [ ] `scripts/validate_loop_skill_context.py --all` が通る。
-- [ ] `scripts/inspect_loop_skill_context.py` が代表 operation で budget headroom を返す。
-- [ ] `select_operation.py`、`validate_worker_packet.py`、`build_resume_brief.py` の代表 CLI が通る。
-- [ ] `python3 -m unittest discover -s skills/grill-to-pr-loop/tests` が通る。
-- [ ] `python3 -m unittest discover -s skills/issue-implementation-loop/tests` が通る。
-- [ ] `check_prereqs.py --phase execution --json` と `check_capabilities.py --json` が通る。
-- [ ] `quick_validate.py` は dependency cache が使える場合に `skills/grill-to-pr-loop` と `skills/issue-implementation-loop` で実行する。使えない場合は未検証理由を ledger に残す。
-- [ ] local issue ledger に実装状態、verification、implementation review 結果、remote write 未実行理由が反映されている。
+- [x] `scripts/validate_loop_skill_context.py --all` が通る。
+- [x] `scripts/inspect_loop_skill_context.py` が代表 operation で budget headroom を返す。
+- [x] `select_operation.py`、`validate_worker_packet.py`、`build_resume_brief.py` の代表 CLI が通る。
+- [x] `python3 -m unittest discover -s skills/grill-to-pr-loop/tests` が通る。
+- [x] `python3 -m unittest discover -s skills/issue-implementation-loop/tests` が通る。
+- [x] `check_prereqs.py --phase execution --json` と `check_capabilities.py --json` が通る。
+- [x] `quick_validate.py` は dependency cache が使える場合に `skills/grill-to-pr-loop` と `skills/issue-implementation-loop` で実行する。使えない場合は未検証理由を ledger に残す。
+- [x] local issue ledger に実装状態、verification、implementation review 結果、remote write 未実行理由が反映されている。
 
 ### ブロッカー
 
@@ -333,6 +360,8 @@ G2PR-002 から G2PR-005 までの成果を統合し、context validation、oper
 ## Remote Policy
 
 `local_only`。GitHub auth は optional failure であり、Remote Gate の明示承認もないため、GitHub issue / PR / push / merge は実行しない。
+
+G2PR-006 でも remote write は実行していない。理由は approved execution envelope の `remote_write_policy.mode=local_only`、`approved_actions=[]`、および Remote Gate の明示承認なし。
 
 ## Execution Plan Gate 承認事項
 
