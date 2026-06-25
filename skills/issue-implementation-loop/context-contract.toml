@@ -1,0 +1,36 @@
+skill = "issue-implementation-loop"
+entrypoint = "SKILL.md"
+base_references = ["references/core.md"]
+word_budget = 1900
+max_file_count = 6
+
+[operations.prepare]
+references = [
+  "references/execution-envelope.md",
+  "references/dependency-contract.md",
+  "references/worktree-lifecycle.md",
+]
+
+[operations."execute.dispatch"]
+references = [
+  "references/scheduler.md",
+  "references/worker-contract.md",
+  "references/human-wait.md",
+  "references/runtime-state.md",
+]
+
+[operations."execute.review"]
+references = [
+  "references/review-gate.md",
+  "references/worker-contract.md",
+  "references/runtime-state.md",
+]
+
+[operations.resume]
+references = ["references/runtime-state.md", "references/recovery.md"]
+
+[operations.status]
+references = ["references/runtime-state.md", "references/scheduler.md"]
+
+[operations.deliver]
+references = ["references/remote-delivery.md"]
