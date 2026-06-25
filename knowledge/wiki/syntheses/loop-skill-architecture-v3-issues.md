@@ -2,7 +2,7 @@
 
 ## 状態
 
-Issue Gate / Execution Plan Gate 承認済み。Execution Packet は [loop-skill-architecture-v3-input-packet.json](loop-skill-architecture-v3-input-packet.json) に置く。`issue-implementation-loop prepare` へ進める。GitHub issue mirror、push、PR 作成、merge は未承認のため行わない。
+Issue Gate / Execution Plan Gate 承認済み。Execution Packet は [loop-skill-architecture-v3-input-packet.json](loop-skill-architecture-v3-input-packet.json)、Execution Envelope は [loop-skill-architecture-v3-execution-envelope.json](loop-skill-architecture-v3-execution-envelope.json) に置く。GitHub issue mirror、push、PR 作成、merge は未承認のため行わない。
 
 ## Ledger
 
@@ -337,6 +337,7 @@ G2PR-002 から G2PR-005 までの成果を統合し、context validation、oper
 ## Execution Plan Gate 承認事項
 
 - Packet: [loop-skill-architecture-v3-input-packet.json](loop-skill-architecture-v3-input-packet.json)
+- Envelope: [loop-skill-architecture-v3-execution-envelope.json](loop-skill-architecture-v3-execution-envelope.json)
 - Capability preflight: `ok: true`
 - Delivery intent: `local_only`
 - reviewer capability: `requesting-code-review` available
@@ -344,6 +345,18 @@ G2PR-002 から G2PR-005 までの成果を統合し、context validation、oper
 - remote writes: 未承認のため実行しない
 - parallel execution: platform-dependent。worker contexts が使えない場合は実装前に停止
 - G2PR-006 は複数 blocker head を直接 merge しないよう、dependency `base_effect` を `none` にする
+
+## Prepare 結果
+
+- Envelope revision: 1
+- `epic_base.ref`: `codex/loop-skill-architecture-v3/epic-base`
+- `epic_base.sha`: `84a2278e9692a3b592fa3195cb956cf74f075a39`
+- physical worktree creation: 未実行
+- runnable on prepare: G2PR-001 のみ `create_on_run`
+- blocked reservations: G2PR-002, G2PR-003, G2PR-004, G2PR-005, G2PR-006 は `reserved`
+- `validate_execution_envelope.py`: `EXECUTION ENVELOPE OK`
+- `reconcile_git_state.py --json`: `ok: true`, collisions 0
+- `check_capabilities.py --input loop-skill-architecture-v3-input-packet.json --json`: `ok: true`
 
 ## Issue Gate 承認事項
 
