@@ -90,6 +90,20 @@ class GrillToPrLoopTests(unittest.TestCase):
         self.assertIn("references/workflow-contract.md", text)
         self.assertIn("operation router", text)
 
+    def test_phase_gate_approvals_require_local_commit(self) -> None:
+        skill_text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+        core_text = CORE_REFERENCE.read_text(encoding="utf-8")
+        planning_text = (SKILL_DIR / "references" / "planning-contract.md").read_text(encoding="utf-8")
+        handoff_text = (SKILL_DIR / "references" / "execution-handoff.md").read_text(encoding="utf-8")
+        mistakes_text = (SKILL_DIR / "references" / "common-mistakes.md").read_text(encoding="utf-8")
+
+        self.assertIn("phase approval commit", skill_text)
+        self.assertIn("commit the approved artifacts", core_text)
+        self.assertIn("Spec Gate approval", planning_text)
+        self.assertIn("Issue Gate approval", planning_text)
+        self.assertIn("Execution Plan Gate approval", handoff_text)
+        self.assertIn("Moving to the next phase without committing an approved gate", mistakes_text)
+
     def test_agent_default_prompts_are_short_and_policy_free(self) -> None:
         for path, skill_name in (
             (GRILL_AGENT_YAML, "$grill-to-pr-loop"),

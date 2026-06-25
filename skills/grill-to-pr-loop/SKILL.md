@@ -45,6 +45,7 @@ After `core.md` and `workflow-contract.md`, load only the references needed for 
 - Keep long specs, ADRs, implementation plans, and Goal contracts in the repo-local durable path defined by the target repository; in this repo that is `knowledge/wiki/syntheses/`.
 - Keep the local issue ledger canonical. GitHub issues and PRs are optional mirrors or delivery records after explicit approval.
 - Keep planning, spec, issue ledger, and execution packet ownership here. Keep branch/base/commit policy in `execution-handoff.md` and remote policy in `remote-delivery.md`.
+- Treat each approved planning gate as a phase approval commit boundary: commit the approved artifacts and ledger/log updates before starting the next phase.
 - Delegate approved issue implementation to `issue-implementation-loop`; it owns worktree reservation, scheduling, runtime state, worker dispatch, scoped waits, implementation review, recovery, and `PR_READY`.
 - Do not implement issue work in the planning/grill context. If worker contexts are unavailable, stop before implementation.
 - Do not publish issues, push, create PRs, merge, force push, deploy, change permissions, touch credentials, perform destructive actions, or incur billing without approved remote policy. Final PR merge is always human-only.
@@ -57,6 +58,8 @@ After `core.md` and `workflow-contract.md`, load only the references needed for 
 - **Remote Gate**: before any external write, load `remote-delivery.md`, verify access, present the exact action set, and wait for explicit approval.
 
 Explicit approval is required at each gate unless the user has already supplied an approved artifact and requested local-only implementation within the same scope.
+
+After Spec Gate, Issue Gate, or Execution Plan Gate approval, commit the approved local artifacts before moving to the next phase. If the user explicitly delays the commit, record that exception in the ledger/log before continuing.
 
 ## Stop Conditions
 

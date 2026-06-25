@@ -41,9 +41,13 @@ Self-review the spec for placeholders, contradictory decisions, ambiguous accept
 
 Present spec path, `Epic ID`, accepted decisions, non-goals, acceptance criteria, verification commands, remote policy, and stop conditions. Wait for approval before issue decomposition unless the user already provided an approved spec and requested direct implementation.
 
+After Spec Gate approval, commit the approved spec and ledger/log updates before issue decomposition.
+
 ### Issue Gate
 
 Present local issues with `Epic ID`, blocker graph, dependency order, `実行可能/ブロック中` status, and acceptance criteria. Wait for approval before GitHub mirroring or execution planning.
+
+After Issue Gate approval, commit the approved local issue ledger and ledger/log updates before GitHub mirroring or execution packet work.
 
 ### GitHub Mirror Gate Preparation
 

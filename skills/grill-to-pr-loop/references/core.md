@@ -16,6 +16,8 @@ Reference ownership is strict: `planning-contract.md` owns artifact and spec min
 
 Use explicit gates before expanding scope: Spec Gate, Issue Gate, Execution Plan Gate, Implementation Review Gate inside `issue-implementation-loop`, and Remote Gate before external writes. Present paths, decisions, acceptance criteria, verification, stop conditions, write scope, dependency order, fallback policy, and local/remote policy as applicable.
 
+After each Spec Gate, Issue Gate, or Execution Plan Gate approval, commit the approved artifacts and ledger/log updates before starting the next phase. Record any user-approved delayed commit as an explicit exception.
+
 Stop if required skills are missing, dirty changes overlap planned write scope, `Epic ID` or blocker graph is ambiguous, approved scope would change, worker contexts are unavailable for implementation, or unresolved Critical/Important findings lack human risk acceptance.
 
 ## Local-first

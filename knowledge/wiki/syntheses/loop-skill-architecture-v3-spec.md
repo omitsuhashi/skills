@@ -148,6 +148,8 @@ GitHub auth は optional failure であり、Issue Gate / Execution Plan Gate / 
 - **Execution Plan Gate**: normalized input packet、write scopes、remote policy、fallback policy を承認する。
 - **Implementation Review Gate**: 各 issue completion / blocker release / PR_READY 前に issue-scoped implementation review を実施する。
 
+Spec Gate / Issue Gate / Execution Plan Gate は承認後に、承認済み local artifacts と ledger/log 更新を commit してから次フェーズへ進む。ユーザーが明示的に commit 延期を指示した場合は、その例外を ledger/log に記録する。
+
 ## Stop Conditions
 
 - `context-contract.toml` と `SKILL.md` が二重の source of truth になる。
