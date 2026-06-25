@@ -7,6 +7,7 @@ from typing import Any
 
 from .constants import ACTIVE_STATUSES, REVIEWABLE_STATUSES, SUCCESS_STATUSES
 from .io import load_json
+from .review import review_approved_or_accepted
 from .scheduler import compute_next_actions
 from .validation.execution_envelope import validate_execution_envelope
 from .validation.runtime_state import validate_runtime_state
@@ -183,7 +184,15 @@ def _runtime_event_inconsistencies(
         if not isinstance(runtime_record, dict) or not isinstance(rebuilt_record, dict):
             inconsistencies.append(f"runtime/events mismatch for {issue_id}: issue missing")
             continue
-        for field in ("status", "base_sha", "head_sha"):
+        for field in (
+            "status",
+            "base_sha",
+            "head_sha",
+            "pr",
+            "pr_opened",
+            "pr_merged",
+            "merge_commit",
+        ):
             if field in rebuilt_record and runtime_record.get(field) != rebuilt_record.get(field):
                 inconsistencies.append(
                     "runtime/events mismatch for "
@@ -219,6 +228,28 @@ def _runtime_event_inconsistencies(
     return inconsistencies
 
 
+def _runtime_with_rebuilt_remote_fields(
+    runtime: dict[str, Any], rebuilt: dict[str, Any]
+) -> dict[str, Any]:
+    effective = dict(runtime)
+    runtime_issues = runtime.get("issues", {})
+    rebuilt_issues = rebuilt.get("issues", {})
+    if not isinstance(runtime_issues, dict) or not isinstance(rebuilt_issues, dict):
+        return effective
+
+    effective_issues: dict[str, Any] = {}
+    for issue_id, record in runtime_issues.items():
+        effective_record = dict(record) if isinstance(record, dict) else record
+        rebuilt_record = rebuilt_issues.get(issue_id)
+        if isinstance(effective_record, dict) and isinstance(rebuilt_record, dict):
+            for field in ("pr", "pr_opened", "pr_merged", "merge_commit"):
+                if field in rebuilt_record:
+                    effective_record[field] = rebuilt_record[field]
+        effective_issues[issue_id] = effective_record
+    effective["issues"] = effective_issues
+    return effective
+
+
 def _verified_commit_ranges(runtime: dict[str, Any]) -> list[str]:
     ranges: list[str] = []
     issues = runtime.get("issues", {})
@@ -226,6 +257,10 @@ def _verified_commit_ranges(runtime: dict[str, Any]) -> list[str]:
         return ranges
     for issue_id, record in sorted(issues.items()):
         if not isinstance(record, dict):
+            continue
+        if record.get("status") not in SUCCESS_STATUSES:
+            continue
+        if not review_approved_or_accepted(record, "review"):
             continue
         review = record.get("review")
         if not isinstance(review, dict):
@@ -241,7 +276,11 @@ def _latest_report_paths(runtime_root: Path) -> list[str]:
     for dirname in ("reports", "reviews"):
         directory = runtime_root / dirname
         if directory.exists():
-            paths.extend(sorted(path for path in directory.iterdir() if path.is_file()))
+            paths.extend(path for path in directory.iterdir() if path.is_file())
+    paths = sorted(
+        paths,
+        key=lambda path: (-path.stat().st_mtime, path.relative_to(runtime_root).as_posix()),
+    )
     return [path.relative_to(runtime_root).as_posix() for path in paths[:6]]
 
 
@@ -370,7 +409,8 @@ def build_resume_brief(
         fixable = _status_issues(runtime, {"REVIEW_CHANGES_REQUESTED"})
         waiting_human = _status_issues(runtime, {"WAITING_HUMAN"})
 
-    pending_remote_action = _pending_remote_action(envelope, runtime)
+    remote_runtime = _runtime_with_rebuilt_remote_fields(runtime, rebuilt)
+    pending_remote_action = _pending_remote_action(envelope, remote_runtime)
     recommended = _recommended_next_operation(
         hard_inconsistencies=hard_inconsistencies,
         actions=actions,

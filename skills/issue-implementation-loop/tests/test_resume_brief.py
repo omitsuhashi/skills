@@ -6,6 +6,13 @@ from _helpers import *
 
 
 class ResumeBriefTests(unittest.TestCase):
+    def brief_line(self, brief: str, label: str) -> str:
+        prefix = f"- {label}: "
+        for line in brief.splitlines():
+            if line.startswith(prefix):
+                return line.removeprefix(prefix)
+        self.fail(f"missing brief line: {label}")
+
     def write_runtime_root(
         self,
         root: Path,
@@ -156,11 +163,46 @@ class ResumeBriefTests(unittest.TestCase):
             self.assertIn("Waiting human: G2PR-005", brief)
             self.assertIn("Pending remote action:", brief)
             self.assertIn(f"Verified commit ranges: G2PR-001 {REVIEW_RANGE}", brief)
-            self.assertIn("Latest report paths: reports/G2PR-001-worker-report.json", brief)
+            self.assertIn("Latest report paths:", brief)
+            self.assertIn("reports/G2PR-001-worker-report.json", brief)
             self.assertIn("reviews/G2PR-001-review.json", brief)
             self.assertIn("Recommended next operation: execute.review G2PR-003", brief)
             self.assertIn("cache only", brief)
             self.assertLessEqual(len(re.findall(r"\S+", brief)), 600)
+
+    def test_build_resume_brief_orders_latest_report_paths_by_mtime_across_reports_and_reviews(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "runtime"
+            self.write_runtime_root(
+                root,
+                envelope=self.rich_envelope(),
+                runtime=self.rich_runtime(),
+                events=self.rich_events(),
+            )
+            files_by_age = [
+                root / "reviews" / "newest-review.json",
+                root / "reports" / "middle-report.json",
+                root / "reviews" / "old-review.json",
+                root / "reports" / "G2PR-001-worker-report.json",
+                root / "reviews" / "G2PR-001-review.json",
+            ]
+            for path in files_by_age:
+                write_json(path, {"path": path.name})
+            for offset, path in enumerate(files_by_age):
+                timestamp = 1_700_000_000 - offset
+                os.utime(path, (timestamp, timestamp))
+
+            result = run_script("build_resume_brief.py", str(root))
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            brief = (root / "resume-brief.md").read_text(encoding="utf-8")
+            latest_paths = self.brief_line(brief, "Latest report paths")
+            self.assertTrue(
+                latest_paths.startswith(
+                    "reviews/newest-review.json, reports/middle-report.json, reviews/old-review.json"
+                ),
+                latest_paths,
+            )
 
     def test_build_resume_brief_fails_fast_when_word_budget_is_exceeded(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -209,3 +251,136 @@ class ResumeBriefTests(unittest.TestCase):
                 brief,
             )
             self.assertIn("Recommended next operation: resume.recover", brief)
+
+    def test_build_resume_brief_compares_remote_pr_fields_from_events(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "runtime"
+            runtime = {
+                "schema_version": 1,
+                "epic_id": "issue-implementation-loop",
+                "envelope_revision": 1,
+                "issues": {
+                    "G2PR-001": {
+                        "status": "PR_READY",
+                        "base_sha": BASE_SHA,
+                        "head_sha": HEAD_SHA,
+                        "review": {"status": "approved", "range": REVIEW_RANGE},
+                    }
+                },
+                "human_requests": [],
+            }
+            events = [
+                {
+                    "event_id": "E-001-review",
+                    "epic_id": "issue-implementation-loop",
+                    "envelope_revision": 1,
+                    "type": "review_status_changed",
+                    "issue": "G2PR-001",
+                    "status": "approved",
+                    "base_sha": BASE_SHA,
+                    "head_sha": HEAD_SHA,
+                    "range": REVIEW_RANGE,
+                },
+                {
+                    "event_id": "E-002-status",
+                    "epic_id": "issue-implementation-loop",
+                    "envelope_revision": 1,
+                    "type": "issue_status_changed",
+                    "issue": "G2PR-001",
+                    "status": "PR_READY",
+                    "base_sha": BASE_SHA,
+                    "head_sha": HEAD_SHA,
+                },
+                {
+                    "event_id": "E-003-pr",
+                    "epic_id": "issue-implementation-loop",
+                    "envelope_revision": 1,
+                    "type": "pr_created",
+                    "issue": "G2PR-001",
+                    "pr": "https://github.com/org/repo/pull/1",
+                },
+            ]
+            self.write_runtime_root(root, envelope=batch_issue_prs_envelope(), runtime=runtime, events=events)
+
+            result = run_script("build_resume_brief.py", str(root))
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            brief = (root / "resume-brief.md").read_text(encoding="utf-8")
+            self.assertIn(
+                "runtime/events mismatch for G2PR-001 pr_opened: runtime=None events=True",
+                brief,
+            )
+            self.assertIn("Pending remote action: none", brief)
+            self.assertIn("Recommended next operation: resume.recover", brief)
+
+    def test_build_resume_brief_verified_ranges_exclude_unapproved_or_non_success_reviews(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "runtime"
+            fix_base = "a" * 40
+            fix_head = "b" * 40
+            unapproved_base = "c" * 40
+            unapproved_head = "d" * 40
+            fix_range = f"{fix_base}..{fix_head}"
+            unapproved_range = f"{unapproved_base}..{unapproved_head}"
+            runtime = {
+                "schema_version": 1,
+                "epic_id": "issue-implementation-loop",
+                "envelope_revision": 1,
+                "issues": {
+                    "G2PR-001": {
+                        "status": "PR_READY",
+                        "base_sha": BASE_SHA,
+                        "head_sha": HEAD_SHA,
+                        "review": {"status": "approved", "range": REVIEW_RANGE},
+                    },
+                    "G2PR-002": {
+                        "status": "REVIEW_CHANGES_REQUESTED",
+                        "base_sha": fix_base,
+                        "head_sha": fix_head,
+                        "review": {"status": "changes_requested", "range": fix_range},
+                    },
+                    "G2PR-003": {
+                        "status": "COMPLETE",
+                        "base_sha": unapproved_base,
+                        "head_sha": unapproved_head,
+                        "review": {"status": "changes_requested", "range": unapproved_range},
+                    },
+                },
+                "human_requests": [],
+            }
+            events = [
+                {
+                    "event_id": f"E-{issue_id}-review",
+                    "epic_id": "issue-implementation-loop",
+                    "envelope_revision": 1,
+                    "type": "review_status_changed",
+                    "issue": issue_id,
+                    "status": record["review"]["status"],
+                    "base_sha": record["base_sha"],
+                    "head_sha": record["head_sha"],
+                    "range": record["review"]["range"],
+                }
+                for issue_id, record in runtime["issues"].items()
+            ] + [
+                {
+                    "event_id": f"E-{issue_id}-status",
+                    "epic_id": "issue-implementation-loop",
+                    "envelope_revision": 1,
+                    "type": "issue_status_changed",
+                    "issue": issue_id,
+                    "status": record["status"],
+                    "base_sha": record["base_sha"],
+                    "head_sha": record["head_sha"],
+                }
+                for issue_id, record in runtime["issues"].items()
+            ]
+            self.write_runtime_root(root, envelope=self.rich_envelope(), runtime=runtime, events=events)
+
+            result = run_script("build_resume_brief.py", str(root))
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            brief = (root / "resume-brief.md").read_text(encoding="utf-8")
+            verified_ranges = self.brief_line(brief, "Verified commit ranges")
+            self.assertEqual(verified_ranges, f"G2PR-001 {REVIEW_RANGE}")
+            self.assertNotIn(fix_range, verified_ranges)
+            self.assertNotIn(unapproved_range, verified_ranges)
