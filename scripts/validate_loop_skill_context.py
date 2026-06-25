@@ -23,7 +23,7 @@ CONTRACT_RELATIVE_PATHS = (
 )
 FORBIDDEN_STANDALONE_SKILL_NAMES = {
     "context-manager",
-    "dependency-contract",
+    "dependency-graph",
     "execution-envelope",
     "human-wait",
     "remote-delivery",

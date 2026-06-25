@@ -39,6 +39,19 @@ def write_example_skill(root: Path, name: str, contract_text: str) -> Path:
 
 
 class ContextContractTests(unittest.TestCase):
+    SPEC_FORBIDDEN_STANDALONE_SKILLS = (
+        "scheduler",
+        "execution-envelope",
+        "dependency-graph",
+        "runtime-state",
+        "worktree-lifecycle",
+        "review-gate",
+        "human-wait",
+        "remote-delivery",
+        "worker-contract",
+        "context-manager",
+    )
+
     def test_validator_rejects_missing_reference(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             skill_dir = Path(tmp) / "skills" / "example-loop"
@@ -137,23 +150,6 @@ class ContextContractTests(unittest.TestCase):
                 "max file count exceeded",
             ),
             (
-                "forbidden",
-                "scheduler",
-                "\n".join(
-                    [
-                        'skill = "scheduler"',
-                        'entrypoint = "SKILL.md"',
-                        'base_references = ["references/core.md"]',
-                        "word_budget = 100",
-                        "max_file_count = 4",
-                        "",
-                        "[operations.test]",
-                        'references = ["references/extra.md"]',
-                    ]
-                ),
-                "forbidden standalone skill name",
-            ),
-            (
                 "invalid-toml",
                 "example-loop",
                 'skill = "example-loop\n',
@@ -169,6 +165,55 @@ class ContextContractTests(unittest.TestCase):
 
                     self.assertNotEqual(result.returncode, 0)
                     self.assertIn(expected, result.stderr)
+
+    def test_validator_rejects_spec_forbidden_standalone_skill_names(self) -> None:
+        for skill_name in self.SPEC_FORBIDDEN_STANDALONE_SKILLS:
+            with self.subTest(skill_name):
+                with tempfile.TemporaryDirectory() as tmp:
+                    skill_dir = write_example_skill(
+                        Path(tmp),
+                        skill_name,
+                        "\n".join(
+                            [
+                                f'skill = "{skill_name}"',
+                                'entrypoint = "SKILL.md"',
+                                'base_references = ["references/core.md"]',
+                                "word_budget = 100",
+                                "max_file_count = 4",
+                                "",
+                                "[operations.test]",
+                                'references = ["references/extra.md"]',
+                            ]
+                        ),
+                    )
+
+                    result = run_context_validator("--skill", str(skill_dir))
+
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("forbidden standalone skill name", result.stderr)
+
+    def test_validator_allows_dependency_contract_reference_name(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            skill_dir = write_example_skill(
+                Path(tmp),
+                "dependency-contract",
+                "\n".join(
+                    [
+                        'skill = "dependency-contract"',
+                        'entrypoint = "SKILL.md"',
+                        'base_references = ["references/core.md"]',
+                        "word_budget = 100",
+                        "max_file_count = 4",
+                        "",
+                        "[operations.test]",
+                        'references = ["references/extra.md"]',
+                    ]
+                ),
+            )
+
+            result = run_context_validator("--skill", str(skill_dir))
+
+            self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_inspector_returns_issue_review_read_set(self) -> None:
         result = run_context_inspector(
