@@ -252,6 +252,64 @@ class ResumeBriefTests(unittest.TestCase):
             )
             self.assertIn("Recommended next operation: resume.recover", brief)
 
+    def test_build_resume_brief_prioritizes_waiting_human_before_runnable_dispatch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "runtime"
+            runtime = {
+                "schema_version": 1,
+                "epic_id": "issue-implementation-loop",
+                "envelope_revision": 1,
+                "issues": {
+                    "G2PR-001": {"status": "WAITING_HUMAN"},
+                    "G2PR-002": {"status": "PENDING"},
+                },
+                "human_requests": [
+                    {
+                        "id": "HR-001",
+                        "scope": "issue",
+                        "issue": "G2PR-001",
+                        "reason": "needs decision",
+                    }
+                ],
+            }
+            events = [
+                {
+                    "event_id": "E-001-waiting",
+                    "epic_id": "issue-implementation-loop",
+                    "envelope_revision": 1,
+                    "type": "issue_status_changed",
+                    "issue": "G2PR-001",
+                    "status": "WAITING_HUMAN",
+                },
+                {
+                    "event_id": "E-002-pending",
+                    "epic_id": "issue-implementation-loop",
+                    "envelope_revision": 1,
+                    "type": "issue_status_changed",
+                    "issue": "G2PR-002",
+                    "status": "PENDING",
+                },
+                {
+                    "event_id": "E-003-human",
+                    "epic_id": "issue-implementation-loop",
+                    "envelope_revision": 1,
+                    "type": "human_request_opened",
+                    "id": "HR-001",
+                    "scope": "issue",
+                    "issue": "G2PR-001",
+                    "reason": "needs decision",
+                },
+            ]
+            self.write_runtime_root(root, envelope=batch_issue_prs_envelope(), runtime=runtime, events=events)
+
+            result = run_script("build_resume_brief.py", str(root))
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            brief = (root / "resume-brief.md").read_text(encoding="utf-8")
+            self.assertIn("Runnable: G2PR-002", brief)
+            self.assertIn("Waiting human: G2PR-001", brief)
+            self.assertIn("Recommended next operation: human.resolve G2PR-001", brief)
+
     def test_build_resume_brief_compares_remote_pr_fields_from_events(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "runtime"

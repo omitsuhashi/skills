@@ -34,7 +34,10 @@
     "max_worker_packet_words": 450,
     "max_worker_report_words": 350,
     "include_full_spec_text": false,
-    "include_full_ledger_text": false
+    "include_full_ledger_text": false,
+    "worker_packet_schema": "skills/issue-implementation-loop/assets/schemas/worker-packet.schema.json",
+    "worker_packet_template": "skills/issue-implementation-loop/assets/templates/worker-packet.json",
+    "worker_packet_validator": "skills/issue-implementation-loop/scripts/validate_worker_packet.py"
   },
   "remote_write_policy": {
     "mode": "local_only",

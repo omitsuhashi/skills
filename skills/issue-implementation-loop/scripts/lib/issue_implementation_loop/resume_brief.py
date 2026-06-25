@@ -321,10 +321,10 @@ def _recommended_next_operation(
         return f"execute.review {reviewable[0]}"
     if fixable:
         return f"execute.fix {fixable[0]}"
-    if isinstance(runnable, list) and runnable:
-        return f"execute.dispatch {runnable[0]}"
     if waiting_human:
         return f"human.resolve {waiting_human[0]}"
+    if isinstance(runnable, list) and runnable:
+        return f"execute.dispatch {runnable[0]}"
     if active:
         return f"status.monitor {active[0]}"
     if actions is not None and pending_remote_action not in {
@@ -348,12 +348,12 @@ def _overall_status(
     counts = _status_counts(runtime)
     if hard_inconsistencies:
         return f"needs recovery ({counts})"
-    if waiting_human:
-        return f"waiting human ({counts})"
     if reviewable:
         return f"reviewable ({counts})"
     if fixable:
         return f"fixable ({counts})"
+    if waiting_human:
+        return f"waiting human ({counts})"
     if active:
         return f"active ({counts})"
     if isinstance(runnable, list) and runnable:

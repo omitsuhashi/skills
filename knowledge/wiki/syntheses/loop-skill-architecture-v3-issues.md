@@ -52,6 +52,13 @@ Runtime root は `/Users/omitsuhashi/repos/omitsuhashi/skills/.git/agent-runs/is
 - Remote writes were not executed during the implementation loop because the approved execution envelope has `remote_write_policy.mode=local_only`, `approved_actions=[]`, and there was no Remote Gate approval at that point.
 - After implementation-loop completion, the user explicitly requested PR creation; integrated branch `codex/skill-loop-optimization` was pushed and draft PR [#19](https://github.com/omitsuhashi/skills/pull/19) was created against `main`. GitHub issue mirror and merge remain unexecuted.
 
+### PR #19 code review follow-up
+
+- Independent code review found Critical 0, Important 2, Minor 1.
+- Important 1 fixed: resume brief recommended next operation now prioritizes waiting human before runnable dispatch, matching scheduler priority.
+- Important 2 fixed: V3 execution envelope records worker packet schema/template/validator references, and `execution-envelope.md` documents the new-envelope expectation.
+- Minor fixed: G2PR-001 through G2PR-005 acceptance checklists now match completed implementation state.
+
 ## G2PR-001
 
 ### Epic ID
@@ -68,12 +75,12 @@ context contract と検証基盤を導入する
 
 ### 受け入れ条件
 
-- [ ] `skills/grill-to-pr-loop/context-contract.toml` と `skills/issue-implementation-loop/context-contract.toml` が存在する。
-- [ ] 各 contract は skill 名、entrypoint、base references、operation references、word budget、max file count を持つ。
-- [ ] `scripts/validate_loop_skill_context.py --all` が valid TOML、missing reference、duplicate reference、reference depth、budget、forbidden standalone skill 名を検証する。
-- [ ] `scripts/inspect_loop_skill_context.py --skill <skill> --operation <operation> --json` が files、word count、budget headroom を返す。
-- [ ] tests は validator failure cases と successful read-set inspection をカバーする。
-- [ ] 外部 dependency を追加しない。
+- [x] `skills/grill-to-pr-loop/context-contract.toml` と `skills/issue-implementation-loop/context-contract.toml` が存在する。
+- [x] 各 contract は skill 名、entrypoint、base references、operation references、word budget、max file count を持つ。
+- [x] `scripts/validate_loop_skill_context.py --all` が valid TOML、missing reference、duplicate reference、reference depth、budget、forbidden standalone skill 名を検証する。
+- [x] `scripts/inspect_loop_skill_context.py --skill <skill> --operation <operation> --json` が files、word count、budget headroom を返す。
+- [x] tests は validator failure cases と successful read-set inspection をカバーする。
+- [x] 外部 dependency を追加しない。
 
 ### ブロッカー
 
@@ -118,13 +125,13 @@ entrypoint と reference ownership を圧縮整理する
 
 ### 受け入れ条件
 
-- [ ] `skills/grill-to-pr-loop/SKILL.md` が 850 words 以下になる。
-- [ ] `skills/issue-implementation-loop/SKILL.md` は 520 words 以下を維持する。
-- [ ] `skills/grill-to-pr-loop/references/core.md` が追加され、workflow lifecycle、責任境界、gate、local-first、remote approval を 600 words 以下で持つ。
-- [ ] `workflow-contract.md` と `context-contract.toml` の routing が矛盾しない。
-- [ ] `remote-delivery.md` を rename する場合は互換 shim または全参照更新を行い、GitHub mirror / ledger sync の正本が 1 つになる。
-- [ ] `agents/openai.yaml` の default prompt は各 32 words 以下で、branch / review / delivery 詳細 policy を含まない。
-- [ ] `skill-creator` の方針に従い、SKILL body へ reference と重複する詳細説明を戻さない。
+- [x] `skills/grill-to-pr-loop/SKILL.md` が 850 words 以下になる。
+- [x] `skills/issue-implementation-loop/SKILL.md` は 520 words 以下を維持する。
+- [x] `skills/grill-to-pr-loop/references/core.md` が追加され、workflow lifecycle、責任境界、gate、local-first、remote approval を 600 words 以下で持つ。
+- [x] `workflow-contract.md` と `context-contract.toml` の routing が矛盾しない。
+- [x] `remote-delivery.md` を rename する場合は互換 shim または全参照更新を行い、GitHub mirror / ledger sync の正本が 1 つになる。
+- [x] `agents/openai.yaml` の default prompt は各 32 words 以下で、branch / review / delivery 詳細 policy を含まない。
+- [x] `skill-creator` の方針に従い、SKILL body へ reference と重複する詳細説明を戻さない。
 
 ### ブロッカー
 
@@ -170,12 +177,12 @@ operation selection を構造化 state で決定する
 
 ### 受け入れ条件
 
-- [ ] `skills/issue-implementation-loop/scripts/select_operation.py` が存在する。
-- [ ] input は envelope、runtime、requested mode を受け取り、JSON output を返す。
-- [ ] priority は spec の順序に従う: explicit deliver/status、未作成 envelope、未予約、git/state 不整合、reviewable、fixable、human wait、runnable、terminal、reconcile。
-- [ ] output は `context-contract.toml` 由来の read set と budget 判定を含む。
-- [ ] operation selection のために追加 LLM router を使わない。
-- [ ] tests は代表 state と priority conflict をカバーする。
+- [x] `skills/issue-implementation-loop/scripts/select_operation.py` が存在する。
+- [x] input は envelope、runtime、requested mode を受け取り、JSON output を返す。
+- [x] priority は spec の順序に従う: explicit deliver/status、未作成 envelope、未予約、git/state 不整合、reviewable、fixable、human wait、runnable、terminal、reconcile。
+- [x] output は `context-contract.toml` 由来の read set と budget 判定を含む。
+- [x] operation selection のために追加 LLM router を使わない。
+- [x] tests は代表 state と priority conflict をカバーする。
 
 ### ブロッカー
 
@@ -217,13 +224,13 @@ worker dispatch 用の schema、template、builder、validator を追加し、wo
 
 ### 受け入れ条件
 
-- [ ] `skills/issue-implementation-loop/assets/schemas/worker-packet.schema.json` が存在する。
-- [ ] `skills/issue-implementation-loop/assets/templates/worker-packet.json` が存在する。
-- [ ] `skills/issue-implementation-loop/scripts/build_worker_packet.py` と `validate_worker_packet.py` が存在する。
-- [ ] default 450 words、hard 800 words、read paths 8 件以下、inline excerpt 1 file 120 words以下、inline 合計 300 words以下を強制する。
-- [ ] full spec / full ledger を含む packet を拒否する。
-- [ ] budget 超過は `PACKET_CONTEXT_BUDGET_EXCEEDED` 相当で失敗し、自動切り落としをしない。
-- [ ] worker contract reference と execution envelope context policy が新 packet を参照する。
+- [x] `skills/issue-implementation-loop/assets/schemas/worker-packet.schema.json` が存在する。
+- [x] `skills/issue-implementation-loop/assets/templates/worker-packet.json` が存在する。
+- [x] `skills/issue-implementation-loop/scripts/build_worker_packet.py` と `validate_worker_packet.py` が存在する。
+- [x] default 450 words、hard 800 words、read paths 8 件以下、inline excerpt 1 file 120 words以下、inline 合計 300 words以下を強制する。
+- [x] full spec / full ledger を含む packet を拒否する。
+- [x] budget 超過は `PACKET_CONTEXT_BUDGET_EXCEEDED` 相当で失敗し、自動切り落としをしない。
+- [x] worker contract reference と execution envelope context policy が新 packet を参照する。
 
 ### ブロッカー
 
@@ -270,13 +277,13 @@ resume brief を派生 artifact として追加する
 
 ### 受け入れ条件
 
-- [ ] `skills/issue-implementation-loop/assets/templates/resume-brief.md` が存在する。
-- [ ] `skills/issue-implementation-loop/scripts/build_resume_brief.py` が存在する。
-- [ ] brief は Epic ID、overall status、runnable、active、reviewable、fixable、waiting human、pending remote action、verified commit ranges、latest report paths、recommended next operation を持つ。
-- [ ] brief は 600 words 以下を強制する。
-- [ ] brief は execution envelope、runtime state、events から再生成できる cache であり、canonical state として扱わない。
-- [ ] runtime-state / recovery references が resume brief の読み方と不整合時の調査方針を説明する。
-- [ ] tests は normal brief、budget overflow、不整合時の handling をカバーする。
+- [x] `skills/issue-implementation-loop/assets/templates/resume-brief.md` が存在する。
+- [x] `skills/issue-implementation-loop/scripts/build_resume_brief.py` が存在する。
+- [x] brief は Epic ID、overall status、runnable、active、reviewable、fixable、waiting human、pending remote action、verified commit ranges、latest report paths、recommended next operation を持つ。
+- [x] brief は 600 words 以下を強制する。
+- [x] brief は execution envelope、runtime state、events から再生成できる cache であり、canonical state として扱わない。
+- [x] runtime-state / recovery references が resume brief の読み方と不整合時の調査方針を説明する。
+- [x] tests は normal brief、budget overflow、不整合時の handling をカバーする。
 
 ### ブロッカー
 

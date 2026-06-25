@@ -125,6 +125,30 @@ class ValidationTests(unittest.TestCase):
                 ],
             )
 
+    def test_loop_skill_v3_execution_envelope_records_worker_packet_context_references(self) -> None:
+        envelope_path = (
+            SKILL_DIR.parents[1]
+            / "knowledge"
+            / "wiki"
+            / "syntheses"
+            / "loop-skill-architecture-v3-execution-envelope.json"
+        )
+        envelope = json.loads(envelope_path.read_text(encoding="utf-8"))
+        context_policy = envelope["context_policy"]
+
+        self.assertEqual(
+            context_policy["worker_packet_schema"],
+            "skills/issue-implementation-loop/assets/schemas/worker-packet.schema.json",
+        )
+        self.assertEqual(
+            context_policy["worker_packet_template"],
+            "skills/issue-implementation-loop/assets/templates/worker-packet.json",
+        )
+        self.assertEqual(
+            context_policy["worker_packet_validator"],
+            "skills/issue-implementation-loop/scripts/validate_worker_packet.py",
+        )
+
     def test_validate_execution_envelope_rejects_non_object_remote_write_policy(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             envelope = base_envelope()

@@ -84,6 +84,7 @@ The approved envelope must keep worker/reviewer handoffs bounded:
 - `max_worker_packet_words`: maximum words in the dispatch packet.
 - `max_worker_report_words`: maximum words in normal worker reports.
 - `include_full_spec_text: false` and `include_full_ledger_text: false`: workers re-read durable paths instead of receiving pasted source documents.
+- `worker_packet_schema`, `worker_packet_template`, and `worker_packet_validator`: repo-root relative paths for the worker packet contract. Legacy envelopes may omit all three, but new envelopes should include all three.
 
 Create a new envelope revision before increasing budgets or allowing pasted full source text.
 
