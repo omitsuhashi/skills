@@ -38,3 +38,15 @@ python3 <skill-dir>/scripts/validate_runtime_state.py <runtime-state.json>
 ```
 
 For `PR_READY`, `COMPLETE`, or `DONE` issues, record matching `base_sha`, `head_sha`, and committed `BASE_SHA..HEAD_SHA` review range. Do not omit them or record `working-tree` as the review head for new success states.
+
+## Resume Brief Cache
+
+Generate a short resume cache from a runtime root with:
+
+```bash
+python3 <skill-dir>/scripts/build_resume_brief.py <runtime-root>
+```
+
+The builder reads `runtime-state.json`, `events.jsonl`, optional `execution-envelope.json`, and latest files under `reports/` and `reviews/`. It writes `<runtime-root>/resume-brief.md` and enforces a 600 word limit. The brief must include Epic ID, overall status, runnable, active, reviewable, fixable, waiting human, pending remote action, verified commit ranges, latest report paths, and the recommended next operation.
+
+Treat `resume-brief.md` as a regenerable cache only. It is not canonical state and must not be edited to fix scheduler/runtime data. If it disagrees with runtime or events, investigate the canonical sources and rebuild the brief.
