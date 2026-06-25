@@ -42,7 +42,7 @@
     "human_policy": {"type": "object"},
     "context_policy": {
       "type": "object",
-      "required": ["paths_first", "max_worker_packet_words", "max_worker_report_words", "include_full_spec_text", "include_full_ledger_text"],
+      "required": ["paths_first", "max_worker_packet_words", "max_worker_report_words", "include_full_spec_text", "include_full_ledger_text", "worker_packet_schema", "worker_packet_template", "worker_packet_validator"],
       "properties": {
         "paths_first": {"const": true},
         "max_worker_packet_words": {"type": "integer", "minimum": 1},

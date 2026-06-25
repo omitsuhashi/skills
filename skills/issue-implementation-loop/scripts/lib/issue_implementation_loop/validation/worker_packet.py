@@ -24,6 +24,36 @@ FORBIDDEN_TEXT_FIELDS = {
     "ledgertext",
     "spectext",
 }
+TOP_LEVEL_FIELDS = {
+    "branch",
+    "context_policy",
+    "dispatch_id",
+    "epic_id",
+    "inline_context",
+    "issue_id",
+    "issue_title",
+    "packet_type",
+    "read_paths",
+    "report_contract",
+    "schema_version",
+    "task",
+    "worktree",
+    "write_scope",
+}
+CONTEXT_POLICY_FIELDS = {
+    "hard_max_packet_words",
+    "include_full_ledger_text",
+    "include_full_spec_text",
+    "max_inline_excerpt_words_per_file",
+    "max_inline_excerpt_words_total",
+    "max_packet_words",
+    "max_read_paths",
+    "paths_first",
+}
+READ_PATH_FIELDS = {"path", "purpose"}
+INLINE_CONTEXT_FIELDS = {"excerpt", "is_full_document", "path", "purpose"}
+TASK_FIELDS = {"acceptance_criteria", "stop_conditions", "summary", "verification"}
+REPORT_CONTRACT_FIELDS = {"format", "validator"}
 
 
 def _field_key(value: str) -> str:
@@ -58,8 +88,22 @@ def _forbidden_text_fields(value: Any, path: str = "") -> list[str]:
     return []
 
 
+def _reject_unknown_fields(
+    value: dict[str, Any],
+    allowed: set[str],
+    path: str,
+    errors: list[str],
+) -> None:
+    for key in sorted(value):
+        if key not in allowed:
+            display = f"{path}.{key}" if path else key
+            errors.append(f"unknown field: {display}")
+
+
 def validate_worker_packet(packet: dict[str, Any]) -> list[str]:
     errors: list[str] = []
+    _reject_unknown_fields(packet, TOP_LEVEL_FIELDS, "", errors)
+
     if packet.get("schema_version") != 1:
         errors.append("schema_version must be 1")
     if packet.get("packet_type") != "issue_worker_dispatch":
@@ -83,6 +127,8 @@ def validate_worker_packet(packet: dict[str, Any]) -> list[str]:
     if not isinstance(context_policy, dict):
         errors.append("context_policy is required")
         context_policy = {}
+    else:
+        _reject_unknown_fields(context_policy, CONTEXT_POLICY_FIELDS, "context_policy", errors)
     if context_policy.get("paths_first") is not True:
         errors.append("context_policy.paths_first must be true")
     max_packet_words = context_policy.get("max_packet_words", DEFAULT_PACKET_WORDS)
@@ -131,6 +177,7 @@ def validate_worker_packet(packet: dict[str, Any]) -> list[str]:
         if not isinstance(entry, dict):
             errors.append(f"{prefix} must be an object")
             continue
+        _reject_unknown_fields(entry, READ_PATH_FIELDS, prefix, errors)
         path = entry.get("path")
         if not isinstance(path, str) or not path.strip():
             errors.append(f"{prefix}.path must be a non-empty string")
@@ -143,11 +190,13 @@ def validate_worker_packet(packet: dict[str, Any]) -> list[str]:
         errors.append("inline_context must be a list")
         inline_context = []
     inline_words = 0
+    inline_words_by_path: dict[str, int] = {}
     for index, entry in enumerate(inline_context):
         prefix = f"inline_context[{index}]"
         if not isinstance(entry, dict):
             errors.append(f"{prefix} must be an object")
             continue
+        _reject_unknown_fields(entry, INLINE_CONTEXT_FIELDS, prefix, errors)
         path = entry.get("path")
         excerpt = entry.get("excerpt")
         if not isinstance(path, str) or not path.strip():
@@ -157,6 +206,9 @@ def validate_worker_packet(packet: dict[str, Any]) -> list[str]:
             continue
         words = count_words(excerpt)
         inline_words += words
+        if isinstance(path, str) and path.strip():
+            clean_path = path.strip()
+            inline_words_by_path[clean_path] = inline_words_by_path.get(clean_path, 0) + words
         if words > MAX_INLINE_EXCERPT_WORDS_PER_FILE:
             errors.append(
                 f"{prefix}.excerpt exceeds {MAX_INLINE_EXCERPT_WORDS_PER_FILE} words"
@@ -171,16 +223,36 @@ def validate_worker_packet(packet: dict[str, Any]) -> list[str]:
         errors.append(
             f"inline_context exceeds {MAX_INLINE_EXCERPT_WORDS_TOTAL} total words"
         )
+    for path, words in sorted(inline_words_by_path.items()):
+        if words > MAX_INLINE_EXCERPT_WORDS_PER_FILE:
+            errors.append(
+                f"inline_context path {path} exceeds {MAX_INLINE_EXCERPT_WORDS_PER_FILE} words"
+            )
 
     task = packet.get("task")
     if not isinstance(task, dict):
         errors.append("task is required")
     else:
+        _reject_unknown_fields(task, TASK_FIELDS, "task", errors)
         if not isinstance(task.get("summary"), str) or not task.get("summary", "").strip():
             errors.append("task.summary must be a non-empty string")
         _as_string_list(task.get("acceptance_criteria"), "task.acceptance_criteria", errors)
         _as_string_list(task.get("verification"), "task.verification", errors)
         _as_string_list(task.get("stop_conditions"), "task.stop_conditions", errors)
+
+    report_contract = packet.get("report_contract")
+    if not isinstance(report_contract, dict):
+        errors.append("report_contract is required")
+    else:
+        _reject_unknown_fields(
+            report_contract,
+            REPORT_CONTRACT_FIELDS,
+            "report_contract",
+            errors,
+        )
+        for field in ("format", "validator"):
+            if not isinstance(report_contract.get(field), str) or not report_contract.get(field, "").strip():
+                errors.append(f"report_contract.{field} must be a non-empty string")
 
     forbidden_fields = _forbidden_text_fields(packet)
     if forbidden_fields:

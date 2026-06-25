@@ -105,6 +105,42 @@ class WorkerPacketTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("full spec/full ledger text is forbidden", result.stderr)
 
+    def test_validate_worker_packet_rejects_unknown_top_level_and_nested_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cases = [
+                (
+                    "top_level",
+                    lambda packet: packet.update({"coordinator_notes": "extra context"}),
+                    "unknown field: coordinator_notes",
+                ),
+                (
+                    "nested_task",
+                    lambda packet: packet["task"].update({"notes": "extra context"}),
+                    "unknown field: task.notes",
+                ),
+                (
+                    "full_spec_bypass",
+                    lambda packet: packet.update({"spec": {"text": "pasted full spec"}}),
+                    "unknown field: spec",
+                ),
+                (
+                    "full_ledger_bypass",
+                    lambda packet: packet.update({"ledger": {"text": "pasted full ledger"}}),
+                    "unknown field: ledger",
+                ),
+            ]
+            for name, mutate, expected in cases:
+                with self.subTest(name):
+                    packet = valid_worker_packet()
+                    mutate(packet)
+                    packet_path = Path(tmp) / f"{name}.json"
+                    write_json(packet_path, packet)
+
+                    result = run_script("validate_worker_packet.py", str(packet_path))
+
+                    self.assertNotEqual(result.returncode, 0, name)
+                    self.assertIn(expected, result.stderr)
+
     def test_validate_worker_packet_enforces_read_path_and_inline_excerpt_limits(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             cases = [
@@ -149,6 +185,24 @@ class WorkerPacketTests(unittest.TestCase):
                     ),
                     "inline_context exceeds 300 total words",
                 ),
+                (
+                    "same_path_excerpt_total",
+                    lambda packet: packet.update(
+                        {
+                            "inline_context": [
+                                {
+                                    "path": "knowledge/wiki/syntheses/issues.md",
+                                    "excerpt": " ".join(f"first{word}" for word in range(70)),
+                                },
+                                {
+                                    "path": "knowledge/wiki/syntheses/issues.md",
+                                    "excerpt": " ".join(f"second{word}" for word in range(70)),
+                                },
+                            ]
+                        }
+                    ),
+                    "inline_context path knowledge/wiki/syntheses/issues.md exceeds 120 words",
+                ),
             ]
             for name, mutate, expected in cases:
                 with self.subTest(name):
@@ -182,6 +236,8 @@ class WorkerPacketTests(unittest.TestCase):
         )
 
         self.assertEqual(schema["properties"]["context_policy"]["properties"]["max_packet_words"]["default"], 450)
+        self.assertFalse(schema["additionalProperties"])
+        self.assertFalse(schema["properties"]["task"]["additionalProperties"])
         self.assertEqual(packet_template["context_policy"]["hard_max_packet_words"], 800)
         context_schema = envelope_schema["properties"]["context_policy"]["properties"]
         self.assertIn("worker_packet_schema", context_schema)

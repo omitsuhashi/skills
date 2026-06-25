@@ -147,7 +147,7 @@ def validate_execution_envelope(envelope: dict[str, Any]) -> list[str]:
             "worker_packet_validator",
         ):
             value = context_policy.get(field)
-            if value is not None and (not isinstance(value, str) or not value.strip()):
+            if not isinstance(value, str) or not value.strip():
                 errors.append(f"context_policy.{field} must be a non-empty string")
 
     work_items = envelope.get("work_items")
