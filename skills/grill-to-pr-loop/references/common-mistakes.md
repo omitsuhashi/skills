@@ -12,6 +12,7 @@ Use this reference when behavior is ambiguous, an agent tries to skip a gate, or
 | Treating GitHub as the default issue source | Keep local issues canonical; mirror only after approval. |
 | Letting `to-prd` or `to-issues` publish remotely before the gate | Use them for local synthesis/review first. |
 | Creating GitHub issues or PRs without updating the ledger | Update the local ledger immediately. |
+| Moving to the next phase without committing an approved gate | Commit the approved local artifacts and ledger/log updates after Spec Gate, Issue Gate, and Execution Plan Gate approval. |
 | Starting execution without a validated input packet | Validate and present the Execution Plan Gate first. |
 | Treating a planning branch as the execution source of truth | Pin `epic_base` in the envelope and reserve issue branches/worktrees. |
 | Merging multiple blocker heads inside a downstream worker | Create an approved integration work item or integration branch. |

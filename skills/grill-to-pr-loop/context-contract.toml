@@ -1,0 +1,36 @@
+skill = "grill-to-pr-loop"
+entrypoint = "SKILL.md"
+base_references = ["references/core.md", "references/workflow-contract.md"]
+word_budget = 3200
+max_file_count = 6
+
+[operations.intake]
+references = ["references/planning-contract.md"]
+
+[operations.grill]
+references = ["references/planning-contract.md"]
+
+[operations.spec]
+references = ["references/planning-contract.md"]
+
+[operations."issue-gate"]
+references = ["references/planning-contract.md", "references/local-issue-ledger.md"]
+
+[operations."execution-plan"]
+references = [
+  "references/planning-contract.md",
+  "references/local-issue-ledger.md",
+  "references/execution-handoff.md",
+]
+
+[operations.resume]
+references = ["references/local-issue-ledger.md", "references/execution-handoff.md"]
+
+[operations."completion-report"]
+references = ["references/local-issue-ledger.md", "references/execution-handoff.md"]
+
+[operations.delivery]
+references = ["references/remote-delivery.md"]
+
+[operations."ambiguity-check"]
+references = ["references/common-mistakes.md"]

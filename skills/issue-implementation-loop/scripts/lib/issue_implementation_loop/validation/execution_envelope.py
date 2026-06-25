@@ -141,6 +141,19 @@ def validate_execution_envelope(envelope: dict[str, Any]) -> list[str]:
             errors.append("context_policy.include_full_spec_text must be false")
         if context_policy.get("include_full_ledger_text") is not False:
             errors.append("context_policy.include_full_ledger_text must be false")
+        worker_packet_ref_fields = (
+            "worker_packet_schema",
+            "worker_packet_template",
+            "worker_packet_validator",
+        )
+        present_worker_packet_refs = [
+            field for field in worker_packet_ref_fields if field in context_policy
+        ]
+        if present_worker_packet_refs:
+            for field in worker_packet_ref_fields:
+                value = context_policy.get(field)
+                if not isinstance(value, str) or not value.strip():
+                    errors.append(f"context_policy.{field} must be a non-empty string")
 
     work_items = envelope.get("work_items")
     if not isinstance(work_items, dict) or not work_items:

@@ -11,7 +11,10 @@ from unittest import mock
 SKILL_DIR = Path(__file__).resolve().parents[1]
 REPO_ROOT = SKILL_DIR.parents[1]
 CHECK_PREREQS = SKILL_DIR / "scripts" / "check_prereqs.py"
+CORE_REFERENCE = SKILL_DIR / "references" / "core.md"
 WORKFLOW_ROUTER = SKILL_DIR / "references" / "workflow-contract.md"
+GRILL_AGENT_YAML = SKILL_DIR / "agents" / "openai.yaml"
+ISSUE_AGENT_YAML = REPO_ROOT / "skills" / "issue-implementation-loop" / "agents" / "openai.yaml"
 
 
 def load_check_prereqs():
@@ -22,12 +25,35 @@ def load_check_prereqs():
     return module
 
 
+def extract_default_prompt(path: Path) -> str:
+    prefix = "  default_prompt: "
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.startswith(prefix):
+            value = line[len(prefix) :]
+            if value.startswith('"') and value.endswith('"'):
+                return value[1:-1]
+    raise AssertionError(f"default_prompt not found in {path}")
+
+
 class GrillToPrLoopTests(unittest.TestCase):
+    def test_core_reference_owns_global_workflow_context(self) -> None:
+        text = CORE_REFERENCE.read_text(encoding="utf-8")
+        self.assertLessEqual(len(text.split()), 600)
+        for required in (
+            "Lifecycle",
+            "Responsibilities",
+            "Gates",
+            "Local-first",
+            "Remote approval",
+        ):
+            self.assertIn(required, text)
+
     def test_workflow_contract_is_router_to_one_level_references(self) -> None:
         text = WORKFLOW_ROUTER.read_text(encoding="utf-8")
         self.assertLessEqual(len(text.split()), 520)
 
         expected = (
+            "core.md",
             "planning-contract.md",
             "local-issue-ledger.md",
             "execution-handoff.md",
@@ -43,7 +69,7 @@ class GrillToPrLoopTests(unittest.TestCase):
         remote_text = (SKILL_DIR / "references" / "remote-delivery.md").read_text(encoding="utf-8")
 
         self.assertIn(
-            "`GitHub mirror`, `issue PR`, `final PR`, or delivery: read `remote-delivery.md`.",
+            "`delivery`: read `remote-delivery.md`.",
             router_text,
         )
         self.assertIn("## GitHub Mirror Gate", remote_text)
@@ -59,8 +85,42 @@ class GrillToPrLoopTests(unittest.TestCase):
     def test_skill_entrypoint_points_to_workflow_router(self) -> None:
         text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
 
+        self.assertLessEqual(len(text.split()), 850)
+        self.assertIn("references/core.md", text)
         self.assertIn("references/workflow-contract.md", text)
-        self.assertIn("It is a router", text)
+        self.assertIn("operation router", text)
+
+    def test_phase_gate_approvals_require_local_commit(self) -> None:
+        skill_text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+        core_text = CORE_REFERENCE.read_text(encoding="utf-8")
+        planning_text = (SKILL_DIR / "references" / "planning-contract.md").read_text(encoding="utf-8")
+        handoff_text = (SKILL_DIR / "references" / "execution-handoff.md").read_text(encoding="utf-8")
+        mistakes_text = (SKILL_DIR / "references" / "common-mistakes.md").read_text(encoding="utf-8")
+
+        self.assertIn("phase approval commit", skill_text)
+        self.assertIn("commit the approved artifacts", core_text)
+        self.assertIn("Spec Gate approval", planning_text)
+        self.assertIn("Issue Gate approval", planning_text)
+        self.assertIn("Execution Plan Gate approval", handoff_text)
+        self.assertIn("Moving to the next phase without committing an approved gate", mistakes_text)
+
+    def test_agent_default_prompts_are_short_and_policy_free(self) -> None:
+        for path, skill_name in (
+            (GRILL_AGENT_YAML, "$grill-to-pr-loop"),
+            (ISSUE_AGENT_YAML, "$issue-implementation-loop"),
+        ):
+            default_prompt = extract_default_prompt(path)
+            self.assertIn(skill_name, default_prompt)
+            self.assertLessEqual(len(default_prompt.split()), 32)
+            for forbidden in (
+                "branch",
+                "delivery",
+                "review",
+                "merge",
+                "worktree",
+                "epic-base",
+            ):
+                self.assertNotIn(forbidden, default_prompt.lower())
 
     def test_candidate_roots_prefers_explicit_then_repo_local_then_global(self) -> None:
         module = load_check_prereqs()

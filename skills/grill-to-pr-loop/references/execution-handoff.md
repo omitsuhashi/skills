@@ -64,6 +64,8 @@ python3 skills/issue-implementation-loop/scripts/validate_input_packet.py <packe
 
 Wait for explicit approval before execution unless the user has already authorized local implementation and no external write or high-risk action is included.
 
+After Execution Plan Gate approval, commit the approved normalized packet, approval record, and ledger/log updates before running `issue-implementation-loop prepare`.
+
 ## Execution Coordinator
 
 After the Execution Plan Gate, load `issue-implementation-loop` and follow its mode router:

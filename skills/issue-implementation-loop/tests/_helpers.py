@@ -77,6 +77,9 @@ def base_envelope() -> dict:
             "max_worker_report_words": 350,
             "include_full_spec_text": False,
             "include_full_ledger_text": False,
+            "worker_packet_schema": "assets/schemas/worker-packet.schema.json",
+            "worker_packet_template": "assets/templates/worker-packet.json",
+            "worker_packet_validator": "scripts/validate_worker_packet.py",
         },
         "remote_write_policy": {"mode": "local_only", "approved_actions": []},
         "work_items": {

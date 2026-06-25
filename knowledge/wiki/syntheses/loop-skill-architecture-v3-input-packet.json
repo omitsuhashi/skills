@@ -1,0 +1,284 @@
+{
+  "schema_version": 1,
+  "repo_root": "/Users/omitsuhashi/.codex/worktrees/d8af/skills",
+  "epic_id": "loop-skill-architecture-v3",
+  "artifact_root": "knowledge/wiki/syntheses",
+  "spec": {
+    "path": "knowledge/wiki/syntheses/loop-skill-architecture-v3-spec.md",
+    "approved_revision": 1,
+    "approved_hash": "git:7e6c510c8bc10f171c0c154fe6481b1a69c832ed"
+  },
+  "work_items": [
+    {
+      "id": "G2PR-001",
+      "title": "context contract と検証基盤を導入する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/loop-skill-architecture-v3-issues.md"
+      },
+      "acceptance_criteria": [
+        "skills/grill-to-pr-loop/context-contract.toml と skills/issue-implementation-loop/context-contract.toml が存在する",
+        "各 context contract が skill 名、entrypoint、base references、operation references、word budget、max file count を持つ",
+        "scripts/validate_loop_skill_context.py --all が TOML、missing reference、duplicate reference、reference depth、budget、forbidden standalone skill 名を検証する",
+        "scripts/inspect_loop_skill_context.py が operation ごとの files、word count、budget headroom を JSON で返す",
+        "validator failure cases と successful read-set inspection の tests がある",
+        "外部 dependency を追加しない"
+      ],
+      "non_goals": [
+        "SKILL.md 圧縮",
+        "worker packet 実装",
+        "resume brief 実装",
+        "remote write"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_loop_skill_context.py --all",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/inspect_loop_skill_context.py --skill skills/issue-implementation-loop --operation execute.review --json",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/grill-to-pr-loop/tests",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests"
+      ],
+      "write_scope": [
+        "path:skills/grill-to-pr-loop/context-contract.toml",
+        "path:skills/issue-implementation-loop/context-contract.toml",
+        "path:scripts/validate_loop_skill_context.py",
+        "path:scripts/inspect_loop_skill_context.py",
+        "path:skills/grill-to-pr-loop/tests",
+        "path:skills/issue-implementation-loop/tests"
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "G2PR-002",
+      "title": "entrypoint と reference ownership を圧縮整理する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/loop-skill-architecture-v3-issues.md"
+      },
+      "acceptance_criteria": [
+        "skills/grill-to-pr-loop/SKILL.md が 850 words 以下になる",
+        "skills/issue-implementation-loop/SKILL.md が 520 words 以下を維持する",
+        "skills/grill-to-pr-loop/references/core.md が workflow lifecycle、責任境界、gate、local-first、remote approval を 600 words 以下で持つ",
+        "workflow-contract.md と context-contract.toml の routing が矛盾しない",
+        "remote-delivery.md を rename する場合は互換 shim または全参照更新で正本を 1 つにする",
+        "agents/openai.yaml の default prompt は各 32 words 以下で branch / review / delivery 詳細 policy を含まない",
+        "SKILL body へ reference と重複する詳細説明を戻さない"
+      ],
+      "non_goals": [
+        "context validator の新規 scope 追加",
+        "operation selection 実装",
+        "remote write"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_loop_skill_context.py --all",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/grill-to-pr-loop/tests",
+        "wc -w skills/grill-to-pr-loop/SKILL.md skills/issue-implementation-loop/SKILL.md skills/grill-to-pr-loop/references/core.md",
+        "git diff --check"
+      ],
+      "write_scope": [
+        "path:skills/grill-to-pr-loop/SKILL.md",
+        "path:skills/grill-to-pr-loop/context-contract.toml",
+        "path:skills/grill-to-pr-loop/references",
+        "path:skills/grill-to-pr-loop/agents/openai.yaml",
+        "path:skills/issue-implementation-loop/agents/openai.yaml",
+        "path:skills/grill-to-pr-loop/tests"
+      ],
+      "dependencies": [
+        {
+          "issue": "G2PR-001",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    },
+    {
+      "id": "G2PR-003",
+      "title": "operation selection を構造化 state で決定する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/loop-skill-architecture-v3-issues.md"
+      },
+      "acceptance_criteria": [
+        "skills/issue-implementation-loop/scripts/select_operation.py が存在する",
+        "input は envelope、runtime、requested mode を受け取り JSON output を返す",
+        "priority は explicit deliver/status、未作成 envelope、未予約、git/state 不整合、reviewable、fixable、human wait、runnable、terminal、reconcile の順序に従う",
+        "output は context-contract.toml 由来の read set と budget 判定を含む",
+        "operation selection のために追加 LLM router を使わない",
+        "代表 state と priority conflict の tests がある"
+      ],
+      "non_goals": [
+        "scheduler semantics 変更",
+        "runtime schema 変更",
+        "remote write"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/select_operation.py --envelope <execution-envelope.json> --runtime <runtime-state.json> --requested-mode execute --json",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_loop_skill_context.py --all"
+      ],
+      "write_scope": [
+        "path:skills/issue-implementation-loop/scripts/select_operation.py",
+        "path:skills/issue-implementation-loop/scripts/lib/issue_implementation_loop",
+        "path:skills/issue-implementation-loop/tests",
+        "path:skills/issue-implementation-loop/references"
+      ],
+      "dependencies": [
+        {
+          "issue": "G2PR-001",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    },
+    {
+      "id": "G2PR-004",
+      "title": "worker packet を正規化し context budget を強制する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/loop-skill-architecture-v3-issues.md"
+      },
+      "acceptance_criteria": [
+        "worker-packet schema と template が存在する",
+        "build_worker_packet.py と validate_worker_packet.py が存在する",
+        "default 450 words、hard 800 words、read paths 8 件以下、inline excerpt 1 file 120 words以下、inline 合計 300 words以下を強制する",
+        "full spec / full ledger を含む packet を拒否する",
+        "budget 超過は PACKET_CONTEXT_BUDGET_EXCEEDED 相当で失敗し、自動切り落としをしない",
+        "worker contract reference と execution envelope context policy が新 packet を参照する"
+      ],
+      "non_goals": [
+        "resume brief 実装",
+        "scheduler semantics 変更",
+        "remote write"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/build_worker_packet.py <args>",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/validate_worker_packet.py <worker-packet.json>",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests",
+        "git diff --check"
+      ],
+      "write_scope": [
+        "path:skills/issue-implementation-loop/assets/schemas",
+        "path:skills/issue-implementation-loop/assets/templates",
+        "path:skills/issue-implementation-loop/scripts/build_worker_packet.py",
+        "path:skills/issue-implementation-loop/scripts/validate_worker_packet.py",
+        "path:skills/issue-implementation-loop/scripts/lib/issue_implementation_loop",
+        "path:skills/issue-implementation-loop/references/worker-contract.md",
+        "path:skills/issue-implementation-loop/tests"
+      ],
+      "dependencies": [
+        {
+          "issue": "G2PR-001",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    },
+    {
+      "id": "G2PR-005",
+      "title": "resume brief を派生 artifact として追加する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/loop-skill-architecture-v3-issues.md"
+      },
+      "acceptance_criteria": [
+        "resume-brief template と build_resume_brief.py が存在する",
+        "brief は Epic ID、overall status、runnable、active、reviewable、fixable、waiting human、pending remote action、verified commit ranges、latest report paths、recommended next operation を持つ",
+        "brief は 600 words 以下を強制する",
+        "brief は execution envelope、runtime state、events から再生成できる cache であり canonical state として扱わない",
+        "runtime-state / recovery references が resume brief の読み方と不整合時の調査方針を説明する",
+        "normal brief、budget overflow、不整合時 handling の tests がある"
+      ],
+      "non_goals": [
+        "runtime schema 変更",
+        "execution event semantics 変更",
+        "remote write"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/build_resume_brief.py <runtime-root>",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests",
+        "git diff --check"
+      ],
+      "write_scope": [
+        "path:skills/issue-implementation-loop/assets/templates/resume-brief.md",
+        "path:skills/issue-implementation-loop/scripts/build_resume_brief.py",
+        "path:skills/issue-implementation-loop/scripts/lib/issue_implementation_loop",
+        "path:skills/issue-implementation-loop/references/runtime-state.md",
+        "path:skills/issue-implementation-loop/references/recovery.md",
+        "path:skills/issue-implementation-loop/tests"
+      ],
+      "dependencies": [
+        {
+          "issue": "G2PR-001",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    },
+    {
+      "id": "G2PR-006",
+      "title": "統合テストと wiki ledger を仕上げる",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/loop-skill-architecture-v3-issues.md"
+      },
+      "acceptance_criteria": [
+        "scripts/validate_loop_skill_context.py --all が通る",
+        "inspect_loop_skill_context.py が代表 operation で budget headroom を返す",
+        "select_operation.py、validate_worker_packet.py、build_resume_brief.py の代表 CLI が通る",
+        "skills/grill-to-pr-loop/tests と skills/issue-implementation-loop/tests の unittest discover が通る",
+        "check_prereqs.py --phase execution --json と check_capabilities.py --json が通る",
+        "quick_validate.py は dependency cache が使える場合に実行し、使えない場合は未検証理由を ledger に残す",
+        "local issue ledger に実装状態、verification、implementation review 結果、remote write 未実行理由が反映されている"
+      ],
+      "non_goals": [
+        "GitHub issue or PR creation",
+        "push or merge",
+        "final PR merge automation"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_loop_skill_context.py --all",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/grill-to-pr-loop/tests",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/grill-to-pr-loop/scripts/check_prereqs.py --phase execution --json",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/check_capabilities.py --json",
+        "git diff --check"
+      ],
+      "write_scope": [
+        "path:skills/grill-to-pr-loop/tests",
+        "path:skills/issue-implementation-loop/tests",
+        "path:knowledge/wiki/syntheses/loop-skill-architecture-v3-issues.md",
+        "path:knowledge/index.md",
+        "path:knowledge/log.md"
+      ],
+      "dependencies": [
+        {
+          "issue": "G2PR-002",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "none"
+        },
+        {
+          "issue": "G2PR-003",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "none"
+        },
+        {
+          "issue": "G2PR-004",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "none"
+        },
+        {
+          "issue": "G2PR-005",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "none"
+        }
+      ]
+    }
+  ],
+  "delivery_intent": "local_only"
+}
