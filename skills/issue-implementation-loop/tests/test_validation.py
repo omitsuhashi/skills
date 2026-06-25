@@ -65,6 +65,66 @@ class ValidationTests(unittest.TestCase):
                 self.assertNotEqual(result.returncode, 0, name)
                 self.assertIn(expected, result.stderr)
 
+    def test_validate_execution_envelope_accepts_legacy_context_policy_without_worker_packet_references(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            envelope = base_envelope()
+            for field in (
+                "worker_packet_schema",
+                "worker_packet_template",
+                "worker_packet_validator",
+            ):
+                del envelope["context_policy"][field]
+            path = Path(tmp) / "legacy-envelope.json"
+            write_json(path, envelope)
+
+            result = run_script("validate_execution_envelope.py", str(path))
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_validate_execution_envelope_requires_all_worker_packet_references_when_any_are_present(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            for field in (
+                "worker_packet_schema",
+                "worker_packet_template",
+                "worker_packet_validator",
+            ):
+                with self.subTest(field):
+                    envelope = base_envelope()
+                    envelope["context_policy"].update(
+                        {
+                            "worker_packet_schema": "assets/schemas/worker-packet.schema.json",
+                            "worker_packet_template": "assets/templates/worker-packet.json",
+                            "worker_packet_validator": "scripts/validate_worker_packet.py",
+                        }
+                    )
+                    del envelope["context_policy"][field]
+                    path = Path(tmp) / f"missing-{field}.json"
+                    write_json(path, envelope)
+
+                    result = run_script("validate_execution_envelope.py", str(path))
+
+                    self.assertNotEqual(result.returncode, 0, field)
+                    self.assertIn(f"context_policy.{field}", result.stderr)
+
+    def test_execution_envelope_schema_allows_legacy_or_complete_worker_packet_context_references(self) -> None:
+        schema = json.loads(ENVELOPE_SCHEMA_FILE.read_text(encoding="utf-8"))
+        context_schema = schema["properties"]["context_policy"]
+
+        for field in (
+            "worker_packet_schema",
+            "worker_packet_template",
+            "worker_packet_validator",
+        ):
+            self.assertNotIn(field, context_schema["required"])
+            self.assertEqual(
+                sorted(context_schema["dependentRequired"][field]),
+                [
+                    "worker_packet_schema",
+                    "worker_packet_template",
+                    "worker_packet_validator",
+                ],
+            )
+
     def test_validate_execution_envelope_rejects_non_object_remote_write_policy(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             envelope = base_envelope()
