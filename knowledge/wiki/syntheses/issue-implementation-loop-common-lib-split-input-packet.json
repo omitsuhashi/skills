@@ -1,0 +1,204 @@
+{
+  "schema_version": 1,
+  "repo_root": "/Users/omitsuhashi/.codex/worktrees/36b4/skills",
+  "epic_id": "issue-implementation-loop-common-lib-split",
+  "artifact_root": "knowledge/wiki/syntheses",
+  "spec": {
+    "path": "knowledge/wiki/syntheses/issue-implementation-loop-common-lib-split-spec.md"
+  },
+  "work_items": [
+    {
+      "id": "G2PR-001",
+      "title": "lib package と _common.py facade を確立する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/issue-implementation-loop-common-lib-split-issues.md"
+      },
+      "acceptance_criteria": [
+        "scripts/lib/issue_implementation_loop exists and can be imported",
+        "_common.py remains a backward-compatible facade for existing public scripts",
+        "check_capabilities.py --json preserves repo-local skill root precedence",
+        "existing public scripts import without errors",
+        "import compatibility and skill discovery regression tests are added before implementation"
+      ],
+      "non_goals": [
+        "validation extraction",
+        "scheduler extraction",
+        "remote write"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/check_capabilities.py --input knowledge/wiki/syntheses/issue-implementation-loop-common-lib-split-input-packet.json --json"
+      ],
+      "write_scope": [
+        "path:skills/issue-implementation-loop/scripts/_common.py",
+        "path:skills/issue-implementation-loop/scripts/lib",
+        "path:skills/issue-implementation-loop/tests"
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "G2PR-002",
+      "title": "validation logic を domain module へ分割する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/issue-implementation-loop-common-lib-split-issues.md"
+      },
+      "acceptance_criteria": [
+        "validation modules exist for input packet, execution envelope, runtime state, worker report, and delivery plan",
+        "_common.py re-exports validation functions without owning validation implementation",
+        "validator script CLI output and exit-code behavior remain compatible",
+        "validation tests are split into behavior-domain test files",
+        "schema files do not change meaning"
+      ],
+      "non_goals": [
+        "scheduler behavior changes",
+        "schema changes",
+        "remote write"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/validate_input_packet.py knowledge/wiki/syntheses/issue-implementation-loop-common-lib-split-input-packet.json"
+      ],
+      "write_scope": [
+        "path:skills/issue-implementation-loop/scripts/_common.py",
+        "path:skills/issue-implementation-loop/scripts/lib/issue_implementation_loop/validation",
+        "path:skills/issue-implementation-loop/scripts/validate_input_packet.py",
+        "path:skills/issue-implementation-loop/scripts/validate_execution_envelope.py",
+        "path:skills/issue-implementation-loop/scripts/validate_runtime_state.py",
+        "path:skills/issue-implementation-loop/scripts/validate_worker_report.py",
+        "path:skills/issue-implementation-loop/scripts/validate_delivery_plan.py",
+        "path:skills/issue-implementation-loop/tests"
+      ],
+      "dependencies": [
+        {
+          "issue": "G2PR-001",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    },
+    {
+      "id": "G2PR-003",
+      "title": "scheduler / dependency graph を domain module へ分割する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/issue-implementation-loop-common-lib-split-issues.md"
+      },
+      "acceptance_criteria": [
+        "graph.py and scheduler.py exist under the internal library",
+        "_common.py re-exports graph and scheduler functions without owning implementation",
+        "compute_next_actions.py CLI output remains compatible",
+        "scheduler and dependency tests are split into behavior-domain test files",
+        "human wait scope and write-scope conflict regressions remain covered"
+      ],
+      "non_goals": [
+        "scheduler semantic changes",
+        "delivery policy changes",
+        "remote write"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests"
+      ],
+      "write_scope": [
+        "path:skills/issue-implementation-loop/scripts/_common.py",
+        "path:skills/issue-implementation-loop/scripts/lib/issue_implementation_loop/graph.py",
+        "path:skills/issue-implementation-loop/scripts/lib/issue_implementation_loop/scheduler.py",
+        "path:skills/issue-implementation-loop/scripts/compute_next_actions.py",
+        "path:skills/issue-implementation-loop/tests"
+      ],
+      "dependencies": [
+        {
+          "issue": "G2PR-002",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    },
+    {
+      "id": "G2PR-004",
+      "title": "delivery / runtime-facing helper と CLI compatibility を仕上げる",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/issue-implementation-loop-common-lib-split-issues.md"
+      },
+      "acceptance_criteria": [
+        "delivery.py, git_state.py, and skill_discovery.py exist under the internal library",
+        "validate_delivery_plan.py, reconcile_git_state.py, rebuild_runtime_state.py, and check_capabilities.py run without import errors",
+        "delivery policy, epic_base lifecycle, runtime rebuild, and git reconcile regressions remain covered",
+        "no GitHub remote write is performed",
+        "_common.py re-exports delivery, git, and skill discovery helpers without owning implementation"
+      ],
+      "non_goals": [
+        "GitHub issue or PR creation",
+        "delivery semantic changes",
+        "runtime schema changes"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/check_capabilities.py --input knowledge/wiki/syntheses/issue-implementation-loop-common-lib-split-input-packet.json --json"
+      ],
+      "write_scope": [
+        "path:skills/issue-implementation-loop/scripts/_common.py",
+        "path:skills/issue-implementation-loop/scripts/lib/issue_implementation_loop/delivery.py",
+        "path:skills/issue-implementation-loop/scripts/lib/issue_implementation_loop/git_state.py",
+        "path:skills/issue-implementation-loop/scripts/lib/issue_implementation_loop/skill_discovery.py",
+        "path:skills/issue-implementation-loop/scripts/validate_delivery_plan.py",
+        "path:skills/issue-implementation-loop/scripts/reconcile_git_state.py",
+        "path:skills/issue-implementation-loop/scripts/rebuild_runtime_state.py",
+        "path:skills/issue-implementation-loop/scripts/check_capabilities.py",
+        "path:skills/issue-implementation-loop/tests"
+      ],
+      "dependencies": [
+        {
+          "issue": "G2PR-003",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    },
+    {
+      "id": "G2PR-005",
+      "title": "tests を behavior domain ごとに分割し ledger を更新する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/issue-implementation-loop-common-lib-split-issues.md"
+      },
+      "acceptance_criteria": [
+        "tests are split into behavior-domain files such as entrypoint, skill discovery, validation, runtime state, delivery, scheduler, and git reconcile",
+        "no single test file retains the whole issue-implementation-loop contract",
+        "issue-implementation-loop skill entrypoint budget and trigger-only description regressions remain covered",
+        "local issue ledger records implementation state, verification, and implementation review outcomes",
+        "knowledge/index.md and knowledge/log.md remain discoverable"
+      ],
+      "non_goals": [
+        "new test framework",
+        "remote write",
+        "user-facing skill split"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/validate_input_packet.py knowledge/wiki/syntheses/issue-implementation-loop-common-lib-split-input-packet.json",
+        "git diff --check"
+      ],
+      "write_scope": [
+        "path:skills/issue-implementation-loop/tests",
+        "path:knowledge/wiki/syntheses/issue-implementation-loop-common-lib-split-issues.md",
+        "path:knowledge/index.md",
+        "path:knowledge/log.md"
+      ],
+      "dependencies": [
+        {
+          "issue": "G2PR-004",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    }
+  ],
+  "delivery_intent": "local_only"
+}
