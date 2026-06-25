@@ -2,18 +2,18 @@
 
 ## 状態
 
-Issue Gate / Execution Plan Gate 承認済み。Execution Packet は [loop-skill-architecture-v3-input-packet.json](loop-skill-architecture-v3-input-packet.json)、Execution Envelope は [loop-skill-architecture-v3-execution-envelope.json](loop-skill-architecture-v3-execution-envelope.json) に置く。G2PR-001 から G2PR-006 は実装レビュー承認済み。実装ループ中の GitHub issue mirror、push、PR 作成、merge は `local_only` により未実行だったが、完了後にユーザーの明示依頼で PR 作成へ進む。
+Issue Gate / Execution Plan Gate 承認済み。Execution Packet は [loop-skill-architecture-v3-input-packet.json](loop-skill-architecture-v3-input-packet.json)、Execution Envelope は [loop-skill-architecture-v3-execution-envelope.json](loop-skill-architecture-v3-execution-envelope.json) に置く。G2PR-001 から G2PR-006 は実装レビュー承認済み。実装ループ中の GitHub issue mirror、push、PR 作成、merge は `local_only` により未実行だったが、完了後にユーザーの明示依頼で統合 branch を push し、draft PR [#19](https://github.com/omitsuhashi/skills/pull/19) を作成した。
 
 ## Ledger
 
 | Epic ID | ローカルID | タイトル | レビュー状態 | 実行状態 | ブロック元 | ブロック先 | GitHub Issue | 実装レビュー | PR |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| loop-skill-architecture-v3 | G2PR-001 | context contract と検証基盤を導入する | 承認済み | 完了 | なし | G2PR-002, G2PR-003, G2PR-004, G2PR-005 | 未作成 | 承認済み | 未作成 |
-| loop-skill-architecture-v3 | G2PR-002 | entrypoint と reference ownership を圧縮整理する | 承認済み | 完了 | G2PR-001 | G2PR-006 | 未作成 | 承認済み | 未作成 |
-| loop-skill-architecture-v3 | G2PR-003 | operation selection を構造化 state で決定する | 承認済み | 完了 | G2PR-001 | G2PR-006 | 未作成 | 承認済み | 未作成 |
-| loop-skill-architecture-v3 | G2PR-004 | worker packet を正規化し context budget を強制する | 承認済み | 完了 | G2PR-001 | G2PR-006 | 未作成 | 承認済み | 未作成 |
-| loop-skill-architecture-v3 | G2PR-005 | resume brief を派生 artifact として追加する | 承認済み | 完了 | G2PR-001 | G2PR-006 | 未作成 | 承認済み | 未作成 |
-| loop-skill-architecture-v3 | G2PR-006 | 統合テストと wiki ledger を仕上げる | 承認済み | 完了 | G2PR-002, G2PR-003, G2PR-004, G2PR-005 | なし | 未作成 | 承認済み | 未作成 |
+| loop-skill-architecture-v3 | G2PR-001 | context contract と検証基盤を導入する | 承認済み | 完了 | なし | G2PR-002, G2PR-003, G2PR-004, G2PR-005 | 未作成 | 承認済み | [draft PR #19](https://github.com/omitsuhashi/skills/pull/19) |
+| loop-skill-architecture-v3 | G2PR-002 | entrypoint と reference ownership を圧縮整理する | 承認済み | 完了 | G2PR-001 | G2PR-006 | 未作成 | 承認済み | [draft PR #19](https://github.com/omitsuhashi/skills/pull/19) |
+| loop-skill-architecture-v3 | G2PR-003 | operation selection を構造化 state で決定する | 承認済み | 完了 | G2PR-001 | G2PR-006 | 未作成 | 承認済み | [draft PR #19](https://github.com/omitsuhashi/skills/pull/19) |
+| loop-skill-architecture-v3 | G2PR-004 | worker packet を正規化し context budget を強制する | 承認済み | 完了 | G2PR-001 | G2PR-006 | 未作成 | 承認済み | [draft PR #19](https://github.com/omitsuhashi/skills/pull/19) |
+| loop-skill-architecture-v3 | G2PR-005 | resume brief を派生 artifact として追加する | 承認済み | 完了 | G2PR-001 | G2PR-006 | 未作成 | 承認済み | [draft PR #19](https://github.com/omitsuhashi/skills/pull/19) |
+| loop-skill-architecture-v3 | G2PR-006 | 統合テストと wiki ledger を仕上げる | 承認済み | 完了 | G2PR-002, G2PR-003, G2PR-004, G2PR-005 | なし | 未作成 | 承認済み | [draft PR #19](https://github.com/omitsuhashi/skills/pull/19) |
 
 ## ブロッカーグラフ
 
@@ -49,7 +49,8 @@ Runtime root は `/Users/omitsuhashi/repos/omitsuhashi/skills/.git/agent-runs/is
 - G2PR-002 worktree: `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/grill-to-pr-loop/scripts/check_prereqs.py --phase execution --json` returned `ok: true`; GitHub auth failure remained optional.
 - G2PR-006 worktree: `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/check_capabilities.py --input knowledge/wiki/syntheses/loop-skill-architecture-v3-input-packet.json --json` returned `ok: true`.
 - `quick_validate.py` for `skills/grill-to-pr-loop` and `skills/issue-implementation-loop` was attempted in the G2PR-002 worktree and was not verified because the dependency cache was unavailable: both commands failed with `ModuleNotFoundError: No module named 'yaml'`.
-- Remote writes were not executed because the approved execution envelope has `remote_write_policy.mode=local_only`, `approved_actions=[]`, and there is no Remote Gate approval.
+- Remote writes were not executed during the implementation loop because the approved execution envelope has `remote_write_policy.mode=local_only`, `approved_actions=[]`, and there was no Remote Gate approval at that point.
+- After implementation-loop completion, the user explicitly requested PR creation; integrated branch `codex/skill-loop-optimization` was pushed and draft PR [#19](https://github.com/omitsuhashi/skills/pull/19) was created against `main`. GitHub issue mirror and merge remain unexecuted.
 
 ## G2PR-001
 
@@ -359,9 +360,11 @@ G2PR-002 から G2PR-005 までの成果を統合し、context validation、oper
 
 ## Remote Policy
 
-`local_only`。GitHub auth は optional failure であり、Remote Gate の明示承認もないため、GitHub issue / PR / push / merge は実行しない。
+実装ループ中は `local_only`。GitHub auth は optional failure であり、Remote Gate の明示承認もなかったため、GitHub issue / PR / push / merge は実行しない方針だった。
 
 G2PR-006 でも remote write は実行していない。理由は approved execution envelope の `remote_write_policy.mode=local_only`、`approved_actions=[]`、および Remote Gate の明示承認なし。
+
+完了後、ユーザーの明示依頼により統合 branch `codex/skill-loop-optimization` を `origin` へ push し、draft PR [#19](https://github.com/omitsuhashi/skills/pull/19) を `main` 向けに作成した。GitHub issue mirror と merge は未実行。
 
 ## Execution Plan Gate 承認事項
 
