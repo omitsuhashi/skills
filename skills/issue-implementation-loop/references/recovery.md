@@ -28,3 +28,9 @@ Use:
 python3 <skill-dir>/scripts/rebuild_runtime_state.py <events.jsonl>
 python3 <skill-dir>/scripts/reconcile_git_state.py <execution-envelope.json> --json
 ```
+
+## Resume Brief Investigation
+
+On resume, read `<runtime-root>/resume-brief.md` first when present. It is a bounded cache for orientation only: use it to find active work, reviewable/fixable issues, waiting human requests, pending remote actions, verified commit ranges, latest report paths, and the recommended next operation.
+
+If the brief lists inconsistencies, do not continue from the brief alone. Compare the execution envelope, `runtime-state.json`, `events.jsonl`, worker/reviewer reports, and git state. Rebuild the snapshot from `events.jsonl` when the snapshot is corrupt or stale, then regenerate the brief. If the brief is missing, stale, over budget, or contradicts canonical state, discard and regenerate it rather than editing it by hand.

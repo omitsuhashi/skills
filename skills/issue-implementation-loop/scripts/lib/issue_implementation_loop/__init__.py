@@ -45,6 +45,16 @@ from .identifiers import (
 )
 from .io import dump_json, load_json
 from .review import has_human_risk_acceptance, review_approved_or_accepted
+from .resume_brief import (
+    DEFAULT_MAX_WORDS,
+    DEFAULT_OUTPUT_NAME,
+    ResumeBriefBudgetError,
+    ResumeBriefError,
+    ResumeBriefInputError,
+    build_resume_brief,
+    rebuild_state_from_events,
+    word_count,
+)
 from .scheduler import (
     compute_next_actions,
     human_blocked_reason,
@@ -73,6 +83,8 @@ __all__ = [
     "ISSUE_PR_MERGE_POLICIES",
     "ISSUE_RE",
     "MAX_REVIEW_CYCLES",
+    "DEFAULT_MAX_WORDS",
+    "DEFAULT_OUTPUT_NAME",
     "RELEASE_ON",
     "REMOTE_MODES",
     "REVIEWABLE_STATUSES",
@@ -81,6 +93,10 @@ __all__ = [
     "WAITING_STATUSES",
     "WORKTREE_STATES",
     "ValidationError",
+    "ResumeBriefBudgetError",
+    "ResumeBriefError",
+    "ResumeBriefInputError",
+    "build_resume_brief",
     "canonical_issue_branch",
     "commit_range_parts",
     "compute_next_actions",
@@ -104,6 +120,7 @@ __all__ = [
     "load_json",
     "path_scope_conflicts",
     "review_approved_or_accepted",
+    "rebuild_state_from_events",
     "scope_conflicts",
     "skill_roots",
     "validate_delivery_plan",
@@ -111,4 +128,5 @@ __all__ = [
     "validate_input_packet",
     "validate_runtime_state",
     "validate_worker_report",
+    "word_count",
 ]
