@@ -18,6 +18,12 @@ Use:
 python3 <skill-dir>/scripts/compute_next_actions.py <execution-envelope.json> <runtime-state.json>
 ```
 
+For mode routing, use `scripts/select_operation.py` before loading operation-specific
+references. It is read-only and selects in this order: explicit `deliver`/`status`,
+missing envelope, missing reservation, state mismatch, reviewable, fixable, human wait,
+runnable, terminal, then reconcile. The result includes the context-contract read set
+and word budget check for the selected operation.
+
 ## Dispatch Rules
 
 - Dispatch only issues whose dependencies are released and whose write scope does not conflict with active implementation/fix work.
