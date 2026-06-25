@@ -1,17 +1,6 @@
-#!/usr/bin/env python3
-"""Compatibility facade for issue-implementation-loop script helpers."""
-
 from __future__ import annotations
 
-from pathlib import Path
-import sys
-
-
-LIB_DIR = Path(__file__).resolve().parent / "lib"
-if str(LIB_DIR) not in sys.path:
-    sys.path.insert(0, str(LIB_DIR))
-
-from issue_implementation_loop import (  # noqa: E402
+from .constants import (
     ACTIVE_STATUSES,
     APPROVED_REVIEW_STATUSES,
     BASE_EFFECTS,
@@ -34,38 +23,39 @@ from issue_implementation_loop import (  # noqa: E402
     TERMINAL_STATUSES,
     WAITING_STATUSES,
     WORKTREE_STATES,
-    ValidationError,
-    canonical_issue_branch,
-    commit_range_parts,
-    compute_next_actions,
-    delivery_issue_scope,
+)
+from .delivery import delivery_issue_scope, issue_branch_owner, validate_delivery_plan
+from .exceptions import ValidationError
+from .git_state import git_output
+from .graph import (
     dependency_cycle,
     dependency_satisfied,
     descendants_of,
-    dump_json,
-    find_skill,
-    git_output,
-    has_human_risk_acceptance,
-    human_blocked_reason,
+    issue_record,
+    issue_status,
+)
+from .identifiers import (
+    canonical_issue_branch,
+    commit_range_parts,
     is_canonical_issue_branch,
     is_commit_range,
     is_full_commit_sha,
     is_issue_id,
     is_lower_kebab,
-    issue_branch_owner,
-    issue_record,
-    issue_status,
-    load_json,
-    path_scope_conflicts,
-    review_approved_or_accepted,
-    scope_conflicts,
-    skill_roots,
-    validate_delivery_plan,
-    validate_execution_envelope,
-    validate_input_packet,
-    validate_runtime_state,
-    validate_worker_report,
 )
+from .io import dump_json, load_json
+from .review import has_human_risk_acceptance, review_approved_or_accepted
+from .scheduler import (
+    compute_next_actions,
+    human_blocked_reason,
+    path_scope_conflicts,
+    scope_conflicts,
+)
+from .skill_discovery import find_skill, skill_roots
+from .validation.execution_envelope import validate_execution_envelope
+from .validation.input_packet import validate_input_packet
+from .validation.runtime_state import validate_runtime_state
+from .validation.worker_report import validate_worker_report
 
 __all__ = [
     "ACTIVE_STATUSES",
