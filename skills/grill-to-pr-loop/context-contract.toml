@@ -1,8 +1,8 @@
 skill = "grill-to-pr-loop"
 entrypoint = "SKILL.md"
-base_references = ["references/workflow-contract.md"]
+base_references = ["references/core.md", "references/workflow-contract.md"]
 word_budget = 3200
-max_file_count = 5
+max_file_count = 6
 
 [operations.intake]
 references = ["references/planning-contract.md"]
