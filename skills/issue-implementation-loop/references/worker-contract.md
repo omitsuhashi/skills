@@ -1,22 +1,25 @@
 # Worker Contract
 
-Give each worker a short packet:
+Give each worker a normalized dispatch packet built from:
 
-- local issue ID/title and Epic ID
-- wave or dispatch ID
-- branch and worktree path
-- exclusive write scope
-- spec, issue ledger, ADR/glossary paths
-- short required behavior and acceptance criteria summary
-- verification commands
-- stop conditions
-- report format
+- `assets/templates/worker-packet.json`
+- `assets/schemas/worker-packet.schema.json`
+- `scripts/build_worker_packet.py`
+- `scripts/validate_worker_packet.py`
+
+The packet contains issue ID/title, Epic ID, dispatch ID, branch, worktree path,
+exclusive write scope, durable read paths, short task summary, acceptance
+criteria, verification commands, stop conditions, and report contract.
 
 ## Rules
 
 - Re-read assigned issue and spec from durable paths.
-- Keep the packet paths-first and within `context_policy.max_worker_packet_words`.
-- Do not paste full spec, ledger, ADR, glossary, or unrelated code into the worker packet unless the approved context policy explicitly allows it.
+- Keep the packet paths-first and validate it before dispatch.
+- Enforce default packet budget 450 words and hard budget 800 words.
+- Keep `read_paths` to 8 entries or fewer.
+- Keep each inline excerpt to 120 words or fewer and all inline excerpts to 300 words or fewer.
+- Do not paste full spec, ledger, ADR, glossary, or unrelated code into the worker packet.
+- Treat `PACKET_CONTEXT_BUDGET_EXCEEDED` as fail-fast; do not auto-truncate packet text.
 - Stay inside write scope.
 - Do not edit coordinator-owned envelope, runtime snapshot, event log, or shared ledger unless explicitly assigned.
 - Use `tdd` or an approved equivalent for behavior changes.

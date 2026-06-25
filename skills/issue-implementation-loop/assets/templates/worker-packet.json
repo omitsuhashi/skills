@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "packet_type": "issue_worker_dispatch",
+  "epic_id": "<epic-id>",
+  "issue_id": "G2PR-001",
+  "issue_title": "Short issue title",
+  "dispatch_id": "dispatch-001",
+  "branch": "codex/<epic-id>/G2PR-001-<slug>",
+  "worktree": "/abs/path/to/worktree",
+  "write_scope": [
+    "path:<scope>"
+  ],
+  "context_policy": {
+    "paths_first": true,
+    "max_packet_words": 450,
+    "hard_max_packet_words": 800,
+    "max_read_paths": 8,
+    "max_inline_excerpt_words_per_file": 120,
+    "max_inline_excerpt_words_total": 300,
+    "include_full_spec_text": false,
+    "include_full_ledger_text": false
+  },
+  "read_paths": [
+    {
+      "path": "knowledge/wiki/syntheses/spec.md",
+      "purpose": "spec"
+    },
+    {
+      "path": "knowledge/wiki/syntheses/issues.md",
+      "purpose": "issue-ledger"
+    }
+  ],
+  "inline_context": [
+    {
+      "path": "knowledge/wiki/syntheses/issues.md",
+      "excerpt": "Short issue-specific excerpt only."
+    }
+  ],
+  "task": {
+    "summary": "Short required behavior summary.",
+    "acceptance_criteria": [
+      "Observable condition"
+    ],
+    "verification": [
+      "python3 -m unittest discover -s tests"
+    ],
+    "stop_conditions": [
+      "Stop before remote writes unless explicitly approved."
+    ]
+  },
+  "report_contract": {
+    "format": "worker-report.json",
+    "validator": "skills/issue-implementation-loop/scripts/validate_worker_report.py"
+  }
+}

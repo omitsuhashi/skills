@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Issue Implementation Loop Worker Dispatch Packet",
+  "type": "object",
+  "required": ["schema_version", "packet_type", "epic_id", "issue_id", "issue_title", "dispatch_id", "branch", "worktree", "write_scope", "context_policy", "read_paths", "inline_context", "task", "report_contract"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "packet_type": {"const": "issue_worker_dispatch"},
+    "epic_id": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"},
+    "issue_id": {"type": "string", "pattern": "^[A-Z0-9]+-[0-9]+$"},
+    "issue_title": {"type": "string", "minLength": 1},
+    "dispatch_id": {"type": "string", "minLength": 1},
+    "branch": {"type": "string", "minLength": 1},
+    "worktree": {"type": "string", "minLength": 1},
+    "write_scope": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "context_policy": {
+      "type": "object",
+      "required": ["paths_first", "max_packet_words", "hard_max_packet_words", "max_read_paths", "max_inline_excerpt_words_per_file", "max_inline_excerpt_words_total", "include_full_spec_text", "include_full_ledger_text"],
+      "properties": {
+        "paths_first": {"const": true},
+        "max_packet_words": {"type": "integer", "minimum": 1, "maximum": 800, "default": 450},
+        "hard_max_packet_words": {"const": 800},
+        "max_read_paths": {"const": 8},
+        "max_inline_excerpt_words_per_file": {"const": 120},
+        "max_inline_excerpt_words_total": {"const": 300},
+        "include_full_spec_text": {"const": false},
+        "include_full_ledger_text": {"const": false}
+      }
+    },
+    "read_paths": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "purpose": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "inline_context": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "excerpt"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "excerpt": {"type": "string", "minLength": 1},
+          "purpose": {"type": "string"},
+          "is_full_document": {"const": false}
+        }
+      }
+    },
+    "task": {
+      "type": "object",
+      "required": ["summary", "acceptance_criteria", "verification", "stop_conditions"],
+      "properties": {
+        "summary": {"type": "string", "minLength": 1},
+        "acceptance_criteria": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "verification": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "stop_conditions": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "report_contract": {
+      "type": "object",
+      "required": ["format", "validator"],
+      "properties": {
+        "format": {"type": "string", "minLength": 1},
+        "validator": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}
