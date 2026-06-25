@@ -23,6 +23,15 @@ def run_script(script: Path, *args: str) -> subprocess.CompletedProcess[str]:
 
 
 class GrillContextContractTests(unittest.TestCase):
+    def test_context_contract_loads_core_then_workflow_router(self) -> None:
+        contract_text = (SKILL_DIR / "context-contract.toml").read_text(encoding="utf-8")
+
+        self.assertIn(
+            'base_references = ["references/core.md", "references/workflow-contract.md"]',
+            contract_text,
+        )
+        self.assertIn("max_file_count = 6", contract_text)
+
     def test_all_loop_context_contracts_validate(self) -> None:
         result = run_script(VALIDATE_CONTEXT, "--all")
 
@@ -47,6 +56,7 @@ class GrillContextContractTests(unittest.TestCase):
             payload["files"],
             [
                 "skills/grill-to-pr-loop/SKILL.md",
+                "skills/grill-to-pr-loop/references/core.md",
                 "skills/grill-to-pr-loop/references/workflow-contract.md",
                 "skills/grill-to-pr-loop/references/planning-contract.md",
                 "skills/grill-to-pr-loop/references/local-issue-ledger.md",
