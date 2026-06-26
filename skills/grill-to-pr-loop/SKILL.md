@@ -31,7 +31,7 @@ If planning lacks `grill-with-docs`, stop. If execution lacks `issue-implementat
 
 ## Mode Router
 
-After `references/core.md`, select the current operation and load only the files listed for that operation in `context-contract.toml`. Treat that contract file as the single source of truth for operation-specific read sets. The legacy workflow router reference is a deprecated shim and is not part of the default read set.
+After `references/core.md`, select the current operation and load only the files listed for that operation in `context-contract.toml`. Treat that contract file as the single source of truth for operation-specific read sets. Do not use a separate workflow router reference.
 
 ## Required Rules
 

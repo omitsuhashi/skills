@@ -9,7 +9,8 @@ import sys
 from pathlib import Path
 from typing import Sequence
 
-from skill_context.contract import ContractError, REPO_ROOT, inspect_operation
+from skill_context.contract import ContractError, REPO_ROOT
+from validate_skill_context import inspect_context_operation
 
 
 def resolve_skill_path(value: str) -> Path:
@@ -25,7 +26,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        result = inspect_operation(resolve_skill_path(args.skill), args.operation)
+        result = inspect_context_operation(resolve_skill_path(args.skill), args.operation)
     except ContractError as exc:
         print(str(exc), file=sys.stderr)
         return 1

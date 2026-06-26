@@ -12,7 +12,6 @@ SKILL_DIR = Path(__file__).resolve().parents[1]
 REPO_ROOT = SKILL_DIR.parents[1]
 CHECK_PREREQS = SKILL_DIR / "scripts" / "check_prereqs.py"
 CORE_REFERENCE = SKILL_DIR / "references" / "core.md"
-WORKFLOW_ROUTER = SKILL_DIR / "references" / "workflow-contract.md"
 GRILL_AGENT_YAML = SKILL_DIR / "agents" / "openai.yaml"
 ISSUE_AGENT_YAML = REPO_ROOT / "skills" / "issue-implementation-loop" / "agents" / "openai.yaml"
 
@@ -47,14 +46,6 @@ class GrillToPrLoopTests(unittest.TestCase):
             "Remote approval",
         ):
             self.assertIn(required, text)
-
-    def test_workflow_contract_is_deprecated_shim_to_context_contract(self) -> None:
-        text = WORKFLOW_ROUTER.read_text(encoding="utf-8")
-        self.assertLessEqual(len(text.split()), 520)
-
-        self.assertIn("deprecated shim", text.lower())
-        self.assertIn("context-contract.toml", text)
-        self.assertIn("core.md", text)
 
     def test_github_mirror_read_set_contains_remote_gate(self) -> None:
         contract_text = (SKILL_DIR / "context-contract.toml").read_text(encoding="utf-8")

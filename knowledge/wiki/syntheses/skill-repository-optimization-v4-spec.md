@@ -2,7 +2,7 @@
 
 ## 状態
 
-Spec Gate / Issue Gate / Execution Plan Gate 承認済み。承認日時は 2026-06-26。2026-06-26 のユーザー追補として、実装開始前にメイン planning session の context 圧縮または fresh execution coordinator への切り替えを skill 契約へ追加する。Input packet は承認済み。実装は `issue-implementation-loop prepare` 以降で進める。GitHub issue mirror、push、PR 作成、merge は行わない。
+Spec Gate / Issue Gate / Execution Plan Gate 承認済み。承認日時は 2026-06-26。2026-06-26 のユーザー追補として、実装開始前にメイン planning session の context 圧縮または fresh execution coordinator への切り替えを skill 契約へ追加する。PR #20 作成後の追加方針として、loop 専用 wrapper CLI と deprecated workflow router shim は残さず、canonical CLI と `context-contract.toml` に一本化する。
 
 ## Problem Statement
 
@@ -22,7 +22,7 @@ PR #19 で loop skill V3 最適化は `main` に入り、context contract、oper
 - `skill-architecture.toml` が repository-change-loop family policy と forbidden standalone skill を機械可読に持つ。
 - `context-contract.toml` schema version 2 が read-set、file count、character budget、estimated token budget、headroom を持つ唯一の read-set 正本になる。
 - `SKILL.md` は operation-specific reference filename を列挙せず、trigger / guard / operation resolver / invariant / stop condition に集中する。
-- `workflow-contract.md` は deprecated shim とし、base read-set から外れる。
+- `workflow-contract.md` は削除され、separate workflow router reference を残さない。
 - `issue-implementation-loop` に `execute.wait` が追加され、`waiting_human` は worker dispatch ではなく wait 専用 read-set へ routing される。
 - Worker Packet V2 が implement / fix / review / inspect を表現し、review / inspect は read-only で write scope を持たない。
 - Worker Packet V2 と Resume Brief V2 は source revision / runtime revision を照合し、stale artifact を実行前に拒否する。
@@ -71,9 +71,9 @@ current checkout の context metrics baseline は `knowledge/wiki/syntheses/skil
 
 - root の `skill-architecture.toml` を family policy の正本として追加する。
 - `scripts/skill_context/` を追加し、contract parsing、metrics、inspection、validation を root validator から分離する。
-- `validate_loop_skill_context.py` / `inspect_loop_skill_context.py` を compatibility wrapper として残し、汎用 `validate_skill_context.py` / `inspect_skill_context.py` / `report_skill_context.py` を追加する。
+- 汎用 `validate_skill_context.py` / `inspect_skill_context.py` / `report_skill_context.py` を canonical CLI とし、loop 専用 wrapper CLI は残さない。
 - `grill-to-pr-loop` と `issue-implementation-loop` の context contract を schema version 2 に移行する。
-- `grill-to-pr-loop` の base read-set から `workflow-contract.md` を外し、`workflow-contract.md` を deprecated shim にする。
+- `grill-to-pr-loop` の base read-set から `workflow-contract.md` を外し、`workflow-contract.md` 自体も削除する。
 - `issue-implementation-loop` に `execute.wait` operation を追加し、`waiting_human` routing を移す。
 - `grill-to-pr-loop` の implementation handoff 手順に、メイン planning session の context 圧縮または fresh execution coordinator への切り替えを追加する。
 - Worker Packet V2 schema/template/builder/validator を追加し、V1 artifact は resume 互換用に読み続ける。
@@ -84,7 +84,7 @@ current checkout の context metrics baseline は `knowledge/wiki/syntheses/skil
 
 - 新しい user-facing skill の追加。
 - scheduler / runtime / delivery の semantics 変更。
-- schema version 1 artifact の破壊的変更。
+- input packet / execution envelope / runtime state の現行 schema version 1 契約変更。
 - GitHub issue mirror、push、PR 作成、merge、final PR merge。
 - 外部 Python dependency の追加。
 - 既存 V3 成果の再実装。
@@ -102,7 +102,7 @@ Spec Gate 承認後に、日本語 local-first ledger として次の blocker or
 2. **SRO4-002: Context Contract V2 と共通 validator を導入する**
    - schema version 1 / 2 を読める context parser と metrics を追加する。
    - chars / estimated tokens / file count / headroom を検証する。
-   - compatibility wrappers を残す。
+   - loop 専用 wrapper CLI を残さず、canonical CLI へ集約する。
 
 3. **SRO4-003: loop skill routing を single-source 化する**
    - loop skill の `SKILL.md` から operation-specific filename 列挙を消す。
@@ -120,8 +120,8 @@ Spec Gate 承認後に、日本語 local-first ledger として次の blocker or
    - context report と architecture validation を CI に載せる。
    - budget 超過 / forbidden standalone skill / duplicate read-set を CI failure にする。
 
-6. **SRO4-006: 統合検証・移行 shim・wiki ledger を仕上げる**
-   - V1 compatibility、V2 default、CI、docs、ledger 更新を統合検証する。
+6. **SRO4-006: 統合検証・wiki ledger を仕上げる**
+   - V2 default、CI、docs、ledger 更新を統合検証する。
    - local issue ledger に実装 evidence と review result を反映する。
 
 ## Acceptance Criteria
@@ -131,8 +131,9 @@ Spec Gate 承認後に、日本語 local-first ledger として次の blocker or
 - `scripts/validate_skill_architecture.py --all` が forbidden standalone skill 追加と policy 逸脱を検出する。
 - `scripts/validate_skill_context.py --all` が schema v1 / v2、missing reference、duplicate reference、reference depth、file count、char budget、estimated token budget、headroom を検証する。
 - `scripts/report_skill_context.py --all --json` が operation ごとの current metrics と baseline 比較を返す。
-- compatibility wrappers `validate_loop_skill_context.py` / `inspect_loop_skill_context.py` は既存 CLI を壊さない。
+- loop 専用 wrapper CLI `validate_loop_skill_context.py` / `inspect_loop_skill_context.py` は残らない。
 - `grill-to-pr-loop/context-contract.toml` の base read-set から `workflow-contract.md` が外れる。
+- `skills/grill-to-pr-loop/references/workflow-contract.md` は残らない。
 - `issue-implementation-loop/context-contract.toml` に `execute.wait` が追加される。
 - `select_operation.py` は `waiting_human` を `execute.wait` に routing する。
 - `grill-to-pr-loop/SKILL.md` と `execution-handoff.md` が、implementation handoff 前のメイン session context 圧縮または fresh execution coordinator 切り替えを必須手順として説明する。
@@ -148,8 +149,8 @@ Spec Gate 承認後に、日本語 local-first ledger として次の blocker or
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_architecture.py --all
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_context.py --all
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/report_skill_context.py --all --json
-PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_loop_skill_context.py --all
-PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/inspect_loop_skill_context.py --skill skills/issue-implementation-loop --operation execute.wait --json
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/inspect_skill_context.py --skill skills/issue-implementation-loop --operation execute.wait --json
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/inspect_skill_context.py --skill skills/llm-wiki --operation single-root.ingest --json
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/select_operation.py --envelope <execution-envelope.json> --runtime <runtime-state.json> --requested-mode execute --json
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/validate_worker_packet.py <worker-packet-v2.json> --json
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/validate_resume_brief.py <runtime-root>
@@ -190,7 +191,7 @@ Spec Gate / Issue Gate / Execution Plan Gate は承認後に、承認済み loca
 
 ## Known Risks
 
-- `workflow-contract.md` を deprecated shim にすると、古い agents が router reference を前提にしたまま動く可能性がある。
+- 古い agents / docs が `workflow-contract.md` や loop 専用 wrapper CLI の deep link を前提にしている場合は失敗する。互換ではなく早期失敗を採用する。
 - token estimator は保守的近似であり、実 tokenizer と完全一致しない。
 - `skill-architecture.toml` と context validator の責務を誤ると policy と metrics が再び一体化する。
 - Worker Packet V2 の root 境界検証は worktree / allowed root の正規化が甘いと false positive / false negative を起こす。
@@ -212,6 +213,5 @@ Spec Gate / Issue Gate / Execution Plan Gate は承認後に、承認済み loca
 - [raw/sources/2026-06-26-skill-repository-optimization-v4-design.md](../../raw/sources/2026-06-26-skill-repository-optimization-v4-design.md)
 - [skills/grill-to-pr-loop/context-contract.toml](../../../skills/grill-to-pr-loop/context-contract.toml)
 - [skills/issue-implementation-loop/context-contract.toml](../../../skills/issue-implementation-loop/context-contract.toml)
-- [scripts/validate_loop_skill_context.py](../../../scripts/validate_loop_skill_context.py)
 - [skills/issue-implementation-loop/assets/schemas/worker-packet.schema.json](../../../skills/issue-implementation-loop/assets/schemas/worker-packet.schema.json)
 - [skills/issue-implementation-loop/scripts/build_resume_brief.py](../../../skills/issue-implementation-loop/scripts/build_resume_brief.py)

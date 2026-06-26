@@ -39,7 +39,6 @@
       "write_scope": [
         "path:skill-architecture.toml",
         "path:scripts/validate_skill_architecture.py",
-        "path:scripts/validate_loop_skill_context.py",
         "path:scripts/report_skill_context.py",
         "path:knowledge/wiki/syntheses/skill-repository-optimization-v4-spec.md",
         "path:knowledge/wiki/syntheses/skill-repository-optimization-v4-issues.md",
@@ -62,8 +61,8 @@
         "estimated token は外部 dependency なしで CJK / ascii / other chars を保守的に見積もる",
         "scripts/validate_skill_context.py --all が missing reference、duplicate reference、reference depth、file count、char budget、estimated token budget、headroom を検出する",
         "scripts/inspect_skill_context.py と scripts/report_skill_context.py が JSON output を持つ",
-        "scripts/validate_loop_skill_context.py と scripts/inspect_loop_skill_context.py は compatibility wrapper として既存 CLI を維持する",
-        "tests は v1 compatibility、v2 budget、Japanese context estimation、failure cases をカバーする"
+        "scripts/validate_skill_context.py と scripts/inspect_skill_context.py を canonical CLI とし、loop 専用 wrapper CLI は残らない",
+        "tests は v2 budget、Japanese context estimation、failure cases、wrapper CLI 不在をカバーする"
       ],
       "non_goals": [
         "loop skill routing changes",
@@ -74,7 +73,7 @@
       "verification": [
         "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_context.py --all",
         "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/report_skill_context.py --all --json",
-        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_loop_skill_context.py --all",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/inspect_skill_context.py --skill skills/llm-wiki --operation single-root.ingest --json",
         "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/grill-to-pr-loop/tests",
         "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests"
       ],
@@ -83,8 +82,6 @@
         "path:scripts/validate_skill_context.py",
         "path:scripts/inspect_skill_context.py",
         "path:scripts/report_skill_context.py",
-        "path:scripts/validate_loop_skill_context.py",
-        "path:scripts/inspect_loop_skill_context.py",
         "path:skills/grill-to-pr-loop/tests",
         "path:skills/issue-implementation-loop/tests"
       ],
@@ -108,7 +105,7 @@
         "skills/grill-to-pr-loop/context-contract.toml が schema version 2 になる",
         "skills/issue-implementation-loop/context-contract.toml が schema version 2 になる",
         "grill-to-pr-loop の base read-set から references/workflow-contract.md が外れる",
-        "workflow-contract.md は deprecated shim として残るが default read-set には含まれない",
+        "workflow-contract.md は残らず、default read-set も separate router reference を含まない",
         "SKILL.md は operation-specific reference filename を列挙しない",
         "issue-implementation-loop/context-contract.toml に execute.wait が追加される",
         "select_operation.py は waiting_human を execute.wait に routing する",
@@ -263,7 +260,7 @@
     },
     {
       "id": "SRO4-006",
-      "title": "統合検証・移行 shim・wiki ledger を仕上げる",
+      "title": "統合検証・wiki ledger を仕上げる",
       "source": {
         "type": "local",
         "path": "knowledge/wiki/syntheses/skill-repository-optimization-v4-issues.md"
@@ -273,7 +270,7 @@
         "validate_skill_context.py --all が通る",
         "report_skill_context.py --all --json が baseline 比較を返す",
         "loop skill tests、llm-wiki tests、代表 packet / resume CLI が通る",
-        "deprecated shim と compatibility wrapper の残置理由と削除条件が references または ledger に記録される",
+        "loop 専用 wrapper CLI と deprecated workflow router shim が残らない",
         "knowledge/wiki/syntheses/skill-repository-optimization-v4-issues.md に各 issue の実装状態、verification、implementation review result が反映される",
         "knowledge/index.md と knowledge/log.md が V4 の実装状態と residual risks を発見できる",
         "remote write を実行しない場合、その理由が ledger に残る"

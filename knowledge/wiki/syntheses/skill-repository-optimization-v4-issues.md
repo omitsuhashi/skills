@@ -2,7 +2,7 @@
 
 ## 状態
 
-Spec Gate / Issue Gate / Execution Plan Gate 承認済み。SRO4-001 から SRO4-006 は `COMPLETE`、implementation review はすべて `approved`。SRO4-006 は 2026-06-26 に SRO4-005 head `e61c6b1a0f402eb4bb4892dbe5980213f88b0fbf` ベースへ、承認済み SRO4-004 head `e4f7551b49df4082d1266b04b32249a0770d7481` を競合なしで merge した。merge commit は `0435b90e5227cf84ef0f6e546463b6f8d3d545df`。SRO4-006 final implementation review は `e61c6b1a0f402eb4bb4892dbe5980213f88b0fbf..b71514cc40a5b6e825d546eaa15fdf92d29677ce` を approved とし、Critical / Important finding はなし。ユーザーの後続承認後、draft PR #20 を作成し、PR review hardening で CI whitespace range と 3 skills baseline regression guard を補強した。
+Spec Gate / Issue Gate / Execution Plan Gate 承認済み。SRO4-001 から SRO4-006 は `COMPLETE`、implementation review はすべて `approved`。SRO4-006 は 2026-06-26 に SRO4-005 head `e61c6b1a0f402eb4bb4892dbe5980213f88b0fbf` ベースへ、承認済み SRO4-004 head `e4f7551b49df4082d1266b04b32249a0770d7481` を競合なしで merge した。merge commit は `0435b90e5227cf84ef0f6e546463b6f8d3d545df`。SRO4-006 final implementation review は `e61c6b1a0f402eb4bb4892dbe5980213f88b0fbf..b71514cc40a5b6e825d546eaa15fdf92d29677ce` を approved とし、Critical / Important finding はなし。ユーザーの後続承認後、draft PR #20 を作成し、PR review hardening で CI whitespace range と 3 skills baseline regression guard を補強した。さらに追加方針として、loop 専用 wrapper CLI と deprecated workflow router shim は互換維持せず削除する。
 
 ## Ledger
 
@@ -13,7 +13,7 @@ Spec Gate / Issue Gate / Execution Plan Gate 承認済み。SRO4-001 から SRO4
 | skill-repository-optimization-v4 | SRO4-003 | loop skill routing を single-source 化する | 承認済み | COMPLETE | SRO4-002 | SRO4-005 | 未作成 | approved: `be17b274c27745f64d0d629ea22d96edcd3fb0ac..839ce87713c4077cdfca650c8873cd947f67e813` | 未作成 |
 | skill-repository-optimization-v4 | SRO4-004 | Worker Packet V2 と Resume Brief V2 を導入する | 承認済み | COMPLETE | SRO4-001 | SRO4-005 | 未作成 | approved: `53fd68f64403505064373100d8ec35543be9c04d..e4f7551b49df4082d1266b04b32249a0770d7481` | 未作成 |
 | skill-repository-optimization-v4 | SRO4-005 | `llm-wiki` contract と CI を追加する | 承認済み | COMPLETE | SRO4-003, SRO4-004 | SRO4-006 | 未作成 | approved: `839ce87713c4077cdfca650c8873cd947f67e813..e61c6b1a0f402eb4bb4892dbe5980213f88b0fbf` | 未作成 |
-| skill-repository-optimization-v4 | SRO4-006 | 統合検証・移行 shim・wiki ledger を仕上げる | 承認済み | COMPLETE: final local ledger commit | SRO4-005 | なし | 未作成 | approved: `e61c6b1a0f402eb4bb4892dbe5980213f88b0fbf..b71514cc40a5b6e825d546eaa15fdf92d29677ce` | 未作成 |
+| skill-repository-optimization-v4 | SRO4-006 | 統合検証・wiki ledger を仕上げる | 承認済み | COMPLETE: final local ledger commit; PR follow-up compatibility shims removed | SRO4-005 | なし | 未作成 | approved: `e61c6b1a0f402eb4bb4892dbe5980213f88b0fbf..b71514cc40a5b6e825d546eaa15fdf92d29677ce` | Draft PR #20 |
 
 ## ブロッカーグラフ
 
@@ -57,7 +57,6 @@ user-facing loop skill を 2 つに固定する family policy と V4 planning ar
 
 - `path:skill-architecture.toml`
 - `path:scripts/validate_skill_architecture.py`
-- `path:scripts/validate_loop_skill_context.py`
 - `path:scripts/report_skill_context.py`
 - `path:knowledge/wiki/syntheses/skill-repository-optimization-v4-spec.md`
 - `path:knowledge/wiki/syntheses/skill-repository-optimization-v4-issues.md`
@@ -99,7 +98,7 @@ Context Contract V2 と共通 validator を導入する
 
 ### 作るもの
 
-loop skill 固有の word count validator を、複数 skill に使える context contract library と validator CLI に発展させる。schema version 1 の互換を維持しつつ、schema version 2 で文字数、非空白文字数、推定 token、headroom を検証する。
+loop skill 固有の word count validator を、複数 skill に使える context contract library と validator CLI に発展させる。schema version 2 で文字数、非空白文字数、推定 token、headroom を検証し、canonical CLI に集約する。
 
 ### 受け入れ条件
 
@@ -108,8 +107,8 @@ loop skill 固有の word count validator を、複数 skill に使える contex
 - [x] estimated token は外部 dependency なしで CJK / ascii / other chars を保守的に見積もる。
 - [x] `scripts/validate_skill_context.py --all` が missing reference、duplicate reference、reference depth、file count、char budget、estimated token budget、headroom を検出する。
 - [x] `scripts/inspect_skill_context.py` と `scripts/report_skill_context.py` が JSON output を持つ。
-- [x] `scripts/validate_loop_skill_context.py` と `scripts/inspect_loop_skill_context.py` は compatibility wrapper として既存 CLI を維持する。
-- [x] tests は v1 compatibility、v2 budget、Japanese context estimation、failure cases をカバーする。
+- [x] `scripts/validate_skill_context.py` と `scripts/inspect_skill_context.py` を canonical CLI とし、loop 専用 wrapper CLI は残らない。
+- [x] tests は v2 budget、Japanese context estimation、failure cases、wrapper CLI 不在をカバーする。
 
 ### ブロッカー
 
@@ -123,30 +122,28 @@ loop skill 固有の word count validator を、複数 skill に使える contex
 - `path:scripts/validate_skill_context.py`
 - `path:scripts/inspect_skill_context.py`
 - `path:scripts/report_skill_context.py`
-- `path:scripts/validate_loop_skill_context.py`
-- `path:scripts/inspect_loop_skill_context.py`
 - `path:skills/grill-to-pr-loop/tests`
 - `path:skills/issue-implementation-loop/tests`
 
 ### 必要な文脈
 
 - 仕様: [Skill Repository Optimization V4 Spec](skill-repository-optimization-v4-spec.md)
-- 既存: `scripts/validate_loop_skill_context.py`, `scripts/inspect_loop_skill_context.py`
+- 既存: `skills/grill-to-pr-loop/context-contract.toml`, `skills/issue-implementation-loop/context-contract.toml`
 - 既存 contracts: `skills/grill-to-pr-loop/context-contract.toml`, `skills/issue-implementation-loop/context-contract.toml`
 
 ### 検証
 
 - `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_context.py --all`
 - `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/report_skill_context.py --all --json`
-- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_loop_skill_context.py --all`
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/inspect_skill_context.py --skill skills/llm-wiki --operation single-root.ingest --json`
 - `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/grill-to-pr-loop/tests`
 - `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests`
 
 ### 実装 evidence
 
 - `scripts/skill_context/` に共通 contract / metrics library を追加し、schema v1/v2、CJK を含む estimated token、headroom、file count を検証対象にした。
-- `validate_skill_context.py` / `inspect_skill_context.py` / `report_skill_context.py` を canonical CLI とし、`validate_loop_skill_context.py` / `inspect_loop_skill_context.py` は旧運用向け compatibility wrapper として残した。
-- 検証: `validate_skill_context.py --all`、`report_skill_context.py --all --json`、`validate_loop_skill_context.py --all`、grill tests、issue-loop tests、`git diff --check` は SRO4-002 worker report で pass。
+- `validate_skill_context.py` / `inspect_skill_context.py` / `report_skill_context.py` を canonical CLI とした。PR follow-up で `validate_loop_skill_context.py` / `inspect_loop_skill_context.py` は削除した。
+- 検証: `validate_skill_context.py --all`、`report_skill_context.py --all --json`、canonical inspector、grill tests、issue-loop tests、`git diff --check` を fresh に実行する。
 - Implementation review: approved, range `53fd68f64403505064373100d8ec35543be9c04d..be17b274c27745f64d0d629ea22d96edcd3fb0ac`。
 - 残リスク: estimated token は実モデル tokenizer ではなく保守的 heuristic。schema v2 への実 skill migration は SRO4-003 / SRO4-005 側で完了。
 
@@ -169,7 +166,7 @@ loop skill routing を single-source 化する
 - [x] `skills/grill-to-pr-loop/context-contract.toml` が schema version 2 になる。
 - [x] `skills/issue-implementation-loop/context-contract.toml` が schema version 2 になる。
 - [x] `grill-to-pr-loop` の base read-set から `references/workflow-contract.md` が外れる。
-- [x] `workflow-contract.md` は deprecated shim として残るが、default read-set には含まれない。
+- [x] `workflow-contract.md` は残らず、default read-set も separate router reference を含まない。
 - [x] `SKILL.md` は operation-specific reference filename を列挙しない。
 - [x] `issue-implementation-loop/context-contract.toml` に `execute.wait` が追加される。
 - [x] `select_operation.py` は `waiting_human` を `execute.wait` に routing する。
@@ -201,7 +198,7 @@ loop skill routing を single-source 化する
 ### 必要な文脈
 
 - 仕様: [Skill Repository Optimization V4 Spec](skill-repository-optimization-v4-spec.md)
-- 既存: `skills/grill-to-pr-loop/SKILL.md`, `skills/grill-to-pr-loop/references/core.md`, `skills/grill-to-pr-loop/references/workflow-contract.md`
+- 既存: `skills/grill-to-pr-loop/SKILL.md`, `skills/grill-to-pr-loop/references/core.md`, `skills/grill-to-pr-loop/context-contract.toml`
 - 既存: `skills/issue-implementation-loop/scripts/lib/issue_implementation_loop/operation_selection.py`
 
 ### 検証
@@ -217,7 +214,7 @@ loop skill routing を single-source 化する
 ### 実装 evidence
 
 - loop skill の read-set 正本を `context-contract.toml` に寄せ、`SKILL.md` から operation-specific file 列挙を外した。
-- `workflow-contract.md` は deprecated shim として残し、default read-set から外した。旧 link / 外部参照を壊さず、read-set regression は `validate_skill_context.py --all` で検出する。
+- `workflow-contract.md` は PR follow-up で削除し、`context-contract.toml` を唯一の operation read-set 正本にした。旧 link / 外部参照は早期失敗させる。
 - `execute.wait` を追加し、`waiting_human` runtime fixture で `select_operation.py` が `execute.wait` を選ぶことを確認した。
 - `grill-to-pr-loop` の handoff 前 context 圧縮 / fresh execution coordinator requirement を `SKILL.md` と `references/execution-handoff.md` に固定し、tests で回帰防止した。
 - Implementation review: approved, range `be17b274c27745f64d0d629ea22d96edcd3fb0ac..839ce87713c4077cdfca650c8873cd947f67e813`。
@@ -365,11 +362,11 @@ loop skill だけでなく、複数 mode と topology reference を持つ `llm-w
 
 ### タイトル
 
-統合検証・移行 shim・wiki ledger を仕上げる
+統合検証・wiki ledger を仕上げる
 
 ### 作るもの
 
-V4 の全変更を統合し、V1 compatibility、V2 default、deprecated shim、CI、wiki ledger を一貫させる。Execution Plan Gate 後に実装された場合、この issue が completion evidence を local ledger に集約する。
+V4 の全変更を統合し、V2 default、CI、wiki ledger を一貫させる。Execution Plan Gate 後に実装された場合、この issue が completion evidence を local ledger に集約する。PR follow-up では loop 専用 wrapper CLI と deprecated workflow router shim を削除し、互換維持より canonical surface を優先する。
 
 ### 受け入れ条件
 
@@ -377,7 +374,7 @@ V4 の全変更を統合し、V1 compatibility、V2 default、deprecated shim、
 - [x] `validate_skill_context.py --all` が通る。
 - [x] `report_skill_context.py --all --json` が baseline 比較を返す。
 - [x] loop skill tests、`llm-wiki` tests、代表 packet / resume CLI が通る。
-- [x] deprecated shim と compatibility wrapper の残置理由と削除条件が references または ledger に記録される。
+- [x] loop 専用 wrapper CLI と deprecated workflow router shim が残らない。
 - [x] `knowledge/wiki/syntheses/skill-repository-optimization-v4-issues.md` に各 issue の実装状態、verification、implementation review result が反映される。
 - [x] `knowledge/index.md` と `knowledge/log.md` が V4 の実装状態と residual risks を発見できる。
 - [x] remote write を実行しない場合、その理由が ledger に残る。
@@ -426,9 +423,11 @@ V4 の全変更を統合し、V1 compatibility、V2 default、deprecated shim、
 - `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_architecture.py --all` -> passed: repository-change-loop architecture policy.
 - `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_context.py --all` -> passed: validated 3 skill context contracts.
 - `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/report_skill_context.py --all --json --require-baseline --fail-on-warning` -> passed: complete 3 skills baseline comparison JSON, warnings `[]`.
-- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/grill-to-pr-loop/tests` -> passed: 13 tests.
-- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests` -> passed: 98 tests.
-- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/llm-wiki/tests` -> passed: 5 tests.
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/inspect_skill_context.py --skill skills/issue-implementation-loop --operation execute.wait --json` -> passed: canonical inspector returned schema v2 read-set.
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/inspect_skill_context.py --skill skills/llm-wiki --operation single-root.ingest --json` -> passed: topology/mode inspector returned schema v2 read-set.
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/grill-to-pr-loop/tests` -> passed: 11 tests.
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests` -> passed: 100 tests.
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/llm-wiki/tests` -> passed: 6 tests.
 - `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/build_worker_packet.py ... --output /private/tmp/sro4-006-cli.F6FKUM/worker-packet-v2.json` -> passed.
 - `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/validate_worker_packet.py /private/tmp/sro4-006-cli.F6FKUM/worker-packet-v2.json --json` -> passed: `ok: true`.
 - `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/validate_worker_packet.py /private/tmp/sro4-006-cli.F6FKUM/worker-packet-v2-stale.json --json` -> expected failure: `source_revision.runtime_state.sha256 is stale`.
@@ -436,10 +435,10 @@ V4 の全変更を統合し、V1 compatibility、V2 default、deprecated shim、
 - `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/validate_resume_brief.py /private/tmp/sro4-006-cli.F6FKUM/clean-runtime --json` -> passed: `ok: true`.
 - `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/validate_resume_brief.py /private/tmp/sro4-006-cli.F6FKUM/runtime-root --meta /private/tmp/sro4-006-cli.F6FKUM/runtime-root/resume-brief-stale.meta.json --json` -> expected failure: `events.sha256 is stale`.
 
-### Compatibility / shim rationale and removal conditions
+### Compatibility removal
 
-- `scripts/validate_loop_skill_context.py` と `scripts/inspect_loop_skill_context.py` は、既存 runbook / CI / user muscle memory を壊さず generic `validate_skill_context.py` / `inspect_skill_context.py` へ移行するために残す。削除条件は、repo 内 docs / tests / workflow / worker packet から wrapper 参照が消え、少なくとも 1 execution epic で canonical CLI のみで運用できたこと。
-- `skills/grill-to-pr-loop/references/workflow-contract.md` は旧 deep link 用 deprecated shim として残す。削除条件は、`context-contract.toml`、`SKILL.md`、tests、knowledge ledger、既知 worker/resume artifacts から `workflow-contract.md` 参照が消え、default read-set 外であることを 1 cycle 維持できたこと。
+- PR follow-up で `scripts/validate_loop_skill_context.py` と `scripts/inspect_loop_skill_context.py` は削除した。今後は `validate_skill_context.py` / `inspect_skill_context.py` / `report_skill_context.py` だけを canonical CLI とする。
+- PR follow-up で `skills/grill-to-pr-loop/references/workflow-contract.md` は削除した。今後の operation routing は `context-contract.toml` だけを正本とし、旧 deep link は互換せず失敗させる。
 - `worker-packet-v1.schema.json` と legacy resume brief warning は既存 V1 packet / old brief を持つ runtime の復旧用に残す。削除条件は、active runtime と archived handoff artifacts が V2 packet / V2 resume meta へ移行済みで、`validate_worker_packet.py` の V1 compatibility test を削除しても復旧契約を失わないこと。
 
 ### Remote policy / residual risks

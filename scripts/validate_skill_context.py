@@ -8,11 +8,10 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import Callable, Dict, List, Mapping, Sequence, Tuple
+from typing import Dict, List, Mapping, Sequence, Tuple
 
 from skill_context.contract import ContractError, REPO_ROOT, all_skill_dirs, load_contract, validate_skill_dir
 from skill_context.metrics import collect_file_metrics
-from validate_skill_architecture import DEFAULT_POLICY_PATH, REQUIRED_FAMILY_ID, load_policy
 
 
 def resolve_skill_path(value: str) -> Path:
@@ -283,29 +282,7 @@ def validate_skill_dir_for_context(skill_dir: Path) -> List[str]:
     return validate_skill_dir(skill_dir)
 
 
-def _policy_user_facing_skill_dirs() -> List[Path]:
-    try:
-        policy = load_policy(DEFAULT_POLICY_PATH)
-    except Exception as exc:  # pragma: no cover - surfaced as ContractError.
-        raise ContractError(str(exc)) from exc
-    families = policy.get("families")
-    if not isinstance(families, dict):
-        raise ContractError("skill architecture policy must contain families")
-    family = families.get(REQUIRED_FAMILY_ID)
-    if not isinstance(family, dict):
-        raise ContractError(f"skill architecture policy missing family: {REQUIRED_FAMILY_ID}")
-    skill_names = family.get("user_facing_skills")
-    if not isinstance(skill_names, list) or not all(isinstance(name, str) for name in skill_names):
-        raise ContractError(f"{REQUIRED_FAMILY_ID}.user_facing_skills must be an array of strings")
-    return [REPO_ROOT / "skills" / name for name in skill_names]
-
-
-def run_validation(
-    argv: Sequence[str] | None = None,
-    *,
-    success_label: str = "skill context",
-    resolve_skill: Callable[[str], Path] = resolve_skill_path,
-) -> int:
+def run_validation(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     target = parser.add_mutually_exclusive_group(required=True)
     target.add_argument("--all", action="store_true", help="validate all skill context contracts")
@@ -315,9 +292,9 @@ def run_validation(
 
     try:
         if args.all:
-            skill_dirs = _policy_user_facing_skill_dirs() if success_label.startswith("loop skill") else all_skill_dirs()
+            skill_dirs = all_skill_dirs()
         else:
-            skill_dirs = [resolve_skill(args.skill)]
+            skill_dirs = [resolve_skill_path(args.skill)]
     except ContractError as exc:
         result = {"ok": False, "skills": [], "errors": [str(exc)]}
         if args.json:
@@ -338,7 +315,7 @@ def run_validation(
     if args.json:
         print(json.dumps(result, indent=2, sort_keys=True))
     elif result["ok"]:
-        print(f"OK: validated {len(skill_dirs)} {success_label} contract(s)")
+        print(f"OK: validated {len(skill_dirs)} skill context contract(s)")
     if stderr_lines:
         print("\n".join(stderr_lines), file=sys.stderr)
     return 0 if result["ok"] else 1

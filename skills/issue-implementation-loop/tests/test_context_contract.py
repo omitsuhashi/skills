@@ -4,30 +4,10 @@ from _helpers import *
 
 
 REPO_ROOT = SKILL_DIR.parents[1]
-VALIDATE_CONTEXT = REPO_ROOT / "scripts" / "validate_loop_skill_context.py"
-INSPECT_CONTEXT = REPO_ROOT / "scripts" / "inspect_loop_skill_context.py"
 VALIDATE_SKILL_CONTEXT = REPO_ROOT / "scripts" / "validate_skill_context.py"
 INSPECT_SKILL_CONTEXT = REPO_ROOT / "scripts" / "inspect_skill_context.py"
 REPORT_SKILL_CONTEXT = REPO_ROOT / "scripts" / "report_skill_context.py"
 METRICS_FILE = REPO_ROOT / "scripts" / "skill_context" / "metrics.py"
-
-
-def run_context_validator(*args: str) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        [sys.executable, str(VALIDATE_CONTEXT), *args],
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-
-
-def run_context_inspector(*args: str) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        [sys.executable, str(INSPECT_CONTEXT), *args],
-        check=False,
-        capture_output=True,
-        text=True,
-    )
 
 
 def run_generic_context_validator(*args: str) -> subprocess.CompletedProcess[str]:
@@ -108,6 +88,10 @@ class ContextContractTests(unittest.TestCase):
         "context-manager",
     )
 
+    def test_loop_specific_context_wrappers_are_removed(self) -> None:
+        self.assertFalse((REPO_ROOT / "scripts" / "validate_loop_skill_context.py").exists())
+        self.assertFalse((REPO_ROOT / "scripts" / "inspect_loop_skill_context.py").exists())
+
     def test_validator_rejects_missing_reference(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             skill_dir = Path(tmp) / "skills" / "example-loop"
@@ -130,7 +114,7 @@ class ContextContractTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            result = run_context_validator("--skill", str(skill_dir))
+            result = run_generic_context_validator("--skill", str(skill_dir))
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("missing reference", result.stderr)
@@ -143,7 +127,7 @@ class ContextContractTests(unittest.TestCase):
         self.assertEqual(metrics["character_count"], 2)
         self.assertEqual(metrics["non_whitespace_character_count"], 2)
 
-    def test_loop_validator_skill_path_is_cwd_relative(self) -> None:
+    def test_generic_validator_accepts_absolute_skill_path(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             skill_dir = write_example_skill(
                 Path(tmp),
@@ -162,17 +146,11 @@ class ContextContractTests(unittest.TestCase):
                 ),
             )
 
-            result = subprocess.run(
-                [sys.executable, str(VALIDATE_CONTEXT), "--skill", str(skill_dir.relative_to(Path(tmp)))],
-                cwd=tmp,
-                check=False,
-                capture_output=True,
-                text=True,
-            )
+            result = run_generic_context_validator("--skill", str(skill_dir))
 
             self.assertEqual(result.returncode, 0, result.stderr)
 
-    def test_loop_inspector_skill_path_is_cwd_relative(self) -> None:
+    def test_generic_inspector_accepts_absolute_skill_path(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             skill_dir = write_example_skill(
                 Path(tmp),
@@ -191,20 +169,12 @@ class ContextContractTests(unittest.TestCase):
                 ),
             )
 
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    str(INSPECT_CONTEXT),
-                    "--skill",
-                    str(skill_dir.relative_to(Path(tmp))),
-                    "--operation",
-                    "test",
-                    "--json",
-                ],
-                cwd=tmp,
-                check=False,
-                capture_output=True,
-                text=True,
+            result = run_generic_context_inspector(
+                "--skill",
+                str(skill_dir),
+                "--operation",
+                "test",
+                "--json",
             )
 
             self.assertEqual(result.returncode, 0, result.stderr)
@@ -292,7 +262,7 @@ class ContextContractTests(unittest.TestCase):
                 with tempfile.TemporaryDirectory() as tmp:
                     skill_dir = write_example_skill(Path(tmp), skill_name, contract_text)
 
-                    result = run_context_validator("--skill", str(skill_dir))
+                    result = run_generic_context_validator("--skill", str(skill_dir))
 
                     self.assertNotEqual(result.returncode, 0)
                     self.assertIn(expected, result.stderr)
@@ -318,7 +288,7 @@ class ContextContractTests(unittest.TestCase):
                         ),
                     )
 
-                    result = run_context_validator("--skill", str(skill_dir))
+                    result = run_generic_context_validator("--skill", str(skill_dir))
 
                     self.assertNotEqual(result.returncode, 0)
                     self.assertIn("forbidden standalone skill name", result.stderr)
@@ -342,12 +312,12 @@ class ContextContractTests(unittest.TestCase):
                 ),
             )
 
-            result = run_context_validator("--skill", str(skill_dir))
+            result = run_generic_context_validator("--skill", str(skill_dir))
 
             self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_inspector_returns_issue_review_read_set(self) -> None:
-        result = run_context_inspector(
+        result = run_generic_context_inspector(
             "--skill",
             "skills/issue-implementation-loop",
             "--operation",

@@ -9,8 +9,8 @@ import unittest
 
 SKILL_DIR = Path(__file__).resolve().parents[1]
 REPO_ROOT = SKILL_DIR.parents[1]
-VALIDATE_CONTEXT = REPO_ROOT / "scripts" / "validate_loop_skill_context.py"
-INSPECT_CONTEXT = REPO_ROOT / "scripts" / "inspect_loop_skill_context.py"
+VALIDATE_CONTEXT = REPO_ROOT / "scripts" / "validate_skill_context.py"
+INSPECT_CONTEXT = REPO_ROOT / "scripts" / "inspect_skill_context.py"
 
 
 def run_script(script: Path, *args: str) -> subprocess.CompletedProcess[str]:
@@ -23,7 +23,7 @@ def run_script(script: Path, *args: str) -> subprocess.CompletedProcess[str]:
 
 
 class GrillContextContractTests(unittest.TestCase):
-    def test_context_contract_v2_loads_core_without_deprecated_workflow_router(self) -> None:
+    def test_context_contract_v2_loads_core_without_workflow_router(self) -> None:
         contract_text = (SKILL_DIR / "context-contract.toml").read_text(encoding="utf-8")
 
         self.assertIn("schema_version = 2", contract_text)
@@ -33,12 +33,13 @@ class GrillContextContractTests(unittest.TestCase):
         )
         self.assertNotIn("references/workflow-contract.md", contract_text)
         self.assertIn("max_file_count = 6", contract_text)
+        self.assertFalse((SKILL_DIR / "references" / "workflow-contract.md").exists())
 
-    def test_all_loop_context_contracts_validate(self) -> None:
+    def test_all_skill_context_contracts_validate(self) -> None:
         result = run_script(VALIDATE_CONTEXT, "--all")
 
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("OK: validated 2", result.stdout)
+        self.assertIn("OK: validated 3", result.stdout)
 
     def test_inspector_returns_execution_plan_read_set(self) -> None:
         result = run_script(
@@ -67,25 +68,6 @@ class GrillContextContractTests(unittest.TestCase):
         self.assertEqual(payload["schema_version"], 2)
         self.assertGreater(payload["word_count"], 0)
         self.assertGreaterEqual(payload["headroom_percent"], 0)
-
-    def test_workflow_contract_is_deprecated_shim_not_default_context(self) -> None:
-        workflow_text = (SKILL_DIR / "references" / "workflow-contract.md").read_text(encoding="utf-8")
-        inspect_result = run_script(
-            INSPECT_CONTEXT,
-            "--skill",
-            "skills/grill-to-pr-loop",
-            "--operation",
-            "execution-plan",
-            "--json",
-        )
-
-        self.assertEqual(inspect_result.returncode, 0, inspect_result.stderr)
-        payload = json.loads(inspect_result.stdout)
-        self.assertIn("deprecated shim", workflow_text.lower())
-        self.assertNotIn(
-            "skills/grill-to-pr-loop/references/workflow-contract.md",
-            payload["files"],
-        )
 
     def test_execution_handoff_requires_compressed_or_fresh_context_guard(self) -> None:
         skill_text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
