@@ -9,6 +9,7 @@ INSPECT_CONTEXT = REPO_ROOT / "scripts" / "inspect_loop_skill_context.py"
 VALIDATE_SKILL_CONTEXT = REPO_ROOT / "scripts" / "validate_skill_context.py"
 INSPECT_SKILL_CONTEXT = REPO_ROOT / "scripts" / "inspect_skill_context.py"
 REPORT_SKILL_CONTEXT = REPO_ROOT / "scripts" / "report_skill_context.py"
+METRICS_FILE = REPO_ROOT / "scripts" / "skill_context" / "metrics.py"
 
 
 def run_context_validator(*args: str) -> subprocess.CompletedProcess[str]:
@@ -54,6 +55,14 @@ def run_generic_context_report(*args: str) -> subprocess.CompletedProcess[str]:
         capture_output=True,
         text=True,
     )
+
+
+def load_metrics_module():
+    spec = importlib.util.spec_from_file_location("skill_context_metrics_under_test", METRICS_FILE)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def write_example_skill(root: Path, name: str, contract_text: str) -> Path:
@@ -125,6 +134,81 @@ class ContextContractTests(unittest.TestCase):
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("missing reference", result.stderr)
+
+    def test_metrics_preserve_file_boundaries_for_words_and_tokens(self) -> None:
+        metrics = load_metrics_module().collect_text_metrics(["a", "a"], {"estimated_token_budget": 10})
+
+        self.assertEqual(metrics["word_count"], 2)
+        self.assertEqual(metrics["estimated_token_count"], 2)
+        self.assertEqual(metrics["character_count"], 2)
+        self.assertEqual(metrics["non_whitespace_character_count"], 2)
+
+    def test_loop_validator_skill_path_is_cwd_relative(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            skill_dir = write_example_skill(
+                Path(tmp),
+                "cwd-loop",
+                "\n".join(
+                    [
+                        'skill = "cwd-loop"',
+                        'entrypoint = "SKILL.md"',
+                        'base_references = ["references/core.md"]',
+                        "word_budget = 100",
+                        "max_file_count = 4",
+                        "",
+                        "[operations.test]",
+                        'references = ["references/extra.md"]',
+                    ]
+                ),
+            )
+
+            result = subprocess.run(
+                [sys.executable, str(VALIDATE_CONTEXT), "--skill", str(skill_dir.relative_to(Path(tmp)))],
+                cwd=tmp,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_loop_inspector_skill_path_is_cwd_relative(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            skill_dir = write_example_skill(
+                Path(tmp),
+                "cwd-loop",
+                "\n".join(
+                    [
+                        'skill = "cwd-loop"',
+                        'entrypoint = "SKILL.md"',
+                        'base_references = ["references/core.md"]',
+                        "word_budget = 100",
+                        "max_file_count = 4",
+                        "",
+                        "[operations.test]",
+                        'references = ["references/extra.md"]',
+                    ]
+                ),
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(INSPECT_CONTEXT),
+                    "--skill",
+                    str(skill_dir.relative_to(Path(tmp))),
+                    "--operation",
+                    "test",
+                    "--json",
+                ],
+                cwd=tmp,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(json.loads(result.stdout)["skill"], "cwd-loop")
 
     def test_validator_rejects_context_contract_failure_cases(self) -> None:
         cases = [

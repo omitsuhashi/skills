@@ -66,12 +66,12 @@ def _headroom_percent(used: int, budget: int | None) -> int | None:
 
 
 def collect_text_metrics(texts: Iterable[str], budget: Mapping[str, int | None] | None = None) -> dict:
-    material = "".join(texts)
+    material_parts = list(texts)
     budget = budget or {}
-    words = word_count(material)
-    character_count = len(material)
-    non_whitespace_character_count = sum(1 for char in material if not char.isspace())
-    estimated_tokens = estimate_token_count(material)
+    words = sum(word_count(text) for text in material_parts)
+    character_count = sum(len(text) for text in material_parts)
+    non_whitespace_character_count = sum(1 for text in material_parts for char in text if not char.isspace())
+    estimated_tokens = sum(estimate_token_count(text) for text in material_parts)
     token_budget = budget.get("estimated_token_budget")
     character_budget = budget.get("character_budget")
     word_budget = budget.get("word_budget")

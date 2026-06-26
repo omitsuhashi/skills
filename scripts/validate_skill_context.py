@@ -7,7 +7,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import List, Sequence
+from typing import Callable, List, Sequence
 
 from skill_context.contract import ContractError, REPO_ROOT, all_skill_dirs, validate_skill_dir
 
@@ -17,7 +17,12 @@ def resolve_skill_path(value: str) -> Path:
     return path if path.is_absolute() else REPO_ROOT / path
 
 
-def run_validation(argv: Sequence[str] | None = None, *, success_label: str = "skill context") -> int:
+def run_validation(
+    argv: Sequence[str] | None = None,
+    *,
+    success_label: str = "skill context",
+    resolve_skill: Callable[[str], Path] = resolve_skill_path,
+) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     target = parser.add_mutually_exclusive_group(required=True)
     target.add_argument("--all", action="store_true", help="validate all skill context contracts")
@@ -26,7 +31,7 @@ def run_validation(argv: Sequence[str] | None = None, *, success_label: str = "s
     args = parser.parse_args(argv)
 
     try:
-        skill_dirs = all_skill_dirs() if args.all else [resolve_skill_path(args.skill)]
+        skill_dirs = all_skill_dirs() if args.all else [resolve_skill(args.skill)]
     except ContractError as exc:
         result = {"ok": False, "skills": [], "errors": [str(exc)]}
         if args.json:

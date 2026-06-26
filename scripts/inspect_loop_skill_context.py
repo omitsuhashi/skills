@@ -16,7 +16,7 @@ def resolve_skill_path(value: str) -> Path:
     path = Path(value)
     if path.is_absolute():
         return path
-    return REPO_ROOT / path
+    return Path.cwd() / path
 
 
 def main(argv: Sequence[str] | None = None) -> int:
