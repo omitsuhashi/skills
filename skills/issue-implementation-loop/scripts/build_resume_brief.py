@@ -15,10 +15,12 @@ if str(LIB_DIR) not in sys.path:
 
 from issue_implementation_loop.resume_brief import (  # noqa: E402
     DEFAULT_MAX_WORDS,
+    DEFAULT_META_NAME,
     DEFAULT_OUTPUT_NAME,
     ResumeBriefBudgetError,
     ResumeBriefError,
     build_resume_brief,
+    build_resume_brief_meta,
 )
 
 
@@ -52,6 +54,15 @@ def main() -> int:
         return 1
 
     output_path.write_text(content, encoding="utf-8")
+    meta_path = runtime_root / DEFAULT_META_NAME
+    meta = build_resume_brief_meta(
+        runtime_root,
+        brief_path=output_path,
+        envelope_path=args.envelope,
+        word_count=words,
+        max_words=args.max_words,
+    )
+    meta_path.write_text(json.dumps(meta, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     if args.stdout:
         print(content, end="")
     else:
@@ -59,6 +70,7 @@ def main() -> int:
             json.dumps(
                 {
                     "path": str(output_path),
+                    "meta_path": str(meta_path),
                     "word_count": words,
                     "max_words": args.max_words,
                 },
