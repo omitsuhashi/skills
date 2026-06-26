@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "epic_id": "skill-repository-optimization-v4",
-  "revision": 2,
+  "revision": 3,
   "epic_base": {
     "ref": "codex/skill-repository-optimization-v4/epic-base",
     "sha": "a073a10d38744771c2ed10fe8d9d351e5bf0e588",
@@ -54,6 +54,7 @@
       "write_scope": [
         "path:skill-architecture.toml",
         "path:scripts/validate_skill_architecture.py",
+        "path:scripts/validate_loop_skill_context.py",
         "path:scripts/report_skill_context.py",
         "path:knowledge/wiki/syntheses/skill-repository-optimization-v4-spec.md",
         "path:knowledge/wiki/syntheses/skill-repository-optimization-v4-issues.md",

@@ -57,6 +57,7 @@ user-facing loop skill を 2 つに固定する family policy と V4 planning ar
 
 - `path:skill-architecture.toml`
 - `path:scripts/validate_skill_architecture.py`
+- `path:scripts/validate_loop_skill_context.py`
 - `path:scripts/report_skill_context.py`
 - `path:knowledge/wiki/syntheses/skill-repository-optimization-v4-spec.md`
 - `path:knowledge/wiki/syntheses/skill-repository-optimization-v4-issues.md`
@@ -405,6 +406,14 @@ V4 の全変更を統合し、V1 compatibility、V2 default、deprecated shim、
 - scope 変更: SRO4-001 の write scope に `path:scripts/validate_skill_architecture.py` と `path:scripts/report_skill_context.py` を追加
 - worktree state: SRO4-001 の physical worktree は作成済みのため `active`
 - 実装制約: SRO4-001 では policy validator と baseline report の最小実装に留め、SRO4-002 の Context Contract V2 本体 redesign へ踏み込まない
+- remote policy: 引き続き `local_only`
+
+## Envelope Revision 3
+
+- 承認日時: 2026-06-26
+- 変更理由: SRO4-001 implementation review で、既存 `scripts/validate_loop_skill_context.py` が forbidden standalone skill list を hard-code しており、`skill-architecture.toml` を正本にする acceptance criteria を満たしていないと判定された
+- scope 変更: SRO4-001 の write scope に `path:scripts/validate_loop_skill_context.py` を追加
+- 実装制約: `validate_loop_skill_context.py` は forbidden standalone skill list を `skill-architecture.toml` から読む最小変更に留め、Context Contract V2 本体 redesign は SRO4-002 に残す
 - remote policy: 引き続き `local_only`
 
 ## 関連ページ
