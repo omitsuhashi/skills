@@ -13,34 +13,17 @@ mixed repo では、wiki 専用の `knowledge root` を 1 つ決めます。repo
 
 ## Router
 
-作業前に mode と topology を判定し、必要な reference だけを読む。全 reference を最初から読まない。
+作業前に mode と topology を判定し、`context-contract.toml` の read-set だけを読む。全 reference を最初から読まない。
 
 1. Mode を 1 つ選ぶ: `bootstrap`, `ingest`, `query`, `draft-review`, `canonicalize`, `lint`。
 2. Topology を判定する:
    - `single-root`: knowledge-root `AGENTS.md` を authority source とし、root registry は作らない。
    - `multi-root`: system-specific root registry adapter で Root ID / URI / Scope / Owner / Read / Write / Draft Target を解決する。
-3. Read set を選ぶ:
-   - Always read: `references/core.md`
-   - `single-root`: add `references/single-root.md`
-   - `multi-root`: add `references/multi-root.md`
-   - Add exactly one mode file under `references/modes/`
-   - 作業中に必要になった detail reference だけを追加で読む。
+3. Operation `<topology>.<mode>` を `context-contract.toml` で解決し、declared read-set を読む。
+4. 作業中に必要になった detail reference だけを追加で読む。
 
 Do not read `references/multi-root.md` for ordinary `single-root` ingest or query. Do not read every mode file to start a task.
-
-## Read Sets
-
-Base read set for every task:
-
-- `references/core.md`
-- exactly one topology file: `references/single-root.md` or `references/multi-root.md`
-- exactly one mode file under `references/modes/`
-
-Detail references are conditional:
-
-- `references/structure.md`: read only when choosing or creating layout, page type, durable document routing, naming, or frontmatter.
-- `references/page-authoring.md`: read only before creating/updating page body text, citations, links, or page boundaries.
-- `references/optional-tooling.md`: read only when optional tools are directly useful.
+If a listed reference disagrees with the contract, treat `context-contract.toml` as the source of truth and fix the mismatch before relying on the read-set.
 
 ## Quick Rules
 

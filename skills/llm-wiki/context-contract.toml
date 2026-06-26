@@ -1,0 +1,70 @@
+schema_version = 2
+skill = "llm-wiki"
+entrypoint = "SKILL.md"
+base_references = ["references/core.md"]
+topologies = ["single-root", "multi-root"]
+modes = ["bootstrap", "ingest", "query", "draft-review", "canonicalize", "lint"]
+character_budget = 26000
+estimated_token_budget = 12000
+max_file_count = 4
+min_headroom_percent = 15
+
+[operations."single-root.bootstrap"]
+topology = "single-root"
+mode = "bootstrap"
+references = ["references/single-root.md", "references/modes/bootstrap.md"]
+
+[operations."single-root.ingest"]
+topology = "single-root"
+mode = "ingest"
+references = ["references/single-root.md", "references/modes/ingest.md"]
+
+[operations."single-root.query"]
+topology = "single-root"
+mode = "query"
+references = ["references/single-root.md", "references/modes/query.md"]
+
+[operations."single-root.draft-review"]
+topology = "single-root"
+mode = "draft-review"
+references = ["references/single-root.md", "references/modes/draft-review.md"]
+
+[operations."single-root.canonicalize"]
+topology = "single-root"
+mode = "canonicalize"
+references = ["references/single-root.md", "references/modes/canonicalize.md"]
+
+[operations."single-root.lint"]
+topology = "single-root"
+mode = "lint"
+references = ["references/single-root.md", "references/modes/lint.md"]
+
+[operations."multi-root.bootstrap"]
+topology = "multi-root"
+mode = "bootstrap"
+references = ["references/multi-root.md", "references/modes/bootstrap.md"]
+
+[operations."multi-root.ingest"]
+topology = "multi-root"
+mode = "ingest"
+references = ["references/multi-root.md", "references/modes/ingest.md"]
+
+[operations."multi-root.query"]
+topology = "multi-root"
+mode = "query"
+references = ["references/multi-root.md", "references/modes/query.md"]
+
+[operations."multi-root.draft-review"]
+topology = "multi-root"
+mode = "draft-review"
+references = ["references/multi-root.md", "references/modes/draft-review.md"]
+
+[operations."multi-root.canonicalize"]
+topology = "multi-root"
+mode = "canonicalize"
+references = ["references/multi-root.md", "references/modes/canonicalize.md"]
+
+[operations."multi-root.lint"]
+topology = "multi-root"
+mode = "lint"
+references = ["references/multi-root.md", "references/modes/lint.md"]
