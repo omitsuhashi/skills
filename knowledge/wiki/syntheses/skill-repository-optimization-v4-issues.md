@@ -2,7 +2,7 @@
 
 ## 状態
 
-Spec Gate 承認済み。Issue Gate draft。全 issue は `下書き` であり、実装、GitHub issue mirror、push、PR 作成、merge は未実行。Issue Gate / Execution Plan Gate の明示承認後にだけ execution へ進める。
+Spec Gate 承認済み。2026-06-26 のユーザー追補として、実装開始前にメイン planning session の context 圧縮または fresh execution coordinator への切り替えを skill 契約へ追加する scope を SRO4-003 に反映済み。Issue Gate draft。全 issue は `下書き` であり、実装、GitHub issue mirror、push、PR 作成、merge は未実行。Issue Gate / Execution Plan Gate の明示承認後にだけ execution へ進める。
 
 ## Ledger
 
@@ -142,7 +142,7 @@ loop skill routing を single-source 化する
 
 ### 作るもの
 
-`context-contract.toml` を loop skill read-set の唯一の正本にし、`SKILL.md` と `workflow-contract.md` から operation-specific reference map を消す。`waiting_human` 専用の `execute.wait` operation を追加し、human wait 中の不要 context load を減らす。
+`context-contract.toml` を loop skill read-set の唯一の正本にし、`SKILL.md` と `workflow-contract.md` から operation-specific reference map を消す。`waiting_human` 専用の `execute.wait` operation を追加し、human wait 中の不要 context load を減らす。さらに、implementation handoff 前にメイン planning session の context 圧縮または fresh execution coordinator への切り替えを必須手順として skill contract に加える。
 
 ### 受け入れ条件
 
@@ -154,6 +154,9 @@ loop skill routing を single-source 化する
 - [ ] `issue-implementation-loop/context-contract.toml` に `execute.wait` が追加される。
 - [ ] `select_operation.py` は `waiting_human` を `execute.wait` に routing する。
 - [ ] `execute.dispatch` から `human-wait.md` が外れ、`execute.wait` が `human-wait.md` と `runtime-state.md` だけを読む。
+- [ ] `grill-to-pr-loop/SKILL.md` が、approved execution handoff 前にメイン planning session の context 圧縮または fresh execution coordinator への切り替えを行うよう指示している。
+- [ ] `grill-to-pr-loop/references/execution-handoff.md` が、implementation を肥大化した planning context から直接始めず、normalized packet と圧縮済み handoff brief から始める契約を説明している。
+- [ ] tests は implementation handoff 前の context 圧縮 / fresh coordinator requirement が skill contract から消えないことを検証する。
 - [ ] global lifecycle、approval、remote boundary、stop condition は `core.md` から発見できる。
 
 ### ブロッカー
@@ -188,6 +191,7 @@ loop skill routing を single-source 化する
 - `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/select_operation.py --envelope <execution-envelope.json> --runtime <runtime-state.json> --requested-mode execute --json`
 - `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/grill-to-pr-loop/tests`
 - `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests`
+- `rg -n "context.*圧縮|fresh execution coordinator|handoff brief" skills/grill-to-pr-loop/SKILL.md skills/grill-to-pr-loop/references/execution-handoff.md`
 - `git diff --check`
 
 ## SRO4-004

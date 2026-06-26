@@ -2,7 +2,7 @@
 
 ## 状態
 
-Spec Gate 承認済み。承認日時は 2026-06-26。Issue ledger と input packet は同じ source から作ったゲート確認用 draft であり、Issue Gate / Execution Plan Gate は未承認。実装、GitHub issue mirror、push、PR 作成、merge は行わない。
+Spec Gate 承認済み。承認日時は 2026-06-26。2026-06-26 のユーザー追補として、実装開始前にメイン planning session の context 圧縮または fresh execution coordinator への切り替えを skill 契約へ追加する。Issue ledger と input packet は同じ source から作ったゲート確認用 draft であり、Issue Gate / Execution Plan Gate は未承認。実装、GitHub issue mirror、push、PR 作成、merge は行わない。
 
 ## Problem Statement
 
@@ -26,6 +26,7 @@ PR #19 で loop skill V3 最適化は `main` に入り、context contract、oper
 - `issue-implementation-loop` に `execute.wait` が追加され、`waiting_human` は worker dispatch ではなく wait 専用 read-set へ routing される。
 - Worker Packet V2 が implement / fix / review / inspect を表現し、review / inspect は read-only で write scope を持たない。
 - Worker Packet V2 と Resume Brief V2 は source revision / runtime revision を照合し、stale artifact を実行前に拒否する。
+- `grill-to-pr-loop` は approved execution handoff 前に、メイン planning session の context 圧縮または fresh execution coordinator への切り替えを必須手順として案内する。
 - `llm-wiki` の topology × mode read-set が context contract で検証される。
 - CI が skill architecture、context contract、packet / resume schema、context regression、loop skill tests を検証する。
 
@@ -57,6 +58,7 @@ PR #19 で loop skill V3 最適化は `main` に入り、context contract、oper
 - budget は word count だけでなく `character_count`、`non_whitespace_character_count`、`estimated_token_count`、`file_count`、`headroom_percent` で検証する。
 - estimated token は外部 tokenizer dependency なしの保守的な近似でよい。
 - `llm-wiki` は generic skill として V4 contract 対象に含めるが、Portfolio OS など system-specific adapter logic は混ぜない。
+- 実装開始前に、メイン planning session の肥大化した context をそのまま implementation worker / coordinator に持ち込まない。圧縮済み handoff brief または normalized packet から始まる fresh execution coordinator を使う。
 - remote write は未承認のため `local_only`。GitHub issue / PR / push / merge はこの spec では行わない。
 
 ## Decisions Requiring Spec Gate Approval
@@ -67,6 +69,7 @@ PR #19 で loop skill V3 最適化は `main` に入り、context contract、oper
 - `grill-to-pr-loop` と `issue-implementation-loop` の context contract を schema version 2 に移行する。
 - `grill-to-pr-loop` の base read-set から `workflow-contract.md` を外し、`workflow-contract.md` を deprecated shim にする。
 - `issue-implementation-loop` に `execute.wait` operation を追加し、`waiting_human` routing を移す。
+- `grill-to-pr-loop` の implementation handoff 手順に、メイン planning session の context 圧縮または fresh execution coordinator への切り替えを追加する。
 - Worker Packet V2 schema/template/builder/validator を追加し、V1 artifact は resume 互換用に読み続ける。
 - Resume Brief V2 の `.meta.json` を追加し、resume 時に freshness を検証する。
 - `.github/workflows/skill-architecture.yml` を追加する。
@@ -99,6 +102,7 @@ Spec Gate 承認後に、日本語 local-first ledger として次の blocker or
    - loop skill の `SKILL.md` から operation-specific filename 列挙を消す。
    - `workflow-contract.md` を base read-set から外す。
    - `execute.wait` を追加し、`waiting_human` を wait 専用 operation へ routing する。
+   - implementation handoff 前に、メイン planning session の context 圧縮または fresh execution coordinator への切り替えを必須化する。
 
 4. **SRO4-004: Worker Packet V2 と Resume Brief V2 を導入する**
    - packet schema/template/builder/validator を V2 対応にする。
@@ -125,6 +129,7 @@ Spec Gate 承認後に、日本語 local-first ledger として次の blocker or
 - `grill-to-pr-loop/context-contract.toml` の base read-set から `workflow-contract.md` が外れる。
 - `issue-implementation-loop/context-contract.toml` に `execute.wait` が追加される。
 - `select_operation.py` は `waiting_human` を `execute.wait` に routing する。
+- `grill-to-pr-loop/SKILL.md` と `execution-handoff.md` が、implementation handoff 前のメイン session context 圧縮または fresh execution coordinator 切り替えを必須手順として説明する。
 - Worker Packet V2 は `task_kind`、`access_mode`、`source_revision`、`read_paths[].purpose`、root 境界 validation を持つ。
 - Review / inspect packet は `access_mode=read_only` かつ `write_scope=[]` でなければならない。
 - Resume Brief V2 は `resume-brief.md` と `resume-brief.meta.json` を生成し、revision / sequence / digest 不一致時に再生成または拒否できる。
@@ -174,6 +179,7 @@ Spec Gate / Issue Gate / Execution Plan Gate は承認後に、承認済み loca
 - scheduler / runtime / delivery semantics を変更しないと実装できない。
 - schema version 1 artifact の resume が不可能になる。
 - `llm-wiki` の generic contract に system-specific adapter detail が混入する。
+- implementation が肥大化したメイン planning session の context をそのまま引き継ぐ必要がある。
 - remote write または破壊的操作が必要になる。
 
 ## Known Risks

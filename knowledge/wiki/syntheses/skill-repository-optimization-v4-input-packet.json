@@ -108,6 +108,9 @@
         "issue-implementation-loop/context-contract.toml に execute.wait が追加される",
         "select_operation.py は waiting_human を execute.wait に routing する",
         "execute.dispatch から human-wait.md が外れ、execute.wait が human-wait.md と runtime-state.md だけを読む",
+        "grill-to-pr-loop/SKILL.md が approved execution handoff 前にメイン planning session の context 圧縮または fresh execution coordinator への切り替えを行うよう指示している",
+        "grill-to-pr-loop/references/execution-handoff.md が implementation を肥大化した planning context から直接始めず、normalized packet と圧縮済み handoff brief から始める契約を説明している",
+        "tests は implementation handoff 前の context 圧縮 / fresh coordinator requirement が skill contract から消えないことを検証する",
         "global lifecycle、approval、remote boundary、stop condition は core.md から発見できる"
       ],
       "non_goals": [
@@ -122,6 +125,7 @@
         "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/select_operation.py --envelope <execution-envelope.json> --runtime <runtime-state.json> --requested-mode execute --json",
         "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/grill-to-pr-loop/tests",
         "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests",
+        "rg -n \"context.*圧縮|fresh execution coordinator|handoff brief\" skills/grill-to-pr-loop/SKILL.md skills/grill-to-pr-loop/references/execution-handoff.md",
         "git diff --check"
       ],
       "write_scope": [
