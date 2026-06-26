@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "epic_id": "skill-repository-optimization-v4",
+  "revision": 1,
+  "epic_base": {
+    "ref": "codex/skill-repository-optimization-v4/epic-base",
+    "sha": "a073a10d38744771c2ed10fe8d9d351e5bf0e588",
+    "branch_state": "reserved"
+  },
+  "execution_policy": {
+    "parallel_preferred": true,
+    "serial_fallback_preapproved": true,
+    "worker_context_required": true,
+    "coordinator_may_implement": false,
+    "serial_fallback_mode": "worker_context_only",
+    "implementation_slots": 4,
+    "review_slots": 2,
+    "wave_is_barrier": false
+  },
+  "review_policy": {
+    "primary": "requesting-code-review",
+    "fallbacks": ["manual-review-fallback"],
+    "manual_fallback_preapproved": false,
+    "max_review_cycles": 2,
+    "max_fix_cycles": 2,
+    "same_finding_limit": 2
+  },
+  "human_policy": {
+    "default_scope": "issue",
+    "epic_scope_requires_reason": true
+  },
+  "context_policy": {
+    "paths_first": true,
+    "max_worker_packet_words": 450,
+    "max_worker_report_words": 350,
+    "include_full_spec_text": false,
+    "include_full_ledger_text": false,
+    "worker_packet_schema": "skills/issue-implementation-loop/assets/schemas/worker-packet.schema.json",
+    "worker_packet_template": "skills/issue-implementation-loop/assets/templates/worker-packet.json",
+    "worker_packet_validator": "skills/issue-implementation-loop/scripts/validate_worker_packet.py"
+  },
+  "remote_write_policy": {
+    "mode": "local_only",
+    "approved_actions": []
+  },
+  "work_items": {
+    "SRO4-001": {
+      "branch": "codex/skill-repository-optimization-v4/SRO4-001-policy-baseline-spec",
+      "worktree_path": "/Users/omitsuhashi/.codex/worktrees/skill-repository-optimization-v4/SRO4-001-policy-baseline-spec",
+      "worktree_state": "create_on_run",
+      "base_policy": {
+        "type": "epic_base"
+      },
+      "write_scope": [
+        "path:skill-architecture.toml",
+        "path:knowledge/wiki/syntheses/skill-repository-optimization-v4-spec.md",
+        "path:knowledge/wiki/syntheses/skill-repository-optimization-v4-issues.md",
+        "path:knowledge/wiki/syntheses/skill-repository-optimization-v4-context-baseline.json",
+        "path:knowledge/index.md",
+        "path:knowledge/log.md"
+      ],
+      "dependencies": []
+    },
+    "SRO4-002": {
+      "branch": "codex/skill-repository-optimization-v4/SRO4-002-context-contract-validator",
+      "worktree_path": "/Users/omitsuhashi/.codex/worktrees/skill-repository-optimization-v4/SRO4-002-context-contract-validator",
+      "worktree_state": "reserved",
+      "base_policy": {
+        "type": "blocker_head",
+        "issue": "SRO4-001"
+      },
+      "write_scope": [
+        "path:scripts/skill_context",
+        "path:scripts/validate_skill_context.py",
+        "path:scripts/inspect_skill_context.py",
+        "path:scripts/report_skill_context.py",
+        "path:scripts/validate_loop_skill_context.py",
+        "path:scripts/inspect_loop_skill_context.py",
+        "path:skills/grill-to-pr-loop/tests",
+        "path:skills/issue-implementation-loop/tests"
+      ],
+      "dependencies": [
+        {
+          "issue": "SRO4-001",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    },
+    "SRO4-003": {
+      "branch": "codex/skill-repository-optimization-v4/SRO4-003-loop-routing-handoff",
+      "worktree_path": "/Users/omitsuhashi/.codex/worktrees/skill-repository-optimization-v4/SRO4-003-loop-routing-handoff",
+      "worktree_state": "reserved",
+      "base_policy": {
+        "type": "blocker_head",
+        "issue": "SRO4-002"
+      },
+      "write_scope": [
+        "path:skills/grill-to-pr-loop/SKILL.md",
+        "path:skills/grill-to-pr-loop/context-contract.toml",
+        "path:skills/grill-to-pr-loop/references",
+        "path:skills/issue-implementation-loop/SKILL.md",
+        "path:skills/issue-implementation-loop/context-contract.toml",
+        "path:skills/issue-implementation-loop/references",
+        "path:skills/issue-implementation-loop/scripts/select_operation.py",
+        "path:skills/issue-implementation-loop/scripts/lib/issue_implementation_loop",
+        "path:skills/grill-to-pr-loop/tests",
+        "path:skills/issue-implementation-loop/tests"
+      ],
+      "dependencies": [
+        {
+          "issue": "SRO4-002",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    },
+    "SRO4-004": {
+      "branch": "codex/skill-repository-optimization-v4/SRO4-004-packet-resume-v2",
+      "worktree_path": "/Users/omitsuhashi/.codex/worktrees/skill-repository-optimization-v4/SRO4-004-packet-resume-v2",
+      "worktree_state": "reserved",
+      "base_policy": {
+        "type": "blocker_head",
+        "issue": "SRO4-001"
+      },
+      "write_scope": [
+        "path:skills/issue-implementation-loop/assets/schemas",
+        "path:skills/issue-implementation-loop/assets/templates",
+        "path:skills/issue-implementation-loop/scripts/build_worker_packet.py",
+        "path:skills/issue-implementation-loop/scripts/validate_worker_packet.py",
+        "path:skills/issue-implementation-loop/scripts/build_resume_brief.py",
+        "path:skills/issue-implementation-loop/scripts/validate_resume_brief.py",
+        "path:skills/issue-implementation-loop/scripts/lib/issue_implementation_loop",
+        "path:skills/issue-implementation-loop/references/worker-contract.md",
+        "path:skills/issue-implementation-loop/references/runtime-state.md",
+        "path:skills/issue-implementation-loop/references/recovery.md",
+        "path:skills/issue-implementation-loop/tests"
+      ],
+      "dependencies": [
+        {
+          "issue": "SRO4-001",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    },
+    "SRO4-005": {
+      "branch": "codex/skill-repository-optimization-v4/SRO4-005-llm-wiki-ci",
+      "worktree_path": "/Users/omitsuhashi/.codex/worktrees/skill-repository-optimization-v4/SRO4-005-llm-wiki-ci",
+      "worktree_state": "reserved",
+      "base_policy": {
+        "type": "epic_base"
+      },
+      "write_scope": [
+        "path:skills/llm-wiki/context-contract.toml",
+        "path:skills/llm-wiki/SKILL.md",
+        "path:skills/llm-wiki/tests",
+        "path:.github/workflows/skill-architecture.yml",
+        "path:scripts/validate_skill_architecture.py",
+        "path:scripts/validate_skill_context.py",
+        "path:scripts/report_skill_context.py"
+      ],
+      "dependencies": [
+        {
+          "issue": "SRO4-003",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "none"
+        },
+        {
+          "issue": "SRO4-004",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "none"
+        }
+      ]
+    },
+    "SRO4-006": {
+      "branch": "codex/skill-repository-optimization-v4/SRO4-006-integration-ledger",
+      "worktree_path": "/Users/omitsuhashi/.codex/worktrees/skill-repository-optimization-v4/SRO4-006-integration-ledger",
+      "worktree_state": "reserved",
+      "base_policy": {
+        "type": "blocker_head",
+        "issue": "SRO4-005"
+      },
+      "write_scope": [
+        "path:skills/grill-to-pr-loop/tests",
+        "path:skills/issue-implementation-loop/tests",
+        "path:skills/llm-wiki/tests",
+        "path:knowledge/wiki/syntheses/skill-repository-optimization-v4-issues.md",
+        "path:knowledge/index.md",
+        "path:knowledge/log.md"
+      ],
+      "dependencies": [
+        {
+          "issue": "SRO4-005",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    }
+  }
+}

@@ -366,7 +366,7 @@ V4 の全変更を統合し、V1 compatibility、V2 default、deprecated shim、
 - `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/llm-wiki/tests`
 - `git diff --check`
 
-## Execution Plan Gate Draft
+## Execution Plan Gate 概要
 
 - Packet: [skill-repository-optimization-v4-input-packet.json](skill-repository-optimization-v4-input-packet.json)
 - delivery intent: `local_only`
@@ -382,6 +382,19 @@ V4 の全変更を統合し、V1 compatibility、V2 default、deprecated shim、
 - worker context policy: `worker_context_required=true`, `coordinator_may_implement=false`, serial fallback は `worker_context_only`
 - remote policy: `local_only`; GitHub issue mirror、push、PR 作成、merge は未承認
 - 次の手順: approval record を commit した後、`issue-implementation-loop prepare` として Execution Envelope / branch / worktree reservation を作成する
+
+## Prepare 結果
+
+- Envelope: [skill-repository-optimization-v4-execution-envelope.json](skill-repository-optimization-v4-execution-envelope.json)
+- Envelope revision: 1
+- `epic_base.ref`: `codex/skill-repository-optimization-v4/epic-base`
+- `epic_base.sha`: `a073a10d38744771c2ed10fe8d9d351e5bf0e588`
+- physical branch / worktree creation: 未実行
+- runnable on prepare: SRO4-001 のみ `create_on_run`
+- blocked reservations: SRO4-002, SRO4-003, SRO4-004, SRO4-005, SRO4-006 は `reserved`
+- SRO4-005 は SRO4-003 / SRO4-004 の hard dependency を維持するが、複数 blocker head の ad hoc merge を避けるため dependency `base_effect` は `none` とする。実装中に両 head の code merge が必要になった場合は stop condition とし、approved integration work item または envelope revision を要求する。
+- `validate_execution_envelope.py`: `EXECUTION ENVELOPE OK`
+- `reconcile_git_state.py --json`: `ok: true`, collisions 0
 
 ## 関連ページ
 
