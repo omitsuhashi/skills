@@ -9,18 +9,18 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Sequence
 
-from validate_loop_skill_context import ContractError, REPO_ROOT, inspect_operation, load_contract, validate_contract
+from validate_loop_skill_context import (
+    ContractError,
+    REPO_ROOT,
+    all_skill_dirs,
+    inspect_operation,
+    load_contract,
+    validate_contract,
+)
 
 
 def _relative(path: Path) -> str:
     return path.relative_to(REPO_ROOT).as_posix() if path.is_relative_to(REPO_ROOT) else str(path)
-
-
-def _default_skill_dirs() -> List[Path]:
-    return [
-        REPO_ROOT / "skills/grill-to-pr-loop",
-        REPO_ROOT / "skills/issue-implementation-loop",
-    ]
 
 
 def _operation_names(skill_dir: Path) -> List[str]:
@@ -64,13 +64,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--json", action="store_true", help="emit JSON")
     args = parser.parse_args(argv)
 
-    skill_dirs = _default_skill_dirs() if args.all else []
-    if args.skill:
-        for value in args.skill:
-            path = Path(value)
-            skill_dirs.append(path if path.is_absolute() else REPO_ROOT / path)
-
     try:
+        skill_dirs = all_skill_dirs() if args.all else []
+        if args.skill:
+            for value in args.skill:
+                path = Path(value)
+                skill_dirs.append(path if path.is_absolute() else REPO_ROOT / path)
         report = collect_report(skill_dirs)
     except ContractError as exc:
         print(str(exc), file=sys.stderr)

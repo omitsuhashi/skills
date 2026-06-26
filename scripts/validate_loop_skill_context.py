@@ -15,29 +15,61 @@ import sys
 from pathlib import Path
 from typing import Dict, Iterable, List, MutableMapping, Sequence, Tuple
 
+from validate_skill_architecture import (
+    DEFAULT_POLICY_PATH,
+    PolicyError,
+    REQUIRED_FAMILY_ID,
+    load_policy,
+)
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-CONTRACT_RELATIVE_PATHS = (
-    Path("skills/grill-to-pr-loop"),
-    Path("skills/issue-implementation-loop"),
-)
-FORBIDDEN_STANDALONE_SKILL_NAMES = {
-    "context-manager",
-    "dependency-graph",
-    "execution-envelope",
-    "human-wait",
-    "remote-delivery",
-    "review-gate",
-    "runtime-state",
-    "scheduler",
-    "worker-contract",
-    "worktree-lifecycle",
-}
 WORD_RE = re.compile(r"[A-Za-z0-9_]+(?:[-'][A-Za-z0-9_]+)*|[^\W\s_]+", re.UNICODE)
 
 
 class ContractError(Exception):
     """Raised when a context contract cannot be parsed."""
+
+
+def _policy_family(errors: List[str]) -> Dict[str, object]:
+    try:
+        policy = load_policy(DEFAULT_POLICY_PATH)
+    except PolicyError as exc:
+        errors.append(str(exc))
+        return {}
+    families = policy.get("families")
+    if not isinstance(families, dict):
+        errors.append("skill architecture policy must contain families")
+        return {}
+    family = families.get(REQUIRED_FAMILY_ID)
+    if not isinstance(family, dict):
+        errors.append(f"skill architecture policy missing family: {REQUIRED_FAMILY_ID}")
+        return {}
+    return family
+
+
+def _policy_string_list(family: Dict[str, object], field: str, errors: List[str]) -> List[str]:
+    value = family.get(field)
+    if not isinstance(value, list) or not all(isinstance(item, str) and item for item in value):
+        errors.append(f"{REQUIRED_FAMILY_ID}.{field} must be an array of non-empty strings")
+        return []
+    return list(value)
+
+
+def _forbidden_standalone_skill_names(errors: List[str]) -> set[str]:
+    family = _policy_family(errors)
+    if not family:
+        return set()
+    return set(_policy_string_list(family, "forbidden_standalone_skill_names", errors))
+
+
+def all_skill_dirs() -> List[Path]:
+    errors: List[str] = []
+    family = _policy_family(errors)
+    skill_names = _policy_string_list(family, "user_facing_skills", errors) if family else []
+    if errors:
+        raise ContractError("; ".join(errors))
+    return [REPO_ROOT / "skills" / skill_name for skill_name in skill_names]
 
 
 def _strip_comment(line: str) -> str:
@@ -284,6 +316,7 @@ def inspect_operation(skill_dir: Path, operation: str) -> Dict[str, object]:
 
 def validate_contract(skill_dir: Path, contract: Dict[str, object]) -> List[str]:
     errors: List[str] = []
+    forbidden_standalone_skill_names = _forbidden_standalone_skill_names(errors)
     skill = _as_string(contract, "skill", errors)
     entrypoint = _as_string(contract, "entrypoint", errors)
     base_references = _as_string_list(contract, "base_references", errors)
@@ -297,7 +330,7 @@ def validate_contract(skill_dir: Path, contract: Dict[str, object]) -> List[str]
     if skill:
         if skill != skill_dir.name:
             errors.append(f"skill must match directory name: {skill_dir.name}")
-        if skill in FORBIDDEN_STANDALONE_SKILL_NAMES:
+        if skill in forbidden_standalone_skill_names:
             errors.append(f"forbidden standalone skill name: {skill}")
 
     if entrypoint and not _safe_relative_path(entrypoint):
@@ -310,7 +343,7 @@ def validate_contract(skill_dir: Path, contract: Dict[str, object]) -> List[str]
         validate_reference_path(skill_dir, reference, errors)
 
     for operation, raw_config in operations.items():
-        if operation in FORBIDDEN_STANDALONE_SKILL_NAMES:
+        if operation in forbidden_standalone_skill_names:
             errors.append(f"forbidden standalone skill name: {operation}")
         if not isinstance(raw_config, dict):
             errors.append(f"operation {operation} must be a table")
@@ -368,10 +401,6 @@ def validate_skill_dir(skill_dir: Path) -> List[str]:
     return validate_contract(skill_dir, contract)
 
 
-def all_skill_dirs() -> List[Path]:
-    return [REPO_ROOT / relative for relative in CONTRACT_RELATIVE_PATHS]
-
-
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     target = parser.add_mutually_exclusive_group(required=True)
@@ -380,7 +409,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--json", action="store_true", help="emit JSON result")
     args = parser.parse_args(argv)
 
-    skill_dirs = all_skill_dirs() if args.all else [Path(args.skill).resolve()]
+    try:
+        skill_dirs = all_skill_dirs() if args.all else [Path(args.skill).resolve()]
+    except ContractError as exc:
+        result = {"ok": False, "skills": [], "errors": [str(exc)]}
+        if args.json:
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print(str(exc), file=sys.stderr)
+        return 1
+
     result = {"ok": True, "skills": []}
     stderr_lines: List[str] = []
     for skill_dir in skill_dirs:
