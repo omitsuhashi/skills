@@ -25,15 +25,7 @@ If no packet exists, omit `--input` only for status/recovery inspection. Stop be
 
 ## Mode Router
 
-Always read `references/core.md`, then only the references for the current mode:
-
-- `prepare`: `execution-envelope.md`, `dependency-contract.md`, `worktree-lifecycle.md`
-- `execute`: `scheduler.md`, `worker-contract.md`, `review-gate.md`, `human-wait.md`, `runtime-state.md`
-- `resume`: `runtime-state.md`, `recovery.md`
-- `status`: `runtime-state.md`, `scheduler.md`
-- `deliver`: `remote-delivery.md`
-
-Do not load every reference by default.
+Always read `references/core.md`. For operation-specific context, use `scripts/select_operation.py` and `context-contract.toml`; the contract file is the single read-set source. Do not list or load every reference by default.
 
 ## Required Rules
 

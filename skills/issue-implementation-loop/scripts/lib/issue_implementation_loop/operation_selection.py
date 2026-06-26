@@ -145,7 +145,7 @@ def select_operation(
     for priority, operation, reason in (
         ("reviewable", "execute.review", "issue is ready for implementation review"),
         ("fixable", "execute.dispatch", "issue needs a worker-context fix pass"),
-        ("waiting_human", "execute.dispatch", "issue is waiting for a scoped human decision"),
+        ("waiting_human", "execute.wait", "issue is waiting for a scoped human decision"),
         ("runnable", "execute.dispatch", "issue is runnable"),
     ):
         issue_ids = next_actions.get(priority, [])
@@ -205,6 +205,14 @@ def _result(
             "word_count": read_set["word_count"],
             "word_budget": read_set["word_budget"],
             "budget_headroom": read_set["budget_headroom"],
+            "character_count": read_set["character_count"],
+            "character_budget": read_set["character_budget"],
+            "non_whitespace_character_count": read_set["non_whitespace_character_count"],
+            "non_whitespace_character_budget": read_set["non_whitespace_character_budget"],
+            "estimated_token_count": read_set["estimated_token_count"],
+            "estimated_token_budget": read_set["estimated_token_budget"],
+            "headroom_percent": read_set["headroom_percent"],
+            "min_headroom_percent": read_set["min_headroom_percent"],
             "within_budget": read_set["within_budget"],
         },
     }

@@ -370,9 +370,9 @@ class ContextContractTests(unittest.TestCase):
             ],
         )
         self.assertGreater(payload["word_count"], 0)
-        self.assertGreaterEqual(payload["budget_headroom"], 0)
+        self.assertGreaterEqual(payload["headroom_percent"], 0)
 
-    def test_generic_validator_and_inspector_accept_v1_contracts(self) -> None:
+    def test_generic_validator_and_inspector_accept_current_issue_loop_contract(self) -> None:
         result = run_generic_context_validator("--skill", "skills/issue-implementation-loop")
 
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -387,13 +387,48 @@ class ContextContractTests(unittest.TestCase):
 
         self.assertEqual(inspect_result.returncode, 0, inspect_result.stderr)
         payload = json.loads(inspect_result.stdout)
-        self.assertEqual(payload["schema_version"], 1)
+        self.assertEqual(payload["schema_version"], 2)
         self.assertEqual(payload["skill"], "issue-implementation-loop")
         self.assertGreater(payload["character_count"], 0)
         self.assertGreater(payload["non_whitespace_character_count"], 0)
         self.assertGreater(payload["estimated_token_count"], 0)
         self.assertIn("headroom_percent", payload)
-        self.assertEqual(payload["word_budget"], payload["budget"]["word_budget"])
+        self.assertIsNone(payload["word_budget"])
+        self.assertGreater(payload["budget"]["estimated_token_budget"], 0)
+
+    def test_issue_loop_contract_defines_wait_operation_and_slim_dispatch(self) -> None:
+        dispatch_result = run_generic_context_inspector(
+            "--skill",
+            "skills/issue-implementation-loop",
+            "--operation",
+            "execute.dispatch",
+            "--json",
+        )
+        wait_result = run_generic_context_inspector(
+            "--skill",
+            "skills/issue-implementation-loop",
+            "--operation",
+            "execute.wait",
+            "--json",
+        )
+
+        self.assertEqual(dispatch_result.returncode, 0, dispatch_result.stderr)
+        self.assertEqual(wait_result.returncode, 0, wait_result.stderr)
+        dispatch_payload = json.loads(dispatch_result.stdout)
+        wait_payload = json.loads(wait_result.stdout)
+        self.assertNotIn(
+            "skills/issue-implementation-loop/references/human-wait.md",
+            dispatch_payload["files"],
+        )
+        self.assertEqual(
+            wait_payload["files"],
+            [
+                "skills/issue-implementation-loop/SKILL.md",
+                "skills/issue-implementation-loop/references/core.md",
+                "skills/issue-implementation-loop/references/human-wait.md",
+                "skills/issue-implementation-loop/references/runtime-state.md",
+            ],
+        )
 
     def test_generic_validator_accepts_v2_budget_and_japanese_estimation(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
