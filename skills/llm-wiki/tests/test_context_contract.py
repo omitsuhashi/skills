@@ -79,6 +79,17 @@ class LlmWikiContextContractTests(unittest.TestCase):
         self.assertEqual(payload["growth_warning_threshold_percent"], 10)
         self.assertIn("warnings", payload)
 
+    def test_report_can_emit_llm_wiki_baseline_without_comparison_fields(self) -> None:
+        result = run_script(REPORT_CONTEXT, "--skill", "skills/llm-wiki", "--json", "--emit-baseline")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["report_type"], "skill-context-baseline")
+        llm_wiki = payload["skills"][0]
+        self.assertEqual(llm_wiki["operation_count"], len(TOPOLOGIES) * len(MODES))
+        self.assertTrue(llm_wiki["operations"])
+        self.assertTrue(all("baseline_comparison" not in operation for operation in llm_wiki["operations"]))
+
     def test_validator_rejects_missing_topology_mode_operation(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             skill_dir = write_llm_wiki_fixture(

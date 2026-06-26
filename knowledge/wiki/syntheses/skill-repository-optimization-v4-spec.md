@@ -54,7 +54,7 @@ PR #19 で loop skill V3 最適化は `main` に入り、context contract、oper
 
 SRO4-001 は V4 後続 issue の土台として、root の `skill-architecture.toml` を repository-change-loop family policy の正本にする。policy は user-facing loop skill を `grill-to-pr-loop` と `issue-implementation-loop` の 2 つに限定し、scheduler / runtime / review / worker などの内部機構を standalone skill にしない forbidden standalone skill 名を機械可読に保持する。
 
-current checkout の context metrics baseline は `knowledge/wiki/syntheses/skill-repository-optimization-v4-context-baseline.json` に保存する。この baseline は schema v1 context contract の word-count metrics を固定するものであり、character count、estimated token count、headroom percent、shared metric library は SRO4-002 の範囲に残す。
+current checkout の context metrics baseline は `knowledge/wiki/syntheses/skill-repository-optimization-v4-context-baseline.json` に保存する。SRO4-001 の初期 baseline は schema v1 context contract の word-count metrics を固定し、SRO4-006 / PR review hardening 後の final baseline は schema v2 の character count、estimated token count、headroom percent を含む 3 skills の post-V4 baseline として固定する。
 
 ## Accepted Decisions
 

@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import sys
+from datetime import date
 from pathlib import Path
 from typing import Dict, List, Mapping, Sequence
 
@@ -79,7 +81,84 @@ def _comparison(
     }
 
 
-def collect_report(skill_dirs: Sequence[Path], baseline_path: Path = DEFAULT_BASELINE_PATH) -> Dict[str, object]:
+def _warning_lines(report: Mapping[str, object]) -> List[str]:
+    warnings = report.get("warnings")
+    if not isinstance(warnings, list):
+        return []
+    return [warning for warning in warnings if isinstance(warning, str)]
+
+
+def _print_warnings(report: Mapping[str, object]) -> None:
+    for warning in _warning_lines(report):
+        print(f"WARNING: {warning}", file=sys.stderr)
+
+
+def _render_text_report(report: Mapping[str, object]) -> str:
+    lines: List[str] = []
+    skills = report["skills"]
+    assert isinstance(skills, list)
+    for skill in skills:
+        assert isinstance(skill, dict)
+        lines.append(f"{skill['skill']} ({skill['path']})")
+        operations = skill["operations"]
+        assert isinstance(operations, list)
+        for operation in operations:
+            headroom = operation["budget_headroom"]
+            if headroom is None:
+                headroom = f"{operation['headroom_percent']}%"
+            lines.append(
+                f"- {operation['operation']}: "
+                f"{operation['word_count']} words, "
+                f"{operation['file_count']} files, "
+                f"headroom {headroom}"
+            )
+    return "\n".join(lines)
+
+
+def _write_or_print(output: str, output_path: str | None) -> None:
+    if output_path:
+        path = Path(output_path)
+        if not path.is_absolute():
+            path = REPO_ROOT / path
+        path.write_text(f"{output}\n", encoding="utf-8")
+    else:
+        print(output)
+
+
+def collect_baseline(skill_dirs: Sequence[Path]) -> Dict[str, object]:
+    report: Dict[str, object] = {
+        "schema_version": 2,
+        "report_type": "skill-context-baseline",
+        "metric_source": "context-contract.toml schema v1/v2 character and estimated-token metrics",
+        "captured_at": date.today().isoformat(),
+        "growth_warning_threshold_percent": GROWTH_WARNING_THRESHOLD_PERCENT,
+        "skills": [],
+    }
+    for skill_dir in skill_dirs:
+        contract = load_contract(skill_dir)
+        operations = []
+        for operation in _operation_names(skill_dir):
+            operation_report = copy.deepcopy(inspect_context_operation(skill_dir, operation))
+            operation_report.pop("baseline_comparison", None)
+            operations.append(operation_report)
+        report["skills"].append(
+            {
+                "skill": skill_dir.name,
+                "path": _relative(skill_dir),
+                "operation_count": len(operations),
+                "topologies": contract.get("topologies", []),
+                "modes": contract.get("modes", []),
+                "operations": operations,
+            }
+        )
+    return report
+
+
+def collect_report(
+    skill_dirs: Sequence[Path],
+    baseline_path: Path = DEFAULT_BASELINE_PATH,
+    require_baseline: bool = False,
+) -> Dict[str, object]:
     baseline = _load_baseline(baseline_path)
     warnings: List[str] = []
     report: Dict[str, object] = {
@@ -87,6 +166,7 @@ def collect_report(skill_dirs: Sequence[Path], baseline_path: Path = DEFAULT_BAS
         "report_type": "skill-context-report",
         "metric_source": "context-contract.toml schema v1/v2 character and estimated-token metrics",
         "baseline_path": _relative(baseline_path),
+        "baseline_required": require_baseline,
         "growth_warning_threshold_percent": GROWTH_WARNING_THRESHOLD_PERCENT,
         "warnings": warnings,
         "skills": [],
@@ -98,7 +178,9 @@ def collect_report(skill_dirs: Sequence[Path], baseline_path: Path = DEFAULT_BAS
             operation_report = inspect_context_operation(skill_dir, operation)
             comparison = _comparison(operation_report, baseline)
             operation_report["baseline_comparison"] = comparison
-            if comparison and comparison["warning"]:
+            if comparison is None and require_baseline:
+                warnings.append(f"{operation_report['skill']} {operation_report['operation']} missing baseline")
+            elif comparison and comparison["warning"]:
                 warnings.append(
                     f"{operation_report['skill']} {operation_report['operation']} "
                     f"{comparison['baseline_metric']} grew {comparison['growth_percent']}%"
@@ -124,6 +206,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     target.add_argument("--skill", action="append", help="skill directory, absolute or repo-relative")
     parser.add_argument("--json", action="store_true", help="emit JSON")
     parser.add_argument("--baseline", default=str(DEFAULT_BASELINE_PATH), help="baseline report JSON path")
+    parser.add_argument("--emit-baseline", action="store_true", help="emit current metrics as a baseline artifact")
+    parser.add_argument("--require-baseline", action="store_true", help="warn when any operation is absent from baseline")
+    parser.add_argument("--fail-on-warning", action="store_true", help="return non-zero when warnings are emitted")
+    parser.add_argument("--output", help="write output to path instead of stdout")
     args = parser.parse_args(argv)
 
     try:
@@ -135,30 +221,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         baseline_path = Path(args.baseline)
         if not baseline_path.is_absolute():
             baseline_path = REPO_ROOT / baseline_path
-        report = collect_report(skill_dirs, baseline_path=baseline_path)
+        if args.emit_baseline:
+            report = collect_baseline(skill_dirs)
+        else:
+            report = collect_report(skill_dirs, baseline_path=baseline_path, require_baseline=args.require_baseline)
     except ContractError as exc:
         print(str(exc), file=sys.stderr)
         return 1
 
+    _print_warnings(report)
     if args.json:
-        print(json.dumps(report, indent=2, sort_keys=True))
+        output = json.dumps(report, indent=2, sort_keys=True)
     else:
-        for skill in report["skills"]:
-            assert isinstance(skill, dict)
-            print(f"{skill['skill']} ({skill['path']})")
-            operations = skill["operations"]
-            assert isinstance(operations, list)
-            for operation in operations:
-                headroom = operation["budget_headroom"]
-                if headroom is None:
-                    headroom = f"{operation['headroom_percent']}%"
-                print(
-                    f"- {operation['operation']}: "
-                    f"{operation['word_count']} words, "
-                    f"{operation['file_count']} files, "
-                    f"headroom {headroom}"
-                )
-    return 0
+        output = _render_text_report(report)
+    _write_or_print(output, args.output)
+    return 2 if args.fail_on_warning and _warning_lines(report) else 0
 
 
 if __name__ == "__main__":

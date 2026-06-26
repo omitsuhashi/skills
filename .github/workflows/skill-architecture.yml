@@ -22,6 +22,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -37,7 +39,7 @@ jobs:
       - name: Write context report
         run: |
           mkdir -p .artifacts
-          PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 scripts/report_skill_context.py --all --json > .artifacts/skill-context-report.json
+          PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 scripts/report_skill_context.py --all --json --require-baseline --fail-on-warning > .artifacts/skill-context-report.json
           python3 -m json.tool .artifacts/skill-context-report.json > /tmp/skill-context-report.pretty.json
           mv /tmp/skill-context-report.pretty.json .artifacts/skill-context-report.json
 
@@ -51,7 +53,18 @@ jobs:
         run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 -m unittest discover -s skills/llm-wiki/tests
 
       - name: Check diff whitespace
-        run: git diff --check
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            base_sha="${{ github.event.pull_request.base.sha }}"
+          elif [[ "${{ github.event_name }}" == "push" && "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]]; then
+            base_sha="${{ github.event.before }}"
+          else
+            git fetch --no-tags --prune origin +refs/heads/main:refs/remotes/origin/main
+            base_sha="$(git merge-base origin/main HEAD)"
+          fi
+          git diff --check "${base_sha}..HEAD"
 
       - name: Upload context report
         if: always()

@@ -2,7 +2,7 @@
 
 ## 状態
 
-Spec Gate / Issue Gate / Execution Plan Gate 承認済み。SRO4-001 から SRO4-006 は `COMPLETE`、implementation review はすべて `approved`。SRO4-006 は 2026-06-26 に SRO4-005 head `e61c6b1a0f402eb4bb4892dbe5980213f88b0fbf` ベースへ、承認済み SRO4-004 head `e4f7551b49df4082d1266b04b32249a0770d7481` を競合なしで merge した。merge commit は `0435b90e5227cf84ef0f6e546463b6f8d3d545df`。SRO4-006 final implementation review は `e61c6b1a0f402eb4bb4892dbe5980213f88b0fbf..b71514cc40a5b6e825d546eaa15fdf92d29677ce` を approved とし、Critical / Important finding はなし。remote policy は `local_only` のため、GitHub issue mirror、push、PR 作成、merge は実行していない。
+Spec Gate / Issue Gate / Execution Plan Gate 承認済み。SRO4-001 から SRO4-006 は `COMPLETE`、implementation review はすべて `approved`。SRO4-006 は 2026-06-26 に SRO4-005 head `e61c6b1a0f402eb4bb4892dbe5980213f88b0fbf` ベースへ、承認済み SRO4-004 head `e4f7551b49df4082d1266b04b32249a0770d7481` を競合なしで merge した。merge commit は `0435b90e5227cf84ef0f6e546463b6f8d3d545df`。SRO4-006 final implementation review は `e61c6b1a0f402eb4bb4892dbe5980213f88b0fbf..b71514cc40a5b6e825d546eaa15fdf92d29677ce` を approved とし、Critical / Important finding はなし。ユーザーの後続承認後、draft PR #20 を作成し、PR review hardening で CI whitespace range と 3 skills baseline regression guard を補強した。
 
 ## Ledger
 
@@ -419,12 +419,13 @@ V4 の全変更を統合し、V1 compatibility、V2 default、deprecated shim、
 - Worker Packet V2 / Resume Brief V2 representative CLI は `/private/tmp/sro4-006-cli.F6FKUM` fixture で実行した。
 - `report_skill_context.py --all --json` は schema version 2、3 skills、warnings `[]`、`llm-wiki` 12 operations を返した。
 - Implementation review: approved, range `e61c6b1a0f402eb4bb4892dbe5980213f88b0fbf..b71514cc40a5b6e825d546eaa15fdf92d29677ce`。Critical / Important finding はなし。
+- PR #20 review hardening で `.github/workflows/skill-architecture.yml` の whitespace check を base range に変更し、`report_skill_context.py` に `--require-baseline` / `--fail-on-warning` / `--emit-baseline` / `--output` を追加した。`skill-repository-optimization-v4-context-baseline.json` は post-V4 の 3 skills / 28 operations baseline として再生成した。
 
 ### SRO4-006 full verification
 
 - `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_architecture.py --all` -> passed: repository-change-loop architecture policy.
 - `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_context.py --all` -> passed: validated 3 skill context contracts.
-- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/report_skill_context.py --all --json` -> passed: baseline comparison JSON, warnings `[]`.
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/report_skill_context.py --all --json --require-baseline --fail-on-warning` -> passed: complete 3 skills baseline comparison JSON, warnings `[]`.
 - `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/grill-to-pr-loop/tests` -> passed: 13 tests.
 - `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests` -> passed: 98 tests.
 - `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/llm-wiki/tests` -> passed: 5 tests.
@@ -443,8 +444,8 @@ V4 の全変更を統合し、V1 compatibility、V2 default、deprecated shim、
 
 ### Remote policy / residual risks
 
-- Remote policy は execution envelope revision 4 の `remote_write_policy.mode=local_only`。ユーザーから push、PR 作成、GitHub issue mirror、merge の明示承認がないため remote write は実行しない。
-- GitHub Actions matrix は local-only policy のため未実行。ローカルでは workflow と同等の required commands を実行し、SRO4-005 では YAML parse を確認済み。
+- Remote policy は execution envelope revision 4 では `remote_write_policy.mode=local_only`。その後ユーザーが push / PR 作成を明示承認したため draft PR #20 を作成済み。merge は human-only のまま。
+- GitHub Actions matrix は PR #20 で Python 3.9 / 3.12 ともに成功済み。CI は base range の whitespace check と `--require-baseline --fail-on-warning` report を実行する。
 - Resume Brief V2 は clean fixture では inconsistencies none だが、現 coordinator runtime/events をコピーした fixture では `runtime=4 events=1` の revision mismatch を本文に表示する。これは final ledger write scope 外の coordinator event replay semantics であり、後続 hardening 候補として残す。
 - SRO4-001 worker report は古い `implementation_review.status=pending` 表示を含むが、runtime-state と event log の最終状態は approved / COMPLETE。final ledger は runtime-state を coordinator source として採用する。
 
