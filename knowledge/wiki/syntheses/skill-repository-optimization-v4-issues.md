@@ -2,7 +2,7 @@
 
 ## 状態
 
-Spec Gate / Issue Gate / Execution Plan Gate 承認済み。SRO4-001 から SRO4-005 は runtime-state 上で `COMPLETE`、implementation review はすべて `approved`。SRO4-006 は 2026-06-26 に SRO4-005 head `e61c6b1a0f402eb4bb4892dbe5980213f88b0fbf` ベースへ、承認済み SRO4-004 head `e4f7551b49df4082d1266b04b32249a0770d7481` を競合なしで merge した。merge commit は `0435b90e5227cf84ef0f6e546463b6f8d3d545df`。remote policy は `local_only` のため、GitHub issue mirror、push、PR 作成、merge は実行していない。
+Spec Gate / Issue Gate / Execution Plan Gate 承認済み。SRO4-001 から SRO4-006 は `COMPLETE`、implementation review はすべて `approved`。SRO4-006 は 2026-06-26 に SRO4-005 head `e61c6b1a0f402eb4bb4892dbe5980213f88b0fbf` ベースへ、承認済み SRO4-004 head `e4f7551b49df4082d1266b04b32249a0770d7481` を競合なしで merge した。merge commit は `0435b90e5227cf84ef0f6e546463b6f8d3d545df`。SRO4-006 final implementation review は `e61c6b1a0f402eb4bb4892dbe5980213f88b0fbf..b71514cc40a5b6e825d546eaa15fdf92d29677ce` を approved とし、Critical / Important finding はなし。remote policy は `local_only` のため、GitHub issue mirror、push、PR 作成、merge は実行していない。
 
 ## Ledger
 
@@ -13,7 +13,7 @@ Spec Gate / Issue Gate / Execution Plan Gate 承認済み。SRO4-001 から SRO4
 | skill-repository-optimization-v4 | SRO4-003 | loop skill routing を single-source 化する | 承認済み | COMPLETE | SRO4-002 | SRO4-005 | 未作成 | approved: `be17b274c27745f64d0d629ea22d96edcd3fb0ac..839ce87713c4077cdfca650c8873cd947f67e813` | 未作成 |
 | skill-repository-optimization-v4 | SRO4-004 | Worker Packet V2 と Resume Brief V2 を導入する | 承認済み | COMPLETE | SRO4-001 | SRO4-005 | 未作成 | approved: `53fd68f64403505064373100d8ec35543be9c04d..e4f7551b49df4082d1266b04b32249a0770d7481` | 未作成 |
 | skill-repository-optimization-v4 | SRO4-005 | `llm-wiki` contract と CI を追加する | 承認済み | COMPLETE | SRO4-003, SRO4-004 | SRO4-006 | 未作成 | approved: `839ce87713c4077cdfca650c8873cd947f67e813..e61c6b1a0f402eb4bb4892dbe5980213f88b0fbf` | 未作成 |
-| skill-repository-optimization-v4 | SRO4-006 | 統合検証・移行 shim・wiki ledger を仕上げる | 承認済み | COMPLETE: final local ledger commit | SRO4-005 | なし | 未作成 | final worker self-check + full verification | 未作成 |
+| skill-repository-optimization-v4 | SRO4-006 | 統合検証・移行 shim・wiki ledger を仕上げる | 承認済み | COMPLETE: final local ledger commit | SRO4-005 | なし | 未作成 | approved: `e61c6b1a0f402eb4bb4892dbe5980213f88b0fbf..b71514cc40a5b6e825d546eaa15fdf92d29677ce` | 未作成 |
 
 ## ブロッカーグラフ
 
@@ -415,6 +415,7 @@ V4 の全変更を統合し、V1 compatibility、V2 default、deprecated shim、
 - Merge 後の SRO4-006 追加編集は packet write scope 内の `knowledge/wiki/syntheses/skill-repository-optimization-v4-issues.md`、`knowledge/index.md`、`knowledge/log.md` に限定した。
 - Worker Packet V2 / Resume Brief V2 representative CLI は `/private/tmp/sro4-006-cli.F6FKUM` fixture で実行した。
 - `report_skill_context.py --all --json` は schema version 2、3 skills、warnings `[]`、`llm-wiki` 12 operations を返した。
+- Implementation review: approved, range `e61c6b1a0f402eb4bb4892dbe5980213f88b0fbf..b71514cc40a5b6e825d546eaa15fdf92d29677ce`。Critical / Important finding はなし。
 
 ### SRO4-006 full verification
 
