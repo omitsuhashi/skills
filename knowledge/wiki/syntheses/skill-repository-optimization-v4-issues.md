@@ -2,18 +2,18 @@
 
 ## 状態
 
-Spec Gate 承認済み。2026-06-26 のユーザー追補として、実装開始前にメイン planning session の context 圧縮または fresh execution coordinator への切り替えを skill 契約へ追加する scope を SRO4-003 に反映済み。Issue Gate draft。全 issue は `下書き` であり、実装、GitHub issue mirror、push、PR 作成、merge は未実行。Issue Gate / Execution Plan Gate の明示承認後にだけ execution へ進める。
+Spec Gate / Issue Gate 承認済み。2026-06-26 のユーザー追補として、実装開始前にメイン planning session の context 圧縮または fresh execution coordinator への切り替えを skill 契約へ追加する scope を SRO4-003 に反映済み。Execution Plan Gate は未承認であり、実装、GitHub issue mirror、push、PR 作成、merge は未実行。Execution Plan Gate の明示承認後にだけ execution へ進める。
 
 ## Ledger
 
 | Epic ID | ローカルID | タイトル | レビュー状態 | 実行状態 | ブロック元 | ブロック先 | GitHub Issue | 実装レビュー | PR |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| skill-repository-optimization-v4 | SRO4-001 | 粒度 policy・baseline・V4 spec を正本化する | 下書き | 実行可能 | なし | SRO4-002, SRO4-004 | 未作成 | 未実施 | 未作成 |
-| skill-repository-optimization-v4 | SRO4-002 | Context Contract V2 と共通 validator を導入する | 下書き | ブロック中 | SRO4-001 | SRO4-003 | 未作成 | 未実施 | 未作成 |
-| skill-repository-optimization-v4 | SRO4-003 | loop skill routing を single-source 化する | 下書き | ブロック中 | SRO4-002 | SRO4-005 | 未作成 | 未実施 | 未作成 |
-| skill-repository-optimization-v4 | SRO4-004 | Worker Packet V2 と Resume Brief V2 を導入する | 下書き | ブロック中 | SRO4-001 | SRO4-005 | 未作成 | 未実施 | 未作成 |
-| skill-repository-optimization-v4 | SRO4-005 | `llm-wiki` contract と CI を追加する | 下書き | ブロック中 | SRO4-003, SRO4-004 | SRO4-006 | 未作成 | 未実施 | 未作成 |
-| skill-repository-optimization-v4 | SRO4-006 | 統合検証・移行 shim・wiki ledger を仕上げる | 下書き | ブロック中 | SRO4-005 | なし | 未作成 | 未実施 | 未作成 |
+| skill-repository-optimization-v4 | SRO4-001 | 粒度 policy・baseline・V4 spec を正本化する | 承認済み | 実行可能 | なし | SRO4-002, SRO4-004 | 未作成 | 未実施 | 未作成 |
+| skill-repository-optimization-v4 | SRO4-002 | Context Contract V2 と共通 validator を導入する | 承認済み | ブロック中 | SRO4-001 | SRO4-003 | 未作成 | 未実施 | 未作成 |
+| skill-repository-optimization-v4 | SRO4-003 | loop skill routing を single-source 化する | 承認済み | ブロック中 | SRO4-002 | SRO4-005 | 未作成 | 未実施 | 未作成 |
+| skill-repository-optimization-v4 | SRO4-004 | Worker Packet V2 と Resume Brief V2 を導入する | 承認済み | ブロック中 | SRO4-001 | SRO4-005 | 未作成 | 未実施 | 未作成 |
+| skill-repository-optimization-v4 | SRO4-005 | `llm-wiki` contract と CI を追加する | 承認済み | ブロック中 | SRO4-003, SRO4-004 | SRO4-006 | 未作成 | 未実施 | 未作成 |
+| skill-repository-optimization-v4 | SRO4-006 | 統合検証・移行 shim・wiki ledger を仕上げる | 承認済み | ブロック中 | SRO4-005 | なし | 未作成 | 未実施 | 未作成 |
 
 ## ブロッカーグラフ
 

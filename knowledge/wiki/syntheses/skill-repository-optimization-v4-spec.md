@@ -2,7 +2,7 @@
 
 ## 状態
 
-Spec Gate 承認済み。承認日時は 2026-06-26。2026-06-26 のユーザー追補として、実装開始前にメイン planning session の context 圧縮または fresh execution coordinator への切り替えを skill 契約へ追加する。Issue ledger と input packet は同じ source から作ったゲート確認用 draft であり、Issue Gate / Execution Plan Gate は未承認。実装、GitHub issue mirror、push、PR 作成、merge は行わない。
+Spec Gate / Issue Gate 承認済み。承認日時は 2026-06-26。2026-06-26 のユーザー追補として、実装開始前にメイン planning session の context 圧縮または fresh execution coordinator への切り替えを skill 契約へ追加する。Input packet は同じ source から作った Execution Plan Gate 確認用 draft であり、Execution Plan Gate は未承認。実装、GitHub issue mirror、push、PR 作成、merge は行わない。
 
 ## Problem Statement
 
