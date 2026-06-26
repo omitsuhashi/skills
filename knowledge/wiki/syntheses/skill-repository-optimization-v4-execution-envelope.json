@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "epic_id": "skill-repository-optimization-v4",
-  "revision": 3,
+  "revision": 4,
   "epic_base": {
     "ref": "codex/skill-repository-optimization-v4/epic-base",
     "sha": "a073a10d38744771c2ed10fe8d9d351e5bf0e588",
@@ -155,7 +155,8 @@
       "worktree_path": "/Users/omitsuhashi/.codex/worktrees/skill-repository-optimization-v4/SRO4-005-llm-wiki-ci",
       "worktree_state": "reserved",
       "base_policy": {
-        "type": "epic_base"
+        "type": "blocker_head",
+        "issue": "SRO4-003"
       },
       "write_scope": [
         "path:skills/llm-wiki/context-contract.toml",
@@ -171,7 +172,7 @@
           "issue": "SRO4-003",
           "strength": "hard",
           "release_on": "review_approved",
-          "base_effect": "none"
+          "base_effect": "branch_from_blocker_head"
         },
         {
           "issue": "SRO4-004",

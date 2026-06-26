@@ -416,6 +416,15 @@ V4 の全変更を統合し、V1 compatibility、V2 default、deprecated shim、
 - 実装制約: `validate_loop_skill_context.py` は forbidden standalone skill list を `skill-architecture.toml` から読む最小変更に留め、Context Contract V2 本体 redesign は SRO4-002 に残す
 - remote policy: 引き続き `local_only`
 
+## Envelope Revision 4
+
+- 承認日時: 2026-06-26
+- 変更理由: SRO4-005 を `epic_base` から dispatch すると、SRO4-002 / SRO4-003 で承認済みの `validate_skill_context.py` と context-contract routing 成果を再実装する必要があり、Prepare 結果で定義した stop condition に該当したため
+- base 変更: SRO4-005 の `base_policy` を `epic_base` から `blocker_head:SRO4-003` に変更し、SRO4-003 依存の `base_effect` を `branch_from_blocker_head` とする
+- dependency 維持: SRO4-004 は SRO4-005 の gating dependency のまま維持し、`base_effect=none` として Worker Packet V2 / Resume Brief V2 の code merge は SRO4-006 の統合検証に残す
+- 実装制約: SRO4-005 は `llm-wiki` contract / CI と skill-context validator の必要最小 extension に限定し、SRO4-004 の packet/resume 実装には触れない
+- remote policy: 引き続き `local_only`
+
 ## 関連ページ
 
 - [Skill Repository Optimization V4 Spec](skill-repository-optimization-v4-spec.md)
