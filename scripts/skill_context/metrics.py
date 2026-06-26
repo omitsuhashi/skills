@@ -96,4 +96,3 @@ def collect_file_metrics(paths: Iterable[Path], budget: Mapping[str, int | None]
     metrics = collect_text_metrics((path.read_text(encoding="utf-8") for path in path_list), budget)
     metrics["file_count"] = len(path_list)
     return metrics
-
