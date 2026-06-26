@@ -1,8 +1,11 @@
+schema_version = 2
 skill = "issue-implementation-loop"
 entrypoint = "SKILL.md"
 base_references = ["references/core.md"]
-word_budget = 1900
+character_budget = 18000
+estimated_token_budget = 8000
 max_file_count = 6
+min_headroom_percent = 20
 
 [operations.prepare]
 references = [
@@ -15,6 +18,11 @@ references = [
 references = [
   "references/scheduler.md",
   "references/worker-contract.md",
+  "references/runtime-state.md",
+]
+
+[operations."execute.wait"]
+references = [
   "references/human-wait.md",
   "references/runtime-state.md",
 ]

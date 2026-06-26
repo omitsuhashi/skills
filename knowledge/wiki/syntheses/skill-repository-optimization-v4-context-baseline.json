@@ -1,0 +1,852 @@
+{
+  "captured_at": "2026-06-26",
+  "growth_warning_threshold_percent": 10,
+  "metric_source": "context-contract.toml schema v1/v2 character and estimated-token metrics",
+  "report_type": "skill-context-baseline",
+  "schema_version": 2,
+  "skills": [
+    {
+      "modes": [],
+      "operation_count": 9,
+      "operations": [
+        {
+          "budget": {
+            "character_budget": 24000,
+            "estimated_token_budget": 10000,
+            "max_file_count": 6,
+            "min_headroom_percent": 20,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 10461,
+          "estimated_token_count": 3929,
+          "file_count": 3,
+          "files": [
+            "skills/grill-to-pr-loop/SKILL.md",
+            "skills/grill-to-pr-loop/references/core.md",
+            "skills/grill-to-pr-loop/references/planning-contract.md"
+          ],
+          "headroom_percent": 60,
+          "max_file_count": 6,
+          "non_whitespace_character_count": 9026,
+          "operation": "intake",
+          "schema_version": 2,
+          "skill": "grill-to-pr-loop",
+          "word_budget": null,
+          "word_count": 1397
+        },
+        {
+          "budget": {
+            "character_budget": 24000,
+            "estimated_token_budget": 10000,
+            "max_file_count": 6,
+            "min_headroom_percent": 20,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 10461,
+          "estimated_token_count": 3929,
+          "file_count": 3,
+          "files": [
+            "skills/grill-to-pr-loop/SKILL.md",
+            "skills/grill-to-pr-loop/references/core.md",
+            "skills/grill-to-pr-loop/references/planning-contract.md"
+          ],
+          "headroom_percent": 60,
+          "max_file_count": 6,
+          "non_whitespace_character_count": 9026,
+          "operation": "grill",
+          "schema_version": 2,
+          "skill": "grill-to-pr-loop",
+          "word_budget": null,
+          "word_count": 1397
+        },
+        {
+          "budget": {
+            "character_budget": 24000,
+            "estimated_token_budget": 10000,
+            "max_file_count": 6,
+            "min_headroom_percent": 20,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 10461,
+          "estimated_token_count": 3929,
+          "file_count": 3,
+          "files": [
+            "skills/grill-to-pr-loop/SKILL.md",
+            "skills/grill-to-pr-loop/references/core.md",
+            "skills/grill-to-pr-loop/references/planning-contract.md"
+          ],
+          "headroom_percent": 60,
+          "max_file_count": 6,
+          "non_whitespace_character_count": 9026,
+          "operation": "spec",
+          "schema_version": 2,
+          "skill": "grill-to-pr-loop",
+          "word_budget": null,
+          "word_count": 1397
+        },
+        {
+          "budget": {
+            "character_budget": 24000,
+            "estimated_token_budget": 10000,
+            "max_file_count": 6,
+            "min_headroom_percent": 20,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 12328,
+          "estimated_token_count": 4750,
+          "file_count": 4,
+          "files": [
+            "skills/grill-to-pr-loop/SKILL.md",
+            "skills/grill-to-pr-loop/references/core.md",
+            "skills/grill-to-pr-loop/references/planning-contract.md",
+            "skills/grill-to-pr-loop/references/local-issue-ledger.md"
+          ],
+          "headroom_percent": 52,
+          "max_file_count": 6,
+          "non_whitespace_character_count": 10568,
+          "operation": "issue-gate",
+          "schema_version": 2,
+          "skill": "grill-to-pr-loop",
+          "word_budget": null,
+          "word_count": 1645
+        },
+        {
+          "budget": {
+            "character_budget": 24000,
+            "estimated_token_budget": 10000,
+            "max_file_count": 6,
+            "min_headroom_percent": 20,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 17691,
+          "estimated_token_count": 6757,
+          "file_count": 5,
+          "files": [
+            "skills/grill-to-pr-loop/SKILL.md",
+            "skills/grill-to-pr-loop/references/core.md",
+            "skills/grill-to-pr-loop/references/planning-contract.md",
+            "skills/grill-to-pr-loop/references/local-issue-ledger.md",
+            "skills/grill-to-pr-loop/references/execution-handoff.md"
+          ],
+          "headroom_percent": 32,
+          "max_file_count": 6,
+          "non_whitespace_character_count": 15196,
+          "operation": "execution-plan",
+          "schema_version": 2,
+          "skill": "grill-to-pr-loop",
+          "word_budget": null,
+          "word_count": 2355
+        },
+        {
+          "budget": {
+            "character_budget": 24000,
+            "estimated_token_budget": 10000,
+            "max_file_count": 6,
+            "min_headroom_percent": 20,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 15305,
+          "estimated_token_count": 5835,
+          "file_count": 4,
+          "files": [
+            "skills/grill-to-pr-loop/SKILL.md",
+            "skills/grill-to-pr-loop/references/core.md",
+            "skills/grill-to-pr-loop/references/local-issue-ledger.md",
+            "skills/grill-to-pr-loop/references/execution-handoff.md"
+          ],
+          "headroom_percent": 41,
+          "max_file_count": 6,
+          "non_whitespace_character_count": 13136,
+          "operation": "resume",
+          "schema_version": 2,
+          "skill": "grill-to-pr-loop",
+          "word_budget": null,
+          "word_count": 2043
+        },
+        {
+          "budget": {
+            "character_budget": 24000,
+            "estimated_token_budget": 10000,
+            "max_file_count": 6,
+            "min_headroom_percent": 20,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 15305,
+          "estimated_token_count": 5835,
+          "file_count": 4,
+          "files": [
+            "skills/grill-to-pr-loop/SKILL.md",
+            "skills/grill-to-pr-loop/references/core.md",
+            "skills/grill-to-pr-loop/references/local-issue-ledger.md",
+            "skills/grill-to-pr-loop/references/execution-handoff.md"
+          ],
+          "headroom_percent": 41,
+          "max_file_count": 6,
+          "non_whitespace_character_count": 13136,
+          "operation": "completion-report",
+          "schema_version": 2,
+          "skill": "grill-to-pr-loop",
+          "word_budget": null,
+          "word_count": 2043
+        },
+        {
+          "budget": {
+            "character_budget": 24000,
+            "estimated_token_budget": 10000,
+            "max_file_count": 6,
+            "min_headroom_percent": 20,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 10656,
+          "estimated_token_count": 3989,
+          "file_count": 3,
+          "files": [
+            "skills/grill-to-pr-loop/SKILL.md",
+            "skills/grill-to-pr-loop/references/core.md",
+            "skills/grill-to-pr-loop/references/remote-delivery.md"
+          ],
+          "headroom_percent": 60,
+          "max_file_count": 6,
+          "non_whitespace_character_count": 9171,
+          "operation": "delivery",
+          "schema_version": 2,
+          "skill": "grill-to-pr-loop",
+          "word_budget": null,
+          "word_count": 1453
+        },
+        {
+          "budget": {
+            "character_budget": 24000,
+            "estimated_token_budget": 10000,
+            "max_file_count": 6,
+            "min_headroom_percent": 20,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 10179,
+          "estimated_token_count": 3765,
+          "file_count": 3,
+          "files": [
+            "skills/grill-to-pr-loop/SKILL.md",
+            "skills/grill-to-pr-loop/references/core.md",
+            "skills/grill-to-pr-loop/references/common-mistakes.md"
+          ],
+          "headroom_percent": 62,
+          "max_file_count": 6,
+          "non_whitespace_character_count": 8728,
+          "operation": "ambiguity-check",
+          "schema_version": 2,
+          "skill": "grill-to-pr-loop",
+          "word_budget": null,
+          "word_count": 1379
+        }
+      ],
+      "path": "skills/grill-to-pr-loop",
+      "skill": "grill-to-pr-loop",
+      "topologies": []
+    },
+    {
+      "modes": [],
+      "operation_count": 7,
+      "operations": [
+        {
+          "budget": {
+            "character_budget": 18000,
+            "estimated_token_budget": 8000,
+            "max_file_count": 6,
+            "min_headroom_percent": 20,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 13035,
+          "estimated_token_count": 4931,
+          "file_count": 5,
+          "files": [
+            "skills/issue-implementation-loop/SKILL.md",
+            "skills/issue-implementation-loop/references/core.md",
+            "skills/issue-implementation-loop/references/execution-envelope.md",
+            "skills/issue-implementation-loop/references/dependency-contract.md",
+            "skills/issue-implementation-loop/references/worktree-lifecycle.md"
+          ],
+          "headroom_percent": 38,
+          "max_file_count": 6,
+          "non_whitespace_character_count": 11243,
+          "operation": "prepare",
+          "schema_version": 2,
+          "skill": "issue-implementation-loop",
+          "word_budget": null,
+          "word_count": 1631
+        },
+        {
+          "budget": {
+            "character_budget": 18000,
+            "estimated_token_budget": 8000,
+            "max_file_count": 6,
+            "min_headroom_percent": 20,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 12597,
+          "estimated_token_count": 4814,
+          "file_count": 5,
+          "files": [
+            "skills/issue-implementation-loop/SKILL.md",
+            "skills/issue-implementation-loop/references/core.md",
+            "skills/issue-implementation-loop/references/scheduler.md",
+            "skills/issue-implementation-loop/references/worker-contract.md",
+            "skills/issue-implementation-loop/references/runtime-state.md"
+          ],
+          "headroom_percent": 39,
+          "max_file_count": 6,
+          "non_whitespace_character_count": 10899,
+          "operation": "execute.dispatch",
+          "schema_version": 2,
+          "skill": "issue-implementation-loop",
+          "word_budget": null,
+          "word_count": 1627
+        },
+        {
+          "budget": {
+            "character_budget": 18000,
+            "estimated_token_budget": 8000,
+            "max_file_count": 6,
+            "min_headroom_percent": 20,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 8839,
+          "estimated_token_count": 3396,
+          "file_count": 4,
+          "files": [
+            "skills/issue-implementation-loop/SKILL.md",
+            "skills/issue-implementation-loop/references/core.md",
+            "skills/issue-implementation-loop/references/human-wait.md",
+            "skills/issue-implementation-loop/references/runtime-state.md"
+          ],
+          "headroom_percent": 57,
+          "max_file_count": 6,
+          "non_whitespace_character_count": 7646,
+          "operation": "execute.wait",
+          "schema_version": 2,
+          "skill": "issue-implementation-loop",
+          "word_budget": null,
+          "word_count": 1139
+        },
+        {
+          "budget": {
+            "character_budget": 18000,
+            "estimated_token_budget": 8000,
+            "max_file_count": 6,
+            "min_headroom_percent": 20,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 12803,
+          "estimated_token_count": 4877,
+          "file_count": 5,
+          "files": [
+            "skills/issue-implementation-loop/SKILL.md",
+            "skills/issue-implementation-loop/references/core.md",
+            "skills/issue-implementation-loop/references/review-gate.md",
+            "skills/issue-implementation-loop/references/worker-contract.md",
+            "skills/issue-implementation-loop/references/runtime-state.md"
+          ],
+          "headroom_percent": 39,
+          "max_file_count": 6,
+          "non_whitespace_character_count": 11057,
+          "operation": "execute.review",
+          "schema_version": 2,
+          "skill": "issue-implementation-loop",
+          "word_budget": null,
+          "word_count": 1674
+        },
+        {
+          "budget": {
+            "character_budget": 18000,
+            "estimated_token_budget": 8000,
+            "max_file_count": 6,
+            "min_headroom_percent": 20,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 10209,
+          "estimated_token_count": 3926,
+          "file_count": 4,
+          "files": [
+            "skills/issue-implementation-loop/SKILL.md",
+            "skills/issue-implementation-loop/references/core.md",
+            "skills/issue-implementation-loop/references/runtime-state.md",
+            "skills/issue-implementation-loop/references/recovery.md"
+          ],
+          "headroom_percent": 50,
+          "max_file_count": 6,
+          "non_whitespace_character_count": 8826,
+          "operation": "resume",
+          "schema_version": 2,
+          "skill": "issue-implementation-loop",
+          "word_budget": null,
+          "word_count": 1334
+        },
+        {
+          "budget": {
+            "character_budget": 18000,
+            "estimated_token_budget": 8000,
+            "max_file_count": 6,
+            "min_headroom_percent": 20,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 9780,
+          "estimated_token_count": 3746,
+          "file_count": 4,
+          "files": [
+            "skills/issue-implementation-loop/SKILL.md",
+            "skills/issue-implementation-loop/references/core.md",
+            "skills/issue-implementation-loop/references/runtime-state.md",
+            "skills/issue-implementation-loop/references/scheduler.md"
+          ],
+          "headroom_percent": 53,
+          "max_file_count": 6,
+          "non_whitespace_character_count": 8470,
+          "operation": "status",
+          "schema_version": 2,
+          "skill": "issue-implementation-loop",
+          "word_budget": null,
+          "word_count": 1258
+        },
+        {
+          "budget": {
+            "character_budget": 18000,
+            "estimated_token_budget": 8000,
+            "max_file_count": 6,
+            "min_headroom_percent": 20,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 8641,
+          "estimated_token_count": 3312,
+          "file_count": 3,
+          "files": [
+            "skills/issue-implementation-loop/SKILL.md",
+            "skills/issue-implementation-loop/references/core.md",
+            "skills/issue-implementation-loop/references/remote-delivery.md"
+          ],
+          "headroom_percent": 58,
+          "max_file_count": 6,
+          "non_whitespace_character_count": 7468,
+          "operation": "deliver",
+          "schema_version": 2,
+          "skill": "issue-implementation-loop",
+          "word_budget": null,
+          "word_count": 1130
+        }
+      ],
+      "path": "skills/issue-implementation-loop",
+      "skill": "issue-implementation-loop",
+      "topologies": []
+    },
+    {
+      "modes": [
+        "bootstrap",
+        "ingest",
+        "query",
+        "draft-review",
+        "canonicalize",
+        "lint"
+      ],
+      "operation_count": 12,
+      "operations": [
+        {
+          "budget": {
+            "character_budget": 26000,
+            "estimated_token_budget": 12000,
+            "max_file_count": 4,
+            "min_headroom_percent": 15,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 14033,
+          "estimated_token_count": 6829,
+          "file_count": 4,
+          "files": [
+            "skills/llm-wiki/SKILL.md",
+            "skills/llm-wiki/references/core.md",
+            "skills/llm-wiki/references/single-root.md",
+            "skills/llm-wiki/references/modes/bootstrap.md"
+          ],
+          "headroom_percent": 43,
+          "max_file_count": 4,
+          "mode": "bootstrap",
+          "non_whitespace_character_count": 12001,
+          "operation": "single-root.bootstrap",
+          "schema_version": 2,
+          "skill": "llm-wiki",
+          "topology": "single-root",
+          "word_budget": null,
+          "word_count": 1980
+        },
+        {
+          "budget": {
+            "character_budget": 26000,
+            "estimated_token_budget": 12000,
+            "max_file_count": 4,
+            "min_headroom_percent": 15,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 13403,
+          "estimated_token_count": 6607,
+          "file_count": 4,
+          "files": [
+            "skills/llm-wiki/SKILL.md",
+            "skills/llm-wiki/references/core.md",
+            "skills/llm-wiki/references/single-root.md",
+            "skills/llm-wiki/references/modes/ingest.md"
+          ],
+          "headroom_percent": 44,
+          "max_file_count": 4,
+          "mode": "ingest",
+          "non_whitespace_character_count": 11459,
+          "operation": "single-root.ingest",
+          "schema_version": 2,
+          "skill": "llm-wiki",
+          "topology": "single-root",
+          "word_budget": null,
+          "word_count": 1888
+        },
+        {
+          "budget": {
+            "character_budget": 26000,
+            "estimated_token_budget": 12000,
+            "max_file_count": 4,
+            "min_headroom_percent": 15,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 12890,
+          "estimated_token_count": 6347,
+          "file_count": 4,
+          "files": [
+            "skills/llm-wiki/SKILL.md",
+            "skills/llm-wiki/references/core.md",
+            "skills/llm-wiki/references/single-root.md",
+            "skills/llm-wiki/references/modes/query.md"
+          ],
+          "headroom_percent": 47,
+          "max_file_count": 4,
+          "mode": "query",
+          "non_whitespace_character_count": 11022,
+          "operation": "single-root.query",
+          "schema_version": 2,
+          "skill": "llm-wiki",
+          "topology": "single-root",
+          "word_budget": null,
+          "word_count": 1818
+        },
+        {
+          "budget": {
+            "character_budget": 26000,
+            "estimated_token_budget": 12000,
+            "max_file_count": 4,
+            "min_headroom_percent": 15,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 14021,
+          "estimated_token_count": 6827,
+          "file_count": 4,
+          "files": [
+            "skills/llm-wiki/SKILL.md",
+            "skills/llm-wiki/references/core.md",
+            "skills/llm-wiki/references/single-root.md",
+            "skills/llm-wiki/references/modes/draft-review.md"
+          ],
+          "headroom_percent": 43,
+          "max_file_count": 4,
+          "mode": "draft-review",
+          "non_whitespace_character_count": 11980,
+          "operation": "single-root.draft-review",
+          "schema_version": 2,
+          "skill": "llm-wiki",
+          "topology": "single-root",
+          "word_budget": null,
+          "word_count": 2001
+        },
+        {
+          "budget": {
+            "character_budget": 26000,
+            "estimated_token_budget": 12000,
+            "max_file_count": 4,
+            "min_headroom_percent": 15,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 13459,
+          "estimated_token_count": 6567,
+          "file_count": 4,
+          "files": [
+            "skills/llm-wiki/SKILL.md",
+            "skills/llm-wiki/references/core.md",
+            "skills/llm-wiki/references/single-root.md",
+            "skills/llm-wiki/references/modes/canonicalize.md"
+          ],
+          "headroom_percent": 45,
+          "max_file_count": 4,
+          "mode": "canonicalize",
+          "non_whitespace_character_count": 11502,
+          "operation": "single-root.canonicalize",
+          "schema_version": 2,
+          "skill": "llm-wiki",
+          "topology": "single-root",
+          "word_budget": null,
+          "word_count": 1909
+        },
+        {
+          "budget": {
+            "character_budget": 26000,
+            "estimated_token_budget": 12000,
+            "max_file_count": 4,
+            "min_headroom_percent": 15,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 13367,
+          "estimated_token_count": 6547,
+          "file_count": 4,
+          "files": [
+            "skills/llm-wiki/SKILL.md",
+            "skills/llm-wiki/references/core.md",
+            "skills/llm-wiki/references/single-root.md",
+            "skills/llm-wiki/references/modes/lint.md"
+          ],
+          "headroom_percent": 45,
+          "max_file_count": 4,
+          "mode": "lint",
+          "non_whitespace_character_count": 11430,
+          "operation": "single-root.lint",
+          "schema_version": 2,
+          "skill": "llm-wiki",
+          "topology": "single-root",
+          "word_budget": null,
+          "word_count": 1879
+        },
+        {
+          "budget": {
+            "character_budget": 26000,
+            "estimated_token_budget": 12000,
+            "max_file_count": 4,
+            "min_headroom_percent": 15,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 18917,
+          "estimated_token_count": 9384,
+          "file_count": 4,
+          "files": [
+            "skills/llm-wiki/SKILL.md",
+            "skills/llm-wiki/references/core.md",
+            "skills/llm-wiki/references/multi-root.md",
+            "skills/llm-wiki/references/modes/bootstrap.md"
+          ],
+          "headroom_percent": 21,
+          "max_file_count": 4,
+          "mode": "bootstrap",
+          "non_whitespace_character_count": 16160,
+          "operation": "multi-root.bootstrap",
+          "schema_version": 2,
+          "skill": "llm-wiki",
+          "topology": "multi-root",
+          "word_budget": null,
+          "word_count": 2721
+        },
+        {
+          "budget": {
+            "character_budget": 26000,
+            "estimated_token_budget": 12000,
+            "max_file_count": 4,
+            "min_headroom_percent": 15,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 18287,
+          "estimated_token_count": 9162,
+          "file_count": 4,
+          "files": [
+            "skills/llm-wiki/SKILL.md",
+            "skills/llm-wiki/references/core.md",
+            "skills/llm-wiki/references/multi-root.md",
+            "skills/llm-wiki/references/modes/ingest.md"
+          ],
+          "headroom_percent": 23,
+          "max_file_count": 4,
+          "mode": "ingest",
+          "non_whitespace_character_count": 15618,
+          "operation": "multi-root.ingest",
+          "schema_version": 2,
+          "skill": "llm-wiki",
+          "topology": "multi-root",
+          "word_budget": null,
+          "word_count": 2629
+        },
+        {
+          "budget": {
+            "character_budget": 26000,
+            "estimated_token_budget": 12000,
+            "max_file_count": 4,
+            "min_headroom_percent": 15,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 17774,
+          "estimated_token_count": 8902,
+          "file_count": 4,
+          "files": [
+            "skills/llm-wiki/SKILL.md",
+            "skills/llm-wiki/references/core.md",
+            "skills/llm-wiki/references/multi-root.md",
+            "skills/llm-wiki/references/modes/query.md"
+          ],
+          "headroom_percent": 25,
+          "max_file_count": 4,
+          "mode": "query",
+          "non_whitespace_character_count": 15181,
+          "operation": "multi-root.query",
+          "schema_version": 2,
+          "skill": "llm-wiki",
+          "topology": "multi-root",
+          "word_budget": null,
+          "word_count": 2559
+        },
+        {
+          "budget": {
+            "character_budget": 26000,
+            "estimated_token_budget": 12000,
+            "max_file_count": 4,
+            "min_headroom_percent": 15,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 18905,
+          "estimated_token_count": 9382,
+          "file_count": 4,
+          "files": [
+            "skills/llm-wiki/SKILL.md",
+            "skills/llm-wiki/references/core.md",
+            "skills/llm-wiki/references/multi-root.md",
+            "skills/llm-wiki/references/modes/draft-review.md"
+          ],
+          "headroom_percent": 21,
+          "max_file_count": 4,
+          "mode": "draft-review",
+          "non_whitespace_character_count": 16139,
+          "operation": "multi-root.draft-review",
+          "schema_version": 2,
+          "skill": "llm-wiki",
+          "topology": "multi-root",
+          "word_budget": null,
+          "word_count": 2742
+        },
+        {
+          "budget": {
+            "character_budget": 26000,
+            "estimated_token_budget": 12000,
+            "max_file_count": 4,
+            "min_headroom_percent": 15,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 18343,
+          "estimated_token_count": 9122,
+          "file_count": 4,
+          "files": [
+            "skills/llm-wiki/SKILL.md",
+            "skills/llm-wiki/references/core.md",
+            "skills/llm-wiki/references/multi-root.md",
+            "skills/llm-wiki/references/modes/canonicalize.md"
+          ],
+          "headroom_percent": 23,
+          "max_file_count": 4,
+          "mode": "canonicalize",
+          "non_whitespace_character_count": 15661,
+          "operation": "multi-root.canonicalize",
+          "schema_version": 2,
+          "skill": "llm-wiki",
+          "topology": "multi-root",
+          "word_budget": null,
+          "word_count": 2650
+        },
+        {
+          "budget": {
+            "character_budget": 26000,
+            "estimated_token_budget": 12000,
+            "max_file_count": 4,
+            "min_headroom_percent": 15,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 18251,
+          "estimated_token_count": 9102,
+          "file_count": 4,
+          "files": [
+            "skills/llm-wiki/SKILL.md",
+            "skills/llm-wiki/references/core.md",
+            "skills/llm-wiki/references/multi-root.md",
+            "skills/llm-wiki/references/modes/lint.md"
+          ],
+          "headroom_percent": 24,
+          "max_file_count": 4,
+          "mode": "lint",
+          "non_whitespace_character_count": 15589,
+          "operation": "multi-root.lint",
+          "schema_version": 2,
+          "skill": "llm-wiki",
+          "topology": "multi-root",
+          "word_budget": null,
+          "word_count": 2620
+        }
+      ],
+      "path": "skills/llm-wiki",
+      "skill": "llm-wiki",
+      "topologies": [
+        "single-root",
+        "multi-root"
+      ]
+    }
+  ]
+}

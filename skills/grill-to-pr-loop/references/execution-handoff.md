@@ -43,6 +43,18 @@ Build a normalized input packet file for `issue-implementation-loop`; do not pas
 
 Use `issue-implementation-loop/assets/templates/input-packet.json` for the concrete shape and `issue-implementation-loop/assets/schemas/input-packet.schema.json` for the field contract. Validate it through `issue-implementation-loop/scripts/validate_input_packet.py` before execution.
 
+## Implementation Context Handoff
+
+Do not begin implementation from the expanded main planning context. Before approved implementation handoff, either perform context 圧縮 of the main planning session or switch to a fresh execution coordinator.
+
+The execution side starts from:
+
+- the normalized packet path
+- a compressed handoff brief with approved scope, dependency order, write scopes, verification, stop conditions, and local/remote policy
+- durable spec and ledger paths, not pasted full source text
+
+The handoff brief is a bounded bridge, not canonical state. If it conflicts with the normalized packet, approved ledger, or Execution Envelope, stop and reconcile those durable artifacts first.
+
 ## Execution Plan Gate
 
 Build and present:

@@ -1,6 +1,24 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "packet_type": "issue_worker_dispatch",
+  "task_kind": "implement",
+  "access_mode": "read_write",
+  "source_revision": {
+    "execution_envelope": {
+      "path": "/abs/path/to/execution-envelope.json",
+      "revision": 1,
+      "sha256": "<sha256>"
+    },
+    "runtime_state": {
+      "path": "/abs/path/to/runtime-state.json",
+      "envelope_revision": 1,
+      "sha256": "<sha256>"
+    },
+    "issue_source": {
+      "path": "knowledge/wiki/syntheses/issues.md",
+      "sha256": "<sha256>"
+    }
+  },
   "epic_id": "<epic-id>",
   "issue_id": "G2PR-001",
   "issue_title": "Short issue title",

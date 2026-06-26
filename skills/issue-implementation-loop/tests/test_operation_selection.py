@@ -143,7 +143,7 @@ class OperationSelectionTests(unittest.TestCase):
             self.assertEqual(payload["priority"], "fixable")
             self.assertEqual(payload["target_issue"], "G2PR-001")
 
-    def test_human_wait_takes_priority_over_runnable_issue(self) -> None:
+    def test_human_wait_selects_wait_read_set_and_takes_priority_over_runnable_issue(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             envelope_path = Path(tmp) / "envelope.json"
             runtime_path = Path(tmp) / "runtime.json"
@@ -166,9 +166,13 @@ class OperationSelectionTests(unittest.TestCase):
 
             payload = self.run_selector(envelope_path=envelope_path, runtime_path=runtime_path)
 
-            self.assertEqual(payload["operation"], "execute.dispatch")
+            self.assertEqual(payload["operation"], "execute.wait")
             self.assertEqual(payload["priority"], "waiting_human")
             self.assertEqual(payload["target_issue"], "G2PR-001")
+            self.assertIn("skills/issue-implementation-loop/references/human-wait.md", payload["read_set"])
+            self.assertIn("skills/issue-implementation-loop/references/runtime-state.md", payload["read_set"])
+            self.assertNotIn("skills/issue-implementation-loop/references/scheduler.md", payload["read_set"])
+            self.assertNotIn("skills/issue-implementation-loop/references/worker-contract.md", payload["read_set"])
 
     def test_runnable_issue_selects_dispatch(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -191,6 +195,7 @@ class OperationSelectionTests(unittest.TestCase):
             self.assertEqual(payload["operation"], "execute.dispatch")
             self.assertEqual(payload["priority"], "runnable")
             self.assertEqual(payload["target_issue"], "G2PR-001")
+            self.assertNotIn("skills/issue-implementation-loop/references/human-wait.md", payload["read_set"])
 
     def test_terminal_state_selects_deliver(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

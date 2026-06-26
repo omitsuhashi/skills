@@ -25,3 +25,22 @@ class EntrypointTests(unittest.TestCase):
             "bounded worker-context jobs",
         ):
             self.assertIn(required, text)
+
+    def test_skill_entrypoint_routes_through_context_contract(self) -> None:
+        text = SKILL_FILE.read_text(encoding="utf-8")
+
+        self.assertIn("context-contract.toml", text)
+        self.assertIn("select_operation.py", text)
+        for operation_reference in (
+            "execution-envelope.md",
+            "dependency-contract.md",
+            "worktree-lifecycle.md",
+            "scheduler.md",
+            "worker-contract.md",
+            "review-gate.md",
+            "human-wait.md",
+            "runtime-state.md",
+            "recovery.md",
+            "remote-delivery.md",
+        ):
+            self.assertNotIn(operation_reference, text)
