@@ -4,7 +4,9 @@
   "epic_id": "skill-repository-optimization-v4",
   "artifact_root": "knowledge/wiki/syntheses",
   "spec": {
-    "path": "knowledge/wiki/syntheses/skill-repository-optimization-v4-spec.md"
+    "path": "knowledge/wiki/syntheses/skill-repository-optimization-v4-spec.md",
+    "approved_revision": 1,
+    "approved_hash": "git:836b59aa8e881edf2ee6c76bde6552db46beb6d3"
   },
   "work_items": [
     {

@@ -2,7 +2,7 @@
 
 ## 状態
 
-Spec Gate / Issue Gate 承認済み。2026-06-26 のユーザー追補として、実装開始前にメイン planning session の context 圧縮または fresh execution coordinator への切り替えを skill 契約へ追加する scope を SRO4-003 に反映済み。Execution Plan Gate は未承認であり、実装、GitHub issue mirror、push、PR 作成、merge は未実行。Execution Plan Gate の明示承認後にだけ execution へ進める。
+Spec Gate / Issue Gate / Execution Plan Gate 承認済み。2026-06-26 のユーザー追補として、実装開始前にメイン planning session の context 圧縮または fresh execution coordinator への切り替えを skill 契約へ追加する scope を SRO4-003 に反映済み。実装は `issue-implementation-loop prepare` 以降で進める。GitHub issue mirror、push、PR 作成、merge は未実行。
 
 ## Ledger
 
@@ -373,6 +373,15 @@ V4 の全変更を統合し、V1 compatibility、V2 default、deprecated shim、
 - remote write: 未承認
 - fallback: parallel execution は SRO4-002 と SRO4-004 以降の write scope overlap を避ける必要がある。最初は SRO4-001 の完了後、SRO4-002 と SRO4-004 を並列候補にできる。
 - final PR merge: human-only
+
+## Execution Plan Gate 承認
+
+- 承認日時: 2026-06-26
+- 承認済み packet: [skill-repository-optimization-v4-input-packet.json](skill-repository-optimization-v4-input-packet.json)
+- capability preflight: `check_prereqs.py --phase execution --json` は `ok: true`; `check_capabilities.py --input ... --json` は `ok: true`
+- worker context policy: `worker_context_required=true`, `coordinator_may_implement=false`, serial fallback は `worker_context_only`
+- remote policy: `local_only`; GitHub issue mirror、push、PR 作成、merge は未承認
+- 次の手順: approval record を commit した後、`issue-implementation-loop prepare` として Execution Envelope / branch / worktree reservation を作成する
 
 ## 関連ページ
 
