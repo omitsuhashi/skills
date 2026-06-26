@@ -40,12 +40,12 @@ user-facing loop skill を 2 つに固定する family policy と V4 planning ar
 
 ### 受け入れ条件
 
-- [ ] `skill-architecture.toml` が repository-change-loop family、user-facing skill 2 件、forbidden standalone skill 名を持つ。
-- [ ] `skill-architecture.toml` の forbidden list は validator code へ重複ハードコードされない。
-- [ ] current checkout の operation context metrics が baseline JSON として保存される。
-- [ ] `knowledge/wiki/syntheses/skill-repository-optimization-v4-spec.md` とこの ledger が `knowledge/index.md` から発見できる。
-- [ ] `knowledge/log.md` に ingest / planning artifact 追加が記録される。
-- [ ] 新しい user-facing skill は追加されない。
+- [x] `skill-architecture.toml` が repository-change-loop family、user-facing skill 2 件、forbidden standalone skill 名を持つ。
+- [x] `skill-architecture.toml` の forbidden list は validator code へ重複ハードコードされない。
+- [x] current checkout の operation context metrics が baseline JSON として保存される。
+- [x] `knowledge/wiki/syntheses/skill-repository-optimization-v4-spec.md` とこの ledger が `knowledge/index.md` から発見できる。
+- [x] `knowledge/log.md` に ingest / planning artifact 追加が記録される。
+- [x] 新しい user-facing skill は追加されない。
 
 ### ブロッカー
 
@@ -67,6 +67,14 @@ user-facing loop skill を 2 つに固定する family policy と V4 planning ar
 - 仕様: [Skill Repository Optimization V4 Spec](skill-repository-optimization-v4-spec.md)
 - source: [Skill Repository Optimization V4 Design](../sources/2026-06-26-skill-repository-optimization-v4-design.md)
 - skill-creator 制約: 新しい standalone skill は trigger /成果物 / state 独立性が揃う場合だけ作る。今回は追加しない。
+
+### 実装 evidence
+
+- `skill-architecture.toml` を追加し、repository-change-loop family の user-facing skills と forbidden standalone skill 名を policy file に集約した。
+- `scripts/validate_skill_architecture.py` は forbidden standalone skill 名を `skill-architecture.toml` から読み、validator 内に list を重複保持しない。
+- `scripts/report_skill_context.py --all --json` の出力を `knowledge/wiki/syntheses/skill-repository-optimization-v4-context-baseline.json` として保存した。
+- `knowledge/index.md` と `knowledge/log.md` に SRO4-001 policy / baseline artifact を登録した。
+- 新しい `skills/*/SKILL.md` は追加していない。
 
 ### 検証
 

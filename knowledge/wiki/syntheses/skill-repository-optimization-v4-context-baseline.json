@@ -1,0 +1,258 @@
+{
+  "base_sha": "a073a10d38744771c2ed10fe8d9d351e5bf0e588",
+  "captured_at": "2026-06-26",
+  "epic_id": "skill-repository-optimization-v4",
+  "issue_id": "SRO4-001",
+  "metric_source": "context-contract.toml schema v1 word-count metrics",
+  "report_type": "skill-context-baseline",
+  "schema_version": 1,
+  "skills": [
+    {
+      "operation_count": 9,
+      "operations": [
+        {
+          "budget_headroom": 1544,
+          "file_count": 4,
+          "files": [
+            "skills/grill-to-pr-loop/SKILL.md",
+            "skills/grill-to-pr-loop/references/core.md",
+            "skills/grill-to-pr-loop/references/workflow-contract.md",
+            "skills/grill-to-pr-loop/references/planning-contract.md"
+          ],
+          "max_file_count": 6,
+          "operation": "intake",
+          "skill": "grill-to-pr-loop",
+          "word_budget": 3200,
+          "word_count": 1656
+        },
+        {
+          "budget_headroom": 1544,
+          "file_count": 4,
+          "files": [
+            "skills/grill-to-pr-loop/SKILL.md",
+            "skills/grill-to-pr-loop/references/core.md",
+            "skills/grill-to-pr-loop/references/workflow-contract.md",
+            "skills/grill-to-pr-loop/references/planning-contract.md"
+          ],
+          "max_file_count": 6,
+          "operation": "grill",
+          "skill": "grill-to-pr-loop",
+          "word_budget": 3200,
+          "word_count": 1656
+        },
+        {
+          "budget_headroom": 1544,
+          "file_count": 4,
+          "files": [
+            "skills/grill-to-pr-loop/SKILL.md",
+            "skills/grill-to-pr-loop/references/core.md",
+            "skills/grill-to-pr-loop/references/workflow-contract.md",
+            "skills/grill-to-pr-loop/references/planning-contract.md"
+          ],
+          "max_file_count": 6,
+          "operation": "spec",
+          "skill": "grill-to-pr-loop",
+          "word_budget": 3200,
+          "word_count": 1656
+        },
+        {
+          "budget_headroom": 1296,
+          "file_count": 5,
+          "files": [
+            "skills/grill-to-pr-loop/SKILL.md",
+            "skills/grill-to-pr-loop/references/core.md",
+            "skills/grill-to-pr-loop/references/workflow-contract.md",
+            "skills/grill-to-pr-loop/references/planning-contract.md",
+            "skills/grill-to-pr-loop/references/local-issue-ledger.md"
+          ],
+          "max_file_count": 6,
+          "operation": "issue-gate",
+          "skill": "grill-to-pr-loop",
+          "word_budget": 3200,
+          "word_count": 1904
+        },
+        {
+          "budget_headroom": 685,
+          "file_count": 6,
+          "files": [
+            "skills/grill-to-pr-loop/SKILL.md",
+            "skills/grill-to-pr-loop/references/core.md",
+            "skills/grill-to-pr-loop/references/workflow-contract.md",
+            "skills/grill-to-pr-loop/references/planning-contract.md",
+            "skills/grill-to-pr-loop/references/local-issue-ledger.md",
+            "skills/grill-to-pr-loop/references/execution-handoff.md"
+          ],
+          "max_file_count": 6,
+          "operation": "execution-plan",
+          "skill": "grill-to-pr-loop",
+          "word_budget": 3200,
+          "word_count": 2515
+        },
+        {
+          "budget_headroom": 997,
+          "file_count": 5,
+          "files": [
+            "skills/grill-to-pr-loop/SKILL.md",
+            "skills/grill-to-pr-loop/references/core.md",
+            "skills/grill-to-pr-loop/references/workflow-contract.md",
+            "skills/grill-to-pr-loop/references/local-issue-ledger.md",
+            "skills/grill-to-pr-loop/references/execution-handoff.md"
+          ],
+          "max_file_count": 6,
+          "operation": "resume",
+          "skill": "grill-to-pr-loop",
+          "word_budget": 3200,
+          "word_count": 2203
+        },
+        {
+          "budget_headroom": 997,
+          "file_count": 5,
+          "files": [
+            "skills/grill-to-pr-loop/SKILL.md",
+            "skills/grill-to-pr-loop/references/core.md",
+            "skills/grill-to-pr-loop/references/workflow-contract.md",
+            "skills/grill-to-pr-loop/references/local-issue-ledger.md",
+            "skills/grill-to-pr-loop/references/execution-handoff.md"
+          ],
+          "max_file_count": 6,
+          "operation": "completion-report",
+          "skill": "grill-to-pr-loop",
+          "word_budget": 3200,
+          "word_count": 2203
+        },
+        {
+          "budget_headroom": 1488,
+          "file_count": 4,
+          "files": [
+            "skills/grill-to-pr-loop/SKILL.md",
+            "skills/grill-to-pr-loop/references/core.md",
+            "skills/grill-to-pr-loop/references/workflow-contract.md",
+            "skills/grill-to-pr-loop/references/remote-delivery.md"
+          ],
+          "max_file_count": 6,
+          "operation": "delivery",
+          "skill": "grill-to-pr-loop",
+          "word_budget": 3200,
+          "word_count": 1712
+        },
+        {
+          "budget_headroom": 1562,
+          "file_count": 4,
+          "files": [
+            "skills/grill-to-pr-loop/SKILL.md",
+            "skills/grill-to-pr-loop/references/core.md",
+            "skills/grill-to-pr-loop/references/workflow-contract.md",
+            "skills/grill-to-pr-loop/references/common-mistakes.md"
+          ],
+          "max_file_count": 6,
+          "operation": "ambiguity-check",
+          "skill": "grill-to-pr-loop",
+          "word_budget": 3200,
+          "word_count": 1638
+        }
+      ],
+      "path": "skills/grill-to-pr-loop",
+      "skill": "grill-to-pr-loop"
+    },
+    {
+      "operation_count": 6,
+      "operations": [
+        {
+          "budget_headroom": 250,
+          "file_count": 5,
+          "files": [
+            "skills/issue-implementation-loop/SKILL.md",
+            "skills/issue-implementation-loop/references/core.md",
+            "skills/issue-implementation-loop/references/execution-envelope.md",
+            "skills/issue-implementation-loop/references/dependency-contract.md",
+            "skills/issue-implementation-loop/references/worktree-lifecycle.md"
+          ],
+          "max_file_count": 6,
+          "operation": "prepare",
+          "skill": "issue-implementation-loop",
+          "word_budget": 1900,
+          "word_count": 1650
+        },
+        {
+          "budget_headroom": 296,
+          "file_count": 6,
+          "files": [
+            "skills/issue-implementation-loop/SKILL.md",
+            "skills/issue-implementation-loop/references/core.md",
+            "skills/issue-implementation-loop/references/scheduler.md",
+            "skills/issue-implementation-loop/references/worker-contract.md",
+            "skills/issue-implementation-loop/references/human-wait.md",
+            "skills/issue-implementation-loop/references/runtime-state.md"
+          ],
+          "max_file_count": 6,
+          "operation": "execute.dispatch",
+          "skill": "issue-implementation-loop",
+          "word_budget": 1900,
+          "word_count": 1604
+        },
+        {
+          "budget_headroom": 332,
+          "file_count": 5,
+          "files": [
+            "skills/issue-implementation-loop/SKILL.md",
+            "skills/issue-implementation-loop/references/core.md",
+            "skills/issue-implementation-loop/references/review-gate.md",
+            "skills/issue-implementation-loop/references/worker-contract.md",
+            "skills/issue-implementation-loop/references/runtime-state.md"
+          ],
+          "max_file_count": 6,
+          "operation": "execute.review",
+          "skill": "issue-implementation-loop",
+          "word_budget": 1900,
+          "word_count": 1568
+        },
+        {
+          "budget_headroom": 630,
+          "file_count": 4,
+          "files": [
+            "skills/issue-implementation-loop/SKILL.md",
+            "skills/issue-implementation-loop/references/core.md",
+            "skills/issue-implementation-loop/references/runtime-state.md",
+            "skills/issue-implementation-loop/references/recovery.md"
+          ],
+          "max_file_count": 6,
+          "operation": "resume",
+          "skill": "issue-implementation-loop",
+          "word_budget": 1900,
+          "word_count": 1270
+        },
+        {
+          "budget_headroom": 659,
+          "file_count": 4,
+          "files": [
+            "skills/issue-implementation-loop/SKILL.md",
+            "skills/issue-implementation-loop/references/core.md",
+            "skills/issue-implementation-loop/references/runtime-state.md",
+            "skills/issue-implementation-loop/references/scheduler.md"
+          ],
+          "max_file_count": 6,
+          "operation": "status",
+          "skill": "issue-implementation-loop",
+          "word_budget": 1900,
+          "word_count": 1241
+        },
+        {
+          "budget_headroom": 751,
+          "file_count": 3,
+          "files": [
+            "skills/issue-implementation-loop/SKILL.md",
+            "skills/issue-implementation-loop/references/core.md",
+            "skills/issue-implementation-loop/references/remote-delivery.md"
+          ],
+          "max_file_count": 6,
+          "operation": "deliver",
+          "skill": "issue-implementation-loop",
+          "word_budget": 1900,
+          "word_count": 1149
+        }
+      ],
+      "path": "skills/issue-implementation-loop",
+      "skill": "issue-implementation-loop"
+    }
+  ]
+}
