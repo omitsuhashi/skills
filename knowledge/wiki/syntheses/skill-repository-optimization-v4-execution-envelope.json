@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "epic_id": "skill-repository-optimization-v4",
-  "revision": 1,
+  "revision": 2,
   "epic_base": {
     "ref": "codex/skill-repository-optimization-v4/epic-base",
     "sha": "a073a10d38744771c2ed10fe8d9d351e5bf0e588",
@@ -47,12 +47,14 @@
     "SRO4-001": {
       "branch": "codex/skill-repository-optimization-v4/SRO4-001-policy-baseline-spec",
       "worktree_path": "/Users/omitsuhashi/.codex/worktrees/skill-repository-optimization-v4/SRO4-001-policy-baseline-spec",
-      "worktree_state": "create_on_run",
+      "worktree_state": "active",
       "base_policy": {
         "type": "epic_base"
       },
       "write_scope": [
         "path:skill-architecture.toml",
+        "path:scripts/validate_skill_architecture.py",
+        "path:scripts/report_skill_context.py",
         "path:knowledge/wiki/syntheses/skill-repository-optimization-v4-spec.md",
         "path:knowledge/wiki/syntheses/skill-repository-optimization-v4-issues.md",
         "path:knowledge/wiki/syntheses/skill-repository-optimization-v4-context-baseline.json",

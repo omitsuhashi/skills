@@ -56,6 +56,8 @@ user-facing loop skill を 2 つに固定する family policy と V4 planning ar
 ### 想定 write scope
 
 - `path:skill-architecture.toml`
+- `path:scripts/validate_skill_architecture.py`
+- `path:scripts/report_skill_context.py`
 - `path:knowledge/wiki/syntheses/skill-repository-optimization-v4-spec.md`
 - `path:knowledge/wiki/syntheses/skill-repository-optimization-v4-issues.md`
 - `path:knowledge/wiki/syntheses/skill-repository-optimization-v4-context-baseline.json`
@@ -395,6 +397,15 @@ V4 の全変更を統合し、V1 compatibility、V2 default、deprecated shim、
 - SRO4-005 は SRO4-003 / SRO4-004 の hard dependency を維持するが、複数 blocker head の ad hoc merge を避けるため dependency `base_effect` は `none` とする。実装中に両 head の code merge が必要になった場合は stop condition とし、approved integration work item または envelope revision を要求する。
 - `validate_execution_envelope.py`: `EXECUTION ENVELOPE OK`
 - `reconcile_git_state.py --json`: `ok: true`, collisions 0
+
+## Envelope Revision 2
+
+- 承認日時: 2026-06-26
+- 変更理由: SRO4-001 の初回 worker dispatch で、承認済み verification が要求する `scripts/validate_skill_architecture.py` と `scripts/report_skill_context.py` が存在せず、かつ SRO4-001 の write scope 外だったため stop condition になった
+- scope 変更: SRO4-001 の write scope に `path:scripts/validate_skill_architecture.py` と `path:scripts/report_skill_context.py` を追加
+- worktree state: SRO4-001 の physical worktree は作成済みのため `active`
+- 実装制約: SRO4-001 では policy validator と baseline report の最小実装に留め、SRO4-002 の Context Contract V2 本体 redesign へ踏み込まない
+- remote policy: 引き続き `local_only`
 
 ## 関連ページ
 

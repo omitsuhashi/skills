@@ -38,6 +38,8 @@
       ],
       "write_scope": [
         "path:skill-architecture.toml",
+        "path:scripts/validate_skill_architecture.py",
+        "path:scripts/report_skill_context.py",
         "path:knowledge/wiki/syntheses/skill-repository-optimization-v4-spec.md",
         "path:knowledge/wiki/syntheses/skill-repository-optimization-v4-issues.md",
         "path:knowledge/wiki/syntheses/skill-repository-optimization-v4-context-baseline.json",
