@@ -6,6 +6,9 @@ from _helpers import *
 REPO_ROOT = SKILL_DIR.parents[1]
 VALIDATE_CONTEXT = REPO_ROOT / "scripts" / "validate_loop_skill_context.py"
 INSPECT_CONTEXT = REPO_ROOT / "scripts" / "inspect_loop_skill_context.py"
+VALIDATE_SKILL_CONTEXT = REPO_ROOT / "scripts" / "validate_skill_context.py"
+INSPECT_SKILL_CONTEXT = REPO_ROOT / "scripts" / "inspect_skill_context.py"
+REPORT_SKILL_CONTEXT = REPO_ROOT / "scripts" / "report_skill_context.py"
 
 
 def run_context_validator(*args: str) -> subprocess.CompletedProcess[str]:
@@ -26,6 +29,33 @@ def run_context_inspector(*args: str) -> subprocess.CompletedProcess[str]:
     )
 
 
+def run_generic_context_validator(*args: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [sys.executable, str(VALIDATE_SKILL_CONTEXT), *args],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+
+def run_generic_context_inspector(*args: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [sys.executable, str(INSPECT_SKILL_CONTEXT), *args],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+
+def run_generic_context_report(*args: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [sys.executable, str(REPORT_SKILL_CONTEXT), *args],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+
 def write_example_skill(root: Path, name: str, contract_text: str) -> Path:
     skill_dir = root / "skills" / name
     references_dir = skill_dir / "references"
@@ -34,6 +64,23 @@ def write_example_skill(root: Path, name: str, contract_text: str) -> Path:
     (references_dir / "core.md").write_text("core reference words\n", encoding="utf-8")
     (references_dir / "extra.md").write_text("extra reference words\n", encoding="utf-8")
     (references_dir / "nested" / "deep.md").write_text("deep reference words\n", encoding="utf-8")
+    (skill_dir / "context-contract.toml").write_text(contract_text, encoding="utf-8")
+    return skill_dir
+
+
+def write_japanese_skill(root: Path, contract_text: str) -> Path:
+    skill_dir = root / "skills" / "japanese-loop"
+    references_dir = skill_dir / "references"
+    references_dir.mkdir(parents=True)
+    (skill_dir / "SKILL.md").write_text(
+        "# Japanese Loop\n\nこれは日本語の長い説明です。承認、検証、実装境界を扱います。\n",
+        encoding="utf-8",
+    )
+    (references_dir / "core.md").write_text(
+        "追加の文脈です。worker は write scope を守り、remote write を行いません。\n",
+        encoding="utf-8",
+    )
+    (references_dir / "extra.md").write_text("extra ascii reference words\n", encoding="utf-8")
     (skill_dir / "context-contract.toml").write_text(contract_text, encoding="utf-8")
     return skill_dir
 
@@ -240,6 +287,125 @@ class ContextContractTests(unittest.TestCase):
         )
         self.assertGreater(payload["word_count"], 0)
         self.assertGreaterEqual(payload["budget_headroom"], 0)
+
+    def test_generic_validator_and_inspector_accept_v1_contracts(self) -> None:
+        result = run_generic_context_validator("--skill", "skills/issue-implementation-loop")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+        inspect_result = run_generic_context_inspector(
+            "--skill",
+            "skills/issue-implementation-loop",
+            "--operation",
+            "execute.review",
+            "--json",
+        )
+
+        self.assertEqual(inspect_result.returncode, 0, inspect_result.stderr)
+        payload = json.loads(inspect_result.stdout)
+        self.assertEqual(payload["schema_version"], 1)
+        self.assertEqual(payload["skill"], "issue-implementation-loop")
+        self.assertGreater(payload["character_count"], 0)
+        self.assertGreater(payload["non_whitespace_character_count"], 0)
+        self.assertGreater(payload["estimated_token_count"], 0)
+        self.assertIn("headroom_percent", payload)
+        self.assertEqual(payload["word_budget"], payload["budget"]["word_budget"])
+
+    def test_generic_validator_accepts_v2_budget_and_japanese_estimation(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            skill_dir = write_japanese_skill(
+                Path(tmp),
+                "\n".join(
+                    [
+                        "schema_version = 2",
+                        'skill = "japanese-loop"',
+                        'entrypoint = "SKILL.md"',
+                        'base_references = ["references/core.md"]',
+                        "character_budget = 5000",
+                        "estimated_token_budget = 1000",
+                        "max_file_count = 4",
+                        "min_headroom_percent = 20",
+                        "",
+                        "[operations.test]",
+                        'references = ["references/extra.md"]',
+                    ]
+                ),
+            )
+
+            result = run_generic_context_validator("--skill", str(skill_dir))
+            inspect_result = run_generic_context_inspector(
+                "--skill",
+                str(skill_dir),
+                "--operation",
+                "test",
+                "--json",
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(inspect_result.returncode, 0, inspect_result.stderr)
+            payload = json.loads(inspect_result.stdout)
+            self.assertEqual(payload["schema_version"], 2)
+            self.assertGreater(payload["character_count"], payload["word_count"])
+            self.assertGreaterEqual(
+                payload["estimated_token_count"],
+                payload["non_whitespace_character_count"] // 2,
+            )
+            self.assertGreaterEqual(payload["headroom_percent"], 20)
+
+    def test_generic_validator_rejects_v2_budget_failures(self) -> None:
+        cases = [
+            ("char-budget", "character_budget = 10", "character budget exceeded"),
+            ("token-budget", "estimated_token_budget = 5", "estimated token budget exceeded"),
+            ("headroom", "min_headroom_percent = 99", "headroom below minimum"),
+        ]
+        for case_name, override, expected in cases:
+            with self.subTest(case_name):
+                with tempfile.TemporaryDirectory() as tmp:
+                    defaults = {
+                        "character_budget": "character_budget = 5000",
+                        "estimated_token_budget": "estimated_token_budget = 1000",
+                        "min_headroom_percent": "min_headroom_percent = 0",
+                    }
+                    key = override.split("=", 1)[0].strip()
+                    defaults[key] = override
+                    skill_dir = write_japanese_skill(
+                        Path(tmp),
+                        "\n".join(
+                            [
+                                "schema_version = 2",
+                                'skill = "japanese-loop"',
+                                'entrypoint = "SKILL.md"',
+                                'base_references = ["references/core.md"]',
+                                defaults["character_budget"],
+                                defaults["estimated_token_budget"],
+                                "max_file_count = 4",
+                                defaults["min_headroom_percent"],
+                                "",
+                                "[operations.test]",
+                                'references = ["references/extra.md"]',
+                            ]
+                        ),
+                    )
+
+                    result = run_generic_context_validator("--skill", str(skill_dir))
+
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn(expected, result.stderr)
+
+    def test_report_skill_context_emits_json_metrics(self) -> None:
+        result = run_generic_context_report("--all", "--json")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["report_type"], "skill-context-report")
+        operations = [
+            operation
+            for skill in payload["skills"]
+            for operation in skill["operations"]
+            if operation["skill"] == "issue-implementation-loop"
+        ]
+        self.assertTrue(operations)
+        self.assertTrue(all("estimated_token_count" in operation for operation in operations))
 
 
 if __name__ == "__main__":

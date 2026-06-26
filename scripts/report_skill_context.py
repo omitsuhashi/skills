@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Sequence
 
-from validate_loop_skill_context import (
+from skill_context.contract import (
     ContractError,
     REPO_ROOT,
     all_skill_dirs,
@@ -36,9 +36,9 @@ def _operation_names(skill_dir: Path) -> List[str]:
 
 def collect_report(skill_dirs: Sequence[Path]) -> Dict[str, object]:
     report: Dict[str, object] = {
-        "schema_version": 1,
-        "report_type": "skill-context-baseline",
-        "metric_source": "context-contract.toml schema v1 word-count metrics",
+        "schema_version": 2,
+        "report_type": "skill-context-report",
+        "metric_source": "context-contract.toml schema v1/v2 character and estimated-token metrics",
         "skills": [],
     }
     for skill_dir in skill_dirs:
@@ -84,11 +84,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             operations = skill["operations"]
             assert isinstance(operations, list)
             for operation in operations:
+                headroom = operation["budget_headroom"]
+                if headroom is None:
+                    headroom = f"{operation['headroom_percent']}%"
                 print(
                     f"- {operation['operation']}: "
                     f"{operation['word_count']} words, "
                     f"{operation['file_count']} files, "
-                    f"headroom {operation['budget_headroom']}"
+                    f"headroom {headroom}"
                 )
     return 0
 
