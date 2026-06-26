@@ -49,4 +49,12 @@ python3 <skill-dir>/scripts/build_resume_brief.py <runtime-root>
 
 The builder reads `runtime-state.json`, `events.jsonl`, optional `execution-envelope.json`, and latest files under `reports/` and `reviews/`. It writes `<runtime-root>/resume-brief.md` and enforces a 600 word limit. The brief must include Epic ID, overall status, runnable, active, reviewable, fixable, waiting human, pending remote action, verified commit ranges, latest report paths, and the recommended next operation.
 
+The builder also writes `<runtime-root>/resume-brief.meta.json` with source
+digests and revisions for the execution envelope, runtime state, and event log.
+Validate the cache before trusting it with:
+
+```bash
+python3 <skill-dir>/scripts/validate_resume_brief.py <runtime-root>
+```
+
 Treat `resume-brief.md` as a regenerable cache only. It is not canonical state and must not be edited to fix scheduler/runtime data. If it disagrees with runtime or events, investigate the canonical sources and rebuild the brief.

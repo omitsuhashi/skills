@@ -169,6 +169,81 @@ class ResumeBriefTests(unittest.TestCase):
             self.assertIn("Recommended next operation: execute.review G2PR-003", brief)
             self.assertIn("cache only", brief)
             self.assertLessEqual(len(re.findall(r"\S+", brief)), 600)
+            meta_path = root / "resume-brief.meta.json"
+            self.assertTrue(meta_path.exists())
+            meta = json.loads(meta_path.read_text(encoding="utf-8"))
+            self.assertEqual(meta["schema_version"], 2)
+            self.assertEqual(meta["artifact"], "resume-brief")
+            self.assertEqual(meta["sources"]["execution_envelope"]["revision"], 1)
+            self.assertEqual(meta["sources"]["runtime_state"]["envelope_revision"], 1)
+            self.assertIn("sha256", meta["sources"]["events"])
+
+            validate_result = run_script("validate_resume_brief.py", str(root))
+
+            self.assertEqual(validate_result.returncode, 0, validate_result.stderr)
+
+    def test_validate_resume_brief_rejects_stale_meta_sources(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cases = [
+                (
+                    "runtime",
+                    lambda root: write_json(
+                        root / "runtime-state.json",
+                        {
+                            "schema_version": 1,
+                            "epic_id": "issue-implementation-loop",
+                            "envelope_revision": 2,
+                            "issues": {},
+                            "human_requests": [],
+                        },
+                    ),
+                    "runtime_state.sha256 is stale",
+                ),
+                (
+                    "envelope",
+                    lambda root: write_json(
+                        root / "execution-envelope.json",
+                        {**self.rich_envelope(), "revision": 2},
+                    ),
+                    "execution_envelope.revision is stale",
+                ),
+                (
+                    "events",
+                    lambda root: (root / "events.jsonl").write_text("", encoding="utf-8"),
+                    "events.sha256 is stale",
+                ),
+            ]
+            for name, mutate, expected in cases:
+                with self.subTest(name):
+                    root = Path(tmp) / name
+                    self.write_runtime_root(
+                        root,
+                        envelope=self.rich_envelope(),
+                        runtime=self.rich_runtime(),
+                        events=self.rich_events(),
+                    )
+                    build_result = run_script("build_resume_brief.py", str(root))
+                    self.assertEqual(build_result.returncode, 0, build_result.stderr)
+                    mutate(root)
+
+                    result = run_script("validate_resume_brief.py", str(root))
+
+                    self.assertNotEqual(result.returncode, 0, name)
+                    self.assertIn(expected, result.stderr)
+
+    def test_validate_resume_brief_allows_legacy_brief_without_meta_for_existing_runs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "runtime"
+            root.mkdir()
+            (root / "resume-brief.md").write_text(
+                "# Resume Brief\n\nLegacy cache without metadata.\n",
+                encoding="utf-8",
+            )
+
+            result = run_script("validate_resume_brief.py", str(root))
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("legacy resume brief without meta", result.stdout)
 
     def test_build_resume_brief_orders_latest_report_paths_by_mtime_across_reports_and_reviews(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

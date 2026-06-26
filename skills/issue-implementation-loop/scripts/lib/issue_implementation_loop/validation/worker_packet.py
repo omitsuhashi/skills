@@ -1,17 +1,22 @@
 from __future__ import annotations
 
+import json
 import os
+from pathlib import Path
 from typing import Any
 
 from ..identifiers import is_issue_id, is_lower_kebab
 from ..worker_packet import (
+    ACCESS_MODES,
     DEFAULT_PACKET_WORDS,
     HARD_PACKET_WORDS,
     MAX_INLINE_EXCERPT_WORDS_PER_FILE,
     MAX_INLINE_EXCERPT_WORDS_TOTAL,
     MAX_READ_PATHS,
     PACKET_CONTEXT_BUDGET_EXCEEDED,
+    TASK_KINDS,
     count_words,
+    file_sha256,
     packet_word_count,
 )
 
@@ -40,6 +45,7 @@ TOP_LEVEL_FIELDS = {
     "worktree",
     "write_scope",
 }
+TOP_LEVEL_FIELDS_V2 = TOP_LEVEL_FIELDS | {"access_mode", "source_revision", "task_kind"}
 CONTEXT_POLICY_FIELDS = {
     "hard_max_packet_words",
     "include_full_ledger_text",
@@ -54,6 +60,10 @@ READ_PATH_FIELDS = {"path", "purpose"}
 INLINE_CONTEXT_FIELDS = {"excerpt", "is_full_document", "path", "purpose"}
 TASK_FIELDS = {"acceptance_criteria", "stop_conditions", "summary", "verification"}
 REPORT_CONTRACT_FIELDS = {"format", "validator"}
+SOURCE_REVISION_FIELDS = {"execution_envelope", "runtime_state", "issue_source"}
+SOURCE_EXECUTION_ENVELOPE_FIELDS = {"path", "revision", "sha256"}
+SOURCE_RUNTIME_STATE_FIELDS = {"path", "envelope_revision", "sha256"}
+SOURCE_ISSUE_SOURCE_FIELDS = {"path", "sha256"}
 
 
 def _field_key(value: str) -> str:
@@ -100,12 +110,144 @@ def _reject_unknown_fields(
             errors.append(f"unknown field: {display}")
 
 
+def _resolve_packet_path(worktree: str, raw_path: str) -> Path | None:
+    if not raw_path.strip() or raw_path.startswith("~"):
+        return None
+    candidate = Path(raw_path)
+    if not candidate.is_absolute():
+        candidate = Path(worktree) / raw_path
+    return candidate.resolve(strict=False)
+
+
+def _path_stays_within_worktree(worktree: str, raw_path: str) -> bool:
+    root = Path(worktree).resolve(strict=False)
+    candidate = _resolve_packet_path(worktree, raw_path)
+    if candidate is None:
+        return False
+    try:
+        return os.path.commonpath([str(root), str(candidate)]) == str(root)
+    except ValueError:
+        return False
+
+
+def _validate_packet_path(
+    *,
+    worktree: str,
+    raw_path: Any,
+    field: str,
+    errors: list[str],
+) -> None:
+    if not isinstance(raw_path, str) or not raw_path.strip():
+        return
+    if not _path_stays_within_worktree(worktree, raw_path):
+        errors.append(f"{field} must stay within worktree")
+
+
+def _write_scope_path(scope: str) -> str:
+    return scope.removeprefix("path:")
+
+
+def _load_json_file(path: Path, field: str, errors: list[str]) -> dict[str, Any] | None:
+    try:
+        with path.open(encoding="utf-8") as handle:
+            value = json.load(handle)
+    except OSError as exc:
+        errors.append(f"{field}.path is unreadable: {exc}")
+        return None
+    except json.JSONDecodeError as exc:
+        errors.append(f"{field}.path is not valid JSON: {exc}")
+        return None
+    if not isinstance(value, dict):
+        errors.append(f"{field}.path must contain a JSON object")
+        return None
+    return value
+
+
+def _validate_source_sha(
+    record: dict[str, Any],
+    path: Path,
+    field: str,
+    errors: list[str],
+) -> None:
+    expected = record.get("sha256")
+    if not isinstance(expected, str) or not expected.strip():
+        errors.append(f"{field}.sha256 must be a non-empty string")
+        return
+    try:
+        actual = file_sha256(path)
+    except OSError as exc:
+        errors.append(f"{field}.path is unreadable: {exc}")
+        return
+    if actual != expected:
+        errors.append(f"{field}.sha256 is stale")
+
+
+def _source_path(record: dict[str, Any], field: str, errors: list[str]) -> Path | None:
+    path = record.get("path")
+    if not isinstance(path, str) or not path.strip():
+        errors.append(f"{field}.path must be a non-empty string")
+        return None
+    return Path(path).resolve(strict=False)
+
+
+def _validate_source_revision(packet: dict[str, Any], errors: list[str]) -> None:
+    source_revision = packet.get("source_revision")
+    if not isinstance(source_revision, dict):
+        errors.append("source_revision is required")
+        return
+    _reject_unknown_fields(source_revision, SOURCE_REVISION_FIELDS, "source_revision", errors)
+
+    envelope = source_revision.get("execution_envelope")
+    if not isinstance(envelope, dict):
+        errors.append("source_revision.execution_envelope is required")
+    else:
+        field = "source_revision.execution_envelope"
+        _reject_unknown_fields(envelope, SOURCE_EXECUTION_ENVELOPE_FIELDS, field, errors)
+        envelope_path = _source_path(envelope, field, errors)
+        revision = envelope.get("revision")
+        if not isinstance(revision, int) or revision < 1:
+            errors.append(f"{field}.revision must be a positive integer")
+        if envelope_path is not None:
+            current = _load_json_file(envelope_path, field, errors)
+            if current is not None and current.get("revision") != revision:
+                errors.append(f"{field}.revision is stale")
+            _validate_source_sha(envelope, envelope_path, field, errors)
+
+    runtime = source_revision.get("runtime_state")
+    if not isinstance(runtime, dict):
+        errors.append("source_revision.runtime_state is required")
+    else:
+        field = "source_revision.runtime_state"
+        _reject_unknown_fields(runtime, SOURCE_RUNTIME_STATE_FIELDS, field, errors)
+        runtime_path = _source_path(runtime, field, errors)
+        envelope_revision = runtime.get("envelope_revision")
+        if not isinstance(envelope_revision, int) or envelope_revision < 1:
+            errors.append(f"{field}.envelope_revision must be a positive integer")
+        if runtime_path is not None:
+            current = _load_json_file(runtime_path, field, errors)
+            if current is not None and current.get("envelope_revision") != envelope_revision:
+                errors.append(f"{field}.envelope_revision is stale")
+            _validate_source_sha(runtime, runtime_path, field, errors)
+
+    issue_source = source_revision.get("issue_source")
+    if not isinstance(issue_source, dict):
+        errors.append("source_revision.issue_source is required")
+    else:
+        field = "source_revision.issue_source"
+        _reject_unknown_fields(issue_source, SOURCE_ISSUE_SOURCE_FIELDS, field, errors)
+        issue_source_path = _source_path(issue_source, field, errors)
+        if issue_source_path is not None:
+            _validate_source_sha(issue_source, issue_source_path, field, errors)
+
+
 def validate_worker_packet(packet: dict[str, Any]) -> list[str]:
     errors: list[str] = []
-    _reject_unknown_fields(packet, TOP_LEVEL_FIELDS, "", errors)
+    schema_version = packet.get("schema_version")
+    is_v2 = schema_version == 2
+    _reject_unknown_fields(packet, TOP_LEVEL_FIELDS_V2 if is_v2 else TOP_LEVEL_FIELDS, "", errors)
 
-    if packet.get("schema_version") != 1:
-        errors.append("schema_version must be 1")
+    if schema_version not in {1, 2}:
+        errors.append("schema_version must be 1 or 2")
     if packet.get("packet_type") != "issue_worker_dispatch":
         errors.append("packet_type must be issue_worker_dispatch")
 
@@ -121,7 +263,46 @@ def validate_worker_packet(packet: dict[str, Any]) -> list[str]:
     worktree = packet.get("worktree")
     if not isinstance(worktree, str) or not os.path.isabs(worktree):
         errors.append("worktree must be an absolute path")
-    _as_string_list(packet.get("write_scope"), "write_scope", errors)
+
+    task_kind = packet.get("task_kind")
+    access_mode = packet.get("access_mode")
+    if is_v2:
+        if task_kind not in TASK_KINDS:
+            errors.append(f"task_kind must be one of {sorted(TASK_KINDS)}")
+        if access_mode not in ACCESS_MODES:
+            errors.append(f"access_mode must be one of {sorted(ACCESS_MODES)}")
+        _validate_source_revision(packet, errors)
+
+    write_scope = packet.get("write_scope")
+    if is_v2 and task_kind in {"review", "inspect"}:
+        if write_scope != []:
+            errors.append(f"{task_kind} packets require write_scope=[]")
+    elif is_v2 and task_kind in {"implement", "fix"}:
+        _as_string_list(write_scope, "write_scope", errors)
+    else:
+        _as_string_list(write_scope, "write_scope", errors)
+
+    if is_v2:
+        if task_kind in {"implement", "fix"}:
+            if access_mode != "read_write":
+                errors.append(f"{task_kind} packets require access_mode=read_write")
+            if not isinstance(write_scope, list) or not write_scope:
+                errors.append(f"{task_kind} packets require a non-empty write_scope")
+        if task_kind in {"review", "inspect"} and access_mode != "read_only":
+            errors.append(f"{task_kind} packets require access_mode=read_only")
+        if isinstance(worktree, str) and os.path.isabs(worktree) and isinstance(write_scope, list):
+            for index, scope in enumerate(write_scope):
+                if not isinstance(scope, str) or not scope.strip():
+                    continue
+                if not scope.startswith("path:"):
+                    errors.append(f"write_scope[{index}] must use path:<path>")
+                    continue
+                _validate_packet_path(
+                    worktree=worktree,
+                    raw_path=_write_scope_path(scope),
+                    field=f"write_scope[{index}]",
+                    errors=errors,
+                )
 
     context_policy = packet.get("context_policy")
     if not isinstance(context_policy, dict):
@@ -181,8 +362,17 @@ def validate_worker_packet(packet: dict[str, Any]) -> list[str]:
         path = entry.get("path")
         if not isinstance(path, str) or not path.strip():
             errors.append(f"{prefix}.path must be a non-empty string")
+        elif is_v2 and isinstance(worktree, str) and os.path.isabs(worktree):
+            _validate_packet_path(
+                worktree=worktree,
+                raw_path=path,
+                field=f"{prefix}.path",
+                errors=errors,
+            )
         purpose = entry.get("purpose")
-        if purpose is not None and (not isinstance(purpose, str) or not purpose.strip()):
+        if is_v2 and (not isinstance(purpose, str) or not purpose.strip()):
+            errors.append(f"{prefix}.purpose must be a non-empty string")
+        elif purpose is not None and (not isinstance(purpose, str) or not purpose.strip()):
             errors.append(f"{prefix}.purpose must be a non-empty string")
 
     inline_context = packet.get("inline_context", [])
@@ -201,6 +391,13 @@ def validate_worker_packet(packet: dict[str, Any]) -> list[str]:
         excerpt = entry.get("excerpt")
         if not isinstance(path, str) or not path.strip():
             errors.append(f"{prefix}.path must be a non-empty string")
+        elif is_v2 and isinstance(worktree, str) and os.path.isabs(worktree):
+            _validate_packet_path(
+                worktree=worktree,
+                raw_path=path,
+                field=f"{prefix}.path",
+                errors=errors,
+            )
         if not isinstance(excerpt, str) or not excerpt.strip():
             errors.append(f"{prefix}.excerpt must be a non-empty string")
             continue
