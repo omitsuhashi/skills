@@ -139,6 +139,89 @@ def load_context_contract(skill_dir: Path) -> dict[str, Any]:
     return parse_context_contract((skill_dir / "context-contract.toml").read_text(encoding="utf-8"))
 
 
+def _first_int(mapping: dict[str, Any], fields: tuple[str, ...]) -> int | None:
+    for field in fields:
+        value = mapping.get(field)
+        if isinstance(value, int):
+            return value
+    return None
+
+
+def _budget(contract: dict[str, Any], operation_config: dict[str, Any]) -> dict[str, int | None]:
+    def override(fields: tuple[str, ...]) -> int | None:
+        value = _first_int(operation_config, fields)
+        return value if value is not None else _first_int(contract, fields)
+
+    return {
+        "word_budget": override(("word_budget",)),
+        "character_budget": override(("character_budget", "char_budget")),
+        "non_whitespace_character_budget": override(("non_whitespace_character_budget",)),
+        "estimated_token_budget": override(("estimated_token_budget", "token_budget")),
+        "max_file_count": override(("max_file_count",)),
+        "min_headroom_percent": override(
+            ("min_headroom_percent", "minimum_headroom_percent", "headroom_percent")
+        ),
+    }
+
+
+def _is_cjk(char: str) -> bool:
+    codepoint = ord(char)
+    return (
+        0x3040 <= codepoint <= 0x30FF
+        or 0x3400 <= codepoint <= 0x4DBF
+        or 0x4E00 <= codepoint <= 0x9FFF
+        or 0xF900 <= codepoint <= 0xFAFF
+        or 0xAC00 <= codepoint <= 0xD7AF
+    )
+
+
+def _estimated_token_count(text: str) -> int:
+    tokens = 0
+    ascii_run = 0
+
+    def flush_ascii() -> None:
+        nonlocal ascii_run, tokens
+        if ascii_run:
+            tokens += (ascii_run + 2) // 3
+            ascii_run = 0
+
+    for char in text:
+        if char.isspace():
+            flush_ascii()
+            continue
+        if _is_cjk(char):
+            flush_ascii()
+            tokens += 1
+        elif ord(char) < 128 and (char.isalnum() or char == "_"):
+            ascii_run += 1
+        elif ord(char) < 128:
+            flush_ascii()
+            tokens += 1
+        else:
+            flush_ascii()
+            tokens += 1
+    flush_ascii()
+    return tokens
+
+
+def _headroom_percent(used: int, budget: int | None) -> int | None:
+    if not budget:
+        return None
+    return ((budget - used) * 100) // budget
+
+
+def _require_positive(value: int | None, field: str) -> int:
+    if not isinstance(value, int) or value <= 0:
+        raise ContextContractError(f"{field} must be a positive integer")
+    return value
+
+
+def _require_non_negative(value: int | None, field: str) -> int:
+    if not isinstance(value, int) or value < 0:
+        raise ContextContractError(f"{field} must be a non-negative integer")
+    return value
+
+
 def operation_read_set(skill_dir: Path, repo_root: Path, operation: str) -> dict[str, Any]:
     contract = load_context_contract(skill_dir)
     operations = contract.get("operations")
@@ -157,10 +240,17 @@ def operation_read_set(skill_dir: Path, repo_root: Path, operation: str) -> dict
         raise ContextContractError("base_references must be an array")
     if not isinstance(operation_references, list):
         raise ContextContractError(f"operations.{operation}.references must be an array")
-    word_budget = operation_config.get("word_budget", contract.get("word_budget"))
-    max_file_count = operation_config.get("max_file_count", contract.get("max_file_count"))
-    if not isinstance(word_budget, int) or not isinstance(max_file_count, int):
-        raise ContextContractError("word_budget and max_file_count must be integers")
+    schema_version = contract.get("schema_version", 1)
+    if schema_version not in (1, 2):
+        raise ContextContractError("schema_version must be 1 or 2")
+    budget = _budget(contract, operation_config)
+    max_file_count = _require_positive(budget["max_file_count"], "max_file_count")
+    if schema_version == 1:
+        _require_positive(budget["word_budget"], "word_budget")
+    else:
+        _require_positive(budget["character_budget"], "character_budget")
+        _require_positive(budget["estimated_token_budget"], "estimated_token_budget")
+        _require_non_negative(budget["min_headroom_percent"], "min_headroom_percent")
 
     relative_files = [entrypoint, *base_references, *operation_references]
     absolute_files = [skill_dir / path for path in relative_files]
@@ -168,14 +258,50 @@ def operation_read_set(skill_dir: Path, repo_root: Path, operation: str) -> dict
     if missing:
         raise ContextContractError("missing context file: " + ", ".join(missing))
 
-    word_count = sum(len(WORD_RE.findall(path.read_text(encoding="utf-8"))) for path in absolute_files)
+    texts = [path.read_text(encoding="utf-8") for path in absolute_files]
+    word_count = sum(len(WORD_RE.findall(text)) for text in texts)
+    character_count = sum(len(text) for text in texts)
+    non_whitespace_character_count = sum(1 for text in texts for char in text if not char.isspace())
+    estimated_token_count = sum(_estimated_token_count(text) for text in texts)
     file_count = len(absolute_files)
+    word_budget = budget["word_budget"]
+    character_budget = budget["character_budget"]
+    non_whitespace_budget = budget["non_whitespace_character_budget"]
+    estimated_token_budget = budget["estimated_token_budget"]
+    headroom_percent = (
+        _headroom_percent(estimated_token_count, estimated_token_budget)
+        if estimated_token_budget
+        else _headroom_percent(character_count, character_budget)
+        if character_budget
+        else _headroom_percent(word_count, word_budget)
+    )
+    min_headroom = budget["min_headroom_percent"]
+    within_budget = file_count <= max_file_count
+    if word_budget:
+        within_budget = within_budget and word_count <= word_budget
+    if character_budget:
+        within_budget = within_budget and character_count <= character_budget
+    if non_whitespace_budget:
+        within_budget = within_budget and non_whitespace_character_count <= non_whitespace_budget
+    if estimated_token_budget:
+        within_budget = within_budget and estimated_token_count <= estimated_token_budget
+    if isinstance(min_headroom, int) and isinstance(headroom_percent, int):
+        within_budget = within_budget and headroom_percent >= min_headroom
+
     return {
         "files": [path.relative_to(repo_root).as_posix() for path in absolute_files],
         "file_count": file_count,
         "max_file_count": max_file_count,
         "word_count": word_count,
         "word_budget": word_budget,
-        "budget_headroom": word_budget - word_count,
-        "within_budget": word_count <= word_budget and file_count <= max_file_count,
+        "budget_headroom": word_budget - word_count if word_budget else None,
+        "character_count": character_count,
+        "character_budget": character_budget,
+        "non_whitespace_character_count": non_whitespace_character_count,
+        "non_whitespace_character_budget": non_whitespace_budget,
+        "estimated_token_count": estimated_token_count,
+        "estimated_token_budget": estimated_token_budget,
+        "headroom_percent": headroom_percent,
+        "min_headroom_percent": min_headroom,
+        "within_budget": within_budget,
     }

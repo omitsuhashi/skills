@@ -11,10 +11,12 @@ from .review import review_approved_or_accepted
 from .scheduler import compute_next_actions
 from .validation.execution_envelope import validate_execution_envelope
 from .validation.runtime_state import validate_runtime_state
+from .worker_packet import file_sha256
 
 
 DEFAULT_MAX_WORDS = 600
 DEFAULT_OUTPUT_NAME = "resume-brief.md"
+DEFAULT_META_NAME = "resume-brief.meta.json"
 MISSING_ENVELOPE = "unavailable - execution envelope missing"
 
 
@@ -37,6 +39,193 @@ class ResumeBriefInputError(ResumeBriefError):
 
 def word_count(text: str) -> int:
     return len(re.findall(r"\S+", text))
+
+
+def _json_object_or_empty(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    value = load_json(path)
+    return value if isinstance(value, dict) else {}
+
+
+def _events_revision(path: Path) -> dict[str, Any]:
+    line_count = 0
+    last_event_id: str | None = None
+    if not path.exists():
+        return {
+            "path": str(path),
+            "sha256": None,
+            "missing": True,
+            "line_count": line_count,
+            "last_event_id": last_event_id,
+        }
+    with path.open(encoding="utf-8") as handle:
+        for line in handle:
+            if not line.strip():
+                continue
+            line_count += 1
+            try:
+                event = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(event, dict) and isinstance(event.get("event_id"), str):
+                last_event_id = event["event_id"]
+    return {
+        "path": str(path),
+        "sha256": file_sha256(path),
+        "line_count": line_count,
+        "last_event_id": last_event_id,
+    }
+
+
+def _runtime_revision(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {
+            "path": str(path),
+            "sha256": None,
+            "missing": True,
+            "envelope_revision": None,
+        }
+    runtime = _json_object_or_empty(path)
+    return {
+        "path": str(path),
+        "sha256": file_sha256(path),
+        "envelope_revision": runtime.get("envelope_revision"),
+    }
+
+
+def _envelope_revision(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {
+            "path": str(path),
+            "sha256": None,
+            "missing": True,
+            "revision": None,
+        }
+    envelope = _json_object_or_empty(path)
+    return {
+        "path": str(path),
+        "sha256": file_sha256(path),
+        "revision": envelope.get("revision"),
+    }
+
+
+def build_resume_brief_meta(
+    runtime_root: str | Path,
+    *,
+    brief_path: str | Path,
+    envelope_path: str | Path | None = None,
+    word_count: int,
+    max_words: int,
+) -> dict[str, Any]:
+    root = Path(runtime_root).resolve(strict=False)
+    runtime_path = root / "runtime-state.json"
+    events_path = root / "events.jsonl"
+    candidate_envelope = (
+        Path(envelope_path).resolve(strict=False)
+        if envelope_path
+        else root / "execution-envelope.json"
+    )
+    return {
+        "schema_version": 2,
+        "artifact": "resume-brief",
+        "runtime_root": str(root),
+        "brief_path": str(Path(brief_path).resolve(strict=False)),
+        "word_count": word_count,
+        "max_words": max_words,
+        "sources": {
+            "execution_envelope": _envelope_revision(candidate_envelope),
+            "runtime_state": _runtime_revision(runtime_path),
+            "events": _events_revision(events_path),
+        },
+    }
+
+
+def _validate_source_sha(record: dict[str, Any], field: str, errors: list[str]) -> None:
+    path = record.get("path")
+    expected = record.get("sha256")
+    if not isinstance(path, str) or not path:
+        errors.append(f"{field}.path is required")
+        return
+    source_path = Path(path)
+    if expected is None and record.get("missing") is True:
+        if source_path.exists():
+            errors.append(f"{field}.path is stale; source now exists")
+        return
+    if not isinstance(expected, str) or not expected:
+        errors.append(f"{field}.sha256 is required")
+        return
+    if not source_path.exists():
+        errors.append(f"{field}.path is missing")
+        return
+    actual = file_sha256(source_path)
+    if actual != expected:
+        errors.append(f"{field}.sha256 is stale")
+
+
+def validate_resume_brief_cache(
+    runtime_root: str | Path,
+    *,
+    meta_path: str | Path | None = None,
+) -> tuple[list[str], list[str]]:
+    root = Path(runtime_root)
+    brief_path = root / DEFAULT_OUTPUT_NAME
+    resolved_meta_path = Path(meta_path) if meta_path else root / DEFAULT_META_NAME
+    if not brief_path.exists():
+        return [f"resume brief is missing: {brief_path}"], []
+    if not resolved_meta_path.exists():
+        return [], ["legacy resume brief without meta"]
+
+    meta = load_json(resolved_meta_path)
+    errors: list[str] = []
+    warnings: list[str] = []
+    if not isinstance(meta, dict):
+        return ["resume brief meta must be a JSON object"], warnings
+    if meta.get("schema_version") != 2:
+        errors.append("resume brief meta schema_version must be 2")
+    if meta.get("artifact") != "resume-brief":
+        errors.append("resume brief meta artifact must be resume-brief")
+
+    sources = meta.get("sources")
+    if not isinstance(sources, dict):
+        errors.append("resume brief meta sources is required")
+        return errors, warnings
+
+    envelope = sources.get("execution_envelope")
+    if not isinstance(envelope, dict):
+        errors.append("execution_envelope source is required")
+    else:
+        _validate_source_sha(envelope, "execution_envelope", errors)
+        path = envelope.get("path")
+        if isinstance(path, str) and Path(path).exists():
+            current = _json_object_or_empty(Path(path))
+            if current.get("revision") != envelope.get("revision"):
+                errors.append("execution_envelope.revision is stale")
+
+    runtime = sources.get("runtime_state")
+    if not isinstance(runtime, dict):
+        errors.append("runtime_state source is required")
+    else:
+        _validate_source_sha(runtime, "runtime_state", errors)
+        path = runtime.get("path")
+        if isinstance(path, str) and Path(path).exists():
+            current = _json_object_or_empty(Path(path))
+            if current.get("envelope_revision") != runtime.get("envelope_revision"):
+                errors.append("runtime_state.envelope_revision is stale")
+
+    events = sources.get("events")
+    if not isinstance(events, dict):
+        errors.append("events source is required")
+    else:
+        _validate_source_sha(events, "events", errors)
+        path = events.get("path")
+        if isinstance(path, str) and Path(path).exists():
+            current = _events_revision(Path(path))
+            if current.get("line_count") != events.get("line_count"):
+                errors.append("events.line_count is stale")
+            if current.get("last_event_id") != events.get("last_event_id"):
+                errors.append("events.last_event_id is stale")
+    return errors, warnings
 
 
 def _copy_issue_metadata(record: dict[str, Any], event: dict[str, Any]) -> None:

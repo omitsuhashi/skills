@@ -4,23 +4,33 @@ Give each worker a normalized dispatch packet built from:
 
 - `assets/templates/worker-packet.json`
 - `assets/schemas/worker-packet.schema.json`
+- `assets/schemas/worker-packet-v1.schema.json` for existing-run compatibility only
 - `scripts/build_worker_packet.py`
 - `scripts/validate_worker_packet.py`
 
 The packet contains issue ID/title, Epic ID, dispatch ID, branch, worktree path,
-exclusive write scope, durable read paths, short task summary, acceptance
-criteria, verification commands, stop conditions, and report contract.
+task kind, access mode, source revision, exclusive write scope, durable read
+paths with purpose, short task summary, acceptance criteria, verification
+commands, stop conditions, and report contract.
 
 ## Rules
 
 - Re-read assigned issue and spec from durable paths.
-- Keep the packet paths-first and validate it before dispatch.
+- Keep the packet paths-first and validate it before dispatch. V2 is the default
+  packet contract; V1 remains readable for old runs only.
+- Use `task_kind=implement|fix|review|inspect`.
+- Use `access_mode=read_write` with non-empty `write_scope` for implement/fix.
+- Use `access_mode=read_only` with `write_scope=[]` for review/inspect.
+- Record `source_revision` for the execution envelope, runtime state, and issue
+  source so stale dispatch packets are rejected before work starts.
 - Enforce default packet budget 450 words and hard budget 800 words.
 - Keep `read_paths` to 8 entries or fewer.
+- Require `read_paths[].purpose`.
 - Keep each inline excerpt to 120 words or fewer and all inline excerpts to 300 words or fewer.
 - Do not paste full spec, ledger, ADR, glossary, or unrelated code into the worker packet.
 - Treat `PACKET_CONTEXT_BUDGET_EXCEEDED` as fail-fast; do not auto-truncate packet text.
-- Stay inside write scope.
+- Stay inside write scope. V2 packet validation rejects path traversal and
+  worker-visible paths outside the assigned worktree.
 - Do not edit coordinator-owned envelope, runtime snapshot, event log, or shared ledger unless explicitly assigned.
 - Use `tdd` or an approved equivalent for behavior changes.
 - Run targeted verification, update issue-owned docs/progress, then run fresh final verification.

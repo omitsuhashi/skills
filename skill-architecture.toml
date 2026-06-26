@@ -1,0 +1,32 @@
+schema_version = 1
+
+[families.repository-change-loop]
+description = "Repository change workflow skills that move approved work from design through local implementation."
+user_facing_skills = [
+  "grill-to-pr-loop",
+  "issue-implementation-loop",
+]
+forbidden_standalone_skill_names = [
+  "context-manager",
+  "dependency-graph",
+  "execution-envelope",
+  "human-wait",
+  "remote-delivery",
+  "review-gate",
+  "runtime-state",
+  "scheduler",
+  "worker-contract",
+  "worktree-lifecycle",
+]
+internal_components = [
+  "context contracts",
+  "dependency graph",
+  "execution envelope",
+  "human wait routing",
+  "remote delivery",
+  "review gate",
+  "runtime state",
+  "scheduler",
+  "worker contract",
+  "worktree lifecycle",
+]

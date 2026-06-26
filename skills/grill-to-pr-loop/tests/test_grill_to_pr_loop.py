@@ -48,30 +48,20 @@ class GrillToPrLoopTests(unittest.TestCase):
         ):
             self.assertIn(required, text)
 
-    def test_workflow_contract_is_router_to_one_level_references(self) -> None:
+    def test_workflow_contract_is_deprecated_shim_to_context_contract(self) -> None:
         text = WORKFLOW_ROUTER.read_text(encoding="utf-8")
         self.assertLessEqual(len(text.split()), 520)
 
-        expected = (
-            "core.md",
-            "planning-contract.md",
-            "local-issue-ledger.md",
-            "execution-handoff.md",
-            "remote-delivery.md",
-            "common-mistakes.md",
-        )
-        for reference in expected:
-            self.assertIn(reference, text)
-            self.assertTrue((SKILL_DIR / "references" / reference).exists(), reference)
+        self.assertIn("deprecated shim", text.lower())
+        self.assertIn("context-contract.toml", text)
+        self.assertIn("core.md", text)
 
     def test_github_mirror_read_set_contains_remote_gate(self) -> None:
-        router_text = WORKFLOW_ROUTER.read_text(encoding="utf-8")
+        contract_text = (SKILL_DIR / "context-contract.toml").read_text(encoding="utf-8")
         remote_text = (SKILL_DIR / "references" / "remote-delivery.md").read_text(encoding="utf-8")
 
-        self.assertIn(
-            "`delivery`: read `remote-delivery.md`.",
-            router_text,
-        )
+        self.assertIn('[operations.delivery]', contract_text)
+        self.assertIn('"references/remote-delivery.md"', contract_text)
         self.assertIn("## GitHub Mirror Gate", remote_text)
         for required in (
             "Confirm the remote points to GitHub.",
@@ -82,13 +72,22 @@ class GrillToPrLoopTests(unittest.TestCase):
         ):
             self.assertIn(required, remote_text)
 
-    def test_skill_entrypoint_points_to_workflow_router(self) -> None:
+    def test_skill_entrypoint_points_to_context_contract_router(self) -> None:
         text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
 
         self.assertLessEqual(len(text.split()), 850)
         self.assertIn("references/core.md", text)
-        self.assertIn("references/workflow-contract.md", text)
+        self.assertIn("context-contract.toml", text)
         self.assertIn("operation router", text)
+        for operation_reference in (
+            "planning-contract.md",
+            "local-issue-ledger.md",
+            "execution-handoff.md",
+            "remote-delivery.md",
+            "common-mistakes.md",
+            "workflow-contract.md",
+        ):
+            self.assertNotIn(operation_reference, text)
 
     def test_phase_gate_approvals_require_local_commit(self) -> None:
         skill_text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")

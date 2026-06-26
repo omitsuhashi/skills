@@ -33,4 +33,18 @@ python3 <skill-dir>/scripts/reconcile_git_state.py <execution-envelope.json> --j
 
 On resume, read `<runtime-root>/resume-brief.md` first when present. It is a bounded cache for orientation only: use it to find active work, reviewable/fixable issues, waiting human requests, pending remote actions, verified commit ranges, latest report paths, and the recommended next operation.
 
-If the brief lists inconsistencies, do not continue from the brief alone. Compare the execution envelope, `runtime-state.json`, `events.jsonl`, worker/reviewer reports, and git state. Rebuild the snapshot from `events.jsonl` when the snapshot is corrupt or stale, then regenerate the brief. If the brief is missing, stale, over budget, or contradicts canonical state, discard and regenerate it rather than editing it by hand.
+When `<runtime-root>/resume-brief.meta.json` exists, validate it before using
+the brief:
+
+```bash
+python3 <skill-dir>/scripts/validate_resume_brief.py <runtime-root>
+```
+
+Old runs may have only `resume-brief.md`; treat those briefs as readable legacy
+caches and regenerate them after orientation. If the brief lists inconsistencies
+or validation reports stale runtime, envelope, or event sources, do not continue
+from the brief alone. Compare the execution envelope, `runtime-state.json`,
+`events.jsonl`, worker/reviewer reports, and git state. Rebuild the snapshot
+from `events.jsonl` when the snapshot is corrupt or stale, then regenerate the
+brief. If the brief is missing, stale, over budget, or contradicts canonical
+state, discard and regenerate it rather than editing it by hand.

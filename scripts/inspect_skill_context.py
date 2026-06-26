@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Inspect a loop-skill context contract read set."""
+"""Inspect a skill context contract read set."""
 
 from __future__ import annotations
 
@@ -14,9 +14,7 @@ from skill_context.contract import ContractError, REPO_ROOT, inspect_operation
 
 def resolve_skill_path(value: str) -> Path:
     path = Path(value)
-    if path.is_absolute():
-        return path
-    return Path.cwd() / path
+    return path if path.is_absolute() else REPO_ROOT / path
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -37,8 +35,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     else:
         print(f"skill: {result['skill']}")
         print(f"operation: {result['operation']}")
+        print(f"schema_version: {result['schema_version']}")
         print(f"files: {result['file_count']} / {result['max_file_count']}")
         print(f"words: {result['word_count']} / {result['word_budget']}")
+        print(f"characters: {result['character_count']}")
+        print(f"non_whitespace_characters: {result['non_whitespace_character_count']}")
+        print(f"estimated_tokens: {result['estimated_token_count']}")
+        print(f"headroom_percent: {result['headroom_percent']}")
         print(f"budget_headroom: {result['budget_headroom']}")
         for file_path in result["files"]:
             print(f"- {file_path}")

@@ -50,6 +50,12 @@ PR #19 で loop skill V3 最適化は `main` に入り、context contract、oper
 - `skills/issue-implementation-loop/assets/schemas/worker-packet.schema.json` は schema version 1 で、`task_kind`、`access_mode`、`source_revision`、root 境界検証を持たない。
 - `skills/issue-implementation-loop/scripts/build_resume_brief.py` は `resume-brief.md` を生成するが、`resume-brief.meta.json` は生成しない。
 
+## SRO4-001 Canonical Baseline
+
+SRO4-001 は V4 後続 issue の土台として、root の `skill-architecture.toml` を repository-change-loop family policy の正本にする。policy は user-facing loop skill を `grill-to-pr-loop` と `issue-implementation-loop` の 2 つに限定し、scheduler / runtime / review / worker などの内部機構を standalone skill にしない forbidden standalone skill 名を機械可読に保持する。
+
+current checkout の context metrics baseline は `knowledge/wiki/syntheses/skill-repository-optimization-v4-context-baseline.json` に保存する。この baseline は schema v1 context contract の word-count metrics を固定するものであり、character count、estimated token count、headroom percent、shared metric library は SRO4-002 の範囲に残す。
+
 ## Accepted Decisions
 
 - 新しい user-facing skill は作らない。`scheduler`、`runtime-state`、`review-gate`、`worker-contract`、`context-manager`、`remote-delivery`、`worktree-lifecycle` は internal reference / schema / script / library とする。
@@ -194,6 +200,7 @@ Spec Gate / Issue Gate / Execution Plan Gate は承認後に、承認済み loca
 
 - [Skill Repository Optimization V4 Design](../sources/2026-06-26-skill-repository-optimization-v4-design.md)
 - [Skill Repository Optimization V4 Issues](skill-repository-optimization-v4-issues.md)
+- [Skill Repository Optimization V4 Context Baseline](skill-repository-optimization-v4-context-baseline.json)
 - [Loop Skill Architecture V3 Spec](loop-skill-architecture-v3-spec.md)
 - [Loop Skill Architecture V3 Issues](loop-skill-architecture-v3-issues.md)
 - [Loop Skill Context Optimization Spec](loop-skill-context-optimization-spec.md)

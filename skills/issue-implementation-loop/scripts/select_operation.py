@@ -53,7 +53,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         if result.get("target_issue"):
             print(f"target_issue: {result['target_issue']}")
         budget = result["word_budget_result"]
-        print(f"words: {budget['word_count']} / {budget['word_budget']}")
+        if budget.get("word_budget"):
+            print(f"words: {budget['word_count']} / {budget['word_budget']}")
+        else:
+            print(f"estimated_tokens: {budget['estimated_token_count']} / {budget['estimated_token_budget']}")
+            print(f"characters: {budget['character_count']} / {budget['character_budget']}")
+            print(f"headroom_percent: {budget['headroom_percent']}")
         print(f"files: {budget['file_count']} / {budget['max_file_count']}")
         for path in result["read_set"]:
             print(f"- {path}")

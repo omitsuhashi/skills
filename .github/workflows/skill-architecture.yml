@@ -1,0 +1,61 @@
+name: Skill Architecture
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - "codex/**"
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.9"
+          - "3.12"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Validate skill architecture
+        run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 scripts/validate_skill_architecture.py --all
+
+      - name: Validate skill context
+        run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 scripts/validate_skill_context.py --all
+
+      - name: Write context report
+        run: |
+          mkdir -p .artifacts
+          PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 scripts/report_skill_context.py --all --json > .artifacts/skill-context-report.json
+          python3 -m json.tool .artifacts/skill-context-report.json > /tmp/skill-context-report.pretty.json
+          mv /tmp/skill-context-report.pretty.json .artifacts/skill-context-report.json
+
+      - name: Run grill-to-pr-loop tests
+        run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 -m unittest discover -s skills/grill-to-pr-loop/tests
+
+      - name: Run issue-implementation-loop tests
+        run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests
+
+      - name: Run llm-wiki tests
+        run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 -m unittest discover -s skills/llm-wiki/tests
+
+      - name: Check diff whitespace
+        run: git diff --check
+
+      - name: Upload context report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skill-context-report-${{ matrix.python-version }}
+          path: .artifacts/skill-context-report.json
