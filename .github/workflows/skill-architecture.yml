@@ -52,6 +52,9 @@ jobs:
       - name: Run llm-wiki tests
         run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 -m unittest discover -s skills/llm-wiki/tests
 
+      - name: Run task-management tests
+        run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 -m unittest discover -s skills/task-management/tests
+
       - name: Check diff whitespace
         shell: bash
         run: |
