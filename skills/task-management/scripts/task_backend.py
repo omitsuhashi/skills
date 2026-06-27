@@ -36,7 +36,14 @@ PROVIDER_SPECIFIC_MARKERS = (
     "repository_id",
     "repositoryid",
     "auth",
+    "header",
+    "headers",
     "token",
+    "transport",
+    "request_id",
+    "requestid",
+    "status_code",
+    "statuscode",
     "raw_payload",
     "rawpayload",
     "message_id",
@@ -78,8 +85,13 @@ def _provider_specific_keys(value: object, prefix: str = "") -> list[str]:
 def validate_backend_neutral_fields(fields: Mapping[str, object]) -> None:
     invalid = sorted(set(fields) - TASK_FIELD_NAMES)
     provider_leaks = _provider_specific_keys(fields)
-    if invalid or provider_leaks:
-        details = ", ".join(sorted(set(invalid + provider_leaks)))
+    invalid_values = [
+        field
+        for field, value in fields.items()
+        if value is not None and not isinstance(value, (str, bool))
+    ]
+    if invalid or provider_leaks or invalid_values:
+        details = ", ".join(sorted(set(invalid + provider_leaks + invalid_values)))
         raise ValueError(f"non-neutral task field(s): {details}")
 
 
@@ -153,6 +165,7 @@ class TaskSnapshot:
     backend_metadata: Mapping[str, object] = field(default_factory=dict)
 
     def to_public_dict(self) -> dict[str, object]:
+        validate_backend_neutral_fields(self.fields)
         return _compact(
             {
                 "task_ref": self.task_ref.to_public_dict(),

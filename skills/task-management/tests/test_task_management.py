@@ -109,6 +109,13 @@ class TaskManagementSkillTests(unittest.TestCase):
                 work_unit_id="inbox",
                 metadata={"rawPayload": {"messageId": "abc123"}},
             )
+        with self.assertRaises(ValueError):
+            backend.TaskDraft(
+                title="Review source",
+                body="Review raw source.",
+                work_unit_id="inbox",
+                metadata={"transport": {"requestId": "abc123", "statusCode": 200}},
+            )
 
     def test_public_dicts_do_not_expose_backend_metadata(self) -> None:
         backend = load_module("task_backend", SKILL_DIR / "scripts" / "task_backend.py")
@@ -139,6 +146,22 @@ class TaskManagementSkillTests(unittest.TestCase):
         self.assertNotIn("backend_metadata", encoded)
         for forbidden in ("githubGraphqlId", "repositoryId", "projectFieldId"):
             self.assertNotIn(forbidden, encoded)
+
+    def test_snapshot_public_dict_rejects_transport_metadata_in_fields(self) -> None:
+        backend = load_module("task_backend", SKILL_DIR / "scripts" / "task_backend.py")
+        snapshot = backend.TaskSnapshot(
+            task_ref=backend.TaskRef(
+                backend="github-projects",
+                id="task-1",
+                url="https://github.com/orgs/the3-inc/projects/7?task=task-1",
+            ),
+            title="Review source",
+            body="Review source.",
+            fields={"source_ref": {"transport": {"requestId": "abc123"}}},
+        )
+
+        with self.assertRaises(ValueError):
+            snapshot.to_public_dict()
 
     def test_query_update_and_comment_use_backend_neutral_fields(self) -> None:
         backend = load_module("task_backend", SKILL_DIR / "scripts" / "task_backend.py")
@@ -191,6 +214,8 @@ class TaskManagementSkillTests(unittest.TestCase):
             adapter.update_fields(first, {"github_graphql_id": "PVT_kw..."})
         with self.assertRaises(ValueError):
             adapter.update_fields(first, {"source_ref": {"rawPayload": "payload"}})
+        with self.assertRaises(ValueError):
+            adapter.update_fields(first, {"source_ref": {"trail": []}})
 
     def test_query_supports_recommended_backend_neutral_fields(self) -> None:
         backend = load_module("task_backend", SKILL_DIR / "scripts" / "task_backend.py")

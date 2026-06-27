@@ -4,7 +4,7 @@
 
 - `TaskDraft`: Proposed task before an external write. It may include proposed fields such as due date or urgency, but it is not task state.
 - `TaskRef`: Stable public reference returned after backend registration. It must link back to the backend without exposing provider-private IDs.
-- `TaskQuery`: Backend-neutral filters for retrieval, including work unit, due date, status, urgency, importance, automation mode, and assignee when available.
+- `TaskQuery`: Backend-neutral filters for retrieval, including work unit, task type, due date, status, urgency, importance, automation mode, approval requirement, source reference, and assignee when available.
 - `TaskSnapshot`: Read-only backend view. Treat status, due date, assignee, task body, priority, and project fields as backend-owned state.
 - `TaskWriteResult`: Result of create, update, or comment operations.
 - `TaskBackendAdapter`: Adapter interface for create, read, query, update, and progress comments.
@@ -26,7 +26,7 @@ Allowed backend-neutral task fields are:
 - `source_ref`
 - `assignee`
 
-Reject provider-specific field names such as GraphQL IDs, project field IDs, option IDs, repository IDs, auth tokens, raw platform payloads, or transport message IDs at the public contract boundary.
+Reject provider-specific field names such as GraphQL IDs, project field IDs, option IDs, repository IDs, auth tokens, raw platform payloads, request IDs, headers, status codes, or transport message IDs at the public contract boundary. Backend-neutral fields should use scalar values; do not pass nested provider payloads as task field values.
 
 ## Local Persistence Rule
 
