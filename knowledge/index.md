@@ -56,6 +56,8 @@ _現在なし。_
   検索語: skill repository optimization, SRO4-001, context baseline, operation metrics, word count, grill-to-pr-loop, issue-implementation-loop
 - [Loop Skill Operational Simplicity Spec](wiki/syntheses/loop-skill-operational-simplicity-spec.md) — loop 系 skill の適用基準、mental model、workflow complexity report を追加する Spec Gate 承認済み契約。
   検索語: grill-to-pr-loop, issue-implementation-loop, operational simplicity, workflow complexity, mental model, 適用基準, 複雑性, コンテキスト最適化
+- [Loop Skill Operational Simplicity Issues](wiki/syntheses/loop-skill-operational-simplicity-issues.md) — loop skill operational simplicity の日本語 local-first issue ledger と blocker graph。
+  検索語: grill-to-pr-loop, issue-implementation-loop, local issue, blocker graph, operational simplicity, workflow complexity, mental model, ローカルIssue
 - [Grill To PR Loop Epic Base Delivery Policy Spec](wiki/syntheses/grill-to-pr-loop-epic-base-delivery-policy-spec.md) — issue PR を `codex/<epic-id>/epic-base` に集約し、issue PR は guarded agent merge、final PR merge は human-only とする delivery policy。
   検索語: grill-to-pr-loop, issue-implementation-loop, epic_base, epic-base, batch_issue_prs, issue PR, final PR, merge policy, review cycles, PR配送
 - [Grill To PR Loop Epic Base Delivery Policy Issues](wiki/syntheses/grill-to-pr-loop-epic-base-delivery-policy-issues.md) — epic-base delivery policy 実装のローカルIssue ledger。

@@ -1,0 +1,232 @@
+# Loop Skill Operational Simplicity Issues
+
+## 状態
+
+Issue Gate 承認済み。Spec Gate は承認済み。Execution Plan Gate、実装、push、PR 作成、remote write は未承認。
+
+## Ledger
+
+| Epic ID | ローカルID | タイトル | レビュー状態 | 実行状態 | ブロック元 | ブロック先 | GitHub Issue | 実装レビュー | PR |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| loop-skill-operational-simplicity | LSOS-001 | loop 系の適用基準を明文化する | 承認済み | 実行可能 | なし | LSOS-002, LSOS-003 | 未作成 | 未実施 | 未作成 |
+| loop-skill-operational-simplicity | LSOS-002 | loop 系 mental model を 1 ページ化する | 承認済み | ブロック中 | LSOS-001 | LSOS-004 | 未作成 | 未実施 | 未作成 |
+| loop-skill-operational-simplicity | LSOS-003 | workflow complexity report を追加する | 承認済み | ブロック中 | LSOS-001 | LSOS-004 | 未作成 | 未実施 | 未作成 |
+| loop-skill-operational-simplicity | LSOS-004 | regression tests と wiki ledger を更新する | 承認済み | ブロック中 | LSOS-002, LSOS-003 | なし | 未作成 | 未実施 | 未作成 |
+
+## ブロッカーグラフ
+
+- LSOS-001: ブロック元 なし。LSOS-002 と LSOS-003 を release する。
+- LSOS-002: LSOS-001 の適用基準を前提に mental model を作る。
+- LSOS-003: LSOS-001 の適用基準を前提に operator-facing complexity を定義する。
+- LSOS-004: LSOS-002 と LSOS-003 の成果を統合して regression tests と wiki ledger を仕上げる。
+
+## LSOS-001
+
+### Epic ID
+
+`loop-skill-operational-simplicity`
+
+### タイトル
+
+loop 系の適用基準を明文化する
+
+### 作るもの
+
+`grill-to-pr-loop` と `issue-implementation-loop` の入口に、loop 系を使う条件、使わない条件、止まる条件を短く追加する。小さい単発修正は通常の direct implementation / task-specific skill に逃がし、長い repository change だけ loop 系に乗せる。
+
+### 受け入れ条件
+
+- [ ] `skills/grill-to-pr-loop/SKILL.md` または operation-owned reference から、loop 系を使うケースと使わないケースが 1 screen 相当で分かる。
+- [ ] `skills/issue-implementation-loop/SKILL.md` から、approved packet 前提、worker context 必須、coordinator 実装禁止が適用条件として分かる。
+- [ ] 新しい user-facing skill は追加されない。
+- [ ] `validate_skill_architecture.py --all` が通る。
+- [ ] `validate_skill_context.py --all` が通る。
+
+### ブロッカー
+
+- 実行状態: 実行可能
+- ブロック元: なし
+- ブロック先: LSOS-002, LSOS-003
+
+### 想定 write scope
+
+- `path:skills/grill-to-pr-loop/SKILL.md`
+- `path:skills/grill-to-pr-loop/references`
+- `path:skills/issue-implementation-loop/SKILL.md`
+- `path:skills/issue-implementation-loop/references`
+- `path:skills/grill-to-pr-loop/tests`
+- `path:skills/issue-implementation-loop/tests`
+
+### 必要な文脈
+
+- 仕様: [Loop Skill Operational Simplicity Spec](loop-skill-operational-simplicity-spec.md)
+- policy: [skill-architecture.toml](../../../skill-architecture.toml)
+- current context contracts: [grill-to-pr-loop/context-contract.toml](../../../skills/grill-to-pr-loop/context-contract.toml), [issue-implementation-loop/context-contract.toml](../../../skills/issue-implementation-loop/context-contract.toml)
+
+### 検証
+
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_architecture.py --all`
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_context.py --all`
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/grill-to-pr-loop/tests`
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests`
+
+## LSOS-002
+
+### Epic ID
+
+`loop-skill-operational-simplicity`
+
+### タイトル
+
+loop 系 mental model を 1 ページ化する
+
+### 作るもの
+
+coordinator、worker、reviewer、runtime state、local ledger、remote delivery の関係を 1 ページで説明する operator-facing reference を追加する。default read-set を肥大化させず、入口から必要時に発見できる形にする。
+
+### 受け入れ条件
+
+- [ ] mental model は coordinator / worker / reviewer / runtime state / local ledger / remote delivery の責務境界を説明している。
+- [ ] mental model は `issue-implementation-loop` の実行者が最初に読む役割境界として使える。
+- [ ] mental model の追加後も `validate_skill_context.py --all` が通る。
+- [ ] default read-set に不要な重い reference を追加しない。
+
+### ブロッカー
+
+- 実行状態: ブロック中
+- ブロック元: LSOS-001
+- ブロック先: LSOS-004
+
+### 想定 write scope
+
+- `path:skills/grill-to-pr-loop/references`
+- `path:skills/issue-implementation-loop/references`
+- `path:skills/grill-to-pr-loop/SKILL.md`
+- `path:skills/issue-implementation-loop/SKILL.md`
+- `path:skills/grill-to-pr-loop/tests`
+- `path:skills/issue-implementation-loop/tests`
+
+### 必要な文脈
+
+- 仕様: [Loop Skill Operational Simplicity Spec](loop-skill-operational-simplicity-spec.md)
+- `skills/grill-to-pr-loop/references/core.md`
+- `skills/issue-implementation-loop/references/core.md`
+- `skills/issue-implementation-loop/references/runtime-state.md`
+- `skills/issue-implementation-loop/references/worker-contract.md`
+
+### 検証
+
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_context.py --all`
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/grill-to-pr-loop/tests`
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests`
+- `rg -n "coordinator|worker|reviewer|runtime state|remote delivery" skills/grill-to-pr-loop skills/issue-implementation-loop`
+
+## LSOS-003
+
+### Epic ID
+
+`loop-skill-operational-simplicity`
+
+### タイトル
+
+workflow complexity report を追加する
+
+### 作るもの
+
+`scripts/report_skill_context.py --all --json` に、read-set context metrics とは別の `workflow_complexity` summary を追加する。gate 数、operation 数、runtime artifact 数、worker-context 必須、review cycle、human wait、remote delivery の有無を advisory として返す。
+
+### 受け入れ条件
+
+- [ ] JSON output に top-level `workflow_complexity` がある。
+- [ ] `workflow_complexity` は operation count、gate count、runtime artifact count、worker-context flag、review-cycle flag、remote-delivery flag を含む。
+- [ ] text output は既存 context report を読みづらくしない。complexity は必要な warning だけ短く出す。
+- [ ] `validate_skill_context.py` は read-set budget validator のままで、complexity を hard failure にしない。
+- [ ] workflow complexity の tests が JSON shape と advisory behavior を固定する。
+
+### ブロッカー
+
+- 実行状態: ブロック中
+- ブロック元: LSOS-001
+- ブロック先: LSOS-004
+
+### 想定 write scope
+
+- `path:scripts/report_skill_context.py`
+- `path:scripts/skill_context`
+- `path:scripts`
+- `path:skills/grill-to-pr-loop/tests`
+- `path:skills/issue-implementation-loop/tests`
+
+### 必要な文脈
+
+- 仕様: [Loop Skill Operational Simplicity Spec](loop-skill-operational-simplicity-spec.md)
+- `scripts/report_skill_context.py`
+- `scripts/skill_context/contract.py`
+- `scripts/skill_context/metrics.py`
+- `skill-architecture.toml`
+
+### 検証
+
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/report_skill_context.py --all --json`
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/report_skill_context.py --all`
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s scripts`
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_context.py --all`
+
+## LSOS-004
+
+### Epic ID
+
+`loop-skill-operational-simplicity`
+
+### タイトル
+
+regression tests と wiki ledger を更新する
+
+### 作るもの
+
+LSOS-001 から LSOS-003 の成果を統合し、regression tests、wiki index/log、issue ledger の implementation evidence を仕上げる。
+
+### 受け入れ条件
+
+- [ ] 適用基準、mental model discoverability、workflow complexity JSON shape が tests で固定されている。
+- [ ] `knowledge/wiki/syntheses/loop-skill-operational-simplicity-issues.md` に各 issue の実装 evidence、検証結果、review 結果が反映されている。
+- [ ] `knowledge/index.md` と `knowledge/log.md` が final ledger を発見できる。
+- [ ] full verification が通る。
+- [ ] remote write は行われていない。
+
+### ブロッカー
+
+- 実行状態: ブロック中
+- ブロック元: LSOS-002, LSOS-003
+- ブロック先: なし
+
+### 想定 write scope
+
+- `path:skills/grill-to-pr-loop`
+- `path:skills/issue-implementation-loop`
+- `path:scripts`
+- `path:knowledge/wiki/syntheses/loop-skill-operational-simplicity-issues.md`
+- `path:knowledge/index.md`
+- `path:knowledge/log.md`
+
+### 必要な文脈
+
+- 仕様: [Loop Skill Operational Simplicity Spec](loop-skill-operational-simplicity-spec.md)
+- この local issue ledger
+- `knowledge/AGENTS.md`
+
+### 検証
+
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_architecture.py --all`
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_context.py --all`
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/report_skill_context.py --all --json`
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/grill-to-pr-loop/tests`
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests`
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s scripts`
+- `git diff --check`
+
+## Remote Policy
+
+`local_only`。
+
+GitHub issue mirror、push、PR 作成、merge は未承認。final PR merge は常に human-only。
