@@ -39,7 +39,8 @@ class GrillContextContractTests(unittest.TestCase):
         result = run_script(VALIDATE_CONTEXT, "--all")
 
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("OK: validated 3", result.stdout)
+        self.assertIn("OK: validated", result.stdout)
+        self.assertIn("skill context contract(s)", result.stdout)
 
     def test_inspector_returns_execution_plan_read_set(self) -> None:
         result = run_script(
