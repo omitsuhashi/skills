@@ -102,6 +102,43 @@ class TaskManagementSkillTests(unittest.TestCase):
                 work_unit_id="inbox",
                 metadata={"raw_payload": {"message_id": "abc123"}},
             )
+        with self.assertRaises(ValueError):
+            backend.TaskDraft(
+                title="Review source",
+                body="Review raw source.",
+                work_unit_id="inbox",
+                metadata={"rawPayload": {"messageId": "abc123"}},
+            )
+
+    def test_public_dicts_do_not_expose_backend_metadata(self) -> None:
+        backend = load_module("task_backend", SKILL_DIR / "scripts" / "task_backend.py")
+        task_ref = backend.TaskRef(
+            backend="github-projects",
+            id="task-1",
+            url="https://github.com/orgs/the3-inc/projects/7?task=task-1",
+        )
+        snapshot = backend.TaskSnapshot(
+            task_ref=task_ref,
+            title="Review source",
+            body="Review source.",
+            fields={"work_unit_id": "inbox"},
+            backend_metadata={"githubGraphqlId": "PVT_kw", "repositoryId": "R_123"},
+        )
+        result = backend.TaskWriteResult(
+            task_ref=task_ref,
+            operation="create",
+            created=True,
+            backend_metadata={"projectFieldId": "PVTSSF_123"},
+        )
+
+        encoded = json.dumps(
+            {"snapshot": snapshot.to_public_dict(), "result": result.to_public_dict()},
+            sort_keys=True,
+        )
+
+        self.assertNotIn("backend_metadata", encoded)
+        for forbidden in ("githubGraphqlId", "repositoryId", "projectFieldId"):
+            self.assertNotIn(forbidden, encoded)
 
     def test_query_update_and_comment_use_backend_neutral_fields(self) -> None:
         backend = load_module("task_backend", SKILL_DIR / "scripts" / "task_backend.py")
@@ -152,6 +189,86 @@ class TaskManagementSkillTests(unittest.TestCase):
         self.assertTrue(comment.updated)
         with self.assertRaises(ValueError):
             adapter.update_fields(first, {"github_graphql_id": "PVT_kw..."})
+        with self.assertRaises(ValueError):
+            adapter.update_fields(first, {"source_ref": {"rawPayload": "payload"}})
+
+    def test_query_supports_recommended_backend_neutral_fields(self) -> None:
+        backend = load_module("task_backend", SKILL_DIR / "scripts" / "task_backend.py")
+        github = load_module(
+            "github_projects_adapter",
+            SKILL_DIR / "scripts" / "github_projects_adapter.py",
+        )
+        adapter = github.InMemoryGitHubProjectsAdapter(
+            github.GitHubProjectsConfig(owner="the3-inc", project_number=7)
+        )
+        expected = adapter.create_task(
+            backend.TaskDraft(
+                title="Review command center routing",
+                body="Review routing.",
+                work_unit_id="WU-command-center",
+                task_type="review",
+                source_ref="knowledge:source-123",
+                approval_required=True,
+                idempotency_key="expected",
+            )
+        ).task_ref
+        adapter.create_task(
+            backend.TaskDraft(
+                title="Capture follow up",
+                body="Follow up.",
+                work_unit_id="WU-command-center",
+                task_type="follow_up",
+                source_ref="knowledge:source-456",
+                approval_required=True,
+                idempotency_key="other",
+            )
+        )
+
+        snapshots = adapter.query_tasks(
+            backend.TaskQuery(
+                work_unit_id="WU-command-center",
+                task_type="review",
+                approval_required=True,
+                source_ref="knowledge:source-123",
+            )
+        )
+
+        self.assertEqual([snapshot.task_ref for snapshot in snapshots], [expected])
+
+    def test_read_and_query_snapshots_do_not_mutate_adapter_state(self) -> None:
+        backend = load_module("task_backend", SKILL_DIR / "scripts" / "task_backend.py")
+        github = load_module(
+            "github_projects_adapter",
+            SKILL_DIR / "scripts" / "github_projects_adapter.py",
+        )
+        adapter = github.InMemoryGitHubProjectsAdapter(
+            github.GitHubProjectsConfig(owner="the3-inc", project_number=7)
+        )
+        task_ref = adapter.create_task(
+            backend.TaskDraft(
+                title="Review command center routing",
+                body="Review routing.",
+                work_unit_id="WU-command-center",
+                idempotency_key="immutable",
+            )
+        ).task_ref
+
+        snapshot = adapter.read_task(task_ref)
+        snapshot.fields["status"] = "done"
+        snapshot.comments.append("mutated outside adapter")
+        query_snapshot = adapter.query_tasks(backend.TaskQuery(work_unit_id="WU-command-center"))[0]
+        query_snapshot.fields["status"] = "blocked"
+
+        reread = adapter.read_task(task_ref)
+
+        self.assertEqual(reread.fields["status"], "todo")
+        self.assertEqual(reread.comments, [])
+
+    def test_capture_text_rejects_invalid_due_date(self) -> None:
+        drafting = load_module("task_draft", SKILL_DIR / "scripts" / "task_draft.py")
+
+        with self.assertRaises(ValueError):
+            drafting.normalize_capture_text("Prepare review by 2026-19-39.")
 
     def test_context_contract_validates_and_routes_github_projects_reference(self) -> None:
         result = run_script(VALIDATE_CONTEXT, "--skill", "skills/task-management")

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
+import re
 from typing import Mapping, Protocol, Sequence
 
 
@@ -28,14 +29,18 @@ PROVIDER_SPECIFIC_MARKERS = (
     "graphql",
     "project_field",
     "projectfield",
+    "projectfieldid",
     "status_option",
     "statusoption",
+    "statusoptionid",
     "repository_id",
     "repositoryid",
     "auth",
     "token",
     "raw_payload",
+    "rawpayload",
     "message_id",
+    "messageid",
 )
 
 
@@ -47,27 +52,35 @@ def _compact(value: object) -> object:
     return value
 
 
+def _normalized_key(value: object) -> str:
+    return re.sub(r"[^a-z0-9]", "", str(value).lower())
+
+
+def _is_provider_specific_key(value: object) -> bool:
+    normalized = _normalized_key(value)
+    return any(_normalized_key(marker) in normalized for marker in PROVIDER_SPECIFIC_MARKERS)
+
+
+def _provider_specific_keys(value: object, prefix: str = "") -> list[str]:
+    leaks: list[str] = []
+    if isinstance(value, Mapping):
+        for key, item in value.items():
+            path = f"{prefix}.{key}" if prefix else str(key)
+            if _is_provider_specific_key(key):
+                leaks.append(path)
+            leaks.extend(_provider_specific_keys(item, path))
+    elif isinstance(value, list):
+        for index, item in enumerate(value):
+            leaks.extend(_provider_specific_keys(item, f"{prefix}[{index}]"))
+    return leaks
+
+
 def validate_backend_neutral_fields(fields: Mapping[str, object]) -> None:
     invalid = sorted(set(fields) - TASK_FIELD_NAMES)
-    provider_leaks = [
-        field
-        for field in fields
-        if any(marker in field.lower() for marker in PROVIDER_SPECIFIC_MARKERS)
-    ]
+    provider_leaks = _provider_specific_keys(fields)
     if invalid or provider_leaks:
         details = ", ".join(sorted(set(invalid + provider_leaks)))
         raise ValueError(f"non-neutral task field(s): {details}")
-
-
-def _provider_specific_keys(value: Mapping[str, object], prefix: str = "") -> list[str]:
-    leaks: list[str] = []
-    for key, item in value.items():
-        path = f"{prefix}.{key}" if prefix else key
-        if any(marker in key.lower() for marker in PROVIDER_SPECIFIC_MARKERS):
-            leaks.append(path)
-        if isinstance(item, Mapping):
-            leaks.extend(_provider_specific_keys(item, path))
-    return leaks
 
 
 @dataclass(frozen=True)
@@ -112,18 +125,21 @@ class TaskRef:
 @dataclass(frozen=True)
 class TaskQuery:
     work_unit_id: str | None = None
+    task_type: str | None = None
     due_date: str | None = None
     status: str | None = None
     urgency: str | None = None
     importance: str | None = None
     automation_mode: str | None = None
+    approval_required: bool | None = None
+    source_ref: str | None = None
     assignee: str | None = None
 
-    def as_filters(self) -> dict[str, str]:
+    def as_filters(self) -> dict[str, object]:
         return {
             key: value
             for key, value in asdict(self).items()
-            if isinstance(value, str) and value
+            if value is not None and not (isinstance(value, str) and not value)
         }
 
 
@@ -144,7 +160,6 @@ class TaskSnapshot:
                 "body": self.body,
                 "fields": dict(self.fields),
                 "comments": list(self.comments),
-                "backend_metadata": dict(self.backend_metadata),
             }
         )  # type: ignore[return-value]
 
@@ -168,7 +183,6 @@ class TaskWriteResult:
                 "updated": self.updated,
                 "changed_fields": list(self.changed_fields),
                 "message": self.message,
-                "backend_metadata": dict(self.backend_metadata),
             }
         )  # type: ignore[return-value]
 

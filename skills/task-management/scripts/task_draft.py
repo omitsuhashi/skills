@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 import hashlib
 import re
 
@@ -34,6 +35,17 @@ def _idempotency_key(text: str, work_unit_id: str, source_ref: str | None) -> st
     return hashlib.sha256(material).hexdigest()[:32]
 
 
+def _validated_due_date(match: re.Match[str] | None) -> str | None:
+    if not match:
+        return None
+    value = match.group(1)
+    try:
+        date.fromisoformat(value)
+    except ValueError as exc:
+        raise ValueError(f"invalid due_date: {value}") from exc
+    return value
+
+
 def normalize_capture_text(
     text: str,
     *,
@@ -51,7 +63,7 @@ def normalize_capture_text(
         body=text.strip(),
         work_unit_id=work_unit_id,
         task_type=values.get("task_type", "follow_up"),
-        due_date=date_match.group(1) if date_match else None,
+        due_date=_validated_due_date(date_match),
         urgency=values.get("urgency"),
         importance=values.get("importance"),
         automation_mode="draft_only",

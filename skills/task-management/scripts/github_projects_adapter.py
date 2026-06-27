@@ -99,19 +99,19 @@ class InMemoryGitHubProjectsAdapter:
         return TaskWriteResult(task_ref=task_ref, operation="create", created=True)
 
     def read_task(self, task_ref: TaskRef) -> TaskSnapshot:
-        return self._snapshot(task_ref)
+        return self._copy_snapshot(self._stored_snapshot(task_ref))
 
     def query_tasks(self, query: TaskQuery) -> list[TaskSnapshot]:
         filters = query.as_filters()
         return [
-            snapshot
+            self._copy_snapshot(snapshot)
             for snapshot in self._items.values()
             if all(snapshot.fields.get(field) == value for field, value in filters.items())
         ]
 
     def update_fields(self, task_ref: TaskRef, fields: Mapping[str, object]) -> TaskWriteResult:
         validate_backend_neutral_fields(fields)
-        snapshot = self._snapshot(task_ref)
+        snapshot = self._stored_snapshot(task_ref)
         changed: list[str] = []
         for field_name, value in fields.items():
             if snapshot.fields.get(field_name) != value:
@@ -127,7 +127,7 @@ class InMemoryGitHubProjectsAdapter:
     def add_progress_comment(self, task_ref: TaskRef, body: str) -> TaskWriteResult:
         if not body.strip():
             raise ValueError("comment body is required")
-        snapshot = self._snapshot(task_ref)
+        snapshot = self._stored_snapshot(task_ref)
         snapshot.comments.append(body.strip())
         return TaskWriteResult(
             task_ref=snapshot.task_ref,
@@ -136,13 +136,23 @@ class InMemoryGitHubProjectsAdapter:
             message="comment added",
         )
 
-    def _snapshot(self, task_ref: TaskRef) -> TaskSnapshot:
+    def _stored_snapshot(self, task_ref: TaskRef) -> TaskSnapshot:
         if task_ref.backend != self.backend:
             raise ValueError(f"wrong backend: {task_ref.backend}")
         try:
             return self._items[task_ref.id]
         except KeyError as exc:
             raise KeyError(f"unknown task ref: {task_ref.id}") from exc
+
+    def _copy_snapshot(self, snapshot: TaskSnapshot) -> TaskSnapshot:
+        return TaskSnapshot(
+            task_ref=snapshot.task_ref,
+            title=snapshot.title,
+            body=snapshot.body,
+            fields=dict(snapshot.fields),
+            comments=list(snapshot.comments),
+            backend_metadata=dict(snapshot.backend_metadata),
+        )
 
     def _task_url(self, task_id: str) -> str:
         if self.config.repository:
