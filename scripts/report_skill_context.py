@@ -190,7 +190,8 @@ def collect_workflow_complexity(report: Mapping[str, object]) -> Dict[str, objec
     gate_breakdown = _gate_breakdown(operations)
     runtime_artifacts = _runtime_artifacts(skill_reports)
 
-    worker_context_required = (REPO_ROOT / "skills" / "issue-implementation-loop").is_dir()
+    selected_skill_names = {str(skill.get("skill")) for skill in skill_reports}
+    worker_context_required = "issue-implementation-loop" in selected_skill_names
     review_cycle_required = "execute.review" in operation_names
     human_wait_present = "execute.wait" in operation_names
     remote_delivery_present = bool({"delivery", "deliver"} & operation_names)
