@@ -44,6 +44,15 @@ class LoopOperationalSimplicityLedgerTests(unittest.TestCase):
         self.assertIn("full verification", log_text)
         self.assertIn("remote policy は `local_only`", log_text)
 
+    def test_final_ledger_does_not_retain_stale_status_language(self) -> None:
+        text = ISSUE_LEDGER.read_text(encoding="utf-8")
+
+        for stale in (
+            "実装、push、PR 作成、remote write は未承認",
+            "LSOS-004 は LSOS-003 完了待ち",
+        ):
+            self.assertNotIn(stale, text)
+
 
 if __name__ == "__main__":
     unittest.main()
