@@ -66,7 +66,7 @@ class GrillToPrLoopTests(unittest.TestCase):
     def test_skill_entrypoint_points_to_context_contract_router(self) -> None:
         text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
 
-        self.assertLessEqual(len(text.split()), 850)
+        self.assertLessEqual(len(text.split()), 950)
         self.assertIn("references/core.md", text)
         self.assertIn("context-contract.toml", text)
         self.assertIn("operation router", text)
@@ -79,6 +79,20 @@ class GrillToPrLoopTests(unittest.TestCase):
             "workflow-contract.md",
         ):
             self.assertNotIn(operation_reference, text)
+
+    def test_skill_entrypoint_defines_loop_applicability(self) -> None:
+        text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+
+        for required in (
+            "Use loop skills when",
+            "Do not use loop skills for",
+            "Stop before implementation when",
+            "small one-off edits",
+            "direct implementation",
+            "approved packet",
+            "worker context",
+        ):
+            self.assertIn(required, text)
 
     def test_phase_gate_approvals_require_local_commit(self) -> None:
         skill_text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")

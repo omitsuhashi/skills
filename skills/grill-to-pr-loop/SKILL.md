@@ -13,6 +13,14 @@ Load `references/core.md` first for lifecycle, ownership, gates, local-first rul
 
 Treat `grill-with-docs` as the required front door for unresolved design choices. If it is unavailable, stop instead of approximating the workflow.
 
+## Applicability
+
+Use loop skills when the change needs durable design decisions, spec/PRD synthesis, local issue decomposition, dependency ordering, approved execution handoff, implementation review, or optional remote delivery.
+
+Do not use loop skills for small one-off edits, a single clear file change, a minor docs fix to an already approved issue, or a task-specific skill that can finish through direct implementation without new gates.
+
+Stop before implementation when design choices are unresolved, scope is not approved, no normalized approved packet exists, worker context is unavailable, or the coordinator would need to become the implementation worker.
+
 ## Immediate Guard
 
 Before design, issue, execution, or PR actions, run:

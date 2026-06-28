@@ -13,7 +13,7 @@ class EntrypointTests(unittest.TestCase):
             description.group(1),
             "Use when implementing approved repository issues after spec, acceptance criteria, and issue decomposition are approved.",
         )
-        self.assertLessEqual(len(re.findall(r"\S+", text)), 520)
+        self.assertLessEqual(len(re.findall(r"\S+", text)), 620)
 
     def test_skill_entrypoint_names_session_and_worker_semantics(self) -> None:
         text = SKILL_FILE.read_text(encoding="utf-8")
@@ -23,6 +23,20 @@ class EntrypointTests(unittest.TestCase):
             "planning/grill session must not implement issue work",
             "Do not create user-owned Codex threads",
             "bounded worker-context jobs",
+        ):
+            self.assertIn(required, text)
+
+    def test_skill_entrypoint_defines_execution_applicability(self) -> None:
+        text = SKILL_FILE.read_text(encoding="utf-8")
+
+        for required in (
+            "Use this skill only when",
+            "normalized approved packet",
+            "worker context is available",
+            "coordinator must not implement",
+            "Do not use this skill for",
+            "small one-off edits",
+            "unapproved or changing scope",
         ):
             self.assertIn(required, text)
 

@@ -13,6 +13,14 @@ Do not create user-owned Codex threads. If worker contexts are unavailable, stop
 
 Use `grill-to-pr-loop` before this skill for design interrogation, PRD/spec creation, and issue decomposition.
 
+## Applicability
+
+Use this skill only when a normalized approved packet exists, the Execution Envelope requires worker-only execution, worker context is available, and the issue can stay inside its assigned write scope.
+
+Do not use this skill for small one-off edits, direct implementation without a packet, unapproved or changing scope, design interrogation, issue creation, or cases where the coordinator must implement to make progress.
+
+The coordinator must not implement issue work. It owns global state, scheduling, waits, review decisions, blocker release, and final reporting; workers own bounded issue changes and verification evidence.
+
 ## Immediate Guard
 
 Before prepare, execute, resume, status, or deliver actions, run:
