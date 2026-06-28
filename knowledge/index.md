@@ -56,8 +56,8 @@ _現在なし。_
   検索語: skill repository optimization, SRO4-001, context baseline, operation metrics, word count, grill-to-pr-loop, issue-implementation-loop
 - [Loop Skill Operational Simplicity Spec](wiki/syntheses/loop-skill-operational-simplicity-spec.md) — loop 系 skill の適用基準、mental model、workflow complexity report を追加する Spec Gate 承認済み契約。
   検索語: grill-to-pr-loop, issue-implementation-loop, operational simplicity, workflow complexity, mental model, 適用基準, 複雑性, コンテキスト最適化
-- [Loop Skill Operational Simplicity Issues](wiki/syntheses/loop-skill-operational-simplicity-issues.md) — loop skill operational simplicity の日本語 local-first issue ledger と blocker graph。
-  検索語: grill-to-pr-loop, issue-implementation-loop, local issue, blocker graph, operational simplicity, workflow complexity, mental model, ローカルIssue
+- [Loop Skill Operational Simplicity Issues](wiki/syntheses/loop-skill-operational-simplicity-issues.md) — loop skill operational simplicity の日本語 local-first final ledger。LSOS-001 から LSOS-004 の implementation evidence、review result、full verification、remote boundary を集約する。
+  検索語: grill-to-pr-loop, issue-implementation-loop, local issue, blocker graph, final ledger, implementation evidence, review result, operational simplicity, workflow complexity, mental model, ローカルIssue
 - [Loop Skill Operational Simplicity Input Packet](wiki/syntheses/loop-skill-operational-simplicity-input-packet.json) — LSOS-001 から LSOS-004 を local-only で実行する approved normalized input packet。
   検索語: loop skill operational simplicity, execution packet, input packet, LSOS, local_only, 実行計画
 - [Loop Skill Operational Simplicity Execution Envelope](wiki/syntheses/loop-skill-operational-simplicity-execution-envelope.json) — LSOS 実装ループの local-only Execution Envelope、worker-only policy、branch/worktree reservation、prepare 検証済み実行契約。
