@@ -11,7 +11,7 @@ Spec Gate / Issue Gate / Execution Plan Gate 承認済み。LSOS-001 から LSOS
 | loop-skill-operational-simplicity | LSOS-001 | loop 系の適用基準を明文化する | 承認済み | COMPLETE | なし | LSOS-002, LSOS-003 | 未作成 | approved: `f61e10dd405d843c5b66ed99395b76e215962f0a..e7cd6fb695c229ec71d3e84e6fea1999123c97a1` | 未作成 |
 | loop-skill-operational-simplicity | LSOS-002 | loop 系 mental model を 1 ページ化する | 承認済み | COMPLETE | LSOS-001 | LSOS-004 | 未作成 | approved: `e798ec03d74280844e09607ebc9f8d97d3b57235..5d48b3f2cffaa2102d9c3b8343fc8351020182a2` | 未作成 |
 | loop-skill-operational-simplicity | LSOS-003 | workflow complexity report を追加する | 承認済み | COMPLETE | LSOS-001 | LSOS-004 | 未作成 | approved: `59ca2a2c7598480191905e5170905d2338897901..584b34c27fa14adff72c20e8f32c0218042f2be8` | 未作成 |
-| loop-skill-operational-simplicity | LSOS-004 | regression tests と wiki ledger を更新する | 承認済み | COMPLETE | LSOS-002, LSOS-003 | なし | 未作成 | review cycle 1 feedback addressed locally | 未作成 |
+| loop-skill-operational-simplicity | LSOS-004 | regression tests と wiki ledger を更新する | 承認済み | COMPLETE | LSOS-002, LSOS-003 | なし | 未作成 | approved: `8974dba422a12bcb250a2bb4f80a576dcf4d13b0..8ef5e98d6179bb4f2e28a6a059ebab7a49d3fb09` | 未作成 |
 
 ## ブロッカーグラフ
 
@@ -292,7 +292,7 @@ LSOS-001 から LSOS-003 の成果を統合し、regression tests、wiki index/l
 - Regression coverage: `scripts/test_loop_operational_simplicity_ledger.py` を追加し、LSOS-004 final ledger、`knowledge/index.md`、`knowledge/log.md` から implementation evidence と remote boundary を発見できることを固定した。
 - `knowledge/index.md` の Loop Skill Operational Simplicity Issues entry を final ledger / implementation evidence 検索語付きに更新した。
 - `knowledge/log.md` に LSOS-004 regression ledger closeout を追記した。
-- Review result: review cycle 1 feedback addressed locally。Final independent review は未実施。
+- Review result: final independent review approved。Critical / Important / Minor finding はなし。
 - Remote write は行っていない。
 
 ### 実装検証
