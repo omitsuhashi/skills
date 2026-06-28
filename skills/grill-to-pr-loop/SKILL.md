@@ -13,6 +13,8 @@ Load `references/core.md` first for lifecycle, ownership, gates, local-first rul
 
 Treat `grill-with-docs` as the required front door for unresolved design choices. If it is unavailable, stop instead of approximating the workflow.
 
+For the execution role-boundary mental model, see `../issue-implementation-loop/references/mental-model.md`; keep it out of default operation read-sets unless the operator needs that orientation.
+
 ## Applicability
 
 Use loop skills when the change needs durable design decisions, spec/PRD synthesis, local issue decomposition, dependency ordering, approved execution handoff, implementation review, or optional remote delivery.

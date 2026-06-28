@@ -13,6 +13,8 @@ Do not create user-owned Codex threads. If worker contexts are unavailable, stop
 
 Use `grill-to-pr-loop` before this skill for design interrogation, PRD/spec creation, and issue decomposition.
 
+Read `references/mental-model.md` when you need the first role-boundary page for coordinator, worker, reviewer, runtime state, local ledger, and remote delivery responsibilities.
+
 ## Applicability
 
 Use this skill only when a normalized approved packet exists, the Execution Envelope requires worker-only execution, worker context is available, and the issue can stay inside its assigned write scope.

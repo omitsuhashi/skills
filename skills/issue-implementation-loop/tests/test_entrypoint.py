@@ -58,3 +58,23 @@ class EntrypointTests(unittest.TestCase):
             "remote-delivery.md",
         ):
             self.assertNotIn(operation_reference, text)
+
+    def test_skill_entrypoint_discovers_role_boundary_mental_model(self) -> None:
+        text = SKILL_FILE.read_text(encoding="utf-8")
+        mental_model = SKILL_DIR / "references" / "mental-model.md"
+
+        self.assertIn("references/mental-model.md", text)
+        self.assertTrue(mental_model.exists())
+
+        model_text = mental_model.read_text(encoding="utf-8")
+        self.assertLessEqual(len(model_text.split()), 900)
+        for required in (
+            "coordinator",
+            "worker",
+            "reviewer",
+            "runtime state",
+            "local ledger",
+            "remote delivery",
+            "Role Boundary",
+        ):
+            self.assertIn(required, model_text)

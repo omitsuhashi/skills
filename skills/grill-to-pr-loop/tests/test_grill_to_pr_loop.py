@@ -94,6 +94,26 @@ class GrillToPrLoopTests(unittest.TestCase):
         ):
             self.assertIn(required, text)
 
+    def test_entrypoint_discovers_issue_execution_mental_model_without_default_read_set(self) -> None:
+        text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+        contract_text = (SKILL_DIR / "context-contract.toml").read_text(encoding="utf-8")
+        issue_mental_model = REPO_ROOT / "skills" / "issue-implementation-loop" / "references" / "mental-model.md"
+
+        self.assertIn("mental-model.md", text)
+        self.assertTrue(issue_mental_model.exists())
+        self.assertNotIn("mental-model.md", contract_text)
+
+        model_text = issue_mental_model.read_text(encoding="utf-8")
+        for required in (
+            "coordinator",
+            "worker",
+            "reviewer",
+            "runtime state",
+            "local ledger",
+            "remote delivery",
+        ):
+            self.assertIn(required, model_text)
+
     def test_phase_gate_approvals_require_local_commit(self) -> None:
         skill_text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
         core_text = CORE_REFERENCE.read_text(encoding="utf-8")
