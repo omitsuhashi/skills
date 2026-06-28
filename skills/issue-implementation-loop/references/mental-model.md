@@ -13,7 +13,7 @@ Use this page before executing an approved issue packet when the coordinator, wo
 - **reviewer** owns implementation review for the assigned issue packet and commit range. It reports Critical, Important, Minor, and residual-risk findings; it does not rewrite scope, perform delivery, or become the worker.
 - **runtime state** is coordinator-owned operational memory: event log, mutable snapshot, reservations, human requests, blocker state, review-cycle state, and delivery candidates. Keep it outside tracked issue branches under the configured runtime root.
 - **local ledger** is the canonical human-readable issue record. It records approved scope, blocker status, implementation evidence, review outcome, PR-ready state, and any local-only exceptions. Remote systems are mirrors, not the planning source of truth.
-- **remote delivery** is optional and gated. Pushes, GitHub issue creation, PR creation, issue PR merge, final PR merge, deployment, destructive actions, credential changes, billing, and permission changes require explicit current approval for the exact action set.
+- **remote delivery** is optional and gated. Pushes, GitHub issue creation, PR creation, issue PR merge, deployment, destructive actions, credential changes, billing, and permission changes require explicit current approval for the exact action set. Final PR merge is always human-only.
 
 ## Operating Rules
 

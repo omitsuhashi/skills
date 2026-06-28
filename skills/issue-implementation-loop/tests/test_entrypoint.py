@@ -78,3 +78,13 @@ class EntrypointTests(unittest.TestCase):
             "Role Boundary",
         ):
             self.assertIn(required, model_text)
+
+    def test_mental_model_keeps_final_pr_merge_human_only(self) -> None:
+        mental_model = SKILL_DIR / "references" / "mental-model.md"
+        model_text = mental_model.read_text(encoding="utf-8")
+
+        self.assertIn("Final PR merge is always human-only", model_text)
+        self.assertNotRegex(
+            model_text,
+            r"final PR merge,.*require explicit current approval",
+        )
