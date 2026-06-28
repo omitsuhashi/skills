@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "repo_root": "/Users/omitsuhashi/.codex/worktrees/d5d0/skills",
+  "epic_id": "loop-skill-operational-simplicity",
+  "artifact_root": "knowledge/wiki/syntheses/loop-skill-operational-simplicity",
+  "spec": {
+    "path": "knowledge/wiki/syntheses/loop-skill-operational-simplicity-spec.md",
+    "approved_hash": "sha256:fbed9996f2f25cb38be9f694693475785ea212925ccfcfedacdd999af18cad1f"
+  },
+  "work_items": [
+    {
+      "id": "LSOS-001",
+      "title": "loop 系の適用基準を明文化する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/loop-skill-operational-simplicity-issues.md"
+      },
+      "acceptance_criteria": [
+        "skills/grill-to-pr-loop/SKILL.md または operation-owned reference から、loop 系を使うケースと使わないケースが 1 screen 相当で分かる",
+        "skills/issue-implementation-loop/SKILL.md から、approved packet 前提、worker context 必須、coordinator 実装禁止が適用条件として分かる",
+        "新しい user-facing skill は追加されない",
+        "validate_skill_architecture.py --all が通る",
+        "validate_skill_context.py --all が通る"
+      ],
+      "non_goals": [
+        "新しい user-facing skill の追加",
+        "scheduler/runtime/delivery semantics の変更",
+        "remote write"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_architecture.py --all",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_context.py --all",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/grill-to-pr-loop/tests",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests"
+      ],
+      "write_scope": [
+        "path:skills/grill-to-pr-loop/SKILL.md",
+        "path:skills/grill-to-pr-loop/references",
+        "path:skills/issue-implementation-loop/SKILL.md",
+        "path:skills/issue-implementation-loop/references",
+        "path:skills/grill-to-pr-loop/tests",
+        "path:skills/issue-implementation-loop/tests"
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "LSOS-002",
+      "title": "loop 系 mental model を 1 ページ化する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/loop-skill-operational-simplicity-issues.md"
+      },
+      "acceptance_criteria": [
+        "mental model は coordinator / worker / reviewer / runtime state / local ledger / remote delivery の責務境界を説明している",
+        "mental model は issue-implementation-loop の実行者が最初に読む役割境界として使える",
+        "mental model の追加後も validate_skill_context.py --all が通る",
+        "default read-set に不要な重い reference を追加しない"
+      ],
+      "non_goals": [
+        "default read-set の肥大化",
+        "scheduler/runtime/delivery semantics の変更",
+        "remote write"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_context.py --all",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/grill-to-pr-loop/tests",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests",
+        "rg -n \"coordinator|worker|reviewer|runtime state|remote delivery\" skills/grill-to-pr-loop skills/issue-implementation-loop"
+      ],
+      "write_scope": [
+        "path:skills/grill-to-pr-loop/references",
+        "path:skills/issue-implementation-loop/references",
+        "path:skills/grill-to-pr-loop/SKILL.md",
+        "path:skills/issue-implementation-loop/SKILL.md",
+        "path:skills/grill-to-pr-loop/tests",
+        "path:skills/issue-implementation-loop/tests"
+      ],
+      "dependencies": [
+        "LSOS-001"
+      ]
+    },
+    {
+      "id": "LSOS-003",
+      "title": "workflow complexity report を追加する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/loop-skill-operational-simplicity-issues.md"
+      },
+      "acceptance_criteria": [
+        "JSON output に top-level workflow_complexity がある",
+        "workflow_complexity は operation count、gate count、runtime artifact count、worker-context flag、review-cycle flag、remote-delivery flag を含む",
+        "text output は既存 context report を読みづらくしない。complexity は必要な warning だけ短く出す",
+        "validate_skill_context.py は read-set budget validator のままで、complexity を hard failure にしない",
+        "workflow complexity の tests が JSON shape と advisory behavior を固定する"
+      ],
+      "non_goals": [
+        "workflow complexity を hard validator にすること",
+        "context-contract.toml を workflow complexity の唯一の正本にすること",
+        "外部 dependency の追加"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/report_skill_context.py --all --json",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/report_skill_context.py --all",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s scripts",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_context.py --all"
+      ],
+      "write_scope": [
+        "path:scripts/report_skill_context.py",
+        "path:scripts/skill_context",
+        "path:scripts",
+        "path:skills/grill-to-pr-loop/tests",
+        "path:skills/issue-implementation-loop/tests"
+      ],
+      "dependencies": [
+        "LSOS-001"
+      ]
+    },
+    {
+      "id": "LSOS-004",
+      "title": "regression tests と wiki ledger を更新する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/loop-skill-operational-simplicity-issues.md"
+      },
+      "acceptance_criteria": [
+        "適用基準、mental model discoverability、workflow complexity JSON shape が tests で固定されている",
+        "knowledge/wiki/syntheses/loop-skill-operational-simplicity-issues.md に各 issue の実装 evidence、検証結果、review 結果が反映されている",
+        "knowledge/index.md と knowledge/log.md が final ledger を発見できる",
+        "full verification が通る",
+        "remote write は行われていない"
+      ],
+      "non_goals": [
+        "remote write",
+        "final PR merge",
+        "未承認 scope の追加"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_architecture.py --all",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_context.py --all",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/report_skill_context.py --all --json",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/grill-to-pr-loop/tests",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s scripts",
+        "git diff --check"
+      ],
+      "write_scope": [
+        "path:skills/grill-to-pr-loop",
+        "path:skills/issue-implementation-loop",
+        "path:scripts",
+        "path:knowledge/wiki/syntheses/loop-skill-operational-simplicity-issues.md",
+        "path:knowledge/index.md",
+        "path:knowledge/log.md"
+      ],
+      "dependencies": [
+        "LSOS-002",
+        "LSOS-003"
+      ]
+    }
+  ],
+  "delivery_intent": "local_only"
+}

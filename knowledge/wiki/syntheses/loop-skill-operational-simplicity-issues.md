@@ -2,7 +2,7 @@
 
 ## 状態
 
-Issue Gate 承認済み。Spec Gate は承認済み。Execution Plan Gate、実装、push、PR 作成、remote write は未承認。
+Spec Gate / Issue Gate / Execution Plan Gate 承認済み。実装、push、PR 作成、remote write は未承認。
 
 ## Ledger
 
