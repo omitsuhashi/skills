@@ -7,13 +7,13 @@ description: Use when implementing approved repository issues after spec, accept
 
 ## Overview
 
-Run approved repository work items from a normalized input packet to local `PR_READY`. Keep one execution coordinator context responsible for global state, blocker release, human requests, review decisions, and final reporting. The planning/grill session must not implement issue work. Dispatch workers or reviewers only for isolated implementation and review tasks.
+Run approved repository work items from a normalized input packet to local `PR_READY`. Keep one execution coordinator context responsible for global state, blocker release, review decisions, and final reporting. The planning/grill session must not implement issue work. Dispatch workers/reviewers only for isolated tasks.
 
 Do not create user-owned Codex threads. If worker contexts are unavailable, stop before implementation. If parallel workers are unavailable, continue through approved serial fallback only as bounded worker-context jobs.
 
-Use `grill-to-pr-loop` before this skill for design interrogation, PRD/spec creation, and issue decomposition.
+Use `grill-to-pr-loop` first for design, PRD/spec creation, and issue decomposition.
 
-Read `references/mental-model.md` when you need the first role-boundary page for coordinator, worker, reviewer, runtime state, local ledger, and remote delivery responsibilities.
+Read `references/mental-model.md` for the first role-boundary page.
 
 ## Applicability
 
@@ -47,6 +47,7 @@ Always read `references/core.md`. For operation-specific context, use `scripts/s
 - Recompute runnable work after every event. A wave is a launch cohort, not a completion barrier.
 - Use `tdd` or an approved equivalent for behavior changes, bug fixes, behavior-bearing refactors, and tests.
 - Send workers bounded paths-first packets; do not paste full specs or ledgers when durable paths suffice.
+- Keep ledger and human-facing report updates in Japanese; preserve stable IDs, paths, commands, schema keys, and external issue/PR references.
 - Keep workers inside write scope; only the coordinator writes envelope, runtime snapshot, event log, and shared ledger unless explicitly assigned.
 - Require a local scoped commit before review, blocker release, issue completion, or any success status.
 - Run issue-scoped implementation review before issue completion, blocker release, or PR readiness.

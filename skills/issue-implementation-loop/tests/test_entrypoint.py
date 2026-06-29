@@ -40,6 +40,17 @@ class EntrypointTests(unittest.TestCase):
         ):
             self.assertIn(required, text)
 
+    def test_skill_entrypoint_keeps_ledger_and_report_updates_japanese_base(self) -> None:
+        text = SKILL_FILE.read_text(encoding="utf-8")
+
+        for required in (
+            "human-facing report updates in Japanese",
+            "stable IDs",
+            "schema keys",
+            "external issue/PR references",
+        ):
+            self.assertIn(required, text)
+
     def test_skill_entrypoint_routes_through_context_contract(self) -> None:
         text = SKILL_FILE.read_text(encoding="utf-8")
 

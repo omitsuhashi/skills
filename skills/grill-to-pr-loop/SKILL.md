@@ -46,6 +46,7 @@ After `references/core.md`, select the current operation and load only the files
 ## Required Rules
 
 - Keep long specs, ADRs, implementation plans, and Goal contracts in the repo-local durable path defined by the target repository; in this repo that is `knowledge/wiki/syntheses/`.
+- Specs/PRDs/ledgers: Japanese; preserve IDs/paths/commands/code symbols/schema keys/branches/errors/external refs.
 - Keep the local issue ledger canonical. GitHub issues and PRs are optional mirrors or delivery records after explicit approval.
 - Keep planning, spec, issue ledger, and execution packet ownership here. Keep branch/base/commit policy in the execution handoff reference and remote policy in the remote delivery reference.
 - Treat each approved planning gate as a phase approval commit boundary: commit the approved artifacts and ledger/log updates before starting the next phase.
