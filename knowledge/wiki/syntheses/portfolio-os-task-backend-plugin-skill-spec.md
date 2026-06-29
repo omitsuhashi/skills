@@ -2,7 +2,7 @@
 
 ## 状態
 
-Spec Gate / Issue Gate 承認済み。Execution Packet 作成前。実装、GitHub issue mirror、push、PR 作成はまだ行わない。
+Spec Gate / Issue Gate / Execution Plan Gate 承認済み。`issue-implementation-loop prepare` 前。実装、GitHub issue mirror、push、PR 作成はまだ行わない。
 
 この版では、GitHub Projects 連携を独自 GitHub adapter / `gh` command planner / GraphQL fallback 実装で作らず、Hermes Agent に登録された GitHub MCP Server を使う方針へ変更する。
 

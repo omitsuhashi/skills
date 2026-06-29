@@ -66,6 +66,8 @@ _現在なし。_
   検索語: Portfolio OS, task backend, task-management, plugin package, primary skill, GitHub Projects, GitHub MCP Server, Hermes Agent, TaskDraft, TaskRef, TaskQuery, TaskSnapshot, TaskBackendRoute, TaskBackendDestination, adapter dispatch, operation envelope, connection_ref, destination_ref, work_unit_id, work_unit_name, inbox, routing, preview, approval gate
 - [Portfolio OS Task Backend Plugin Skill Issues](wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md) — `portfolio-os-task-backend-plugin-skill` の Issue Gate 承認済み local-first ledger。POTASK-001 から POTASK-009、blocker graph、acceptance criteria を定義する。
   検索語: Portfolio OS, task backend, task-management, local issue, Issue Gate, POTASK, blocker graph, adapter dispatch, TaskDraft, TaskBackendRoute, TaskBackendDestination
+- [Portfolio OS Task Backend Plugin Skill Input Packet](wiki/syntheses/portfolio-os-task-backend-plugin-skill-input-packet.json) — `portfolio-os-task-backend-plugin-skill` の Execution Plan Gate 承認済み input packet。承認済み POTASK-001 から POTASK-009 の source、acceptance criteria、write scope、dependencies、local-only delivery intent を正規化する。
+  検索語: Portfolio OS, task backend, task-management, input packet, Execution Plan Gate, issue-implementation-loop, POTASK, write scope, dependencies, local_only
 
 ## クエリ起点成果物
 
