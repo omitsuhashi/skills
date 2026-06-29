@@ -109,8 +109,9 @@ backend_key: "github_projects_mcp"
 operation_type: "task.create"
 destination_ref: "github-projects:portfolio-os-task-board"
 task_ref:
-  ref: "github-projects:portfolio-os-task-board/task/opaque-1024"
-  url: "https://github.com/orgs/example-org/projects/portfolio-os-task-board?pane=task&item=opaque-1024"
+  backend_key: "github_projects_mcp"
+  task_ref: "github-projects:portfolio-os-task-board/task/opaque-1024"
+  task_url: "https://github.com/orgs/example-org/projects/portfolio-os-task-board?pane=task&item=opaque-1024"
   title: "Implement task draft composition guidance"
 error: null
 ```
@@ -133,10 +134,12 @@ error:
   human_action: "Add the missing field in the GitHub Projects setup, then rerun preflight."
 ```
 
-`task_ref.ref` is an opaque backend-owned reference. Consumers must not parse it
-for GitHub IDs. Linkable URLs are allowed as backend-owned metadata, but
-credentials, tokens, raw node IDs, field IDs, repository IDs, and project numbers
-must not appear in `TaskWriteResult`.
+`task_ref` uses the backend-neutral `TaskRef` shape from `task-contracts.md`:
+`backend_key`, `task_ref`, `task_url`, and `title`. The nested
+`task_ref.task_ref` value is an opaque backend-owned reference. Consumers must
+not parse it for GitHub IDs. Linkable URLs are allowed as backend-owned
+metadata, but credentials, tokens, raw node IDs, field IDs, repository IDs, and
+project numbers must not appear in `TaskWriteResult`.
 
 ## Adapter Result Normalization
 
@@ -149,8 +152,9 @@ task-management boundary keeps only these normalized values:
 | approved operation type | `operation_type` |
 | approved backend key | `backend_key` |
 | approved destination reference | `destination_ref` |
-| adapter-owned task/item reference | `task_ref.ref` |
-| adapter-owned task/project URL | `task_ref.url` |
+| approved backend key for the task ref | `task_ref.backend_key` |
+| adapter-owned task/item reference | `task_ref.task_ref` |
+| adapter-owned task/project URL | `task_ref.task_url` |
 | adapter-owned title or display label | `task_ref.title` |
 | typed adapter error | `error.code`, `error.message`, `error.retryable`, `error.setup_required`, `error.human_action` |
 

@@ -20,6 +20,7 @@ REQUIRED_TYPED_CODES = {
     "project_not_found",
     "field_missing",
 }
+CANONICAL_TASK_REF_KEYS = {"backend_key", "task_ref", "task_url", "title"}
 
 FORBIDDEN_NORMALIZED_KEYS = {
     "node_id",
@@ -100,6 +101,17 @@ class GitHubMcpRouteContractTests(unittest.TestCase):
         self.assertIn("plugin install must not register MCP servers", text)
         self.assertIn("No live smoke test is required", text)
 
+    def test_reference_uses_canonical_backend_neutral_task_ref_shape(self):
+        text = self.reference_text
+
+        for field_name in CANONICAL_TASK_REF_KEYS:
+            self.assertIn(field_name, text)
+
+        self.assertIn("`task_ref.task_ref` value is an opaque backend-owned reference", text)
+        self.assertIn("`task_ref.task_url`", text)
+        self.assertNotIn("`task_ref.ref`", text)
+        self.assertNotIn("`task_ref.url`", text)
+
     def test_preflight_can_represent_required_typed_results(self):
         results = self.preflight["preflight_results"]
         codes = {result["task_write_result"]["error"]["code"] for result in results}
@@ -131,8 +143,10 @@ class GitHubMcpRouteContractTests(unittest.TestCase):
             self.assertEqual(adapter_result["operation_type"], task_write_result["operation_type"])
             self.assertEqual(adapter_result["backend_key"], task_write_result["backend_key"])
             self.assertEqual(adapter_result["destination_ref"], task_write_result["destination_ref"])
-            self.assertEqual(adapter_result["adapter_ref"], task_write_result["task_ref"]["ref"])
-            self.assertEqual(adapter_result["url"], task_write_result["task_ref"]["url"])
+            self.assertEqual(CANONICAL_TASK_REF_KEYS, set(task_write_result["task_ref"]))
+            self.assertEqual(adapter_result["backend_key"], task_write_result["task_ref"]["backend_key"])
+            self.assertEqual(adapter_result["adapter_ref"], task_write_result["task_ref"]["task_ref"])
+            self.assertEqual(adapter_result["url"], task_write_result["task_ref"]["task_url"])
             self.assertIsNone(task_write_result["error"])
 
     def test_normalized_task_write_result_does_not_expose_provider_raw_ids_or_auth(self):
@@ -154,8 +168,9 @@ class GitHubMcpRouteContractTests(unittest.TestCase):
             "result_type": "TaskWriteResult",
             "ok": True,
             "task_ref": {
-                "ref": "external_ref",
-                "url": "https://example.invalid/tasks/1",
+                "backend_key": "github_projects_mcp",
+                "task_ref": "external_ref",
+                "task_url": "https://example.invalid/tasks/1",
                 "title": "Task",
             },
             "error": {
