@@ -1,0 +1,6 @@
+{
+  "backend_key": "github_projects_mcp",
+  "task_ref": "external_ref",
+  "task_url": "https://example.invalid/tasks/external_ref",
+  "title": "Review inbound task routing for portfolio work"
+}

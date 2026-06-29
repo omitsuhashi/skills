@@ -31,6 +31,20 @@ FORBIDDEN_NORMALIZED_KEYS = {
     "token",
     "authorization",
 }
+FORBIDDEN_NORMALIZED_VALUE_PATTERNS = (
+    r"\bnode_id\b",
+    r"\bfield_id\b",
+    r"\bproject_id\b",
+    r"\bproject_number\b",
+    r"\brepository_id\b",
+    r"\boption_id\b",
+    r"\braw_id\b",
+    r"\bauthorization\b",
+    r"\bbearer\s+",
+    r"\bghp_[A-Za-z0-9_]+",
+    r"\bgithub_pat_[A-Za-z0-9_]+",
+    r"\btoken\s*[:=]",
+)
 
 
 def _load_json(path):
@@ -45,6 +59,27 @@ def _walk_dicts(value):
     elif isinstance(value, list):
         for item in value:
             yield from _walk_dicts(item)
+
+
+def _forbidden_value_paths(value, patterns, path="$"):
+    if isinstance(value, dict):
+        matches = []
+        for key, child in value.items():
+            matches.extend(_forbidden_value_paths(child, patterns, f"{path}.{key}"))
+        return matches
+
+    if isinstance(value, list):
+        matches = []
+        for index, child in enumerate(value):
+            matches.extend(_forbidden_value_paths(child, patterns, f"{path}[{index}]"))
+        return matches
+
+    if isinstance(value, str):
+        for pattern in patterns:
+            if re.search(pattern, value, flags=re.IGNORECASE):
+                return [path]
+
+    return []
 
 
 class GitHubMcpRouteContractTests(unittest.TestCase):
@@ -109,6 +144,30 @@ class GitHubMcpRouteContractTests(unittest.TestCase):
         for normalized in normalized_results:
             for item in _walk_dicts(normalized):
                 self.assertTrue(FORBIDDEN_NORMALIZED_KEYS.isdisjoint(item.keys()))
+            self.assertEqual(
+                [],
+                _forbidden_value_paths(normalized, FORBIDDEN_NORMALIZED_VALUE_PATTERNS),
+            )
+
+    def test_forbidden_value_scan_covers_normalized_raw_id_and_auth_leaks(self):
+        normalized = {
+            "result_type": "TaskWriteResult",
+            "ok": True,
+            "task_ref": {
+                "ref": "external_ref",
+                "url": "https://example.invalid/tasks/1",
+                "title": "Task",
+            },
+            "error": {
+                "code": "blocked",
+                "message": "field_id: must-not-leak",
+            },
+        }
+
+        self.assertEqual(
+            ["$.error.message"],
+            _forbidden_value_paths(normalized, FORBIDDEN_NORMALIZED_VALUE_PATTERNS),
+        )
 
     def test_plugin_contains_no_live_github_client_command_planner_or_graphql_query(self):
         scanned_paths = [

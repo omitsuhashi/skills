@@ -1,0 +1,15 @@
+{
+  "result_type": "TaskWriteResult",
+  "ok": true,
+  "status": "created",
+  "operation_type": "task.create",
+  "backend_key": "github_projects_mcp",
+  "destination_ref": "github-projects:portfolio-os-task-board",
+  "task_ref": {
+    "backend_key": "github_projects_mcp",
+    "task_ref": "external_ref",
+    "task_url": "https://example.invalid/tasks/external_ref",
+    "title": "Review inbound task routing for portfolio work"
+  },
+  "error": null
+}

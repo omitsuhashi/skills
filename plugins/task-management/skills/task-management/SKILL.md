@@ -10,7 +10,11 @@ Use this skill to normalize task intent, prepare reviewable task drafts, and kee
 ## References
 
 - Read `references/task-draft-contract.md` before composing TaskDraft title, body, taxonomy, inbox fallback, source-boundary content, or create/update preview text.
+- Read `references/task-contracts.md` when checking backend-neutral contract fields, normalized task refs, query/snapshot/write-result shapes, or raw provider ID/auth boundaries.
+- Read `references/backend-routing.md` before selecting a backend key, resolving route registry entries, or requiring caller/profile/host destination input.
 - Read `references/adapter-dispatch.md` before preparing adapter operation envelopes or applying the Adapter Dispatch Review guard.
+- Read `references/github-mcp-projects.md` before representing GitHub Projects MCP route availability, typed route blocks, or adapter result normalization.
+- Read `references/hermes-mcp-governance.md` before giving setup guidance for MCP registration, credential/tool enablement boundaries, or Hermes delegation risk.
 
 ## Operating Boundaries
 

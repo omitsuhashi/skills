@@ -88,8 +88,10 @@ plugins/task-management/
 │   ├── SKILL.md
 │   ├── agents/openai.yaml
 │   └── references/
+│       ├── task-contracts.md
 │       ├── task-draft-contract.md
 │       ├── backend-routing.md
+│       ├── adapter-dispatch.md
 │       ├── github-mcp-projects.md
 │       └── hermes-mcp-governance.md
 ├── examples/
