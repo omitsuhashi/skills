@@ -1,0 +1,16 @@
+# Example backend route registry for task-management.
+# This file describes connection surfaces only. It does not store credentials or
+# concrete GitHub owner/project/repository targets.
+
+default_backend = "github_projects_mcp"
+
+[backends.github_projects_mcp]
+kind = "mcp"
+connection_ref = "github-projects"
+capability = "project_management"
+
+[backends.github_projects_mcp.field_overrides]
+# Add entries only when a backend uses names that differ from the neutral field
+# names expected by the task-management skill.
+# work_unit_id = "Work Unit"
+# work_unit_name = "Work Unit Name"
