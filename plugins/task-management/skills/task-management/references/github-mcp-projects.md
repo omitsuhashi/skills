@@ -30,6 +30,10 @@ The task-management plugin must not:
   normal tests
 
 The plugin install must not register MCP servers or enable GitHub adapter tools.
+More completely, plugin install must not register MCP servers, configure
+credentials, edit Hermes profiles, or enable GitHub adapter tools. Those actions
+belong to the host / adapter-side setup path described in
+`hermes-mcp-governance.md`.
 
 No live smoke test is required for this route in the repository test suite.
 Fixture-backed tests cover the plugin-owned contract. Live GitHub MCP Server
@@ -53,6 +57,25 @@ GitHub owner, project number, repository, node IDs, field IDs, option IDs, and
 tokens are not route inputs for the reusable task-management contract. If the
 external adapter requires target details, it must resolve them from the opaque
 host-owned connection and destination references.
+
+## Adapter Availability Gate
+
+The Adapter Availability Gate is host / adapter-side confirmation, not a plugin
+implementation side effect. The host or adapter supplies availability evidence
+for the configured MCP server, credentials, enabled adapter tool, destination,
+and project field readiness. The task-management plugin maps that evidence to
+typed route results and stops before dispatch when setup is incomplete.
+
+Passing this gate must not be implemented by plugin install, self-registration,
+Hermes profile editing, credential setup, automatic tool enablement, schema
+repair, or direct GitHub fallback code. The gate confirms that an external MCP
+adapter is ready to receive an operation that has already passed TaskDraft
+review and Adapter Dispatch Review.
+
+When a Hermes profile uses `delegation.inherit_mcp_toolsets: true`, the host
+must ensure state-changing GitHub MCP adapter tools are not unconditionally
+inherited by child agents. If that delegation boundary is not enforced, write
+availability is blocked even if the MCP server and credentials exist.
 
 ## Preflight Result Codes
 
