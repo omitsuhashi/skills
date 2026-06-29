@@ -56,6 +56,114 @@
         },
         "error": null
       }
+    },
+    {
+      "case": "field_type_mismatch",
+      "adapter_result": {
+        "result_type": "github_mcp_adapter_result",
+        "ok": false,
+        "operation_type": "task.create",
+        "backend_key": "github_projects_mcp",
+        "destination_ref": "github-projects:portfolio-os-task-board",
+        "error_code": "field_type_mismatch"
+      },
+      "task_write_result": {
+        "result_type": "TaskWriteResult",
+        "ok": false,
+        "status": "blocked",
+        "operation_type": "task.create",
+        "backend_key": "github_projects_mcp",
+        "destination_ref": "github-projects:portfolio-os-task-board",
+        "task_ref": null,
+        "error": {
+          "code": "field_type_mismatch",
+          "message": "A destination field exists but has a type incompatible with the reviewed TaskDraft.",
+          "retryable": false,
+          "setup_required": true,
+          "human_action": "Update the destination field mapping or backend schema outside the plugin, then rerun route preflight."
+        }
+      }
+    },
+    {
+      "case": "tool_capability_mismatch",
+      "adapter_result": {
+        "result_type": "github_mcp_adapter_result",
+        "ok": false,
+        "operation_type": "task.comment",
+        "backend_key": "github_projects_mcp",
+        "destination_ref": "github-projects:portfolio-os-task-board",
+        "error_code": "tool_capability_mismatch"
+      },
+      "task_write_result": {
+        "result_type": "TaskWriteResult",
+        "ok": false,
+        "status": "blocked",
+        "operation_type": "task.comment",
+        "backend_key": "github_projects_mcp",
+        "destination_ref": "github-projects:portfolio-os-task-board",
+        "task_ref": null,
+        "error": {
+          "code": "tool_capability_mismatch",
+          "message": "The enabled adapter tool cannot perform the approved operation.",
+          "retryable": false,
+          "setup_required": true,
+          "human_action": "Enable or select an adapter tool that explicitly supports the approved operation."
+        }
+      }
+    },
+    {
+      "case": "rate_limited",
+      "adapter_result": {
+        "result_type": "github_mcp_adapter_result",
+        "ok": false,
+        "operation_type": "task.update",
+        "backend_key": "github_projects_mcp",
+        "destination_ref": "github-projects:portfolio-os-task-board",
+        "error_code": "rate_limited"
+      },
+      "task_write_result": {
+        "result_type": "TaskWriteResult",
+        "ok": false,
+        "status": "failed",
+        "operation_type": "task.update",
+        "backend_key": "github_projects_mcp",
+        "destination_ref": "github-projects:portfolio-os-task-board",
+        "task_ref": null,
+        "error": {
+          "code": "rate_limited",
+          "message": "The external adapter reported a rate limit for the requested operation.",
+          "retryable": true,
+          "setup_required": false,
+          "human_action": "Wait for the adapter rate limit window to reset before retrying."
+        }
+      }
+    },
+    {
+      "case": "partial_update_failure",
+      "adapter_result": {
+        "result_type": "github_mcp_adapter_result",
+        "ok": false,
+        "operation_type": "task.update",
+        "backend_key": "github_projects_mcp",
+        "destination_ref": "github-projects:portfolio-os-task-board",
+        "error_code": "partial_update_failure"
+      },
+      "task_write_result": {
+        "result_type": "TaskWriteResult",
+        "ok": false,
+        "status": "failed",
+        "operation_type": "task.update",
+        "backend_key": "github_projects_mcp",
+        "destination_ref": "github-projects:portfolio-os-task-board",
+        "task_ref": null,
+        "error": {
+          "code": "partial_update_failure",
+          "message": "The external adapter reported that only part of the requested task update completed.",
+          "retryable": false,
+          "setup_required": false,
+          "human_action": "Inspect the backend task state through the adapter-owned surface before retrying or issuing a corrective update."
+        }
+      }
     }
   ]
 }

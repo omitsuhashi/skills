@@ -51,7 +51,7 @@ class TaskDraftContractExampleTests(unittest.TestCase):
         example = self.example_text
 
         self.assertIn("## Inbox Fallback", reference)
-        self.assertIn("needs human routing during review", reference)
+        self.assertIn("human routing during review", reference)
         self.assertIn('work_unit_id: "inbox"', example)
         self.assertIn('work_unit_name: "Inbox"', example)
         self.assertIn("Human review should replace inbox", example)
@@ -72,8 +72,11 @@ class TaskDraftContractExampleTests(unittest.TestCase):
     def test_example_uses_sanitized_source_ref_instead_of_raw_payload_shape(self):
         text = self.example_text
 
-        self.assertIn('source_ref: "source-trail:portfolio-os-task-backend-plugin-skill/POTASK-003"', text)
-        self.assertIn('source_ref: "source-summary:unrouted-task-management-note"', text)
+        self.assertIn("source_ref:\n  kind: \"source_trail\"", text)
+        self.assertIn("ref: \"source-trail:portfolio-os-task-backend-plugin-skill/POTASK-003\"", text)
+        self.assertIn("source_ref:\n  kind: \"source_summary\"", text)
+        self.assertIn("ref: \"source-summary:unrouted-task-management-note\"", text)
+        self.assertIn("fields:\n  review_notes:", text)
 
         raw_payload_markers = (
             r"\bmessage_id\s*:",

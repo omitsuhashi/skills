@@ -7,6 +7,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = ROOT / "tests" / "fixtures"
 CONTRACT_DOC = ROOT / "skills" / "task-management" / "references" / "task-contracts.md"
+TASK_DRAFT_REFERENCE = ROOT / "skills" / "task-management" / "references" / "task-draft-contract.md"
+TASK_CREATE_PREVIEW_EXAMPLE = ROOT / "examples" / "task-create-preview.example.md"
 PROVIDER_RAW_ID_OR_AUTH_KEYS = {
     "node_id",
     "project_id",
@@ -107,6 +109,18 @@ class TaskContractFixtureTests(unittest.TestCase):
         )
         self.assertIsInstance(draft["approval_required"], bool)
         self.assertEqual({"kind", "ref", "label"}, set(draft["source_ref"]))
+
+    def test_task_draft_reference_and_preview_match_canonical_fixture_shape(self):
+        reference = TASK_DRAFT_REFERENCE.read_text(encoding="utf-8")
+        preview = TASK_CREATE_PREVIEW_EXAMPLE.read_text(encoding="utf-8")
+
+        self.assertIn("`due_date`: ISO date string or `null`", reference)
+        self.assertNotIn("otherwise omit it", reference)
+        self.assertIn("`source_ref`: object with `kind`, `ref`, and `label`", reference)
+        self.assertNotIn("source_ref: \"", preview)
+        self.assertIn("source_ref:\n  kind:", preview)
+        self.assertNotIn("\nreview_notes:", preview)
+        self.assertIn("fields:\n  review_notes:", preview)
 
     def test_route_and_destination_keep_backend_target_separate(self):
         route = self.load_fixture("backend-route.example.json")

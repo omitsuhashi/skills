@@ -12,7 +12,7 @@ PREFLIGHT_FIXTURE = FIXTURES / "preflight-results.json"
 ADAPTER_FIXTURE = FIXTURES / "adapter-results.json"
 
 
-REQUIRED_TYPED_CODES = {
+PREFLIGHT_TYPED_CODES = {
     "mcp_server_missing",
     "tool_disabled",
     "auth_missing",
@@ -20,6 +20,13 @@ REQUIRED_TYPED_CODES = {
     "project_not_found",
     "field_missing",
 }
+ADAPTER_FAILURE_TYPED_CODES = {
+    "field_type_mismatch",
+    "tool_capability_mismatch",
+    "rate_limited",
+    "partial_update_failure",
+}
+REQUIRED_TYPED_CODES = PREFLIGHT_TYPED_CODES | ADAPTER_FAILURE_TYPED_CODES
 CANONICAL_TASK_REF_KEYS = {"backend_key", "task_ref", "task_url", "title"}
 
 FORBIDDEN_NORMALIZED_KEYS = {
@@ -112,11 +119,24 @@ class GitHubMcpRouteContractTests(unittest.TestCase):
         self.assertNotIn("`task_ref.ref`", text)
         self.assertNotIn("`task_ref.url`", text)
 
-    def test_preflight_can_represent_required_typed_results(self):
+    def test_route_can_represent_required_typed_results(self):
+        results = [
+            *self.preflight["preflight_results"],
+            *self.adapter["adapter_results"],
+        ]
+        codes = {
+            result["task_write_result"]["error"]["code"]
+            for result in results
+            if result["task_write_result"]["error"] is not None
+        }
+
+        self.assertEqual(REQUIRED_TYPED_CODES, codes)
+
+    def test_preflight_can_represent_setup_blocking_results(self):
         results = self.preflight["preflight_results"]
         codes = {result["task_write_result"]["error"]["code"] for result in results}
 
-        self.assertEqual(REQUIRED_TYPED_CODES, codes)
+        self.assertEqual(PREFLIGHT_TYPED_CODES, codes)
 
         for result in results:
             task_write_result = result["task_write_result"]
@@ -130,7 +150,11 @@ class GitHubMcpRouteContractTests(unittest.TestCase):
             self.assertTrue(task_write_result["error"]["human_action"])
 
     def test_adapter_result_fixture_normalizes_to_task_write_result_shape(self):
-        cases = self.adapter["adapter_results"]
+        cases = [
+            case
+            for case in self.adapter["adapter_results"]
+            if case["task_write_result"]["ok"]
+        ]
         self.assertGreaterEqual(len(cases), 1)
 
         for case in cases:
@@ -148,6 +172,29 @@ class GitHubMcpRouteContractTests(unittest.TestCase):
             self.assertEqual(adapter_result["adapter_ref"], task_write_result["task_ref"]["task_ref"])
             self.assertEqual(adapter_result["url"], task_write_result["task_ref"]["task_url"])
             self.assertIsNone(task_write_result["error"])
+
+    def test_adapter_failure_fixture_normalizes_to_typed_task_write_result(self):
+        cases = [
+            case
+            for case in self.adapter["adapter_results"]
+            if not case["task_write_result"]["ok"]
+        ]
+        self.assertEqual(ADAPTER_FAILURE_TYPED_CODES, {case["case"] for case in cases})
+
+        for case in cases:
+            adapter_result = case["adapter_result"]
+            task_write_result = case["task_write_result"]
+
+            self.assertFalse(adapter_result["ok"])
+            self.assertEqual("TaskWriteResult", task_write_result["result_type"])
+            self.assertFalse(task_write_result["ok"])
+            self.assertIn(task_write_result["status"], {"blocked", "failed"})
+            self.assertEqual(adapter_result["operation_type"], task_write_result["operation_type"])
+            self.assertEqual(adapter_result["backend_key"], task_write_result["backend_key"])
+            self.assertEqual(adapter_result["destination_ref"], task_write_result["destination_ref"])
+            self.assertEqual(case["case"], task_write_result["error"]["code"])
+            self.assertIsInstance(task_write_result["error"]["human_action"], str)
+            self.assertTrue(task_write_result["error"]["human_action"])
 
     def test_normalized_task_write_result_does_not_expose_provider_raw_ids_or_auth(self):
         normalized_results = [

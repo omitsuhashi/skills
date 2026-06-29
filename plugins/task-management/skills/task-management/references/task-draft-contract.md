@@ -11,13 +11,13 @@ Every create preview should be built from these neutral fields:
 - `task_type`: one of `implementation`, `review`, `research`, `decision`, `coordination`, `maintenance`, or `inbox_triage`.
 - `work_unit_id`: stable routing key for the work unit. Use `inbox` when the correct work unit is unknown.
 - `work_unit_name`: backend display label for the work unit. Use `Inbox` when `work_unit_id` falls back to `inbox`.
-- `due_date`: ISO date when provided or clearly implied; otherwise omit it.
+- `due_date`: ISO date string or `null`.
 - `urgency`: `low`, `normal`, `high`, or `blocked`.
 - `importance`: `low`, `normal`, `high`, or `critical`.
 - `automation_mode`: `manual_only`, `assistive`, or `trusted_after_approval`.
 - `approval_required`: boolean. State-changing adapter dispatch requires explicit approval.
-- `source_ref`: a sanitized source summary or durable source trail reference, not a raw platform payload.
-- `review_notes`: uncertainties, routing rationale, and fields the human should confirm.
+- `source_ref`: object with `kind`, `ref`, and `label`. It identifies a sanitized source summary or durable source trail reference, not a raw platform payload.
+- `fields`: backend-neutral field bag for future extension. Use `fields.review_notes` for uncertainties, routing rationale, and fields the human should confirm.
 
 ## Work Unit Resolution
 
@@ -85,15 +85,15 @@ Automation modes:
 
 Use `work_unit_id: inbox` only when the source is actionable but the correct work unit cannot be determined from caller context, explicit override, profile config, or durable source trail.
 
-`inbox` means "needs human routing during review"; it is not a permanent work unit and it is not a local Portfolio OS task state store. A preview using the fallback must set `work_unit_name: Inbox` and include a review note asking the human to confirm or replace the work unit before adapter dispatch.
+`inbox` is the fallback `work_unit_id` for human routing during review; it is not a local Portfolio OS task state store. A preview using the fallback must set `work_unit_name: Inbox` and include `fields.review_notes` asking the human to confirm or replace the work unit before adapter dispatch.
 
 ## Source Boundary
 
-`source_ref` may contain:
+`source_ref` is an object with:
 
-- a sanitized source summary
-- a durable source trail reference supplied by the caller
-- a link or opaque reference already approved for task context
+- `kind`: source reference kind such as `source_trail`, `source_summary`, or `commander_chat`
+- `ref`: a durable source trail reference, sanitized summary reference, link, or opaque reference already approved for task context
+- `label`: human-readable source label for review previews
 
 `TaskDraft` must not store:
 

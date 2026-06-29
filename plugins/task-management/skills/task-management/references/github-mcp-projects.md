@@ -77,21 +77,26 @@ must ensure state-changing GitHub MCP adapter tools are not unconditionally
 inherited by child agents. If that delegation boundary is not enforced, write
 availability is blocked even if the MCP server and credentials exist.
 
-## Preflight Result Codes
+## Typed Route Result Codes
 
-Preflight is a representation step, not a live GitHub check. The host or caller
-may supply availability data. The task-management plugin maps that data to a
-typed `TaskWriteResult` and stops before dispatch when any required condition is
-missing.
+Typed route results may come from preflight availability data or from a
+host-provided adapter response. Preflight is a representation step, not a live
+GitHub check. The host or caller may supply availability data. The
+task-management plugin maps that data and later adapter responses to typed
+`TaskWriteResult` values.
 
-| Code | Meaning | Dispatch behavior |
-| --- | --- | --- |
-| `mcp_server_missing` | The host has no available GitHub MCP Server connection for `connection_ref`. | Stop and ask the human or host to configure the adapter outside plugin install. |
-| `tool_disabled` | The server exists but the required adapter tool is not enabled for this flow. | Stop and request explicit tool enablement outside the plugin. |
-| `auth_missing` | The adapter reports missing authentication or expired authorization. | Stop and ask the human to authenticate through the host-owned adapter flow. |
-| `permission_failure` | Authentication exists, but the adapter lacks required project permission. | Stop and request access review; do not retry through a fallback client. |
-| `project_not_found` | The opaque `destination_ref` cannot be resolved by the adapter. | Stop and ask the human to correct the destination registration. |
-| `field_missing` | Required backend fields for the approved TaskDraft cannot be resolved. | Stop and provide setup guidance; do not create or repair schema here. |
+| Code | Source | Meaning | Dispatch behavior |
+| --- | --- | --- | --- |
+| `mcp_server_missing` | Preflight | The host has no available GitHub MCP Server connection for `connection_ref`. | Stop and ask the human or host to configure the adapter outside plugin install. |
+| `tool_disabled` | Preflight | The server exists but the required adapter tool is not enabled for this flow. | Stop and request explicit tool enablement outside the plugin. |
+| `auth_missing` | Preflight | The adapter reports missing authentication or expired authorization. | Stop and ask the human to authenticate through the host-owned adapter flow. |
+| `permission_failure` | Preflight | Authentication exists, but the adapter lacks required project permission. | Stop and request access review; do not retry through a fallback client. |
+| `project_not_found` | Preflight | The opaque `destination_ref` cannot be resolved by the adapter. | Stop and ask the human to correct the destination registration. |
+| `field_missing` | Preflight | Required backend fields for the approved TaskDraft cannot be resolved. | Stop and provide setup guidance; do not create or repair schema here. |
+| `field_type_mismatch` | Adapter result | A destination field exists but has a type incompatible with the reviewed TaskDraft. | Stop and ask for backend setup or field mapping correction outside the plugin. |
+| `tool_capability_mismatch` | Adapter result | The enabled adapter tool cannot perform the approved operation. | Stop and require a tool or route with matching capability; do not dispatch through a fallback client. |
+| `rate_limited` | Adapter result | The external adapter reported a rate limit for the requested operation. | Return a retryable failure and let the human or host retry after the adapter window resets. |
+| `partial_update_failure` | Adapter result | The external adapter reported that only part of the requested task update completed. | Return a failed result and require backend inspection before retry or corrective update. |
 
 These codes are stable contract values for normalizing GitHub MCP route
 availability. Adapters may expose more detailed backend-specific errors, but the

@@ -18,7 +18,10 @@ urgency: "normal"
 importance: "high"
 automation_mode: "assistive"
 approval_required: true
-source_ref: "source-trail:portfolio-os-task-backend-plugin-skill/POTASK-003"
+source_ref:
+  kind: "source_trail"
+  ref: "source-trail:portfolio-os-task-backend-plugin-skill/POTASK-003"
+  label: "POTASK-003 source trail"
 body: |
   Outcome:
   Define backend-neutral TaskDraft composition guidance for title, body,
@@ -38,9 +41,10 @@ body: |
 
   Review:
   Confirm the work unit before adapter dispatch.
-review_notes:
-  - "Routing is inferred from the approved POTASK-003 worker packet."
-  - "State-changing adapter dispatch still requires explicit approval."
+fields:
+  review_notes:
+    - "Routing is inferred from the approved POTASK-003 worker packet."
+    - "State-changing adapter dispatch still requires explicit approval."
 ```
 
 ## Human Review Preview
@@ -63,7 +67,7 @@ Task:
 - Importance: `high`
 - Automation mode: `assistive`
 - Approval required: `true`
-- Source ref: `source-trail:portfolio-os-task-backend-plugin-skill/POTASK-003`
+- Source ref: `source-trail:portfolio-os-task-backend-plugin-skill/POTASK-003` (`POTASK-003 source trail`)
 
 Expected adapter side effects after explicit approval:
 
@@ -96,9 +100,15 @@ task:
     importance: "high"
     automation_mode: "assistive"
     approval_required: true
-    source_ref: "source-trail:portfolio-os-task-backend-plugin-skill/POTASK-003"
+    source_ref:
+      kind: "source_trail"
+      ref: "source-trail:portfolio-os-task-backend-plugin-skill/POTASK-003"
+      label: "POTASK-003 source trail"
     work_unit_id: "portfolio-os-task-backend-plugin-skill"
     work_unit_name: "Portfolio OS Task Backend Plugin Skill"
+    review_notes:
+      - "Routing is inferred from the approved POTASK-003 worker packet."
+      - "State-changing adapter dispatch still requires explicit approval."
 work_unit_id: "portfolio-os-task-backend-plugin-skill"
 work_unit_name: "Portfolio OS Task Backend Plugin Skill"
 expected_adapter_side_effects:
@@ -125,14 +135,19 @@ title: "Implement task create preview contract"
 task_type: "implementation"
 work_unit_id: "portfolio-os-task-backend-plugin-skill"
 work_unit_name: "Unknown work unit: portfolio-os-task-backend-plugin-skill"
+due_date: null
 urgency: "normal"
 importance: "high"
 automation_mode: "assistive"
 approval_required: true
-source_ref: "source-trail:portfolio-os-task-backend-plugin-skill/POTASK-005"
-review_notes:
-  - "work_unit_id is retained as the stable routing key."
-  - "Human review must confirm the backend display label before adapter dispatch."
+source_ref:
+  kind: "source_trail"
+  ref: "source-trail:portfolio-os-task-backend-plugin-skill/POTASK-005"
+  label: "POTASK-005 source trail"
+fields:
+  review_notes:
+    - "work_unit_id is retained as the stable routing key."
+    - "Human review must confirm the backend display label before adapter dispatch."
 ```
 
 ## Inbox Fallback Preview
@@ -144,12 +159,17 @@ title: "Triage task-management follow-up"
 task_type: "inbox_triage"
 work_unit_id: "inbox"
 work_unit_name: "Inbox"
+due_date: null
 urgency: "normal"
 importance: "normal"
 automation_mode: "assistive"
 approval_required: true
-source_ref: "source-summary:unrouted-task-management-note"
-review_notes:
-  - "work_unit_id uses inbox because caller context did not identify a work unit."
-  - "Human review should replace inbox with the correct stable work unit before dispatch when possible."
+source_ref:
+  kind: "source_summary"
+  ref: "source-summary:unrouted-task-management-note"
+  label: "Unrouted task-management note"
+fields:
+  review_notes:
+    - "work_unit_id uses inbox because caller context did not identify a work unit."
+    - "Human review should replace inbox with the correct stable work unit before dispatch when possible."
 ```
