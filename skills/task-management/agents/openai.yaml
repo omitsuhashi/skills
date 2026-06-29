@@ -1,0 +1,4 @@
+interface:
+  display_name: "Task Management"
+  short_description: "Backend-neutral task draft and adapter workflow"
+  default_prompt: "Use $task-management to turn capture text into a reviewed task draft and register it through an approved task backend."

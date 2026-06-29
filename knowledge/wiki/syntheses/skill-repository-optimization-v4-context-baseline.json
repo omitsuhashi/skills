@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-06-26",
+  "captured_at": "2026-06-28",
   "growth_warning_threshold_percent": 10,
   "metric_source": "context-contract.toml schema v1/v2 character and estimated-token metrics",
   "report_type": "skill-context-baseline",
@@ -19,8 +19,8 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 10461,
-          "estimated_token_count": 3929,
+          "character_count": 10411,
+          "estimated_token_count": 3912,
           "file_count": 3,
           "files": [
             "skills/grill-to-pr-loop/SKILL.md",
@@ -29,12 +29,12 @@
           ],
           "headroom_percent": 60,
           "max_file_count": 6,
-          "non_whitespace_character_count": 9026,
+          "non_whitespace_character_count": 8986,
           "operation": "intake",
           "schema_version": 2,
           "skill": "grill-to-pr-loop",
           "word_budget": null,
-          "word_count": 1397
+          "word_count": 1387
         },
         {
           "budget": {
@@ -46,8 +46,8 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 10461,
-          "estimated_token_count": 3929,
+          "character_count": 10411,
+          "estimated_token_count": 3912,
           "file_count": 3,
           "files": [
             "skills/grill-to-pr-loop/SKILL.md",
@@ -56,12 +56,12 @@
           ],
           "headroom_percent": 60,
           "max_file_count": 6,
-          "non_whitespace_character_count": 9026,
+          "non_whitespace_character_count": 8986,
           "operation": "grill",
           "schema_version": 2,
           "skill": "grill-to-pr-loop",
           "word_budget": null,
-          "word_count": 1397
+          "word_count": 1387
         },
         {
           "budget": {
@@ -73,8 +73,8 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 10461,
-          "estimated_token_count": 3929,
+          "character_count": 10411,
+          "estimated_token_count": 3912,
           "file_count": 3,
           "files": [
             "skills/grill-to-pr-loop/SKILL.md",
@@ -83,12 +83,12 @@
           ],
           "headroom_percent": 60,
           "max_file_count": 6,
-          "non_whitespace_character_count": 9026,
+          "non_whitespace_character_count": 8986,
           "operation": "spec",
           "schema_version": 2,
           "skill": "grill-to-pr-loop",
           "word_budget": null,
-          "word_count": 1397
+          "word_count": 1387
         },
         {
           "budget": {
@@ -100,8 +100,8 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 12328,
-          "estimated_token_count": 4750,
+          "character_count": 12278,
+          "estimated_token_count": 4733,
           "file_count": 4,
           "files": [
             "skills/grill-to-pr-loop/SKILL.md",
@@ -111,12 +111,12 @@
           ],
           "headroom_percent": 52,
           "max_file_count": 6,
-          "non_whitespace_character_count": 10568,
+          "non_whitespace_character_count": 10528,
           "operation": "issue-gate",
           "schema_version": 2,
           "skill": "grill-to-pr-loop",
           "word_budget": null,
-          "word_count": 1645
+          "word_count": 1635
         },
         {
           "budget": {
@@ -128,8 +128,8 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 17691,
-          "estimated_token_count": 6757,
+          "character_count": 17641,
+          "estimated_token_count": 6740,
           "file_count": 5,
           "files": [
             "skills/grill-to-pr-loop/SKILL.md",
@@ -140,12 +140,12 @@
           ],
           "headroom_percent": 32,
           "max_file_count": 6,
-          "non_whitespace_character_count": 15196,
+          "non_whitespace_character_count": 15156,
           "operation": "execution-plan",
           "schema_version": 2,
           "skill": "grill-to-pr-loop",
           "word_budget": null,
-          "word_count": 2355
+          "word_count": 2345
         },
         {
           "budget": {
@@ -157,8 +157,8 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 15305,
-          "estimated_token_count": 5835,
+          "character_count": 15255,
+          "estimated_token_count": 5818,
           "file_count": 4,
           "files": [
             "skills/grill-to-pr-loop/SKILL.md",
@@ -168,12 +168,12 @@
           ],
           "headroom_percent": 41,
           "max_file_count": 6,
-          "non_whitespace_character_count": 13136,
+          "non_whitespace_character_count": 13096,
           "operation": "resume",
           "schema_version": 2,
           "skill": "grill-to-pr-loop",
           "word_budget": null,
-          "word_count": 2043
+          "word_count": 2033
         },
         {
           "budget": {
@@ -185,8 +185,8 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 15305,
-          "estimated_token_count": 5835,
+          "character_count": 15255,
+          "estimated_token_count": 5818,
           "file_count": 4,
           "files": [
             "skills/grill-to-pr-loop/SKILL.md",
@@ -196,12 +196,12 @@
           ],
           "headroom_percent": 41,
           "max_file_count": 6,
-          "non_whitespace_character_count": 13136,
+          "non_whitespace_character_count": 13096,
           "operation": "completion-report",
           "schema_version": 2,
           "skill": "grill-to-pr-loop",
           "word_budget": null,
-          "word_count": 2043
+          "word_count": 2033
         },
         {
           "budget": {
@@ -213,8 +213,8 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 10656,
-          "estimated_token_count": 3989,
+          "character_count": 10606,
+          "estimated_token_count": 3972,
           "file_count": 3,
           "files": [
             "skills/grill-to-pr-loop/SKILL.md",
@@ -223,12 +223,12 @@
           ],
           "headroom_percent": 60,
           "max_file_count": 6,
-          "non_whitespace_character_count": 9171,
+          "non_whitespace_character_count": 9131,
           "operation": "delivery",
           "schema_version": 2,
           "skill": "grill-to-pr-loop",
           "word_budget": null,
-          "word_count": 1453
+          "word_count": 1443
         },
         {
           "budget": {
@@ -240,8 +240,8 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 10179,
-          "estimated_token_count": 3765,
+          "character_count": 10129,
+          "estimated_token_count": 3748,
           "file_count": 3,
           "files": [
             "skills/grill-to-pr-loop/SKILL.md",
@@ -250,12 +250,12 @@
           ],
           "headroom_percent": 62,
           "max_file_count": 6,
-          "non_whitespace_character_count": 8728,
+          "non_whitespace_character_count": 8688,
           "operation": "ambiguity-check",
           "schema_version": 2,
           "skill": "grill-to-pr-loop",
           "word_budget": null,
-          "word_count": 1379
+          "word_count": 1369
         }
       ],
       "path": "skills/grill-to-pr-loop",
@@ -847,6 +847,123 @@
         "single-root",
         "multi-root"
       ]
+    },
+    {
+      "modes": [],
+      "operation_count": 4,
+      "operations": [
+        {
+          "budget": {
+            "character_budget": 22000,
+            "estimated_token_budget": 10000,
+            "max_file_count": 4,
+            "min_headroom_percent": 15,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 5573,
+          "estimated_token_count": 2105,
+          "file_count": 3,
+          "files": [
+            "skills/task-management/SKILL.md",
+            "skills/task-management/references/backend-contract.md",
+            "skills/task-management/references/governance.md"
+          ],
+          "headroom_percent": 78,
+          "max_file_count": 4,
+          "non_whitespace_character_count": 4753,
+          "operation": "draft",
+          "schema_version": 2,
+          "skill": "task-management",
+          "word_budget": null,
+          "word_count": 753
+        },
+        {
+          "budget": {
+            "character_budget": 22000,
+            "estimated_token_budget": 10000,
+            "max_file_count": 4,
+            "min_headroom_percent": 15,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 6913,
+          "estimated_token_count": 2591,
+          "file_count": 4,
+          "files": [
+            "skills/task-management/SKILL.md",
+            "skills/task-management/references/backend-contract.md",
+            "skills/task-management/references/github-projects.md",
+            "skills/task-management/references/governance.md"
+          ],
+          "headroom_percent": 74,
+          "max_file_count": 4,
+          "non_whitespace_character_count": 5883,
+          "operation": "github-projects",
+          "schema_version": 2,
+          "skill": "task-management",
+          "word_budget": null,
+          "word_count": 933
+        },
+        {
+          "budget": {
+            "character_budget": 22000,
+            "estimated_token_budget": 10000,
+            "max_file_count": 4,
+            "min_headroom_percent": 15,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 5386,
+          "estimated_token_count": 2017,
+          "file_count": 3,
+          "files": [
+            "skills/task-management/SKILL.md",
+            "skills/task-management/references/backend-contract.md",
+            "skills/task-management/references/migration.md"
+          ],
+          "headroom_percent": 79,
+          "max_file_count": 4,
+          "non_whitespace_character_count": 4587,
+          "operation": "migration",
+          "schema_version": 2,
+          "skill": "task-management",
+          "word_budget": null,
+          "word_count": 736
+        },
+        {
+          "budget": {
+            "character_budget": 22000,
+            "estimated_token_budget": 10000,
+            "max_file_count": 4,
+            "min_headroom_percent": 15,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 4700,
+          "estimated_token_count": 1774,
+          "file_count": 2,
+          "files": [
+            "skills/task-management/SKILL.md",
+            "skills/task-management/references/backend-contract.md"
+          ],
+          "headroom_percent": 82,
+          "max_file_count": 4,
+          "non_whitespace_character_count": 4009,
+          "operation": "adapter-contract",
+          "schema_version": 2,
+          "skill": "task-management",
+          "word_budget": null,
+          "word_count": 640
+        }
+      ],
+      "path": "skills/task-management",
+      "skill": "task-management",
+      "topologies": []
     }
   ]
 }

@@ -1,0 +1,20 @@
+schema_version = 2
+skill = "task-management"
+entrypoint = "SKILL.md"
+base_references = ["references/backend-contract.md"]
+character_budget = 22000
+estimated_token_budget = 10000
+max_file_count = 4
+min_headroom_percent = 15
+
+[operations.draft]
+references = ["references/governance.md"]
+
+[operations.github-projects]
+references = ["references/github-projects.md", "references/governance.md"]
+
+[operations.migration]
+references = ["references/migration.md"]
+
+[operations.adapter-contract]
+references = []
