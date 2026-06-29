@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "adapter_results": [
+    {
+      "case": "task_create_success",
+      "adapter_result": {
+        "result_type": "github_mcp_adapter_result",
+        "ok": true,
+        "operation_type": "task.create",
+        "backend_key": "github_projects_mcp",
+        "destination_ref": "github-projects:portfolio-os-task-board",
+        "adapter_ref": "github-projects:portfolio-os-task-board/task/opaque-1024",
+        "url": "https://github.com/orgs/example-org/projects/portfolio-os-task-board?pane=task&item=opaque-1024",
+        "title": "Implement task draft composition guidance"
+      },
+      "task_write_result": {
+        "result_type": "TaskWriteResult",
+        "ok": true,
+        "status": "created",
+        "operation_type": "task.create",
+        "backend_key": "github_projects_mcp",
+        "destination_ref": "github-projects:portfolio-os-task-board",
+        "task_ref": {
+          "ref": "github-projects:portfolio-os-task-board/task/opaque-1024",
+          "url": "https://github.com/orgs/example-org/projects/portfolio-os-task-board?pane=task&item=opaque-1024",
+          "title": "Implement task draft composition guidance",
+          "backend_label": "Portfolio OS Tasks"
+        },
+        "error": null
+      }
+    },
+    {
+      "case": "task_comment_success",
+      "adapter_result": {
+        "result_type": "github_mcp_adapter_result",
+        "ok": true,
+        "operation_type": "task.comment",
+        "backend_key": "github_projects_mcp",
+        "destination_ref": "github-projects:portfolio-os-task-board",
+        "adapter_ref": "github-projects:portfolio-os-task-board/task/opaque-1024",
+        "url": "https://github.com/orgs/example-org/projects/portfolio-os-task-board?pane=task&item=opaque-1024",
+        "title": "Implement task draft composition guidance"
+      },
+      "task_write_result": {
+        "result_type": "TaskWriteResult",
+        "ok": true,
+        "status": "commented",
+        "operation_type": "task.comment",
+        "backend_key": "github_projects_mcp",
+        "destination_ref": "github-projects:portfolio-os-task-board",
+        "task_ref": {
+          "ref": "github-projects:portfolio-os-task-board/task/opaque-1024",
+          "url": "https://github.com/orgs/example-org/projects/portfolio-os-task-board?pane=task&item=opaque-1024",
+          "title": "Implement task draft composition guidance",
+          "backend_label": "Portfolio OS Tasks"
+        },
+        "error": null
+      }
+    }
+  ]
+}
