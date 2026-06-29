@@ -54,6 +54,14 @@ _現在なし。_
   検索語: skill repository optimization, execution envelope, worker_context_required, local_only, SRO4, worktree reservation, 実行計画
 - [Skill Repository Optimization V4 Context Baseline](wiki/syntheses/skill-repository-optimization-v4-context-baseline.json) — SRO4-001 で固定した loop skill operation context metrics baseline。
   検索語: skill repository optimization, SRO4-001, context baseline, operation metrics, word count, grill-to-pr-loop, issue-implementation-loop
+- [Loop Skill 運用単純化仕様](wiki/syntheses/loop-skill-operational-simplicity-spec.md) — loop 系 skill の適用基準、役割境界モデル、workflow complexity レポートを追加する Spec Gate 承認済み契約。
+  検索語: 適用基準, 役割境界モデル, 複雑性, grill-to-pr-loop, issue-implementation-loop, operational simplicity, workflow complexity, mental model, コンテキスト最適化
+- [Loop Skill 運用単純化 Issue 台帳](wiki/syntheses/loop-skill-operational-simplicity-issues.md) — loop 系 skill 運用単純化の日本語 local-first final ledger。LSOS-001 から LSOS-004 の実装証跡、レビュー結果、full verification、remote boundary、draft PR #22 を集約する。
+  検索語: ローカルIssue, 実装証跡, レビュー結果, 運用単純化, draft PR #22, grill-to-pr-loop, issue-implementation-loop, local issue, blocker graph, final ledger, workflow complexity, role boundary
+- [Loop Skill 運用単純化 Input Packet](wiki/syntheses/loop-skill-operational-simplicity-input-packet.json) — LSOS-001 から LSOS-004 を local-only で実行する承認済み normalized input packet。
+  検索語: 実行計画, 承認済み packet, loop skill operational simplicity, execution packet, input packet, LSOS, local_only
+- [Loop Skill 運用単純化 Execution Envelope](wiki/syntheses/loop-skill-operational-simplicity-execution-envelope.json) — LSOS 実装ループの local-only Execution Envelope、worker-only policy、branch/worktree reservation、prepare 検証済み実行契約。
+  検索語: 実行計画, 実行 envelope, worker_context_required, local_only, LSOS, worktree reservation, loop skill operational simplicity
 - [Grill To PR Loop Epic Base Delivery Policy Spec](wiki/syntheses/grill-to-pr-loop-epic-base-delivery-policy-spec.md) — issue PR を `codex/<epic-id>/epic-base` に集約し、issue PR は guarded agent merge、final PR merge は human-only とする delivery policy。
   検索語: grill-to-pr-loop, issue-implementation-loop, epic_base, epic-base, batch_issue_prs, issue PR, final PR, merge policy, review cycles, PR配送
 - [Grill To PR Loop Epic Base Delivery Policy Issues](wiki/syntheses/grill-to-pr-loop-epic-base-delivery-policy-issues.md) — epic-base delivery policy 実装のローカルIssue ledger。

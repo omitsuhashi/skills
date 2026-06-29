@@ -22,7 +22,7 @@ Stop if required skills are missing, dirty changes overlap planned write scope, 
 
 ## Local-first
 
-Local durable artifacts are canonical. In this repository, long specs and Goal contracts live under `knowledge/wiki/syntheses/`. Local issue ledgers use Japanese titles, headings, status values, and prose while preserving code symbols, paths, commands, branch names, IDs, and external references. GitHub issues and PRs are mirrors or delivery records, not the planning source of truth.
+Local durable artifacts are canonical. In this repository, long specs and Goal contracts live under `knowledge/wiki/syntheses/`. Specs/PRDs/ledgers use Japanese headings/labels/status/prose; preserve code symbols, schema keys, paths, commands, branches, IDs, external refs. GitHub issues and PRs are mirrors or delivery records, not the planning source of truth.
 
 Update the local ledger whenever issue publication, implementation review, PR-ready state, PR creation, merge/close state, or completion state changes. Do not report completion while the ledger contradicts execution or remote state.
 

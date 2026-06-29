@@ -20,26 +20,28 @@ For repos without a knowledge wiki, fallback paths are:
 
 ## Spec / PRD Minimum
 
+Specs/PRDs use Japanese headings/labels/prose. Preserve IDs, paths, commands, code symbols, schema keys, branches, errors, external refs.
+
 The spec must contain:
 
-- Problem statement and success criteria.
-- Stable `Epic ID`.
-- Accepted decisions from Grill with Docs.
-- Non-goals.
-- Issue decomposition strategy.
-- Acceptance criteria.
-- Testing decisions and verification commands.
-- Remote-write policy.
-- Human review gates.
-- Stop conditions and known risks.
+- 問題設定 / 成功条件。
+- Stable `Epic ID`。
+- 採用した判断。
+- 非目標。
+- Issue 分解方針。
+- 受け入れ条件。
+- 検証方針 / コマンド。
+- リモート書き込み方針。
+- 人間レビューゲート。
+- 停止条件 / 既知のリスク。
 
-Self-review the spec for placeholders, contradictory decisions, ambiguous acceptance criteria, stale paths, and hidden implementation assumptions.
+Self-review the spec for placeholders, contradictions, ambiguous criteria, stale paths, hidden implementation assumptions, and English prose that should be Japanese.
 
 ## Gates
 
 ### Spec Gate
 
-Present spec path, `Epic ID`, accepted decisions, non-goals, acceptance criteria, verification commands, remote policy, and stop conditions. Wait for approval before issue decomposition unless the user already provided an approved spec and requested direct implementation.
+Present spec path, `Epic ID`, 採用した判断, 非目標, 受け入れ条件, 検証コマンド, remote policy, and stop conditions. Wait for approval before issue decomposition unless the user already provided an approved spec and requested direct implementation.
 
 After Spec Gate approval, commit the approved spec and ledger/log updates before issue decomposition.
 
