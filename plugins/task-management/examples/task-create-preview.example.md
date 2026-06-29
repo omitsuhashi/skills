@@ -57,6 +57,8 @@ Task:
 - Type: `implementation`
 - Work unit id: `portfolio-os-task-backend-plugin-skill`
 - Work unit name: `Portfolio OS Task Backend Plugin Skill`
+- Routing key: `work_unit_id`
+- Backend display label: `work_unit_name`
 - Urgency: `normal`
 - Importance: `high`
 - Automation mode: `assistive`
@@ -68,6 +70,25 @@ Expected adapter side effects after explicit approval:
 - Create one task in the selected backend destination.
 - Store the task title, body, neutral fields, `work_unit_id`, and `work_unit_name`.
 - Return an opaque backend task reference or typed error.
+
+## Unknown Work Unit Name Preview
+
+Use this fallback when the stable work unit id is known but the backend display label is not.
+
+```yaml
+title: "Implement task create preview contract"
+task_type: "implementation"
+work_unit_id: "portfolio-os-task-backend-plugin-skill"
+work_unit_name: "Unknown work unit: portfolio-os-task-backend-plugin-skill"
+urgency: "normal"
+importance: "high"
+automation_mode: "assistive"
+approval_required: true
+source_ref: "source-trail:portfolio-os-task-backend-plugin-skill/POTASK-005"
+review_notes:
+  - "work_unit_id is retained as the stable routing key."
+  - "Human review must confirm the backend display label before adapter dispatch."
+```
 
 ## Inbox Fallback Preview
 

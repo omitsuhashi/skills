@@ -10,7 +10,7 @@ Every create preview should be built from these neutral fields:
 - `body`: concise operational context, expected outcome, acceptance notes, and review questions.
 - `task_type`: one of `implementation`, `review`, `research`, `decision`, `coordination`, `maintenance`, or `inbox_triage`.
 - `work_unit_id`: stable routing key for the work unit. Use `inbox` when the correct work unit is unknown.
-- `work_unit_name`: human display label for the work unit. Use `Inbox` when `work_unit_id` falls back to `inbox`.
+- `work_unit_name`: backend display label for the work unit. Use `Inbox` when `work_unit_id` falls back to `inbox`.
 - `due_date`: ISO date when provided or clearly implied; otherwise omit it.
 - `urgency`: `low`, `normal`, `high`, or `blocked`.
 - `importance`: `low`, `normal`, `high`, or `critical`.
@@ -18,6 +18,16 @@ Every create preview should be built from these neutral fields:
 - `approval_required`: boolean. State-changing adapter dispatch requires explicit approval.
 - `source_ref`: a sanitized source summary or durable source trail reference, not a raw platform payload.
 - `review_notes`: uncertainties, routing rationale, and fields the human should confirm.
+
+## Work Unit Resolution
+
+`work_unit_id` is the stable routing key. Resolve it from explicit override, caller or profile context, or durable source trail. It must not be derived from or overwritten by `work_unit_name`; renaming a backend display label does not change task routing.
+
+`work_unit_name` is the backend display label. It helps humans scan the selected backend UI and review preview, but it is not a routing key. Do not use it to select a backend destination or change the resolved `work_unit_id`.
+
+If `work_unit_id` is known but the display label is unknown, keep the resolved `work_unit_id` and set `work_unit_name: "Unknown work unit: <work_unit_id>"`. A missing display label is a human-review issue, not a routing change. Add a review note asking the human to confirm the backend display label before adapter dispatch.
+
+Only use the `inbox` fallback when the stable `work_unit_id` itself cannot be determined.
 
 ## Title Rules
 
@@ -100,7 +110,7 @@ Before any adapter-facing create preview is approved, show:
 
 - task title and body
 - task type, urgency, importance, automation mode, and approval requirement
-- `work_unit_id` and `work_unit_name`, including `inbox` / `Inbox` fallback when used
+- `work_unit_id` as the routing key and `work_unit_name` as the backend display label, including `inbox` / `Inbox` fallback when used
 - sanitized `source_ref`
 - routing rationale and review notes
 - the selected backend and destination when those are already known
