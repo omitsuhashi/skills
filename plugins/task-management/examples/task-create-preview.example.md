@@ -71,6 +71,51 @@ Expected adapter side effects after explicit approval:
 - Store the task title, body, neutral fields, `work_unit_id`, and `work_unit_name`.
 - Return an opaque backend task reference or typed error.
 
+## Adapter Operation Envelope Preview
+
+This envelope is adapter-neutral review input. It is not a backend write and it
+must not be passed to an adapter until Adapter Dispatch Review approves the same
+operation, tool, and destination.
+
+```yaml
+operation_type: "task.create"
+backend_key: "github_projects_mcp"
+connection_ref: "github-projects"
+destination_ref: "github-projects:portfolio-os-task-board"
+destination_label: "Portfolio OS Tasks"
+adapter_tool_name: "github-projects:task-create"
+task:
+  title: "Implement task draft composition guidance"
+  body: |
+    Outcome:
+    Define backend-neutral TaskDraft composition guidance for title, body,
+    taxonomy fields, work unit display, and review preview expectations.
+  fields:
+    task_type: "implementation"
+    urgency: "normal"
+    importance: "high"
+    automation_mode: "assistive"
+    approval_required: true
+    source_ref: "source-trail:portfolio-os-task-backend-plugin-skill/POTASK-003"
+    work_unit_id: "portfolio-os-task-backend-plugin-skill"
+    work_unit_name: "Portfolio OS Task Backend Plugin Skill"
+work_unit_id: "portfolio-os-task-backend-plugin-skill"
+work_unit_name: "Portfolio OS Task Backend Plugin Skill"
+expected_adapter_side_effects:
+  - "Create one task in the selected backend destination."
+  - "Store the task title, body, neutral fields, work_unit_id, and work_unit_name."
+  - "Return an opaque backend task reference or typed error."
+adapter_dispatch_review:
+  status: "required"
+  required_match:
+    approved_operation_type: "task.create"
+    approved_adapter_tool_name: "github-projects:task-create"
+    approved_destination_ref: "github-projects:portfolio-os-task-board"
+  instruction: "Do not dispatch until review_status is approved."
+```
+
+Adapter Dispatch Review: required. Do not dispatch until review_status is approved.
+
 ## Unknown Work Unit Name Preview
 
 Use this fallback when the stable work unit id is known but the backend display label is not.
