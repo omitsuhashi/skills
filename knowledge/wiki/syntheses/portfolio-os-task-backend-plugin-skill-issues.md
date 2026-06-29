@@ -2,7 +2,7 @@
 
 ## 状態
 
-Issue Gate / Execution Plan Gate 承認済み。POTASK-001、POTASK-002、POTASK-003、POTASK-004、POTASK-005、POTASK-006、POTASK-007、POTASK-008 は `PR_READY`。POTASK-009 は docs / examples / verification / handoff boundary の最終統合 issue として実行中。GitHub issue mirror、push、PR 作成、merge はまだ行わない。
+Issue Gate / Execution Plan Gate 承認済み。POTASK-001、POTASK-002、POTASK-003、POTASK-004、POTASK-005、POTASK-006、POTASK-007、POTASK-008、POTASK-009 は local `PR_READY`。PR delivery は承認済み。GitHub issue mirror と merge はまだ行わない。
 
 ## Epic ID
 
@@ -28,7 +28,7 @@ Issue Gate / Execution Plan Gate 承認済み。POTASK-001、POTASK-002、POTASK
 | `portfolio-os-task-backend-plugin-skill` | POTASK-006 | adapter operation envelope と Adapter Dispatch Review guard を実装する | 承認済み | 完了 | `PR_READY` `0ce0ffa6eae53b7f085e64af1a453749f82cc3ba` | POTASK-002, POTASK-003, POTASK-004, POTASK-005 | POTASK-007, POTASK-009 | 未作成 | approved: `c46d02023e1b9d8fc58fa9e2a57dde1c51d1a386..0ce0ffa6eae53b7f085e64af1a453749f82cc3ba` | 未作成 |
 | `portfolio-os-task-backend-plugin-skill` | POTASK-007 | GitHub MCP route preflight と typed result mapping を実装する | 承認済み | 完了 | `PR_READY` `ed62de954b57ff4c5b32f6efaa6098843d85c1ac` | POTASK-002, POTASK-004, POTASK-006 | POTASK-008, POTASK-009 | 未作成 | approved: `0ce0ffa6eae53b7f085e64af1a453749f82cc3ba..ed62de954b57ff4c5b32f6efaa6098843d85c1ac` | 未作成 |
 | `portfolio-os-task-backend-plugin-skill` | POTASK-008 | Hermes adapter availability runbook と governance reference を作る | 承認済み | 完了 | `PR_READY` `06f9b6fc7801271f345a8c2772a6d64e7c64f310` | POTASK-004, POTASK-007 | POTASK-009 | 未作成 | approved: `ed62de954b57ff4c5b32f6efaa6098843d85c1ac..06f9b6fc7801271f345a8c2772a6d64e7c64f310` | 未作成 |
-| `portfolio-os-task-backend-plugin-skill` | POTASK-009 | docs / examples / verification / handoff boundary を統合する | 承認済み | 実行中 | 統合中 | POTASK-006, POTASK-007, POTASK-008 | なし | 未作成 | changes requested 対応中 | 未作成 |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-009 | docs / examples / verification / handoff boundary を統合する | 承認済み | 完了 | `PR_READY` `214349fff56bd55ff3e7e68612a499096096803f` | POTASK-006, POTASK-007, POTASK-008 | なし | 未作成 | approved: `06f9b6fc7801271f345a8c2772a6d64e7c64f310..214349fff56bd55ff3e7e68612a499096096803f` | 未作成 |
 
 ## Blocker Graph
 
