@@ -41,6 +41,8 @@ Build a normalized input packet file for `issue-implementation-loop`; do not pas
 - `work_items[]` with ID, title, source, acceptance criteria, non-goals, verification, write scope, and dependencies
 - `delivery_intent`
 
+`work_items[].title`、`acceptance_criteria`、`non_goals` などの user-facing packet string は日本語をベースにする。schema key、path、command、ID、外部参照は維持する。
+
 Use `issue-implementation-loop/assets/templates/input-packet.json` for the concrete shape and `issue-implementation-loop/assets/schemas/input-packet.schema.json` for the field contract. Validate it through `issue-implementation-loop/scripts/validate_input_packet.py` before execution.
 
 ## Implementation Context Handoff

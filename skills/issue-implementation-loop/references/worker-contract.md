@@ -13,6 +13,8 @@ task kind, access mode, source revision, exclusive write scope, durable read
 paths with purpose, short task summary, acceptance criteria, verification
 commands, stop conditions, and report contract.
 
+`issue_title`、`task.summary`、`task.acceptance_criteria`、`task.stop_conditions` などの user-facing packet string は日本語をベースにする。schema key、path、command、ID、branch name、外部参照は維持する。
+
 ## Rules
 
 - Re-read assigned issue and spec from durable paths.

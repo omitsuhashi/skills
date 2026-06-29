@@ -18,7 +18,7 @@ Spec Gate / Issue Gate / Execution Plan Gate 承認済み。LSOS-001 から LSOS
 - LSOS-001: 完了。ブロック元 なし。LSOS-002 と LSOS-003 を release 済み。
 - LSOS-002: 完了。LSOS-001 の適用基準を前提に役割境界モデルを作成済み。LSOS-004 へ release 済み。
 - LSOS-003: 完了。LSOS-001 の適用基準を前提に実行者向け complexity を定義済み。LSOS-004 へ release 済み。
-- LSOS-004: 完了。LSOS-002 と LSOS-003 の成果を統合し、regression tests と wiki final ledger を固定済み。
+- LSOS-004: 完了。LSOS-002 と LSOS-003 の成果を統合し、regression tests と wiki 最終台帳を固定済み。
 
 ## LSOS-001
 
@@ -250,8 +250,8 @@ LSOS-001 から LSOS-003 の成果を統合し、regression tests、wiki index/l
 
 - [x] 適用基準、役割境界モデルの discoverability、workflow complexity JSON shape が tests で固定されている。
 - [x] `knowledge/wiki/syntheses/loop-skill-operational-simplicity-issues.md` に各 issue の実装証跡、検証結果、レビュー結果が反映されている。
-- [x] `knowledge/index.md` と `knowledge/log.md` が final ledger を発見できる。
-- [x] full verification が通る。
+- [x] `knowledge/index.md` と `knowledge/log.md` が最終台帳を発見できる。
+- [x] 全体検証が通る。
 - [x] remote write は行われていない。
 - [x] 仕様書 / PRD / Issue 台帳 / human-facing report / packet の生成・更新規約は日本語ベースを明示し、機械可読 identifier は維持されている。
 
@@ -288,13 +288,14 @@ LSOS-001 から LSOS-003 の成果を統合し、regression tests、wiki index/l
 
 ### 実装証跡
 
-- Regression coverage: `skills/grill-to-pr-loop/tests/test_grill_to_pr_loop.py` が loop applicability と役割境界モデルの discoverability を固定し、`skills/issue-implementation-loop/tests/test_entrypoint.py` が execution applicability と role-boundary mental model discoverability を固定している。
-- Regression coverage: `scripts/test_report_skill_context.py` が `workflow_complexity` JSON shape、text advisory、non-loop target behavior、`validate_skill_context.py` が complexity hard failure にならないことを固定している。
-- Regression coverage: `scripts/test_loop_operational_simplicity_ledger.py` を追加し、LSOS-004 final ledger、`knowledge/index.md`、`knowledge/log.md` から実装証跡と remote boundary を発見できることを固定した。
-- Regression coverage: `skills/grill-to-pr-loop/tests/test_grill_to_pr_loop.py` が生成 spec/PRD と packet の日本語ベース規約を固定している。
-- `knowledge/index.md` の Loop Skill 運用単純化 Issue 台帳 entry を final ledger / 実装証跡検索語付きに更新した。
+- 回帰テスト範囲: `skills/grill-to-pr-loop/tests/test_grill_to_pr_loop.py` が loop applicability と役割境界モデルの discoverability を固定し、`skills/issue-implementation-loop/tests/test_entrypoint.py` が execution applicability と role-boundary mental model discoverability を固定している。
+- 回帰テスト範囲: `scripts/test_report_skill_context.py` が `workflow_complexity` JSON shape、text advisory、non-loop target behavior、`validate_skill_context.py` が complexity hard failure にならないことを固定している。
+- 回帰テスト範囲: `scripts/test_loop_operational_simplicity_ledger.py` を追加し、LSOS-004 最終台帳、`knowledge/index.md`、`knowledge/log.md` から実装証跡と remote boundary を発見できることを固定した。
+- 回帰テスト範囲: `skills/grill-to-pr-loop/tests/test_grill_to_pr_loop.py` が生成 spec/PRD と packet の日本語ベース規約を固定している。
+- `knowledge/index.md` の Loop Skill 運用単純化 Issue 台帳 entry を最終台帳 / 実装証跡検索語付きに更新した。
 - `skills/grill-to-pr-loop/references/planning-contract.md` に、生成 spec/PRD の title、見出し、label、本文を日本語ベースにし、schema key や path などの identifier を維持する方針を追加した。
 - `skills/issue-implementation-loop/SKILL.md` に、ledger と human-facing report 更新を日本語ベースにする方針を追加した。
+- `skills/grill-to-pr-loop/references/execution-handoff.md` と `skills/issue-implementation-loop/references/worker-contract.md` に、packet の user-facing string を日本語ベースにする方針を追加した。
 - `skills/issue-implementation-loop/assets/templates/input-packet.json` と `skills/issue-implementation-loop/assets/templates/worker-packet.json` の user-facing string 例を日本語へ更新した。
 - `knowledge/log.md` に LSOS-004 regression ledger closeout を追記した。
 - レビュー結果: final independent review 承認済み。Critical / Important / Minor finding はなし。
