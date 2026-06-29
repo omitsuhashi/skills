@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "epic_id": "loop-skill-operational-simplicity",
+  "revision": 1,
+  "epic_base": {
+    "ref": "codex/loop-skill-operational-simplicity/epic-base",
+    "sha": "99f67f2ebe1d026d2b274905abdc61d033fc907f",
+    "branch_state": "reserved"
+  },
+  "execution_policy": {
+    "parallel_preferred": true,
+    "serial_fallback_preapproved": true,
+    "worker_context_required": true,
+    "coordinator_may_implement": false,
+    "serial_fallback_mode": "worker_context_only",
+    "implementation_slots": 2,
+    "review_slots": 1,
+    "wave_is_barrier": false
+  },
+  "review_policy": {
+    "primary": "requesting-code-review",
+    "fallbacks": [
+      "manual-review-fallback"
+    ],
+    "manual_fallback_preapproved": false,
+    "max_review_cycles": 2,
+    "max_fix_cycles": 2,
+    "same_finding_limit": 2
+  },
+  "human_policy": {
+    "default_scope": "issue",
+    "epic_scope_requires_reason": true
+  },
+  "context_policy": {
+    "paths_first": true,
+    "max_worker_packet_words": 450,
+    "max_worker_report_words": 350,
+    "include_full_spec_text": false,
+    "include_full_ledger_text": false,
+    "worker_packet_schema": "skills/issue-implementation-loop/assets/schemas/worker-packet.schema.json",
+    "worker_packet_template": "skills/issue-implementation-loop/assets/templates/worker-packet.json",
+    "worker_packet_validator": "skills/issue-implementation-loop/scripts/validate_worker_packet.py"
+  },
+  "remote_write_policy": {
+    "mode": "local_only",
+    "approved_actions": []
+  },
+  "work_items": {
+    "LSOS-001": {
+      "branch": "codex/loop-skill-operational-simplicity/LSOS-001-applicability-rules",
+      "worktree_path": "/Users/omitsuhashi/.codex/worktrees/loop-skill-operational-simplicity/LSOS-001-applicability-rules",
+      "worktree_state": "create_on_run",
+      "base_policy": {
+        "type": "epic_base"
+      },
+      "write_scope": [
+        "path:skills/grill-to-pr-loop/SKILL.md",
+        "path:skills/grill-to-pr-loop/references",
+        "path:skills/issue-implementation-loop/SKILL.md",
+        "path:skills/issue-implementation-loop/references",
+        "path:skills/grill-to-pr-loop/tests",
+        "path:skills/issue-implementation-loop/tests"
+      ],
+      "dependencies": []
+    },
+    "LSOS-002": {
+      "branch": "codex/loop-skill-operational-simplicity/LSOS-002-mental-model",
+      "worktree_path": "/Users/omitsuhashi/.codex/worktrees/loop-skill-operational-simplicity/LSOS-002-mental-model",
+      "worktree_state": "reserved",
+      "base_policy": {
+        "type": "blocker_head",
+        "issue": "LSOS-001"
+      },
+      "write_scope": [
+        "path:skills/grill-to-pr-loop/references",
+        "path:skills/issue-implementation-loop/references",
+        "path:skills/grill-to-pr-loop/SKILL.md",
+        "path:skills/issue-implementation-loop/SKILL.md",
+        "path:skills/grill-to-pr-loop/tests",
+        "path:skills/issue-implementation-loop/tests"
+      ],
+      "dependencies": [
+        {
+          "issue": "LSOS-001",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    },
+    "LSOS-003": {
+      "branch": "codex/loop-skill-operational-simplicity/LSOS-003-workflow-complexity-report",
+      "worktree_path": "/Users/omitsuhashi/.codex/worktrees/loop-skill-operational-simplicity/LSOS-003-workflow-complexity-report",
+      "worktree_state": "reserved",
+      "base_policy": {
+        "type": "blocker_head",
+        "issue": "LSOS-001"
+      },
+      "write_scope": [
+        "path:scripts/report_skill_context.py",
+        "path:scripts/skill_context",
+        "path:scripts",
+        "path:skills/grill-to-pr-loop/tests",
+        "path:skills/issue-implementation-loop/tests"
+      ],
+      "dependencies": [
+        {
+          "issue": "LSOS-001",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    },
+    "LSOS-004": {
+      "branch": "codex/loop-skill-operational-simplicity/LSOS-004-regression-ledger",
+      "worktree_path": "/Users/omitsuhashi/.codex/worktrees/loop-skill-operational-simplicity/LSOS-004-regression-ledger",
+      "worktree_state": "reserved",
+      "base_policy": {
+        "type": "blocker_head",
+        "issue": "LSOS-002"
+      },
+      "write_scope": [
+        "path:skills/grill-to-pr-loop",
+        "path:skills/issue-implementation-loop",
+        "path:scripts",
+        "path:knowledge/wiki/syntheses/loop-skill-operational-simplicity-issues.md",
+        "path:knowledge/index.md",
+        "path:knowledge/log.md"
+      ],
+      "dependencies": [
+        {
+          "issue": "LSOS-002",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        },
+        {
+          "issue": "LSOS-003",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "none"
+        }
+      ]
+    }
+  }
+}

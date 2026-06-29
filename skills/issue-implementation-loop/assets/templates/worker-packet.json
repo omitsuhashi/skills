@@ -21,7 +21,7 @@
   },
   "epic_id": "<epic-id>",
   "issue_id": "G2PR-001",
-  "issue_title": "Short issue title",
+  "issue_title": "短い日本語 issue タイトル",
   "dispatch_id": "dispatch-001",
   "branch": "codex/<epic-id>/G2PR-001-<slug>",
   "worktree": "/abs/path/to/worktree",
@@ -51,19 +51,19 @@
   "inline_context": [
     {
       "path": "knowledge/wiki/syntheses/issues.md",
-      "excerpt": "Short issue-specific excerpt only."
+      "excerpt": "issue に必要な短い抜粋のみ。"
     }
   ],
   "task": {
-    "summary": "Short required behavior summary.",
+    "summary": "必要な挙動の短い要約。",
     "acceptance_criteria": [
-      "Observable condition"
+      "観測可能な受け入れ条件"
     ],
     "verification": [
       "python3 -m unittest discover -s tests"
     ],
     "stop_conditions": [
-      "Stop before remote writes unless explicitly approved."
+      "明示承認がない remote write の前で停止する。"
     ]
   },
   "report_contract": {

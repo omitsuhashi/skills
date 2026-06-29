@@ -8,6 +8,7 @@ Use this reference when behavior is ambiguous, an agent tries to skip a gate, or
 | Keeping execution mechanics in this skill | Move worktree/scheduler/runtime/recovery/review loop details to `issue-implementation-loop`. |
 | Implementing issue code in the planning/grill session | Stop and hand off to an execution coordinator with worker contexts. |
 | Creating horizontal layer issues | Rewrite as vertical slices that are independently verifiable. |
+| English spec/PRD | Use Japanese; preserve IDs/paths/schema keys. |
 | Writing generated issue labels in English | Use Japanese labels/status values; keep code symbols and paths unchanged. |
 | Treating GitHub as the default issue source | Keep local issues canonical; mirror only after approval. |
 | Letting `to-prd` or `to-issues` publish remotely before the gate | Use them for local synthesis/review first. |

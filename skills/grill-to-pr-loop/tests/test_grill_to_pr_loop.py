@@ -12,6 +12,7 @@ SKILL_DIR = Path(__file__).resolve().parents[1]
 REPO_ROOT = SKILL_DIR.parents[1]
 CHECK_PREREQS = SKILL_DIR / "scripts" / "check_prereqs.py"
 CORE_REFERENCE = SKILL_DIR / "references" / "core.md"
+PLANNING_CONTRACT = SKILL_DIR / "references" / "planning-contract.md"
 GRILL_AGENT_YAML = SKILL_DIR / "agents" / "openai.yaml"
 ISSUE_AGENT_YAML = REPO_ROOT / "skills" / "issue-implementation-loop" / "agents" / "openai.yaml"
 
@@ -66,7 +67,7 @@ class GrillToPrLoopTests(unittest.TestCase):
     def test_skill_entrypoint_points_to_context_contract_router(self) -> None:
         text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
 
-        self.assertLessEqual(len(text.split()), 850)
+        self.assertLessEqual(len(text.split()), 950)
         self.assertIn("references/core.md", text)
         self.assertIn("context-contract.toml", text)
         self.assertIn("operation router", text)
@@ -80,10 +81,90 @@ class GrillToPrLoopTests(unittest.TestCase):
         ):
             self.assertNotIn(operation_reference, text)
 
+    def test_skill_entrypoint_defines_loop_applicability(self) -> None:
+        text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+
+        for required in (
+            "Use loop skills when",
+            "Do not use loop skills for",
+            "Stop before implementation when",
+            "small one-off edits",
+            "direct implementation",
+            "approved packet",
+            "worker context",
+        ):
+            self.assertIn(required, text)
+
+    def test_entrypoint_discovers_issue_execution_mental_model_without_default_read_set(self) -> None:
+        text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+        contract_text = (SKILL_DIR / "context-contract.toml").read_text(encoding="utf-8")
+        issue_mental_model = REPO_ROOT / "skills" / "issue-implementation-loop" / "references" / "mental-model.md"
+
+        self.assertIn("mental-model.md", text)
+        self.assertTrue(issue_mental_model.exists())
+        self.assertNotIn("mental-model.md", contract_text)
+
+        model_text = issue_mental_model.read_text(encoding="utf-8")
+        for required in (
+            "coordinator",
+            "worker",
+            "reviewer",
+            "runtime state",
+            "local ledger",
+            "remote delivery",
+        ):
+            self.assertIn(required, model_text)
+
+    def test_generated_specs_and_packets_default_to_japanese_base_language(self) -> None:
+        skill_text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+        core_text = CORE_REFERENCE.read_text(encoding="utf-8")
+        planning_text = PLANNING_CONTRACT.read_text(encoding="utf-8")
+        handoff_text = (SKILL_DIR / "references" / "execution-handoff.md").read_text(encoding="utf-8")
+        mistakes_text = (SKILL_DIR / "references" / "common-mistakes.md").read_text(encoding="utf-8")
+        worker_contract_text = (REPO_ROOT / "skills" / "issue-implementation-loop" / "references" / "worker-contract.md").read_text(encoding="utf-8")
+        input_template = (REPO_ROOT / "skills" / "issue-implementation-loop" / "assets" / "templates" / "input-packet.json").read_text(encoding="utf-8")
+        worker_template = (REPO_ROOT / "skills" / "issue-implementation-loop" / "assets" / "templates" / "worker-packet.json").read_text(encoding="utf-8")
+
+        for text in (skill_text, core_text, planning_text):
+            self.assertIn("Japanese", text)
+            self.assertIn("schema keys", text)
+
+        for required in (
+            "問題設定 / 成功条件",
+            "採用した判断",
+            "非目標",
+            "Issue 分解方針",
+            "受け入れ条件",
+            "リモート書き込み方針",
+            "人間レビューゲート",
+            "停止条件 / 既知のリスク",
+        ):
+            self.assertIn(required, planning_text)
+
+        self.assertIn("English spec/PRD", mistakes_text)
+        for required in (
+            "work_items[].title",
+            "acceptance_criteria",
+            "non_goals",
+        ):
+            self.assertIn(required, handoff_text)
+        for required in (
+            "issue_title",
+            "task.summary",
+            "task.acceptance_criteria",
+            "task.stop_conditions",
+        ):
+            self.assertIn(required, worker_contract_text)
+        self.assertIn("user-facing packet string は日本語をベースにする", handoff_text)
+        self.assertIn("user-facing packet string は日本語をベースにする", worker_contract_text)
+        self.assertIn("短い日本語 issue タイトル", input_template)
+        self.assertIn("必要な挙動の短い要約", worker_template)
+        self.assertNotIn("Short issue title", input_template + worker_template)
+
     def test_phase_gate_approvals_require_local_commit(self) -> None:
         skill_text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
         core_text = CORE_REFERENCE.read_text(encoding="utf-8")
-        planning_text = (SKILL_DIR / "references" / "planning-contract.md").read_text(encoding="utf-8")
+        planning_text = PLANNING_CONTRACT.read_text(encoding="utf-8")
         handoff_text = (SKILL_DIR / "references" / "execution-handoff.md").read_text(encoding="utf-8")
         mistakes_text = (SKILL_DIR / "references" / "common-mistakes.md").read_text(encoding="utf-8")
 

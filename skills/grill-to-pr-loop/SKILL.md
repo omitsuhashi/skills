@@ -13,6 +13,16 @@ Load `references/core.md` first for lifecycle, ownership, gates, local-first rul
 
 Treat `grill-with-docs` as the required front door for unresolved design choices. If it is unavailable, stop instead of approximating the workflow.
 
+For the execution role-boundary mental model, see `../issue-implementation-loop/references/mental-model.md`; keep it out of default operation read-sets unless the operator needs that orientation.
+
+## Applicability
+
+Use loop skills when the change needs durable design decisions, spec/PRD synthesis, local issue decomposition, dependency ordering, approved execution handoff, implementation review, or optional remote delivery.
+
+Do not use loop skills for small one-off edits, a single clear file change, a minor docs fix to an already approved issue, or a task-specific skill that can finish through direct implementation without new gates.
+
+Stop before implementation when design choices are unresolved, scope is not approved, no normalized approved packet exists, worker context is unavailable, or the coordinator would need to become the implementation worker.
+
 ## Immediate Guard
 
 Before design, issue, execution, or PR actions, run:
@@ -36,6 +46,7 @@ After `references/core.md`, select the current operation and load only the files
 ## Required Rules
 
 - Keep long specs, ADRs, implementation plans, and Goal contracts in the repo-local durable path defined by the target repository; in this repo that is `knowledge/wiki/syntheses/`.
+- Specs/PRDs/ledgers: Japanese; preserve IDs/paths/commands/code symbols/schema keys/branches/errors/external refs.
 - Keep the local issue ledger canonical. GitHub issues and PRs are optional mirrors or delivery records after explicit approval.
 - Keep planning, spec, issue ledger, and execution packet ownership here. Keep branch/base/commit policy in the execution handoff reference and remote policy in the remote delivery reference.
 - Treat each approved planning gate as a phase approval commit boundary: commit the approved artifacts and ledger/log updates before starting the next phase.

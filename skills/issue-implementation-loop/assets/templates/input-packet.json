@@ -11,13 +11,13 @@
   "work_items": [
     {
       "id": "G2PR-001",
-      "title": "Short issue title",
+      "title": "短い日本語 issue タイトル",
       "source": {
         "type": "local",
         "path": "knowledge/wiki/syntheses/issues.md"
       },
-      "acceptance_criteria": ["observable condition"],
-      "non_goals": ["excluded behavior"],
+      "acceptance_criteria": ["観測可能な受け入れ条件"],
+      "non_goals": ["対象外の挙動"],
       "verification": ["python3 -m unittest discover -s tests"],
       "write_scope": ["path:skills/example"],
       "dependencies": []
