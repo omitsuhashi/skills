@@ -64,6 +64,8 @@ _現在なし。_
 - [Portfolio OS Install Review And Procedure](wiki/syntheses/portfolio-os-install-review-and-procedure.md) — `skills` repo に Portfolio OS 固有 runtime を混ぜないためのレビュー結果と導入手順。
 - [Portfolio OS Task Backend Plugin Skill Spec](wiki/syntheses/portfolio-os-task-backend-plugin-skill-spec.md) — Portfolio OS task state-free 方針を保つ薄い task-management plugin package / primary skill / GitHub MCP Server first routing の Spec Gate 承認済み仕様。
   検索語: Portfolio OS, task backend, task-management, plugin package, primary skill, GitHub Projects, GitHub MCP Server, Hermes Agent, TaskDraft, TaskRef, TaskQuery, TaskSnapshot, TaskBackendRoute, TaskBackendDestination, adapter dispatch, operation envelope, connection_ref, destination_ref, work_unit_id, work_unit_name, inbox, routing, preview, approval gate
+- [Portfolio OS Task Backend Plugin Skill Issues](wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md) — `portfolio-os-task-backend-plugin-skill` の Issue Gate 承認済み local-first ledger。POTASK-001 から POTASK-009、blocker graph、acceptance criteria を定義する。
+  検索語: Portfolio OS, task backend, task-management, local issue, Issue Gate, POTASK, blocker graph, adapter dispatch, TaskDraft, TaskBackendRoute, TaskBackendDestination
 
 ## クエリ起点成果物
 
