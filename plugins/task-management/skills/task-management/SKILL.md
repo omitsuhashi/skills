@@ -7,6 +7,10 @@ description: Use for backend-neutral task intake and task backend routing workfl
 
 Use this skill to normalize task intent, prepare reviewable task drafts, and keep task backend routing separate from Portfolio OS state. Treat the selected backend as the source of truth for task state.
 
+## References
+
+- Read `references/task-draft-contract.md` before composing TaskDraft title, body, taxonomy, inbox fallback, source-boundary content, or create/update preview text.
+
 ## Operating Boundaries
 
 - Keep Portfolio OS out of task state ownership. It may keep source trail, routing rationale, draft previews, backend references, and decision logs.

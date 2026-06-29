@@ -4,6 +4,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
+SKILL = REPO_ROOT / "plugins/task-management/skills/task-management/SKILL.md"
 REFERENCE = REPO_ROOT / "plugins/task-management/skills/task-management/references/task-draft-contract.md"
 EXAMPLE = REPO_ROOT / "plugins/task-management/examples/task-create-preview.example.md"
 
@@ -11,8 +12,12 @@ EXAMPLE = REPO_ROOT / "plugins/task-management/examples/task-create-preview.exam
 class TaskDraftContractExampleTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls.skill_text = SKILL.read_text(encoding="utf-8")
         cls.reference_text = REFERENCE.read_text(encoding="utf-8")
         cls.example_text = EXAMPLE.read_text(encoding="utf-8")
+
+    def test_skill_entrypoint_references_task_draft_contract(self):
+        self.assertIn("references/task-draft-contract.md", self.skill_text)
 
     def test_reference_defines_composition_rules_and_taxonomy(self):
         text = self.reference_text
