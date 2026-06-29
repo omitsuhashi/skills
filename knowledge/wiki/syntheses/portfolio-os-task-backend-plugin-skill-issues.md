@@ -2,7 +2,7 @@
 
 ## 状態
 
-Issue Gate 承認済み。Execution Packet 作成前。実装、GitHub issue mirror、push、PR 作成、merge はまだ行わない。
+Issue Gate / Execution Plan Gate 承認済み。POTASK-001、POTASK-002、POTASK-003、POTASK-004、POTASK-005、POTASK-006、POTASK-007、POTASK-008 は `PR_READY`。POTASK-009 は docs / examples / verification / handoff boundary の最終統合 issue として実行中。GitHub issue mirror、push、PR 作成、merge はまだ行わない。
 
 ## Epic ID
 
@@ -18,17 +18,17 @@ Issue Gate 承認済み。Execution Packet 作成前。実装、GitHub issue mir
 
 ## Ledger
 
-| Epic ID | ローカルID | タイトル | レビュー状態 | 実行状態 | ブロック元 | ブロック先 | GitHub Issue | 実装レビュー | PR |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `portfolio-os-task-backend-plugin-skill` | POTASK-001 | `plugins/task-management/` の plugin scaffold と primary skill skeleton を作る | 承認済み | 実行可能 | なし | POTASK-002, POTASK-003, POTASK-004 | 未作成 | 未実施 | 未作成 |
-| `portfolio-os-task-backend-plugin-skill` | POTASK-002 | backend-neutral contract と固定テストデータを定義する | 承認済み | ブロック中 | POTASK-001 | POTASK-005, POTASK-006, POTASK-007 | 未作成 | 未実施 | 未作成 |
-| `portfolio-os-task-backend-plugin-skill` | POTASK-003 | task taxonomy と `TaskDraft` composition reference / examples を作る | 承認済み | ブロック中 | POTASK-001 | POTASK-005, POTASK-006 | 未作成 | 未実施 | 未作成 |
-| `portfolio-os-task-backend-plugin-skill` | POTASK-004 | backend / destination routing config と reference を作る | 承認済み | ブロック中 | POTASK-001 | POTASK-006, POTASK-007, POTASK-008 | 未作成 | 未実施 | 未作成 |
-| `portfolio-os-task-backend-plugin-skill` | POTASK-005 | `work_unit_id` / `work_unit_name` の解決と preview contract を実装する | 承認済み | ブロック中 | POTASK-002, POTASK-003 | POTASK-006 | 未作成 | 未実施 | 未作成 |
-| `portfolio-os-task-backend-plugin-skill` | POTASK-006 | adapter operation envelope と Adapter Dispatch Review guard を実装する | 承認済み | ブロック中 | POTASK-002, POTASK-003, POTASK-004, POTASK-005 | POTASK-007, POTASK-009 | 未作成 | 未実施 | 未作成 |
-| `portfolio-os-task-backend-plugin-skill` | POTASK-007 | GitHub MCP route preflight と typed result mapping を実装する | 承認済み | ブロック中 | POTASK-002, POTASK-004, POTASK-006 | POTASK-008, POTASK-009 | 未作成 | 未実施 | 未作成 |
-| `portfolio-os-task-backend-plugin-skill` | POTASK-008 | Hermes adapter availability runbook と governance reference を作る | 承認済み | ブロック中 | POTASK-004, POTASK-007 | POTASK-009 | 未作成 | 未実施 | 未作成 |
-| `portfolio-os-task-backend-plugin-skill` | POTASK-009 | docs / examples / verification / handoff boundary を統合する | 承認済み | ブロック中 | POTASK-006, POTASK-007, POTASK-008 | なし | 未作成 | 未実施 | 未作成 |
+| Epic ID | ローカルID | タイトル | レビュー状態 | 実行状態 | 実装結果 | ブロック元 | ブロック先 | GitHub Issue | 実装レビュー | PR |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-001 | `plugins/task-management/` の plugin scaffold と primary skill skeleton を作る | 承認済み | 完了 | `PR_READY` `248d7a4a50e90f9ce05515cae5c05251b769c978` | なし | POTASK-002, POTASK-003, POTASK-004 | 未作成 | approved: `341d776703b837f3bd148965ba8c6ee8e3633bdf..248d7a4a50e90f9ce05515cae5c05251b769c978` | 未作成 |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-002 | backend-neutral contract と固定テストデータを定義する | 承認済み | 完了 | `PR_READY` `ed250ca6fe2c1ea38af05bba26a0cd3511413bf8` | POTASK-001 | POTASK-005, POTASK-006, POTASK-007 | 未作成 | approved: `248d7a4a50e90f9ce05515cae5c05251b769c978..ed250ca6fe2c1ea38af05bba26a0cd3511413bf8` | 未作成 |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-003 | task taxonomy と `TaskDraft` composition reference / examples を作る | 承認済み | 完了 | `PR_READY` `b2ad95a06c0643c4486d1ef05bc6034d958be1f1` | POTASK-001 | POTASK-005, POTASK-006 | 未作成 | approved: `248d7a4a50e90f9ce05515cae5c05251b769c978..b2ad95a06c0643c4486d1ef05bc6034d958be1f1` | 未作成 |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-004 | backend / destination routing config と reference を作る | 承認済み | 完了 | `PR_READY` `c724ee94dd4dae3d74c5e52564f8eded52b69dfb` | POTASK-001 | POTASK-006, POTASK-007, POTASK-008 | 未作成 | approved: `248d7a4a50e90f9ce05515cae5c05251b769c978..c724ee94dd4dae3d74c5e52564f8eded52b69dfb` | 未作成 |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-005 | `work_unit_id` / `work_unit_name` の解決と preview contract を実装する | 承認済み | 完了 | `PR_READY` `c46d02023e1b9d8fc58fa9e2a57dde1c51d1a386` | POTASK-002, POTASK-003 | POTASK-006 | 未作成 | approved: `b2ad95a06c0643c4486d1ef05bc6034d958be1f1..c46d02023e1b9d8fc58fa9e2a57dde1c51d1a386` | 未作成 |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-006 | adapter operation envelope と Adapter Dispatch Review guard を実装する | 承認済み | 完了 | `PR_READY` `0ce0ffa6eae53b7f085e64af1a453749f82cc3ba` | POTASK-002, POTASK-003, POTASK-004, POTASK-005 | POTASK-007, POTASK-009 | 未作成 | approved: `c46d02023e1b9d8fc58fa9e2a57dde1c51d1a386..0ce0ffa6eae53b7f085e64af1a453749f82cc3ba` | 未作成 |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-007 | GitHub MCP route preflight と typed result mapping を実装する | 承認済み | 完了 | `PR_READY` `ed62de954b57ff4c5b32f6efaa6098843d85c1ac` | POTASK-002, POTASK-004, POTASK-006 | POTASK-008, POTASK-009 | 未作成 | approved: `0ce0ffa6eae53b7f085e64af1a453749f82cc3ba..ed62de954b57ff4c5b32f6efaa6098843d85c1ac` | 未作成 |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-008 | Hermes adapter availability runbook と governance reference を作る | 承認済み | 完了 | `PR_READY` `06f9b6fc7801271f345a8c2772a6d64e7c64f310` | POTASK-004, POTASK-007 | POTASK-009 | 未作成 | approved: `ed62de954b57ff4c5b32f6efaa6098843d85c1ac..06f9b6fc7801271f345a8c2772a6d64e7c64f310` | 未作成 |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-009 | docs / examples / verification / handoff boundary を統合する | 承認済み | 実行中 | 統合中 | POTASK-006, POTASK-007, POTASK-008 | なし | 未作成 | changes requested 対応中 | 未作成 |
 
 ## Blocker Graph
 
@@ -130,6 +130,7 @@ chat / capture text から作る task の title、body、type、importance、urg
 #### Scope
 
 - `task-draft-contract.md`
+- `SKILL.md` から `task-draft-contract.md` への参照導線
 - task title / body examples
 - task type / importance / urgency examples
 - fixture-backed tests
@@ -210,12 +211,14 @@ task-management plugin / skill が実 write を所有せず、adapter に渡す 
 - adapter-neutral operation envelope
 - preview format
 - per-operation explicit review guard
+- `SKILL.md` から `adapter-dispatch.md` への参照導線
 - fixture / mock adapter tests
 
 #### Acceptance Criteria
 
 - create/update/comment/report に相当する intent を adapter-neutral envelope として表現できる。
 - envelope は backend key、connection ref、destination ref / label、operation type、task title/body/fields、`work_unit_id`、`work_unit_name`、adapter tool 名、expected adapter side effects を含む。
+- update/comment/report envelope は既存 task を示す opaque `task_ref` を持ち、Adapter Dispatch Review の確認対象に含める。
 - 明示 approval check なしに adapter dispatch envelope を渡せない。
 - 外部 adapter の実 write 方針、GitHub mutation sequence、retry policy は plugin に存在しない。
 

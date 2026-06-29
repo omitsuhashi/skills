@@ -2,7 +2,7 @@
 
 ## 状態
 
-Spec Gate / Issue Gate / Execution Plan Gate 承認済み。`issue-implementation-loop prepare` 前。実装、GitHub issue mirror、push、PR 作成はまだ行わない。
+Spec Gate / Issue Gate / Execution Plan Gate 承認済み。`issue-implementation-loop` 実行中。POTASK-001、POTASK-002、POTASK-003、POTASK-004、POTASK-005、POTASK-006、POTASK-007、POTASK-008 は `PR_READY`。POTASK-009 は docs / examples / verification / handoff boundary の最終統合 issue として実行中。GitHub issue mirror、push、PR 作成はまだ行わない。
 
 この版では、GitHub Projects 連携を独自 GitHub adapter / `gh` command planner / GraphQL fallback 実装で作らず、Hermes Agent に登録された GitHub MCP Server を使う方針へ変更する。
 
