@@ -4,6 +4,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 PLUGIN_ROOT = REPO_ROOT / "plugins/task-management"
+SKILL = PLUGIN_ROOT / "skills/task-management/SKILL.md"
 REFERENCE = PLUGIN_ROOT / "skills/task-management/references/adapter-dispatch.md"
 EXAMPLE = PLUGIN_ROOT / "examples/task-create-preview.example.md"
 
@@ -11,8 +12,12 @@ EXAMPLE = PLUGIN_ROOT / "examples/task-create-preview.example.md"
 class AdapterDispatchContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls.skill_text = SKILL.read_text(encoding="utf-8")
         cls.reference_text = REFERENCE.read_text(encoding="utf-8") if REFERENCE.exists() else ""
         cls.example_text = EXAMPLE.read_text(encoding="utf-8")
+
+    def test_skill_entrypoint_references_adapter_dispatch_contract(self):
+        self.assertIn("references/adapter-dispatch.md", self.skill_text)
 
     def test_reference_defines_adapter_neutral_operation_envelope(self):
         text = self.reference_text
@@ -38,10 +43,21 @@ class AdapterDispatchContractTests(unittest.TestCase):
             "task.fields",
             "work_unit_id",
             "work_unit_name",
+            "task_ref",
             "adapter_tool_name",
             "expected_adapter_side_effects",
         ):
             self.assertIn(f"`{field_name}`", text)
+
+    def test_existing_task_operations_require_task_ref_and_review_match(self):
+        text = self.reference_text
+
+        for operation_type in ("task.update", "task.comment", "task.report"):
+            self.assertRegex(text, rf"\| `{operation_type}` \| [^\n]*`task_ref`")
+
+        self.assertIn("required for `task.update`, `task.comment`, and `task.report`", text)
+        self.assertIn("opaque backend-owned task reference", text)
+        self.assertIn("`approved_task_ref` matches `task_ref`", text)
 
     def test_adapter_dispatch_review_is_required_before_dispatch(self):
         text = self.reference_text
@@ -52,6 +68,7 @@ class AdapterDispatchContractTests(unittest.TestCase):
         self.assertIn("approved_operation_type", text)
         self.assertIn("approved_adapter_tool_name", text)
         self.assertIn("approved_destination_ref", text)
+        self.assertIn("approved_task_ref", text)
 
     def test_preview_example_contains_reviewable_envelope_and_guard(self):
         text = self.example_text

@@ -10,6 +10,7 @@ Use this skill to normalize task intent, prepare reviewable task drafts, and kee
 ## References
 
 - Read `references/task-draft-contract.md` before composing TaskDraft title, body, taxonomy, inbox fallback, source-boundary content, or create/update preview text.
+- Read `references/adapter-dispatch.md` before preparing adapter operation envelopes or applying the Adapter Dispatch Review guard.
 
 ## Operating Boundaries
 
@@ -34,6 +35,7 @@ When preparing a task create/update/comment/report preview, include:
 - backend key and connection reference
 - destination reference and label
 - operation type
+- opaque task reference for update/comment/report operations
 - task title, body, and fields
 - `work_unit_id` and `work_unit_name` when known
 - expected adapter side effects

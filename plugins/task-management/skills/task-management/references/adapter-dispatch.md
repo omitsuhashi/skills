@@ -12,12 +12,12 @@ An adapter-neutral operation envelope can represent these intent types:
 | Operation type | Intent |
 | --- | --- |
 | `task.create` | Create a task from a reviewed TaskDraft. |
-| `task.update` | Update fields or body content for an existing backend task reference. |
-| `task.comment` | Add a comment or human-readable progress note to an existing backend task reference. |
-| `task.report` | Attach or publish a work report summary to an existing backend task reference. |
+| `task.update` | Update fields or body content for an existing backend task reference identified by `task_ref`. |
+| `task.comment` | Add a comment or human-readable progress note to an existing backend task reference identified by `task_ref`. |
+| `task.report` | Attach or publish a work report summary to an existing backend task reference identified by `task_ref`. |
 
-Every envelope must include these fields before it is eligible for Adapter
-Dispatch Review:
+The envelope surface uses these fields before it is eligible for Adapter
+Dispatch Review. Operation-specific requiredness is part of each field contract:
 
 | Field | Contract |
 | --- | --- |
@@ -31,6 +31,7 @@ Dispatch Review:
 | `task.fields` | Backend-neutral fields such as task type, urgency, importance, approval requirement, source ref, and work unit values. |
 | `work_unit_id` | Stable routing key copied into task fields. |
 | `work_unit_name` | Backend display label copied into task fields for human scanning. |
+| `task_ref` | opaque backend-owned task reference; required for `task.update`, `task.comment`, and `task.report`. |
 | `adapter_tool_name` | Host-provided adapter tool or route surface name. |
 | `expected_adapter_side_effects` | Human-readable list of side effects expected after explicit approval. |
 
@@ -38,6 +39,10 @@ Dispatch Review:
 repository IDs, auth material, raw platform payloads, or transport metadata in
 the envelope. If a target-specific identifier is required, pass an opaque
 backend-owned reference such as `destination_ref` or an existing `task_ref`.
+`task_ref` is required for `task.update`, `task.comment`, and `task.report`
+because those operations mutate or annotate an existing backend task. It is
+omitted from `task.create` unless an external adapter explicitly supplied a
+backend-owned reference for a prior object.
 
 ## Adapter Dispatch Review Guard
 
@@ -49,9 +54,12 @@ The review check must confirm:
 - `approved_operation_type` matches `operation_type`
 - `approved_adapter_tool_name` matches `adapter_tool_name`
 - `approved_destination_ref` matches `destination_ref`
+- `approved_task_ref` matches `task_ref` for update, comment, and report
+  envelopes
 - the reviewer has seen `backend_key`, `connection_ref`, `destination_ref`,
   `destination_label`, `operation_type`, task title/body/fields,
-  `work_unit_id`, `work_unit_name`, and `expected_adapter_side_effects`
+  `work_unit_id`, `work_unit_name`, `task_ref` when present, and
+  `expected_adapter_side_effects`
 
 If any value is missing or changed after review, stop and present a new Adapter
 Dispatch Review preview. Approval for one envelope does not approve a later
