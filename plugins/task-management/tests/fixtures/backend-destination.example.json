@@ -1,0 +1,6 @@
+{
+  "backend_key": "github_projects_mcp",
+  "destination_ref": "github-projects:portfolio-os-task-board",
+  "destination_label": "Portfolio OS Tasks",
+  "content_target_ref": "github-content-target:portfolio-os-issues"
+}

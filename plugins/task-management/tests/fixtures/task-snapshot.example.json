@@ -1,0 +1,30 @@
+{
+  "task_ref": {
+    "backend_key": "github_projects_mcp",
+    "task_ref": "external_ref",
+    "task_url": "https://example.invalid/tasks/external_ref",
+    "title": "Review inbound task routing for portfolio work"
+  },
+  "title": "Review inbound task routing for portfolio work",
+  "body": "Confirm the task belongs to the Portfolio OS common area and prepare it for human review before adapter dispatch.",
+  "work_unit_id": "inbox",
+  "work_unit_name": "Inbox",
+  "task_type": "implementation",
+  "status": "open",
+  "due_date": "2026-07-01",
+  "urgency": "normal",
+  "importance": "high",
+  "automation_mode": "assistive",
+  "approval_required": true,
+  "source_ref": {
+    "kind": "commander_chat",
+    "ref": "source:commander-chat:2026-06-29T09-00-00Z",
+    "label": "Commander chat intake"
+  },
+  "backend_metadata": {
+    "display_link": {
+      "name": "Portfolio OS Tasks item",
+      "url": "https://example.invalid/tasks/external_ref"
+    }
+  }
+}

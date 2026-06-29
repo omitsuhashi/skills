@@ -8,6 +8,7 @@ wiki の最初の navigation surface として使います。durable page はす
 - [Grill To PR Loop スキル分割・非停止実行 詳細設計 v2](wiki/sources/2026-06-21-grill-to-pr-loop-skill-split-design-v2.md) — `grill-to-pr-loop` を composition skill と `issue-implementation-loop` execution skill に分割する添付設計の source summary。
 - [2026-06-25 Loop Skill Architecture V3 Design](wiki/sources/2026-06-25-loop-skill-architecture-v3-design.md) — loop skill の context contract、worker packet、resume brief、operation routing を整理する添付設計の source summary。
 - [Skill Repository Optimization V4 Design](wiki/sources/2026-06-26-skill-repository-optimization-v4-design.md) — PR #19 後の loop skill / llm-wiki context contract、artifact freshness、CI regression 固定の source summary。
+- [2026-06-28 Portfolio OS Task Backend Plugin / Skill Handoff](wiki/sources/2026-06-28-portfolio-os-task-backend-plugin-skill-handoff.md) — Portfolio OS の task state-free 方針を保った task-management skill と GitHub MCP Server first routing の handoff source summary。
 
 ## エンティティ
 
@@ -69,6 +70,12 @@ _現在なし。_
 - [Grill To PR Loop Epic Base Lifecycle Hardening Spec](wiki/syntheses/grill-to-pr-loop-epic-base-lifecycle-hardening-spec.md) — `epic_base` を検証可能な delivery/integration branch resource として lifecycle 管理に載せる hardening spec。
   検索語: grill-to-pr-loop, issue-implementation-loop, epic_base, epic-base, branch lifecycle, reconcile, pr_merged, final PR, ブランチ統制
 - [Portfolio OS Install Review And Procedure](wiki/syntheses/portfolio-os-install-review-and-procedure.md) — `skills` repo に Portfolio OS 固有 runtime を混ぜないためのレビュー結果と導入手順。
+- [Portfolio OS Task Backend Plugin Skill Spec](wiki/syntheses/portfolio-os-task-backend-plugin-skill-spec.md) — Portfolio OS task state-free 方針を保つ薄い task-management plugin package / primary skill / GitHub MCP Server first routing の Spec Gate 承認済み仕様。
+  検索語: Portfolio OS, task backend, task-management, plugin package, primary skill, GitHub Projects, GitHub MCP Server, Hermes Agent, TaskDraft, TaskRef, TaskQuery, TaskSnapshot, TaskBackendRoute, TaskBackendDestination, adapter dispatch, operation envelope, connection_ref, destination_ref, work_unit_id, work_unit_name, inbox, routing, preview, approval gate
+- [Portfolio OS Task Backend Plugin Skill Issues](wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md) — `portfolio-os-task-backend-plugin-skill` の Issue Gate 承認済み local-first ledger。POTASK-001 から POTASK-009、blocker graph、acceptance criteria を定義する。
+  検索語: Portfolio OS, task backend, task-management, local issue, Issue Gate, POTASK, blocker graph, adapter dispatch, TaskDraft, TaskBackendRoute, TaskBackendDestination
+- [Portfolio OS Task Backend Plugin Skill Input Packet](wiki/syntheses/portfolio-os-task-backend-plugin-skill-input-packet.json) — `portfolio-os-task-backend-plugin-skill` の Execution Plan Gate 承認済み input packet。承認済み POTASK-001 から POTASK-009 の source、acceptance criteria、write scope、dependencies、local-only delivery intent を正規化する。
+  検索語: Portfolio OS, task backend, task-management, input packet, Execution Plan Gate, issue-implementation-loop, POTASK, write scope, dependencies, local_only
 
 ## クエリ起点成果物
 

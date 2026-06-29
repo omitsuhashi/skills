@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "route": {
+    "backend_key": "github_projects_mcp",
+    "kind": "mcp",
+    "connection_ref": "github-projects",
+    "capability": "project_management"
+  },
+  "preflight_results": [
+    {
+      "case": "mcp_server_missing",
+      "task_write_result": {
+        "result_type": "TaskWriteResult",
+        "ok": false,
+        "status": "blocked",
+        "backend_key": "github_projects_mcp",
+        "operation_type": "task.create",
+        "destination_ref": "github-projects:portfolio-os-task-board",
+        "task_ref": null,
+        "error": {
+          "code": "mcp_server_missing",
+          "message": "GitHub MCP Server is not available for the configured connection reference.",
+          "retryable": false,
+          "setup_required": true,
+          "human_action": "Configure the GitHub MCP Server in the host, then rerun route preflight."
+        }
+      }
+    },
+    {
+      "case": "tool_disabled",
+      "task_write_result": {
+        "result_type": "TaskWriteResult",
+        "ok": false,
+        "status": "blocked",
+        "backend_key": "github_projects_mcp",
+        "operation_type": "task.create",
+        "destination_ref": "github-projects:portfolio-os-task-board",
+        "task_ref": null,
+        "error": {
+          "code": "tool_disabled",
+          "message": "The required GitHub Projects MCP adapter tool is disabled for this flow.",
+          "retryable": false,
+          "setup_required": true,
+          "human_action": "Enable the specific host adapter tool after reviewing its write permissions."
+        }
+      }
+    },
+    {
+      "case": "auth_missing",
+      "task_write_result": {
+        "result_type": "TaskWriteResult",
+        "ok": false,
+        "status": "blocked",
+        "backend_key": "github_projects_mcp",
+        "operation_type": "task.create",
+        "destination_ref": "github-projects:portfolio-os-task-board",
+        "task_ref": null,
+        "error": {
+          "code": "auth_missing",
+          "message": "The host adapter reports missing or expired GitHub authentication.",
+          "retryable": false,
+          "setup_required": true,
+          "human_action": "Authenticate through the host-owned GitHub MCP adapter flow."
+        }
+      }
+    },
+    {
+      "case": "permission_failure",
+      "task_write_result": {
+        "result_type": "TaskWriteResult",
+        "ok": false,
+        "status": "blocked",
+        "backend_key": "github_projects_mcp",
+        "operation_type": "task.create",
+        "destination_ref": "github-projects:portfolio-os-task-board",
+        "task_ref": null,
+        "error": {
+          "code": "permission_failure",
+          "message": "The host adapter is authenticated but lacks permission for the selected destination.",
+          "retryable": false,
+          "setup_required": false,
+          "human_action": "Review GitHub project permissions or choose a destination the adapter can access."
+        }
+      }
+    },
+    {
+      "case": "project_not_found",
+      "task_write_result": {
+        "result_type": "TaskWriteResult",
+        "ok": false,
+        "status": "blocked",
+        "backend_key": "github_projects_mcp",
+        "operation_type": "task.create",
+        "destination_ref": "github-projects:missing-task-board",
+        "task_ref": null,
+        "error": {
+          "code": "project_not_found",
+          "message": "The adapter cannot resolve the opaque destination reference.",
+          "retryable": false,
+          "setup_required": true,
+          "human_action": "Correct the host-provided destination registration before dispatch."
+        }
+      }
+    },
+    {
+      "case": "field_missing",
+      "task_write_result": {
+        "result_type": "TaskWriteResult",
+        "ok": false,
+        "status": "blocked",
+        "backend_key": "github_projects_mcp",
+        "operation_type": "task.create",
+        "destination_ref": "github-projects:portfolio-os-task-board",
+        "task_ref": null,
+        "error": {
+          "code": "field_missing",
+          "message": "A required GitHub Projects field for the reviewed TaskDraft is unavailable.",
+          "retryable": false,
+          "setup_required": true,
+          "human_action": "Add or map the missing field in backend setup; the plugin must not repair schema automatically."
+        }
+      }
+    }
+  ]
+}

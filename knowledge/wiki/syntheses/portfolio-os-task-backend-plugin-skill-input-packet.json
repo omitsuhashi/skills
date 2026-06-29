@@ -1,0 +1,388 @@
+{
+  "schema_version": 1,
+  "repo_root": "/Users/omitsuhashi/.codex/worktrees/54b8/skills",
+  "epic_id": "portfolio-os-task-backend-plugin-skill",
+  "artifact_root": "knowledge/wiki/syntheses",
+  "spec": {
+    "path": "knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-spec.md",
+    "approved_revision": 1,
+    "approved_hash": "sha256:df247f727af412eadcca70674676aeca4ad11dd19951820afb3688b7ff134037"
+  },
+  "work_items": [
+    {
+      "id": "POTASK-001",
+      "title": "plugins/task-management の plugin scaffold と primary skill skeleton を作る",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md"
+      },
+      "acceptance_criteria": [
+        "plugins/task-management/.codex-plugin/plugin.json が存在し plugin-creator validator の対象になる",
+        "plugins/task-management/skills/task-management/SKILL.md と agents/openai.yaml が存在し skill-creator quick validation の対象になる",
+        "初回公開 skill entrypoint は plugins/task-management/skills/task-management/ の 1 つだけである",
+        "GitHub adapter、gh command planner、direct GraphQL client、MCP server 実装が存在しない"
+      ],
+      "non_goals": [
+        "GitHub API client や GitHub MCP Server の実装",
+        "plugin install 時の MCP registration、credential setup、tool enablement",
+        "GitHub issue mirror、push、PR creation"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 /Users/omitsuhashi/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/task-management",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_validate.py plugins/task-management/skills/task-management"
+      ],
+      "write_scope": [
+        "path:plugins/task-management/.codex-plugin",
+        "path:plugins/task-management/config",
+        "path:plugins/task-management/skills/task-management",
+        "path:plugins/task-management/examples",
+        "path:plugins/task-management/tests"
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "POTASK-002",
+      "title": "backend-neutral contract と固定テストデータを定義する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md"
+      },
+      "acceptance_criteria": [
+        "TaskDraft は work_unit_id、work_unit_name、task type、due date、urgency、importance、automation mode、approval required、source ref を backend-neutral に表現できる",
+        "TaskBackendRoute は kind=mcp|reader|skill|cli|url、connection ref、capability、field override を表現できる",
+        "TaskBackendDestination は backend key、destination ref / label、必要なら content target ref を表現できる",
+        "TaskRef / TaskSnapshot は provider-specific raw IDs を exposed contract にしない"
+      ],
+      "non_goals": [
+        "backend API client の実装",
+        "GitHub Projects schema create/repair",
+        "live GitHub access を要求する tests"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests"
+      ],
+      "write_scope": [
+        "path:plugins/task-management/skills/task-management/references/task-contracts.md",
+        "path:plugins/task-management/tests/test_task_contracts.py",
+        "path:plugins/task-management/tests/fixtures"
+      ],
+      "dependencies": [
+        {
+          "issue": "POTASK-001",
+          "strength": "hard",
+          "release_on": "artifact_ready",
+          "base_effect": "none"
+        }
+      ]
+    },
+    {
+      "id": "POTASK-003",
+      "title": "task taxonomy と TaskDraft composition reference / examples を作る",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md"
+      },
+      "acceptance_criteria": [
+        "task title / body の構成規則が skill から参照できる",
+        "work_unit_id と work_unit_name の両方が preview に現れる",
+        "inbox fallback の意味が明確である",
+        "raw platform payload、message id、transport metadata を contract に保存しない"
+      ],
+      "non_goals": [
+        "Portfolio OS 独自の capture 実装",
+        "local task ledger の作成",
+        "duplicate prevention store の作成"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests"
+      ],
+      "write_scope": [
+        "path:plugins/task-management/skills/task-management/references/task-draft-contract.md",
+        "path:plugins/task-management/examples/task-create-preview.example.md",
+        "path:plugins/task-management/tests/test_task_draft_examples.py"
+      ],
+      "dependencies": [
+        {
+          "issue": "POTASK-001",
+          "strength": "hard",
+          "release_on": "artifact_ready",
+          "base_effect": "none"
+        }
+      ]
+    },
+    {
+      "id": "POTASK-004",
+      "title": "backend / destination routing config と reference を作る",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md"
+      },
+      "acceptance_criteria": [
+        "plugin config は kind、connection_ref、capability、任意の field override を持つ",
+        "plugin config は GitHub owner、project number、repository を必須または既定値として持たない",
+        "destination は caller / profile / host-provided registration から TaskBackendDestination として渡す",
+        "github_projects_mcp は default backend key として表現できるが、具体 project target を内包しない"
+      ],
+      "non_goals": [
+        "GitHub owner / project number / repository を plugin config に保存すること",
+        "credential や token の保存",
+        "backend API client の作成"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests"
+      ],
+      "write_scope": [
+        "path:plugins/task-management/config/task-backends.example.toml",
+        "path:plugins/task-management/skills/task-management/references/backend-routing.md",
+        "path:plugins/task-management/tests/test_backend_routing.py"
+      ],
+      "dependencies": [
+        {
+          "issue": "POTASK-001",
+          "strength": "hard",
+          "release_on": "artifact_ready",
+          "base_effect": "none"
+        }
+      ]
+    },
+    {
+      "id": "POTASK-005",
+      "title": "work_unit_id / work_unit_name の解決と preview contract を実装する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md"
+      },
+      "acceptance_criteria": [
+        "work_unit_id は stable routing key として扱われる",
+        "work_unit_name は backend 上の display label として扱われる",
+        "work_unit_name が不明な場合の fallback / human review behavior が明記される",
+        "preview は work_unit_id と work_unit_name を両方表示する"
+      ],
+      "non_goals": [
+        "Portfolio OS work unit registry の新規作成",
+        "work unit rename の一括同期",
+        "backend 上の既存 task display label repair"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests"
+      ],
+      "write_scope": [
+        "path:plugins/task-management/skills/task-management/references/task-draft-contract.md",
+        "path:plugins/task-management/examples/task-create-preview.example.md",
+        "path:plugins/task-management/tests/test_work_unit_preview.py"
+      ],
+      "dependencies": [
+        {
+          "issue": "POTASK-002",
+          "strength": "hard",
+          "release_on": "artifact_ready",
+          "base_effect": "none"
+        },
+        {
+          "issue": "POTASK-003",
+          "strength": "hard",
+          "release_on": "artifact_ready",
+          "base_effect": "none"
+        }
+      ]
+    },
+    {
+      "id": "POTASK-006",
+      "title": "adapter operation envelope と Adapter Dispatch Review guard を実装する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md"
+      },
+      "acceptance_criteria": [
+        "create/update/comment/report に相当する intent を adapter-neutral envelope として表現できる",
+        "envelope は backend key、connection ref、destination ref / label、operation type、task title/body/fields、work_unit_id、work_unit_name、adapter tool 名、expected adapter side effects を含む",
+        "明示 approval check なしに adapter dispatch envelope を渡せない",
+        "外部 adapter の実 write 方針、GitHub mutation sequence、retry policy は plugin に存在しない"
+      ],
+      "non_goals": [
+        "GitHub mutation sequence の実装",
+        "MCP server の実装",
+        "batch approval または policy-gated approval"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests"
+      ],
+      "write_scope": [
+        "path:plugins/task-management/skills/task-management/references/adapter-dispatch.md",
+        "path:plugins/task-management/examples/task-create-preview.example.md",
+        "path:plugins/task-management/tests/test_adapter_dispatch.py"
+      ],
+      "dependencies": [
+        {
+          "issue": "POTASK-002",
+          "strength": "hard",
+          "release_on": "artifact_ready",
+          "base_effect": "none"
+        },
+        {
+          "issue": "POTASK-003",
+          "strength": "hard",
+          "release_on": "artifact_ready",
+          "base_effect": "none"
+        },
+        {
+          "issue": "POTASK-004",
+          "strength": "hard",
+          "release_on": "artifact_ready",
+          "base_effect": "none"
+        },
+        {
+          "issue": "POTASK-005",
+          "strength": "hard",
+          "release_on": "artifact_ready",
+          "base_effect": "none"
+        }
+      ]
+    },
+    {
+      "id": "POTASK-007",
+      "title": "GitHub MCP route preflight と typed result mapping を実装する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md"
+      },
+      "acceptance_criteria": [
+        "MCP server missing、tool disabled、auth missing、permission failure、project not found、field missing を typed result にできる",
+        "adapter result から TaskWriteResult へ正規化できる",
+        "GitHub API client、gh command planner、GraphQL query は存在しない",
+        "normal tests は live GitHub access、Hermes live profile、credentials、MCP server を要求しない"
+      ],
+      "non_goals": [
+        "GitHub MCP Server 自体の read/write 実装テスト",
+        "GitHub Projects schema create/repair",
+        "live GitHub credential を使う smoke test"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests"
+      ],
+      "write_scope": [
+        "path:plugins/task-management/skills/task-management/references/github-mcp-projects.md",
+        "path:plugins/task-management/tests/test_github_mcp_route.py",
+        "path:plugins/task-management/tests/fixtures"
+      ],
+      "dependencies": [
+        {
+          "issue": "POTASK-002",
+          "strength": "hard",
+          "release_on": "artifact_ready",
+          "base_effect": "none"
+        },
+        {
+          "issue": "POTASK-004",
+          "strength": "hard",
+          "release_on": "artifact_ready",
+          "base_effect": "none"
+        },
+        {
+          "issue": "POTASK-006",
+          "strength": "hard",
+          "release_on": "artifact_ready",
+          "base_effect": "none"
+        }
+      ]
+    },
+    {
+      "id": "POTASK-008",
+      "title": "Hermes adapter availability runbook と governance reference を作る",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md"
+      },
+      "acceptance_criteria": [
+        "plugin install は MCP server registration、credential setup、Hermes profile edit、GitHub adapter tool enablement を行わない",
+        "Adapter Availability Gate は host / adapter 側の確認であり、plugin の実装副作用ではない",
+        "delegation.inherit_mcp_toolsets: true による state-changing MCP adapter tools の無条件継承リスクを明記する",
+        "GitHub MCP adapter tools を子 agent へ無条件継承しない guidance がある"
+      ],
+      "non_goals": [
+        "Hermes live profile の変更",
+        "credential setup の実行",
+        "GitHub MCP Server registration の実行"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests"
+      ],
+      "write_scope": [
+        "path:plugins/task-management/skills/task-management/references/hermes-mcp-governance.md",
+        "path:plugins/task-management/skills/task-management/references/github-mcp-projects.md",
+        "path:plugins/task-management/examples/hermes-github-mcp-enable.example.md"
+      ],
+      "dependencies": [
+        {
+          "issue": "POTASK-004",
+          "strength": "hard",
+          "release_on": "artifact_ready",
+          "base_effect": "none"
+        },
+        {
+          "issue": "POTASK-007",
+          "strength": "hard",
+          "release_on": "artifact_ready",
+          "base_effect": "none"
+        }
+      ]
+    },
+    {
+      "id": "POTASK-009",
+      "title": "docs / examples / verification / handoff boundary を統合する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md"
+      },
+      "acceptance_criteria": [
+        "docs は GitHub Projects が first backend であり permanent architecture ではないことを明記する",
+        "Portfolio OS は task state source of truth を持たない",
+        "dedicated idempotency key、task_sha field、duplicate-prevention store は存在しない",
+        "GitHub MCP Server read/write live smoke test は normal verification に含めない",
+        "git diff --check と repo-local validators が通る"
+      ],
+      "non_goals": [
+        "GitHub issue mirror",
+        "push / PR creation / merge",
+        "GitHub MCP Server read/write の live smoke test"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 /Users/omitsuhashi/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/task-management",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_validate.py plugins/task-management/skills/task-management",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_architecture.py --all",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_context.py --all",
+        "git diff --check"
+      ],
+      "write_scope": [
+        "path:plugins/task-management",
+        "path:knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-spec.md",
+        "path:knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md",
+        "path:knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-input-packet.json",
+        "path:knowledge/index.md",
+        "path:knowledge/log.md"
+      ],
+      "dependencies": [
+        {
+          "issue": "POTASK-006",
+          "strength": "hard",
+          "release_on": "artifact_ready",
+          "base_effect": "none"
+        },
+        {
+          "issue": "POTASK-007",
+          "strength": "hard",
+          "release_on": "artifact_ready",
+          "base_effect": "none"
+        },
+        {
+          "issue": "POTASK-008",
+          "strength": "hard",
+          "release_on": "artifact_ready",
+          "base_effect": "none"
+        }
+      ]
+    }
+  ],
+  "delivery_intent": "local_only"
+}

@@ -1,0 +1,20 @@
+{
+  "title": "Review inbound task routing for portfolio work",
+  "body": "Confirm the task belongs to the Portfolio OS common area and prepare it for human review before adapter dispatch.",
+  "work_unit_id": "inbox",
+  "work_unit_name": "Inbox",
+  "task_type": "implementation",
+  "due_date": "2026-07-01",
+  "urgency": "normal",
+  "importance": "high",
+  "automation_mode": "assistive",
+  "approval_required": true,
+  "source_ref": {
+    "kind": "commander_chat",
+    "ref": "source:commander-chat:2026-06-29T09-00-00Z",
+    "label": "Commander chat intake"
+  },
+  "fields": {
+    "review_reason": "Ambiguous work unit defaults to inbox for review."
+  }
+}

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Task Management"
+  short_description: "Review-gated task intake and routing."
+  default_prompt: "Use $task-management to turn this note into a reviewed task draft."
+
+policy:
+  allow_implicit_invocation: true

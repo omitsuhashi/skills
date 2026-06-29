@@ -1,0 +1,12 @@
+{
+  "kind": "mcp",
+  "connection_ref": "github-projects",
+  "capability": "project_management",
+  "field_overrides": {
+    "work_unit_id": "Work Unit",
+    "work_unit_name": "Work Unit Name",
+    "due_date": "Due Date",
+    "importance": "Priority",
+    "approval_required": "Approval Required"
+  }
+}

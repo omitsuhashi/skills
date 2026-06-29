@@ -1,0 +1,31 @@
+{
+  "name": "task-management",
+  "version": "0.1.0",
+  "description": "Backend-neutral task-management workflow package for review-gated task intake and adapter dispatch preparation.",
+  "author": {
+    "name": "Omitsuhashi"
+  },
+  "license": "UNLICENSED",
+  "keywords": [
+    "tasks",
+    "portfolio-os",
+    "mcp"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Task Management",
+    "shortDescription": "Review-gated task intake and routing.",
+    "longDescription": "Provides a thin task-management plugin package with a single primary skill for backend-neutral task drafting, review preparation, and adapter dispatch boundaries. It does not register MCP servers, configure credentials, or implement GitHub adapters.",
+    "developerName": "Omitsuhashi",
+    "category": "Productivity",
+    "capabilities": [
+      "Tasks",
+      "Review"
+    ],
+    "defaultPrompt": [
+      "Use task-management to turn this note into a reviewed task draft.",
+      "Use task-management to prepare a task routing preview.",
+      "Use task-management to check task backend boundaries."
+    ]
+  }
+}
