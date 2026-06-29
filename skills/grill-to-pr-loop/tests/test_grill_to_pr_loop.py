@@ -119,7 +119,9 @@ class GrillToPrLoopTests(unittest.TestCase):
         skill_text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
         core_text = CORE_REFERENCE.read_text(encoding="utf-8")
         planning_text = PLANNING_CONTRACT.read_text(encoding="utf-8")
+        handoff_text = (SKILL_DIR / "references" / "execution-handoff.md").read_text(encoding="utf-8")
         mistakes_text = (SKILL_DIR / "references" / "common-mistakes.md").read_text(encoding="utf-8")
+        worker_contract_text = (REPO_ROOT / "skills" / "issue-implementation-loop" / "references" / "worker-contract.md").read_text(encoding="utf-8")
         input_template = (REPO_ROOT / "skills" / "issue-implementation-loop" / "assets" / "templates" / "input-packet.json").read_text(encoding="utf-8")
         worker_template = (REPO_ROOT / "skills" / "issue-implementation-loop" / "assets" / "templates" / "worker-packet.json").read_text(encoding="utf-8")
 
@@ -140,6 +142,21 @@ class GrillToPrLoopTests(unittest.TestCase):
             self.assertIn(required, planning_text)
 
         self.assertIn("English spec/PRD", mistakes_text)
+        for required in (
+            "work_items[].title",
+            "acceptance_criteria",
+            "non_goals",
+        ):
+            self.assertIn(required, handoff_text)
+        for required in (
+            "issue_title",
+            "task.summary",
+            "task.acceptance_criteria",
+            "task.stop_conditions",
+        ):
+            self.assertIn(required, worker_contract_text)
+        self.assertIn("user-facing packet string は日本語をベースにする", handoff_text)
+        self.assertIn("user-facing packet string は日本語をベースにする", worker_contract_text)
         self.assertIn("短い日本語 issue タイトル", input_template)
         self.assertIn("必要な挙動の短い要約", worker_template)
         self.assertNotIn("Short issue title", input_template + worker_template)

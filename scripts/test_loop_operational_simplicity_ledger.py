@@ -21,11 +21,11 @@ class LoopOperationalSimplicityLedgerTests(unittest.TestCase):
         for required in (
             "- [x] 適用基準、役割境界モデルの discoverability、workflow complexity JSON shape が tests で固定されている。",
             "- [x] `knowledge/wiki/syntheses/loop-skill-operational-simplicity-issues.md` に各 issue の実装証跡、検証結果、レビュー結果が反映されている。",
-            "- [x] `knowledge/index.md` と `knowledge/log.md` が final ledger を発見できる。",
-            "- [x] full verification が通る。",
+            "- [x] `knowledge/index.md` と `knowledge/log.md` が最終台帳を発見できる。",
+            "- [x] 全体検証が通る。",
             "- [x] remote write は行われていない。",
             "### 実装証跡",
-            "Regression coverage:",
+            "回帰テスト範囲:",
             "レビュー結果:",
             "実装ループ中の remote write は行っていない。",
         ):
@@ -36,7 +36,7 @@ class LoopOperationalSimplicityLedgerTests(unittest.TestCase):
         log_text = LOG.read_text(encoding="utf-8")
 
         self.assertIn("[Loop Skill 運用単純化 Issue 台帳](wiki/syntheses/loop-skill-operational-simplicity-issues.md)", index_text)
-        self.assertIn("final ledger", index_text)
+        self.assertIn("最終台帳", index_text)
         self.assertIn("実装証跡", index_text)
 
         self.assertIn("[2026-06-29] docs | Loop skill 運用単純化 docs 日本語化", log_text)
