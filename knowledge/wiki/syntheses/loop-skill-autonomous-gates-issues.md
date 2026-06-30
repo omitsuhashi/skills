@@ -2,7 +2,7 @@
 
 ## 状態
 
-Spec Gate / Issue Gate 承認済み。Execution Plan Gate は agent preflight + commit boundary として自動通過済み。LSAG-001 は worker 実装済みで coordinator review 待ち。LSAG-002 から LSAG-005 は未実装。GitHub issue mirror、push、PR 作成、merge はまだ行っていない。承認済み仕様は [Loop Skill 自動継続 Gate 仕様](loop-skill-autonomous-gates-spec.md)、normalized input packet は [Loop Skill 自動継続 Gate Input Packet](loop-skill-autonomous-gates-input-packet.json)。
+Spec Gate / Issue Gate 承認済み。Execution Plan Gate は agent preflight + commit boundary として自動通過済み。LSAG-001 と LSAG-003 は worker 実装済みで coordinator review 待ち。LSAG-002、LSAG-004、LSAG-005 は未実装。GitHub issue mirror、push、PR 作成、merge はまだ行っていない。承認済み仕様は [Loop Skill 自動継続 Gate 仕様](loop-skill-autonomous-gates-spec.md)、normalized input packet は [Loop Skill 自動継続 Gate Input Packet](loop-skill-autonomous-gates-input-packet.json)。
 
 ## 台帳
 
@@ -10,7 +10,7 @@ Spec Gate / Issue Gate 承認済み。Execution Plan Gate は agent preflight + 
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | loop-skill-autonomous-gates | LSAG-001 | Gate taxonomy と自動継続 policy を定義する | 承認済み | 実装済み / coordinator review 待ち | なし | LSAG-002, LSAG-003, LSAG-004 | 未作成 | coordinator review 待ち | 未作成 |
 | loop-skill-autonomous-gates | LSAG-002 | Execution Plan Gate の自動継続を実行契約に反映する | 承認済み | ブロック中 | LSAG-001 | LSAG-005 | 未作成 | 未実施 | 未作成 |
-| loop-skill-autonomous-gates | LSAG-003 | Live Root Gate / Adapter Availability Gate を readiness gate として整理する | 承認済み | ブロック中 | LSAG-001 | LSAG-005 | 未作成 | 未実施 | 未作成 |
+| loop-skill-autonomous-gates | LSAG-003 | Live Root Gate / Adapter Availability Gate を readiness gate として整理する | 承認済み | 実装済み / coordinator review 待ち | LSAG-001 | LSAG-005 | 未作成 | coordinator review 待ち | 未作成 |
 | loop-skill-autonomous-gates | LSAG-004 | final PR 自動作成 policy を Execution Envelope / delivery に固定する | 承認済み | ブロック中 | LSAG-001 | LSAG-005 | 未作成 | 未実施 | 未作成 |
 | loop-skill-autonomous-gates | LSAG-005 | regression tests と wiki discoverability を追加する | 承認済み | ブロック中 | LSAG-002, LSAG-003, LSAG-004 | なし | 未作成 | 未実施 | 未作成 |
 
@@ -18,7 +18,7 @@ Spec Gate / Issue Gate 承認済み。Execution Plan Gate は agent preflight + 
 
 - LSAG-001: worker 実装済み / coordinator review 待ち。ブロック元 なし。LSAG-002、LSAG-003、LSAG-004 の共通前提。ブロック解除は coordinator review 後に判断する。
 - LSAG-002: ブロック中。LSAG-001 の gate taxonomy 確定後に、Execution Plan Gate の実行契約を更新する。
-- LSAG-003: ブロック中。LSAG-001 の gate taxonomy 確定後に、Live Root / Adapter Availability readiness semantics を整理する。
+- LSAG-003: worker 実装済み / coordinator review 待ち。LSAG-001 の gate taxonomy に従い、Live Root / Adapter Availability readiness semantics を task-management plugin contract に固定した。LSAG-005 のブロック解除は coordinator review 後に判断する。
 - LSAG-004: ブロック中。LSAG-001 の gate taxonomy 確定後に、final PR 自動作成の approved action と delivery validation を固定する。
 - LSAG-005: ブロック中。LSAG-002、LSAG-003、LSAG-004 の実装後に regression と wiki discoverability を集約する。
 
@@ -143,11 +143,11 @@ current checkout に literal `Live Root Gate` がないため、既存 `Adapter 
 
 ### 受け入れ条件
 
-- [ ] `Live Root Gate` / `Adapter Availability Gate` は readiness check であり、write approval ではないと明記されている。
-- [ ] pass 時は承認済み operation が実行可能であることだけを意味し、未承認 remote write を許可しない。
-- [ ] root mismatch、auth missing、destination unresolved、unsafe delegation boundary は setup blocker として表現される。
-- [ ] task-management plugin の adapter dispatch approval と readiness gate が混同されない。
-- [ ] plugin install が Hermes profile 編集、MCP server 登録、credential 設定を副作用として行わない境界は維持される。
+- [x] `Live Root Gate` / `Adapter Availability Gate` は readiness check であり、write approval ではないと明記されている。
+- [x] pass 時は承認済み operation が実行可能であることだけを意味し、未承認 remote write を許可しない。
+- [x] root mismatch、auth missing、destination unresolved、unsafe delegation boundary は setup blocker として表現される。
+- [x] task-management plugin の adapter dispatch approval と readiness gate が混同されない。
+- [x] plugin install が Hermes profile 編集、MCP server 登録、credential 設定を副作用として行わない境界は維持される。
 
 ### 非目標
 
@@ -156,7 +156,7 @@ current checkout に literal `Live Root Gate` がないため、既存 `Adapter 
 
 ### ブロッカー
 
-- 実行状態: ブロック中
+- 実行状態: 実装済み / coordinator review 待ち
 - ブロック元: LSAG-001
 - ブロック先: LSAG-005
 
@@ -169,11 +169,20 @@ current checkout に literal `Live Root Gate` がないため、既存 `Adapter 
 - `path:knowledge/wiki/syntheses/loop-skill-autonomous-gates-issues.md`
 - `path:knowledge/log.md`
 
+### Worker 実装メモ
+
+- `github-mcp-projects.md` で `Live Root Gate` と `Adapter Availability Gate` を同じ readiness check class として整理し、pass は承認済み operation の実行可能性だけを意味し、未承認 remote write を許可しないと明記した。
+- root mismatch、auth missing、destination unresolved、unsafe delegation boundary を setup blocker として列挙した。
+- `adapter-dispatch.md` で readiness pass と `Adapter Dispatch Review` approval boundary を分離し、readiness pass が dispatch approval を置き換えないことを固定した。
+- `hermes-mcp-governance.md` で plugin install が Hermes profile 編集、MCP server 登録、credential 設定、tool enablement を副作用にしない境界を維持した。
+- `plugins/task-management/tests/test_github_mcp_route.py` と `plugins/task-management/tests/test_adapter_dispatch.py` に LSAG-003 regression を追加した。
+- Hermes profile 編集、MCP server 登録、credential 設定、GitHub Projects mutation、task backend write 自動承認、real runtime root 変更は実行していない。
+
 ### 検証
 
-- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests`
-- `rg -n "Adapter Availability Gate|readiness|approval|credential|delegation" plugins/task-management`
-- `git diff --check`
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests` -> OK（41 tests）
+- `rg -n "Adapter Availability Gate|readiness|approval|credential|delegation" plugins/task-management` -> OK（readiness / approval / credential / delegation contract を確認）
+- `git diff --check` -> OK
 
 ## LSAG-004
 
