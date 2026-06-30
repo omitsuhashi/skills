@@ -153,6 +153,47 @@
       ]
     },
     {
+      "id": "LSAG-006",
+      "title": "LSAG-002 / LSAG-003 / LSAG-004 integration base を作成する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/loop-skill-autonomous-gates-issues.md"
+      },
+      "acceptance_criteria": [
+        "integration branch が LSAG-002、LSAG-003、LSAG-004 の reviewed head をすべて ancestor として含む",
+        "conflict resolution は既存 issue 実装の意味を変えず、shared ledger/log の統合だけに限定されている",
+        "LSAG-005 は integration head から分岐できる",
+        "GitHub push、PR 作成、merge は行わない"
+      ],
+      "non_goals": [
+        "LSAG-002、LSAG-003、LSAG-004 の実装内容を変更すること",
+        "GitHub issue mirror、push、PR 作成、merge の実行"
+      ],
+      "verification": [
+        "git merge-base --is-ancestor 9a7fee240b283b65906ad8ff17239905b4c20d8c HEAD",
+        "git merge-base --is-ancestor be8f906d814ef2dff7c6ca5bec6cdb6517f37c07 HEAD",
+        "git merge-base --is-ancestor 5a9e77ed608fd46f1e7901aad12686cf4eb83333 HEAD",
+        "git diff --check"
+      ],
+      "write_scope": [
+        "path:skills/grill-to-pr-loop/references/execution-handoff.md",
+        "path:skills/grill-to-pr-loop/references/core.md",
+        "path:skills/grill-to-pr-loop/tests",
+        "path:plugins/task-management/skills/task-management/references/github-mcp-projects.md",
+        "path:plugins/task-management/skills/task-management/references/hermes-mcp-governance.md",
+        "path:plugins/task-management/skills/task-management/references/adapter-dispatch.md",
+        "path:plugins/task-management/tests",
+        "path:skills/issue-implementation-loop",
+        "path:knowledge/wiki/syntheses/loop-skill-autonomous-gates-issues.md",
+        "path:knowledge/log.md"
+      ],
+      "dependencies": [
+        "LSAG-002",
+        "LSAG-003",
+        "LSAG-004"
+      ]
+    },
+    {
       "id": "LSAG-005",
       "title": "regression tests と wiki discoverability を追加する",
       "source": {
@@ -190,9 +231,7 @@
         "path:knowledge/wiki/syntheses/loop-skill-autonomous-gates-issues.md"
       ],
       "dependencies": [
-        "LSAG-002",
-        "LSAG-003",
-        "LSAG-004"
+        "LSAG-006"
       ]
     }
   ],

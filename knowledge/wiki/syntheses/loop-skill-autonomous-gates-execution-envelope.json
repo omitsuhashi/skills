@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "epic_id": "loop-skill-autonomous-gates",
-  "revision": 1,
+  "revision": 2,
   "epic_base": {
     "ref": "codex/loop-skill-autonomous-gates/epic-base",
     "sha": "c3a68fdb357a747e1c1f429d0e95372c92d795be",
@@ -156,8 +156,8 @@
       "worktree_path": "/Users/omitsuhashi/.codex/worktrees/loop-skill-autonomous-gates/LSAG-005-regression-ledger",
       "worktree_state": "reserved",
       "base_policy": {
-        "type": "blocker_head",
-        "issue": "LSAG-004"
+        "type": "integration_head",
+        "integration_issue": "LSAG-006"
       },
       "write_scope": [
         "path:scripts",
@@ -167,6 +167,35 @@
         "path:knowledge/index.md",
         "path:knowledge/log.md",
         "path:knowledge/wiki/syntheses/loop-skill-autonomous-gates-issues.md"
+      ],
+      "dependencies": [
+        {
+          "issue": "LSAG-006",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_integration_head"
+        }
+      ]
+    },
+    "LSAG-006": {
+      "branch": "codex/loop-skill-autonomous-gates/LSAG-006-integration-base",
+      "worktree_path": "/Users/omitsuhashi/.codex/worktrees/loop-skill-autonomous-gates/LSAG-006-integration-base",
+      "worktree_state": "reserved",
+      "base_policy": {
+        "type": "blocker_head",
+        "issue": "LSAG-004"
+      },
+      "write_scope": [
+        "path:skills/grill-to-pr-loop/references/execution-handoff.md",
+        "path:skills/grill-to-pr-loop/references/core.md",
+        "path:skills/grill-to-pr-loop/tests",
+        "path:plugins/task-management/skills/task-management/references/github-mcp-projects.md",
+        "path:plugins/task-management/skills/task-management/references/hermes-mcp-governance.md",
+        "path:plugins/task-management/skills/task-management/references/adapter-dispatch.md",
+        "path:plugins/task-management/tests",
+        "path:skills/issue-implementation-loop",
+        "path:knowledge/wiki/syntheses/loop-skill-autonomous-gates-issues.md",
+        "path:knowledge/log.md"
       ],
       "dependencies": [
         {
