@@ -58,7 +58,8 @@ class LoopAutonomousGatesLedgerTests(unittest.TestCase):
             "LSAG-006: `6bcf0ed93a8199e04094c33e0ae8a76bdfe7e7d9`",
             "レビュー結果: LSAG-001 から LSAG-004 と LSAG-006 は review cycle 1 approved",
             "LSAG-005 は初回 review で Important 1 件を修正し、review-fix 後の re-review approved",
-            "GitHub issue mirror、push、PR 作成、ready-for-review、merge、force push は実行していない",
+            "Draft final PR: [#26](https://github.com/omitsuhashi/skills/pull/26)",
+            "Human-only boundaries left intact: ready-for-review, final PR merge, force push, GitHub issue mirror",
         ):
             self.assertIn(required, text)
 
@@ -105,7 +106,9 @@ class LoopAutonomousGatesLedgerTests(unittest.TestCase):
             "[2026-06-30] auto-continue | Loop skill autonomous gates Execution Plan Gate packet",
             "[2026-06-30] implementation | Loop skill autonomous gates LSAG-005 regression ledger",
             "LSAG-005 は regression tests、wiki discoverability、最終台帳集約だけを実装 scope とした",
-            "delivery state は local-only evidence として、GitHub issue mirror、push、PR 作成、ready-for-review、merge、force push を未実行に保った",
+            "[2026-06-30] delivery | Loop skill autonomous gates draft final PR",
+            "Draft final PR は https://github.com/omitsuhashi/skills/pull/26",
+            "ready-for-review、final PR merge、force push、GitHub issue mirror",
         ):
             self.assertIn(required, log_text)
 
