@@ -57,14 +57,14 @@ After `references/core.md`, select the current operation and load only the files
 
 ## Gates
 
-- **Spec Gate**: present spec path, `Epic ID`, accepted decisions, non-goals, acceptance criteria, verification, remote policy, and stop conditions.
-- **Issue Gate**: present local issues, blocker graph, dependency order, `実行可能/ブロック中` status, and acceptance criteria.
-- **Execution Plan Gate**: present the normalized packet, capability preflight, write scopes, dependency graph, fallback policy, and local/remote policy.
-- **Remote Gate**: before any external write, load the remote delivery reference, verify access, present the exact action set, and wait for explicit approval.
+- **Spec Gate**: human decision gate for the spec path, `Epic ID`, accepted decisions, non-goals, acceptance criteria, verification, remote policy, and stop conditions.
+- **Issue Gate**: human decision gate for local issues, blocker graph, dependency order, `実行可能/ブロック中` status, and acceptance criteria.
+- **Execution Plan Gate**: agent preflight + commit boundary for the normalized packet, capability preflight, write scopes, dependency graph, fallback policy, and local/remote policy; it is not a human approval gate when the approved scope is unchanged and stop conditions are clear.
+- **Remote Gate**: remote action gate only for an external write outside approved remote policy; load the remote delivery reference, verify access, present the exact action set, and wait for explicit approval.
 
-Explicit approval is required at each gate unless the user has already supplied an approved artifact and requested local-only implementation within the same scope.
+Explicit approval is required for human decision gates unless the user has already supplied an approved artifact and requested local-only implementation within the same scope. External/high-risk actions outside approved remote policy still require current explicit approval.
 
-After Spec Gate, Issue Gate, or Execution Plan Gate approval, commit the approved local artifacts before moving to the next phase. If the user explicitly delays the commit, record that exception in the ledger/log before continuing.
+After Spec Gate or Issue Gate approval, commit the approved local artifacts before moving to the next phase. At the Execution Plan Gate, commit the approved packet/evidence boundary before handing off to `issue-implementation-loop`. If the user explicitly delays the commit, record that exception in the ledger/log before continuing.
 
 ## Stop Conditions
 

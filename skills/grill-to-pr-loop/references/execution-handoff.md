@@ -70,15 +70,26 @@ Build and present:
 - remote-write policy
 - issue PR base/merge policy and final PR human-only merge policy
 
+Leave durable evidence before auto-continuation:
+
+- normalized packet path and validation result
+- capability preflight evidence
+- approved write scope
+- dependency graph
+- remote policy summary
+
 Validate with:
 
 ```bash
 python3 skills/issue-implementation-loop/scripts/validate_input_packet.py <packet.json>
+python3 skills/issue-implementation-loop/scripts/check_capabilities.py --input <packet.json> --json
 ```
 
-Wait for explicit approval before execution unless the user has already authorized local implementation and no external write or high-risk action is included.
+When Spec Gate and Issue Gate already approved the scope, auto-continue without another human approval if `validate_input_packet.py` and capability preflight pass, the run stays inside the approved write scope, and the remote policy summary contains no unapproved external write or high-risk action.
 
-After Execution Plan Gate approval, commit the approved normalized packet, approval record, and ledger/log updates before running `issue-implementation-loop prepare`.
+After Execution Plan Gate approval or auto-continue decision, commit the approved artifacts, normalized packet/evidence boundary, local ledger, and `knowledge/log.md` updates. Then run `issue-implementation-loop prepare`.
+
+Stop instead of auto-continuing if the approved scope would change, dirty changes overlap planned write scope, capability preflight fails, worker context is unavailable, or the observed remote policy does not match the approved remote policy.
 
 ## Execution Coordinator
 

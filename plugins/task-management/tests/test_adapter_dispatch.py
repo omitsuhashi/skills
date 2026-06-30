@@ -70,6 +70,15 @@ class AdapterDispatchContractTests(unittest.TestCase):
         self.assertIn("approved_destination_ref", text)
         self.assertIn("approved_task_ref", text)
 
+    def test_dispatch_approval_is_separate_from_readiness_gate(self):
+        text = self.reference_text
+
+        self.assertIn("Adapter Availability Gate", text)
+        self.assertIn("readiness", text)
+        self.assertIn("not approval", text)
+        self.assertIn("Adapter Dispatch Review", text)
+        self.assertIn("readiness pass must not replace Adapter Dispatch Review", text)
+
     def test_preview_example_contains_reviewable_envelope_and_guard(self):
         text = self.example_text
 
