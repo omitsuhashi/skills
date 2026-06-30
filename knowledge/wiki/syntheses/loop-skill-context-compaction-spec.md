@@ -2,7 +2,7 @@
 
 ## 状態
 
-Spec Gate 承認済み。Issue Gate、Execution Plan Gate、実装、GitHub issue mirror、push、PR 作成、merge は未承認。
+Spec Gate / Issue Gate 承認済み。Execution Plan Gate、実装、GitHub issue mirror、push、PR 作成、merge は未承認。
 
 ## 問題設定
 
