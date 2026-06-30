@@ -64,7 +64,13 @@
       "required": ["mode", "approved_actions"],
       "properties": {
         "mode": {"enum": ["local_only", "per_action", "batch_draft_prs", "batch_issue_prs"]},
-        "approved_actions": {"type": "array"},
+        "approved_actions": {
+          "type": "array",
+          "items": {
+            "enum": ["final_pr_push_head", "final_pr_create_draft"]
+          },
+          "uniqueItems": true
+        },
         "issue_prs": {
           "type": "object",
           "required": ["base", "merge"],
@@ -79,7 +85,8 @@
           "properties": {
             "head": {"const": "epic_base.ref"},
             "base": {"const": "main"},
-            "merge": {"const": "human_only"}
+            "merge": {"const": "human_only"},
+            "draft_default": {"const": true}
           }
         }
       },

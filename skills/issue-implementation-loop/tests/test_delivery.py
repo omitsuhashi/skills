@@ -4,6 +4,33 @@ from _helpers import *
 
 
 class DeliveryTests(unittest.TestCase):
+    def test_remote_delivery_docs_define_final_pr_auto_create_contract(self) -> None:
+        text = (SKILL_DIR / "references" / "remote-delivery.md").read_text(encoding="utf-8")
+        envelope_text = (SKILL_DIR / "references" / "execution-envelope.md").read_text(encoding="utf-8")
+        template = json.loads((SKILL_DIR / "assets" / "templates" / "delivery-plan.json").read_text(encoding="utf-8"))
+
+        for required in (
+            "final_pr_push_head",
+            "final_pr_create_draft",
+            "delivery plan validation",
+            "ok: true",
+            "draft",
+            "ledger",
+            "runtime state",
+            "completion report",
+        ):
+            self.assertIn(required, text)
+        for required in (
+            "ready-for-review",
+            "final PR merge",
+            "force push",
+            "human action",
+        ):
+            self.assertIn(required, text)
+        self.assertIn("final_pr_push_head", envelope_text)
+        self.assertIn("final_pr_create_draft", envelope_text)
+        self.assertIs(template["draft"], True)
+
     def test_validate_delivery_plan_rejects_final_pr_from_issue_branch(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             envelope_path = Path(tmp) / "envelope.json"
@@ -58,6 +85,67 @@ class DeliveryTests(unittest.TestCase):
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("issues.G2PR-003.pr_merged must be true before final PR", result.stderr)
+
+    def test_validate_delivery_plan_requires_approved_final_pr_actions(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            envelope_path = Path(tmp) / "envelope.json"
+            runtime_path = Path(tmp) / "runtime.json"
+            plan_path = Path(tmp) / "delivery-plan.json"
+            write_json(envelope_path, batch_issue_prs_envelope())
+            write_json(runtime_path, merged_runtime_state())
+            write_json(
+                plan_path,
+                {
+                    "action": "final_pr",
+                    "head": "codex/issue-implementation-loop/epic-base",
+                    "base": "main",
+                    "issue_scope": ["G2PR-001", "G2PR-002", "G2PR-003"],
+                },
+            )
+
+            result = run_script(
+                "validate_delivery_plan.py",
+                str(envelope_path),
+                str(runtime_path),
+                str(plan_path),
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("remote_write_policy.approved_actions must include final_pr_push_head", result.stderr)
+            self.assertIn("remote_write_policy.approved_actions must include final_pr_create_draft", result.stderr)
+
+    def test_validate_delivery_plan_rejects_ready_final_pr_creation(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            envelope_path = Path(tmp) / "envelope.json"
+            runtime_path = Path(tmp) / "runtime.json"
+            plan_path = Path(tmp) / "delivery-plan.json"
+            envelope = batch_issue_prs_envelope()
+            envelope["remote_write_policy"]["approved_actions"] = [
+                "final_pr_push_head",
+                "final_pr_create_draft",
+            ]
+            write_json(envelope_path, envelope)
+            write_json(runtime_path, merged_runtime_state())
+            write_json(
+                plan_path,
+                {
+                    "action": "final_pr",
+                    "head": "codex/issue-implementation-loop/epic-base",
+                    "base": "main",
+                    "draft": False,
+                    "issue_scope": ["G2PR-001", "G2PR-002", "G2PR-003"],
+                },
+            )
+
+            result = run_script(
+                "validate_delivery_plan.py",
+                str(envelope_path),
+                str(runtime_path),
+                str(plan_path),
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("final_pr.draft must be true; ready-for-review is a separate human action", result.stderr)
 
     def test_validate_delivery_plan_rejects_runtime_state_from_different_epic_or_revision(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -154,7 +242,12 @@ class DeliveryTests(unittest.TestCase):
             envelope_path = Path(tmp) / "envelope.json"
             runtime_path = Path(tmp) / "runtime.json"
             plan_path = Path(tmp) / "delivery-plan.json"
-            write_json(envelope_path, batch_issue_prs_envelope())
+            envelope = batch_issue_prs_envelope()
+            envelope["remote_write_policy"]["approved_actions"] = [
+                "final_pr_push_head",
+                "final_pr_create_draft",
+            ]
+            write_json(envelope_path, envelope)
             write_json(runtime_path, merged_runtime_state())
             write_json(
                 plan_path,
@@ -181,7 +274,12 @@ class DeliveryTests(unittest.TestCase):
             envelope_path = Path(tmp) / "envelope.json"
             runtime_path = Path(tmp) / "runtime.json"
             plan_path = Path(tmp) / "delivery-plan.json"
-            write_json(envelope_path, batch_issue_prs_envelope())
+            envelope = batch_issue_prs_envelope()
+            envelope["remote_write_policy"]["approved_actions"] = [
+                "final_pr_push_head",
+                "final_pr_create_draft",
+            ]
+            write_json(envelope_path, envelope)
             write_json(runtime_path, merged_runtime_state(missing_merge="G2PR-003"))
             write_json(
                 plan_path,

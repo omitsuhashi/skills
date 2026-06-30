@@ -2,7 +2,7 @@
 
 ## 状態
 
-Spec Gate / Issue Gate 承認済み。Execution Plan Gate は agent preflight + commit boundary として自動通過済み。LSAG-001 は worker 実装済みで coordinator review 待ち。LSAG-002 から LSAG-005 は未実装。GitHub issue mirror、push、PR 作成、merge はまだ行っていない。承認済み仕様は [Loop Skill 自動継続 Gate 仕様](loop-skill-autonomous-gates-spec.md)、normalized input packet は [Loop Skill 自動継続 Gate Input Packet](loop-skill-autonomous-gates-input-packet.json)。
+Spec Gate / Issue Gate 承認済み。Execution Plan Gate は agent preflight + commit boundary として自動通過済み。LSAG-001 と LSAG-004 は worker 実装済みで coordinator review 待ち。LSAG-002、LSAG-003、LSAG-005 は未実装。GitHub issue mirror、push、PR 作成、merge はまだ行っていない。承認済み仕様は [Loop Skill 自動継続 Gate 仕様](loop-skill-autonomous-gates-spec.md)、normalized input packet は [Loop Skill 自動継続 Gate Input Packet](loop-skill-autonomous-gates-input-packet.json)。
 
 ## 台帳
 
@@ -11,7 +11,7 @@ Spec Gate / Issue Gate 承認済み。Execution Plan Gate は agent preflight + 
 | loop-skill-autonomous-gates | LSAG-001 | Gate taxonomy と自動継続 policy を定義する | 承認済み | 実装済み / coordinator review 待ち | なし | LSAG-002, LSAG-003, LSAG-004 | 未作成 | coordinator review 待ち | 未作成 |
 | loop-skill-autonomous-gates | LSAG-002 | Execution Plan Gate の自動継続を実行契約に反映する | 承認済み | ブロック中 | LSAG-001 | LSAG-005 | 未作成 | 未実施 | 未作成 |
 | loop-skill-autonomous-gates | LSAG-003 | Live Root Gate / Adapter Availability Gate を readiness gate として整理する | 承認済み | ブロック中 | LSAG-001 | LSAG-005 | 未作成 | 未実施 | 未作成 |
-| loop-skill-autonomous-gates | LSAG-004 | final PR 自動作成 policy を Execution Envelope / delivery に固定する | 承認済み | ブロック中 | LSAG-001 | LSAG-005 | 未作成 | 未実施 | 未作成 |
+| loop-skill-autonomous-gates | LSAG-004 | final PR 自動作成 policy を Execution Envelope / delivery に固定する | 承認済み | 実装済み / coordinator review 待ち | LSAG-001 | LSAG-005 | 未作成 | coordinator review 待ち | 未作成 |
 | loop-skill-autonomous-gates | LSAG-005 | regression tests と wiki discoverability を追加する | 承認済み | ブロック中 | LSAG-002, LSAG-003, LSAG-004 | なし | 未作成 | 未実施 | 未作成 |
 
 ## ブロッカーグラフ
@@ -19,7 +19,7 @@ Spec Gate / Issue Gate 承認済み。Execution Plan Gate は agent preflight + 
 - LSAG-001: worker 実装済み / coordinator review 待ち。ブロック元 なし。LSAG-002、LSAG-003、LSAG-004 の共通前提。ブロック解除は coordinator review 後に判断する。
 - LSAG-002: ブロック中。LSAG-001 の gate taxonomy 確定後に、Execution Plan Gate の実行契約を更新する。
 - LSAG-003: ブロック中。LSAG-001 の gate taxonomy 確定後に、Live Root / Adapter Availability readiness semantics を整理する。
-- LSAG-004: ブロック中。LSAG-001 の gate taxonomy 確定後に、final PR 自動作成の approved action と delivery validation を固定する。
+- LSAG-004: worker 実装済み / coordinator review 待ち。final PR 自動作成の approved action と delivery validation を固定した。LSAG-005 のブロック解除は coordinator review 後に判断する。
 - LSAG-005: ブロック中。LSAG-002、LSAG-003、LSAG-004 の実装後に regression と wiki discoverability を集約する。
 
 循環依存はない。Issue Gate 承認済みのため、全 issue の `レビュー状態` は `承認済み` とする。
@@ -191,12 +191,12 @@ final PR 自動作成 policy を Execution Envelope / delivery に固定する
 
 ### 受け入れ条件
 
-- [ ] `remote_write_policy.approved_actions` が `final_pr_push_head` と `final_pr_create_draft` を表現できる。
-- [ ] final PR 自動作成は、delivery plan validation `ok: true`、`epic_base.ref` active、対象 issue の統合済み状態、approved remote policy を満たす場合だけ許可される。
-- [ ] final PR head が `epic_base.ref` ではない場合は停止する。
-- [ ] 自動作成される final PR は既定で draft。
-- [ ] ready-for-review 化、final PR merge、force push は別の human action / approval として残る。
-- [ ] draft final PR 作成後に ledger / runtime state / completion report を更新する契約がある。
+- [x] `remote_write_policy.approved_actions` が `final_pr_push_head` と `final_pr_create_draft` を表現できる。
+- [x] final PR 自動作成は、delivery plan validation `ok: true`、`epic_base.ref` active、対象 issue の統合済み状態、approved remote policy を満たす場合だけ許可される。
+- [x] final PR head が `epic_base.ref` ではない場合は停止する。
+- [x] 自動作成される final PR は既定で draft。
+- [x] ready-for-review 化、final PR merge、force push は別の human action / approval として残る。
+- [x] draft final PR 作成後に ledger / runtime state / completion report を更新する契約がある。
 
 ### 非目標
 
@@ -206,9 +206,18 @@ final PR 自動作成 policy を Execution Envelope / delivery に固定する
 
 ### ブロッカー
 
-- 実行状態: ブロック中
+- 実行状態: 実装済み / coordinator review 待ち
 - ブロック元: LSAG-001
 - ブロック先: LSAG-005
+- ブロック解除: coordinator review 後に判断する
+
+### Worker 実装メモ
+
+- `remote_write_policy.approved_actions` を `final_pr_push_head` / `final_pr_create_draft` の enum として schema / validator に固定した。
+- `validate_delivery_plan.py` は final PR 作成時に approved action、`epic_base.branch_state: active`、`head == epic_base.ref`、対象 issue の `pr_merged: true`、draft-only policy を検証する。
+- `assets/templates/execution-envelope.json` と `assets/templates/delivery-plan.json` は draft final PR 作成を既定値として示す。
+- `remote-delivery.md` と `execution-envelope.md` に、draft final PR 作成後の local ledger / runtime state / completion report 同期契約と、ready-for-review / final PR merge / force push の human action 境界を明記した。
+- GitHub issue mirror、push、PR 作成、ready-for-review、merge、force push は実行していない。
 
 ### 想定 write scope
 

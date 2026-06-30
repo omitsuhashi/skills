@@ -4,6 +4,7 @@ import os
 from typing import Any
 
 from ..constants import (
+    APPROVED_REMOTE_ACTIONS,
     BASE_EFFECTS,
     BASE_POLICY_TYPES,
     EDGE_STRENGTHS,
@@ -95,7 +96,24 @@ def validate_execution_envelope(envelope: dict[str, Any]) -> list[str]:
     else:
         if remote_policy.get("mode") not in REMOTE_MODES:
             errors.append(f"remote_write_policy.mode must be one of {sorted(REMOTE_MODES)}")
-        elif remote_policy.get("mode") == "batch_issue_prs":
+        approved_actions = remote_policy.get("approved_actions")
+        if not isinstance(approved_actions, list):
+            errors.append("remote_write_policy.approved_actions must be a list")
+        else:
+            seen_actions: set[str] = set()
+            for index, action in enumerate(approved_actions):
+                if action not in APPROVED_REMOTE_ACTIONS:
+                    errors.append(
+                        f"remote_write_policy.approved_actions[{index}] must be one of "
+                        f"{sorted(APPROVED_REMOTE_ACTIONS)}"
+                    )
+                elif action in seen_actions:
+                    errors.append(
+                        f"remote_write_policy.approved_actions[{index}] duplicates {action}"
+                    )
+                else:
+                    seen_actions.add(action)
+        if remote_policy.get("mode") == "batch_issue_prs":
             batch_issue_prs = True
             expected_epic_base_ref = f"codex/{epic_id}/epic-base" if isinstance(epic_id, str) else None
             if isinstance(epic_base, dict) and epic_base.get("ref") != expected_epic_base_ref:
@@ -124,6 +142,8 @@ def validate_execution_envelope(envelope: dict[str, Any]) -> list[str]:
                     errors.append("remote_write_policy.final_pr.base must be main")
                 if final_pr.get("merge") not in FINAL_PR_MERGE_POLICIES:
                     errors.append("remote_write_policy.final_pr.merge must be human_only")
+                if "draft_default" in final_pr and final_pr.get("draft_default") is not True:
+                    errors.append("remote_write_policy.final_pr.draft_default must be true when provided")
 
     context_policy = envelope.get("context_policy")
     if not isinstance(context_policy, dict):
