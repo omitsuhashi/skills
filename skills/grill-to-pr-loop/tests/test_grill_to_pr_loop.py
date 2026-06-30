@@ -175,6 +175,30 @@ class GrillToPrLoopTests(unittest.TestCase):
         self.assertIn("Execution Plan Gate approval", handoff_text)
         self.assertIn("Moving to the next phase without committing an approved gate", mistakes_text)
 
+    def test_gate_taxonomy_separates_human_preflight_and_remote_boundaries(self) -> None:
+        skill_text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+        core_text = CORE_REFERENCE.read_text(encoding="utf-8")
+        mistakes_text = (SKILL_DIR / "references" / "common-mistakes.md").read_text(encoding="utf-8")
+        combined = f"{skill_text}\n{core_text}"
+
+        for required in (
+            "Spec Gate",
+            "Issue Gate",
+            "human decision gate",
+            "Execution Plan Gate",
+            "agent preflight + commit boundary",
+            "not a human approval gate",
+            "Remote Gate",
+            "outside approved remote policy",
+            "external write",
+            "human-only",
+        ):
+            self.assertIn(required, combined)
+
+        self.assertIn("draft final PR", mistakes_text)
+        self.assertIn("approved remote policy", mistakes_text)
+        self.assertNotIn("Treating PR creation as implicit | Get explicit approval first.", mistakes_text)
+
     def test_agent_default_prompts_are_short_and_policy_free(self) -> None:
         for path, skill_name in (
             (GRILL_AGENT_YAML, "$grill-to-pr-loop"),

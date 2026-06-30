@@ -2,13 +2,13 @@
 
 ## 状態
 
-Spec Gate / Issue Gate 承認済み。Execution Plan Gate は agent preflight + commit boundary として自動通過済み。LSAG-001 から LSAG-005 は未実装。GitHub issue mirror、push、PR 作成、merge はまだ行っていない。承認済み仕様は [Loop Skill 自動継続 Gate 仕様](loop-skill-autonomous-gates-spec.md)、normalized input packet は [Loop Skill 自動継続 Gate Input Packet](loop-skill-autonomous-gates-input-packet.json)。
+Spec Gate / Issue Gate 承認済み。Execution Plan Gate は agent preflight + commit boundary として自動通過済み。LSAG-001 は worker 実装済みで coordinator review 待ち。LSAG-002 から LSAG-005 は未実装。GitHub issue mirror、push、PR 作成、merge はまだ行っていない。承認済み仕様は [Loop Skill 自動継続 Gate 仕様](loop-skill-autonomous-gates-spec.md)、normalized input packet は [Loop Skill 自動継続 Gate Input Packet](loop-skill-autonomous-gates-input-packet.json)。
 
 ## 台帳
 
 | Epic ID | ローカルID | タイトル | レビュー状態 | 実行状態 | ブロック元 | ブロック先 | GitHub Issue | 実装レビュー | PR |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| loop-skill-autonomous-gates | LSAG-001 | Gate taxonomy と自動継続 policy を定義する | 承認済み | 実行可能 | なし | LSAG-002, LSAG-003, LSAG-004 | 未作成 | 未実施 | 未作成 |
+| loop-skill-autonomous-gates | LSAG-001 | Gate taxonomy と自動継続 policy を定義する | 承認済み | 実装済み / coordinator review 待ち | なし | LSAG-002, LSAG-003, LSAG-004 | 未作成 | coordinator review 待ち | 未作成 |
 | loop-skill-autonomous-gates | LSAG-002 | Execution Plan Gate の自動継続を実行契約に反映する | 承認済み | ブロック中 | LSAG-001 | LSAG-005 | 未作成 | 未実施 | 未作成 |
 | loop-skill-autonomous-gates | LSAG-003 | Live Root Gate / Adapter Availability Gate を readiness gate として整理する | 承認済み | ブロック中 | LSAG-001 | LSAG-005 | 未作成 | 未実施 | 未作成 |
 | loop-skill-autonomous-gates | LSAG-004 | final PR 自動作成 policy を Execution Envelope / delivery に固定する | 承認済み | ブロック中 | LSAG-001 | LSAG-005 | 未作成 | 未実施 | 未作成 |
@@ -16,7 +16,7 @@ Spec Gate / Issue Gate 承認済み。Execution Plan Gate は agent preflight + 
 
 ## ブロッカーグラフ
 
-- LSAG-001: 実行可能。ブロック元 なし。LSAG-002、LSAG-003、LSAG-004 の共通前提。
+- LSAG-001: worker 実装済み / coordinator review 待ち。ブロック元 なし。LSAG-002、LSAG-003、LSAG-004 の共通前提。ブロック解除は coordinator review 後に判断する。
 - LSAG-002: ブロック中。LSAG-001 の gate taxonomy 確定後に、Execution Plan Gate の実行契約を更新する。
 - LSAG-003: ブロック中。LSAG-001 の gate taxonomy 確定後に、Live Root / Adapter Availability readiness semantics を整理する。
 - LSAG-004: ブロック中。LSAG-001 の gate taxonomy 確定後に、final PR 自動作成の approved action と delivery validation を固定する。
@@ -40,11 +40,11 @@ Gate taxonomy と自動継続 policy を定義する
 
 ### 受け入れ条件
 
-- [ ] `skills/grill-to-pr-loop/SKILL.md` または operation-owned reference が、Spec Gate / Issue Gate を human decision gate として説明している。
-- [ ] `Execution Plan Gate` は human approval gate ではなく、agent preflight + commit boundary として説明されている。
-- [ ] Remote Gate は approved remote policy 外の external write にだけ明示承認を求める gate として説明されている。
-- [ ] `common-mistakes.md` は、approved remote policy 内の draft final PR 自動作成を「PR creation は常に個別承認」と誤読させない。
-- [ ] final PR merge は常に human-only として残っている。
+- [x] `skills/grill-to-pr-loop/SKILL.md` または operation-owned reference が、Spec Gate / Issue Gate を human decision gate として説明している。
+- [x] `Execution Plan Gate` は human approval gate ではなく、agent preflight + commit boundary として説明されている。
+- [x] Remote Gate は approved remote policy 外の external write にだけ明示承認を求める gate として説明されている。
+- [x] `common-mistakes.md` は、approved remote policy 内の draft final PR 自動作成を「PR creation は常に個別承認」と誤読させない。
+- [x] final PR merge は常に human-only として残っている。
 
 ### 非目標
 
@@ -53,9 +53,16 @@ Gate taxonomy と自動継続 policy を定義する
 
 ### ブロッカー
 
-- 実行状態: 実行可能
+- 実行状態: 実装済み / coordinator review 待ち
 - ブロック元: なし
 - ブロック先: LSAG-002, LSAG-003, LSAG-004
+
+### Worker 実装メモ
+
+- `skills/grill-to-pr-loop/SKILL.md` と `skills/grill-to-pr-loop/references/core.md` で gate taxonomy を human decision gate、agent preflight + commit boundary、Remote Gate に分離した。
+- `skills/grill-to-pr-loop/references/common-mistakes.md` で、approved remote policy 内の draft final PR 作成を常時個別承認と誤読させない表現に更新した。
+- `skills/grill-to-pr-loop/tests/test_grill_to_pr_loop.py` に gate taxonomy regression を追加した。
+- LSAG-002 / LSAG-003 / LSAG-004 のブロッカー解除は coordinator review 後に判断する。
 
 ### 想定 write scope
 

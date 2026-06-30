@@ -19,5 +19,5 @@ Use this reference when behavior is ambiguous, an agent tries to skip a gate, or
 | Merging multiple blocker heads inside a downstream worker | Create an approved integration work item or integration branch. |
 | Marking an issue PR-ready from an uncommitted diff | Create/update a scoped local commit and review `BASE_SHA..HEAD_SHA`. |
 | Treating PR review as issue implementation review | Let `issue-implementation-loop` run the issue-scoped review gate before PR readiness. |
-| Treating PR creation as implicit | Get explicit approval first. |
-| Merging final PRs automatically | Create the final PR, then leave final merge to the human. |
+| Treating PR creation as either always implicit or always per-run approval | PR creation needs approved remote policy. If that policy already covers draft final PR creation and delivery validation passes, do not add another per-run approval. Outside approved remote policy, use Remote Gate. |
+| Merging final PRs automatically | A draft final PR may be created only under approved remote policy; final PR merge remains human-only. |
