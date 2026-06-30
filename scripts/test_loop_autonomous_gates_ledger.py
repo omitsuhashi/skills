@@ -54,9 +54,10 @@ class LoopAutonomousGatesLedgerTests(unittest.TestCase):
             "LSAG-002: `9a7fee240b283b65906ad8ff17239905b4c20d8c`",
             "LSAG-003: `be8f906d814ef2dff7c6ca5bec6cdb6517f37c07`",
             "LSAG-004: `5a9e77ed608fd46f1e7901aad12686cf4eb83333`",
+            "LSAG-005: `0d179d188c126a8ea9112a43aecc0d62e5ec9b71`",
             "LSAG-006: `6bcf0ed93a8199e04094c33e0ae8a76bdfe7e7d9`",
             "レビュー結果: LSAG-001 から LSAG-004 と LSAG-006 は review cycle 1 approved",
-            "LSAG-005 はこの台帳更新と full verification 後の scoped local commit を coordinator review 対象にする",
+            "LSAG-005 は初回 review で Important 1 件を修正し、review-fix 後の re-review approved",
             "GitHub issue mirror、push、PR 作成、ready-for-review、merge、force push は実行していない",
         ):
             self.assertIn(required, text)
@@ -82,8 +83,8 @@ class LoopAutonomousGatesLedgerTests(unittest.TestCase):
             self.assertIn("review cycle 1 approved", section)
 
         lsag005 = text.split("## LSAG-005", 1)[1].split("\n## ", 1)[0]
-        self.assertIn("- 実行状態: 完了 / coordinator review 待ち", lsag005)
-        self.assertIn("review-fix 後の coordinator re-review 待ち", lsag005)
+        self.assertIn("- 実行状態: 完了", lsag005)
+        self.assertIn("review-fix 後の re-review approved", lsag005)
 
     def test_index_and_log_expose_spec_ledger_packet_and_delivery_state(self) -> None:
         index_text = INDEX.read_text(encoding="utf-8")
