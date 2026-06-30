@@ -65,10 +65,10 @@ _現在なし。_
   検索語: 実行計画, 実行 envelope, worker_context_required, local_only, LSOS, worktree reservation, loop skill operational simplicity
 - [Loop Skill 自動継続 Gate 仕様](wiki/syntheses/loop-skill-autonomous-gates-spec.md) — `Execution Plan Gate` と `Live Root Gate` を agent preflight + commit boundary として自動継続し、承認済み delivery policy 内の draft final PR 作成を追加承認なしに行う Spec Gate 承認済み仕様。
   検索語: Execution Plan Gate, Live Root Gate, Adapter Availability Gate, final PR, draft PR, approved_actions, auto-continue, grill-to-pr-loop, issue-implementation-loop, remote policy, human-only merge
-- [Loop Skill 自動継続 Gate Issue 台帳](wiki/syntheses/loop-skill-autonomous-gates-issues.md) — `loop-skill-autonomous-gates` の Issue Gate 承認済み日本語 local-first ledger。LSAG-001 から LSAG-005、blocker graph、acceptance criteria、write scope、remote policy を定義する。
-  検索語: LSAG, Loop Skill 自動継続, local issue, Issue Gate, blocker graph, Execution Plan Gate, Live Root Gate, Adapter Availability Gate, final PR, approved_actions
-- [Loop Skill 自動継続 Gate Input Packet](wiki/syntheses/loop-skill-autonomous-gates-input-packet.json) — `loop-skill-autonomous-gates` の Execution Plan Gate 自動通過用 normalized input packet。LSAG-001 から LSAG-005 の write scope、dependencies、`batch_issue_prs` delivery intent を正規化する。
-  検索語: LSAG, input packet, Execution Plan Gate, auto-continue, issue-implementation-loop, batch_issue_prs, final PR, approved_actions
+- [Loop Skill 自動継続 Gate Issue 台帳](wiki/syntheses/loop-skill-autonomous-gates-issues.md) — `loop-skill-autonomous-gates` の Issue Gate 承認済み日本語 local-first 最終台帳。LSAG-001 から LSAG-006 の implementation evidence、review result、verification result、delivery evidence、remote 未実行境界を集約する。
+  検索語: LSAG, Loop Skill 自動継続, local issue, Issue Gate, final ledger, 最終台帳, implementation evidence, review result, verification result, delivery evidence, blocker graph, Execution Plan Gate, Live Root Gate, Adapter Availability Gate, final PR, approved_actions
+- [Loop Skill 自動継続 Gate Input Packet](wiki/syntheses/loop-skill-autonomous-gates-input-packet.json) — `loop-skill-autonomous-gates` の Execution Plan Gate 自動通過用 normalized input packet。LSAG-001 から LSAG-005 の write scope、dependencies、`batch_issue_prs` delivery intent を正規化する execution packet。
+  検索語: LSAG, input packet, execution packet, Execution Plan Gate, auto-continue, issue-implementation-loop, batch_issue_prs, final PR, approved_actions, delivery evidence
 - [Grill To PR Loop Epic Base Delivery Policy Spec](wiki/syntheses/grill-to-pr-loop-epic-base-delivery-policy-spec.md) — issue PR を `codex/<epic-id>/epic-base` に集約し、issue PR は guarded agent merge、final PR merge は human-only とする delivery policy。
   検索語: grill-to-pr-loop, issue-implementation-loop, epic_base, epic-base, batch_issue_prs, issue PR, final PR, merge policy, review cycles, PR配送
 - [Grill To PR Loop Epic Base Delivery Policy Issues](wiki/syntheses/grill-to-pr-loop-epic-base-delivery-policy-issues.md) — epic-base delivery policy 実装のローカルIssue ledger。
