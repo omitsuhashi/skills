@@ -91,7 +91,7 @@ Spec Gate 承認後に、日本語 local-first ledger として次の blocker or
 - live root / adapter readiness failure は、承認待ちではなく setup blocker として報告される。
 - `remote_write_policy.approved_actions` が `final_pr_push_head` と `final_pr_create_draft` を表現できる。
 - final PR 自動作成は、delivery plan validation `ok: true`、`epic_base.ref` active、対象 issue の統合済み状態、approved remote policy を満たす場合だけ実行される。
-- 自動作成される final PR は既定で draft。ready-for-review 化は別承認または明示 approved action がある場合だけ許可される。
+- 自動作成される final PR は既定で draft。ready-for-review 化は常に別の human action であり、approved remote action では許可しない。
 - final PR merge は常に human-only として schema、validator、docs、tests に残る。
 - GitHub issue mirror、task backend mutation、credential / permission / billing / production / destructive action はこの仕様の自動化対象に含まれない。
 - `SKILL.md` は肥大化させず、詳細 contract は references、schema、validator、tests に置く。

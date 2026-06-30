@@ -136,6 +136,13 @@ def validate_execution_envelope(envelope: dict[str, Any]) -> list[str]:
             if not isinstance(final_pr, dict):
                 errors.append("remote_write_policy.final_pr is required for batch_issue_prs")
             else:
+                allowed_final_pr_keys = {"head", "base", "merge", "draft_default"}
+                for key in sorted(final_pr):
+                    if key not in allowed_final_pr_keys:
+                        errors.append(
+                            f"remote_write_policy.final_pr.{key} is not allowed; "
+                            "ready-for-review, force push, and high-risk final PR actions are human-only"
+                        )
                 if final_pr.get("head") not in FINAL_PR_HEADS:
                     errors.append("remote_write_policy.final_pr.head must be epic_base.ref")
                 if final_pr.get("base") != "main":

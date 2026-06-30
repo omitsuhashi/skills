@@ -87,7 +87,8 @@
             "base": {"const": "main"},
             "merge": {"const": "human_only"},
             "draft_default": {"const": true}
-          }
+          },
+          "additionalProperties": false
         }
       },
       "allOf": [

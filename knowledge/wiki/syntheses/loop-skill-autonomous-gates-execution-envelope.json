@@ -54,7 +54,8 @@
     "final_pr": {
       "head": "epic_base.ref",
       "base": "main",
-      "merge": "human_only"
+      "merge": "human_only",
+      "draft_default": true
     }
   },
   "work_items": {
