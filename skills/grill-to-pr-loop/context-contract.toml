@@ -37,3 +37,6 @@ references = ["references/remote-delivery.md"]
 
 [operations."ambiguity-check"]
 references = ["references/common-mistakes.md"]
+
+[operations."context-compaction"]
+references = ["references/context-compaction.md"]

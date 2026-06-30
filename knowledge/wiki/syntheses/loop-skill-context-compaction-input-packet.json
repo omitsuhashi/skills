@@ -1,0 +1,265 @@
+{
+  "schema_version": 1,
+  "repo_root": "/Users/omitsuhashi/.codex/worktrees/loop-skill-context-compaction/LSCC-005-ledger-packet-verification",
+  "epic_id": "loop-skill-context-compaction",
+  "artifact_root": "knowledge/wiki/syntheses",
+  "spec": {
+    "path": "knowledge/wiki/syntheses/loop-skill-context-compaction-spec.md",
+    "approved_revision": 1,
+    "approved_hash": "sha256:a152fb5cc58a6174687980c71727373646254808d7b8aa87e5862b1e638bf426"
+  },
+  "issue_ledger": {
+    "path": "knowledge/wiki/syntheses/loop-skill-context-compaction-issues.md",
+    "approved_revision": 1,
+    "approved_hash": "sha256:ae388e4ee6d504d124f9ff922303103de91ae290659585c54cddde6819112bf6"
+  },
+  "execution_plan": {
+    "remote_policy": "local_only",
+    "worker_context_required": true,
+    "coordinator_may_implement": false,
+    "serial_fallback_mode": "worker_context_only",
+    "context_compaction": {
+      "soft_trigger_percent": 65,
+      "hard_stop_percent": 75,
+      "mandatory_handoff_compaction": 1
+    }
+  },
+  "approved_blocker_graph": [
+    {
+      "from": "LSCC-001",
+      "to": "LSCC-002"
+    },
+    {
+      "from": "LSCC-001",
+      "to": "LSCC-003"
+    },
+    {
+      "from": "LSCC-001",
+      "to": "LSCC-004"
+    },
+    {
+      "from": "LSCC-002",
+      "to": "LSCC-004"
+    },
+    {
+      "from": "LSCC-003",
+      "to": "LSCC-004"
+    },
+    {
+      "from": "LSCC-004",
+      "to": "LSCC-005"
+    }
+  ],
+  "work_items": [
+    {
+      "id": "LSCC-001",
+      "title": "family-level context compaction policy を追加する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/loop-skill-context-compaction-issues.md"
+      },
+      "acceptance_criteria": [
+        "skill-architecture.toml が soft_trigger_percent = 65 を持つ",
+        "skill-architecture.toml が hard_stop_percent = 75 を正確に持つ",
+        "mandatory_handoff_compaction = 1 を integer flag として持つ",
+        "新しい standalone skill を作らないことが regression で固定される",
+        "architecture validator が repository-change-loop family の context compaction policy を検証する"
+      ],
+      "non_goals": [
+        "user-facing skill の追加",
+        "session pressure を read-set estimated token count から推定すること"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_architecture.py --all",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/report_skill_context.py --all --json",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s scripts",
+        "git diff --check"
+      ],
+      "write_scope": [
+        "path:skill-architecture.toml",
+        "path:scripts/validate_skill_architecture.py",
+        "path:scripts/report_skill_context.py",
+        "path:scripts",
+        "path:knowledge/wiki/syntheses/loop-skill-context-compaction-issues.md",
+        "path:knowledge/log.md"
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "LSCC-002",
+      "title": "`grill-to-pr-loop` の context compaction contract を追加する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/loop-skill-context-compaction-issues.md"
+      },
+      "acceptance_criteria": [
+        "entrypoint から 65% trigger と context compaction reference を発見できる",
+        "references/context-compaction.md が owner 境界つきで保持/圧縮/禁止分類を明示する",
+        "同 reference が phase transition GC rule と phase 別圧縮 matrix を持つ",
+        "context-compaction operation は current operation の conditional overlay としてだけ使われる",
+        "65% trigger 時も current operation の required references を落とさない"
+      ],
+      "non_goals": [
+        "通常 operation read-set を肥大化させること",
+        "planning session が issue implementation worker になること"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_context.py --all",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/grill-to-pr-loop/tests",
+        "rg -n \"context-compaction|65%|Phase Transition\" skills/grill-to-pr-loop",
+        "git diff --check"
+      ],
+      "write_scope": [
+        "path:skills/grill-to-pr-loop/SKILL.md",
+        "path:skills/grill-to-pr-loop/references/context-compaction.md",
+        "path:skills/grill-to-pr-loop/context-contract.toml",
+        "path:skills/grill-to-pr-loop/tests",
+        "path:knowledge/wiki/syntheses/loop-skill-context-compaction-issues.md",
+        "path:knowledge/log.md"
+      ],
+      "dependencies": [
+        {
+          "issue": "LSCC-001",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    },
+    {
+      "id": "LSCC-003",
+      "title": "`issue-implementation-loop` の execution compaction contract を追加する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/loop-skill-context-compaction-issues.md"
+      },
+      "acceptance_criteria": [
+        "issue-implementation-loop が Execution Envelope、runtime state、resume brief、worker packet の圧縮境界を明示する",
+        "Execution Envelope.context_policy.session_compaction が schema / template / validator で検証される",
+        "soft_trigger_percent は 65、hard_stop_percent は 75 で固定される",
+        "prepare / execute / review / resume / deliver の phase exit で carry-forward capsule を作る契約を持つ",
+        "worker packet の strict context_policy は session-level field を拒否し続ける"
+      ],
+      "non_goals": [
+        "worker packet schema に session-level policy を混ぜること",
+        "runtime state / scheduler / delivery semantics の意味論を変更すること"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/validate_execution_envelope.py knowledge/wiki/syntheses/loop-skill-context-compaction-execution-envelope.json",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 skills/issue-implementation-loop/scripts/validate_worker_packet.py <worker-packet.json> --json",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_context.py --all",
+        "git diff --check"
+      ],
+      "write_scope": [
+        "path:skills/issue-implementation-loop/SKILL.md",
+        "path:skills/issue-implementation-loop/references",
+        "path:skills/issue-implementation-loop/context-contract.toml",
+        "path:skills/issue-implementation-loop/assets/schemas",
+        "path:skills/issue-implementation-loop/assets/templates",
+        "path:skills/issue-implementation-loop/scripts",
+        "path:skills/issue-implementation-loop/tests",
+        "path:knowledge/wiki/syntheses/loop-skill-context-compaction-issues.md",
+        "path:knowledge/log.md"
+      ],
+      "dependencies": [
+        {
+          "issue": "LSCC-002",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    },
+    {
+      "id": "LSCC-004",
+      "title": "session pressure advisory と regression を追加する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/loop-skill-context-compaction-issues.md"
+      },
+      "acceptance_criteria": [
+        "report_skill_context.py --all --json --session-pressure-percent 65 が session_context.compaction_required=true を返す",
+        "report_skill_context.py --all --session-pressure-percent 65 の text output は短い advisory 行だけを追加する",
+        "report_skill_context.py --all --session-pressure-percent 75 --fail-on-warning が hard-stop warning と fail-on-warning 挙動を固定する",
+        "advisory は phase checkpoint / conditional overlay の代替ではないことを regression で確認できる",
+        "validate_skill_context.py --all は read-set budget validator のまま通る"
+      ],
+      "non_goals": [
+        "validate_skill_context.py を session pressure validator にすること",
+        "non-loop skill に session pressure advisory を広げること"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/report_skill_context.py --all --json --session-pressure-percent 65",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/report_skill_context.py --all --session-pressure-percent 75 --fail-on-warning",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_context.py --all",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s scripts",
+        "git diff --check"
+      ],
+      "write_scope": [
+        "path:scripts/report_skill_context.py",
+        "path:scripts/validate_skill_context.py",
+        "path:scripts",
+        "path:skills/grill-to-pr-loop/tests",
+        "path:skills/issue-implementation-loop/tests",
+        "path:knowledge/wiki/syntheses/loop-skill-context-compaction-issues.md",
+        "path:knowledge/log.md"
+      ],
+      "dependencies": [
+        {
+          "issue": "LSCC-003",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    },
+    {
+      "id": "LSCC-005",
+      "title": "wiki ledger / packet / verification を仕上げる",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/loop-skill-context-compaction-issues.md"
+      },
+      "acceptance_criteria": [
+        "Issue ledger が implementation evidence、review result、verification result を issue ごとに持つ",
+        "normalized input packet が approved spec / approved ledger / write scope / remote policy を参照する",
+        "Execution Envelope が local_only、worker-only、context compaction policy を含む",
+        "full verification と implementation review evidence が ledger / log に同期される",
+        "Spec / Issue / Execution Plan Gate 承認後の commit boundary が維持される"
+      ],
+      "non_goals": [
+        "GitHub issue mirror、push、PR 作成、PR ready 化、merge",
+        "final PR merge"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_architecture.py --all",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_context.py --all",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/report_skill_context.py --all --json",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/report_skill_context.py --all --json --session-pressure-percent 65",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/report_skill_context.py --all --session-pressure-percent 75 --fail-on-warning",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/grill-to-pr-loop/tests",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s scripts",
+        "git diff --check"
+      ],
+      "write_scope": [
+        "path:knowledge/wiki/syntheses/loop-skill-context-compaction-issues.md",
+        "path:knowledge/wiki/syntheses/loop-skill-context-compaction-input-packet.json",
+        "path:knowledge/wiki/syntheses/loop-skill-context-compaction-execution-envelope.json",
+        "path:knowledge/wiki/syntheses/loop-skill-context-compaction-handoff-brief.md",
+        "path:knowledge/index.md",
+        "path:knowledge/log.md"
+      ],
+      "dependencies": [
+        {
+          "issue": "LSCC-004",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    }
+  ],
+  "delivery_intent": "local_only"
+}

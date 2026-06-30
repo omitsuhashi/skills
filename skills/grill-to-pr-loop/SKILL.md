@@ -43,6 +43,8 @@ If planning lacks `grill-with-docs`, stop. If execution lacks `issue-implementat
 
 After `references/core.md`, select the current operation and load only the files listed for that operation in `context-contract.toml`. Treat that contract file as the single source of truth for operation-specific read sets. Do not use a separate workflow router reference.
 
+When session context pressure reaches `65%`, keep the current operation read-set loaded and add `references/context-compaction.md` only as the `context-compaction` conditional overlay. Do not switch operations or drop current required references just because compaction is triggered.
+
 ## Required Rules
 
 - Keep long specs, ADRs, implementation plans, and Goal contracts in the repo-local durable path defined by the target repository; in this repo that is `knowledge/wiki/syntheses/`.

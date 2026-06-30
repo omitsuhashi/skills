@@ -27,10 +27,22 @@ from ..identifiers import (
 )
 
 
+SESSION_COMPACTION_REQUIRED_VALUES = {
+    "soft_trigger_percent": 65,
+    "hard_stop_percent": 75,
+    "mandatory_handoff_compaction": 1,
+    "mandatory_phase_transition_gc": True,
+    "carry_forward_capsule_words_default": 400,
+    "carry_forward_capsule_words_hard": 600,
+    "inline_json_code_diff_lines_hard": 80,
+}
+
+
 def validate_execution_envelope(envelope: dict[str, Any]) -> list[str]:
     errors: list[str] = []
-    if envelope.get("schema_version") != 1:
-        errors.append("schema_version must be 1")
+    schema_version = envelope.get("schema_version")
+    if schema_version not in (1, 2):
+        errors.append("schema_version must be 1 or 2")
 
     epic_id = envelope.get("epic_id")
     if not isinstance(epic_id, str) or not is_lower_kebab(epic_id):
@@ -168,6 +180,19 @@ def validate_execution_envelope(envelope: dict[str, Any]) -> list[str]:
             errors.append("context_policy.include_full_spec_text must be false")
         if context_policy.get("include_full_ledger_text") is not False:
             errors.append("context_policy.include_full_ledger_text must be false")
+        session_compaction = context_policy.get("session_compaction")
+        if session_compaction is None:
+            if schema_version == 2:
+                errors.append("context_policy.session_compaction is required for schema_version 2")
+        elif not isinstance(session_compaction, dict):
+            errors.append("context_policy.session_compaction must be an object")
+        else:
+            for field in sorted(session_compaction):
+                if field not in SESSION_COMPACTION_REQUIRED_VALUES:
+                    errors.append(f"unknown field: context_policy.session_compaction.{field}")
+            for field, expected in SESSION_COMPACTION_REQUIRED_VALUES.items():
+                if session_compaction.get(field) != expected:
+                    errors.append(f"context_policy.session_compaction.{field} must be {expected}")
         worker_packet_ref_fields = (
             "worker_packet_schema",
             "worker_packet_template",

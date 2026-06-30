@@ -63,6 +63,16 @@ _現在なし。_
   検索語: 実行計画, 承認済み packet, loop skill operational simplicity, execution packet, input packet, LSOS, local_only
 - [Loop Skill 運用単純化 Execution Envelope](wiki/syntheses/loop-skill-operational-simplicity-execution-envelope.json) — LSOS 実装ループの local-only Execution Envelope、worker-only policy、branch/worktree reservation、prepare 検証済み実行契約。
   検索語: 実行計画, 実行 envelope, worker_context_required, local_only, LSOS, worktree reservation, loop skill operational simplicity
+- [Loop Skill Context Compaction Spec](wiki/syntheses/loop-skill-context-compaction-spec.md) — loop 系 skill の session context pressure 65% 圧縮 trigger、保持/圧縮分類、phase 別 compaction policy を定義する Spec Gate 承認済み仕様。
+  検索語: grill-to-pr-loop, issue-implementation-loop, context compaction, session pressure, 65%, 圧縮, 忘れてはいけないこと, handoff brief, resume brief, worker packet
+- [Loop Skill Context Compaction Issues](wiki/syntheses/loop-skill-context-compaction-issues.md) — context compaction 実装の日本語 local-first ledger。LSCC-001 から LSCC-005 の implementation evidence、review result、verification result、remote policy を集約する。
+  検索語: LSCC, Issue Gate, local issue ledger, context compaction, carry-forward capsule, phase transition GC, conditional overlay, local_only, implementation evidence, review result, verification result
+- [Loop Skill Context Compaction Input Packet](wiki/syntheses/loop-skill-context-compaction-input-packet.json) — LSCC-001 から LSCC-005 を local-only / worker-only で実行する normalized input packet。
+  検索語: LSCC, input packet, Execution Plan Gate, issue-implementation-loop, worker-only, local_only, write scope, dependency graph
+- [Loop Skill Context Compaction Execution Envelope](wiki/syntheses/loop-skill-context-compaction-execution-envelope.json) — LSCC 実装ループの local-only Execution Envelope。worker-only policy、reserved branch/worktree、session compaction policy を含む。
+  検索語: LSCC, execution envelope, worker_context_required, coordinator_may_implement, local_only, session_compaction, hard_stop_percent, worktree reservation
+- [Loop Skill Context Compaction Handoff Brief](wiki/syntheses/loop-skill-context-compaction-handoff-brief.md) — Execution Plan Gate 後に raw transcript へ依存せず再開するための bounded handoff brief。
+  検索語: LSCC, handoff brief, carry-forward capsule, resume, runtime root, worker packet, context compaction
 - [Loop Skill 自動継続 Gate 仕様](wiki/syntheses/loop-skill-autonomous-gates-spec.md) — `Execution Plan Gate` と `Live Root Gate` を agent preflight + commit boundary として自動継続し、承認済み delivery policy 内の draft final PR 作成を追加承認なしに行う Spec Gate 承認済み仕様。
   検索語: Execution Plan Gate, Live Root Gate, Adapter Availability Gate, final PR, draft PR, approved_actions, auto-continue, grill-to-pr-loop, issue-implementation-loop, remote policy, human-only merge
 - [Loop Skill 自動継続 Gate Issue 台帳](wiki/syntheses/loop-skill-autonomous-gates-issues.md) — `loop-skill-autonomous-gates` の Issue Gate 承認済み日本語 local-first 最終台帳。LSAG-001 から LSAG-006 の implementation evidence、review result、verification result、delivery evidence、remote 未実行境界を集約する。

@@ -20,6 +20,7 @@ forbidden_standalone_skill_names = [
 ]
 internal_components = [
   "context contracts",
+  "context compaction",
   "dependency graph",
   "execution envelope",
   "human wait routing",
@@ -30,3 +31,8 @@ internal_components = [
   "worker contract",
   "worktree lifecycle",
 ]
+
+[families.repository-change-loop.context_compaction]
+soft_trigger_percent = 65
+hard_stop_percent = 75
+mandatory_handoff_compaction = 1
