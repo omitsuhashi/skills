@@ -108,6 +108,29 @@ class GitHubMcpRouteContractTests(unittest.TestCase):
         self.assertIn("plugin install must not register MCP servers", text)
         self.assertIn("No live smoke test is required", text)
 
+    def test_live_root_and_adapter_availability_are_readiness_not_write_approval(self):
+        text = self.reference_text
+
+        self.assertIn("Live Root Gate", text)
+        self.assertIn("Adapter Availability Gate", text)
+        self.assertIn("readiness check", text)
+        self.assertIn("write approval", text)
+        self.assertIn("approved operation is executable", text)
+        self.assertIn("does not permit unapproved remote writes", text)
+
+    def test_readiness_failures_are_setup_blockers(self):
+        text = self.reference_text
+
+        for blocker in (
+            "root mismatch",
+            "auth missing",
+            "destination unresolved",
+            "unsafe delegation boundary",
+        ):
+            self.assertIn(blocker, text)
+
+        self.assertIn("setup blocker", text)
+
     def test_reference_uses_canonical_backend_neutral_task_ref_shape(self):
         text = self.reference_text
 
