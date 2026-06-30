@@ -17,7 +17,13 @@ from skill_context.contract import (
     all_skill_dirs,
     load_contract,
 )
-from validate_skill_architecture import DEFAULT_POLICY_PATH, REQUIRED_FAMILY_ID, PolicyError, load_policy
+from validate_skill_architecture import (
+    DEFAULT_POLICY_PATH,
+    EXPECTED_CONTEXT_COMPACTION_POLICY,
+    REQUIRED_FAMILY_ID,
+    PolicyError,
+    load_policy,
+)
 from validate_skill_context import inspect_context_operation, operation_names_for_context
 
 
@@ -113,7 +119,17 @@ def _warning_lines(report: Mapping[str, object]) -> List[str]:
     return [warning for warning in warnings if isinstance(warning, str)]
 
 
-def _repository_change_loop_skill_names() -> set[str]:
+def _session_pressure_percent(value: str) -> int:
+    try:
+        percent = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("must be an integer from 0 to 100") from exc
+    if percent < 0 or percent > 100:
+        raise argparse.ArgumentTypeError("must be an integer from 0 to 100")
+    return percent
+
+
+def _repository_change_loop_family() -> Mapping[str, object]:
     try:
         policy = load_policy(DEFAULT_POLICY_PATH)
     except PolicyError as exc:
@@ -124,10 +140,31 @@ def _repository_change_loop_skill_names() -> set[str]:
     family = families.get(REQUIRED_FAMILY_ID)
     if not isinstance(family, dict):
         raise ContractError(f"skill architecture policy missing family: {REQUIRED_FAMILY_ID}")
+    return family
+
+
+def _repository_change_loop_skill_names() -> set[str]:
+    family = _repository_change_loop_family()
     skill_names = family.get("user_facing_skills")
     if not isinstance(skill_names, list) or not all(isinstance(item, str) and item for item in skill_names):
         raise ContractError(f"{REQUIRED_FAMILY_ID}.user_facing_skills must be an array of non-empty strings")
     return set(skill_names)
+
+
+def _context_compaction_policy() -> Dict[str, int]:
+    family = _repository_change_loop_family()
+    policy = family.get("context_compaction")
+    if not isinstance(policy, dict):
+        raise ContractError(f"{REQUIRED_FAMILY_ID}.context_compaction must be a table")
+    compacted: Dict[str, int] = {}
+    for field, expected in EXPECTED_CONTEXT_COMPACTION_POLICY.items():
+        value = policy.get(field)
+        if type(value) is not int:
+            raise ContractError(f"{REQUIRED_FAMILY_ID}.context_compaction.{field} must be an integer")
+        if value != expected:
+            raise ContractError(f"{REQUIRED_FAMILY_ID}.context_compaction.{field} must be {expected}")
+        compacted[field] = value
+    return compacted
 
 
 def _loop_skill_reports(report: Mapping[str, object]) -> List[Mapping[str, object]]:
@@ -209,6 +246,7 @@ def collect_workflow_complexity(report: Mapping[str, object]) -> Dict[str, objec
     return {
         "advisory_only": True,
         "family": REQUIRED_FAMILY_ID,
+        "context_compaction_policy": _context_compaction_policy(),
         "skill_count": len(skill_reports),
         "operation_count": len(operations),
         "gate_count": len(gate_breakdown),
@@ -223,9 +261,62 @@ def collect_workflow_complexity(report: Mapping[str, object]) -> Dict[str, objec
     }
 
 
+def collect_session_context(report: Mapping[str, object], session_pressure_percent: int) -> Dict[str, object] | None:
+    skill_reports = _loop_skill_reports(report)
+    if not skill_reports:
+        return None
+    policy = _context_compaction_policy()
+    soft_trigger_percent = policy["soft_trigger_percent"]
+    hard_stop_percent = policy["hard_stop_percent"]
+    compaction_required = session_pressure_percent >= soft_trigger_percent
+    hard_stop_required = session_pressure_percent >= hard_stop_percent
+
+    warnings: List[str] = []
+    if hard_stop_required:
+        warnings.append(
+            "session pressure hard stop: "
+            f"{session_pressure_percent}% >= {hard_stop_percent}%; "
+            "compaction checkpoint or fresh coordinator required before new phase, "
+            "worker dispatch, review/fix cycle, resume, or delivery gate"
+        )
+
+    return {
+        "advisory_only": True,
+        "source": "operator_supplied",
+        "family": REQUIRED_FAMILY_ID,
+        "session_pressure_percent": session_pressure_percent,
+        "soft_trigger_percent": soft_trigger_percent,
+        "hard_stop_percent": hard_stop_percent,
+        "compaction_required": compaction_required,
+        "hard_stop_required": hard_stop_required,
+        "requires_phase_checkpoint": compaction_required,
+        "requires_conditional_overlay": compaction_required,
+        "not_a_substitute_for": ["phase checkpoint", "conditional overlay"],
+        "warnings": warnings,
+    }
+
+
 def _print_warnings(report: Mapping[str, object]) -> None:
     for warning in _warning_lines(report):
         print(f"WARNING: {warning}", file=sys.stderr)
+
+
+def _render_session_context(session_context: Mapping[str, object]) -> str:
+    percent = session_context["session_pressure_percent"]
+    soft = session_context["soft_trigger_percent"]
+    hard = session_context["hard_stop_percent"]
+    if session_context.get("hard_stop_required"):
+        return (
+            f"Session context: {percent}% pressure >= {hard}%; hard stop before new phase, "
+            "worker dispatch, review/fix cycle, resume, or delivery until compaction checkpoint "
+            "or fresh coordinator."
+        )
+    if session_context.get("compaction_required"):
+        return (
+            f"Session context: {percent}% pressure >= {soft}%; compaction checkpoint required; "
+            "keep phase checkpoint and conditional overlay contracts."
+        )
+    return f"Session context: {percent}% pressure < {soft}%; no compaction checkpoint required."
 
 
 def _render_text_report(report: Mapping[str, object]) -> str:
@@ -254,6 +345,9 @@ def _render_text_report(report: Mapping[str, object]) -> str:
             warning_text = "; ".join(warning for warning in warnings if isinstance(warning, str))
             if warning_text:
                 lines.append(f"Workflow complexity: {warning_text}.")
+    session_context = report.get("session_context")
+    if isinstance(session_context, dict):
+        lines.append(_render_session_context(session_context))
     return "\n".join(lines)
 
 
@@ -352,6 +446,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--emit-baseline", action="store_true", help="emit current metrics as a baseline artifact")
     parser.add_argument("--require-baseline", action="store_true", help="warn when any operation is absent from baseline")
     parser.add_argument("--fail-on-warning", action="store_true", help="return non-zero when warnings are emitted")
+    parser.add_argument(
+        "--session-pressure-percent",
+        type=_session_pressure_percent,
+        help="operator-supplied session context pressure advisory percentage",
+    )
     parser.add_argument("--output", help="write output to path instead of stdout")
     args = parser.parse_args(argv)
 
@@ -368,6 +467,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             report = collect_baseline(skill_dirs)
         else:
             report = collect_report(skill_dirs, baseline_path=baseline_path, require_baseline=args.require_baseline)
+            if args.session_pressure_percent is not None:
+                session_context = collect_session_context(report, args.session_pressure_percent)
+                if session_context is not None:
+                    report["session_context"] = session_context
+                    warnings = report.get("warnings")
+                    if isinstance(warnings, list):
+                        warnings.extend(session_context["warnings"])
     except ContractError as exc:
         print(str(exc), file=sys.stderr)
         return 1

@@ -4,7 +4,7 @@ The Execution Envelope is the approved execution contract. It is more specific t
 
 ## Required Sections
 
-- `schema_version`: `1`
+- `schema_version`: `2` for new envelopes. Legacy `1` envelopes remain valid when they predate the session-compaction policy.
 - `epic_id`: lower-kebab-case ASCII
 - `revision`: positive integer
 - `epic_base`: per-epic base branch ref, immutable initial full 40- or 64-character hex SHA, and `branch_state` for `batch_issue_prs`
@@ -85,6 +85,7 @@ The approved envelope must keep worker/reviewer handoffs bounded:
 - `max_worker_report_words`: maximum words in normal worker reports.
 - `include_full_spec_text: false` and `include_full_ledger_text: false`: workers re-read durable paths instead of receiving pasted source documents.
 - `worker_packet_schema`, `worker_packet_template`, and `worker_packet_validator`: repo-root relative paths for the worker packet contract. Legacy envelopes may omit all three, but new envelopes should include all three.
+- `session_compaction`: session-level execution compaction policy; required for schema version `2`, optional only for legacy schema version `1` envelopes. See `references/context-compaction.md`.
 
 Create a new envelope revision before increasing budgets or allowing pasted full source text.
 

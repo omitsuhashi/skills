@@ -25,6 +25,7 @@ commands, stop conditions, and report contract.
 - Use `access_mode=read_only` with `write_scope=[]` for review/inspect.
 - Record `source_revision` for the execution envelope, runtime state, and issue
   source so stale dispatch packets are rejected before work starts.
+- Keep worker `context_policy` packet-local; never include `session_compaction`.
 - Enforce default packet budget 450 words and hard budget 800 words.
 - Keep `read_paths` to 8 entries or fewer.
 - Require `read_paths[].purpose`.

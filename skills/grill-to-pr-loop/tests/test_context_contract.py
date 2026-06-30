@@ -79,6 +79,68 @@ class GrillContextContractTests(unittest.TestCase):
         self.assertIn("handoff brief", handoff_text)
         self.assertIn("normalized packet", handoff_text)
 
+    def test_context_compaction_trigger_is_discoverable_from_entrypoint(self) -> None:
+        skill_text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+        reference_text = (SKILL_DIR / "references" / "context-compaction.md").read_text(encoding="utf-8")
+
+        self.assertIn("65%", skill_text)
+        self.assertIn("references/context-compaction.md", skill_text)
+        self.assertIn("conditional overlay", skill_text)
+        self.assertIn("忘れてはいけないこと", reference_text)
+        self.assertIn("忘れてもいいこと", reference_text)
+        self.assertIn("圧縮してはいけないこと", reference_text)
+        self.assertIn("Phase Transition Context GC", reference_text)
+        self.assertIn("Phase 別圧縮 matrix", reference_text)
+
+    def test_context_compaction_is_conditional_overlay_not_default_read_set(self) -> None:
+        execution_plan = run_script(
+            INSPECT_CONTEXT,
+            "--skill",
+            "skills/grill-to-pr-loop",
+            "--operation",
+            "execution-plan",
+            "--json",
+        )
+        overlay = run_script(
+            INSPECT_CONTEXT,
+            "--skill",
+            "skills/grill-to-pr-loop",
+            "--operation",
+            "context-compaction",
+            "--json",
+        )
+
+        self.assertEqual(execution_plan.returncode, 0, execution_plan.stderr)
+        self.assertEqual(overlay.returncode, 0, overlay.stderr)
+        execution_payload = json.loads(execution_plan.stdout)
+        overlay_payload = json.loads(overlay.stdout)
+
+        self.assertNotIn(
+            "skills/grill-to-pr-loop/references/context-compaction.md",
+            execution_payload["files"],
+        )
+        self.assertEqual(
+            execution_payload["files"],
+            [
+                "skills/grill-to-pr-loop/SKILL.md",
+                "skills/grill-to-pr-loop/references/core.md",
+                "skills/grill-to-pr-loop/references/planning-contract.md",
+                "skills/grill-to-pr-loop/references/local-issue-ledger.md",
+                "skills/grill-to-pr-loop/references/execution-handoff.md",
+            ],
+        )
+        self.assertEqual(
+            overlay_payload["files"],
+            [
+                "skills/grill-to-pr-loop/SKILL.md",
+                "skills/grill-to-pr-loop/references/core.md",
+                "skills/grill-to-pr-loop/references/context-compaction.md",
+            ],
+        )
+
+        skill_text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("keep the current operation read-set loaded", skill_text)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-06-26",
+  "captured_at": "2026-06-30",
   "growth_warning_threshold_percent": 10,
   "metric_source": "context-contract.toml schema v1/v2 character and estimated-token metrics",
   "report_type": "skill-context-baseline",
@@ -7,7 +7,7 @@
   "skills": [
     {
       "modes": [],
-      "operation_count": 9,
+      "operation_count": 10,
       "operations": [
         {
           "budget": {
@@ -19,22 +19,22 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 10461,
-          "estimated_token_count": 3929,
+          "character_count": 11601,
+          "estimated_token_count": 4424,
           "file_count": 3,
           "files": [
             "skills/grill-to-pr-loop/SKILL.md",
             "skills/grill-to-pr-loop/references/core.md",
             "skills/grill-to-pr-loop/references/planning-contract.md"
           ],
-          "headroom_percent": 60,
+          "headroom_percent": 55,
           "max_file_count": 6,
-          "non_whitespace_character_count": 9026,
+          "non_whitespace_character_count": 10017,
           "operation": "intake",
           "schema_version": 2,
           "skill": "grill-to-pr-loop",
           "word_budget": null,
-          "word_count": 1397
+          "word_count": 1557
         },
         {
           "budget": {
@@ -46,22 +46,22 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 10461,
-          "estimated_token_count": 3929,
+          "character_count": 11601,
+          "estimated_token_count": 4424,
           "file_count": 3,
           "files": [
             "skills/grill-to-pr-loop/SKILL.md",
             "skills/grill-to-pr-loop/references/core.md",
             "skills/grill-to-pr-loop/references/planning-contract.md"
           ],
-          "headroom_percent": 60,
+          "headroom_percent": 55,
           "max_file_count": 6,
-          "non_whitespace_character_count": 9026,
+          "non_whitespace_character_count": 10017,
           "operation": "grill",
           "schema_version": 2,
           "skill": "grill-to-pr-loop",
           "word_budget": null,
-          "word_count": 1397
+          "word_count": 1557
         },
         {
           "budget": {
@@ -73,22 +73,22 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 10461,
-          "estimated_token_count": 3929,
+          "character_count": 11601,
+          "estimated_token_count": 4424,
           "file_count": 3,
           "files": [
             "skills/grill-to-pr-loop/SKILL.md",
             "skills/grill-to-pr-loop/references/core.md",
             "skills/grill-to-pr-loop/references/planning-contract.md"
           ],
-          "headroom_percent": 60,
+          "headroom_percent": 55,
           "max_file_count": 6,
-          "non_whitespace_character_count": 9026,
+          "non_whitespace_character_count": 10017,
           "operation": "spec",
           "schema_version": 2,
           "skill": "grill-to-pr-loop",
           "word_budget": null,
-          "word_count": 1397
+          "word_count": 1557
         },
         {
           "budget": {
@@ -100,8 +100,8 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 12328,
-          "estimated_token_count": 4750,
+          "character_count": 13468,
+          "estimated_token_count": 5245,
           "file_count": 4,
           "files": [
             "skills/grill-to-pr-loop/SKILL.md",
@@ -109,14 +109,14 @@
             "skills/grill-to-pr-loop/references/planning-contract.md",
             "skills/grill-to-pr-loop/references/local-issue-ledger.md"
           ],
-          "headroom_percent": 52,
+          "headroom_percent": 47,
           "max_file_count": 6,
-          "non_whitespace_character_count": 10568,
+          "non_whitespace_character_count": 11559,
           "operation": "issue-gate",
           "schema_version": 2,
           "skill": "grill-to-pr-loop",
           "word_budget": null,
-          "word_count": 1645
+          "word_count": 1805
         },
         {
           "budget": {
@@ -128,8 +128,8 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 17691,
-          "estimated_token_count": 6757,
+          "character_count": 18967,
+          "estimated_token_count": 7326,
           "file_count": 5,
           "files": [
             "skills/grill-to-pr-loop/SKILL.md",
@@ -138,14 +138,14 @@
             "skills/grill-to-pr-loop/references/local-issue-ledger.md",
             "skills/grill-to-pr-loop/references/execution-handoff.md"
           ],
-          "headroom_percent": 32,
+          "headroom_percent": 26,
           "max_file_count": 6,
-          "non_whitespace_character_count": 15196,
+          "non_whitespace_character_count": 16315,
           "operation": "execution-plan",
           "schema_version": 2,
           "skill": "grill-to-pr-loop",
           "word_budget": null,
-          "word_count": 2355
+          "word_count": 2530
         },
         {
           "budget": {
@@ -157,8 +157,8 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 15305,
-          "estimated_token_count": 5835,
+          "character_count": 16634,
+          "estimated_token_count": 6362,
           "file_count": 4,
           "files": [
             "skills/grill-to-pr-loop/SKILL.md",
@@ -166,14 +166,14 @@
             "skills/grill-to-pr-loop/references/local-issue-ledger.md",
             "skills/grill-to-pr-loop/references/execution-handoff.md"
           ],
-          "headroom_percent": 41,
+          "headroom_percent": 36,
           "max_file_count": 6,
-          "non_whitespace_character_count": 13136,
+          "non_whitespace_character_count": 14310,
           "operation": "resume",
           "schema_version": 2,
           "skill": "grill-to-pr-loop",
           "word_budget": null,
-          "word_count": 2043
+          "word_count": 2217
         },
         {
           "budget": {
@@ -185,8 +185,8 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 15305,
-          "estimated_token_count": 5835,
+          "character_count": 16634,
+          "estimated_token_count": 6362,
           "file_count": 4,
           "files": [
             "skills/grill-to-pr-loop/SKILL.md",
@@ -194,14 +194,14 @@
             "skills/grill-to-pr-loop/references/local-issue-ledger.md",
             "skills/grill-to-pr-loop/references/execution-handoff.md"
           ],
-          "headroom_percent": 41,
+          "headroom_percent": 36,
           "max_file_count": 6,
-          "non_whitespace_character_count": 13136,
+          "non_whitespace_character_count": 14310,
           "operation": "completion-report",
           "schema_version": 2,
           "skill": "grill-to-pr-loop",
           "word_budget": null,
-          "word_count": 2043
+          "word_count": 2217
         },
         {
           "budget": {
@@ -213,22 +213,22 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 10656,
-          "estimated_token_count": 3989,
+          "character_count": 11849,
+          "estimated_token_count": 4442,
           "file_count": 3,
           "files": [
             "skills/grill-to-pr-loop/SKILL.md",
             "skills/grill-to-pr-loop/references/core.md",
             "skills/grill-to-pr-loop/references/remote-delivery.md"
           ],
-          "headroom_percent": 60,
+          "headroom_percent": 55,
           "max_file_count": 6,
-          "non_whitespace_character_count": 9171,
+          "non_whitespace_character_count": 10217,
           "operation": "delivery",
           "schema_version": 2,
           "skill": "grill-to-pr-loop",
           "word_budget": null,
-          "word_count": 1453
+          "word_count": 1612
         },
         {
           "budget": {
@@ -240,22 +240,49 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 10179,
-          "estimated_token_count": 3765,
+          "character_count": 11441,
+          "estimated_token_count": 4246,
           "file_count": 3,
           "files": [
             "skills/grill-to-pr-loop/SKILL.md",
             "skills/grill-to-pr-loop/references/core.md",
             "skills/grill-to-pr-loop/references/common-mistakes.md"
           ],
-          "headroom_percent": 62,
+          "headroom_percent": 57,
           "max_file_count": 6,
-          "non_whitespace_character_count": 8728,
+          "non_whitespace_character_count": 9833,
           "operation": "ambiguity-check",
           "schema_version": 2,
           "skill": "grill-to-pr-loop",
           "word_budget": null,
-          "word_count": 1379
+          "word_count": 1548
+        },
+        {
+          "budget": {
+            "character_budget": 24000,
+            "estimated_token_budget": 10000,
+            "max_file_count": 6,
+            "min_headroom_percent": 20,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 14928,
+          "estimated_token_count": 5613,
+          "file_count": 3,
+          "files": [
+            "skills/grill-to-pr-loop/SKILL.md",
+            "skills/grill-to-pr-loop/references/core.md",
+            "skills/grill-to-pr-loop/references/context-compaction.md"
+          ],
+          "headroom_percent": 43,
+          "max_file_count": 6,
+          "non_whitespace_character_count": 12804,
+          "operation": "context-compaction",
+          "schema_version": 2,
+          "skill": "grill-to-pr-loop",
+          "word_budget": null,
+          "word_count": 2022
         }
       ],
       "path": "skills/grill-to-pr-loop",
@@ -264,7 +291,7 @@
     },
     {
       "modes": [],
-      "operation_count": 7,
+      "operation_count": 8,
       "operations": [
         {
           "budget": {
@@ -276,8 +303,8 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 13035,
-          "estimated_token_count": 4931,
+          "character_count": 14201,
+          "estimated_token_count": 5366,
           "file_count": 5,
           "files": [
             "skills/issue-implementation-loop/SKILL.md",
@@ -286,14 +313,14 @@
             "skills/issue-implementation-loop/references/dependency-contract.md",
             "skills/issue-implementation-loop/references/worktree-lifecycle.md"
           ],
-          "headroom_percent": 38,
+          "headroom_percent": 32,
           "max_file_count": 6,
-          "non_whitespace_character_count": 11243,
+          "non_whitespace_character_count": 12251,
           "operation": "prepare",
           "schema_version": 2,
           "skill": "issue-implementation-loop",
           "word_budget": null,
-          "word_count": 1631
+          "word_count": 1789
         },
         {
           "budget": {
@@ -305,8 +332,8 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 12597,
-          "estimated_token_count": 4814,
+          "character_count": 13719,
+          "estimated_token_count": 5257,
           "file_count": 5,
           "files": [
             "skills/issue-implementation-loop/SKILL.md",
@@ -315,14 +342,14 @@
             "skills/issue-implementation-loop/references/worker-contract.md",
             "skills/issue-implementation-loop/references/runtime-state.md"
           ],
-          "headroom_percent": 39,
+          "headroom_percent": 34,
           "max_file_count": 6,
-          "non_whitespace_character_count": 10899,
+          "non_whitespace_character_count": 11881,
           "operation": "execute.dispatch",
           "schema_version": 2,
           "skill": "issue-implementation-loop",
           "word_budget": null,
-          "word_count": 1627
+          "word_count": 1776
         },
         {
           "budget": {
@@ -334,8 +361,8 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 8839,
-          "estimated_token_count": 3396,
+          "character_count": 9708,
+          "estimated_token_count": 3716,
           "file_count": 4,
           "files": [
             "skills/issue-implementation-loop/SKILL.md",
@@ -343,14 +370,14 @@
             "skills/issue-implementation-loop/references/human-wait.md",
             "skills/issue-implementation-loop/references/runtime-state.md"
           ],
-          "headroom_percent": 57,
+          "headroom_percent": 53,
           "max_file_count": 6,
-          "non_whitespace_character_count": 7646,
+          "non_whitespace_character_count": 8392,
           "operation": "execute.wait",
           "schema_version": 2,
           "skill": "issue-implementation-loop",
           "word_budget": null,
-          "word_count": 1139
+          "word_count": 1261
         },
         {
           "budget": {
@@ -362,8 +389,8 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 12803,
-          "estimated_token_count": 4877,
+          "character_count": 13925,
+          "estimated_token_count": 5320,
           "file_count": 5,
           "files": [
             "skills/issue-implementation-loop/SKILL.md",
@@ -372,14 +399,14 @@
             "skills/issue-implementation-loop/references/worker-contract.md",
             "skills/issue-implementation-loop/references/runtime-state.md"
           ],
-          "headroom_percent": 39,
+          "headroom_percent": 33,
           "max_file_count": 6,
-          "non_whitespace_character_count": 11057,
+          "non_whitespace_character_count": 12039,
           "operation": "execute.review",
           "schema_version": 2,
           "skill": "issue-implementation-loop",
           "word_budget": null,
-          "word_count": 1674
+          "word_count": 1823
         },
         {
           "budget": {
@@ -391,8 +418,8 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 10209,
-          "estimated_token_count": 3926,
+          "character_count": 11078,
+          "estimated_token_count": 4246,
           "file_count": 4,
           "files": [
             "skills/issue-implementation-loop/SKILL.md",
@@ -400,14 +427,14 @@
             "skills/issue-implementation-loop/references/runtime-state.md",
             "skills/issue-implementation-loop/references/recovery.md"
           ],
-          "headroom_percent": 50,
+          "headroom_percent": 46,
           "max_file_count": 6,
-          "non_whitespace_character_count": 8826,
+          "non_whitespace_character_count": 9572,
           "operation": "resume",
           "schema_version": 2,
           "skill": "issue-implementation-loop",
           "word_budget": null,
-          "word_count": 1334
+          "word_count": 1456
         },
         {
           "budget": {
@@ -419,8 +446,8 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 9780,
-          "estimated_token_count": 3746,
+          "character_count": 10649,
+          "estimated_token_count": 4066,
           "file_count": 4,
           "files": [
             "skills/issue-implementation-loop/SKILL.md",
@@ -428,14 +455,14 @@
             "skills/issue-implementation-loop/references/runtime-state.md",
             "skills/issue-implementation-loop/references/scheduler.md"
           ],
-          "headroom_percent": 53,
+          "headroom_percent": 49,
           "max_file_count": 6,
-          "non_whitespace_character_count": 8470,
+          "non_whitespace_character_count": 9216,
           "operation": "status",
           "schema_version": 2,
           "skill": "issue-implementation-loop",
           "word_budget": null,
-          "word_count": 1258
+          "word_count": 1380
         },
         {
           "budget": {
@@ -447,22 +474,49 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 8641,
-          "estimated_token_count": 3312,
+          "character_count": 9510,
+          "estimated_token_count": 3632,
           "file_count": 3,
           "files": [
             "skills/issue-implementation-loop/SKILL.md",
             "skills/issue-implementation-loop/references/core.md",
             "skills/issue-implementation-loop/references/remote-delivery.md"
           ],
-          "headroom_percent": 58,
+          "headroom_percent": 54,
           "max_file_count": 6,
-          "non_whitespace_character_count": 7468,
+          "non_whitespace_character_count": 8214,
           "operation": "deliver",
           "schema_version": 2,
           "skill": "issue-implementation-loop",
           "word_budget": null,
-          "word_count": 1130
+          "word_count": 1252
+        },
+        {
+          "budget": {
+            "character_budget": 18000,
+            "estimated_token_budget": 8000,
+            "max_file_count": 6,
+            "min_headroom_percent": 20,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 10304,
+          "estimated_token_count": 3861,
+          "file_count": 3,
+          "files": [
+            "skills/issue-implementation-loop/SKILL.md",
+            "skills/issue-implementation-loop/references/core.md",
+            "skills/issue-implementation-loop/references/context-compaction.md"
+          ],
+          "headroom_percent": 51,
+          "max_file_count": 6,
+          "non_whitespace_character_count": 8910,
+          "operation": "context-compaction",
+          "schema_version": 2,
+          "skill": "issue-implementation-loop",
+          "word_budget": null,
+          "word_count": 1336
         }
       ],
       "path": "skills/issue-implementation-loop",

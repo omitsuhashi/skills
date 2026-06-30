@@ -36,6 +36,7 @@ If no packet exists, omit `--input` only for status/recovery inspection. Stop be
 ## Mode Router
 
 Always read `references/core.md`. For operation-specific context, use `scripts/select_operation.py` and `context-contract.toml`; the contract file is the single read-set source. Do not list or load every reference by default.
+At 65% session pressure or phase exit, read `references/context-compaction.md`.
 
 ## Required Rules
 

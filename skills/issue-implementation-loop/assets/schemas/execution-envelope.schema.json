@@ -4,7 +4,7 @@
   "type": "object",
   "required": ["schema_version", "epic_id", "revision", "epic_base", "execution_policy", "review_policy", "human_policy", "context_policy", "remote_write_policy", "work_items"],
   "properties": {
-    "schema_version": {"const": 1},
+    "schema_version": {"enum": [1, 2]},
     "epic_id": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"},
     "revision": {"type": "integer", "minimum": 1},
     "epic_base": {
@@ -51,7 +51,29 @@
         "include_full_ledger_text": {"const": false},
         "worker_packet_schema": {"type": "string", "minLength": 1},
         "worker_packet_template": {"type": "string", "minLength": 1},
-        "worker_packet_validator": {"type": "string", "minLength": 1}
+        "worker_packet_validator": {"type": "string", "minLength": 1},
+        "session_compaction": {
+          "type": "object",
+          "required": [
+            "soft_trigger_percent",
+            "hard_stop_percent",
+            "mandatory_handoff_compaction",
+            "mandatory_phase_transition_gc",
+            "carry_forward_capsule_words_default",
+            "carry_forward_capsule_words_hard",
+            "inline_json_code_diff_lines_hard"
+          ],
+          "properties": {
+            "soft_trigger_percent": {"const": 65},
+            "hard_stop_percent": {"const": 75},
+            "mandatory_handoff_compaction": {"const": 1},
+            "mandatory_phase_transition_gc": {"const": true},
+            "carry_forward_capsule_words_default": {"const": 400},
+            "carry_forward_capsule_words_hard": {"const": 600},
+            "inline_json_code_diff_lines_hard": {"const": 80}
+          },
+          "additionalProperties": false
+        }
       },
       "dependentRequired": {
         "worker_packet_schema": ["worker_packet_schema", "worker_packet_template", "worker_packet_validator"],
@@ -146,6 +168,19 @@
         "properties": {
           "epic_base": {
             "required": ["ref", "sha", "branch_state"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"schema_version": {"const": 2}},
+        "required": ["schema_version"]
+      },
+      "then": {
+        "properties": {
+          "context_policy": {
+            "required": ["paths_first", "max_worker_packet_words", "max_worker_report_words", "include_full_spec_text", "include_full_ledger_text", "session_compaction"]
           }
         }
       }
