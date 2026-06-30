@@ -65,6 +65,54 @@ class ValidationTests(unittest.TestCase):
                 self.assertNotEqual(result.returncode, 0, name)
                 self.assertIn(expected, result.stderr)
 
+    def test_validate_execution_envelope_requires_session_compaction_policy(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            envelope = base_envelope()
+            del envelope["context_policy"]["session_compaction"]
+            path = Path(tmp) / "missing-session-compaction.json"
+            write_json(path, envelope)
+
+            result = run_script("validate_execution_envelope.py", str(path))
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("context_policy.session_compaction", result.stderr)
+
+    def test_validate_execution_envelope_rejects_invalid_session_compaction_policy(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cases = [
+                ("soft_trigger", {"soft_trigger_percent": 64}, "soft_trigger_percent"),
+                ("hard_stop", {"hard_stop_percent": 76}, "hard_stop_percent"),
+                ("handoff", {"mandatory_handoff_compaction": 0}, "mandatory_handoff_compaction"),
+                ("phase_gc", {"mandatory_phase_transition_gc": False}, "mandatory_phase_transition_gc"),
+                (
+                    "capsule_default",
+                    {"carry_forward_capsule_words_default": 401},
+                    "carry_forward_capsule_words_default",
+                ),
+                (
+                    "capsule_hard",
+                    {"carry_forward_capsule_words_hard": 601},
+                    "carry_forward_capsule_words_hard",
+                ),
+                (
+                    "inline_lines",
+                    {"inline_json_code_diff_lines_hard": 81},
+                    "inline_json_code_diff_lines_hard",
+                ),
+                ("unknown", {"session_notes": "coordinator-only"}, "unknown field"),
+            ]
+            for name, patch, expected in cases:
+                with self.subTest(name):
+                    envelope = base_envelope()
+                    envelope["context_policy"]["session_compaction"].update(patch)
+                    path = Path(tmp) / f"{name}.json"
+                    write_json(path, envelope)
+
+                    result = run_script("validate_execution_envelope.py", str(path))
+
+                    self.assertNotEqual(result.returncode, 0, name)
+                    self.assertIn(expected, result.stderr)
+
     def test_validate_execution_envelope_accepts_legacy_context_policy_without_worker_packet_references(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             envelope = base_envelope()

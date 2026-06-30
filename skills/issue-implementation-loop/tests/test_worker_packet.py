@@ -188,6 +188,18 @@ class WorkerPacketTests(unittest.TestCase):
                     lambda packet: packet.update({"ledger": {"text": "pasted full ledger"}}),
                     "unknown field: ledger",
                 ),
+                (
+                    "session_compaction",
+                    lambda packet: packet["context_policy"].update(
+                        {
+                            "session_compaction": {
+                                "soft_trigger_percent": 65,
+                                "hard_stop_percent": 75,
+                            }
+                        }
+                    ),
+                    "unknown field: context_policy.session_compaction",
+                ),
             ]
             for name, mutate, expected in cases:
                 with self.subTest(name):
@@ -449,9 +461,16 @@ class WorkerPacketTests(unittest.TestCase):
         self.assertIn("worker_packet_schema", context_schema)
         self.assertIn("worker_packet_template", context_schema)
         self.assertIn("worker_packet_validator", context_schema)
+        session_schema = context_schema["session_compaction"]
+        self.assertEqual(session_schema["properties"]["soft_trigger_percent"]["const"], 65)
+        self.assertEqual(session_schema["properties"]["hard_stop_percent"]["const"], 75)
         self.assertEqual(
             envelope_template["context_policy"]["worker_packet_schema"],
             "assets/schemas/worker-packet.schema.json",
+        )
+        self.assertEqual(
+            envelope_template["context_policy"]["session_compaction"]["soft_trigger_percent"],
+            65,
         )
 
     def test_worker_contract_points_workers_to_normalized_packet_tools(self) -> None:

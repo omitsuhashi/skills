@@ -80,6 +80,15 @@ def base_envelope() -> dict:
             "worker_packet_schema": "assets/schemas/worker-packet.schema.json",
             "worker_packet_template": "assets/templates/worker-packet.json",
             "worker_packet_validator": "scripts/validate_worker_packet.py",
+            "session_compaction": {
+                "soft_trigger_percent": 65,
+                "hard_stop_percent": 75,
+                "mandatory_handoff_compaction": 1,
+                "mandatory_phase_transition_gc": True,
+                "carry_forward_capsule_words_default": 400,
+                "carry_forward_capsule_words_hard": 600,
+                "inline_json_code_diff_lines_hard": 80,
+            },
         },
         "remote_write_policy": {"mode": "local_only", "approved_actions": []},
         "work_items": {
