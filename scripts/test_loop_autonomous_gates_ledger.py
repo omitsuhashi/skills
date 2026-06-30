@@ -70,6 +70,21 @@ class LoopAutonomousGatesLedgerTests(unittest.TestCase):
         ):
             self.assertIn(required, lsag005)
 
+    def test_completed_issue_sections_do_not_retain_stale_review_wait_wording(self) -> None:
+        text = LEDGER.read_text(encoding="utf-8")
+
+        self.assertNotIn("実装済み / coordinator review 待ち", text)
+        self.assertNotIn("coordinator review 後に判断する", text)
+
+        for issue_id in ("LSAG-001", "LSAG-002", "LSAG-003", "LSAG-004", "LSAG-006"):
+            section = text.split(f"## {issue_id}", 1)[1].split("\n## ", 1)[0]
+            self.assertIn("- 実行状態: 完了", section)
+            self.assertIn("review cycle 1 approved", section)
+
+        lsag005 = text.split("## LSAG-005", 1)[1].split("\n## ", 1)[0]
+        self.assertIn("- 実行状態: 完了 / coordinator review 待ち", lsag005)
+        self.assertIn("review-fix 後の coordinator re-review 待ち", lsag005)
+
     def test_index_and_log_expose_spec_ledger_packet_and_delivery_state(self) -> None:
         index_text = INDEX.read_text(encoding="utf-8")
         log_text = LOG.read_text(encoding="utf-8")
