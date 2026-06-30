@@ -65,7 +65,7 @@ class ValidationTests(unittest.TestCase):
                 self.assertNotEqual(result.returncode, 0, name)
                 self.assertIn(expected, result.stderr)
 
-    def test_validate_execution_envelope_requires_session_compaction_policy(self) -> None:
+    def test_validate_execution_envelope_requires_session_compaction_policy_for_schema_version_2(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             envelope = base_envelope()
             del envelope["context_policy"]["session_compaction"]
@@ -76,6 +76,18 @@ class ValidationTests(unittest.TestCase):
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("context_policy.session_compaction", result.stderr)
+
+    def test_validate_execution_envelope_accepts_legacy_schema_v1_without_session_compaction_policy(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            envelope = base_envelope()
+            envelope["schema_version"] = 1
+            del envelope["context_policy"]["session_compaction"]
+            path = Path(tmp) / "legacy-without-session-compaction.json"
+            write_json(path, envelope)
+
+            result = run_script("validate_execution_envelope.py", str(path))
+
+            self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_validate_execution_envelope_rejects_invalid_session_compaction_policy(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -158,6 +170,11 @@ class ValidationTests(unittest.TestCase):
         schema = json.loads(ENVELOPE_SCHEMA_FILE.read_text(encoding="utf-8"))
         context_schema = schema["properties"]["context_policy"]
 
+        self.assertEqual(schema["properties"]["schema_version"]["enum"], [1, 2])
+        self.assertNotIn("session_compaction", context_schema["required"])
+        root_conditions = json.dumps(schema["allOf"], sort_keys=True)
+        self.assertIn('"const": 2', root_conditions)
+        self.assertIn('"session_compaction"', root_conditions)
         for field in (
             "worker_packet_schema",
             "worker_packet_template",
@@ -172,6 +189,18 @@ class ValidationTests(unittest.TestCase):
                     "worker_packet_validator",
                 ],
             )
+
+    def test_validate_execution_envelope_accepts_resume_capable_tracked_legacy_envelopes(self) -> None:
+        envelope_dir = SKILL_DIR.parents[1] / "knowledge" / "wiki" / "syntheses"
+
+        for name in (
+            "loop-skill-architecture-v3-execution-envelope.json",
+            "loop-skill-operational-simplicity-execution-envelope.json",
+            "skill-repository-optimization-v4-execution-envelope.json",
+        ):
+            with self.subTest(name):
+                result = run_script("validate_execution_envelope.py", str(envelope_dir / name))
+                self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_loop_skill_v3_execution_envelope_records_worker_packet_context_references(self) -> None:
         envelope_path = (

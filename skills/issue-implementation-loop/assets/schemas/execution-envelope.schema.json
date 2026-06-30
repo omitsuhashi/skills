@@ -4,7 +4,7 @@
   "type": "object",
   "required": ["schema_version", "epic_id", "revision", "epic_base", "execution_policy", "review_policy", "human_policy", "context_policy", "remote_write_policy", "work_items"],
   "properties": {
-    "schema_version": {"const": 1},
+    "schema_version": {"enum": [1, 2]},
     "epic_id": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"},
     "revision": {"type": "integer", "minimum": 1},
     "epic_base": {
@@ -42,7 +42,7 @@
     "human_policy": {"type": "object"},
     "context_policy": {
       "type": "object",
-      "required": ["paths_first", "max_worker_packet_words", "max_worker_report_words", "include_full_spec_text", "include_full_ledger_text", "session_compaction"],
+      "required": ["paths_first", "max_worker_packet_words", "max_worker_report_words", "include_full_spec_text", "include_full_ledger_text"],
       "properties": {
         "paths_first": {"const": true},
         "max_worker_packet_words": {"type": "integer", "minimum": 1},
@@ -168,6 +168,19 @@
         "properties": {
           "epic_base": {
             "required": ["ref", "sha", "branch_state"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"schema_version": {"const": 2}},
+        "required": ["schema_version"]
+      },
+      "then": {
+        "properties": {
+          "context_policy": {
+            "required": ["paths_first", "max_worker_packet_words", "max_worker_report_words", "include_full_spec_text", "include_full_ledger_text", "session_compaction"]
           }
         }
       }

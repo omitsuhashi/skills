@@ -456,6 +456,7 @@ class WorkerPacketTests(unittest.TestCase):
         self.assertFalse(schema["additionalProperties"])
         self.assertFalse(schema["properties"]["task"]["additionalProperties"])
         self.assertEqual(packet_template["schema_version"], 2)
+        self.assertEqual(envelope_template["schema_version"], 2)
         self.assertEqual(packet_template["context_policy"]["hard_max_packet_words"], 800)
         context_schema = envelope_schema["properties"]["context_policy"]["properties"]
         self.assertIn("worker_packet_schema", context_schema)

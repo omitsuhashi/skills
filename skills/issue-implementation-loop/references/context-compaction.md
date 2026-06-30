@@ -4,7 +4,7 @@ This contract keeps execution resumable without carrying raw transcript or bulky
 
 ## Policy Source
 
-`Execution Envelope.context_policy.session_compaction` is the session-level policy. It must contain:
+`Execution Envelope.context_policy.session_compaction` is the session-level policy. It is required for schema version `2` envelopes. Legacy schema version `1` envelopes may omit it when they predate this contract. When present, it must contain:
 
 - `soft_trigger_percent: 65`
 - `hard_stop_percent: 75`

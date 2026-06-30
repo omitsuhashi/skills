@@ -45,7 +45,7 @@ def load_common_module():
 
 def base_envelope() -> dict:
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "epic_id": "issue-implementation-loop",
         "revision": 1,
         "epic_base": {"ref": "main", "sha": BASE_SHA},
