@@ -60,22 +60,45 @@ host-owned connection and destination references.
 
 ## Adapter Availability Gate
 
-The Adapter Availability Gate is host / adapter-side confirmation, not a plugin
-implementation side effect. The host or adapter supplies availability evidence
-for the configured MCP server, credentials, enabled adapter tool, destination,
-and project field readiness. The task-management plugin maps that evidence to
-typed route results and stops before dispatch when setup is incomplete.
+The Adapter Availability Gate is a readiness check, not write approval. In
+loop-skill gate terminology, a Live Root Gate for this route means the same
+class of host / adapter-side readiness check: the live root, MCP adapter,
+connection reference, destination reference, credential state, and delegation
+boundary are ready for an already approved operation. A pass means only that the
+approved operation is executable by the selected adapter; it does not permit
+unapproved remote writes or approve a different operation, destination, tool, or
+side effect.
+
+Put differently: readiness does not permit unapproved remote writes.
+
+The host or adapter supplies availability evidence for the configured MCP
+server, credentials, enabled adapter tool, destination, and project field
+readiness. The task-management plugin maps that evidence to typed route results
+and stops before dispatch when setup is incomplete.
 
 Passing this gate must not be implemented by plugin install, self-registration,
 Hermes profile editing, credential setup, automatic tool enablement, schema
-repair, or direct GitHub fallback code. The gate confirms that an external MCP
-adapter is ready to receive an operation that has already passed TaskDraft
+repair, or direct GitHub fallback code. The gate confirms only that an external
+MCP adapter is ready to receive an operation that has already passed TaskDraft
 review and Adapter Dispatch Review.
+
+Readiness failures are setup blockers, not approval questions:
+
+- root mismatch: the caller, repo, live root, or host profile points at a
+  different task-management route or runtime root than the reviewed operation
+  expects.
+- auth missing: the adapter reports missing, expired, or unavailable
+  authentication.
+- destination unresolved: the opaque `destination_ref` cannot be resolved by the
+  host-owned adapter setup.
+- unsafe delegation boundary: state-changing MCP tools would be exposed beyond
+  the reviewed commander or task-management flow.
 
 When a Hermes profile uses `delegation.inherit_mcp_toolsets: true`, the host
 must ensure state-changing GitHub MCP adapter tools are not unconditionally
 inherited by child agents. If that delegation boundary is not enforced, write
-availability is blocked even if the MCP server and credentials exist.
+availability is blocked as a setup blocker even if the MCP server and
+credentials exist.
 
 ## Typed Route Result Codes
 

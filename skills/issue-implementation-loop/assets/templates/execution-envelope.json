@@ -50,7 +50,10 @@
   },
   "remote_write_policy": {
     "mode": "batch_issue_prs",
-    "approved_actions": [],
+    "approved_actions": [
+      "final_pr_push_head",
+      "final_pr_create_draft"
+    ],
     "issue_prs": {
       "base": "epic_base.ref",
       "merge": "agent_default_with_human_escalation"
@@ -58,7 +61,8 @@
     "final_pr": {
       "head": "epic_base.ref",
       "base": "main",
-      "merge": "human_only"
+      "merge": "human_only",
+      "draft_default": true
     }
   },
   "work_items": {

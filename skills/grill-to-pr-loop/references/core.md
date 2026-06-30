@@ -14,11 +14,11 @@ Reference ownership is strict: `planning-contract.md` owns artifact and spec min
 
 ## Gates
 
-Use explicit gates before expanding scope: Spec Gate, Issue Gate, Execution Plan Gate, Implementation Review Gate inside `issue-implementation-loop`, and Remote Gate before external writes. Present paths, decisions, acceptance criteria, verification, stop conditions, write scope, dependency order, fallback policy, and local/remote policy as applicable.
+Use explicit gates before expanding scope. Spec Gate and Issue Gate are human decision gate checkpoints for decisions, scope, issue shape, dependency order, and acceptance criteria. Execution Plan Gate is agent preflight + commit boundary for packet validation, capabilities, write scope, dependency graph, fallback policy, and local/remote policy; it auto-continues inside approved scope when preflight passes, and is not a human approval gate when approved scope is unchanged and stop conditions are clear. Implementation Review Gate stays inside `issue-implementation-loop`. Remote Gate applies only before an external write outside approved remote policy.
 
-After each Spec Gate, Issue Gate, or Execution Plan Gate approval, commit the approved artifacts and ledger/log updates before starting the next phase. Record any user-approved delayed commit as an explicit exception.
+After each Spec Gate or Issue Gate approval, commit the approved artifacts and ledger/log updates before starting the next phase. At Execution Plan Gate, commit the approved packet/evidence boundary, including preflight evidence, before execution handoff. Record any user-approved delayed commit as an explicit exception.
 
-Stop if required skills are missing, dirty changes overlap planned write scope, `Epic ID` or blocker graph is ambiguous, approved scope would change, worker contexts are unavailable for implementation, or unresolved Critical/Important findings lack human risk acceptance.
+Stop if required skills are missing, dirty changes overlap planned write scope, `Epic ID` or blocker graph is ambiguous, approved scope would change, remote policy mismatches approved policy, worker contexts are unavailable for implementation, or unresolved Critical/Important findings lack human risk acceptance.
 
 ## Local-first
 
@@ -28,4 +28,4 @@ Update the local ledger whenever issue publication, implementation review, PR-re
 
 ## Remote approval
 
-Remote writes are optional and require explicit current approval. This includes GitHub issue creation, push, PR creation, ready-for-review changes, issue PR merge, force push, deployment, destructive action, credential, permission, billing, or production changes. GitHub authentication is optional until a Remote Gate is approved. If remote access is unavailable, ask whether to continue local-only. Final PR merge is always human-only.
+Remote writes are optional and must stay inside approved remote policy. Remote Gate requires explicit current approval only for an external write outside approved remote policy. A policy may pre-approve bounded actions such as draft final PR creation, but ready-for-review changes, issue PR merge, force push, deployment, destructive action, credential, permission, billing, production changes, and any unapproved external write still require current approval. GitHub authentication is optional until an approved remote action needs it. If remote access is unavailable, ask whether to continue local-only. Final PR merge is always human-only.

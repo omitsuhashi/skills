@@ -340,6 +340,102 @@ class ValidationTests(unittest.TestCase):
 
             self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_validate_execution_envelope_accepts_final_pr_auto_create_actions(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            envelope = base_envelope()
+            envelope["epic_base"]["ref"] = "codex/issue-implementation-loop/epic-base"
+            envelope["epic_base"]["branch_state"] = "reserved"
+            envelope["remote_write_policy"] = {
+                "mode": "batch_issue_prs",
+                "approved_actions": [
+                    "final_pr_push_head",
+                    "final_pr_create_draft",
+                ],
+                "issue_prs": {
+                    "base": "epic_base.ref",
+                    "merge": "agent_default_with_human_escalation",
+                },
+                "final_pr": {
+                    "head": "epic_base.ref",
+                    "base": "main",
+                    "merge": "human_only",
+                },
+            }
+            path = Path(tmp) / "envelope.json"
+            write_json(path, envelope)
+
+            result = run_script("validate_execution_envelope.py", str(path))
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_validate_execution_envelope_rejects_unknown_approved_remote_actions(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            envelope = base_envelope()
+            envelope["epic_base"]["ref"] = "codex/issue-implementation-loop/epic-base"
+            envelope["epic_base"]["branch_state"] = "reserved"
+            envelope["remote_write_policy"] = {
+                "mode": "batch_issue_prs",
+                "approved_actions": [
+                    "final_pr_create_ready",
+                    "force_push",
+                ],
+                "issue_prs": {
+                    "base": "epic_base.ref",
+                    "merge": "agent_default_with_human_escalation",
+                },
+                "final_pr": {
+                    "head": "epic_base.ref",
+                    "base": "main",
+                    "merge": "human_only",
+                },
+            }
+            path = Path(tmp) / "envelope.json"
+            write_json(path, envelope)
+
+            result = run_script("validate_execution_envelope.py", str(path))
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("remote_write_policy.approved_actions[0]", result.stderr)
+            self.assertIn("remote_write_policy.approved_actions[1]", result.stderr)
+
+    def test_validate_execution_envelope_rejects_ready_or_high_risk_final_pr_fields(self) -> None:
+        forbidden_fields = {
+            "ready_for_review": True,
+            "force_push": True,
+            "production": True,
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            for field, value in forbidden_fields.items():
+                with self.subTest(field):
+                    envelope = base_envelope()
+                    envelope["epic_base"]["ref"] = "codex/issue-implementation-loop/epic-base"
+                    envelope["epic_base"]["branch_state"] = "reserved"
+                    envelope["remote_write_policy"] = {
+                        "mode": "batch_issue_prs",
+                        "approved_actions": [
+                            "final_pr_push_head",
+                            "final_pr_create_draft",
+                        ],
+                        "issue_prs": {
+                            "base": "epic_base.ref",
+                            "merge": "agent_default_with_human_escalation",
+                        },
+                        "final_pr": {
+                            "head": "epic_base.ref",
+                            "base": "main",
+                            "merge": "human_only",
+                            field: value,
+                        },
+                    }
+                    path = Path(tmp) / f"forbidden-{field}.json"
+                    write_json(path, envelope)
+
+                    result = run_script("validate_execution_envelope.py", str(path))
+
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn(f"remote_write_policy.final_pr.{field}", result.stderr)
+                    self.assertIn("human-only", result.stderr)
+
     def test_validate_execution_envelope_requires_epic_base_branch_state_for_batch_issue_prs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             envelope = base_envelope()
@@ -460,6 +556,20 @@ class ValidationTests(unittest.TestCase):
             remote_schema["properties"]["final_pr"]["required"],
             ["head", "base", "merge"],
         )
+        self.assertEqual(
+            remote_schema["properties"]["final_pr"]["additionalProperties"],
+            False,
+        )
+
+    def test_execution_envelope_schema_defines_approved_remote_action_enum(self) -> None:
+        schema = json.loads(ENVELOPE_SCHEMA_FILE.read_text(encoding="utf-8"))
+        approved_actions = schema["properties"]["remote_write_policy"]["properties"]["approved_actions"]
+
+        self.assertEqual(approved_actions["items"]["enum"], [
+            "final_pr_push_head",
+            "final_pr_create_draft",
+        ])
+        self.assertEqual(approved_actions["uniqueItems"], True)
 
     def test_execution_envelope_schema_defines_epic_base_branch_lifecycle(self) -> None:
         schema = json.loads(ENVELOPE_SCHEMA_FILE.read_text(encoding="utf-8"))

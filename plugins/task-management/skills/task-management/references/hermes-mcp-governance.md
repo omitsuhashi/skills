@@ -24,8 +24,12 @@ configuration during install.
 
 ## Adapter Availability Gate
 
-The Adapter Availability Gate is host / adapter-side confirmation. It is not a
-plugin implementation side effect.
+The Adapter Availability Gate is a host / adapter-side readiness check. It is
+not a plugin implementation side effect, task write approval, or remote write
+approval. When a workflow calls this a Live Root Gate, it is still the same
+readiness class: the host confirms that the selected live root, MCP adapter,
+credential state, destination reference, tool enablement, and delegation
+boundary can execute an operation that has already been approved elsewhere.
 
 Before a state-changing GitHub MCP adapter tool can receive an approved
 operation envelope, the host or adapter must confirm:
@@ -45,6 +49,12 @@ map it to the typed GitHub MCP route results described in
 before adapter dispatch and returns setup guidance. It does not self-register,
 self-authenticate, self-enable, repair schema, or fall back to a direct GitHub
 client.
+
+A readiness pass means only that an approved operation is executable. It does
+not permit unapproved remote writes, approve a changed destination or tool, or
+replace Adapter Dispatch Review. A readiness failure is a setup blocker when it
+reports root mismatch, auth missing, destination unresolved, or an unsafe
+delegation boundary.
 
 ## Credential Boundary
 

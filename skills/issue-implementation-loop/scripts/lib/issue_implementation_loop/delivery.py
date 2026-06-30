@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from .constants import FINAL_PR_REQUIRED_APPROVED_ACTIONS
 from .identifiers import is_issue_id
 from .validation.execution_envelope import validate_execution_envelope
 from .validation.runtime_state import validate_runtime_state
@@ -102,6 +103,17 @@ def validate_delivery_plan(envelope: dict[str, Any], runtime: dict[str, Any], pl
             errors.append(f"final_pr.head must be {epic_base_ref}")
     if isinstance(epic_base, dict) and epic_base.get("branch_state") != "active":
         errors.append("epic_base.branch_state must be active before final PR")
+    approved_actions = remote_policy.get("approved_actions", [])
+    if not isinstance(approved_actions, list):
+        errors.append("remote_write_policy.approved_actions must be a list")
+        approved_actions = []
+    approved_action_set = {action for action in approved_actions if isinstance(action, str)}
+    for action in sorted(FINAL_PR_REQUIRED_APPROVED_ACTIONS - approved_action_set):
+        errors.append(f"remote_write_policy.approved_actions must include {action}")
+    if plan.get("draft", True) is not True:
+        errors.append("final_pr.draft must be true; ready-for-review is a separate human action")
+    if plan.get("ready_for_review") is True:
+        errors.append("ready-for-review is a separate human action")
 
     issues = delivery_issue_scope(envelope, plan, errors)
     runtime_issues = runtime.get("issues", {})

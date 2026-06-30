@@ -59,7 +59,10 @@ Required shape:
 ```json
 {
   "mode": "batch_issue_prs",
-  "approved_actions": [],
+  "approved_actions": [
+    "final_pr_push_head",
+    "final_pr_create_draft"
+  ],
   "issue_prs": {
     "base": "epic_base.ref",
     "merge": "agent_default_with_human_escalation"
@@ -67,12 +70,13 @@ Required shape:
   "final_pr": {
     "head": "epic_base.ref",
     "base": "main",
-    "merge": "human_only"
+    "merge": "human_only",
+    "draft_default": true
   }
 }
 ```
 
-For this mode, `epic_base.ref` must be `codex/<epic-id>/epic-base`. Issue PR merges may be agent-run only while checks, review, permissions, and mergeability are unambiguous. Final PR merge is always human-only.
+For this mode, `epic_base.ref` must be `codex/<epic-id>/epic-base`. Issue PR merges may be agent-run only while checks, review, permissions, and mergeability are unambiguous. Final PR auto-creation requires `final_pr_push_head` and `final_pr_create_draft` in `approved_actions`, uses `draft_default: true`, and still keeps final PR merge as `human_only`.
 
 `epic_base.branch_state` must be one of `reserved`, `create_on_run`, `active`, or `missing`. Treat a missing `epic_base.ref` branch as a reconciliation failure before final PR delivery.
 

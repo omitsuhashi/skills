@@ -2,6 +2,7 @@
   "action": "final_pr",
   "head": "codex/<epic-id>/epic-base",
   "base": "main",
+  "draft": true,
   "issue_scope": [
     "G2PR-001",
     "G2PR-002"

@@ -65,6 +65,22 @@ If any value is missing or changed after review, stop and present a new Adapter
 Dispatch Review preview. Approval for one envelope does not approve a later
 create, update, comment, report, batch, or policy-gated operation.
 
+## Readiness Is Not Approval
+
+The Adapter Availability Gate and any route-specific Live Root Gate are
+readiness checks, not approval gates. They can confirm that the selected host,
+adapter, credential state, destination reference, and delegation boundary are
+ready to execute an already approved envelope. They do not approve a task write,
+remote write, different destination, different adapter tool, or changed expected
+side effect.
+
+Adapter Dispatch Review remains the approval boundary for state-changing task
+operations. A readiness pass must not replace Adapter Dispatch Review. If
+readiness passes but the envelope has not been approved, stop before dispatch.
+If Adapter Dispatch Review approves an envelope but readiness later reports a
+root mismatch, auth missing, destination unresolved, or unsafe delegation
+boundary, treat the result as a setup blocker and stop before dispatch.
+
 ## Non-Ownership Boundary
 
 The task-management plugin does not define external adapter write policy,
