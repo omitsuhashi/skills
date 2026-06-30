@@ -17,7 +17,13 @@ from skill_context.contract import (
     all_skill_dirs,
     load_contract,
 )
-from validate_skill_architecture import DEFAULT_POLICY_PATH, REQUIRED_FAMILY_ID, PolicyError, load_policy
+from validate_skill_architecture import (
+    DEFAULT_POLICY_PATH,
+    EXPECTED_CONTEXT_COMPACTION_POLICY,
+    REQUIRED_FAMILY_ID,
+    PolicyError,
+    load_policy,
+)
 from validate_skill_context import inspect_context_operation, operation_names_for_context
 
 
@@ -113,7 +119,7 @@ def _warning_lines(report: Mapping[str, object]) -> List[str]:
     return [warning for warning in warnings if isinstance(warning, str)]
 
 
-def _repository_change_loop_skill_names() -> set[str]:
+def _repository_change_loop_family() -> Mapping[str, object]:
     try:
         policy = load_policy(DEFAULT_POLICY_PATH)
     except PolicyError as exc:
@@ -124,10 +130,31 @@ def _repository_change_loop_skill_names() -> set[str]:
     family = families.get(REQUIRED_FAMILY_ID)
     if not isinstance(family, dict):
         raise ContractError(f"skill architecture policy missing family: {REQUIRED_FAMILY_ID}")
+    return family
+
+
+def _repository_change_loop_skill_names() -> set[str]:
+    family = _repository_change_loop_family()
     skill_names = family.get("user_facing_skills")
     if not isinstance(skill_names, list) or not all(isinstance(item, str) and item for item in skill_names):
         raise ContractError(f"{REQUIRED_FAMILY_ID}.user_facing_skills must be an array of non-empty strings")
     return set(skill_names)
+
+
+def _context_compaction_policy() -> Dict[str, int]:
+    family = _repository_change_loop_family()
+    policy = family.get("context_compaction")
+    if not isinstance(policy, dict):
+        raise ContractError(f"{REQUIRED_FAMILY_ID}.context_compaction must be a table")
+    compacted: Dict[str, int] = {}
+    for field, expected in EXPECTED_CONTEXT_COMPACTION_POLICY.items():
+        value = policy.get(field)
+        if type(value) is not int:
+            raise ContractError(f"{REQUIRED_FAMILY_ID}.context_compaction.{field} must be an integer")
+        if value != expected:
+            raise ContractError(f"{REQUIRED_FAMILY_ID}.context_compaction.{field} must be {expected}")
+        compacted[field] = value
+    return compacted
 
 
 def _loop_skill_reports(report: Mapping[str, object]) -> List[Mapping[str, object]]:
@@ -209,6 +236,7 @@ def collect_workflow_complexity(report: Mapping[str, object]) -> Dict[str, objec
     return {
         "advisory_only": True,
         "family": REQUIRED_FAMILY_ID,
+        "context_compaction_policy": _context_compaction_policy(),
         "skill_count": len(skill_reports),
         "operation_count": len(operations),
         "gate_count": len(gate_breakdown),

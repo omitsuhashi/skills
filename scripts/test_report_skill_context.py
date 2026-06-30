@@ -69,6 +69,20 @@ class SkillContextReportTests(unittest.TestCase):
         self.assertTrue(complexity["remote_delivery_present"])
         self.assertTrue(complexity["advisory_only"])
 
+    def test_json_report_includes_family_context_compaction_policy(self) -> None:
+        result = run_script(REPORT_SKILL_CONTEXT, "--all", "--json")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        complexity = json.loads(result.stdout)["workflow_complexity"]
+        self.assertEqual(
+            complexity["context_compaction_policy"],
+            {
+                "soft_trigger_percent": 65,
+                "hard_stop_percent": 75,
+                "mandatory_handoff_compaction": 1,
+            },
+        )
+
     def test_text_report_keeps_complexity_advisory_brief(self) -> None:
         result = run_script(REPORT_SKILL_CONTEXT, "--all")
 

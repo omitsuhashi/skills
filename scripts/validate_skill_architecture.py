@@ -20,6 +20,11 @@ DEFAULT_POLICY_PATH = REPO_ROOT / "skill-architecture.toml"
 SKILLS_ROOT = REPO_ROOT / "skills"
 REQUIRED_FAMILY_ID = "repository-change-loop"
 SKILL_NAME_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]*")
+EXPECTED_CONTEXT_COMPACTION_POLICY = {
+    "soft_trigger_percent": 65,
+    "hard_stop_percent": 75,
+    "mandatory_handoff_compaction": 1,
+}
 
 
 class PolicyError(Exception):
@@ -192,6 +197,28 @@ def _duplicates(values: Sequence[str]) -> List[str]:
     return sorted({value for value in values if values.count(value) > 1})
 
 
+def _validate_context_compaction_policy(family: Dict[str, object], errors: List[str]) -> None:
+    policy = family.get("context_compaction")
+    if not isinstance(policy, dict):
+        errors.append("repository-change-loop.context_compaction must be a table")
+        return
+
+    soft_trigger = policy.get("soft_trigger_percent")
+    if type(soft_trigger) is not int or soft_trigger != EXPECTED_CONTEXT_COMPACTION_POLICY["soft_trigger_percent"]:
+        errors.append("context_compaction.soft_trigger_percent must be 65")
+
+    hard_stop = policy.get("hard_stop_percent")
+    if type(hard_stop) is not int or hard_stop != EXPECTED_CONTEXT_COMPACTION_POLICY["hard_stop_percent"]:
+        errors.append("context_compaction.hard_stop_percent must be exactly 75")
+
+    mandatory_handoff = policy.get("mandatory_handoff_compaction")
+    if (
+        type(mandatory_handoff) is not int
+        or mandatory_handoff != EXPECTED_CONTEXT_COMPACTION_POLICY["mandatory_handoff_compaction"]
+    ):
+        errors.append("context_compaction.mandatory_handoff_compaction must be integer flag 1")
+
+
 def _actual_skill_names() -> List[str]:
     if not SKILLS_ROOT.is_dir():
         return []
@@ -239,6 +266,7 @@ def validate_policy(policy: Dict[str, object]) -> List[str]:
         errors.append("forbidden_standalone_skill_names must not be empty")
     if not internal_components:
         errors.append("internal_components must not be empty")
+    _validate_context_compaction_policy(family, errors)
     return errors
 
 
