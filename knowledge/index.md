@@ -69,6 +69,8 @@ _現在なし。_
   検索語: LSAG, Loop Skill 自動継続, local issue, Issue Gate, blocker graph, Execution Plan Gate, Live Root Gate, Adapter Availability Gate, final PR, approved_actions
 - [Loop Skill 自動継続 Gate Input Packet](wiki/syntheses/loop-skill-autonomous-gates-input-packet.json) — `loop-skill-autonomous-gates` の Execution Plan Gate 自動通過用 normalized input packet。LSAG-001 から LSAG-005 の write scope、dependencies、`batch_issue_prs` delivery intent を正規化する。
   検索語: LSAG, input packet, Execution Plan Gate, auto-continue, issue-implementation-loop, batch_issue_prs, final PR, approved_actions
+- [Loop Skill 自動継続 Gate Execution Envelope](wiki/syntheses/loop-skill-autonomous-gates-execution-envelope.json) — `loop-skill-autonomous-gates` 実装ループの Execution Envelope。worker-only policy、branch/worktree reservation、`batch_issue_prs`、`final_pr_push_head` / `final_pr_create_draft` approved actions を固定する。
+  検索語: LSAG, execution envelope, worker_context_required, batch_issue_prs, final_pr_push_head, final_pr_create_draft, worktree reservation, auto-continue
 - [Grill To PR Loop Epic Base Delivery Policy Spec](wiki/syntheses/grill-to-pr-loop-epic-base-delivery-policy-spec.md) — issue PR を `codex/<epic-id>/epic-base` に集約し、issue PR は guarded agent merge、final PR merge は human-only とする delivery policy。
   検索語: grill-to-pr-loop, issue-implementation-loop, epic_base, epic-base, batch_issue_prs, issue PR, final PR, merge policy, review cycles, PR配送
 - [Grill To PR Loop Epic Base Delivery Policy Issues](wiki/syntheses/grill-to-pr-loop-epic-base-delivery-policy-issues.md) — epic-base delivery policy 実装のローカルIssue ledger。

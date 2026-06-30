@@ -1,0 +1,193 @@
+{
+  "schema_version": 1,
+  "epic_id": "loop-skill-autonomous-gates",
+  "revision": 1,
+  "epic_base": {
+    "ref": "codex/loop-skill-autonomous-gates/epic-base",
+    "sha": "c3a68fdb357a747e1c1f429d0e95372c92d795be",
+    "branch_state": "reserved"
+  },
+  "execution_policy": {
+    "parallel_preferred": true,
+    "serial_fallback_preapproved": true,
+    "worker_context_required": true,
+    "coordinator_may_implement": false,
+    "serial_fallback_mode": "worker_context_only",
+    "implementation_slots": 3,
+    "review_slots": 1,
+    "wave_is_barrier": false
+  },
+  "review_policy": {
+    "primary": "requesting-code-review",
+    "fallbacks": [
+      "manual-review-fallback"
+    ],
+    "manual_fallback_preapproved": false,
+    "max_review_cycles": 2,
+    "max_fix_cycles": 2,
+    "same_finding_limit": 2
+  },
+  "human_policy": {
+    "default_scope": "issue",
+    "epic_scope_requires_reason": true
+  },
+  "context_policy": {
+    "paths_first": true,
+    "max_worker_packet_words": 450,
+    "max_worker_report_words": 350,
+    "include_full_spec_text": false,
+    "include_full_ledger_text": false,
+    "worker_packet_schema": "skills/issue-implementation-loop/assets/schemas/worker-packet.schema.json",
+    "worker_packet_template": "skills/issue-implementation-loop/assets/templates/worker-packet.json",
+    "worker_packet_validator": "skills/issue-implementation-loop/scripts/validate_worker_packet.py"
+  },
+  "remote_write_policy": {
+    "mode": "batch_issue_prs",
+    "approved_actions": [
+      "final_pr_push_head",
+      "final_pr_create_draft"
+    ],
+    "issue_prs": {
+      "base": "epic_base.ref",
+      "merge": "agent_default_with_human_escalation"
+    },
+    "final_pr": {
+      "head": "epic_base.ref",
+      "base": "main",
+      "merge": "human_only"
+    }
+  },
+  "work_items": {
+    "LSAG-001": {
+      "branch": "codex/loop-skill-autonomous-gates/LSAG-001-gate-taxonomy",
+      "worktree_path": "/Users/omitsuhashi/.codex/worktrees/loop-skill-autonomous-gates/LSAG-001-gate-taxonomy",
+      "worktree_state": "create_on_run",
+      "base_policy": {
+        "type": "epic_base"
+      },
+      "write_scope": [
+        "path:skills/grill-to-pr-loop/SKILL.md",
+        "path:skills/grill-to-pr-loop/references/core.md",
+        "path:skills/grill-to-pr-loop/references/common-mistakes.md",
+        "path:skills/grill-to-pr-loop/tests",
+        "path:knowledge/wiki/syntheses/loop-skill-autonomous-gates-issues.md"
+      ],
+      "dependencies": []
+    },
+    "LSAG-002": {
+      "branch": "codex/loop-skill-autonomous-gates/LSAG-002-execution-plan-auto-continue",
+      "worktree_path": "/Users/omitsuhashi/.codex/worktrees/loop-skill-autonomous-gates/LSAG-002-execution-plan-auto-continue",
+      "worktree_state": "reserved",
+      "base_policy": {
+        "type": "blocker_head",
+        "issue": "LSAG-001"
+      },
+      "write_scope": [
+        "path:skills/grill-to-pr-loop/references/execution-handoff.md",
+        "path:skills/grill-to-pr-loop/references/core.md",
+        "path:skills/grill-to-pr-loop/tests",
+        "path:knowledge/wiki/syntheses/loop-skill-autonomous-gates-issues.md",
+        "path:knowledge/log.md"
+      ],
+      "dependencies": [
+        {
+          "issue": "LSAG-001",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    },
+    "LSAG-003": {
+      "branch": "codex/loop-skill-autonomous-gates/LSAG-003-readiness-gates",
+      "worktree_path": "/Users/omitsuhashi/.codex/worktrees/loop-skill-autonomous-gates/LSAG-003-readiness-gates",
+      "worktree_state": "reserved",
+      "base_policy": {
+        "type": "blocker_head",
+        "issue": "LSAG-001"
+      },
+      "write_scope": [
+        "path:plugins/task-management/skills/task-management/references/github-mcp-projects.md",
+        "path:plugins/task-management/skills/task-management/references/hermes-mcp-governance.md",
+        "path:plugins/task-management/skills/task-management/references/adapter-dispatch.md",
+        "path:plugins/task-management/tests",
+        "path:knowledge/wiki/syntheses/loop-skill-autonomous-gates-issues.md",
+        "path:knowledge/log.md"
+      ],
+      "dependencies": [
+        {
+          "issue": "LSAG-001",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    },
+    "LSAG-004": {
+      "branch": "codex/loop-skill-autonomous-gates/LSAG-004-final-pr-auto-create",
+      "worktree_path": "/Users/omitsuhashi/.codex/worktrees/loop-skill-autonomous-gates/LSAG-004-final-pr-auto-create",
+      "worktree_state": "reserved",
+      "base_policy": {
+        "type": "blocker_head",
+        "issue": "LSAG-001"
+      },
+      "write_scope": [
+        "path:skills/issue-implementation-loop/references/remote-delivery.md",
+        "path:skills/issue-implementation-loop/references/execution-envelope.md",
+        "path:skills/issue-implementation-loop/assets/schemas/execution-envelope.schema.json",
+        "path:skills/issue-implementation-loop/assets/templates/execution-envelope.json",
+        "path:skills/issue-implementation-loop/assets/templates/delivery-plan.json",
+        "path:skills/issue-implementation-loop/scripts",
+        "path:skills/issue-implementation-loop/tests",
+        "path:knowledge/wiki/syntheses/loop-skill-autonomous-gates-issues.md",
+        "path:knowledge/log.md"
+      ],
+      "dependencies": [
+        {
+          "issue": "LSAG-001",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    },
+    "LSAG-005": {
+      "branch": "codex/loop-skill-autonomous-gates/LSAG-005-regression-ledger",
+      "worktree_path": "/Users/omitsuhashi/.codex/worktrees/loop-skill-autonomous-gates/LSAG-005-regression-ledger",
+      "worktree_state": "reserved",
+      "base_policy": {
+        "type": "blocker_head",
+        "issue": "LSAG-004"
+      },
+      "write_scope": [
+        "path:scripts",
+        "path:skills/grill-to-pr-loop/tests",
+        "path:skills/issue-implementation-loop/tests",
+        "path:plugins/task-management/tests",
+        "path:knowledge/index.md",
+        "path:knowledge/log.md",
+        "path:knowledge/wiki/syntheses/loop-skill-autonomous-gates-issues.md"
+      ],
+      "dependencies": [
+        {
+          "issue": "LSAG-002",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "none"
+        },
+        {
+          "issue": "LSAG-003",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "none"
+        },
+        {
+          "issue": "LSAG-004",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    }
+  }
+}

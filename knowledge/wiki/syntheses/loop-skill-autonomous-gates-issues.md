@@ -2,7 +2,7 @@
 
 ## 状態
 
-Spec Gate / Issue Gate 承認済み。Execution Plan Gate は agent preflight + commit boundary として自動通過済み。LSAG-001 から LSAG-005 は未実装。GitHub issue mirror、push、PR 作成、merge はまだ行っていない。承認済み仕様は [Loop Skill 自動継続 Gate 仕様](loop-skill-autonomous-gates-spec.md)、normalized input packet は [Loop Skill 自動継続 Gate Input Packet](loop-skill-autonomous-gates-input-packet.json)。
+Spec Gate / Issue Gate 承認済み。Execution Plan Gate は agent preflight + commit boundary として自動通過済み。Execution Envelope prepare 済み。LSAG-001 から LSAG-005 は未実装。GitHub issue mirror、push、PR 作成、merge はまだ行っていない。承認済み仕様は [Loop Skill 自動継続 Gate 仕様](loop-skill-autonomous-gates-spec.md)、normalized input packet は [Loop Skill 自動継続 Gate Input Packet](loop-skill-autonomous-gates-input-packet.json)、Execution Envelope は [Loop Skill 自動継続 Gate Execution Envelope](loop-skill-autonomous-gates-execution-envelope.json)。
 
 ## 台帳
 

@@ -2,7 +2,7 @@
 
 ## 状態
 
-Spec Gate / Issue Gate 承認済み。Execution Plan Gate は agent preflight + commit boundary として自動通過済み。承認済み local issue ledger は [Loop Skill 自動継続 Gate Issue 台帳](loop-skill-autonomous-gates-issues.md)、normalized input packet は [Loop Skill 自動継続 Gate Input Packet](loop-skill-autonomous-gates-input-packet.json) に置く。2026-06-30 のユーザー承認により、`Execution Plan Gate` と `Live Root Gate` は都度の人間レビュー対象にせず、agent preflight と commit boundary として扱う。実装完了後の final PR 作成も、承認済み delivery policy 内では追加承認なしに自動実行する。final PR merge は引き続き human-only。
+Spec Gate / Issue Gate 承認済み。Execution Plan Gate は agent preflight + commit boundary として自動通過済み。Execution Envelope prepare 済み。承認済み local issue ledger は [Loop Skill 自動継続 Gate Issue 台帳](loop-skill-autonomous-gates-issues.md)、normalized input packet は [Loop Skill 自動継続 Gate Input Packet](loop-skill-autonomous-gates-input-packet.json)、Execution Envelope は [Loop Skill 自動継続 Gate Execution Envelope](loop-skill-autonomous-gates-execution-envelope.json) に置く。2026-06-30 のユーザー承認により、`Execution Plan Gate` と `Live Root Gate` は都度の人間レビュー対象にせず、agent preflight と commit boundary として扱う。実装完了後の final PR 作成も、承認済み delivery policy 内では追加承認なしに自動実行する。final PR merge は引き続き human-only。
 
 ## 問題設定
 
