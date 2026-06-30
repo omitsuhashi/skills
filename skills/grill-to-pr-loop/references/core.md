@@ -14,11 +14,11 @@ Reference ownership is strict: `planning-contract.md` owns artifact and spec min
 
 ## Gates
 
-Use explicit gates before expanding scope. Spec Gate and Issue Gate are human decision gate checkpoints for decisions, scope, issue shape, dependency order, and acceptance criteria. Execution Plan Gate is agent preflight + commit boundary for packet validation, capabilities, write scope, dependency graph, fallback policy, and local/remote policy; it is not a human approval gate when approved scope is unchanged and stop conditions are clear. Implementation Review Gate stays inside `issue-implementation-loop`. Remote Gate applies only before an external write outside approved remote policy.
+Use explicit gates before expanding scope. Spec Gate and Issue Gate are human decision gate checkpoints for decisions, scope, issue shape, dependency order, and acceptance criteria. Execution Plan Gate is agent preflight + commit boundary for packet validation, capabilities, write scope, dependency graph, fallback policy, and local/remote policy; it auto-continues inside approved scope when preflight passes, and is not a human approval gate when approved scope is unchanged and stop conditions are clear. Implementation Review Gate stays inside `issue-implementation-loop`. Remote Gate applies only before an external write outside approved remote policy.
 
-After each Spec Gate or Issue Gate approval, commit the approved artifacts and ledger/log updates before starting the next phase. At Execution Plan Gate, commit the approved packet/evidence boundary before execution handoff. Record any user-approved delayed commit as an explicit exception.
+After each Spec Gate or Issue Gate approval, commit the approved artifacts and ledger/log updates before starting the next phase. At Execution Plan Gate, commit the approved packet/evidence boundary, including preflight evidence, before execution handoff. Record any user-approved delayed commit as an explicit exception.
 
-Stop if required skills are missing, dirty changes overlap planned write scope, `Epic ID` or blocker graph is ambiguous, approved scope would change, worker contexts are unavailable for implementation, or unresolved Critical/Important findings lack human risk acceptance.
+Stop if required skills are missing, dirty changes overlap planned write scope, `Epic ID` or blocker graph is ambiguous, approved scope would change, remote policy mismatches approved policy, worker contexts are unavailable for implementation, or unresolved Critical/Important findings lack human risk acceptance.
 
 ## Local-first
 

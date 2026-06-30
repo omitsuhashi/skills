@@ -2,14 +2,14 @@
 
 ## 状態
 
-Spec Gate / Issue Gate 承認済み。Execution Plan Gate は agent preflight + commit boundary として自動通過済み。LSAG-001 と LSAG-004 は worker 実装済みで coordinator review 待ち。LSAG-002、LSAG-003、LSAG-005 は未実装。GitHub issue mirror、push、PR 作成、merge はまだ行っていない。承認済み仕様は [Loop Skill 自動継続 Gate 仕様](loop-skill-autonomous-gates-spec.md)、normalized input packet は [Loop Skill 自動継続 Gate Input Packet](loop-skill-autonomous-gates-input-packet.json)。
+Spec Gate / Issue Gate 承認済み。Execution Plan Gate は agent preflight + commit boundary として自動通過済み。LSAG-001、LSAG-002、LSAG-004 は worker 実装済みで coordinator review 待ち。LSAG-003 と LSAG-005 は未実装。GitHub issue mirror、push、PR 作成、merge はまだ行っていない。承認済み仕様は [Loop Skill 自動継続 Gate 仕様](loop-skill-autonomous-gates-spec.md)、normalized input packet は [Loop Skill 自動継続 Gate Input Packet](loop-skill-autonomous-gates-input-packet.json)。
 
 ## 台帳
 
 | Epic ID | ローカルID | タイトル | レビュー状態 | 実行状態 | ブロック元 | ブロック先 | GitHub Issue | 実装レビュー | PR |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | loop-skill-autonomous-gates | LSAG-001 | Gate taxonomy と自動継続 policy を定義する | 承認済み | 実装済み / coordinator review 待ち | なし | LSAG-002, LSAG-003, LSAG-004 | 未作成 | coordinator review 待ち | 未作成 |
-| loop-skill-autonomous-gates | LSAG-002 | Execution Plan Gate の自動継続を実行契約に反映する | 承認済み | ブロック中 | LSAG-001 | LSAG-005 | 未作成 | 未実施 | 未作成 |
+| loop-skill-autonomous-gates | LSAG-002 | Execution Plan Gate の自動継続を実行契約に反映する | 承認済み | 実装済み / coordinator review 待ち | LSAG-001 | LSAG-005 | 未作成 | coordinator review 待ち | 未作成 |
 | loop-skill-autonomous-gates | LSAG-003 | Live Root Gate / Adapter Availability Gate を readiness gate として整理する | 承認済み | ブロック中 | LSAG-001 | LSAG-005 | 未作成 | 未実施 | 未作成 |
 | loop-skill-autonomous-gates | LSAG-004 | final PR 自動作成 policy を Execution Envelope / delivery に固定する | 承認済み | 実装済み / coordinator review 待ち | LSAG-001 | LSAG-005 | 未作成 | coordinator review 待ち | 未作成 |
 | loop-skill-autonomous-gates | LSAG-005 | regression tests と wiki discoverability を追加する | 承認済み | ブロック中 | LSAG-002, LSAG-003, LSAG-004 | なし | 未作成 | 未実施 | 未作成 |
@@ -17,7 +17,7 @@ Spec Gate / Issue Gate 承認済み。Execution Plan Gate は agent preflight + 
 ## ブロッカーグラフ
 
 - LSAG-001: worker 実装済み / coordinator review 待ち。ブロック元 なし。LSAG-002、LSAG-003、LSAG-004 の共通前提。ブロック解除は coordinator review 後に判断する。
-- LSAG-002: ブロック中。LSAG-001 の gate taxonomy 確定後に、Execution Plan Gate の実行契約を更新する。
+- LSAG-002: worker 実装済み / coordinator review 待ち。LSAG-001 の gate taxonomy を前提に、Execution Plan Gate の実行契約を更新した。LSAG-005 のブロッカー解除は coordinator review 後に判断する。
 - LSAG-003: ブロック中。LSAG-001 の gate taxonomy 確定後に、Live Root / Adapter Availability readiness semantics を整理する。
 - LSAG-004: worker 実装済み / coordinator review 待ち。final PR 自動作成の approved action と delivery validation を固定した。LSAG-005 のブロック解除は coordinator review 後に判断する。
 - LSAG-005: ブロック中。LSAG-002、LSAG-003、LSAG-004 の実装後に regression と wiki discoverability を集約する。
@@ -95,11 +95,11 @@ Execution Plan Gate の自動継続を実行契約に反映する
 
 ### 受け入れ条件
 
-- [ ] `Execution Plan Gate` は、承認済み scope 内で `validate_input_packet.py` と capability preflight が通る場合、自動継続できると明記されている。
-- [ ] 自動継続前に normalized packet、preflight evidence、write scope、dependency graph、remote policy summary を durable evidence として残す。
-- [ ] 自動継続後も承認済み artifacts と `knowledge/log.md` / local ledger 更新を commit してから `issue-implementation-loop prepare` へ進む。
-- [ ] scope change、dirty overlap、capability failure、worker context unavailable、remote policy mismatch は停止条件として残っている。
-- [ ] planning/grill session が issue work を直接実装しない境界は弱まっていない。
+- [x] `Execution Plan Gate` は、承認済み scope 内で `validate_input_packet.py` と capability preflight が通る場合、自動継続できると明記されている。
+- [x] 自動継続前に normalized packet、preflight evidence、write scope、dependency graph、remote policy summary を durable evidence として残す。
+- [x] 自動継続後も承認済み artifacts と `knowledge/log.md` / local ledger 更新を commit してから `issue-implementation-loop prepare` へ進む。
+- [x] scope change、dirty overlap、capability failure、worker context unavailable、remote policy mismatch は停止条件として残っている。
+- [x] planning/grill session が issue work を直接実装しない境界は弱まっていない。
 
 ### 非目標
 
@@ -108,9 +108,18 @@ Execution Plan Gate の自動継続を実行契約に反映する
 
 ### ブロッカー
 
-- 実行状態: ブロック中
+- 実行状態: 実装済み / coordinator review 待ち
 - ブロック元: LSAG-001
 - ブロック先: LSAG-005
+
+### Worker 実装メモ
+
+- `skills/grill-to-pr-loop/references/execution-handoff.md` で、承認済み Spec / Issue scope 内では `validate_input_packet.py` と `check_capabilities.py --input` が通り、write scope / dependency graph / remote policy summary が一致する場合に追加承認なしで自動継続できると明記した。
+- 自動継続前の durable evidence として normalized packet validation、capability preflight evidence、approved write scope、dependency graph、remote policy summary を残す契約を追加した。
+- 自動継続時も approved artifacts、normalized packet/evidence boundary、local ledger、`knowledge/log.md` を commit してから `issue-implementation-loop prepare` へ進む契約を追加した。
+- scope change、dirty overlap、capability failure、worker context unavailable、remote policy mismatch は停止条件として維持した。
+- `skills/grill-to-pr-loop/tests/test_grill_to_pr_loop.py` に Execution Plan Gate auto-continue regression を追加した。
+- LSAG-005 のブロッカー解除は coordinator review 後に判断する。
 
 ### 想定 write scope
 

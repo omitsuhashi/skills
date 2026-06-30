@@ -199,6 +199,29 @@ class GrillToPrLoopTests(unittest.TestCase):
         self.assertIn("approved remote policy", mistakes_text)
         self.assertNotIn("Treating PR creation as implicit | Get explicit approval first.", mistakes_text)
 
+    def test_execution_plan_gate_auto_continue_keeps_evidence_and_stop_conditions(self) -> None:
+        handoff_text = (SKILL_DIR / "references" / "execution-handoff.md").read_text(encoding="utf-8")
+        core_text = CORE_REFERENCE.read_text(encoding="utf-8")
+        combined = f"{handoff_text}\n{core_text}"
+
+        for required in (
+            "auto-continue without another human approval",
+            "validate_input_packet.py",
+            "capability preflight",
+            "normalized packet path and validation result",
+            "approved write scope",
+            "dependency graph",
+            "remote policy summary",
+            "commit the approved artifacts",
+            "knowledge/log.md",
+            "issue-implementation-loop prepare",
+            "dirty changes overlap planned write scope",
+            "worker context is unavailable",
+            "remote policy does not match the approved remote policy",
+            "planning/grill session must not become an implementation worker",
+        ):
+            self.assertIn(required, combined)
+
     def test_agent_default_prompts_are_short_and_policy_free(self) -> None:
         for path, skill_name in (
             (GRILL_AGENT_YAML, "$grill-to-pr-loop"),
