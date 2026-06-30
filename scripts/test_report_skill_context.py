@@ -115,6 +115,83 @@ class SkillContextReportTests(unittest.TestCase):
         self.assertNotIn("complexity", result.stdout.lower())
         self.assertNotIn("complexity", result.stderr.lower())
 
+    def test_session_pressure_json_marks_soft_compaction_required(self) -> None:
+        result = run_script(REPORT_SKILL_CONTEXT, "--all", "--json", "--session-pressure-percent", "65")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        session_context = json.loads(result.stdout)["session_context"]
+
+        self.assertTrue(session_context["advisory_only"])
+        self.assertEqual(session_context["source"], "operator_supplied")
+        self.assertEqual(session_context["session_pressure_percent"], 65)
+        self.assertTrue(session_context["compaction_required"])
+        self.assertFalse(session_context["hard_stop_required"])
+
+    def test_session_pressure_text_adds_single_brief_advisory_line(self) -> None:
+        without_pressure = run_script(REPORT_SKILL_CONTEXT, "--all")
+        with_pressure = run_script(REPORT_SKILL_CONTEXT, "--all", "--session-pressure-percent", "65")
+
+        self.assertEqual(without_pressure.returncode, 0, without_pressure.stderr)
+        self.assertEqual(with_pressure.returncode, 0, with_pressure.stderr)
+
+        added_lines = [
+            line
+            for line in with_pressure.stdout.splitlines()
+            if line not in without_pressure.stdout.splitlines()
+        ]
+        self.assertEqual(len(added_lines), 1)
+        self.assertTrue(added_lines[0].startswith("Session context:"))
+        self.assertIn("compaction checkpoint required", added_lines[0])
+
+    def test_session_pressure_hard_stop_warning_fails_on_warning(self) -> None:
+        result = run_script(
+            REPORT_SKILL_CONTEXT,
+            "--all",
+            "--session-pressure-percent",
+            "75",
+            "--fail-on-warning",
+        )
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("WARNING:", result.stderr)
+        self.assertIn("hard stop", result.stderr)
+        self.assertIn("Session context:", result.stdout)
+
+    def test_session_pressure_advisory_is_not_checkpoint_or_overlay_replacement(self) -> None:
+        result = run_script(REPORT_SKILL_CONTEXT, "--all", "--json", "--session-pressure-percent", "65")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        session_context = json.loads(result.stdout)["session_context"]
+
+        self.assertTrue(session_context["requires_phase_checkpoint"])
+        self.assertTrue(session_context["requires_conditional_overlay"])
+        self.assertEqual(
+            session_context["not_a_substitute_for"],
+            ["phase checkpoint", "conditional overlay"],
+        )
+
+    def test_session_pressure_advisory_is_limited_to_loop_skills(self) -> None:
+        text_result = run_script(REPORT_SKILL_CONTEXT, "--skill", "skills/llm-wiki", "--session-pressure-percent", "75")
+        json_result = run_script(
+            REPORT_SKILL_CONTEXT,
+            "--skill",
+            "skills/llm-wiki",
+            "--json",
+            "--session-pressure-percent",
+            "75",
+        )
+
+        self.assertEqual(text_result.returncode, 0, text_result.stderr)
+        self.assertEqual(json_result.returncode, 0, json_result.stderr)
+        self.assertNotIn("Session context:", text_result.stdout)
+        self.assertNotIn("session_context", json.loads(json_result.stdout))
+
+    def test_context_validator_does_not_accept_session_pressure_flag(self) -> None:
+        result = run_script(VALIDATE_SKILL_CONTEXT, "--all", "--session-pressure-percent", "65")
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("unrecognized arguments: --session-pressure-percent 65", result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()
