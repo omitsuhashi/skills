@@ -20,6 +20,12 @@ Spec Gate / Issue Gate 承認済み。Execution Plan Gate、実装、GitHub issu
 - Canonical paths: spec は [loop-review-governance-spec.md](loop-review-governance-spec.md)、issue ledger はこの file。
 - Open decisions: normalized input packet、write scope、execution dependency graph、fallback policy、remote policy の Execution Plan Gate preflight。
 - Pending risk: candidate registry を schema-backed にすると実装量が増える。Issue Gate approval は schema-backed 初回実装を必須化しない。Execution Plan では LRG-002 acceptance に従い、reference-only / schema-backed のいずれかを一貫して選ぶ。
+- Execution Plan artifacts:
+  - [loop-review-governance-input-packet.json](loop-review-governance-input-packet.json)
+- Execution Plan preflight evidence:
+  - `validate_input_packet.py knowledge/wiki/syntheses/loop-review-governance-input-packet.json`: `INPUT PACKET OK`
+  - `validate_input_packet.py ... --json`: `{"ok": true, "errors": []}`
+  - `check_capabilities.py --input ... --json`: `ok: true`; `requesting-code-review` と `tdd` 検出済み。remote write は未承認。
 
 ## Local Issue Ledger
 
