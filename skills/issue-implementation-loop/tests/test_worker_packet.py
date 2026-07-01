@@ -474,6 +474,47 @@ class WorkerPacketTests(unittest.TestCase):
             65,
         )
 
+    def test_worker_packet_rejects_session_level_hardening_candidate_decision_state(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "worktree"
+            root.mkdir()
+            envelope, runtime, issue_source = self.write_v2_sources(root)
+            cases = [
+                (
+                    "top_level",
+                    lambda packet: packet.update({"hardening_candidates": []}),
+                    "unknown field: hardening_candidates",
+                ),
+                (
+                    "review_policy",
+                    lambda packet: packet.update({"review_policy": {"hardening_candidates": {}}}),
+                    "unknown field: review_policy",
+                ),
+                (
+                    "task_decisions",
+                    lambda packet: packet["task"].update({"candidate_decisions": []}),
+                    "unknown field: task.candidate_decisions",
+                ),
+                (
+                    "context_policy_state",
+                    lambda packet: packet["context_policy"].update(
+                        {"candidate_registry_path": "decisions/hardening-candidates.json"}
+                    ),
+                    "unknown field: context_policy.candidate_registry_path",
+                ),
+            ]
+            for name, mutate, expected in cases:
+                with self.subTest(name):
+                    packet = valid_worker_packet_v2(root, envelope, runtime, issue_source)
+                    mutate(packet)
+                    packet_path = root / f"{name}.json"
+                    write_json(packet_path, packet)
+
+                    result = run_script("validate_worker_packet.py", str(packet_path))
+
+                    self.assertNotEqual(result.returncode, 0, name)
+                    self.assertIn(expected, result.stderr)
+
     def test_worker_contract_points_workers_to_normalized_packet_tools(self) -> None:
         worker_contract = (SKILL_DIR / "references" / "worker-contract.md").read_text(
             encoding="utf-8"

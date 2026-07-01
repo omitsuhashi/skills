@@ -103,6 +103,14 @@ def base_envelope() -> dict:
             "max_review_cycles": 2,
             "max_fix_cycles": 2,
             "same_finding_limit": 2,
+            "hardening_candidates": {
+                "candidate_registry_path": "decisions/hardening-candidates.json",
+                "max_candidates_per_issue": 5,
+                "max_summary_words": 80,
+                "issue_completion_blocking": False,
+                "final_delivery_requires_decisions": True,
+                "worker_packet_decision_state": "forbidden",
+            },
         },
         "human_policy": {
             "default_scope": "issue",

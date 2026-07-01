@@ -37,6 +37,51 @@ SESSION_COMPACTION_REQUIRED_VALUES = {
     "inline_json_code_diff_lines_hard": 80,
 }
 
+HARDENING_CANDIDATES_REQUIRED_FIELDS = {
+    "candidate_registry_path",
+    "final_delivery_requires_decisions",
+    "issue_completion_blocking",
+    "max_candidates_per_issue",
+    "max_summary_words",
+    "worker_packet_decision_state",
+}
+
+
+def _validate_hardening_candidates_policy(
+    policy: Any,
+    errors: list[str],
+) -> None:
+    prefix = "review_policy.hardening_candidates"
+    if policy is None:
+        return
+    if not isinstance(policy, dict):
+        errors.append(f"{prefix} must be an object")
+        return
+
+    for field in sorted(policy):
+        if field not in HARDENING_CANDIDATES_REQUIRED_FIELDS:
+            errors.append(f"unknown field: {prefix}.{field}")
+    for field in sorted(HARDENING_CANDIDATES_REQUIRED_FIELDS):
+        if field not in policy:
+            errors.append(f"{prefix}.{field} is required")
+
+    if policy.get("candidate_registry_path") != "decisions/hardening-candidates.json":
+        errors.append(
+            f"{prefix}.candidate_registry_path must be decisions/hardening-candidates.json"
+        )
+    max_candidates = policy.get("max_candidates_per_issue")
+    if not isinstance(max_candidates, int) or max_candidates < 1 or max_candidates > 5:
+        errors.append(f"{prefix}.max_candidates_per_issue must be an integer between 1 and 5")
+    max_summary_words = policy.get("max_summary_words")
+    if not isinstance(max_summary_words, int) or max_summary_words < 1 or max_summary_words > 80:
+        errors.append(f"{prefix}.max_summary_words must be an integer between 1 and 80")
+    if policy.get("issue_completion_blocking") is not False:
+        errors.append(f"{prefix}.issue_completion_blocking must be false")
+    if policy.get("final_delivery_requires_decisions") is not True:
+        errors.append(f"{prefix}.final_delivery_requires_decisions must be true")
+    if policy.get("worker_packet_decision_state") != "forbidden":
+        errors.append(f"{prefix}.worker_packet_decision_state must be forbidden")
+
 
 def validate_execution_envelope(envelope: dict[str, Any]) -> list[str]:
     errors: list[str] = []
@@ -100,6 +145,10 @@ def validate_execution_envelope(envelope: dict[str, Any]) -> list[str]:
             or max_fix_cycles > MAX_REVIEW_CYCLES
         ):
             errors.append("review_policy.max_fix_cycles must be an integer between 0 and 2")
+        _validate_hardening_candidates_policy(
+            review_policy.get("hardening_candidates"),
+            errors,
+        )
 
     remote_policy = envelope.get("remote_write_policy")
     batch_issue_prs = False
