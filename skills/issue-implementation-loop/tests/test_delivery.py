@@ -184,6 +184,57 @@ class DeliveryTests(unittest.TestCase):
             self.assertIn("approved_for_current_pr", payload["errors"][0])
             self.assertIn("G2PR-004", payload["errors"][0])
 
+    def test_validate_delivery_plan_rejects_safety_escalation_declined_or_deferred(self) -> None:
+        for decision in ("declined", "deferred_follow_up"):
+            with self.subTest(decision=decision), tempfile.TemporaryDirectory() as tmp:
+                envelope_path = Path(tmp) / "envelope.json"
+                runtime_path = Path(tmp) / "runtime-state.json"
+                plan_path = Path(tmp) / "delivery-plan.json"
+                registry_path = Path(tmp) / "decisions" / "hardening-candidates.json"
+                envelope = batch_issue_prs_envelope()
+                envelope["remote_write_policy"]["approved_actions"] = [
+                    "final_pr_push_head",
+                    "final_pr_create_draft",
+                ]
+                write_json(envelope_path, envelope)
+                write_json(runtime_path, merged_runtime_state())
+                write_hardening_registry(
+                    registry_path,
+                    [
+                        hardening_candidate(
+                            f"HC-G2PR-001-{decision}",
+                            classification="safety_escalation",
+                            decision=decision,
+                        )
+                    ],
+                )
+                write_json(
+                    plan_path,
+                    {
+                        "action": "final_pr",
+                        "head": "codex/issue-implementation-loop/epic-base",
+                        "base": "main",
+                        "issue_scope": ["G2PR-001", "G2PR-002", "G2PR-003"],
+                    },
+                )
+
+                result = run_script(
+                    "validate_delivery_plan.py",
+                    str(envelope_path),
+                    str(runtime_path),
+                    str(plan_path),
+                    "--json",
+                )
+
+                self.assertNotEqual(result.returncode, 0)
+                payload = json.loads(result.stdout)
+                self.assertFalse(payload["ok"])
+                self.assertIn("unresolved safety_escalation", payload["errors"][0])
+                self.assertEqual(
+                    [candidate["decision"] for candidate in payload["pending_hardening_candidates"]],
+                    [decision],
+                )
+
     def test_validate_delivery_plan_allows_resolved_candidates_and_reports_residual_risks(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             envelope_path = Path(tmp) / "envelope.json"

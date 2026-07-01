@@ -12,6 +12,7 @@ from .validation.runtime_state import validate_runtime_state
 
 
 RESIDUAL_RISK_DECISIONS = {"deferred_follow_up", "declined", "risk_accepted"}
+SAFETY_ESCALATION_RESOLUTION_DECISIONS = {"risk_accepted", "implemented"}
 READY_IMPLEMENTATION_STATUSES = {"PR_READY"}
 
 
@@ -175,8 +176,7 @@ def hardening_candidate_report(
 
         if classification == "safety_escalation":
             safety_resolved = (
-                decision in RESIDUAL_RISK_DECISIONS
-                or decision == "implemented"
+                decision in SAFETY_ESCALATION_RESOLUTION_DECISIONS
                 or (decision == "approved_for_current_pr" and implementation_ready)
             )
             if not safety_resolved:
