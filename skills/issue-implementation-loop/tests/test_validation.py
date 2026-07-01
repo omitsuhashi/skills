@@ -300,6 +300,57 @@ class ValidationTests(unittest.TestCase):
 
             self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_validate_execution_envelope_rejects_malformed_hardening_candidate_policy(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cases = [
+                (
+                    "registry_path",
+                    {"candidate_registry_path": "inline-candidates.json"},
+                    "review_policy.hardening_candidates.candidate_registry_path",
+                ),
+                (
+                    "too_many_candidates",
+                    {"max_candidates_per_issue": 999},
+                    "review_policy.hardening_candidates.max_candidates_per_issue",
+                ),
+                (
+                    "long_summary",
+                    {"max_summary_words": 999},
+                    "review_policy.hardening_candidates.max_summary_words",
+                ),
+                (
+                    "completion_blocking",
+                    {"issue_completion_blocking": True},
+                    "review_policy.hardening_candidates.issue_completion_blocking",
+                ),
+                (
+                    "delivery_not_gated",
+                    {"final_delivery_requires_decisions": False},
+                    "review_policy.hardening_candidates.final_delivery_requires_decisions",
+                ),
+                (
+                    "worker_decision_state",
+                    {"worker_packet_decision_state": "included"},
+                    "review_policy.hardening_candidates.worker_packet_decision_state",
+                ),
+                (
+                    "unknown_decision_state",
+                    {"candidate_decisions": []},
+                    "unknown field: review_policy.hardening_candidates.candidate_decisions",
+                ),
+            ]
+            for name, patch, expected in cases:
+                with self.subTest(name):
+                    envelope = base_envelope()
+                    envelope["review_policy"]["hardening_candidates"].update(patch)
+                    path = Path(tmp) / f"{name}.json"
+                    write_json(path, envelope)
+
+                    result = run_script("validate_execution_envelope.py", str(path))
+
+                    self.assertNotEqual(result.returncode, 0, name)
+                    self.assertIn(expected, result.stderr)
+
     def test_validate_execution_envelope_requires_worker_context_boundaries(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             cases = [
