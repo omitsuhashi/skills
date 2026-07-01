@@ -26,7 +26,8 @@ class LoopReviewGovernanceLedgerTests(unittest.TestCase):
             "`hardening_candidate`",
             "`safety_escalation`",
             "`classification_needed`",
-            "Issue completion の blocker ではなく、final PR 前の人間判断 queue",
+            "future-only hardening は routine review では記録しない",
+            "明示依頼または current PR delivery risk",
         ):
             self.assertIn(required, spec_text)
 
@@ -39,7 +40,7 @@ class LoopReviewGovernanceLedgerTests(unittest.TestCase):
         ):
             self.assertIn(required, lrg005)
 
-    def test_ledger_aggregates_lrg001_through_lrg005_evidence_and_pending_decisions(self) -> None:
+    def test_ledger_aggregates_lrg001_through_lrg005_evidence_and_follow_up_decisions(self) -> None:
         text = LEDGER.read_text(encoding="utf-8")
 
         for issue_id in ("LRG-001", "LRG-002", "LRG-003", "LRG-004", "LRG-005"):
@@ -56,8 +57,8 @@ class LoopReviewGovernanceLedgerTests(unittest.TestCase):
             "HC-LRG-003-001",
             "HC-LRG-003-002",
             "HC-LRG-004-001",
-            "`pending_decision`",
-            "draft PR 作成を止めない",
+            "`deferred_follow_up`",
+            "future-only hardening を通常レビュー観点から外す",
         ):
             self.assertIn(required, text)
 
@@ -82,19 +83,22 @@ class LoopReviewGovernanceLedgerTests(unittest.TestCase):
             "[2026-07-01] review-fix | Loop review governance draft PR decision surface",
             "[2026-07-01] review-fix | Loop review governance hardening decision visibility",
             "[2026-07-01] review-fix | Loop review governance hardening decision material",
-            "pending_decision` は draft PR 作成ではなく",
-            "HC-LRG-002-001、HC-LRG-003-001、HC-LRG-003-002、HC-LRG-004-001 は pending_decision",
+            "[2026-07-01] review-fix | Loop review governance future-only hardening scope",
+            "既存 hardening candidate 4 件を `deferred_follow_up`",
+            "future-only hardening を routine review から外し",
         ):
             self.assertIn(required, log_text)
 
-    def test_hardening_decision_file_explains_storage_origin_and_target_paths(self) -> None:
+    def test_hardening_decision_file_records_follow_up_and_review_scope_correction(self) -> None:
         text = HARDENING_DECISIONS.read_text(encoding="utf-8")
 
         for required in (
             "## 保存場所と読み方",
             "## 出典 / 指している箇所",
-            "## 判断材料サマリ",
-            "## 候補別判断メモ",
+            "## Review Scope Correction",
+            "既存 4 件は current PR に取り込まず `deferred_follow_up`",
+            "future-only hardening を通常レビュー観点から外す",
+            "explicitly requested by the human or tied to current PR delivery risk",
             "runtime registry の `candidates[0]`",
             "runtime registry の `candidates[1]`",
             "runtime registry の `candidates[2]`",
@@ -106,13 +110,10 @@ class LoopReviewGovernanceLedgerTests(unittest.TestCase):
             "skills/issue-implementation-loop/scripts/check_capabilities.py",
             "skills/issue-implementation-loop/scripts/lib/issue_implementation_loop/delivery.py",
             "skills/issue-implementation-loop/scripts/lib/issue_implementation_loop/validation/execution_envelope.py",
-            "判断したい問い",
-            "今回取り込む効果",
-            "今回取り込むコスト / 影響",
-            "`HC-LRG-002-001`: resume brief の pending 件数を動的算出する",
-            "`HC-LRG-003-001`: `check_capabilities.py` に worker packet routing coverage を足す",
-            "`HC-LRG-003-002`: local-only completion report validator に接続する",
-            "`HC-LRG-004-001`: acceptance criteria と `write_scope` の mismatch preflight",
+            "| `HC-LRG-002-001` | `deferred_follow_up` |",
+            "| `HC-LRG-003-001` | `deferred_follow_up` |",
+            "| `HC-LRG-003-002` | `deferred_follow_up` |",
+            "| `HC-LRG-004-001` | `deferred_follow_up` |",
         ):
             self.assertIn(required, text)
 
@@ -134,7 +135,8 @@ class LoopReviewGovernanceLedgerTests(unittest.TestCase):
 
         for required in (
             "Execution Plan Gate",
-            "`hardening_candidate` は自動修正せず、final PR 前に人間判断へ送る",
+            "future-only hardening は通常レビュー観点から外す",
+            "`hardening_candidate` は明示依頼または current PR delivery risk に結び付く場合だけ記録し、自動修正しない",
             "Runtime root:",
         ):
             self.assertIn(required, handoff_text)

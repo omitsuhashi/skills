@@ -40,18 +40,21 @@ class ReviewGateTests(unittest.TestCase):
         ):
             self.assertIn(required, text)
 
-    def test_review_packet_separates_required_intent_lane_from_optional_hardening_lane(self) -> None:
+    def test_review_packet_excludes_future_only_hardening_by_default(self) -> None:
         text = REVIEW_GATE.read_text(encoding="utf-8")
 
         for required in (
             "Issue intent review lane",
             "required lane",
-            "Hardening candidate lane",
-            "optional lane",
-            "source artifacts are already satisfied",
+            "Future-only hardening suggestions are out of review scope by default",
+            "Do not ask the reviewer to enumerate general hardening ideas",
+            "only when explicitly requested by the human or tied to current PR delivery risk",
             "do not auto-fix",
         ):
             self.assertIn(required, text)
+
+        self.assertNotIn("Hardening candidate lane", text)
+        self.assertNotIn("optional lane", text)
 
     def test_requesting_code_review_is_primary_reviewer_contract(self) -> None:
         text = REVIEW_GATE.read_text(encoding="utf-8")

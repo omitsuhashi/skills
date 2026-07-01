@@ -25,6 +25,10 @@ This coordinator-owned runtime artifact is not a worker branch artifact or
 ledger replacement. Track only the schema/template in `assets/`; do not commit
 the live registry in a worker branch.
 
+Do not create registry entries for routine future-only hardening ideas. The
+registry is for human-requested hardening review, current PR delivery-risk
+decisions, `safety_escalation`, and `classification_needed`.
+
 Candidate fields: `candidate_id`, `source_issue`, `classification`, `summary`,
 `risk`, `estimated_scope`, `decision`, `implementation_issue`.
 
@@ -37,7 +41,8 @@ Defaults: each `hardening_candidate.summary` is 80 words or fewer; each source
 issue records 5 件 or fewer.
 
 `hardening_candidate` does not block completion, blocker release, or local
-`PR_READY`. `safety_escalation` and `classification_needed` require scoped
+`PR_READY`. Future-only suggestions are omitted rather than carried to the
+registry. `safety_escalation` and `classification_needed` require scoped
 `human_request_opened`.
 
 ## Validation

@@ -29,6 +29,8 @@ review.
   shared artifact is affected.
 - Use `epic` only for the existing epic-wide reasons above.
 
-`hardening_candidate` alone does not open a human wait. It is recorded in
-`<runtime-root>/decisions/hardening-candidates.json` for the final decision
-gate.
+Routine future-only hardening suggestions are not review findings and do not
+open a human wait. A `hardening_candidate` is recorded in
+`<runtime-root>/decisions/hardening-candidates.json` only when the human
+explicitly requested hardening review or the candidate is tied to current PR
+delivery risk. It still does not open an issue execution wait by itself.

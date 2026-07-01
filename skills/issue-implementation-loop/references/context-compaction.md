@@ -33,13 +33,15 @@ At every `prepare`, `execute`, `review`, `resume`, and `deliver` exit, create a 
 - affected issue IDs, branch/worktree, base/head SHA, and review range
 - approval state, remote-write policy, human waits, blockers, and residual risks
 - verification command/result summary and evidence paths
-- `Pending hardening decisions: N` and `<runtime-root>/decisions/hardening-candidates.json` when unresolved candidates exist
+- `Pending hardening decisions: N` and `<runtime-root>/decisions/hardening-candidates.json` when unresolved human-requested or current-delivery candidates exist
 
 Drop raw worker JSON, full worker report text, full review text, candidate full text, command output dumps, diff/patch text, stale drafts, rejected alternatives, and local implementation trial-and-error from carry-forward context after the phase exit. If needed later, reload the bounded source artifact by path and digest.
 
 ## Candidate Registry Carry-Forward
 
 Hardening candidate state is carried by path, not by copied proposal text.
+Routine future-only hardening ideas are not review findings and should not enter
+the registry or carry-forward capsule.
 Carry forward only:
 
 ```text

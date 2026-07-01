@@ -16,7 +16,7 @@
 
 - Gate state: Spec Gate、Issue Gate、Execution Plan Gate は承認済み。draft final PR 作成のみ承認済み。
 - Execution policy: `worker_context_required=true`、`coordinator_may_implement=false`、`serial_fallback_mode=worker_context_only`。
-- Review policy: `requesting-code-review` を第一候補とし、`max_review_cycles=2`。`hardening_candidate` は自動修正せず、final PR 前に人間判断へ送る。
+- Review policy: `requesting-code-review` を第一候補とし、`max_review_cycles=2`。future-only hardening は通常レビュー観点から外す。`hardening_candidate` は明示依頼または current PR delivery risk に結び付く場合だけ記録し、自動修正しない。
 - Context policy: paths-first、full spec/ledger paste 禁止、worker packet default 600 words、session compaction は soft 65% / hard 75% / mandatory handoff compaction `1` / phase transition GC required。
 - Dependency order: LRG-001 -> LRG-002 -> LRG-003。LRG-004 は LRG-001 / LRG-002 後、LRG-005 は LRG-001 から LRG-004 後。
 - Runnable first issue: LRG-001。LRG-002 / LRG-003 / LRG-004 / LRG-005 は blocker release まで reserved。

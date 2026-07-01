@@ -69,7 +69,7 @@
   "work_items": [
     {
       "id": "LRG-001",
-      "title": "review finding taxonomy と 2 lane packet を定義する",
+      "title": "review finding taxonomy と narrow packet を定義する",
       "source": {
         "type": "local",
         "path": "knowledge/wiki/syntheses/loop-review-governance-issues.md"
@@ -78,9 +78,9 @@
         "review-gate.md が intent_gap、implementation_regression、hardening_candidate、safety_escalation、classification_needed の分類を定義する",
         "superpowers:requesting-code-review を Issue 実装レビューの第一候補として明記する",
         "reviewer packet は BASE_SHA / HEAD_SHA の committed range review を前提にする",
-        "reviewer packet は Issue 意図適合レビューを必須 lane、堅牢化候補列挙を任意 lane として分ける",
+        "reviewer packet は Issue 意図適合レビューを必須 lane とし、future-only hardening を通常レビュー観点から外す",
         "intent_gap / implementation_regression は blocking finding として既存 fix loop に乗る",
-        "hardening_candidate は review/fix cycle では自動修正要求にしない",
+        "hardening_candidate は明示依頼または current PR delivery risk に結び付く場合だけ記録し、review/fix cycle では自動修正要求にしない",
         "classification_needed は曖昧なまま自動修正せず、coordinator か人間判断へ送る",
         "review packet は paths-first で、default 600 words / hard 900 words の budget 方針を持つ"
       ],
@@ -111,7 +111,7 @@
       "acceptance_criteria": [
         "<runtime-root>/decisions/hardening-candidates.json を coordinator-owned artifact として定義する",
         "candidate は ID、source issue、classification、summary、risk、estimated scope、decision、implementation issue を持つ",
-        "hardening_candidate は 1 件 80 words 以下、1 issue 5 件以下を default とする",
+        "routine review は future-only hardening を列挙しない。明示依頼または current PR delivery risk として記録する hardening_candidate は 1 件 80 words 以下、1 issue 5 件以下を default とする",
         "candidate registry は worker branch に含めない",
         "resume brief は Pending hardening decisions: N と registry path だけを carry-forward する",
         "safety_escalation / classification_needed は必要最小 scope の human_request_opened へ送る",
@@ -241,8 +241,8 @@
         "path": "knowledge/wiki/syntheses/loop-review-governance-issues.md"
       },
       "acceptance_criteria": [
-        "intent_gap と hardening_candidate を混同しない regression がある",
-        "hardening_candidate が auto-fix されず final PR 前 decision queue に送られる regression がある",
+        "intent_gap と明示依頼または current PR delivery risk に限る hardening_candidate を混同しない regression がある",
+        "future-only hardening が routine review で列挙されず、記録済み hardening_candidate が auto-fix されない regression がある",
         "未判断 candidate は draft final PR 作成を止めず、ready-for-review / merge 前の一括判断 gate に出る regression がある",
         "superpowers:requesting-code-review 第一候補と fallback boundary の contract が test または docs regression で固定されている",
         "validate_skill_context.py --all が通る",
