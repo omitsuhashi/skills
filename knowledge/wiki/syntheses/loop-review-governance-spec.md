@@ -2,7 +2,7 @@
 
 ## 状態
 
-Spec Gate 承認済み。Issue Gate、Execution Plan Gate、実装、GitHub issue mirror、push、PR 作成、merge は未承認。
+Spec Gate / Issue Gate 承認済み。Execution Plan Gate、実装、GitHub issue mirror、push、PR 作成、merge は未承認。
 
 ## 仕様レビュー
 
@@ -33,6 +33,7 @@ Spec Gate 承認済み。Issue Gate、Execution Plan Gate、実装、GitHub issu
 - spec 作成前の `git status --short`: clean。作成後の未コミット差分は、この spec、`knowledge/index.md`、`knowledge/log.md` のみ。
 - 計画前提チェック: `python3 skills/grill-to-pr-loop/scripts/check_prereqs.py --phase planning` は通過済み。
 - 2026-07-01 にユーザーが Spec Gate を承認した。
+- 2026-07-01 にユーザーが Issue Gate を承認した。
 - `grill-to-pr-loop` は planning / spec / issue ledger / execution packet を所有し、実装は `issue-implementation-loop` に委譲する。
 - `issue-implementation-loop/references/review-gate.md` は、現在「approved local/remote issue、requirements/spec、acceptance criteria、non-goals、write scope、verification evidence」に対する gap だけを review scope としている。
 - `issue-implementation-loop` は issue implementation review を 2 cycle まで実行し、未解決 Critical / Important in-scope finding は人間 risk acceptance なしに completion / blocker release / PR readiness へ進めない。
@@ -345,6 +346,7 @@ GitHub issue mirror、push、draft PR 作成、ready-for-review、merge、force 
 
 ## 関連ページ
 
+- [Loop Review Governance Issue 台帳](loop-review-governance-issues.md)
 - [Grill To PR Loop Issue Implementation Review Gate Plan](grill-to-pr-loop-issue-implementation-review-gate-plan.md)
 - [Loop Skill 運用単純化仕様](loop-skill-operational-simplicity-spec.md)
 - [Loop Skill Context Compaction Spec](loop-skill-context-compaction-spec.md)
