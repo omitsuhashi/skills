@@ -2,7 +2,7 @@
 
 ## 状態
 
-Spec Gate / Issue Gate 承認済み。Execution Plan Gate、実装、GitHub issue mirror、push、PR 作成、merge は未承認。
+Spec Gate / Issue Gate / Execution Plan Gate 承認済み。Execution Envelope revision 1 prepare 済み。実装、GitHub issue mirror、push、PR 作成、merge は未承認。
 
 ## 仕様レビュー
 
@@ -34,6 +34,7 @@ Spec Gate / Issue Gate 承認済み。Execution Plan Gate、実装、GitHub issu
 - 計画前提チェック: `python3 skills/grill-to-pr-loop/scripts/check_prereqs.py --phase planning` は通過済み。
 - 2026-07-01 にユーザーが Spec Gate を承認した。
 - 2026-07-01 にユーザーが Issue Gate を承認した。
+- 2026-07-01 にユーザーが Execution Plan Gate を承認した。
 - `grill-to-pr-loop` は planning / spec / issue ledger / execution packet を所有し、実装は `issue-implementation-loop` に委譲する。
 - `issue-implementation-loop/references/review-gate.md` は、現在「approved local/remote issue、requirements/spec、acceptance criteria、non-goals、write scope、verification evidence」に対する gap だけを review scope としている。
 - `issue-implementation-loop` は issue implementation review を 2 cycle まで実行し、未解決 Critical / Important in-scope finding は人間 risk acceptance なしに completion / blocker release / PR readiness へ進めない。

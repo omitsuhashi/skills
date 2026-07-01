@@ -29,6 +29,10 @@ _現在なし。_
   検索語: loop review governance, local issue, Issue Gate, LRG, blocker graph, hardening candidate, requesting-code-review, context budget, ローカルIssue, 堅牢化
 - [Loop Review Governance Input Packet](wiki/syntheses/loop-review-governance-input-packet.json) — `loop-review-governance` の Execution Plan Gate 用 normalized input packet。承認済み LRG-001 から LRG-005 の source、acceptance criteria、write scope、dependencies、local-only delivery intent を正規化する。
   検索語: loop review governance, input packet, Execution Plan Gate, issue-implementation-loop, LRG, write scope, dependencies, local_only, 実行計画
+- [Loop Review Governance Execution Envelope](wiki/syntheses/loop-review-governance-execution-envelope.json) — `loop-review-governance` の local-only Execution Envelope。worker-only policy、review governance policy、branch/worktree reservation、Execution Plan Gate 承認済み prepare 契約を含む。
+  検索語: loop review governance, execution envelope, worker_context_required, local_only, LRG, worktree reservation, hardening candidate, requesting-code-review, 実行計画
+- [Loop Review Governance Handoff Brief](wiki/syntheses/loop-review-governance-handoff-brief.md) — Execution Plan Gate 後に raw transcript へ依存せず `issue-implementation-loop` を開始するための bounded handoff brief。
+  検索語: loop review governance, handoff brief, carry-forward capsule, issue-implementation-loop, runtime root, context compaction
 - [Grill To PR Loop Skill Split V2 Spec](wiki/syntheses/grill-to-pr-loop-skill-split-v2-spec.md) — `issue-implementation-loop` 新設と `grill-to-pr-loop` composition 縮小の実装契約。
   検索語: grill-to-pr-loop, issue-implementation-loop, execution envelope, worktree reservation, scheduler, human wait, runtime state, skill split, implementation plan
 - [Grill To PR Loop Skill Split V2 Issues](wiki/syntheses/grill-to-pr-loop-skill-split-v2-issues.md) — skill split 実装のローカルIssue ledger。

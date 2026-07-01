@@ -2,7 +2,7 @@
 
 ## 状態
 
-Spec Gate / Issue Gate 承認済み。Execution Plan Gate、実装、GitHub issue mirror、push、PR 作成、merge は未承認。
+Spec Gate / Issue Gate / Execution Plan Gate 承認済み。Execution Envelope revision 1 prepare 済み。実装、GitHub issue mirror、push、PR 作成、merge は未承認。
 
 ## Source
 
@@ -11,21 +11,26 @@ Spec Gate / Issue Gate 承認済み。Execution Plan Gate、実装、GitHub issu
 - Spec Gate approval commit: `3a8069b9a0e80e13cda4b547974abba639ddb59e`
 - Spec digest: `sha256:70f6d8879a4e17f219a532b7294863e775857d79a80f7e0c04fb346c16588edd`
 - Issue Gate approval: 2026-07-01 user approved this local issue ledger.
+- Execution Plan Gate approval: 2026-07-01 user approved the normalized input packet and execution plan.
 - Remote policy: `local_only`
 
 ## Phase Transition Capsule
 
-- Current phase result: Issue Gate 承認済み。LRG-001 から LRG-005 の粒度、blocker graph、dependency order、acceptance criteria は承認済み。
-- Next phase entrypoint: Execution Plan Gate preparation。
-- Canonical paths: spec は [loop-review-governance-spec.md](loop-review-governance-spec.md)、issue ledger はこの file。
-- Open decisions: normalized input packet、write scope、execution dependency graph、fallback policy、remote policy の Execution Plan Gate preflight。
+- Current phase result: Execution Plan Gate 承認済み。normalized input packet、write scope、execution dependency graph、fallback policy、remote policy は承認済み。
+- Next phase entrypoint: `issue-implementation-loop prepare` / `execute`。
+- Canonical paths: spec は [loop-review-governance-spec.md](loop-review-governance-spec.md)、issue ledger はこの file、input packet は [loop-review-governance-input-packet.json](loop-review-governance-input-packet.json)、Execution Envelope は [loop-review-governance-execution-envelope.json](loop-review-governance-execution-envelope.json)、handoff brief は [loop-review-governance-handoff-brief.md](loop-review-governance-handoff-brief.md)。
+- Open decisions: なし。実装中に approved scope 変更、worker context 不在、remote write、高リスク操作が必要になった場合は停止する。
 - Pending risk: candidate registry を schema-backed にすると実装量が増える。Issue Gate approval は schema-backed 初回実装を必須化しない。Execution Plan では LRG-002 acceptance に従い、reference-only / schema-backed のいずれかを一貫して選ぶ。
 - Execution Plan artifacts:
   - [loop-review-governance-input-packet.json](loop-review-governance-input-packet.json)
+  - [loop-review-governance-execution-envelope.json](loop-review-governance-execution-envelope.json)
+  - [loop-review-governance-handoff-brief.md](loop-review-governance-handoff-brief.md)
 - Execution Plan preflight evidence:
   - `validate_input_packet.py knowledge/wiki/syntheses/loop-review-governance-input-packet.json`: `INPUT PACKET OK`
   - `validate_input_packet.py ... --json`: `{"ok": true, "errors": []}`
   - `check_capabilities.py --input ... --json`: `ok: true`; `requesting-code-review` と `tdd` 検出済み。remote write は未承認。
+  - `validate_execution_envelope.py knowledge/wiki/syntheses/loop-review-governance-execution-envelope.json`: `EXECUTION ENVELOPE OK`
+  - `reconcile_git_state.py knowledge/wiki/syntheses/loop-review-governance-execution-envelope.json --json`: `ok: true`
 
 ## Local Issue Ledger
 
