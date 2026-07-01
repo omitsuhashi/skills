@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "epic_id": "<epic-id>",
+  "registry_path": "<runtime-root>/decisions/hardening-candidates.json",
+  "limits": {
+    "hardening_candidate_summary_words_default": 80,
+    "hardening_candidates_per_issue_default": 5
+  },
+  "candidates": [
+    {
+      "candidate_id": "HC-<issue-id>-001",
+      "source_issue": "<issue-id>",
+      "classification": "hardening_candidate",
+      "summary": "Add a bounded follow-up guardrail.",
+      "risk": "Low if deferred; source issue acceptance remains satisfied.",
+      "estimated_scope": [
+        "path:skills/..."
+      ],
+      "decision": "pending_decision",
+      "implementation_issue": null,
+      "delivery_blocker": false,
+      "recommended_decision": "deferred_follow_up",
+      "decision_reason": null,
+      "decided_by": null,
+      "decided_at": null
+    }
+  ]
+}
