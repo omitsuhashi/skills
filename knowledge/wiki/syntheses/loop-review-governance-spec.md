@@ -2,7 +2,7 @@
 
 ## 状態
 
-Spec Gate / Issue Gate / Execution Plan Gate 承認済み。Execution Envelope revision 2 prepare 済み。LRG-001 から LRG-005 は final PR branch に統合済み。draft PR 作成はユーザー承認済み。GitHub issue mirror、ready-for-review、merge、force push、deploy、credential、permission、billing、production、destructive action は未承認。
+Spec Gate / Issue Gate / Execution Plan Gate 承認済み。Execution Envelope revision 2 prepare 済み。LRG-001 から LRG-005 は final PR branch に統合済み。Draft final PR [#27](https://github.com/omitsuhashi/skills/pull/27) 作成済み。GitHub issue mirror、ready-for-review、merge、force push、deploy、credential、permission、billing、production、destructive action は未承認。
 
 ## 仕様レビュー
 

@@ -2,7 +2,7 @@
 
 ## 状態
 
-Spec Gate / Issue Gate / Execution Plan Gate 承認済み。LRG-001 から LRG-005 は final PR branch に統合済み。draft PR 作成は承認済み。ready-for-review、merge、force push、production / credential / permission / billing / destructive action は未承認。
+Spec Gate / Issue Gate / Execution Plan Gate 承認済み。LRG-001 から LRG-005 は final PR branch に統合済み。Draft final PR [#27](https://github.com/omitsuhashi/skills/pull/27) 作成済み。ready-for-review、merge、force push、production / credential / permission / billing / destructive action は未承認。
 
 ## Source
 
@@ -16,8 +16,8 @@ Spec Gate / Issue Gate / Execution Plan Gate 承認済み。LRG-001 から LRG-0
 
 ## Phase Transition Capsule
 
-- Current phase result: LRG-001 から LRG-005 は final PR branch に統合済み。
-- Next phase entrypoint: draft final PR を作成し、統合 diff 上で hardening candidate を一括判断する。
+- Current phase result: LRG-001 から LRG-005 は final PR branch に統合済み。Draft final PR [#27](https://github.com/omitsuhashi/skills/pull/27) 作成済み。
+- Next phase entrypoint: draft final PR の統合 diff 上で hardening candidate を一括判断する。
 - Canonical paths: spec は [loop-review-governance-spec.md](loop-review-governance-spec.md)、issue ledger はこの file、input packet は [loop-review-governance-input-packet.json](loop-review-governance-input-packet.json)、Execution Envelope は [loop-review-governance-execution-envelope.json](loop-review-governance-execution-envelope.json)、handoff brief は [loop-review-governance-handoff-brief.md](loop-review-governance-handoff-brief.md)、candidate decision surface は [loop-review-governance-hardening-decisions.md](loop-review-governance-hardening-decisions.md)。
 - Open decisions: pending hardening candidates を一括で current PR に取り込む / 後続へ送る / 採用しない / risk acceptance のどれにするか。
 - Pending risk: 未判断 hardening candidate は draft PR 作成を止めないが、ready-for-review、merge、risk acceptance、candidate 取り込み実装の前に人間判断が必要。
@@ -37,11 +37,11 @@ Spec Gate / Issue Gate / Execution Plan Gate 承認済み。LRG-001 から LRG-0
 
 | Epic ID | ローカルID | タイトル | レビュー状態 | 実行状態 | ブロック元 | ブロック先 | GitHub Issue | 実装レビュー | PR |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| loop-review-governance | LRG-001 | review finding taxonomy と 2 lane packet を定義する | 承認済み | final branch 統合済み | なし | LRG-002, LRG-004, LRG-005 | 未作成 | approved cycle 2 | draft final PR 作成予定 |
-| loop-review-governance | LRG-002 | candidate registry と bounded decision artifact を追加する | 承認済み | final branch 統合済み | LRG-001 | LRG-003, LRG-004, LRG-005 | 未作成 | approved cycle 1 | draft final PR 作成予定 |
-| loop-review-governance | LRG-003 | final delivery preflight に pending candidate check を追加する | 承認済み | final branch 統合済み | LRG-002 | LRG-005 | 未作成 | approved cycle 2 | draft final PR 作成予定 |
-| loop-review-governance | LRG-004 | execution handoff / envelope policy を同期する | 承認済み | final branch 統合済み | LRG-001, LRG-002 | LRG-005 | 未作成 | approved cycle 2 | draft final PR 作成予定 |
-| loop-review-governance | LRG-005 | regression tests と wiki discoverability を更新する | 承認済み | final branch 統合済み | LRG-001, LRG-002, LRG-003, LRG-004 | なし | 未作成 | integrated conflict resolution | draft final PR 作成予定 |
+| loop-review-governance | LRG-001 | review finding taxonomy と 2 lane packet を定義する | 承認済み | final branch 統合済み | なし | LRG-002, LRG-004, LRG-005 | 未作成 | approved cycle 2 | [draft PR #27](https://github.com/omitsuhashi/skills/pull/27) |
+| loop-review-governance | LRG-002 | candidate registry と bounded decision artifact を追加する | 承認済み | final branch 統合済み | LRG-001 | LRG-003, LRG-004, LRG-005 | 未作成 | approved cycle 1 | [draft PR #27](https://github.com/omitsuhashi/skills/pull/27) |
+| loop-review-governance | LRG-003 | final delivery preflight に pending candidate check を追加する | 承認済み | final branch 統合済み | LRG-002 | LRG-005 | 未作成 | approved cycle 2 | [draft PR #27](https://github.com/omitsuhashi/skills/pull/27) |
+| loop-review-governance | LRG-004 | execution handoff / envelope policy を同期する | 承認済み | final branch 統合済み | LRG-001, LRG-002 | LRG-005 | 未作成 | approved cycle 2 | [draft PR #27](https://github.com/omitsuhashi/skills/pull/27) |
+| loop-review-governance | LRG-005 | regression tests と wiki discoverability を更新する | 承認済み | final branch 統合済み | LRG-001, LRG-002, LRG-003, LRG-004 | なし | 未作成 | integrated conflict resolution | [draft PR #27](https://github.com/omitsuhashi/skills/pull/27) |
 
 ## Blocker Graph
 
@@ -61,7 +61,7 @@ LRG-004 -> LRG-005
 - Final branch 統合済み: LRG-001、LRG-002、LRG-003、LRG-004、LRG-005。
 - ブロック中: なし。
 - Cyclic blocker: なし。
-- GitHub issue mirror / ready-for-review / merge: 未承認。branch push と draft final PR 作成のみ承認済み。
+- GitHub issue mirror / ready-for-review / merge: 未承認。Branch push と draft final PR [#27](https://github.com/omitsuhashi/skills/pull/27) 作成のみ実行済み。
 - Issue Gate 承認済みのため、全 issue の `レビュー状態` は `承認済み` とする。
 
 ## LRG-001: review finding taxonomy と 2 lane packet を定義する
@@ -358,7 +358,7 @@ Review governance の regression coverage、context budget evidence、wiki disco
 - LRG-005: `b7a5b989bb856ec0703f490361f7d9898ac521f4..HEAD`、regression discoverability / wiki synchronization branch。
 - Runtime state: `/Users/omitsuhashi/repos/omitsuhashi/skills/.git/agent-runs/issue-implementation-loop/loop-review-governance/runtime-state.json`
 - Candidate registry: `/Users/omitsuhashi/repos/omitsuhashi/skills/.git/agent-runs/issue-implementation-loop/loop-review-governance/decisions/hardening-candidates.json`
-- Remote policy: branch push と draft final PR 作成のみ承認済み。GitHub issue mirror、ready-for-review、merge、force push、production / credential / permission / billing / destructive action は未実行。
+- Remote policy: branch push と draft final PR [#27](https://github.com/omitsuhashi/skills/pull/27) 作成のみ実行済み。GitHub issue mirror、ready-for-review、merge、force push、production / credential / permission / billing / destructive action は未実行。
 - Delivery validation: `validate_delivery_plan.py knowledge/wiki/syntheses/loop-review-governance-execution-envelope.json /private/tmp/loop-review-governance-delivery/runtime-state.json knowledge/wiki/syntheses/loop-review-governance-final-delivery-plan.json --json` は `ok: true`。`errors: []`、`decision_gate_blockers` は pending hardening candidate 4 件。
 
 ## Pending Hardening Decisions
