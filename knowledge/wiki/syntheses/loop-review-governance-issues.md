@@ -362,7 +362,7 @@ Review governance の regression coverage、context budget evidence、wiki disco
 - Remote policy: branch push と draft final PR [#27](https://github.com/omitsuhashi/skills/pull/27) 作成のみ実行済み。GitHub issue mirror、ready-for-review、merge、force push、production / credential / permission / billing / destructive action は未実行。
 - Delivery validation: `validate_delivery_plan.py knowledge/wiki/syntheses/loop-review-governance-execution-envelope.json /private/tmp/loop-review-governance-delivery/runtime-state.json knowledge/wiki/syntheses/loop-review-governance-final-delivery-plan.json --json` は `ok: true`。`errors: []`。当初の pending hardening candidate 4 件は review comment により `deferred_follow_up` と判断済み。
 
-## Pending Hardening Decisions
+## Deferred Hardening Follow-ups
 
 判断対象の正本は [loop-review-governance-hardening-decisions.md](loop-review-governance-hardening-decisions.md) に置く。既存 4 件は `deferred_follow_up` とし、future-only hardening は通常レビュー観点から外す。
 

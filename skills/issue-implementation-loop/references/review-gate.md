@@ -4,7 +4,7 @@ Run after fresh final verification, before issue completion, blocker release, or
 
 ## Scope
 
-Review only approved issue, spec/requirements, acceptance criteria, non-goals, write scope, and verification evidence.
+Review issue intent/regression against approved issue, spec/requirements, acceptance criteria, non-goals, write scope, and verification evidence, and check current PR delivery risk / safety escalation.
 
 Ignore quality/architecture/style/performance/refactor/docs suggestions unless they prove a source artifact is unmet.
 

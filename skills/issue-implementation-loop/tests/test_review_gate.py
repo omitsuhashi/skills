@@ -33,6 +33,7 @@ class ReviewGateTests(unittest.TestCase):
             "paths-first",
             "`BASE_SHA` / `HEAD_SHA`",
             "committed range review",
+            "check current PR delivery risk",
             "default 600 words",
             "hard 900 words",
             "Do not paste full spec",

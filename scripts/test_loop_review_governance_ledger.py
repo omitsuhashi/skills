@@ -48,6 +48,7 @@ class LoopReviewGovernanceLedgerTests(unittest.TestCase):
 
         for required in (
             "## 実装証跡サマリ",
+            "## Deferred Hardening Follow-ups",
             "LRG-001: `b7a5b989bb856ec0703f490361f7d9898ac521f4..461cea6cb48b4a44b40148e2523a5cd17a386f86`",
             "LRG-002: `461cea6cb48b4a44b40148e2523a5cd17a386f86..1ee5eb11b6fa23a1e33f82649ec38438dd5b6404`",
             "LRG-003: `1ee5eb11b6fa23a1e33f82649ec38438dd5b6404..2a02704943d6d9dc86a130074cafa85c80c06a1f`",
@@ -61,6 +62,7 @@ class LoopReviewGovernanceLedgerTests(unittest.TestCase):
             "future-only hardening を通常レビュー観点から外す",
         ):
             self.assertIn(required, text)
+        self.assertNotIn("## Pending Hardening Decisions", text)
 
     def test_index_and_log_expose_execution_artifacts_and_gate_evidence(self) -> None:
         index_text = INDEX.read_text(encoding="utf-8")
@@ -91,11 +93,13 @@ class LoopReviewGovernanceLedgerTests(unittest.TestCase):
 
     def test_hardening_decision_file_records_follow_up_and_review_scope_correction(self) -> None:
         text = HARDENING_DECISIONS.read_text(encoding="utf-8")
+        ledger_text = LEDGER.read_text(encoding="utf-8")
 
         for required in (
             "## 保存場所と読み方",
             "## 出典 / 指している箇所",
             "## Review Scope Correction",
+            "Deferred Hardening Follow-ups",
             "既存 4 件は current PR に取り込まず `deferred_follow_up`",
             "future-only hardening を通常レビュー観点から外す",
             "explicitly requested by the human or tied to current PR delivery risk",
@@ -116,6 +120,8 @@ class LoopReviewGovernanceLedgerTests(unittest.TestCase):
             "| `HC-LRG-004-001` | `deferred_follow_up` |",
         ):
             self.assertIn(required, text)
+        self.assertNotIn("Pending Hardening Decisions", text)
+        self.assertNotIn("## Pending Hardening Decisions", ledger_text)
 
     def test_execution_envelope_and_handoff_brief_are_discoverable_artifacts(self) -> None:
         envelope_text = EXECUTION_ENVELOPE.read_text(encoding="utf-8")

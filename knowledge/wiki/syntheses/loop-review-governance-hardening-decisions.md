@@ -9,7 +9,7 @@ Resolved for current draft PR。PR review comment で既存 4 件は current PR 
 ## Source
 
 - Runtime registry: `/Users/omitsuhashi/repos/omitsuhashi/skills/.git/agent-runs/issue-implementation-loop/loop-review-governance/decisions/hardening-candidates.json`
-- Human-readable source: この file と [loop-review-governance-issues.md](loop-review-governance-issues.md) の `Pending Hardening Decisions`
+- Human-readable source: この file と [loop-review-governance-issues.md](loop-review-governance-issues.md) の `Deferred Hardening Follow-ups`
 - PR 上の確認面: draft PR [#27](https://github.com/omitsuhashi/skills/pull/27)
 
 ## Review Scope Correction
@@ -33,8 +33,8 @@ Resolved for current draft PR。PR review comment で既存 4 件は current PR 
 | Candidate ID | 保存されている場所 | どこで出た指摘か | 何を指しているか |
 | --- | --- | --- | --- |
 | `HC-LRG-002-001` | runtime registry の `candidates[0]`、この file、issue ledger | `reviews/LRG-002/review-cycle-1.md` の Hardening Candidates | `skills/issue-implementation-loop/scripts/build_resume_brief.py`、`skills/issue-implementation-loop/scripts/lib/issue_implementation_loop/resume_brief.py`、`skills/issue-implementation-loop/tests/test_resume_brief.py` |
-| `HC-LRG-003-001` | runtime registry の `candidates[1]`、この file、issue ledger | `reviews/LRG-003/review-cycle-1.md` / `reviews/LRG-003/review-cycle-2.md` で既存 pending candidate として扱われた。primary details は runtime registry | `skills/issue-implementation-loop/scripts/check_capabilities.py`、worker packet validation 周辺、`skills/issue-implementation-loop/tests` |
-| `HC-LRG-003-002` | runtime registry の `candidates[2]`、この file、issue ledger | `reviews/LRG-003/review-cycle-1.md` / `reviews/LRG-003/review-cycle-2.md` で既存 pending candidate として扱われた。primary details は runtime registry | `skills/issue-implementation-loop/scripts/lib/issue_implementation_loop/delivery.py`、`skills/issue-implementation-loop/scripts/validate_delivery_plan.py`、`skills/issue-implementation-loop/references/remote-delivery.md` |
+| `HC-LRG-003-001` | runtime registry の `candidates[1]`、この file、issue ledger | `reviews/LRG-003/review-cycle-1.md` / `reviews/LRG-003/review-cycle-2.md` で既存 candidate として扱われた。primary details は runtime registry | `skills/issue-implementation-loop/scripts/check_capabilities.py`、worker packet validation 周辺、`skills/issue-implementation-loop/tests` |
+| `HC-LRG-003-002` | runtime registry の `candidates[2]`、この file、issue ledger | `reviews/LRG-003/review-cycle-1.md` / `reviews/LRG-003/review-cycle-2.md` で既存 candidate として扱われた。primary details は runtime registry | `skills/issue-implementation-loop/scripts/lib/issue_implementation_loop/delivery.py`、`skills/issue-implementation-loop/scripts/validate_delivery_plan.py`、`skills/issue-implementation-loop/references/remote-delivery.md` |
 | `HC-LRG-004-001` | runtime registry の `candidates[3]`、この file、issue ledger | `reviews/LRG-004/review-cycle-1.md` の Hardening Candidates | `skills/grill-to-pr-loop/references/execution-handoff.md`、`skills/issue-implementation-loop/scripts/lib/issue_implementation_loop/validation/execution_envelope.py`、`skills/issue-implementation-loop/tests/test_validation.py` |
 
 ## 判断対象
