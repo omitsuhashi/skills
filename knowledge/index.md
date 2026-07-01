@@ -29,8 +29,10 @@ _現在なし。_
   検索語: loop review governance, local issue, Issue Gate, LRG, blocker graph, hardening candidate, requesting-code-review, context budget, ローカルIssue, 堅牢化
 - [Loop Review Governance Input Packet](wiki/syntheses/loop-review-governance-input-packet.json) — `loop-review-governance` の Execution Plan Gate 用 normalized input packet。承認済み LRG-001 から LRG-005 の source、acceptance criteria、write scope、dependencies、local-only delivery intent を正規化する。
   検索語: loop review governance, input packet, Execution Plan Gate, issue-implementation-loop, LRG, write scope, dependencies, local_only, 実行計画
-- [Loop Review Governance Execution Envelope](wiki/syntheses/loop-review-governance-execution-envelope.json) — `loop-review-governance` の local-only Execution Envelope。worker-only policy、review governance policy、branch/worktree reservation、draft PR 作成後の hardening decision gate を固定する。
-  検索語: loop review governance, execution envelope, worker_context_required, local_only, requesting-code-review, hardening candidate, pending_decision, draft PR, worktree reservation
+- [Loop Review Governance Execution Envelope](wiki/syntheses/loop-review-governance-execution-envelope.json) — `loop-review-governance` の Execution Envelope。worker-only policy、review governance policy、branch/worktree reservation、draft PR 作成後の hardening decision gate、draft final PR approved actions を固定する。
+  検索語: loop review governance, execution envelope, worker_context_required, batch_issue_prs, requesting-code-review, hardening candidate, pending_decision, draft PR, worktree reservation
+- [Loop Review Governance Final Delivery Plan](wiki/syntheses/loop-review-governance-final-delivery-plan.json) — `loop-review-governance` の draft final PR 作成用 delivery plan。head は `codex/loop-review-governance/epic-base`、base は `main`、draft only。
+  検索語: loop review governance, delivery plan, draft PR, final PR, epic-base, hardening decision
 - [Loop Review Governance Handoff Brief](wiki/syntheses/loop-review-governance-handoff-brief.md) — Execution Plan Gate 後に raw transcript へ依存せず `issue-implementation-loop` を再開するための bounded handoff brief。
   検索語: loop review governance, handoff brief, Execution Plan Gate, runtime root, worker packet, hardening_candidate, local_only
 - [Loop Review Governance Hardening Candidate Decisions](wiki/syntheses/loop-review-governance-hardening-decisions.md) — draft final PR 上の統合結果を見ながら `hardening_candidate` 4 件を一括判断するための decision artifact。

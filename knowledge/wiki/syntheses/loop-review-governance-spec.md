@@ -2,7 +2,7 @@
 
 ## 状態
 
-Spec Gate / Issue Gate / Execution Plan Gate 承認済み。Execution Envelope revision 1 prepare 済み。実装、GitHub issue mirror、push、PR 作成、merge は未承認。
+Spec Gate / Issue Gate / Execution Plan Gate 承認済み。Execution Envelope revision 2 prepare 済み。LRG-001 から LRG-005 は final PR branch に統合済み。draft PR 作成はユーザー承認済み。GitHub issue mirror、ready-for-review、merge、force push、deploy、credential、permission、billing、production、destructive action は未承認。
 
 ## 仕様レビュー
 
@@ -303,9 +303,9 @@ git diff --check
 
 ## リモート書き込み方針
 
-この spec / Issue Gate / Execution Plan Gate / 実装ループの既定は `local_only`。
+この spec / Issue Gate / Execution Plan Gate / 実装ループの既定は `local_only` だったが、2026-07-01 のユーザー依頼により draft final PR 作成だけ承認済み。
 
-GitHub issue mirror、push、draft PR 作成、ready-for-review、merge、force push、deploy、credential、permission、billing、production、destructive action は未承認。final PR merge は常に human-only。
+GitHub issue mirror、ready-for-review、merge、force push、deploy、credential、permission、billing、production、destructive action は未承認。final PR merge は常に human-only。
 
 ## 人間レビューゲート
 

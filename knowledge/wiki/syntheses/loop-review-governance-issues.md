@@ -12,7 +12,7 @@ Spec Gate / Issue Gate / Execution Plan Gate 承認済み。LRG-001 から LRG-0
 - Spec digest: `sha256:70f6d8879a4e17f219a532b7294863e775857d79a80f7e0c04fb346c16588edd`
 - Issue Gate approval: 2026-07-01 user approved this local issue ledger.
 - Execution Plan Gate approval: 2026-07-01 approved local-only worker execution from the normalized input packet and Execution Envelope.
-- Remote policy: `local_only`
+- Remote policy: draft final PR 作成のみ承認済み。GitHub issue mirror、ready-for-review、merge、force push、高リスク操作は未承認。
 
 ## Phase Transition Capsule
 
@@ -61,7 +61,7 @@ LRG-004 -> LRG-005
 - Final branch 統合済み: LRG-001、LRG-002、LRG-003、LRG-004、LRG-005。
 - ブロック中: なし。
 - Cyclic blocker: なし。
-- GitHub issue mirror / push / PR 作成 / merge: `local_only` のため未承認。
+- GitHub issue mirror / ready-for-review / merge: 未承認。branch push と draft final PR 作成のみ承認済み。
 - Issue Gate 承認済みのため、全 issue の `レビュー状態` は `承認済み` とする。
 
 ## LRG-001: review finding taxonomy と 2 lane packet を定義する
@@ -358,7 +358,8 @@ Review governance の regression coverage、context budget evidence、wiki disco
 - LRG-005: `b7a5b989bb856ec0703f490361f7d9898ac521f4..HEAD`、regression discoverability / wiki synchronization branch。
 - Runtime state: `/Users/omitsuhashi/repos/omitsuhashi/skills/.git/agent-runs/issue-implementation-loop/loop-review-governance/runtime-state.json`
 - Candidate registry: `/Users/omitsuhashi/repos/omitsuhashi/skills/.git/agent-runs/issue-implementation-loop/loop-review-governance/decisions/hardening-candidates.json`
-- Remote policy: `local_only`。GitHub issue mirror、push、PR 作成、ready-for-review、merge、force push、production / credential / permission / billing / destructive action は未実行。
+- Remote policy: branch push と draft final PR 作成のみ承認済み。GitHub issue mirror、ready-for-review、merge、force push、production / credential / permission / billing / destructive action は未実行。
+- Delivery validation: `validate_delivery_plan.py knowledge/wiki/syntheses/loop-review-governance-execution-envelope.json /private/tmp/loop-review-governance-delivery/runtime-state.json knowledge/wiki/syntheses/loop-review-governance-final-delivery-plan.json --json` は `ok: true`。`errors: []`、`decision_gate_blockers` は pending hardening candidate 4 件。
 
 ## Pending Hardening Decisions
 

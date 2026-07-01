@@ -91,7 +91,8 @@ class LoopReviewGovernanceLedgerTests(unittest.TestCase):
         for required in (
             '"epic_id": "loop-review-governance"',
             '"remote_write_policy"',
-            '"mode": "local_only"',
+            '"mode": "batch_issue_prs"',
+            '"final_pr_create_draft"',
             '"primary": "requesting-code-review"',
             '"hardening_candidates"',
             '"ready_or_merge_requires_decisions": true',

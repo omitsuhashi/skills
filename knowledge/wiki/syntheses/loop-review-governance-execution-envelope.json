@@ -1,11 +1,11 @@
 {
   "schema_version": 2,
   "epic_id": "loop-review-governance",
-  "revision": 1,
+  "revision": 2,
   "epic_base": {
     "ref": "codex/loop-review-governance/epic-base",
     "sha": "b7a5b989bb856ec0703f490361f7d9898ac521f4",
-    "branch_state": "reserved"
+    "branch_state": "active"
   },
   "execution_policy": {
     "parallel_preferred": false,
@@ -59,8 +59,21 @@
     }
   },
   "remote_write_policy": {
-    "mode": "local_only",
-    "approved_actions": []
+    "mode": "batch_issue_prs",
+    "approved_actions": [
+      "final_pr_push_head",
+      "final_pr_create_draft"
+    ],
+    "issue_prs": {
+      "base": "epic_base.ref",
+      "merge": "agent_default_with_human_escalation"
+    },
+    "final_pr": {
+      "head": "epic_base.ref",
+      "base": "main",
+      "merge": "human_only",
+      "draft_default": true
+    }
   },
   "work_items": {
     "LRG-001": {
