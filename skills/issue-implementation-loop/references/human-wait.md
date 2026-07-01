@@ -14,3 +14,21 @@ Use `epic` only for envelope corruption, DAG/runtime corruption, shared-base saf
 ## Runtime Rule
 
 While waiting, continue unrelated runnable implementation work, review work, fix work, local verification, and recovery. Do not turn a narrow question into a global pause.
+
+## Review Governance Waits
+
+`safety_escalation` and `classification_needed` findings open a
+`human_request_opened` event at the smallest affected scope. Do not auto-fix
+them and do not widen the wait just because the finding appeared during a
+review.
+
+- Use `issue` when the decision affects only the source issue.
+- Use `descendants` when unreleased hard descendants would inherit the risk or
+  classification.
+- Use `resource` when the same write lock, credential, delivery surface, or
+  shared artifact is affected.
+- Use `epic` only for the existing epic-wide reasons above.
+
+`hardening_candidate` alone does not open a human wait. It is recorded in
+`<runtime-root>/decisions/hardening-candidates.json` for the final decision
+gate.

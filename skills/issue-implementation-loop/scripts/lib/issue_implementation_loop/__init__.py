@@ -24,7 +24,14 @@ from .constants import (
     WAITING_STATUSES,
     WORKTREE_STATES,
 )
-from .delivery import delivery_issue_scope, issue_branch_owner, validate_delivery_plan
+from .delivery import (
+    delivery_issue_scope,
+    hardening_candidate_registry_path,
+    hardening_candidate_report,
+    issue_branch_owner,
+    load_hardening_candidate_registry,
+    validate_delivery_plan,
+)
 from .exceptions import ValidationError
 from .git_state import git_output
 from .graph import (
@@ -140,6 +147,8 @@ __all__ = [
     "file_sha256",
     "git_output",
     "has_human_risk_acceptance",
+    "hardening_candidate_registry_path",
+    "hardening_candidate_report",
     "human_blocked_reason",
     "is_canonical_issue_branch",
     "is_commit_range",
@@ -150,6 +159,7 @@ __all__ = [
     "issue_record",
     "issue_status",
     "load_json",
+    "load_hardening_candidate_registry",
     "packet_word_count",
     "path_scope_conflicts",
     "review_approved_or_accepted",
