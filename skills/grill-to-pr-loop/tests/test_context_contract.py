@@ -79,6 +79,20 @@ class GrillContextContractTests(unittest.TestCase):
         self.assertIn("handoff brief", handoff_text)
         self.assertIn("normalized packet", handoff_text)
 
+    def test_execution_handoff_carries_review_governance_policy_without_worker_candidate_decision_state(self) -> None:
+        handoff_text = (SKILL_DIR / "references" / "execution-handoff.md").read_text(
+            encoding="utf-8"
+        )
+
+        for required in (
+            "review_policy.hardening_candidates",
+            "decisions/hardening-candidates.json",
+            "worker packet",
+            "candidate decision state",
+            "planning/grill session must not become an implementation worker",
+        ):
+            self.assertIn(required, handoff_text)
+
     def test_context_compaction_trigger_is_discoverable_from_entrypoint(self) -> None:
         skill_text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
         reference_text = (SKILL_DIR / "references" / "context-compaction.md").read_text(encoding="utf-8")

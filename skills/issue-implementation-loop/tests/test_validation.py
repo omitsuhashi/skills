@@ -259,6 +259,47 @@ class ValidationTests(unittest.TestCase):
                 self.assertNotEqual(result.returncode, 0, name)
                 self.assertIn(expected, result.stderr)
 
+    def test_execution_envelope_template_schema_and_validator_define_hardening_candidate_policy(self) -> None:
+        schema = json.loads(ENVELOPE_SCHEMA_FILE.read_text(encoding="utf-8"))
+        template = json.loads(
+            (SKILL_DIR / "assets" / "templates" / "execution-envelope.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        expected_policy = {
+            "candidate_registry_path": "decisions/hardening-candidates.json",
+            "max_candidates_per_issue": 5,
+            "max_summary_words": 80,
+            "issue_completion_blocking": False,
+            "final_delivery_requires_decisions": True,
+            "worker_packet_decision_state": "forbidden",
+        }
+
+        self.assertEqual(template["review_policy"]["hardening_candidates"], expected_policy)
+
+        policy_schema = schema["properties"]["review_policy"]["properties"]["hardening_candidates"]
+        self.assertFalse(policy_schema["additionalProperties"])
+        for field, value in expected_policy.items():
+            self.assertIn(field, policy_schema["required"])
+            field_schema = policy_schema["properties"][field]
+            if field in {
+                "candidate_registry_path",
+                "issue_completion_blocking",
+                "final_delivery_requires_decisions",
+                "worker_packet_decision_state",
+            }:
+                self.assertEqual(field_schema["const"], value)
+        self.assertEqual(policy_schema["properties"]["max_candidates_per_issue"]["maximum"], 5)
+        self.assertEqual(policy_schema["properties"]["max_summary_words"]["maximum"], 80)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "envelope.json"
+            write_json(path, base_envelope())
+
+            result = run_script("validate_execution_envelope.py", str(path))
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_validate_execution_envelope_requires_worker_context_boundaries(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             cases = [

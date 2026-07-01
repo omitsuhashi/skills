@@ -4,17 +4,9 @@ Use this reference when preparing the normalized input packet, presenting the Ex
 
 ## Branch / Base / Commit Policy
 
-Do not model the run as a shared mutable development main branch that receives ad hoc merges from issue branches. Model it as:
+Do not model the run as a mutable development main branch. Use an optional planning branch, per-epic `epic_base.ref` (`codex/<epic-id>/epic-base`) with immutable `epic_base.sha` and delivery `branch_state`, one branch/worktree reservation per issue, typed dependency edges, and local `PR_READY` until remote delivery is approved. Issue PRs target `epic_base.ref`; the final PR targets `main` and final merge is human-only.
 
-1. Optional planning branch for workspace isolation.
-2. Per-epic `epic_base.ref` branch named `codex/<epic-id>/epic-base`, plus immutable initial `epic_base.sha` and delivery `branch_state` in the Execution Envelope.
-3. One branch/worktree reservation per approved issue.
-4. Typed dependency edge plus work item `base_policy` when downstream code needs upstream code.
-5. Local `PR_READY` as the implementation terminal state until remote delivery is explicitly approved.
-6. Issue PRs from issue branches to `epic_base.ref`, with guarded agent merge when the remote policy allows it.
-7. A final PR from `epic_base.ref` to `main`; final PR merge is human-only.
-
-Use branch names like `codex/<epic-id>/<local-id>-<slug>`. Blocked issues may reserve names and paths, but their physical worktrees stay absent until release.
+Use branch names like `codex/<epic-id>/<local-id>-<slug>`. Blocked issues may reserve names/paths, but physical worktrees stay absent until release.
 
 Base policies:
 
@@ -22,7 +14,7 @@ Base policies:
 - `blocker_head`: branch from exactly one prerequisite issue head.
 - `integration_head`: branch from an approved integration work item / branch.
 
-Do not let a downstream worker merge multiple blocker heads. Add an integration work item when multiple prerequisite heads must be combined.
+Do not let a downstream worker merge multiple blocker heads; add an integration work item instead.
 
 Commit policy:
 
@@ -57,26 +49,17 @@ The execution side starts from:
 
 The handoff brief is a bounded bridge, not canonical state. If it conflicts with the normalized packet, approved ledger, or Execution Envelope, stop and reconcile those durable artifacts first.
 
+## Review Governance Handoff
+
+The Execution Envelope carries minimal `review_policy.hardening_candidates`: registry path `decisions/hardening-candidates.json`, max `5` candidates per issue, max `80` summary words, `issue_completion_blocking=false`, `final_delivery_requires_decisions=true`, and `worker_packet_decision_state=forbidden`.
+
+This is policy only. Runtime owns candidate records and human decisions; a worker packet may name paths/instructions but must not carry candidate decision state. The planning/grill session must not become an implementation worker; it hands off to `issue-implementation-loop`.
+
 ## Execution Plan Gate
 
-Build and present:
+Build and present the normalized input packet path, capability preflight, issue list, write scopes, dependencies, delivery intent, `epic_base`, branch/worktree reservations, base policies, reviewer/fallback policy, parallel/serial fallback, remote-write policy, issue PR policy, and final PR human-only merge policy.
 
-- normalized input packet path
-- `issue-implementation-loop` capability preflight result
-- issue list, write scopes, dependencies, and delivery intent
-- `epic_base`, branch/worktree reservations, and base policies
-- reviewer capability and approved fallback policy
-- parallel/serial fallback policy
-- remote-write policy
-- issue PR base/merge policy and final PR human-only merge policy
-
-Leave durable evidence before auto-continuation:
-
-- normalized packet path and validation result
-- capability preflight evidence
-- approved write scope
-- dependency graph
-- remote policy summary
+Leave durable evidence before auto-continuation: normalized packet path and validation result, capability preflight, approved write scope, dependency graph, and remote policy summary.
 
 Validate with:
 
@@ -93,13 +76,7 @@ Stop instead of auto-continuing if the approved scope would change, dirty change
 
 ## Execution Coordinator
 
-After the Execution Plan Gate, load `issue-implementation-loop` and follow its mode router:
-
-- `prepare`: create/validate Execution Envelope and branch/worktree reservations.
-- `execute`: schedule implementation/review/fix lanes.
-- `resume`: reconcile state after interruption.
-- `status`: report current execution state.
-- `deliver`: prepare PR-ready branches for approved remote delivery.
+After the Execution Plan Gate, load `issue-implementation-loop` and follow its mode router: `prepare` validates the Execution Envelope and reservations; `execute` schedules implementation/review/fix lanes; `resume` reconciles state; `status` reports; `deliver` prepares PR-ready branches for approved remote delivery.
 
 Recommended context split:
 
