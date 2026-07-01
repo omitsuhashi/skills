@@ -358,17 +358,20 @@ Review governance の regression coverage、context budget evidence、wiki disco
 - LRG-005: `b7a5b989bb856ec0703f490361f7d9898ac521f4..HEAD`、regression discoverability / wiki synchronization branch。
 - Runtime state: `/Users/omitsuhashi/repos/omitsuhashi/skills/.git/agent-runs/issue-implementation-loop/loop-review-governance/runtime-state.json`
 - Candidate registry: `/Users/omitsuhashi/repos/omitsuhashi/skills/.git/agent-runs/issue-implementation-loop/loop-review-governance/decisions/hardening-candidates.json`
+- Human-readable candidate decision surface: [loop-review-governance-hardening-decisions.md](loop-review-governance-hardening-decisions.md)
 - Remote policy: branch push と draft final PR [#27](https://github.com/omitsuhashi/skills/pull/27) 作成のみ実行済み。GitHub issue mirror、ready-for-review、merge、force push、production / credential / permission / billing / destructive action は未実行。
 - Delivery validation: `validate_delivery_plan.py knowledge/wiki/syntheses/loop-review-governance-execution-envelope.json /private/tmp/loop-review-governance-delivery/runtime-state.json knowledge/wiki/syntheses/loop-review-governance-final-delivery-plan.json --json` は `ok: true`。`errors: []`、`decision_gate_blockers` は pending hardening candidate 4 件。
 
 ## Pending Hardening Decisions
 
-| Candidate ID | Source issue | Decision | Recommended decision | 実装判断 |
-| --- | --- | --- | --- | --- |
-| HC-LRG-002-001 | LRG-002 | `pending_decision` | `deferred_follow_up` | draft PR 作成を止めない。ready-for-review / merge 前に一括判断 |
-| HC-LRG-003-001 | LRG-003 | `pending_decision` | `deferred_follow_up` | draft PR 作成を止めない。ready-for-review / merge 前に一括判断 |
-| HC-LRG-003-002 | LRG-003 | `pending_decision` | `deferred_follow_up` | draft PR 作成を止めない。ready-for-review / merge 前に一括判断 |
-| HC-LRG-004-001 | LRG-004 | `pending_decision` | `deferred_follow_up` | draft PR 作成を止めない。ready-for-review / merge 前に一括判断 |
+判断対象の正本は [loop-review-governance-hardening-decisions.md](loop-review-governance-hardening-decisions.md) に置く。そこに保存場所、出典 review artifact、指している実装箇所を candidate ごとに記録する。
+
+| Candidate ID | Source issue | Decision | Recommended decision | 出典 / 指している箇所 | 実装判断 |
+| --- | --- | --- | --- | --- | --- |
+| HC-LRG-002-001 | LRG-002 | `pending_decision` | `deferred_follow_up` | LRG-002 review cycle 1。resume brief の `Pending hardening decisions: N` 動的表示。 | draft PR 作成を止めない。ready-for-review / merge 前に一括判断 |
+| HC-LRG-003-001 | LRG-003 | `pending_decision` | `deferred_follow_up` | runtime registry primary。`check_capabilities.py` / worker packet validation coverage。 | draft PR 作成を止めない。ready-for-review / merge 前に一括判断 |
+| HC-LRG-003-002 | LRG-003 | `pending_decision` | `deferred_follow_up` | runtime registry primary。`pending_hardening_candidates` / `residual_risks` の local-only completion report validation。 | draft PR 作成を止めない。ready-for-review / merge 前に一括判断 |
+| HC-LRG-004-001 | LRG-004 | `pending_decision` | `deferred_follow_up` | LRG-004 review cycle 1。acceptance criteria と `write_scope` の mismatch preflight。 | draft PR 作成を止めない。ready-for-review / merge 前に一括判断 |
 
 未判断 candidate が残っていても draft final PR は作成できる。ready-for-review、merge、risk acceptance、または candidate 取り込み実装へ進む前には、人間 decision gate で全 candidate を一括判断する。LRG-005 は candidate decision を実装せず、decision queue の discoverability と regression evidence を同期する。
 

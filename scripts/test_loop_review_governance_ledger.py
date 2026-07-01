@@ -10,6 +10,7 @@ SPEC = REPO_ROOT / "knowledge/wiki/syntheses/loop-review-governance-spec.md"
 INPUT_PACKET = REPO_ROOT / "knowledge/wiki/syntheses/loop-review-governance-input-packet.json"
 EXECUTION_ENVELOPE = REPO_ROOT / "knowledge/wiki/syntheses/loop-review-governance-execution-envelope.json"
 HANDOFF_BRIEF = REPO_ROOT / "knowledge/wiki/syntheses/loop-review-governance-handoff-brief.md"
+HARDENING_DECISIONS = REPO_ROOT / "knowledge/wiki/syntheses/loop-review-governance-hardening-decisions.md"
 INDEX = REPO_ROOT / "knowledge/index.md"
 LOG = REPO_ROOT / "knowledge/log.md"
 
@@ -70,6 +71,7 @@ class LoopReviewGovernanceLedgerTests(unittest.TestCase):
             "[Loop Review Governance Input Packet](wiki/syntheses/loop-review-governance-input-packet.json)",
             "[Loop Review Governance Execution Envelope](wiki/syntheses/loop-review-governance-execution-envelope.json)",
             "[Loop Review Governance Handoff Brief](wiki/syntheses/loop-review-governance-handoff-brief.md)",
+            "[Loop Review Governance Hardening Candidate Decisions](wiki/syntheses/loop-review-governance-hardening-decisions.md)",
         ):
             self.assertIn(artifact, index_text)
 
@@ -78,10 +80,31 @@ class LoopReviewGovernanceLedgerTests(unittest.TestCase):
             "[2026-07-01] gate | Loop review governance Execution Plan Gate approval",
             "[2026-07-01] implementation | Loop review governance LRG-005 regression discoverability",
             "[2026-07-01] review-fix | Loop review governance draft PR decision surface",
+            "[2026-07-01] review-fix | Loop review governance hardening decision visibility",
             "pending_decision` は draft PR 作成ではなく",
             "HC-LRG-002-001、HC-LRG-003-001、HC-LRG-003-002、HC-LRG-004-001 は pending_decision",
         ):
             self.assertIn(required, log_text)
+
+    def test_hardening_decision_file_explains_storage_origin_and_target_paths(self) -> None:
+        text = HARDENING_DECISIONS.read_text(encoding="utf-8")
+
+        for required in (
+            "## 保存場所と読み方",
+            "## 出典 / 指している箇所",
+            "runtime registry の `candidates[0]`",
+            "runtime registry の `candidates[1]`",
+            "runtime registry の `candidates[2]`",
+            "runtime registry の `candidates[3]`",
+            "reviews/LRG-002/review-cycle-1.md",
+            "reviews/LRG-003/review-cycle-1.md",
+            "reviews/LRG-004/review-cycle-1.md",
+            "skills/issue-implementation-loop/scripts/build_resume_brief.py",
+            "skills/issue-implementation-loop/scripts/check_capabilities.py",
+            "skills/issue-implementation-loop/scripts/lib/issue_implementation_loop/delivery.py",
+            "skills/issue-implementation-loop/scripts/lib/issue_implementation_loop/validation/execution_envelope.py",
+        ):
+            self.assertIn(required, text)
 
     def test_execution_envelope_and_handoff_brief_are_discoverable_artifacts(self) -> None:
         envelope_text = EXECUTION_ENVELOPE.read_text(encoding="utf-8")
