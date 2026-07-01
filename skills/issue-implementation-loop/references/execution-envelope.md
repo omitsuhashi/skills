@@ -44,7 +44,7 @@ New envelopes include `review_policy.hardening_candidates` as policy only:
 }
 ```
 
-Interpret `candidate_registry_path` relative to the coordinator runtime root. Store candidate records and human decision state in `<runtime-root>/decisions/hardening-candidates.json`, not in the Execution Envelope or worker packet. Routine review packets must not solicit future-only hardening ideas; populate the registry only for human-requested hardening review, current PR delivery-risk decisions, `safety_escalation`, or `classification_needed`.
+Interpret `candidate_registry_path` relative to the coordinator runtime root. Store candidate records and human decision state in `<runtime-root>/decisions/hardening-candidates.json`, not in the Execution Envelope or worker packet. Routine review packets must not solicit future-only hardening ideas or classification-only passes; populate the registry with `hardening_candidate` or `classification_needed` only when needed by an encountered finding or explicitly requested by the human. Continue recording `safety_escalation` for current PR delivery risk.
 
 Recorded `hardening_candidate` findings do not block issue completion, blocker release, local `PR_READY`, or draft final PR creation by themselves. Future-only suggestions are omitted rather than recorded. Candidate records that do exist remain pending decisions for the ready-for-review / merge lane. Worker packets may summarize the review governance policy by path and short instruction, but must not include session-level candidate decision state.
 

@@ -78,10 +78,10 @@
         "review-gate.md が intent_gap、implementation_regression、hardening_candidate、safety_escalation、classification_needed の分類を定義する",
         "superpowers:requesting-code-review を Issue 実装レビューの第一候補として明記する",
         "reviewer packet は BASE_SHA / HEAD_SHA の committed range review を前提にする",
-        "reviewer packet は Issue 意図適合レビューを必須 lane とし、future-only hardening を通常レビュー観点から外す",
+        "reviewer packet は自動レビュー観点を Issue 意図適合、今回変更による regression、current PR delivery risk の 3 つに限定する",
         "intent_gap / implementation_regression は blocking finding として既存 fix loop に乗る",
         "hardening_candidate は明示依頼または current PR delivery risk に結び付く場合だけ記録し、review/fix cycle では自動修正要求にしない",
-        "classification_needed は曖昧なまま自動修正せず、coordinator か人間判断へ送る",
+        "classification_needed は自動レビュー観点として探さず、必要になった場合または人間が明示した場合だけ扱う",
         "review packet は paths-first で、default 600 words / hard 900 words の budget 方針を持つ"
       ],
       "non_goals": [
@@ -111,10 +111,10 @@
       "acceptance_criteria": [
         "<runtime-root>/decisions/hardening-candidates.json を coordinator-owned artifact として定義する",
         "candidate は ID、source issue、classification、summary、risk、estimated scope、decision、implementation issue を持つ",
-        "routine review は future-only hardening を列挙しない。明示依頼または current PR delivery risk として記録する hardening_candidate は 1 件 80 words 以下、1 issue 5 件以下を default とする",
+        "routine review は future-only hardening や classification-only pass を列挙しない。必要になった場合または明示依頼で記録する hardening_candidate は 1 件 80 words 以下、1 issue 5 件以下を default とする",
         "candidate registry は worker branch に含めない",
         "resume brief は Pending hardening decisions: N と registry path だけを carry-forward する",
-        "safety_escalation / classification_needed は必要最小 scope の human_request_opened へ送る",
+        "safety_escalation / encountered classification_needed は必要最小 scope の human_request_opened へ送る",
         "candidate full text を phase carry-forward に貼らず、path 参照にする"
       ],
       "non_goals": [

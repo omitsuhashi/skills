@@ -27,7 +27,7 @@ class LoopReviewGovernanceLedgerTests(unittest.TestCase):
             "`safety_escalation`",
             "`classification_needed`",
             "future-only hardening は routine review では記録しない",
-            "明示依頼または current PR delivery risk",
+            "自動レビュー観点として探さず",
         ):
             self.assertIn(required, spec_text)
 
@@ -60,6 +60,7 @@ class LoopReviewGovernanceLedgerTests(unittest.TestCase):
             "HC-LRG-004-001",
             "`deferred_follow_up`",
             "future-only hardening を通常レビュー観点から外す",
+            "自動レビュー観点を Issue 意図適合、今回変更による regression、current PR delivery risk の 3 つに限定",
         ):
             self.assertIn(required, text)
         self.assertNotIn("## Pending Hardening Decisions", text)
@@ -101,8 +102,8 @@ class LoopReviewGovernanceLedgerTests(unittest.TestCase):
             "## Review Scope Correction",
             "Deferred Hardening Follow-ups",
             "既存 4 件は current PR に取り込まず `deferred_follow_up`",
-            "future-only hardening を通常レビュー観点から外す",
-            "explicitly requested by the human or tied to current PR delivery risk",
+            "Issue 意図適合、今回変更による regression、current PR delivery risk の 3 つに限定",
+            "必要になった場合、または人間が明示した場合だけ扱う",
             "runtime registry の `candidates[0]`",
             "runtime registry の `candidates[1]`",
             "runtime registry の `candidates[2]`",
@@ -141,8 +142,8 @@ class LoopReviewGovernanceLedgerTests(unittest.TestCase):
 
         for required in (
             "Execution Plan Gate",
-            "future-only hardening は通常レビュー観点から外す",
-            "`hardening_candidate` は明示依頼または current PR delivery risk に結び付く場合だけ記録し、自動修正しない",
+            "自動レビュー観点は Issue 意図適合、今回変更による regression、current PR delivery risk の 3 つだけ",
+            "`classification_needed` / `hardening_candidate` は必要になった場合または人間が明示した場合だけ扱い、自動修正しない",
             "Runtime root:",
         ):
             self.assertIn(required, handoff_text)

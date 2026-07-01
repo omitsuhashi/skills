@@ -17,7 +17,7 @@ While waiting, continue unrelated runnable implementation work, review work, fix
 
 ## Review Governance Waits
 
-`safety_escalation` and `classification_needed` findings open a
+`safety_escalation` findings and encountered `classification_needed` cases open a
 `human_request_opened` event at the smallest affected scope. Do not auto-fix
 them and do not widen the wait just because the finding appeared during a
 review.
@@ -34,3 +34,7 @@ open a human wait. A `hardening_candidate` is recorded in
 `<runtime-root>/decisions/hardening-candidates.json` only when the human
 explicitly requested hardening review or the candidate is tied to current PR
 delivery risk. It still does not open an issue execution wait by itself.
+
+Do not open a classification wait just because classification is a possible
+review category. Open it only when an actual finding cannot be classified from
+available evidence or the human explicitly requested a classification pass.

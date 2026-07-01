@@ -16,9 +16,9 @@ Resolved for current draft PR。PR review comment で既存 4 件は current PR 
 
 既存 4 件は current PR に取り込まず `deferred_follow_up` とする。
 
-また、今回の 4 件のような「将来的にやった方がいいかも」という future-only hardening を通常レビュー観点から外す。Issue 実装レビューの既定 scope は、Issue 意図適合、今回変更による regression、current PR delivery risk、`safety_escalation`、`classification_needed` に限定する。
+また、今回の 4 件のような「将来的にやった方がいいかも」という future-only hardening を通常レビュー観点から外す。Issue 実装レビューで自動確認する既定 scope は、Issue 意図適合、今回変更による regression、current PR delivery risk の 3 つに限定する。
 
-`hardening_candidate` は完全には削除しない。ただし routine review で探させない。記録するのは explicitly requested by the human or tied to current PR delivery risk の場合だけにする。
+`classification_needed` と `hardening_candidate` は完全には削除しない。ただし routine review で探させない。必要になった場合、または人間が明示した場合だけ扱う。
 
 ## 保存場所と読み方
 
@@ -54,11 +54,13 @@ ready-for-review、merge、force push、deploy、credential、permission、billi
 
 ## 今後のレビュー観点
 
-Issue 実装レビューで reviewer に求めるのは次だけにする。
+Issue 実装レビューで reviewer に自動確認させるのは次だけにする。
 
 - Issue 意図 / spec / acceptance criteria / non-goals / write scope / verification evidence が満たされているか
 - 今回変更で既存挙動、契約、検証対象を壊していないか
 - security、credential、permission、destructive、production、data loss など current PR delivery risk がないか
-- 分類不能な finding がある場合に `classification_needed` として止めること
 
-future-only hardening、一般的な設計余裕、将来の追加検証、保守性改善は、ユーザーが明示的に hardening review を依頼した場合だけ扱う。
+次は自動レビュー観点ではない。必要になった場合、またはユーザーが明示した場合だけ扱う。
+
+- 分類不能な finding の `classification_needed` 判定
+- future-only hardening、一般的な設計余裕、将来の追加検証、保守性改善

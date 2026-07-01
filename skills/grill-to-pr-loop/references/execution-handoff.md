@@ -53,7 +53,7 @@ The handoff brief is cache, not canonical state. If it conflicts with packet, le
 
 The Execution Envelope carries minimal `review_policy.hardening_candidates`: registry path `decisions/hardening-candidates.json`, max `5` candidates per issue, max `80` summary words, `issue_completion_blocking=false`, `ready_or_merge_requires_decisions=true`, and `worker_packet_decision_state=forbidden`.
 
-This is policy only. Runtime owns candidate records and decisions; worker packets may name paths/instructions but not candidate decision state. Routine review packets do not ask for future-only hardening ideas; candidates are only for human-requested hardening, current PR delivery risk, `safety_escalation`, or `classification_needed`. The planning/grill session must not become an implementation worker; it hands off to `issue-implementation-loop`.
+This is policy only. Runtime owns candidate records and decisions; worker packets may name paths/instructions but not candidate decision state. Routine review packets ask for only three automatic checks: issue intent fit, implementation regression, and current PR delivery risk. Do not solicit future-only hardening or classification-only passes. Record `hardening_candidate` or `classification_needed` only when needed by an encountered finding or explicitly requested by the human. The planning/grill session must not become an implementation worker; it hands off to `issue-implementation-loop`.
 
 ## Execution Plan Gate
 

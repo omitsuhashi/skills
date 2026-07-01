@@ -24,7 +24,7 @@ class ReviewGateTests(unittest.TestCase):
         self.assertIn("existing fix loop", text)
         self.assertIn("hardening_candidate is not a fix request", text)
         self.assertIn("classification_needed stops the issue", text)
-        self.assertIn("coordinator or human classification decision", text)
+        self.assertIn("coordinator or human decision", text)
 
     def test_review_packet_is_paths_first_committed_range_with_budget(self) -> None:
         text = REVIEW_GATE.read_text(encoding="utf-8")
@@ -33,7 +33,7 @@ class ReviewGateTests(unittest.TestCase):
             "paths-first",
             "`BASE_SHA` / `HEAD_SHA`",
             "committed range review",
-            "check current PR delivery risk",
+            "Current PR delivery risk",
             "default 600 words",
             "hard 900 words",
             "Do not paste full spec",
@@ -45,17 +45,23 @@ class ReviewGateTests(unittest.TestCase):
         text = REVIEW_GATE.read_text(encoding="utf-8")
 
         for required in (
-            "Issue intent review lane",
-            "required lane",
+            "Automatic review checks",
+            "Issue intent fit",
+            "Implementation regression",
+            "Current PR delivery risk",
+            "Non-automatic handling",
+            "classification_needed is not an automatic review viewpoint",
+            "Hardening is not an automatic review viewpoint",
             "Future-only hardening suggestions are out of review scope by default",
             "Do not ask the reviewer to enumerate general hardening ideas",
-            "only when explicitly requested by the human or tied to current PR delivery risk",
+            "explicitly requested by the human",
             "do not auto-fix",
         ):
             self.assertIn(required, text)
 
         self.assertNotIn("Hardening candidate lane", text)
         self.assertNotIn("optional lane", text)
+        self.assertNotIn("Review approved issue, spec, acceptance, non-goals, write scope, and verification evidence. Classify gaps as `intent_gap`, `implementation_regression`, or `classification_needed`.", text)
 
     def test_requesting_code_review_is_primary_reviewer_contract(self) -> None:
         text = REVIEW_GATE.read_text(encoding="utf-8")
