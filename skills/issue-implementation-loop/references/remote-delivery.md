@@ -47,7 +47,11 @@ Agent issue PR merge is allowed only when the PR is mergeable, required checks p
 
 Before final PR creation, reconcile `epic_base.ref`, set `epic_base.branch_state: active`, and confirm every issue in the delivery candidate set has `pr_merged: true` in runtime state or an equivalent approved ledger record. When using `validate_delivery_plan.py`, first reflect any approved ledger-equivalent merge record into runtime state; the validator does not infer final integration from local `PR_READY`. Do not treat local `PR_READY` alone as proof that `epic_base.ref` contains the issue head.
 
+Final PR preflight also reads `<runtime-root>/decisions/hardening-candidates.json` when present. `pending_decision` or unresolved `safety_escalation` blocks final PR delivery. `approved_for_current_pr` is allowed only when its `implementation_issue` is `PR_READY`, integrated, or review approved. `deferred_follow_up`, `declined`, and `risk_accepted` do not block delivery, but must be copied into the completion report residual risk summary.
+
 After creating a draft final PR, synchronize the PR URL, draft state, delivery plan validation evidence, and residual risk summary into the local ledger, runtime state, and completion report before reporting delivery complete. Do not mark the final PR ready for review in this step.
+
+For `local_only` completion, no remote delivery plan is required, but the completion report still must include `pending_hardening_candidates` when unresolved candidates remain and residual risks for `deferred_follow_up`, `declined`, or `risk_accepted` candidates.
 
 ## Always Separate Approval
 

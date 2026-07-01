@@ -1,11 +1,37 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Any
 
 from .constants import FINAL_PR_REQUIRED_APPROVED_ACTIONS
 from .identifiers import is_issue_id
+from .review import review_approved_or_accepted
 from .validation.execution_envelope import validate_execution_envelope
 from .validation.runtime_state import validate_runtime_state
+
+
+RESIDUAL_RISK_DECISIONS = {"deferred_follow_up", "declined", "risk_accepted"}
+READY_IMPLEMENTATION_STATUSES = {"PR_READY"}
+
+
+def hardening_candidate_registry_path(runtime_state_path: str | Path) -> Path:
+    return Path(runtime_state_path).parent / "decisions" / "hardening-candidates.json"
+
+
+def load_hardening_candidate_registry(
+    runtime_state_path: str | Path,
+) -> tuple[dict[str, Any] | None, str, str | None]:
+    registry_path = hardening_candidate_registry_path(runtime_state_path)
+    if not registry_path.exists():
+        return None, str(registry_path), None
+    try:
+        registry = json.loads(registry_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return None, str(registry_path), f"{registry_path.name}: invalid JSON: {exc}"
+    if not isinstance(registry, dict):
+        return None, str(registry_path), f"{registry_path.name}: registry must be an object"
+    return registry, str(registry_path), None
 
 
 def issue_branch_owner(envelope: dict[str, Any], branch: Any) -> str | None:
@@ -43,7 +69,137 @@ def delivery_issue_scope(envelope: dict[str, Any], plan: dict[str, Any], errors:
     return issues
 
 
-def validate_delivery_plan(envelope: dict[str, Any], runtime: dict[str, Any], plan: dict[str, Any]) -> list[str]:
+def _candidate_id(candidate: Any, index: int) -> str:
+    if isinstance(candidate, dict) and isinstance(candidate.get("candidate_id"), str):
+        return candidate["candidate_id"]
+    return f"candidates[{index}]"
+
+
+def _candidate_completion_summary(candidate: dict[str, Any], index: int) -> dict[str, Any]:
+    return {
+        "candidate_id": _candidate_id(candidate, index),
+        "source_issue": candidate.get("source_issue"),
+        "classification": candidate.get("classification"),
+        "decision": candidate.get("decision"),
+        "implementation_issue": candidate.get("implementation_issue"),
+        "summary": candidate.get("summary"),
+        "risk": candidate.get("risk"),
+    }
+
+
+def _append_candidate_summary_once(
+    report: dict[str, list[Any]],
+    field: str,
+    summary: dict[str, Any],
+) -> None:
+    candidate_id = summary.get("candidate_id")
+    if any(existing.get("candidate_id") == candidate_id for existing in report[field] if isinstance(existing, dict)):
+        return
+    report[field].append(summary)
+
+
+def _implementation_issue_ready(runtime: dict[str, Any], implementation_issue: Any) -> bool:
+    if not isinstance(implementation_issue, str) or not implementation_issue:
+        return False
+    issues = runtime.get("issues", {})
+    if not isinstance(issues, dict):
+        return False
+    record = issues.get(implementation_issue)
+    if not isinstance(record, dict):
+        return False
+    if record.get("status") in READY_IMPLEMENTATION_STATUSES:
+        return True
+    if record.get("pr_merged") is True:
+        return True
+    signals = record.get("signals", [])
+    if isinstance(signals, list) and "integrated" in signals:
+        return True
+    return review_approved_or_accepted(record, "review")
+
+
+def hardening_candidate_report(
+    runtime: dict[str, Any],
+    candidate_registry: dict[str, Any] | None,
+    *,
+    candidate_registry_path: str = "hardening-candidates.json",
+    candidate_registry_load_error: str | None = None,
+) -> dict[str, list[Any]]:
+    report: dict[str, list[Any]] = {
+        "errors": [],
+        "pending_hardening_candidates": [],
+        "residual_risks": [],
+    }
+    registry_label = Path(candidate_registry_path).name
+    if candidate_registry_load_error:
+        report["errors"].append(candidate_registry_load_error)
+        return report
+    if candidate_registry is None:
+        return report
+    if candidate_registry.get("schema_version") != 1:
+        report["errors"].append(f"{registry_label}: schema_version must be 1")
+    if candidate_registry.get("epic_id") != runtime.get("epic_id"):
+        report["errors"].append(f"{registry_label}: epic_id must match runtime_state.epic_id")
+    candidates = candidate_registry.get("candidates")
+    if not isinstance(candidates, list):
+        report["errors"].append(f"{registry_label}: candidates must be a list")
+        return report
+
+    for index, candidate in enumerate(candidates):
+        candidate_label = _candidate_id(candidate, index)
+        if not isinstance(candidate, dict):
+            report["errors"].append(f"{registry_label}: candidates[{index}] must be an object")
+            continue
+        summary = _candidate_completion_summary(candidate, index)
+        classification = candidate.get("classification")
+        decision = candidate.get("decision")
+
+        if decision == "pending_decision":
+            _append_candidate_summary_once(report, "pending_hardening_candidates", summary)
+            report["errors"].append(
+                f"{registry_label}: {candidate_label} has pending_decision; "
+                "final PR delivery requires a decision"
+            )
+            continue
+
+        implementation_ready = False
+        if decision == "approved_for_current_pr":
+            implementation_issue = candidate.get("implementation_issue")
+            implementation_ready = _implementation_issue_ready(runtime, implementation_issue)
+            if not implementation_ready:
+                _append_candidate_summary_once(report, "pending_hardening_candidates", summary)
+                report["errors"].append(
+                    f"{registry_label}: {candidate_label} approved_for_current_pr requires "
+                    f"implementation_issue {implementation_issue} to be PR_READY, integrated, "
+                    "or review approved"
+                )
+
+        if classification == "safety_escalation":
+            safety_resolved = (
+                decision in RESIDUAL_RISK_DECISIONS
+                or decision == "implemented"
+                or (decision == "approved_for_current_pr" and implementation_ready)
+            )
+            if not safety_resolved:
+                _append_candidate_summary_once(report, "pending_hardening_candidates", summary)
+                report["errors"].append(
+                    f"{registry_label}: {candidate_label} has unresolved safety_escalation; "
+                    "risk acceptance or implemented approved scope is required before final PR"
+                )
+
+        if decision in RESIDUAL_RISK_DECISIONS:
+            report["residual_risks"].append(summary)
+    return report
+
+
+def validate_delivery_plan(
+    envelope: dict[str, Any],
+    runtime: dict[str, Any],
+    plan: dict[str, Any],
+    *,
+    candidate_registry: dict[str, Any] | None = None,
+    candidate_registry_path: str = "hardening-candidates.json",
+    candidate_registry_load_error: str | None = None,
+) -> list[str]:
     errors: list[str] = []
     errors.extend(f"envelope: {error}" for error in validate_execution_envelope(envelope))
     errors.extend(f"runtime_state: {error}" for error in validate_runtime_state(runtime))
@@ -122,4 +278,12 @@ def validate_delivery_plan(envelope: dict[str, Any], runtime: dict[str, Any], pl
             record = runtime_issues.get(issue_id)
             if not isinstance(record, dict) or record.get("pr_merged") is not True:
                 errors.append(f"issues.{issue_id}.pr_merged must be true before final PR")
+    errors.extend(
+        hardening_candidate_report(
+            runtime,
+            candidate_registry,
+            candidate_registry_path=candidate_registry_path,
+            candidate_registry_load_error=candidate_registry_load_error,
+        )["errors"]
+    )
     return errors
