@@ -36,7 +36,27 @@
       "required": ["max_review_cycles"],
       "properties": {
         "max_review_cycles": {"type": "integer", "minimum": 1, "maximum": 2},
-        "max_fix_cycles": {"type": "integer", "minimum": 0, "maximum": 2}
+        "max_fix_cycles": {"type": "integer", "minimum": 0, "maximum": 2},
+        "hardening_candidates": {
+          "type": "object",
+          "required": [
+            "candidate_registry_path",
+            "max_candidates_per_issue",
+            "max_summary_words",
+            "issue_completion_blocking",
+            "ready_or_merge_requires_decisions",
+            "worker_packet_decision_state"
+          ],
+          "properties": {
+            "candidate_registry_path": {"const": "decisions/hardening-candidates.json"},
+            "max_candidates_per_issue": {"type": "integer", "minimum": 1, "maximum": 5},
+            "max_summary_words": {"type": "integer", "minimum": 1, "maximum": 80},
+            "issue_completion_blocking": {"const": false},
+            "ready_or_merge_requires_decisions": {"const": true},
+            "worker_packet_decision_state": {"const": "forbidden"}
+          },
+          "additionalProperties": false
+        }
       }
     },
     "human_policy": {"type": "object"},

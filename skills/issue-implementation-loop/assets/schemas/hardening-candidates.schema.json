@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Issue Implementation Loop Hardening Candidate Registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "epic_id",
+    "registry_path",
+    "limits",
+    "candidates"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "epic_id": {"type": "string"},
+    "registry_path": {
+      "type": "string",
+      "description": "Path to the coordinator-owned runtime artifact, usually <runtime-root>/decisions/hardening-candidates.json."
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hardening_candidate_summary_words_default",
+        "hardening_candidates_per_issue_default"
+      ],
+      "properties": {
+        "hardening_candidate_summary_words_default": {"const": 80},
+        "hardening_candidates_per_issue_default": {"const": 5}
+      }
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "candidate_id",
+          "source_issue",
+          "classification",
+          "summary",
+          "risk",
+          "estimated_scope",
+          "decision",
+          "implementation_issue"
+        ],
+        "properties": {
+          "candidate_id": {"type": "string", "minLength": 1},
+          "source_issue": {"type": "string", "minLength": 1},
+          "classification": {
+            "enum": [
+              "hardening_candidate",
+              "safety_escalation",
+              "classification_needed"
+            ]
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Default limit for hardening_candidate summaries is 80 words."
+          },
+          "risk": {"type": "string", "minLength": 1},
+          "estimated_scope": {
+            "type": "array",
+            "items": {"type": "string"},
+            "default": []
+          },
+          "decision": {
+            "enum": [
+              "pending_decision",
+              "approved_for_current_pr",
+              "deferred_follow_up",
+              "declined",
+              "risk_accepted",
+              "implemented"
+            ]
+          },
+          "implementation_issue": {
+            "type": ["string", "null"],
+            "description": "Required when decision is approved_for_current_pr or implemented."
+          },
+          "delivery_blocker": {"type": "boolean"},
+          "recommended_decision": {
+            "enum": [
+              "approved_for_current_pr",
+              "deferred_follow_up",
+              "declined",
+              "risk_accepted"
+            ]
+          },
+          "decision_reason": {"type": ["string", "null"]},
+          "decided_by": {"type": ["string", "null"]},
+          "decided_at": {"type": ["string", "null"]}
+        }
+      }
+    }
+  }
+}

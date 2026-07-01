@@ -1,0 +1,13 @@
+{
+  "action": "final_pr",
+  "head": "codex/loop-review-governance/epic-base",
+  "base": "main",
+  "draft": true,
+  "issue_scope": [
+    "LRG-001",
+    "LRG-002",
+    "LRG-003",
+    "LRG-004",
+    "LRG-005"
+  ]
+}

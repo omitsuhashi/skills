@@ -1,0 +1,307 @@
+{
+  "schema_version": 1,
+  "repo_root": "/Users/omitsuhashi/.codex/worktrees/5473/skills",
+  "epic_id": "loop-review-governance",
+  "artifact_root": "knowledge/wiki/syntheses",
+  "spec": {
+    "path": "knowledge/wiki/syntheses/loop-review-governance-spec.md",
+    "approved_revision": 1,
+    "approved_hash": "sha256:97d2944021187b529761751b6dd5fb90547c131d5c9a9090adb32ff93fa5001f"
+  },
+  "issue_ledger": {
+    "path": "knowledge/wiki/syntheses/loop-review-governance-issues.md",
+    "approved_revision": 1,
+    "approved_hash": "sha256:65f0bba09b6b0b355bf9ab08ba0ce70f942c6534b015bd8d79b23185f4617456"
+  },
+  "execution_plan": {
+    "remote_policy": "local_only",
+    "worker_context_required": true,
+    "coordinator_may_implement": false,
+    "serial_fallback_mode": "worker_context_only",
+    "review_policy": {
+      "primary": "superpowers:requesting-code-review",
+      "max_review_cycles": 2,
+      "hardening_candidate_auto_fix": false,
+      "draft_pr_allows_pending_decisions": true,
+      "ready_or_merge_requires_decisions": true
+    },
+    "context_budget": {
+      "review_packet_words_default": 600,
+      "review_packet_words_hard": 900,
+      "candidate_words_hard": 80,
+      "candidate_count_per_issue_default": 5
+    }
+  },
+  "approved_blocker_graph": [
+    {
+      "from": "LRG-001",
+      "to": "LRG-002"
+    },
+    {
+      "from": "LRG-001",
+      "to": "LRG-004"
+    },
+    {
+      "from": "LRG-001",
+      "to": "LRG-005"
+    },
+    {
+      "from": "LRG-002",
+      "to": "LRG-003"
+    },
+    {
+      "from": "LRG-002",
+      "to": "LRG-004"
+    },
+    {
+      "from": "LRG-002",
+      "to": "LRG-005"
+    },
+    {
+      "from": "LRG-003",
+      "to": "LRG-005"
+    },
+    {
+      "from": "LRG-004",
+      "to": "LRG-005"
+    }
+  ],
+  "work_items": [
+    {
+      "id": "LRG-001",
+      "title": "review finding taxonomy と narrow packet を定義する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/loop-review-governance-issues.md"
+      },
+      "acceptance_criteria": [
+        "review-gate.md が intent_gap、implementation_regression、hardening_candidate、safety_escalation、classification_needed の分類を定義する",
+        "superpowers:requesting-code-review を Issue 実装レビューの第一候補として明記する",
+        "reviewer packet は BASE_SHA / HEAD_SHA の committed range review を前提にする",
+        "reviewer packet は自動レビュー観点を Issue 意図適合、今回変更による regression、current PR delivery risk の 3 つに限定する",
+        "intent_gap / implementation_regression は blocking finding として既存 fix loop に乗る",
+        "hardening_candidate は明示依頼または current PR delivery risk に結び付く場合だけ記録し、review/fix cycle では自動修正要求にしない",
+        "classification_needed は自動レビュー観点として探さず、必要になった場合または人間が明示した場合だけ扱う",
+        "review packet は paths-first で、default 600 words / hard 900 words の budget 方針を持つ"
+      ],
+      "non_goals": [
+        "reviewer report を初回から完全 JSON 必須にすること",
+        "SKILL.md を肥大化させること"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_context.py --all",
+        "rg -n \"intent_gap|hardening_candidate|requesting-code-review|600 words|900 words\" skills/issue-implementation-loop",
+        "git diff --check"
+      ],
+      "write_scope": [
+        "path:skills/issue-implementation-loop/references/review-gate.md",
+        "path:skills/issue-implementation-loop/tests",
+        "path:knowledge/wiki/syntheses/loop-review-governance-issues.md"
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "LRG-002",
+      "title": "candidate registry と bounded decision artifact を追加する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/loop-review-governance-issues.md"
+      },
+      "acceptance_criteria": [
+        "<runtime-root>/decisions/hardening-candidates.json を coordinator-owned artifact として定義する",
+        "candidate は ID、source issue、classification、summary、risk、estimated scope、decision、implementation issue を持つ",
+        "routine review は future-only hardening や classification-only pass を列挙しない。必要になった場合または明示依頼で記録する hardening_candidate は 1 件 80 words 以下、1 issue 5 件以下を default とする",
+        "candidate registry は worker branch に含めない",
+        "resume brief は Pending hardening decisions: N と registry path だけを carry-forward する",
+        "safety_escalation / encountered classification_needed は必要最小 scope の human_request_opened へ送る",
+        "candidate full text を phase carry-forward に貼らず、path 参照にする"
+      ],
+      "non_goals": [
+        "candidate registry を local issue ledger の代替 source of truth にすること",
+        "human wait を常に epic-wide にすること"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests",
+        "candidate registry schema / template を追加した場合は対象 validator または fixture test",
+        "rg -n \"hardening-candidates|Pending hardening decisions|80 words|5 件\" skills/issue-implementation-loop",
+        "git diff --check"
+      ],
+      "write_scope": [
+        "path:skills/issue-implementation-loop/references/runtime-state.md",
+        "path:skills/issue-implementation-loop/references/human-wait.md",
+        "path:skills/issue-implementation-loop/references/context-compaction.md",
+        "path:skills/issue-implementation-loop/assets",
+        "path:skills/issue-implementation-loop/tests",
+        "path:knowledge/wiki/syntheses/loop-review-governance-issues.md"
+      ],
+      "dependencies": [
+        {
+          "issue": "LRG-001",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    },
+    {
+      "id": "LRG-003",
+      "title": "final delivery preflight に pending candidate check を追加する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/loop-review-governance-issues.md"
+      },
+      "acceptance_criteria": [
+        "draft final PR delivery plan validation は candidate registry を確認する",
+        "pending_decision または unresolved safety_escalation があれば draft PR 作成は fail せず pending_hardening_candidates と decision_gate_blockers に出す",
+        "deferred_follow_up、declined、risk_accepted は draft PR 作成を許可するが、completion report の residual risk に残す",
+        "approved_for_current_pr は対応する implementation_issue が PR_READY / integrated / review approved でなければ decision_gate_blockers に残す",
+        "local_only completion report でも未判断 candidate があれば pending_hardening_candidates として報告する",
+        "final PR merge、ready-for-review、force push、deploy、credential、permission、billing、production、destructive action の別承認境界は弱めない"
+      ],
+      "non_goals": [
+        "final PR ready-for-review 化や merge の自動化",
+        "local PR_READY だけで epic-base integration 済みと推定すること"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests",
+        "python3 skills/issue-implementation-loop/scripts/validate_delivery_plan.py <execution-envelope.json> <runtime-state.json> <delivery-plan.json> --json の新規 fixture tests",
+        "rg -n \"pending_decision|safety_escalation|hardening-candidates|final PR\" skills/issue-implementation-loop",
+        "git diff --check"
+      ],
+      "write_scope": [
+        "path:skills/issue-implementation-loop/references/remote-delivery.md",
+        "path:skills/issue-implementation-loop/scripts",
+        "path:skills/issue-implementation-loop/tests",
+        "path:knowledge/wiki/syntheses/loop-review-governance-issues.md"
+      ],
+      "dependencies": [
+        {
+          "issue": "LRG-002",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    },
+    {
+      "id": "LRG-004",
+      "title": "execution handoff / envelope policy を同期する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/loop-review-governance-issues.md"
+      },
+      "acceptance_criteria": [
+        "execution handoff が review governance policy を伝える",
+        "review_policy.hardening_candidates 相当を Execution Envelope に持たせるか、reference-only policy とするかが実装で一貫している",
+        "envelope に持たせる場合、schema / template / validator / tests が一致する",
+        "reference-only にする場合、context-contract.toml の read-set と reference ownership が明確で、packet に full policy text を貼らない",
+        "worker packet に session-level candidate decision state を混ぜない",
+        "planning/grill session が issue work を直接実装しない境界は維持される"
+      ],
+      "non_goals": [
+        "coordinator direct implementation の許可",
+        "execution envelope を人間判断 queue の source of truth にすること"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/grill-to-pr-loop/tests",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests",
+        "Execution Envelope validator / template fixture tests",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_context.py --all",
+        "git diff --check"
+      ],
+      "write_scope": [
+        "path:skills/grill-to-pr-loop/references/execution-handoff.md",
+        "path:skills/grill-to-pr-loop/tests",
+        "path:skills/issue-implementation-loop/references/execution-envelope.md",
+        "path:skills/issue-implementation-loop/assets",
+        "path:skills/issue-implementation-loop/tests",
+        "path:knowledge/wiki/syntheses/loop-review-governance-issues.md"
+      ],
+      "dependencies": [
+        {
+          "issue": "LRG-001",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        },
+        {
+          "issue": "LRG-002",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "none"
+        }
+      ]
+    },
+    {
+      "id": "LRG-005",
+      "title": "regression tests と wiki discoverability を更新する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/loop-review-governance-issues.md"
+      },
+      "acceptance_criteria": [
+        "intent_gap と明示依頼または current PR delivery risk に限る hardening_candidate を混同しない regression がある",
+        "future-only hardening が routine review で列挙されず、記録済み hardening_candidate が auto-fix されない regression がある",
+        "未判断 candidate は draft final PR 作成を止めず、ready-for-review / merge 前の一括判断 gate に出る regression がある",
+        "superpowers:requesting-code-review 第一候補と fallback boundary の contract が test または docs regression で固定されている",
+        "validate_skill_context.py --all が通る",
+        "report_skill_context.py --all --json が warnings なし、または warning の理由と follow-up が ledger に記録される",
+        "knowledge/index.md から spec / issue ledger / execution artifacts を発見できる",
+        "knowledge/log.md に Issue Gate / Execution Plan Gate / implementation evidence が同期される"
+      ],
+      "non_goals": [
+        "GitHub issue mirror、push、PR 作成、ready-for-review、merge",
+        "context complexity advisory を hard validator にすること"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_architecture.py --all",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_context.py --all",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/report_skill_context.py --all --json",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/grill-to-pr-loop/tests",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s scripts",
+        "rg -n \"loop-review-governance|hardening_candidate|pending_decision|requesting-code-review\" skills scripts knowledge/wiki/syntheses",
+        "git diff --check"
+      ],
+      "write_scope": [
+        "path:skills/grill-to-pr-loop/tests",
+        "path:skills/issue-implementation-loop/tests",
+        "path:scripts",
+        "path:knowledge/wiki/syntheses/loop-review-governance-issues.md",
+        "path:knowledge/wiki/syntheses/loop-review-governance-input-packet.json",
+        "path:knowledge/wiki/syntheses/loop-review-governance-execution-envelope.json",
+        "path:knowledge/wiki/syntheses/loop-review-governance-handoff-brief.md",
+        "path:knowledge/index.md",
+        "path:knowledge/log.md"
+      ],
+      "dependencies": [
+        {
+          "issue": "LRG-001",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "none"
+        },
+        {
+          "issue": "LRG-002",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "none"
+        },
+        {
+          "issue": "LRG-003",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "none"
+        },
+        {
+          "issue": "LRG-004",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "none"
+        }
+      ]
+    }
+  ],
+  "delivery_intent": "local_only"
+}

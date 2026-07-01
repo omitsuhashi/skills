@@ -22,7 +22,7 @@ Required policy:
 - final PR merge: `human_only`
 - final PR creation default: draft
 
-Before creating any issue PR or final PR, write the exact action to a delivery plan file, validate it with `--json`, and record/report the `ok: true` output before creating the PR. Final PR auto-creation is allowed only when delivery plan validation returns `ok: true`, `epic_base.ref` is active, every issue in the delivery candidate set is integrated, and the approved remote policy includes both `final_pr_push_head` and `final_pr_create_draft`. Use `assets/templates/delivery-plan.json` as the starting point for final PRs:
+Before creating any issue PR or draft final PR, write the exact action to a delivery plan file, validate it with `--json`, and record/report the `ok: true` output before creating the PR. Draft final PR auto-creation is allowed when delivery plan validation returns `ok: true`, `epic_base.ref` is active, every issue in the delivery candidate set is integrated, and the approved remote policy includes both `final_pr_push_head` and `final_pr_create_draft`. Use `assets/templates/delivery-plan.json` as the starting point for final PRs:
 
 ```bash
 python3 <skill-dir>/scripts/validate_delivery_plan.py <execution-envelope.json> <runtime-state.json> <delivery-plan.json>
@@ -47,7 +47,11 @@ Agent issue PR merge is allowed only when the PR is mergeable, required checks p
 
 Before final PR creation, reconcile `epic_base.ref`, set `epic_base.branch_state: active`, and confirm every issue in the delivery candidate set has `pr_merged: true` in runtime state or an equivalent approved ledger record. When using `validate_delivery_plan.py`, first reflect any approved ledger-equivalent merge record into runtime state; the validator does not infer final integration from local `PR_READY`. Do not treat local `PR_READY` alone as proof that `epic_base.ref` contains the issue head.
 
-After creating a draft final PR, synchronize the PR URL, draft state, delivery plan validation evidence, and residual risk summary into the local ledger, runtime state, and completion report before reporting delivery complete. Do not mark the final PR ready for review in this step.
+Draft final PR preflight also reads `<runtime-root>/decisions/hardening-candidates.json` when present. Routine future-only hardening suggestions should not be in that registry. `pending_decision` or unresolved `safety_escalation` does not block draft PR creation; it must appear in `pending_hardening_candidates` and `decision_gate_blockers` so the human can judge the integrated PR diff. `approved_for_current_pr` is unresolved until its `implementation_issue` is `PR_READY`, integrated, or review approved. For recorded `hardening_candidate`, `deferred_follow_up`, `declined`, and `risk_accepted` do not block draft PR creation, but must be copied into the completion report residual risk summary. For `safety_escalation`, only `risk_accepted`, `implemented`, or `approved_for_current_pr` with ready implementation clears the ready-for-review / merge blocker.
+
+After creating a draft final PR, synchronize the PR URL, draft state, delivery plan validation evidence, pending hardening candidate summary, decision gate blockers, and residual risk summary into the local ledger, runtime state, and completion report before reporting delivery complete. Do not mark the final PR ready for review in this step.
+
+For `local_only` completion, no remote delivery plan is required, but the completion report still must include `pending_hardening_candidates` when unresolved candidates remain and residual risks for `deferred_follow_up`, `declined`, or `risk_accepted` candidates.
 
 ## Always Separate Approval
 

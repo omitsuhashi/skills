@@ -35,6 +35,43 @@ def write_json(path: Path, value: object) -> None:
     path.write_text(json.dumps(value, indent=2), encoding="utf-8")
 
 
+def write_hardening_registry(path: Path, candidates: list[dict]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    write_json(
+        path,
+        {
+            "schema_version": 1,
+            "epic_id": "issue-implementation-loop",
+            "registry_path": str(path),
+            "limits": {
+                "hardening_candidate_summary_words_default": 80,
+                "hardening_candidates_per_issue_default": 5,
+            },
+            "candidates": candidates,
+        },
+    )
+
+
+def hardening_candidate(
+    candidate_id: str,
+    *,
+    classification: str = "hardening_candidate",
+    decision: str = "pending_decision",
+    implementation_issue: str | None = None,
+) -> dict:
+    return {
+        "candidate_id": candidate_id,
+        "source_issue": "G2PR-001",
+        "classification": classification,
+        "summary": "Add a bounded delivery hardening guard.",
+        "risk": "Low if deferred; source acceptance remains satisfied.",
+        "estimated_scope": ["path:skills/issue-implementation-loop"],
+        "decision": decision,
+        "implementation_issue": implementation_issue,
+        "delivery_blocker": classification == "safety_escalation",
+    }
+
+
 def load_common_module():
     spec = importlib.util.spec_from_file_location("issue_loop_common_under_test", COMMON_SCRIPT)
     assert spec and spec.loader
@@ -66,6 +103,14 @@ def base_envelope() -> dict:
             "max_review_cycles": 2,
             "max_fix_cycles": 2,
             "same_finding_limit": 2,
+            "hardening_candidates": {
+                "candidate_registry_path": "decisions/hardening-candidates.json",
+                "max_candidates_per_issue": 5,
+                "max_summary_words": 80,
+                "issue_completion_blocking": False,
+                "ready_or_merge_requires_decisions": True,
+                "worker_packet_decision_state": "forbidden",
+            },
         },
         "human_policy": {
             "default_scope": "issue",

@@ -9,7 +9,7 @@ The Execution Envelope is the approved execution contract. It is more specific t
 - `revision`: positive integer
 - `epic_base`: per-epic base branch ref, immutable initial full 40- or 64-character hex SHA, and `branch_state` for `batch_issue_prs`
 - `execution_policy`: parallel preference, serial fallback, slots, `wave_is_barrier`, and worker-context boundary
-- `review_policy`: primary reviewer, fallbacks, manual fallback, `max_review_cycles: 2`, and fix-cycle limits
+- `review_policy`: primary reviewer, fallbacks, manual fallback, `max_review_cycles: 2`, fix-cycle limits, and `hardening_candidates` policy
 - `human_policy`: default scope and epic-scope reason requirement
 - `context_policy`: paths-first worker packet and report budgets
 - `remote_write_policy`: `local_only`, `per_action`, `batch_draft_prs`, or `batch_issue_prs`
@@ -28,6 +28,25 @@ Use this required shape:
 ```
 
 Serial fallback means worker jobs run one at a time. It does not authorize coordinator-direct implementation. If worker contexts are unavailable, stop before implementation.
+
+## Review Governance Policy
+
+New envelopes include `review_policy.hardening_candidates` as policy only:
+
+```json
+{
+  "candidate_registry_path": "decisions/hardening-candidates.json",
+  "max_candidates_per_issue": 5,
+  "max_summary_words": 80,
+  "issue_completion_blocking": false,
+  "ready_or_merge_requires_decisions": true,
+  "worker_packet_decision_state": "forbidden"
+}
+```
+
+Interpret `candidate_registry_path` relative to the coordinator runtime root. Store candidate records and human decision state in `<runtime-root>/decisions/hardening-candidates.json`, not in the Execution Envelope or worker packet. Routine review packets must not solicit future-only hardening ideas or classification-only passes; populate the registry with `hardening_candidate` or `classification_needed` only when needed by an encountered finding or explicitly requested by the human. Continue recording `safety_escalation` for current PR delivery risk.
+
+Recorded `hardening_candidate` findings do not block issue completion, blocker release, local `PR_READY`, or draft final PR creation by themselves. Future-only suggestions are omitted rather than recorded. Candidate records that do exist remain pending decisions for the ready-for-review / merge lane. Worker packets may summarize the review governance policy by path and short instruction, but must not include session-level candidate decision state.
 
 ## Reservation Rules
 
@@ -105,6 +124,7 @@ Create a new envelope revision before changing:
 - remote action policy
 - issue PR merge policy or final PR policy
 - retry or review fallback policy
+- review governance policy, including `review_policy.hardening_candidates`
 - human wait policy
 - context policy
 

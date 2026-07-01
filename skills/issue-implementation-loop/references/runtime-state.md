@@ -1,60 +1,68 @@
 # Runtime State
 
-Keep mutable state outside tracked issue branches.
-
-Default root:
+Keep mutable execution state outside tracked issue branches:
 
 ```text
 $(git rev-parse --git-common-dir)/agent-runs/issue-implementation-loop/<epic-id>/
-├── runtime-state.json
-├── events.jsonl
-├── reports/
-├── reviews/
-├── decisions/
-├── locks/
-└── recovery/
 ```
 
-## Update Rule
+Runtime root contents: `runtime-state.json`, `events.jsonl`, `reports/`,
+`reviews/`, `decisions/`, `locks/`, `recovery/`.
 
-Only the coordinator writes central state:
+Only the coordinator writes central state: validate report, append event, update
+snapshot. Worker branches must not include `runtime-state.json`,
+`events.jsonl`, or live decision artifacts unless approved scope owns
+coordinator-state tooling.
 
-```text
-worker/reviewer report
-  -> coordinator validates attempt/report ID
-  -> append event
-  -> atomic snapshot update
-  -> render human summary when needed
-```
+`pr_created` sets `pr`/`pr_opened`; `pr_merged` also sets `pr_merged` and
+`merge_commit`. Delivery reads runtime state, not local `PR_READY` inference.
 
-Worker branches must not include `runtime-state.json` or `events.jsonl` unless the approved issue explicitly owns coordinator-state tooling.
+## Hardening Candidate Registry
 
-`pr_created` events set `pr` and `pr_opened` on the issue record. `pr_merged` events set `pr`, `pr_opened`, `pr_merged`, and `merge_commit` when provided. Delivery decisions must read this state rather than inferring epic-base integration from local `PR_READY`.
+Path: `<runtime-root>/decisions/hardening-candidates.json`.
 
-Validate snapshots with:
+This coordinator-owned runtime artifact is not a worker branch artifact or
+ledger replacement. Track only the schema/template in `assets/`; do not commit
+the live registry in a worker branch.
 
-```bash
-python3 <skill-dir>/scripts/validate_runtime_state.py <runtime-state.json>
-```
+Do not create registry entries for routine future-only hardening ideas or
+classification-only passes. The registry is for human-requested hardening
+review, current PR delivery-risk decisions, `safety_escalation`, and
+`classification_needed` only when an encountered finding cannot be classified or
+the human explicitly requested a classification pass.
 
-For `PR_READY`, `COMPLETE`, or `DONE` issues, record matching `base_sha`, `head_sha`, and committed `BASE_SHA..HEAD_SHA` review range. Do not omit them or record `working-tree` as the review head for new success states.
+Candidate fields: `candidate_id`, `source_issue`, `classification`, `summary`,
+`risk`, `estimated_scope`, `decision`, `implementation_issue`.
+
+`classification`: `hardening_candidate`, `safety_escalation`,
+`classification_needed`. `decision`: `pending_decision`,
+`approved_for_current_pr`, `deferred_follow_up`, `declined`, `risk_accepted`,
+`implemented`.
+
+Defaults: each `hardening_candidate.summary` is 80 words or fewer; each source
+issue records 5 件 or fewer.
+
+`hardening_candidate` does not block completion, blocker release, or local
+`PR_READY`. Future-only suggestions are omitted rather than carried to the
+registry. `safety_escalation` and encountered `classification_needed` findings
+require scoped `human_request_opened`.
+
+## Validation
+
+Validate snapshots with `python3 <skill-dir>/scripts/validate_runtime_state.py <runtime-state.json>`.
+
+For `PR_READY`, `COMPLETE`, or `DONE`, record matching `base_sha`, `head_sha`,
+and committed `BASE_SHA..HEAD_SHA` review range; never use `working-tree`.
 
 ## Resume Brief Cache
 
-Generate a short resume cache from a runtime root with:
+Build a regenerable cache:
 
 ```bash
 python3 <skill-dir>/scripts/build_resume_brief.py <runtime-root>
 ```
 
-The builder reads `runtime-state.json`, `events.jsonl`, optional `execution-envelope.json`, and latest files under `reports/` and `reviews/`. It writes `<runtime-root>/resume-brief.md` and enforces a 600 word limit. The brief must include Epic ID, overall status, runnable, active, reviewable, fixable, waiting human, pending remote action, verified commit ranges, latest report paths, and the recommended next operation.
-
-The builder also writes `<runtime-root>/resume-brief.meta.json` with source
-digests and revisions for the execution envelope, runtime state, and event log.
-Validate the cache before trusting it with:
-
-```bash
-python3 <skill-dir>/scripts/validate_resume_brief.py <runtime-root>
-```
-
-Treat `resume-brief.md` as a regenerable cache only. It is not canonical state and must not be edited to fix scheduler/runtime data. If it disagrees with runtime or events, investigate the canonical sources and rebuild the brief.
+The brief reads runtime/events plus optional envelope and report/review paths,
+enforces 600 words, and writes `<runtime-root>/resume-brief.md` plus meta. Add
+`Pending hardening decisions: N` and the candidate registry path when needed; do
+not copy candidate full text. If stale, fix runtime/events and rebuild.

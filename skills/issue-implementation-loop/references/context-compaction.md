@@ -33,15 +33,33 @@ At every `prepare`, `execute`, `review`, `resume`, and `deliver` exit, create a 
 - affected issue IDs, branch/worktree, base/head SHA, and review range
 - approval state, remote-write policy, human waits, blockers, and residual risks
 - verification command/result summary and evidence paths
+- `Pending hardening decisions: N` and `<runtime-root>/decisions/hardening-candidates.json` when unresolved human-requested or current-delivery candidates exist
 
-Drop raw worker JSON, full worker report text, full review text, command output dumps, diff/patch text, stale drafts, rejected alternatives, and local implementation trial-and-error from carry-forward context after the phase exit. If needed later, reload the bounded source artifact by path and digest.
+Drop raw worker JSON, full worker report text, full review text, candidate full text, command output dumps, diff/patch text, stale drafts, rejected alternatives, and local implementation trial-and-error from carry-forward context after the phase exit. If needed later, reload the bounded source artifact by path and digest.
+
+## Candidate Registry Carry-Forward
+
+Hardening candidate state is carried by path, not by copied proposal text.
+Routine future-only hardening ideas are not review findings and should not enter
+the registry or carry-forward capsule.
+Carry forward only:
+
+```text
+Pending hardening decisions: N
+Candidate registry: <runtime-root>/decisions/hardening-candidates.json
+```
+
+Do not paste candidate full text, rationale, suggested change, or decision
+history into phase carry-forward capsules, resume briefs, worker packets, or
+review packets. Reload `hardening-candidates.json` by path when the coordinator
+needs the full decision surface.
 
 ## Required Phase Outcomes
 
 - `prepare`: carry forward envelope path/revision/hash, runtime root, event log path, branch/worktree reservation summary, and unresolved envelope validation issues.
 - `execute`: carry forward worker packet path, worker report path, changed file summary, commit SHA, verification result, and any scoped blocker.
-- `review`: carry forward review range, verdict, Critical/Important findings, fix status, and accepted residual risk only.
-- `resume`: validate or rebuild the resume brief, then carry forward runtime state, event log, freshness metadata, dirty-state summary, and selected next operation.
+- `review`: carry forward review range, verdict, Critical/Important findings, fix status, accepted residual risk, candidate count, and candidate registry path only.
+- `resume`: validate or rebuild the resume brief, then carry forward runtime state, event log, freshness metadata, dirty-state summary, selected next operation, `Pending hardening decisions: N`, and candidate registry path.
 - `deliver`: carry forward PR-ready branches, approved remote action set, skipped remote actions, final PR human-only boundary, and delivery evidence path.
 
 ## Worker Packet Strictness

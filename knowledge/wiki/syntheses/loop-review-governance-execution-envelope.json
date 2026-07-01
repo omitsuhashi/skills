@@ -1,0 +1,218 @@
+{
+  "schema_version": 2,
+  "epic_id": "loop-review-governance",
+  "revision": 2,
+  "epic_base": {
+    "ref": "codex/loop-review-governance/epic-base",
+    "sha": "b7a5b989bb856ec0703f490361f7d9898ac521f4",
+    "branch_state": "active"
+  },
+  "execution_policy": {
+    "parallel_preferred": false,
+    "serial_fallback_preapproved": true,
+    "worker_context_required": true,
+    "coordinator_may_implement": false,
+    "serial_fallback_mode": "worker_context_only",
+    "implementation_slots": 1,
+    "review_slots": 1,
+    "wave_is_barrier": false
+  },
+  "review_policy": {
+    "primary": "requesting-code-review",
+    "fallbacks": [
+      "manual-review-fallback"
+    ],
+    "manual_fallback_preapproved": false,
+    "max_review_cycles": 2,
+    "max_fix_cycles": 2,
+    "same_finding_limit": 2,
+    "hardening_candidates": {
+      "candidate_registry_path": "decisions/hardening-candidates.json",
+      "max_candidates_per_issue": 5,
+      "max_summary_words": 80,
+      "issue_completion_blocking": false,
+      "ready_or_merge_requires_decisions": true,
+      "worker_packet_decision_state": "forbidden"
+    }
+  },
+  "human_policy": {
+    "default_scope": "issue",
+    "epic_scope_requires_reason": true
+  },
+  "context_policy": {
+    "paths_first": true,
+    "max_worker_packet_words": 600,
+    "max_worker_report_words": 350,
+    "include_full_spec_text": false,
+    "include_full_ledger_text": false,
+    "worker_packet_schema": "skills/issue-implementation-loop/assets/schemas/worker-packet.schema.json",
+    "worker_packet_template": "skills/issue-implementation-loop/assets/templates/worker-packet.json",
+    "worker_packet_validator": "skills/issue-implementation-loop/scripts/validate_worker_packet.py",
+    "session_compaction": {
+      "soft_trigger_percent": 65,
+      "hard_stop_percent": 75,
+      "mandatory_handoff_compaction": 1,
+      "mandatory_phase_transition_gc": true,
+      "carry_forward_capsule_words_default": 400,
+      "carry_forward_capsule_words_hard": 600,
+      "inline_json_code_diff_lines_hard": 80
+    }
+  },
+  "remote_write_policy": {
+    "mode": "batch_issue_prs",
+    "approved_actions": [
+      "final_pr_push_head",
+      "final_pr_create_draft"
+    ],
+    "issue_prs": {
+      "base": "epic_base.ref",
+      "merge": "agent_default_with_human_escalation"
+    },
+    "final_pr": {
+      "head": "epic_base.ref",
+      "base": "main",
+      "merge": "human_only",
+      "draft_default": true
+    }
+  },
+  "work_items": {
+    "LRG-001": {
+      "branch": "codex/loop-review-governance/LRG-001-review-finding-taxonomy",
+      "worktree_path": "/Users/omitsuhashi/.codex/worktrees/loop-review-governance/LRG-001-review-finding-taxonomy",
+      "worktree_state": "create_on_run",
+      "base_policy": {
+        "type": "epic_base"
+      },
+      "write_scope": [
+        "path:skills/issue-implementation-loop/references/review-gate.md",
+        "path:skills/issue-implementation-loop/tests",
+        "path:knowledge/wiki/syntheses/loop-review-governance-issues.md"
+      ],
+      "dependencies": []
+    },
+    "LRG-002": {
+      "branch": "codex/loop-review-governance/LRG-002-candidate-registry",
+      "worktree_path": "/Users/omitsuhashi/.codex/worktrees/loop-review-governance/LRG-002-candidate-registry",
+      "worktree_state": "reserved",
+      "base_policy": {
+        "type": "blocker_head",
+        "issue": "LRG-001"
+      },
+      "write_scope": [
+        "path:skills/issue-implementation-loop/references/runtime-state.md",
+        "path:skills/issue-implementation-loop/references/human-wait.md",
+        "path:skills/issue-implementation-loop/references/context-compaction.md",
+        "path:skills/issue-implementation-loop/assets",
+        "path:skills/issue-implementation-loop/tests",
+        "path:knowledge/wiki/syntheses/loop-review-governance-issues.md"
+      ],
+      "dependencies": [
+        {
+          "issue": "LRG-001",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    },
+    "LRG-003": {
+      "branch": "codex/loop-review-governance/LRG-003-delivery-preflight",
+      "worktree_path": "/Users/omitsuhashi/.codex/worktrees/loop-review-governance/LRG-003-delivery-preflight",
+      "worktree_state": "reserved",
+      "base_policy": {
+        "type": "blocker_head",
+        "issue": "LRG-002"
+      },
+      "write_scope": [
+        "path:skills/issue-implementation-loop/references/remote-delivery.md",
+        "path:skills/issue-implementation-loop/scripts",
+        "path:skills/issue-implementation-loop/tests",
+        "path:knowledge/wiki/syntheses/loop-review-governance-issues.md"
+      ],
+      "dependencies": [
+        {
+          "issue": "LRG-002",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    },
+    "LRG-004": {
+      "branch": "codex/loop-review-governance/LRG-004-execution-handoff-policy",
+      "worktree_path": "/Users/omitsuhashi/.codex/worktrees/loop-review-governance/LRG-004-execution-handoff-policy",
+      "worktree_state": "reserved",
+      "base_policy": {
+        "type": "blocker_head",
+        "issue": "LRG-001"
+      },
+      "write_scope": [
+        "path:skills/grill-to-pr-loop/references/execution-handoff.md",
+        "path:skills/grill-to-pr-loop/tests",
+        "path:skills/issue-implementation-loop/references/execution-envelope.md",
+        "path:skills/issue-implementation-loop/assets",
+        "path:skills/issue-implementation-loop/tests",
+        "path:knowledge/wiki/syntheses/loop-review-governance-issues.md"
+      ],
+      "dependencies": [
+        {
+          "issue": "LRG-001",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        },
+        {
+          "issue": "LRG-002",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "none"
+        }
+      ]
+    },
+    "LRG-005": {
+      "branch": "codex/loop-review-governance/LRG-005-regression-discoverability",
+      "worktree_path": "/Users/omitsuhashi/.codex/worktrees/loop-review-governance/LRG-005-regression-discoverability",
+      "worktree_state": "reserved",
+      "base_policy": {
+        "type": "epic_base"
+      },
+      "write_scope": [
+        "path:skills/grill-to-pr-loop/tests",
+        "path:skills/issue-implementation-loop/tests",
+        "path:scripts",
+        "path:knowledge/wiki/syntheses/loop-review-governance-issues.md",
+        "path:knowledge/wiki/syntheses/loop-review-governance-input-packet.json",
+        "path:knowledge/wiki/syntheses/loop-review-governance-execution-envelope.json",
+        "path:knowledge/wiki/syntheses/loop-review-governance-handoff-brief.md",
+        "path:knowledge/index.md",
+        "path:knowledge/log.md"
+      ],
+      "dependencies": [
+        {
+          "issue": "LRG-001",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "none"
+        },
+        {
+          "issue": "LRG-002",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "none"
+        },
+        {
+          "issue": "LRG-003",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "none"
+        },
+        {
+          "issue": "LRG-004",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "none"
+        }
+      ]
+    }
+  }
+}
