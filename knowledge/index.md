@@ -23,6 +23,8 @@ _現在なし。_
 - [LLM Wiki Draft Review And Canonicalize Goal Spec](wiki/syntheses/llm-wiki-draft-review-and-canonicalize-goal-spec.md) — Goal command で `skills/llm-wiki` を更新するための詳細実装契約。
 - [Grill To PR Loop Issue Implementation Review Gate Plan](wiki/syntheses/grill-to-pr-loop-issue-implementation-review-gate-plan.md) — `skills/grill-to-pr-loop` に issue 単位の実装レビューゲートを追加するための実装計画。
   検索語: grill-to-pr-loop, requesting-code-review, 実装レビュー, issue review, PR review, review gate, implementation plan
+- [Loop Review Governance Spec](wiki/syntheses/loop-review-governance-spec.md) — Issue 意図適合レビューと堅牢化候補を分離し、bounded summary と final PR 前 human decision で scope-expanding hardening を制御する Spec Gate 承認済み仕様。
+  検索語: loop review governance, issue intent, hardening candidate, safety escalation, final PR, human decision, requesting-code-review, context budget, 実装レビュー, 堅牢化, 人間判断
 - [Grill To PR Loop Skill Split V2 Spec](wiki/syntheses/grill-to-pr-loop-skill-split-v2-spec.md) — `issue-implementation-loop` 新設と `grill-to-pr-loop` composition 縮小の実装契約。
   検索語: grill-to-pr-loop, issue-implementation-loop, execution envelope, worktree reservation, scheduler, human wait, runtime state, skill split, implementation plan
 - [Grill To PR Loop Skill Split V2 Issues](wiki/syntheses/grill-to-pr-loop-skill-split-v2-issues.md) — skill split 実装のローカルIssue ledger。
