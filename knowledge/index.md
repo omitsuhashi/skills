@@ -33,6 +33,8 @@ _現在なし。_
   検索語: loop review governance, execution envelope, worker_context_required, local_only, LRG, worktree reservation, hardening candidate, requesting-code-review, 実行計画
 - [Loop Review Governance Handoff Brief](wiki/syntheses/loop-review-governance-handoff-brief.md) — Execution Plan Gate 後に raw transcript へ依存せず `issue-implementation-loop` を開始するための bounded handoff brief。
   検索語: loop review governance, handoff brief, carry-forward capsule, issue-implementation-loop, runtime root, context compaction
+- [Loop Review Governance Hardening Candidate Decisions](wiki/syntheses/loop-review-governance-hardening-decisions.md) — final PR 前に人間判断が必要な `hardening_candidate` 4 件の対象、推奨、判断欄をまとめる decision artifact。
+  検索語: loop review governance, hardening candidate, pending decision, human decision gate, final PR, deferred follow-up, 堅牢化, 人間判断
 - [Grill To PR Loop Skill Split V2 Spec](wiki/syntheses/grill-to-pr-loop-skill-split-v2-spec.md) — `issue-implementation-loop` 新設と `grill-to-pr-loop` composition 縮小の実装契約。
   検索語: grill-to-pr-loop, issue-implementation-loop, execution envelope, worktree reservation, scheduler, human wait, runtime state, skill split, implementation plan
 - [Grill To PR Loop Skill Split V2 Issues](wiki/syntheses/grill-to-pr-loop-skill-split-v2-issues.md) — skill split 実装のローカルIssue ledger。
