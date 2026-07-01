@@ -22,7 +22,8 @@
       "primary": "superpowers:requesting-code-review",
       "max_review_cycles": 2,
       "hardening_candidate_auto_fix": false,
-      "candidate_decision_required_before_final_pr": true
+      "draft_pr_allows_pending_decisions": true,
+      "ready_or_merge_requires_decisions": true
     },
     "context_budget": {
       "review_packet_words_default": 600,
@@ -151,10 +152,10 @@
         "path": "knowledge/wiki/syntheses/loop-review-governance-issues.md"
       },
       "acceptance_criteria": [
-        "final PR delivery plan validation は candidate registry を確認する",
-        "pending_decision または unresolved safety_escalation があれば final PR delivery plan は fail する",
-        "deferred_follow_up、declined、risk_accepted は delivery を許可するが、completion report の residual risk に残す",
-        "approved_for_current_pr は対応する implementation_issue が PR_READY / integrated / review approved でなければ delivery を許可しない",
+        "draft final PR delivery plan validation は candidate registry を確認する",
+        "pending_decision または unresolved safety_escalation があれば draft PR 作成は fail せず pending_hardening_candidates と decision_gate_blockers に出す",
+        "deferred_follow_up、declined、risk_accepted は draft PR 作成を許可するが、completion report の residual risk に残す",
+        "approved_for_current_pr は対応する implementation_issue が PR_READY / integrated / review approved でなければ decision_gate_blockers に残す",
         "local_only completion report でも未判断 candidate があれば pending_hardening_candidates として報告する",
         "final PR merge、ready-for-review、force push、deploy、credential、permission、billing、production、destructive action の別承認境界は弱めない"
       ],
@@ -242,7 +243,7 @@
       "acceptance_criteria": [
         "intent_gap と hardening_candidate を混同しない regression がある",
         "hardening_candidate が auto-fix されず final PR 前 decision queue に送られる regression がある",
-        "未判断 candidate がある final PR delivery plan が fail する regression がある",
+        "未判断 candidate は draft final PR 作成を止めず、ready-for-review / merge 前の一括判断 gate に出る regression がある",
         "superpowers:requesting-code-review 第一候補と fallback boundary の contract が test または docs regression で固定されている",
         "validate_skill_context.py --all が通る",
         "report_skill_context.py --all --json が warnings なし、または warning の理由と follow-up が ledger に記録される",

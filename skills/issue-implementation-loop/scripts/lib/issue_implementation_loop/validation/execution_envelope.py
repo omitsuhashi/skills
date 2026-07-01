@@ -39,10 +39,10 @@ SESSION_COMPACTION_REQUIRED_VALUES = {
 
 HARDENING_CANDIDATES_REQUIRED_FIELDS = {
     "candidate_registry_path",
-    "final_delivery_requires_decisions",
     "issue_completion_blocking",
     "max_candidates_per_issue",
     "max_summary_words",
+    "ready_or_merge_requires_decisions",
     "worker_packet_decision_state",
 }
 
@@ -77,8 +77,8 @@ def _validate_hardening_candidates_policy(
         errors.append(f"{prefix}.max_summary_words must be an integer between 1 and 80")
     if policy.get("issue_completion_blocking") is not False:
         errors.append(f"{prefix}.issue_completion_blocking must be false")
-    if policy.get("final_delivery_requires_decisions") is not True:
-        errors.append(f"{prefix}.final_delivery_requires_decisions must be true")
+    if policy.get("ready_or_merge_requires_decisions") is not True:
+        errors.append(f"{prefix}.ready_or_merge_requires_decisions must be true")
     if policy.get("worker_packet_decision_state") != "forbidden":
         errors.append(f"{prefix}.worker_packet_decision_state must be forbidden")
 

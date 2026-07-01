@@ -49,6 +49,7 @@ def main() -> int:
                     "errors": errors,
                     "pending_hardening_candidates": candidate_report["pending_hardening_candidates"],
                     "residual_risks": candidate_report["residual_risks"],
+                    "decision_gate_blockers": candidate_report["decision_gate_blockers"],
                     "candidate_registry": registry_path,
                 }
             ),

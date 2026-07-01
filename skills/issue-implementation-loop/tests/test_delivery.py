@@ -91,7 +91,7 @@ class DeliveryTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("issues.G2PR-003.pr_merged must be true before final PR", result.stderr)
 
-    def test_validate_delivery_plan_json_rejects_pending_candidate_registry_before_final_pr(self) -> None:
+    def test_validate_delivery_plan_json_allows_draft_final_pr_with_pending_candidates(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             envelope_path = Path(tmp) / "envelope.json"
             runtime_path = Path(tmp) / "runtime-state.json"
@@ -126,13 +126,18 @@ class DeliveryTests(unittest.TestCase):
                 "--json",
             )
 
-            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(result.returncode, 0, result.stderr)
             payload = json.loads(result.stdout)
-            self.assertFalse(payload["ok"])
-            self.assertIn("hardening-candidates.json", payload["errors"][0])
-            self.assertIn("pending_decision", payload["errors"][0])
+            self.assertTrue(payload["ok"])
+            self.assertEqual(payload["errors"], [])
+            self.assertEqual(
+                [candidate["candidate_id"] for candidate in payload["pending_hardening_candidates"]],
+                ["HC-G2PR-001-001"],
+            )
+            self.assertIn("ready-for-review", payload["decision_gate_blockers"][0])
+            self.assertIn("pending_decision", payload["decision_gate_blockers"][0])
 
-    def test_validate_delivery_plan_rejects_approved_candidate_until_implementation_issue_is_ready(self) -> None:
+    def test_validate_delivery_plan_reports_approved_candidate_until_implementation_issue_is_ready(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             envelope_path = Path(tmp) / "envelope.json"
             runtime_path = Path(tmp) / "runtime-state.json"
@@ -178,13 +183,14 @@ class DeliveryTests(unittest.TestCase):
                 "--json",
             )
 
-            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(result.returncode, 0, result.stderr)
             payload = json.loads(result.stdout)
-            self.assertFalse(payload["ok"])
-            self.assertIn("approved_for_current_pr", payload["errors"][0])
-            self.assertIn("G2PR-004", payload["errors"][0])
+            self.assertTrue(payload["ok"])
+            self.assertEqual(payload["errors"], [])
+            self.assertIn("approved_for_current_pr", payload["decision_gate_blockers"][0])
+            self.assertIn("G2PR-004", payload["decision_gate_blockers"][0])
 
-    def test_validate_delivery_plan_rejects_safety_escalation_declined_or_deferred(self) -> None:
+    def test_validate_delivery_plan_reports_safety_escalation_declined_or_deferred(self) -> None:
         for decision in ("declined", "deferred_follow_up"):
             with self.subTest(decision=decision), tempfile.TemporaryDirectory() as tmp:
                 envelope_path = Path(tmp) / "envelope.json"
@@ -226,10 +232,11 @@ class DeliveryTests(unittest.TestCase):
                     "--json",
                 )
 
-                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(result.returncode, 0, result.stderr)
                 payload = json.loads(result.stdout)
-                self.assertFalse(payload["ok"])
-                self.assertIn("unresolved safety_escalation", payload["errors"][0])
+                self.assertTrue(payload["ok"])
+                self.assertEqual(payload["errors"], [])
+                self.assertIn("unresolved safety_escalation", payload["decision_gate_blockers"][0])
                 self.assertEqual(
                     [candidate["decision"] for candidate in payload["pending_hardening_candidates"]],
                     [decision],

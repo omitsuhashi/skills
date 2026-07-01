@@ -51,7 +51,7 @@ The handoff brief is a bounded bridge, not canonical state. If it conflicts with
 
 ## Review Governance Handoff
 
-The Execution Envelope carries minimal `review_policy.hardening_candidates`: registry path `decisions/hardening-candidates.json`, max `5` candidates per issue, max `80` summary words, `issue_completion_blocking=false`, `final_delivery_requires_decisions=true`, and `worker_packet_decision_state=forbidden`.
+The Execution Envelope carries minimal `review_policy.hardening_candidates`: registry path `decisions/hardening-candidates.json`, max `5` candidates per issue, max `80` summary words, `issue_completion_blocking=false`, `ready_or_merge_requires_decisions=true`, and `worker_packet_decision_state=forbidden`.
 
 This is policy only. Runtime owns candidate records and human decisions; a worker packet may name paths/instructions but must not carry candidate decision state. The planning/grill session must not become an implementation worker; it hands off to `issue-implementation-loop`.
 

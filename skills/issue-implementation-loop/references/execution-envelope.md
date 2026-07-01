@@ -39,14 +39,14 @@ New envelopes include `review_policy.hardening_candidates` as policy only:
   "max_candidates_per_issue": 5,
   "max_summary_words": 80,
   "issue_completion_blocking": false,
-  "final_delivery_requires_decisions": true,
+  "ready_or_merge_requires_decisions": true,
   "worker_packet_decision_state": "forbidden"
 }
 ```
 
 Interpret `candidate_registry_path` relative to the coordinator runtime root. Store candidate records and human decision state in `<runtime-root>/decisions/hardening-candidates.json`, not in the Execution Envelope or worker packet.
 
-`hardening_candidate` findings do not block issue completion, blocker release, or local `PR_READY` by themselves. They remain pending delivery decisions until the final delivery lane resolves them. Worker packets may summarize the review governance policy by path and short instruction, but must not include session-level candidate decision state.
+`hardening_candidate` findings do not block issue completion, blocker release, local `PR_READY`, or draft final PR creation by themselves. They remain pending decisions for the ready-for-review / merge lane. Worker packets may summarize the review governance policy by path and short instruction, but must not include session-level candidate decision state.
 
 ## Reservation Rules
 

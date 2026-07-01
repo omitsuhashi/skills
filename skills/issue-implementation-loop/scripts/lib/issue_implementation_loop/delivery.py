@@ -129,6 +129,7 @@ def hardening_candidate_report(
         "errors": [],
         "pending_hardening_candidates": [],
         "residual_risks": [],
+        "decision_gate_blockers": [],
     }
     registry_label = Path(candidate_registry_path).name
     if candidate_registry_load_error:
@@ -156,9 +157,9 @@ def hardening_candidate_report(
 
         if decision == "pending_decision":
             _append_candidate_summary_once(report, "pending_hardening_candidates", summary)
-            report["errors"].append(
+            report["decision_gate_blockers"].append(
                 f"{registry_label}: {candidate_label} has pending_decision; "
-                "final PR delivery requires a decision"
+                "ready-for-review, merge, or candidate implementation requires a human decision"
             )
             continue
 
@@ -168,10 +169,10 @@ def hardening_candidate_report(
             implementation_ready = _implementation_issue_ready(runtime, implementation_issue)
             if not implementation_ready:
                 _append_candidate_summary_once(report, "pending_hardening_candidates", summary)
-                report["errors"].append(
+                report["decision_gate_blockers"].append(
                     f"{registry_label}: {candidate_label} approved_for_current_pr requires "
                     f"implementation_issue {implementation_issue} to be PR_READY, integrated, "
-                    "or review approved"
+                    "or review approved before ready-for-review or merge"
                 )
 
         if classification == "safety_escalation":
@@ -181,9 +182,9 @@ def hardening_candidate_report(
             )
             if not safety_resolved:
                 _append_candidate_summary_once(report, "pending_hardening_candidates", summary)
-                report["errors"].append(
+                report["decision_gate_blockers"].append(
                     f"{registry_label}: {candidate_label} has unresolved safety_escalation; "
-                    "risk acceptance or implemented approved scope is required before final PR"
+                    "risk acceptance or implemented approved scope is required before ready-for-review or merge"
                 )
 
         if decision in RESIDUAL_RISK_DECISIONS:

@@ -108,7 +108,7 @@ def base_envelope() -> dict:
                 "max_candidates_per_issue": 5,
                 "max_summary_words": 80,
                 "issue_completion_blocking": False,
-                "final_delivery_requires_decisions": True,
+                "ready_or_merge_requires_decisions": True,
                 "worker_packet_decision_state": "forbidden",
             },
         },

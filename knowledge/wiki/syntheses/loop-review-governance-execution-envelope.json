@@ -26,8 +26,14 @@
     "max_review_cycles": 2,
     "max_fix_cycles": 2,
     "same_finding_limit": 2,
-    "hardening_candidate_auto_fix": false,
-    "candidate_decision_required_before_final_pr": true
+    "hardening_candidates": {
+      "candidate_registry_path": "decisions/hardening-candidates.json",
+      "max_candidates_per_issue": 5,
+      "max_summary_words": 80,
+      "issue_completion_blocking": false,
+      "ready_or_merge_requires_decisions": true,
+      "worker_packet_decision_state": "forbidden"
+    }
   },
   "human_policy": {
     "default_scope": "issue",

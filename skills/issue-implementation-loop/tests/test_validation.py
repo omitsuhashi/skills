@@ -271,7 +271,7 @@ class ValidationTests(unittest.TestCase):
             "max_candidates_per_issue": 5,
             "max_summary_words": 80,
             "issue_completion_blocking": False,
-            "final_delivery_requires_decisions": True,
+            "ready_or_merge_requires_decisions": True,
             "worker_packet_decision_state": "forbidden",
         }
 
@@ -285,7 +285,7 @@ class ValidationTests(unittest.TestCase):
             if field in {
                 "candidate_registry_path",
                 "issue_completion_blocking",
-                "final_delivery_requires_decisions",
+                "ready_or_merge_requires_decisions",
                 "worker_packet_decision_state",
             }:
                 self.assertEqual(field_schema["const"], value)
@@ -324,9 +324,9 @@ class ValidationTests(unittest.TestCase):
                     "review_policy.hardening_candidates.issue_completion_blocking",
                 ),
                 (
-                    "delivery_not_gated",
-                    {"final_delivery_requires_decisions": False},
-                    "review_policy.hardening_candidates.final_delivery_requires_decisions",
+                    "ready_or_merge_not_gated",
+                    {"ready_or_merge_requires_decisions": False},
+                    "review_policy.hardening_candidates.ready_or_merge_requires_decisions",
                 ),
                 (
                     "worker_decision_state",

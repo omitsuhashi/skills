@@ -29,7 +29,7 @@
       "max_candidates_per_issue": 5,
       "max_summary_words": 80,
       "issue_completion_blocking": false,
-      "final_delivery_requires_decisions": true,
+      "ready_or_merge_requires_decisions": true,
       "worker_packet_decision_state": "forbidden"
     }
   },

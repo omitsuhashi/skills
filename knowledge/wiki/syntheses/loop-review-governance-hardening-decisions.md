@@ -2,9 +2,9 @@
 
 ## 状態
 
-Human Decision Gate pending。
+Human Decision Gate pending。Draft final PR 作成後に統合 diff を見て一括判断する。
 
-このファイルは `loop-review-governance` の final PR 作成前に、人間が判断する必要がある `hardening_candidate` を一覧化するための decision artifact です。
+このファイルは `loop-review-governance` の draft final PR 上で、人間が一括判断する必要がある `hardening_candidate` を一覧化するための decision artifact です。
 
 ## Source
 
@@ -21,7 +21,7 @@ Human Decision Gate pending。
 - `declined`: 採用しない。理由を残す。
 - `risk_accepted`: risk を認識したうえで delivery 継続を許可する。通常は `safety_escalation` 用。
 
-`pending_decision` が残っている間は、final PR 作成に進まない。
+`pending_decision` が残っていても draft final PR 作成には進める。ready-for-review、merge、または candidate 取り込み実装へ進む前に、全 candidate の一括判断を行う。
 
 ## 判断対象
 
@@ -32,13 +32,15 @@ Human Decision Gate pending。
 | `HC-LRG-003-002` | `LRG-003` | `pending_hardening_candidates` / `residual_risks` helper output を将来の `local_only` completion report validator に接続する。 | 低。remote delivery preflight は enforced だが、`local_only` completion report validation は documented reporting contract に留まる。 | `skills/issue-implementation-loop/scripts`, `skills/issue-implementation-loop/tests`, `skills/issue-implementation-loop/references` | `deferred_follow_up` | `pending_decision` | 未判断 |
 | `HC-LRG-004-001` | `LRG-004` | acceptance criteria が validator 変更を要求しているのに write scope が validator path を含まない mismatch を dispatch / preflight で検出する。 | 低。LRG-004 の具体的 validator gap は修正済みだが、将来 packet で同じ mismatch が再発しうる。 | `skills/issue-implementation-loop/scripts`, `skills/issue-implementation-loop/tests`, `skills/grill-to-pr-loop/references` | `deferred_follow_up` | `pending_decision` | 未判断 |
 
-## PR 作成条件
+## PR / Ready / Merge 条件
 
-final PR を作るには、上の 4 件すべてについて `人間判断` が `pending_decision` 以外になっている必要がある。
+draft final PR は、上の 4 件が `pending_decision` のままでも作成できる。PR body とこのファイルに同じ判断対象を載せ、統合 diff を見たうえで一括判断する。
 
 全件 `deferred_follow_up` を選ぶ場合は、current PR の実装 scope は増やさず、completion report に residual hardening candidate として残す。
 
 いずれかを `approved_for_current_pr` にする場合は、current PR scope が増えるため、amendment issue を追加して通常の実装レビューを通す。
+
+ready-for-review、merge、risk acceptance、または candidate 取り込み実装へ進む前には、4 件すべてについて `人間判断` が `pending_decision` 以外になっている必要がある。
 
 ## 現時点の coordinator 推奨
 
