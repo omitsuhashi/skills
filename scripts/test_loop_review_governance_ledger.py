@@ -81,6 +81,7 @@ class LoopReviewGovernanceLedgerTests(unittest.TestCase):
             "[2026-07-01] implementation | Loop review governance LRG-005 regression discoverability",
             "[2026-07-01] review-fix | Loop review governance draft PR decision surface",
             "[2026-07-01] review-fix | Loop review governance hardening decision visibility",
+            "[2026-07-01] review-fix | Loop review governance hardening decision material",
             "pending_decision` は draft PR 作成ではなく",
             "HC-LRG-002-001、HC-LRG-003-001、HC-LRG-003-002、HC-LRG-004-001 は pending_decision",
         ):
@@ -92,6 +93,8 @@ class LoopReviewGovernanceLedgerTests(unittest.TestCase):
         for required in (
             "## 保存場所と読み方",
             "## 出典 / 指している箇所",
+            "## 判断材料サマリ",
+            "## 候補別判断メモ",
             "runtime registry の `candidates[0]`",
             "runtime registry の `candidates[1]`",
             "runtime registry の `candidates[2]`",
@@ -103,6 +106,13 @@ class LoopReviewGovernanceLedgerTests(unittest.TestCase):
             "skills/issue-implementation-loop/scripts/check_capabilities.py",
             "skills/issue-implementation-loop/scripts/lib/issue_implementation_loop/delivery.py",
             "skills/issue-implementation-loop/scripts/lib/issue_implementation_loop/validation/execution_envelope.py",
+            "判断したい問い",
+            "今回取り込む効果",
+            "今回取り込むコスト / 影響",
+            "`HC-LRG-002-001`: resume brief の pending 件数を動的算出する",
+            "`HC-LRG-003-001`: `check_capabilities.py` に worker packet routing coverage を足す",
+            "`HC-LRG-003-002`: local-only completion report validator に接続する",
+            "`HC-LRG-004-001`: acceptance criteria と `write_scope` の mismatch preflight",
         ):
             self.assertIn(required, text)
 

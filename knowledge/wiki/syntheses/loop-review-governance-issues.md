@@ -364,7 +364,7 @@ Review governance の regression coverage、context budget evidence、wiki disco
 
 ## Pending Hardening Decisions
 
-判断対象の正本は [loop-review-governance-hardening-decisions.md](loop-review-governance-hardening-decisions.md) に置く。そこに保存場所、出典 review artifact、指している実装箇所を candidate ごとに記録する。
+判断対象の正本は [loop-review-governance-hardening-decisions.md](loop-review-governance-hardening-decisions.md) に置く。そこに保存場所、出典 review artifact、指している実装箇所、判断材料サマリ、候補別判断メモを candidate ごとに記録する。
 
 | Candidate ID | Source issue | Decision | Recommended decision | 出典 / 指している箇所 | 実装判断 |
 | --- | --- | --- | --- | --- | --- |
