@@ -23,6 +23,7 @@ GitHub Projects を first backend とするが、Portfolio OS core や reusable 
 - task-management skill は capture/chat text を `TaskDraft` に正規化し、human review text と recommendation rationale を出せる。
 - adapter invocation envelope は dispatch 前に review できる。実際の create/update/comment の実行方針は MCP などの外部 adapter が所有する。
 - MCP server enablement、credential setup、GitHub adapter tool enablement は plugin install では実行しない。
+- Hermes native plugin loader 用に `plugins/task-management/plugin.yaml` と `__init__.py` を持ち、`hermes plugins list` / `enable` の入口から同梱 skill を登録できる。
 - インストール後は、Hermes Agent に GitHub MCP Server が登録済みであれば、task 登録の review / approval / routing / adapter dispatch まで使える。
 - normal tests は固定テストデータ / 模擬実装ベースで、live GitHub access、Hermes live profile、credentials、MCP server を要求しない。
 
@@ -58,6 +59,9 @@ GitHub Projects を first backend とするが、Portfolio OS core や reusable 
 - 推奨 package path は `plugins/task-management/` とする。
 - top-level `skills/task-management/` は作らない。skill は `plugins/task-management/skills/task-management/` に置く。
 - plugin scaffold は `plugin-creator` の helper を使い、`.codex-plugin/plugin.json` を必須にする。
+- Hermes native plugin manifest として `plugin.yaml` を package root に置く。current Hermes の valid kind は `standalone` / `backend` / `exclusive` / `platform` / `model-provider` なので、workflow package であっても `kind: standalone` とする。
+- Hermes enable/load entrypoint として package root の `__init__.py` から同梱 skill を `ctx.register_skill("task-management", ...)` で登録する。これは adapter 実装ではなく、plugin skill registration だけを担う。
+- current Hermes は subdir plugin install 時に対象 subdir だけを installed plugin directory へ移すため、`.git` が残らず `hermes plugins update task-management` が失敗する場合がある。standalone repository 化または Hermes installer の source metadata 対応までは、README で `hermes plugins install --force ...#plugins/task-management` による更新手順を明記する。
 - skill scaffold は `skill-creator` の helper を使い、`SKILL.md` と `agents/openai.yaml` を検証対象にする。
 - Portfolio OS local/profile-specific skills は profile-specific capture / routing / source trail integration / shared layer handoff に限定する。
 - initial behavior は review / approval gate first とし、task draft、routing decision、adapter invocation envelope を人間が確認できるようにする。
@@ -82,6 +86,9 @@ GitHub Projects を first backend とするが、Portfolio OS core や reusable 
 ```text
 plugins/task-management/
 ├── .codex-plugin/plugin.json
+├── plugin.yaml
+├── __init__.py
+├── README.md
 ├── config/
 │   └── task-backends.example.toml
 ├── skills/task-management/
@@ -263,6 +270,9 @@ Spec Gate 承認後に、日本語 local-first ledger として issue 化する�
 ## 受け入れ基準
 
 - `plugins/task-management/.codex-plugin/plugin.json` が存在し、`plugin-creator` validator を通る。
+- `plugins/task-management/plugin.yaml` が存在し、Hermes native plugin manifest として `name: task-management`、`version: 0.1.0`、`kind: standalone` を持つ。
+- `plugins/task-management/__init__.py` は `ctx.register_skill("task-management", plugins/task-management/skills/task-management/SKILL.md)` 相当だけを行い、live Hermes profile、credentials、MCP、GitHub、network、adapter 実装には触れない。
+- `plugins/task-management/README.md` は Hermes subdir install / enable 手順と、subdir install では `.git` が残らず `hermes plugins update task-management` が使えない場合の `install --force` 更新手順を明記する。
 - `plugins/task-management/skills/task-management/SKILL.md` が存在し、`skill-creator` quick validation を通る。
 - 初回実装の公開 skill entrypoint は `plugins/task-management/skills/task-management/` の 1 つだけである。
 - plugin package は distribution / install-update / config template / examples / references を所有し、GitHub read/write adapter や MCP server 実装を所有しない。

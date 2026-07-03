@@ -122,6 +122,7 @@ class AdapterDispatchContractTests(unittest.TestCase):
             path.relative_to(PLUGIN_ROOT).as_posix()
             for path in scanned_paths
             if path.suffix in implementation_suffixes
+            and path.relative_to(PLUGIN_ROOT).as_posix() != "__init__.py"
         ]
 
         self.assertEqual([], implementation_files)

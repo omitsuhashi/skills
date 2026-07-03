@@ -1,0 +1,6 @@
+manifest_version: 1
+name: task-management
+version: 0.1.0
+description: Backend-neutral task-management workflow package.
+author: Omitsuhashi
+kind: standalone

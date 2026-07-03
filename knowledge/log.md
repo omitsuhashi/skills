@@ -983,3 +983,11 @@ append-only で使います。すべての entry は予測しやすい header �
 - user feedback を受け、自動レビュー観点を Issue 意図適合、今回変更による regression、current PR delivery risk の 3 つに限定した
 - `classification_needed` と `hardening_candidate` は自動探索せず、必要になった場合または人間が明示した場合だけ扱う方針へ更新した
 - `review-gate.md`、execution handoff / envelope / runtime / human wait references、spec、input packet、issue ledger、handoff brief、decision artifact、regression tests を同期した
+
+## [2026-07-03] implementation | Task-management Hermes native plugin manifest
+
+- Hermes local docs / loader implementation を確認し、native plugin discovery は `plugin.yaml`、enable/load は `__init__.py` の `register(ctx)` を使うことを反映した
+- `plugins/task-management/plugin.yaml` を追加し、current Hermes の valid kind に合わせて `kind: standalone` とした
+- `plugins/task-management/__init__.py` を追加し、同梱 `task-management` skill を `ctx.register_skill` で登録するだけの entrypoint にした
+- `plugins/task-management/README.md` に subdir install / enable 手順と、`.git` が残らない場合の `hermes plugins update` limitation / `install --force` 更新手順を明記した
+- `knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-spec.md` と task-management plugin tests を同期した
