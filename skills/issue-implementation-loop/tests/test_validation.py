@@ -65,7 +65,7 @@ class ValidationTests(unittest.TestCase):
                 self.assertNotEqual(result.returncode, 0, name)
                 self.assertIn(expected, result.stderr)
 
-    def test_validate_execution_envelope_requires_session_compaction_policy_for_schema_version_2(self) -> None:
+    def test_validate_execution_envelope_requires_session_compaction_policy_for_schema_version_2_or_3(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             envelope = base_envelope()
             del envelope["context_policy"]["session_compaction"]
@@ -82,7 +82,20 @@ class ValidationTests(unittest.TestCase):
             envelope = base_envelope()
             envelope["schema_version"] = 1
             del envelope["context_policy"]["session_compaction"]
+            del envelope["phase_branch_policy"]
             path = Path(tmp) / "legacy-without-session-compaction.json"
+            write_json(path, envelope)
+
+            result = run_script("validate_execution_envelope.py", str(path))
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_validate_execution_envelope_accepts_legacy_schema_v2_without_phase_branch_policy(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            envelope = base_envelope()
+            envelope["schema_version"] = 2
+            del envelope["phase_branch_policy"]
+            path = Path(tmp) / "legacy-v2-without-phase-branch-policy.json"
             write_json(path, envelope)
 
             result = run_script("validate_execution_envelope.py", str(path))
@@ -170,10 +183,11 @@ class ValidationTests(unittest.TestCase):
         schema = json.loads(ENVELOPE_SCHEMA_FILE.read_text(encoding="utf-8"))
         context_schema = schema["properties"]["context_policy"]
 
-        self.assertEqual(schema["properties"]["schema_version"]["enum"], [1, 2])
+        self.assertEqual(schema["properties"]["schema_version"]["enum"], [1, 2, 3])
         self.assertNotIn("session_compaction", context_schema["required"])
         root_conditions = json.dumps(schema["allOf"], sort_keys=True)
         self.assertIn('"const": 2', root_conditions)
+        self.assertIn('"const": 3', root_conditions)
         self.assertIn('"session_compaction"', root_conditions)
         for field in (
             "worker_packet_schema",
@@ -189,6 +203,77 @@ class ValidationTests(unittest.TestCase):
                     "worker_packet_validator",
                 ],
             )
+
+    def test_validate_execution_envelope_requires_phase_branch_policy_for_schema_version_3(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            envelope = base_envelope()
+            del envelope["phase_branch_policy"]
+            path = Path(tmp) / "missing-phase-branch-policy.json"
+            write_json(path, envelope)
+
+            result = run_script("validate_execution_envelope.py", str(path))
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("phase_branch_policy", result.stderr)
+
+    def test_validate_execution_envelope_rejects_invalid_phase_branch_policy(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cases = [
+                ("planning_branch", {"planning_artifacts_branch": "epic_base"}, "planning_artifacts_branch"),
+                ("approval_commit", {"phase_approval_commit_required": False}, "phase_approval_commit_required"),
+                ("clean_scope", {"phase_transition_requires_clean_scope": False}, "phase_transition_requires_clean_scope"),
+                ("context", {"execution_coordinator_context": "same_expanded_thread"}, "execution_coordinator_context"),
+                ("planning_impl", {"main_planning_session_may_implement": True}, "main_planning_session_may_implement"),
+                ("worktree", {"worktree_per_issue": False}, "worktree_per_issue"),
+                ("prefix", {"branch_prefix": "feature"}, "branch_prefix"),
+                ("epic_pattern", {"epic_base_ref_pattern": "main"}, "epic_base_ref_pattern"),
+                ("issue_pattern", {"issue_branch_pattern": "codex/<epic-id>/<slug>"}, "issue_branch_pattern"),
+                ("epic_owner", {"epic_base_owner": "worker"}, "epic_base_owner"),
+                ("issue_owner", {"issue_branch_owner": "coordinator"}, "issue_branch_owner"),
+                ("integration", {"integration_branch_policy": "ad_hoc_merge"}, "integration_branch_policy"),
+                ("unknown", {"branch_cleanup": "auto"}, "unknown field"),
+            ]
+            for name, patch, expected in cases:
+                with self.subTest(name):
+                    envelope = base_envelope()
+                    envelope["phase_branch_policy"].update(patch)
+                    path = Path(tmp) / f"{name}.json"
+                    write_json(path, envelope)
+
+                    result = run_script("validate_execution_envelope.py", str(path))
+
+                    self.assertNotEqual(result.returncode, 0, name)
+                    self.assertIn(expected, result.stderr)
+
+    def test_execution_envelope_schema_defines_codex_phase_branch_policy(self) -> None:
+        schema = json.loads(ENVELOPE_SCHEMA_FILE.read_text(encoding="utf-8"))
+        policy_schema = schema["properties"]["phase_branch_policy"]
+        template = json.loads(
+            (SKILL_DIR / "assets" / "templates" / "execution-envelope.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        expected_policy = {
+            "planning_artifacts_branch": "current_session_branch",
+            "phase_approval_commit_required": True,
+            "phase_transition_requires_clean_scope": True,
+            "execution_coordinator_context": "fresh_or_compacted",
+            "main_planning_session_may_implement": False,
+            "worktree_per_issue": True,
+            "branch_prefix": "codex",
+            "epic_base_ref_pattern": "codex/<epic-id>/epic-base",
+            "issue_branch_pattern": "codex/<epic-id>/<local-id>-<slug>",
+            "epic_base_owner": "execution_coordinator",
+            "issue_branch_owner": "worker",
+            "integration_branch_policy": "approved_integration_work_item_only",
+        }
+
+        self.assertEqual(template["schema_version"], 3)
+        self.assertEqual(template["phase_branch_policy"], expected_policy)
+        self.assertEqual(policy_schema["required"], list(expected_policy))
+        self.assertFalse(policy_schema["additionalProperties"])
+        for field, value in expected_policy.items():
+            self.assertEqual(policy_schema["properties"][field]["const"], value)
 
     def test_validate_execution_envelope_accepts_resume_capable_tracked_legacy_envelopes(self) -> None:
         envelope_dir = SKILL_DIR.parents[1] / "knowledge" / "wiki" / "syntheses"

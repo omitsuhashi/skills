@@ -53,6 +53,7 @@ When session context pressure reaches `65%`, keep the current operation read-set
 - Keep planning, spec, issue ledger, and execution packet ownership here. Keep branch/base/commit policy in the execution handoff reference and remote policy in the remote delivery reference.
 - Treat each approved planning gate as a phase approval commit boundary: commit the approved artifacts and ledger/log updates before starting the next phase.
 - Before approved implementation handoff, perform context 圧縮 of the main planning session or switch to a fresh execution coordinator that starts from the normalized packet plus a bounded handoff brief.
+- New execution envelopes use schema version `3` with `phase_branch_policy`; keep planning commits, `epic_base`, issue branches, and worker worktrees as separate Codex-owned resources.
 - Delegate approved issue implementation to `issue-implementation-loop`; it owns worktree reservation, scheduling, runtime state, worker dispatch, scoped waits, implementation review, recovery, and `PR_READY`.
 - Do not implement issue work in the planning/grill context. If worker contexts are unavailable, stop before implementation.
 - Do not publish issues, push, create PRs, merge, force push, deploy, change permissions, touch credentials, perform destructive actions, or incur billing without approved remote policy. Final PR merge is always human-only.

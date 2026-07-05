@@ -82,7 +82,7 @@ def load_common_module():
 
 def base_envelope() -> dict:
     return {
-        "schema_version": 2,
+        "schema_version": 3,
         "epic_id": "issue-implementation-loop",
         "revision": 1,
         "epic_base": {"ref": "main", "sha": BASE_SHA},
@@ -134,6 +134,20 @@ def base_envelope() -> dict:
                 "carry_forward_capsule_words_hard": 600,
                 "inline_json_code_diff_lines_hard": 80,
             },
+        },
+        "phase_branch_policy": {
+            "planning_artifacts_branch": "current_session_branch",
+            "phase_approval_commit_required": True,
+            "phase_transition_requires_clean_scope": True,
+            "execution_coordinator_context": "fresh_or_compacted",
+            "main_planning_session_may_implement": False,
+            "worktree_per_issue": True,
+            "branch_prefix": "codex",
+            "epic_base_ref_pattern": "codex/<epic-id>/epic-base",
+            "issue_branch_pattern": "codex/<epic-id>/<local-id>-<slug>",
+            "epic_base_owner": "execution_coordinator",
+            "issue_branch_owner": "worker",
+            "integration_branch_policy": "approved_integration_work_item_only",
         },
         "remote_write_policy": {"mode": "local_only", "approved_actions": []},
         "work_items": {

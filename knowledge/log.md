@@ -991,3 +991,11 @@ append-only で使います。すべての entry は予測しやすい header �
 - `plugins/task-management/__init__.py` を追加し、同梱 `task-management` skill を `ctx.register_skill` で登録するだけの entrypoint にした
 - `plugins/task-management/README.md` に subdir install / enable 手順と、`.git` が残らない場合の `hermes plugins update` limitation / `install --force` 更新手順を明記した
 - `knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-spec.md` と task-management plugin tests を同期した
+
+## [2026-07-05] implementation | Loop skill Codex phase branch policy
+
+- `knowledge/wiki/syntheses/loop-skill-codex-optimization-spec.md` を追加し、Codex の planning / execution context、phase approval commit、fresh / compacted coordinator handoff、branch ownership を local-only 仕様として整理した
+- `Execution Envelope` 新規 template を schema version `3` に上げ、`phase_branch_policy` を schema / validator / tests で固定した
+- `grill-to-pr-loop` execution handoff と `issue-implementation-loop` execution envelope / worktree lifecycle references を、planning branch、`epic_base`、issue branch、integration work item の責務分離に同期した
+- schema version `1` / `2` envelope は historical / resume artifact として互換維持する方針にした
+- GitHub issue mirror、push、PR 作成、ready-for-review、merge、force push、production / credential / permission / billing / destructive action は実行していない

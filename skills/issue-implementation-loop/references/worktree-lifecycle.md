@@ -11,6 +11,10 @@ Use one branch/worktree reservation per approved issue. For `batch_issue_prs`, a
 
 `epic_base` uses the same state names but is not an issue work item. It may omit `worktree_path` when no physical epic-base checkout is needed.
 
+## Codex Branch Ownership
+
+Planning artifacts stay on the planning branch. The execution coordinator owns `codex/<epic-id>/epic-base`; workers own only `codex/<epic-id>/<local-id>-<slug>` issue branches. Create an issue branch only when runnable and `base_policy` has an observable base. Keep blocked worktrees absent. Use an approved integration work item when one downstream branch needs multiple issue heads.
+
 ## Procedure
 
 1. Validate envelope branch/path uniqueness.

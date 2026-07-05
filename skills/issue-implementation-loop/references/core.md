@@ -38,6 +38,8 @@ Return a local execution result:
 
 Use `assets/templates/execution-result.json` for the concrete shape.
 
+New Execution Envelopes use schema version `3` with `phase_branch_policy`; legacy `1` / `2` remain resumable.
+
 ## Non-Goals
 
 - Do not create or redesign issues.

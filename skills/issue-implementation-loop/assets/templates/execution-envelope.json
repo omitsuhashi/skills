@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "epic_id": "<epic-id>",
   "revision": 1,
   "epic_base": {
@@ -55,6 +55,20 @@
       "carry_forward_capsule_words_hard": 600,
       "inline_json_code_diff_lines_hard": 80
     }
+  },
+  "phase_branch_policy": {
+    "planning_artifacts_branch": "current_session_branch",
+    "phase_approval_commit_required": true,
+    "phase_transition_requires_clean_scope": true,
+    "execution_coordinator_context": "fresh_or_compacted",
+    "main_planning_session_may_implement": false,
+    "worktree_per_issue": true,
+    "branch_prefix": "codex",
+    "epic_base_ref_pattern": "codex/<epic-id>/epic-base",
+    "issue_branch_pattern": "codex/<epic-id>/<local-id>-<slug>",
+    "epic_base_owner": "execution_coordinator",
+    "issue_branch_owner": "worker",
+    "integration_branch_policy": "approved_integration_work_item_only"
   },
   "remote_write_policy": {
     "mode": "batch_issue_prs",

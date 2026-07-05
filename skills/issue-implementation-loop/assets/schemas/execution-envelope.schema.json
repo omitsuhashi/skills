@@ -4,7 +4,7 @@
   "type": "object",
   "required": ["schema_version", "epic_id", "revision", "epic_base", "execution_policy", "review_policy", "human_policy", "context_policy", "remote_write_policy", "work_items"],
   "properties": {
-    "schema_version": {"enum": [1, 2]},
+    "schema_version": {"enum": [1, 2, 3]},
     "epic_id": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"},
     "revision": {"type": "integer", "minimum": 1},
     "epic_base": {
@@ -100,6 +100,38 @@
         "worker_packet_template": ["worker_packet_schema", "worker_packet_template", "worker_packet_validator"],
         "worker_packet_validator": ["worker_packet_schema", "worker_packet_template", "worker_packet_validator"]
       }
+    },
+    "phase_branch_policy": {
+      "type": "object",
+      "required": [
+        "planning_artifacts_branch",
+        "phase_approval_commit_required",
+        "phase_transition_requires_clean_scope",
+        "execution_coordinator_context",
+        "main_planning_session_may_implement",
+        "worktree_per_issue",
+        "branch_prefix",
+        "epic_base_ref_pattern",
+        "issue_branch_pattern",
+        "epic_base_owner",
+        "issue_branch_owner",
+        "integration_branch_policy"
+      ],
+      "properties": {
+        "planning_artifacts_branch": {"const": "current_session_branch"},
+        "phase_approval_commit_required": {"const": true},
+        "phase_transition_requires_clean_scope": {"const": true},
+        "execution_coordinator_context": {"const": "fresh_or_compacted"},
+        "main_planning_session_may_implement": {"const": false},
+        "worktree_per_issue": {"const": true},
+        "branch_prefix": {"const": "codex"},
+        "epic_base_ref_pattern": {"const": "codex/<epic-id>/epic-base"},
+        "issue_branch_pattern": {"const": "codex/<epic-id>/<local-id>-<slug>"},
+        "epic_base_owner": {"const": "execution_coordinator"},
+        "issue_branch_owner": {"const": "worker"},
+        "integration_branch_policy": {"const": "approved_integration_work_item_only"}
+      },
+      "additionalProperties": false
     },
     "remote_write_policy": {
       "type": "object",
@@ -206,6 +238,20 @@
         "required": ["schema_version"]
       },
       "then": {
+        "properties": {
+          "context_policy": {
+            "required": ["paths_first", "max_worker_packet_words", "max_worker_report_words", "include_full_spec_text", "include_full_ledger_text", "session_compaction"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"schema_version": {"const": 3}},
+        "required": ["schema_version"]
+      },
+      "then": {
+        "required": ["phase_branch_policy"],
         "properties": {
           "context_policy": {
             "required": ["paths_first", "max_worker_packet_words", "max_worker_report_words", "include_full_spec_text", "include_full_ledger_text", "session_compaction"]

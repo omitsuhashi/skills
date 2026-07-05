@@ -169,10 +169,13 @@ class GrillToPrLoopTests(unittest.TestCase):
         mistakes_text = (SKILL_DIR / "references" / "common-mistakes.md").read_text(encoding="utf-8")
 
         self.assertIn("phase approval commit", skill_text)
+        self.assertIn("phase_branch_policy", skill_text)
         self.assertIn("commit the approved artifacts", core_text)
         self.assertIn("Spec Gate approval", planning_text)
         self.assertIn("Issue Gate approval", planning_text)
         self.assertIn("Execution Plan Gate approval", handoff_text)
+        self.assertIn("current planning branch", handoff_text)
+        self.assertIn("schema version `3` Execution Envelope", handoff_text)
         self.assertIn("Moving to the next phase without committing an approved gate", mistakes_text)
 
     def test_gate_taxonomy_separates_human_preflight_and_remote_boundaries(self) -> None:
@@ -211,10 +214,12 @@ class GrillToPrLoopTests(unittest.TestCase):
             "normalized packet path and validation result",
             "approved write scope",
             "dependency graph",
+            "phase_branch_policy",
             "remote policy summary",
             "commit the approved artifacts",
             "knowledge/log.md",
             "issue-implementation-loop prepare",
+            "fresh or compacted coordinator context",
             "dirty changes overlap planned write scope",
             "worker context is unavailable",
             "remote policy does not match the approved remote policy",

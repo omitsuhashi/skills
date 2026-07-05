@@ -37,6 +37,21 @@ SESSION_COMPACTION_REQUIRED_VALUES = {
     "inline_json_code_diff_lines_hard": 80,
 }
 
+PHASE_BRANCH_POLICY_REQUIRED_VALUES = {
+    "planning_artifacts_branch": "current_session_branch",
+    "phase_approval_commit_required": True,
+    "phase_transition_requires_clean_scope": True,
+    "execution_coordinator_context": "fresh_or_compacted",
+    "main_planning_session_may_implement": False,
+    "worktree_per_issue": True,
+    "branch_prefix": "codex",
+    "epic_base_ref_pattern": "codex/<epic-id>/epic-base",
+    "issue_branch_pattern": "codex/<epic-id>/<local-id>-<slug>",
+    "epic_base_owner": "execution_coordinator",
+    "issue_branch_owner": "worker",
+    "integration_branch_policy": "approved_integration_work_item_only",
+}
+
 HARDENING_CANDIDATES_REQUIRED_FIELDS = {
     "candidate_registry_path",
     "issue_completion_blocking",
@@ -45,6 +60,25 @@ HARDENING_CANDIDATES_REQUIRED_FIELDS = {
     "ready_or_merge_requires_decisions",
     "worker_packet_decision_state",
 }
+
+
+def _validate_exact_policy_object(
+    value: Any,
+    *,
+    prefix: str,
+    required_values: dict[str, object],
+    errors: list[str],
+) -> None:
+    if not isinstance(value, dict):
+        errors.append(f"{prefix} must be an object")
+        return
+    for field in sorted(value):
+        if field not in required_values:
+            errors.append(f"unknown field: {prefix}.{field}")
+    for field, expected in required_values.items():
+        if value.get(field) != expected:
+            rendered = str(expected).lower() if isinstance(expected, bool) else str(expected)
+            errors.append(f"{prefix}.{field} must be {rendered}")
 
 
 def _validate_hardening_candidates_policy(
@@ -86,8 +120,8 @@ def _validate_hardening_candidates_policy(
 def validate_execution_envelope(envelope: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     schema_version = envelope.get("schema_version")
-    if schema_version not in (1, 2):
-        errors.append("schema_version must be 1 or 2")
+    if schema_version not in (1, 2, 3):
+        errors.append("schema_version must be 1, 2, or 3")
 
     epic_id = envelope.get("epic_id")
     if not isinstance(epic_id, str) or not is_lower_kebab(epic_id):
@@ -231,8 +265,8 @@ def validate_execution_envelope(envelope: dict[str, Any]) -> list[str]:
             errors.append("context_policy.include_full_ledger_text must be false")
         session_compaction = context_policy.get("session_compaction")
         if session_compaction is None:
-            if schema_version == 2:
-                errors.append("context_policy.session_compaction is required for schema_version 2")
+            if schema_version in (2, 3):
+                errors.append("context_policy.session_compaction is required for schema_version 2 or 3")
         elif not isinstance(session_compaction, dict):
             errors.append("context_policy.session_compaction must be an object")
         else:
@@ -255,6 +289,18 @@ def validate_execution_envelope(envelope: dict[str, Any]) -> list[str]:
                 value = context_policy.get(field)
                 if not isinstance(value, str) or not value.strip():
                     errors.append(f"context_policy.{field} must be a non-empty string")
+
+    phase_branch_policy = envelope.get("phase_branch_policy")
+    if phase_branch_policy is None:
+        if schema_version == 3:
+            errors.append("phase_branch_policy is required for schema_version 3")
+    else:
+        _validate_exact_policy_object(
+            phase_branch_policy,
+            prefix="phase_branch_policy",
+            required_values=PHASE_BRANCH_POLICY_REQUIRED_VALUES,
+            errors=errors,
+        )
 
     work_items = envelope.get("work_items")
     if not isinstance(work_items, dict) or not work_items:
