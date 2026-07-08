@@ -75,4 +75,4 @@ Stop and ask before continuing if an `Epic ID` is ambiguous, dirty changes overl
 
 ## Completion Report
 
-Report spec/docs paths, `Epic ID`, local issue status, packet path, execution result, branch/worktree map from execution, verification, implementation review summary, ledger updates, skipped/performed remote actions, and residual risks.
+Report spec/docs paths, `Epic ID`, local issue status, packet path, execution result, branch/worktree map from execution, verification, implementation review summary, spec alignment review summary, ledger updates, skipped/performed remote actions, and residual risks.
