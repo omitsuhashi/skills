@@ -64,6 +64,24 @@ class GrillToPrLoopTests(unittest.TestCase):
         ):
             self.assertIn(required, remote_text)
 
+    def test_final_pr_delivery_requires_spec_alignment_review(self) -> None:
+        skill_text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+        remote_text = (SKILL_DIR / "references" / "remote-delivery.md").read_text(encoding="utf-8")
+        combined = f"{skill_text}\n{remote_text}"
+
+        for required in (
+            "superpowers:requesting-code-review",
+            "spec alignment",
+            "スペックに対して過不足がないか",
+            "スペックに対してずれた実装をしていないか",
+            "After all issue PRs are merged",
+            "before creating the final PR",
+            "final PR ready-for-review",
+            "implementation review summary",
+            "spec alignment review summary",
+        ):
+            self.assertIn(required, combined)
+
     def test_skill_entrypoint_points_to_context_contract_router(self) -> None:
         text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
 
