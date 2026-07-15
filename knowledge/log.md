@@ -1022,3 +1022,11 @@ append-only で使います。すべての entry は予測しやすい header �
 - forbidden-value detectionとnormalization validationを追加し、該当behavioral testsをREDからGREENへ進めた
 - `.codex-plugin/plugin.json`だけを読むcompanies preflightと、`exports`を拒否するcurrent `plugin-creator` validatorのcontract mismatchはskills repo単独では解消せず、cross-repo follow-up blockerとして維持する
 - implementation review cycle 2で再現したquoted JSON provider / credential marker bypassとunsafe URL schemeをfail closedにし、query側canonical taxonomy / ISO date validationとguard別subtestを追加した
+
+## [2026-07-16] spec | Task-management pluggable provider adapter
+
+- user approvalを受け、POTASK-011としてconsumerがbackend差を意識しない`task_query` contract、host-owned route、pluggable provider adapterを追加した
+- read-only local JSON adapterをcredential-free Hermes end-to-end verification backend、GitHub Projects MCP adapterをproduction first backendとして定義した
+- GitHub adapterはhost-provided `projects_list` response mappingに限定し、direct API / GraphQL / `gh` / credential clientを持たない境界とした
+- public `task_query` / `TaskSnapshotResult`は維持し、model inputからadapter、tool、file path、GitHub destinationを選べないfail-closed方針を固定した
+- PR #29の追加scopeとして実装し、GitHub issue mirror、mergeは行わない

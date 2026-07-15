@@ -2,9 +2,9 @@
 
 ## 状態
 
-Spec Gate / Issue Gate / Execution Plan Gate 承認済み。`issue-implementation-loop` は POTASK-001 から POTASK-009 まで local `PR_READY`。2026-07-15 に追加承認された POTASK-010 の backend-neutral read adapter / Hermes read-only tool / export alignment は local 実装・検証済みで、PR delivery 対象とする。Current companies preflight は `.codex-plugin/plugin.json` だけを読むため、Hermes `plugin.yaml` をauthoritative export evidenceとして受け入れるcross-repo follow-upまでNPLM-006 end-to-end gateはblockedのままとする。live install、GitHub issue mirror、mergeはまだ行わない。
+Spec Gate / Issue Gate / Execution Plan Gate 承認済み。`issue-implementation-loop` は POTASK-001 から POTASK-009 まで local `PR_READY`。2026-07-15 に追加承認された POTASK-010 の backend-neutral read facade / Hermes read-only tool / export alignment は local 実装・検証済みで、PR delivery 対象とする。2026-07-16 に POTASK-011 として、consumer が backend を意識せず Hermes から実際に `task_query` を呼べる pluggable provider adapter / host-owned route / end-to-end smoke test を追加する方針を承認した。Current companies preflight は `.codex-plugin/plugin.json` だけを読むため、Hermes `plugin.yaml` をauthoritative export evidenceとして受け入れるcross-repo follow-upまでNPLM-006 end-to-end gateはblockedのままとする。GitHub issue mirror、mergeはまだ行わない。
 
-この版では、GitHub Projects 連携を独自 GitHub adapter / `gh` command planner / GraphQL fallback 実装で作らず、Hermes Agent に登録された GitHub MCP Server を使う方針へ変更する。
+この版では、GitHub Projects 連携をdirect GitHub API adapter / `gh` command planner / GraphQL fallback 実装で作らず、Hermes Agent に登録された GitHub MCP Server と薄いresponse adapterを使う。
 
 ## 問題
 
@@ -18,7 +18,7 @@ GitHub Projects を first backend とするが、Portfolio OS core や reusable 
 
 - backend-neutral task contract が `TaskDraft`、`TaskRef`、`TaskQuery`、`TaskSnapshot`、`TaskWriteResult`、`TaskBackendRoute`、`TaskBackendDestination` を持つ。
 - GitHub Projects は first backend だが、GitHub-specific IDs / field IDs / auth / MCP server config は Portfolio OS core と reusable task-management skill に漏らさない。
-- GitHub 連携は host-provided MCP tools を使い、独自 GitHub adapter、direct GraphQL HTTP client、`gh` command planner は作らない。
+- GitHub 連携は host-provided MCP tools を使い、provider adapter は MCP response と backend-neutral adapter result の変換だけを所有する。direct GraphQL HTTP client、`gh` command planner は作らない。
 - Portfolio OS は task state の source of truth を持たず、source trail、routing/classification rationale、task draft、backend task refs、decision logs、work report logs だけを保持する。
 - task-management skill は capture/chat text を `TaskDraft` に正規化し、human review text と recommendation rationale を出せる。
 - adapter invocation envelope は dispatch 前に review できる。実際の create/update/comment の実行方針は MCP などの外部 adapter が所有する。
@@ -26,9 +26,10 @@ GitHub Projects を first backend とするが、Portfolio OS core や reusable 
 - Hermes native plugin loader 用に `plugins/task-management/plugin.yaml` と `__init__.py` を持ち、`hermes plugins list` / `enable` の入口から同梱 skill を登録できる。
 - インストール後は、Hermes Agent に GitHub MCP Server が登録済みであれば、task 登録の review / approval / routing / adapter dispatch まで使える。
 - normal tests は固定テストデータ / 模擬実装ベースで、live GitHub access、Hermes live profile、credentials、MCP server を要求しない。
-- Hermes は `task_query` を `task-management-read` toolset に登録し、operator-configured `mcp__<server>__task_query` 以外へ dispatch しない。
+- Hermes は `task_query` を `task-management-read` toolset に登録する。model input から adapter / tool / file path / provider destination を選ばせず、host-owned route が `backend_key` と `destination_ref` から固定 adapter を解決する。
 - `plugin.yaml.exports.toolsets` と runtime registration は正確に `task-management-read` で一致する。`.codex-plugin/plugin.json` は current `plugin-creator` schema に `exports` がないため Codex manifest として有効な field だけを維持する。
 - read adapter は `TaskQuery` と opaque `destination_ref` を受け、provider raw IDs、unknown backend metadata、credential-like values を含まない `TaskSnapshotResult` を返す。
+- consumer は local JSON、GitHub Projects MCP、将来の reader / skill backend の違いを意識せず、同じ `task_query` / `TaskSnapshotResult` contract を使う。
 
 ## Epic ID
 
@@ -57,7 +58,7 @@ GitHub Projects を first backend とするが、Portfolio OS core や reusable 
 - plugin は distribution / install-update / config template / examples / references の単位であり、通常の実行 surface は同梱 skill が担う。
 - 初回実装では公開 entrypoint skill を `task-management` 1 つに保つ。`daily-review`、`backend-admin`、`task-router` などの追加 skill は、trigger と責務が明確に分かれた後続 scope とする。
 - GitHub Projects 連携は GitHub MCP Server first とする。
-- 独自 GitHub adapter、`gh` command planner、direct GraphQL HTTP client、GitHub Projects schema repair code は作らない。
+- direct GitHub API adapter / provider client、`gh` command planner、direct GraphQL HTTP client、GitHub Projects schema repair code は作らない。GitHub Projects MCP provider adapterはhost-provided read toolのresponse mappingだけを行う。
 - 実装は repository root の `plugins/` 配下に置く。
 - 推奨 package path は `plugins/task-management/` とする。
 - top-level `skills/task-management/` は作らない。skill は `plugins/task-management/skills/task-management/` に置く。
@@ -79,12 +80,14 @@ GitHub Projects を first backend とするが、Portfolio OS core や reusable 
 - batch approval と policy-gated approval は初回実装では扱わない。
 - 現 planning scope は task composition / routing / adapter dispatch envelope までとし、外部 adapter が行う実 write policy はこの issue の責務にしない。
 - task-management plugin / skill は remote write policy、GitHub Projects mutation、GitHub issue/PR、push、PR creation、merge を所有しない。これらは adapter / host / delivery workflow の責務とする。
-- read adapter target は operator-owned `TASK_MANAGEMENT_READ_ADAPTER_TOOL` で固定し、値は `mcp__<server>__task_query` だけを許可する。Model input から adapter tool を選ばせない。
+- POTASK-010 の external adapter compatibility として `TASK_MANAGEMENT_READ_ADAPTER_TOOL=mcp__<server>__task_query` を維持する。
+- POTASK-011 では host-owned route file から `backend_key` / `destination_ref` に対応する adapter kind と fixed tool / source を解決する。route file path、adapter kind、MCP tool 名、local source path、GitHub owner / project number / field mapping はmodel inputに含めない。
+- 初期 provider adapter は read-only local JSON と GitHub Projects MCP とする。local JSON は Hermes end-to-end path をcredentialなしで検証する reference backend、GitHub Projects MCP は production first backend とする。どちらも public contract は同じである。
 - Hermes capability export の authoritative source は `plugin.yaml.exports.toolsets` とする。Current `plugin-creator` が `.codex-plugin/plugin.json.exports` を拒否するため、Codex manifest は current schema のまま有効性を保つ。
 
 ## アプリケーション構成
 
-今回作るものは、ユーザーが直接使う CLI app ではなく、Codex / Hermes にインストール可能な薄い task-management plugin package である。GitHub provider client は含めない。plugin package は配布・更新・設定テンプレート・参照資料、backend-neutral read wrapper のまとまりであり、agent-facing workflow は同梱された primary `task-management` skill、read-only runtime surface は `task-management-read:task_query` が担う。
+今回作るものは、ユーザーが直接使う CLI app ではなく、Codex / Hermes にインストール可能な薄い task-management plugin package である。GitHub provider client は含めない。plugin package は配布・更新・設定テンプレート・参照資料、backend-neutral read facade、pluggable provider adapter のまとまりであり、agent-facing workflow は同梱された primary `task-management` skill、read-only runtime surface は `task-management-read:task_query` が担う。
 
 想定 layout は次の通り。
 
@@ -95,7 +98,12 @@ plugins/task-management/
 ├── __init__.py
 ├── task_management/
 │   ├── __init__.py
-│   └── read_adapter.py
+│   ├── read_adapter.py
+│   ├── route_config.py
+│   └── provider_adapters/
+│       ├── __init__.py
+│       ├── local_json.py
+│       └── github_projects_mcp.py
 ├── README.md
 ├── config/
 │   └── task-backends.example.toml
@@ -116,7 +124,32 @@ plugins/task-management/
 └── tests/
 ```
 
-`scripts/task_management/github_projects_commands.py`、`gh_executor.py`、GitHub GraphQL client、GitHub Projects adapter module は作らない。
+`scripts/task_management/github_projects_commands.py`、`gh_executor.py`、GitHub GraphQL client は作らない。`github_projects_mcp.py` は provider client ではなく、Hermes が登録した read-only `projects_list` toolをdispatchして結果を共通adapter resultへ変換する境界に限定する。
+
+## Read Provider Adapter 設計
+
+public `task_query` は `TaskQuery` と opaque `destination_ref` だけを受ける。consumer は backend kind、MCP server名、GitHub owner / project number、local file path、field mappingを指定しない。
+
+host-owned route file は次を解決する。
+
+1. `backend_key` と `destination_ref` に対応する adapter kind。
+2. adapter が使う fixed read surface。GitHubの場合は `mcp__<server>__projects_list`、local JSONの場合はhost-owned source file。
+3. provider destinationとcanonical fieldのmapping。これらはadapter内部入力であり、`TaskSnapshotResult`へ返さない。
+
+provider adapter は同じ内部protocolを実装する。
+
+```text
+query(route, destination, task_query, dispatch) -> AdapterTaskSnapshotItems
+```
+
+- `local_json` はhost-owned JSON documentをread-onlyで読み、query filterとlimitを適用する。path traversalやmodel-supplied pathは許可しない。
+- `github_projects_mcp` はhost-owned routeから固定されたread-only `projects_list`だけをHermes `ctx.dispatch_tool`で呼ぶ。direct HTTP、GraphQL、`gh`、credential lookupは行わない。
+- `external_mcp_task_query` はPOTASK-010互換としてoperator-configured `mcp__<server>__task_query`を呼ぶ。
+- facadeはadapter出力を再度allowlist normalizeし、provider raw ID、route secrets、unknown metadata、credential-like valuesをfail closedする。
+
+route configを差し替えてもconsumer、Schedule Secretary、Portfolio OS、Hermes prompt側のtool名とresult contractは変えない。将来backendを追加するときはprovider adapterとhost routeだけを追加し、public schemaへprovider-specific fieldを足さない。
+
+通常検証はfixture / fake dispatchを使う。Hermes実呼出し検証は隔離したtemporary profileとread-only local JSON adapterで `plugin load → task_query dispatch → normalized TaskSnapshotResult` を確認する。GitHub MCP adapterはfixture-backed response mappingを検証し、live GitHub OAuth / PATをnormal testの必須条件にしない。operatorがlive GitHub connectionを用意した場合のみ、同じpublic queryによるoptional live smoke testを行う。
 
 初回実装では `skills/task-management/` を唯一の公開 skill entrypoint とする。複数 skill へ分割するのは、入力 task 化、daily review、backend administration などが独立した trigger / permission / context budget を持つと確認できた場合に限る。
 
@@ -242,7 +275,7 @@ Hermes Agent での懸念:
 
 ## Spec Gate で承認済みの判断
 
-- GitHub MCP Server first 方針を採用し、独自 GitHub adapter / `gh` / GraphQL fallback 実装を作らないこと。
+- GitHub MCP Server first 方針を採用し、provider adapterをresponse mappingに限定してdirect GitHub API adapter / `gh` / GraphQL fallback 実装を作らないこと。
 - 初回実装では GitHub Projects schema create/repair を scope 外にし、pre-existing validation に限定すること。
 - 初回実装を、routing contract だけでなくインストール後に実利用できる task-management skill package として完成させること。
 - Hermes Agent で GitHub MCP adapter tools をどの profile / platform / delegation boundary に expose するかを、Issue Gate / Execution Plan Gate で確認すること。
@@ -254,13 +287,14 @@ Hermes Agent での懸念:
 - Portfolio OS runtime を task state source of truth にすること。
 - raw Discord platform payloads、message ids、transport metadata を Portfolio OS knowledge/routing contracts に保存すること。
 - GitHub Projects concepts を Portfolio OS core に hard-code すること。
-- GitHub API client、GitHub Projects adapter、`gh` command planner、direct GraphQL HTTP client の作成。
+- GitHub API client、`gh` command planner、direct GraphQL HTTP client の作成。
 - plugin install 時の live credentials、MCP server registration、tool enablement、hooks、production automations の有効化。
 - GitHub Projects field schema create/repair。
 - GitHub issue / PR 作成、push、merge、deployment。
 - GitHub MCP Server 自体の read/write 実装テスト。
-- plugin 自身による GitHub API / GraphQL / `gh` read client、credential 管理、provider destination 解決。
+- plugin 自身による GitHub API / GraphQL / `gh` read client、credential 管理。provider destination 解決はhost-owned routeを入力とするprovider adapterだけが行い、consumer / public contractへ漏らさない。
 - model input で任意の adapter tool 名を選ばせること。
+- model input でlocal file path、GitHub owner、project number、field ID、route file pathを選ばせること。
 - batch approval、policy-gated approval、trusted automation による adapter dispatch。
 - dedicated duplicate prevention のための `task_sha` field、local store、raw source payload 保存。
 
@@ -278,6 +312,7 @@ Spec Gate 承認後に、日本語 local-first ledger として issue 化する�
 8. Hermes Agent への GitHub MCP Server availability runbook と task-management skill の利用例を作る。
 9. Portfolio OS handoff boundary、migration boundary、duplicate cleanup stance、MCP enablement boundary を docs / examples に反映する。
 10. backend-neutral read adapter、Hermes `task-management-read:task_query` registration、authoritative export alignment、normalized `TaskSnapshot` behavioral test を追加する。
+11. pluggable provider adapter、host-owned route、local JSON / GitHub Projects MCP adapter、Hermes end-to-end smoke testを追加する。
 
 ## 受け入れ基準
 
@@ -287,7 +322,7 @@ Spec Gate 承認後に、日本語 local-first ledger として issue 化する�
 - `plugins/task-management/README.md` は Hermes subdir install / enable 手順と、subdir install では `.git` が残らず `hermes plugins update task-management` が使えない場合の `install --force` 更新手順を明記する。
 - `plugins/task-management/skills/task-management/SKILL.md` が存在し、`skill-creator` quick validation を通る。
 - 初回実装の公開 skill entrypoint は `plugins/task-management/skills/task-management/` の 1 つだけである。
-- plugin package は distribution / install-update / config template / examples / references と backend-neutral read wrapper を所有し、GitHub provider client、write adapter、MCP server 実装を所有しない。
+- plugin package は distribution / install-update / config template / examples / references、backend-neutral read facade、read-only provider adaptersを所有し、GitHub provider client、write adapter、MCP server 実装を所有しない。
 - `TaskDraft` は `work_unit_id`、`work_unit_name`、task type、due date、urgency、importance、automation mode、approval required、source ref を backend-neutral に表現できる。
 - `TaskBackendRoute` は `kind=mcp|reader|skill|cli|url`、connection ref、capability、field override を表現できる。
 - `TaskBackendDestination` は backend key、destination ref / label、必要なら content target ref を表現できる。
@@ -295,6 +330,9 @@ Spec Gate 承認後に、日本語 local-first ledger として issue 化する�
 - `TaskRef` と `TaskSnapshot` は provider-specific raw IDs を Portfolio OS core consumer に漏らさず、linkable metadata は backend-owned metadata として扱う。
 - `task_query` は backend-neutral `TaskQuery` と opaque `destination_ref` を固定 host adapter へ渡し、allowlist された `TaskSnapshotResult` だけを返す。
 - `task_query` は missing configuration、write-capable tool name、invalid adapter result、invalid/unsafe snapshot を typed error として fail closed する。
+- `task_query` のpublic schemaはbackend追加で変わらない。host-owned routeがadapterを選び、consumerはlocal JSON / GitHub Projects MCPの違いを指定しない。
+- local JSON adapterはhost-owned pathだけをread-onlyで扱い、model-supplied pathやroute外pathを読まない。
+- GitHub Projects MCP adapterはfixed read-only `projects_list`だけをdispatchし、direct API / GraphQL / `gh`を使わない。
 - `plugin.yaml.exports.toolsets` と Hermes `ctx.register_tool(..., toolset=...)` は正確に `task-management-read` で一致する。
 - GitHub MCP Server route は MCP server missing、tool disabled、auth missing、permission failure、project not found、field missing を typed result にできる。
 - 固定テストデータ / 模擬実装 tests で create/update/report/query preview と typed result mapping を検証できる。
@@ -305,13 +343,14 @@ Spec Gate 承認後に、日本語 local-first ledger として issue 化する�
 - approval preview は backend key / connection ref / destination ref / destination label、operation type、task title/body/fields、`work_unit_id`、`work_unit_name`、呼び出す adapter tool 名、expected adapter side effects を含む。
 - batch approval と policy-gated approval は実装されない。
 - plugin install は live MCP server registration、credential setup、Hermes profile edit、GitHub adapter tool enablement を行わない。
-- live adapter / GitHub adapter / `gh` command planner / direct GraphQL HTTP client は存在しない。
+- direct GitHub API client / `gh` command planner / direct GraphQL HTTP client は存在しない。GitHub provider adapterはhost-provided MCP read toolのresponse mappingだけを行う。
 - GitHub Projects schema create/repair は初回実装では行わない。
 - GitHub MCP Server の read/write 自体を live smoke test しない。routing / preview / guard / typed error mapping を固定テストデータと模擬 tool で検証する。
 - インストール後に、Hermes Agent に GitHub MCP Server が登録済みであれば、task 登録の review / approval / routing / adapter dispatch まで実利用できる。
 - dedicated idempotency key、`task_sha` field、duplicate-prevention store は存在しない。
 - task duplication が起きた場合は backend 側で整理する。Portfolio OS は duplicate state / cleanup ledger を持たない。
 - docs は GitHub Projects が first backend であり permanent architecture ではないことを明記する。
+- temporary Hermes profileでpublic `task_query`を呼び、local JSON providerからnormalized `TaskSnapshotResult`が返るend-to-end smoke testが通る。
 
 ## 検証コマンド
 
@@ -326,7 +365,7 @@ PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_c
 git diff --check
 ```
 
-GitHub MCP Server read/write の live smoke test は normal verification に含めない。normal verification は task composition、routing、adapter operation envelope、preview、guard、typed result mappingに加え、`task_query` の exact adapter dispatch、`TaskSnapshotResult` allowlist、credential leak rejection、Hermes toolset/export alignment を固定テストデータ / 模擬 tool で検証する。
+GitHub MCP Server read/write の live smoke test は normal verification に含めない。normal verification は task composition、routing、adapter operation envelope、preview、guard、typed result mappingに加え、`task_query` の route resolution、local JSON read、GitHub MCP exact read-only dispatch、`TaskSnapshotResult` allowlist、credential leak rejection、Hermes toolset/export alignment を固定テストデータ / 模擬 toolで検証する。Hermesの実呼出し経路はtemporary profileとlocal JSON fixtureで検証する。
 
 ## Adapter Dispatch 方針
 
@@ -366,8 +405,8 @@ dry-run mode は作らない。`local_only` は planning / repository delivery p
 - 重複作成を完全に防ぐと主張する。
 - batch approval または policy-gated approval を初回実装 scope に戻す。
 - preview なし、または operation ごとの明示承認なしで adapter dispatch envelope を渡す。
-- 独自 GitHub adapter、`gh` command planner、direct GraphQL HTTP client を初回実装 scope に戻す。
-- `task-management-read:task_query` が `mcp__<server>__task_query` 以外の任意 tool へ dispatch できる。
+- GitHub provider adapterがresponse mappingを超えてdirect API、`gh`、GraphQL client、credential managementを持つ。
+- `task-management-read:task_query` がhost-owned routeを迂回してmodel-supplied任意tool / file path / provider destinationへdispatchできる。
 - normalized `TaskSnapshot` が provider raw ID、unknown backend metadata、credential-like value を返す。
 - `plugin.yaml.exports.toolsets` と Hermes runtime registration の toolset 名が一致しない。
 - GitHub Projects schema create/repair を初回実装 scope に戻す。
@@ -382,6 +421,7 @@ dry-run mode は作らない。`local_only` は planning / repository delivery p
 - Hermes config の `delegation.inherit_mcp_toolsets: true` により、state-changing MCP adapter tools が子 agent に継承されるリスクがある。
 - MCP remote server / OAuth / token scope の扱いを誤ると credential exposure や過剰権限につながる。
 - `TASK_MANAGEMENT_READ_ADAPTER_TOOL` は tool 名だけを保持するが、host-provided `task_query` adapter 自体の read-only 性、credential、destination mapping、pagination は live Adapter Availability Gate で別途検証が必要である。
+- host-owned route fileのpermission、destination mapping、GitHub field mappingが誤るとwrong destinationまたはinvalid snapshotになる。routeはmodel inputから変更できず、adapter resultはfacadeで再検証する必要がある。
 - current `plugin-creator` schema は `.codex-plugin/plugin.json.exports` を受け付けないため、Hermes capability export の authoritative source は `plugin.yaml` とする。companies 側 preflight が Codex manifest だけを読む場合は、Hermes manifest も検証対象にする follow-up が必要である。
 - `work_unit_name` は display label なので、work unit rename 後に backend 上の古い task と表示名がずれる可能性がある。安定識別は `work_unit_id`、人間向け表示は `work_unit_name` として扱う。
 - dedicated duplicate prevention を持たないため、通信 timeout 後の再実行や人間の二重承認で duplicate task が作られる可能性がある。
