@@ -1,7 +1,7 @@
 {
   "name": "task-management",
-  "version": "0.1.0",
-  "description": "Backend-neutral task-management workflow package for review-gated task intake and adapter dispatch preparation.",
+  "version": "0.2.0",
+  "description": "Backend-neutral task-management workflow package for reviewed intake, normalized reads, and adapter dispatch preparation.",
   "author": {
     "name": "Omitsuhashi"
   },

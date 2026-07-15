@@ -1,4 +1,7 @@
+import os
 from pathlib import Path
+
+from .task_management.read_adapter import ADAPTER_TOOL_ENV, register_read_tool
 
 
 def register(ctx):
@@ -9,3 +12,4 @@ def register(ctx):
         skill_path,
         description="Backend-neutral task intake and task backend routing workflow.",
     )
+    register_read_tool(ctx, os.environ.get(ADAPTER_TOOL_ENV))

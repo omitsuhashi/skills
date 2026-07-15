@@ -2,7 +2,7 @@
 
 ## 状態
 
-Issue Gate / Execution Plan Gate 承認済み。POTASK-001、POTASK-002、POTASK-003、POTASK-004、POTASK-005、POTASK-006、POTASK-007、POTASK-008、POTASK-009 は local `PR_READY`。PR delivery は承認済み。GitHub issue mirror と merge はまだ行わない。
+Issue Gate / Execution Plan Gate 承認済み。POTASK-001 から POTASK-009 は local `PR_READY`。2026-07-15 に追加承認された POTASK-010 は local 実装・検証済みでPR delivery対象。implementation review 2 cyclesのskills-side Critical / Importantは対応済みで、current companies preflight がHermes `plugin.yaml` exportを読まないcross-repo blockerだけが残る。PR delivery は承認済み。GitHub issue mirror と merge はまだ行わない。
 
 ## Epic ID
 
@@ -11,7 +11,7 @@ Issue Gate / Execution Plan Gate 承認済み。POTASK-001、POTASK-002、POTASK
 ## 前提
 
 - 正本仕様: [Portfolio OS Task Backend Plugin Skill Spec](portfolio-os-task-backend-plugin-skill-spec.md)
-- 初回実装 scope は task taxonomy、`TaskDraft` composition、backend / destination routing、adapter operation envelope、preview / guard、typed result mapping まで。
+- 初回実装 scope は task taxonomy、`TaskDraft` composition、backend / destination routing、adapter operation envelope、preview / guard、typed result mapping まで。POTASK-010 では user-approved follow-up として backend-neutral read wrapperだけを追加する。
 - 外部 adapter の実 write 方針、GitHub Projects mutation、GitHub issue / PR、push、PR creation、merge は adapter / host / delivery workflow の責務であり、この ledger の実装対象外。
 - GitHub MCP Server 自体の read/write live smoke test は行わない。通常検証は固定テストデータ / 模擬 tool を使う。
 - local issue ledger を canonical とし、GitHub issues は未作成の optional mirror とする。
@@ -29,6 +29,7 @@ Issue Gate / Execution Plan Gate 承認済み。POTASK-001、POTASK-002、POTASK
 | `portfolio-os-task-backend-plugin-skill` | POTASK-007 | GitHub MCP route preflight と typed result mapping を実装する | 承認済み | 完了 | `PR_READY` `ed62de954b57ff4c5b32f6efaa6098843d85c1ac` | POTASK-002, POTASK-004, POTASK-006 | POTASK-008, POTASK-009 | 未作成 | approved: `0ce0ffa6eae53b7f085e64af1a453749f82cc3ba..ed62de954b57ff4c5b32f6efaa6098843d85c1ac` | 未作成 |
 | `portfolio-os-task-backend-plugin-skill` | POTASK-008 | Hermes adapter availability runbook と governance reference を作る | 承認済み | 完了 | `PR_READY` `06f9b6fc7801271f345a8c2772a6d64e7c64f310` | POTASK-004, POTASK-007 | POTASK-009 | 未作成 | approved: `ed62de954b57ff4c5b32f6efaa6098843d85c1ac..06f9b6fc7801271f345a8c2772a6d64e7c64f310` | 未作成 |
 | `portfolio-os-task-backend-plugin-skill` | POTASK-009 | docs / examples / verification / handoff boundary を統合する | 承認済み | 完了 | `PR_READY` `214349fff56bd55ff3e7e68612a499096096803f` | POTASK-006, POTASK-007, POTASK-008 | なし | 未作成 | approved: `06f9b6fc7801271f345a8c2772a6d64e7c64f310..214349fff56bd55ff3e7e68612a499096096803f` | 未作成 |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-010 | backend-neutral task read capability を実装する | 承認済み | 完了 | local verified / PR delivery対象 | POTASK-002, POTASK-007, POTASK-008 | なし | 未作成 | PRで追跡 | PRで追跡 |
 
 ## Blocker Graph
 
@@ -43,7 +44,8 @@ POTASK-001
 │   │       │   └── POTASK-009
 │   │       └── POTASK-009
 │   ├── POTASK-006
-│   └── POTASK-007
+│   ├── POTASK-007
+│   └── POTASK-010
 ├── POTASK-003
 │   ├── POTASK-005
 │   └── POTASK-006
@@ -54,6 +56,7 @@ POTASK-001
 ```
 
 循環依存はない。Issue Gate 承認済みのため、全 issue の `レビュー状態` は `承認済み` とする。
+POTASK-010 は POTASK-002 の contract、POTASK-007 の typed adapter boundary、POTASK-008 の Hermes governance を再利用する follow-up であり、既存 issue を再開しない。
 
 ## 依存順
 
@@ -64,6 +67,7 @@ POTASK-001
 5. POTASK-007
 6. POTASK-008
 7. POTASK-009
+8. POTASK-010
 
 ## Issues
 
@@ -311,6 +315,56 @@ PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_a
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_context.py --all
 git diff --check
 ```
+
+### POTASK-010: backend-neutral task read capability を実装する
+
+#### 目的
+
+`TaskQuery` から host-provided read adapter を呼び、Schedule Secretary などの consumer へ provider raw ID、credential、raw payloadを漏らさない normalized `TaskSnapshotResult` を返す。Hermes runtime registration と authoritative exportを正確に `task-management-read` へ揃える。
+
+#### Scope
+
+- `plugins/task-management/task_management/read_adapter.py`
+- `plugins/task-management/__init__.py`
+- `plugins/task-management/plugin.yaml`
+- `plugins/task-management/.codex-plugin/plugin.json` のversion alignment
+- task read adapter reference / README / primary skill / task contracts
+- behavioral tests
+
+#### Acceptance Criteria
+
+- Hermes は `task_query` を `task-management-read` toolset に `ctx.register_tool` で登録する。
+- `plugin.yaml.exports.toolsets` は正確に `["task-management-read"]` であり、runtime registrationと一致する。
+- `.codex-plugin/plugin.json` は current `plugin-creator` validatorを通る。未サポートの `exports` fieldは追加しない。
+- operator-configured adapter toolは `mcp__<server>__task_query` だけを許可し、model inputから任意toolを選ばせない。
+- `TaskQuery` と opaque `destination_ref` をdispatchし、canonical fieldだけを含む `TaskSnapshotResult` を返す。
+- provider raw ID / unknown backend metadataはoutputから除外し、credential-like valueを含むsnapshotはgeneric typed errorでfail closedする。
+- normal testsはmock dispatchを使い、live Hermes / MCP / GitHub / credentialsを要求しない。
+
+#### Non-goals
+
+- GitHub API / GraphQL / `gh` clientの実装。
+- GitHub MCP Server registration、credential setup、profile edit、live install。
+- write adapter、task mutation、GitHub issue / PR / push / merge。
+- companies repositoryのpreflight変更。
+
+#### Verification
+
+```bash
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 /Users/omitsuhashi/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/task-management
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_validate.py plugins/task-management/skills/task-management
+git diff --check
+```
+
+#### Current evidence
+
+- behavioral testsはREDでadapter module、Hermes registration、manifest exportの欠落を確認後、GREENへ進めた。
+- plugin test suiteは60 tests成功。
+- installed Hermesの実`PluginContext` / registryでplugin moduleをloadし、`task_query`が`task-management-read`へ登録されることを確認した。
+- implementation review cycle 1のprovider marker / credential検出、backend一致、canonical taxonomy / ISO date、required `backend_metadata`の指摘を修正した。
+- implementation review cycle 2のquoted JSON marker bypassとunsafe link schemeを修正し、query taxonomy / date validationとguard別subtestを追加した。
+- delivery branch / commit / PRはGitHub delivery recordで追跡し、live installは実施しない。
 
 ## Issue Gate で承認する事項
 

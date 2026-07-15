@@ -115,6 +115,10 @@ Adapters may translate this into provider-specific reads outside the reusable
 skill. Query fixtures must not require live GitHub, Hermes profiles, MCP
 servers, or credentials.
 
+The executable Hermes surface wraps these fields in an object containing
+`query` and opaque `destination_ref`. The adapter tool name is operator-owned
+configuration and must not be accepted as model input.
+
 ## TaskSnapshot
 
 `TaskSnapshot` is a normalized read model returned from a backend.
@@ -137,8 +141,28 @@ Required fields:
 - `backend_metadata`
 
 `backend_metadata` may include display-only, backend-owned metadata such as a
-link label and URL. It must not expose provider-specific raw IDs, field IDs, or
-auth details to Portfolio OS core consumers.
+link label and HTTP(S) URL without embedded credentials. It must not expose
+provider-specific raw IDs, field IDs, or auth details to Portfolio OS core
+consumers. Snapshot task type, due date, urgency, importance, and automation
+mode use the same canonical values as `TaskDraft`.
+
+## TaskSnapshotResult
+
+`TaskSnapshotResult` is the executable read envelope returned by
+`task-management-read:task_query`.
+
+Required fields:
+
+- `result_type`: `TaskSnapshotResult`.
+- `ok`: boolean.
+- `backend_key`: the selected backend key on success.
+- `destination_ref`: the opaque destination used for the read on success.
+- `task_snapshots`: zero or more normalized `TaskSnapshot` values.
+- `error`: `null` on success, otherwise a typed backend-neutral error.
+
+The result must fail closed instead of returning a partial snapshot when a
+required field is missing or a normalized value contains credential-like data.
+Raw adapter results and provider payloads are never included in errors.
 
 ## TaskWriteResult
 

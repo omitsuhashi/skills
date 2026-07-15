@@ -1,9 +1,10 @@
 # Task Management Plugin
 
 `task-management` is a thin Hermes / Codex workflow package for reviewed task
-intake and backend-neutral task routing. The package ships one primary skill at
-`skills/task-management/SKILL.md` and does not register MCP servers, configure
-credentials, edit Hermes profiles, or perform GitHub writes during install.
+intake, backend-neutral task routing, and normalized task reads. The package
+ships one primary skill at `skills/task-management/SKILL.md`. It does not
+register MCP servers, configure credentials, edit Hermes profiles, or perform
+GitHub writes during install.
 
 ## Hermes Install
 
@@ -16,7 +17,39 @@ hermes plugins enable task-management
 
 Hermes will discover `plugin.yaml` and load `__init__.py` when the plugin is
 enabled. The entrypoint registers the bundled skill as
-`task-management:task-management` through `ctx.register_skill`.
+`task-management:task-management` through `ctx.register_skill` and the
+read-only `task_query` tool in the `task-management-read` toolset through
+`ctx.register_tool`.
+
+`plugin.yaml` is the authoritative Hermes manifest. Its `exports.toolsets`
+value is exactly `task-management-read`, matching the runtime registration.
+The Codex `.codex-plugin/plugin.json` remains within the current
+`plugin-creator` schema, which does not accept an `exports` field.
+
+## Read Adapter
+
+The public `task_query` tool accepts an opaque `destination_ref` and a
+backend-neutral `TaskQuery`. It dispatches only to the host-configured MCP tool
+named by `TASK_MANAGEMENT_READ_ADAPTER_TOOL`. The configured name must match
+`mcp__<server>__task_query`; arbitrary MCP tool names and write tools are
+rejected before dispatch.
+
+The host-provided adapter owns provider access, credentials, pagination, and
+destination resolution. It returns an `items` array, and this plugin projects
+each item into the canonical `TaskSnapshot` allowlist. Provider raw IDs,
+unknown backend metadata, and credential-like values are never returned to the
+caller. Query/snapshot taxonomy and ISO dates are validated, and linkable URLs
+must use `http` or `https` without embedded credentials. Missing configuration,
+invalid adapter output, and unsafe snapshots fail closed with typed errors.
+
+Example host configuration:
+
+```bash
+export TASK_MANAGEMENT_READ_ADAPTER_TOOL=mcp__task_backend__task_query
+```
+
+This variable contains only a registered Hermes tool name. It is not a token,
+credential, GitHub owner, project number, or destination mapping.
 
 ## Update Caveat
 

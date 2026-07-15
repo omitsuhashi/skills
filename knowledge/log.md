@@ -999,3 +999,26 @@ append-only で使います。すべての entry は予測しやすい header �
 - `grill-to-pr-loop` execution handoff と `issue-implementation-loop` execution envelope / worktree lifecycle references を、planning branch、`epic_base`、issue branch、integration work item の責務分離に同期した
 - schema version `1` / `2` envelope は historical / resume artifact として互換維持する方針にした
 - GitHub issue mirror、push、PR 作成、ready-for-review、merge、force push、production / credential / permission / billing / destructive action は実行していない
+
+## [2026-07-15] implementation | Task-management read capability
+
+- companies側 NPLM-006 blockerを確認し、POTASK-010としてbackend-neutral read adapter、Hermes read-only tool registration、`task-management-read` export alignment、normalized `TaskSnapshot` behavioral testを追加した
+- `plugins/task-management/task_management/read_adapter.py` は `TaskQuery` とopaque `destination_ref`をoperator-configured `mcp__<server>__task_query`へdispatchし、canonical `TaskSnapshotResult`だけを返す
+- model inputによるadapter tool選択、write-capable tool名、provider raw ID / unknown backend metadata / credential-like valueの返却をfail closedにした
+- `plugins/task-management/__init__.py` は`task_query`を`task-management-read` toolsetへ登録し、`plugin.yaml.exports.toolsets`とruntime registrationを一致させた
+- current `plugin-creator` validatorは`.codex-plugin/plugin.json.exports`を拒否するため、Codex manifestは有効なschemaを維持し、Hermes capability exportのauthoritative sourceを`plugin.yaml`とした
+- TDDでadapter module、Hermes registration、manifest export、input/output credential / nested raw ID rejection、invalid query type / adapter exception normalizationの欠落をRED確認し、plugin suite 60 testsをGREEN確認した
+- live Hermes / MCP / GitHub / credential、marketplace、cachebuster、install、push、PR作成は実行していない
+
+## [2026-07-15] lint | Task-management POTASK-010 wiki sync
+
+- `knowledge/index.md`、POTASK-010を含むspec / issue ledger、implementation logの相互参照とcanonical配置を確認した
+- draft canonicalize、redirect、tombstone、archive、external ingestは不要と判断した
+- checkout内にrepo-root wiki validatorは存在しないため、`skills/llm-wiki/tests` 6件の通過と対象Markdownの手動確認をlint evidenceとした
+
+## [2026-07-15] review-fix | Task-management read capability
+
+- implementation review cycle 1で、canonical scalar内のprovider marker / common credential key、queryとsnapshotのbackend不一致、canonical taxonomy / ISO date、required `backend_metadata`のfail-closed不足を確認した
+- forbidden-value detectionとnormalization validationを追加し、該当behavioral testsをREDからGREENへ進めた
+- `.codex-plugin/plugin.json`だけを読むcompanies preflightと、`exports`を拒否するcurrent `plugin-creator` validatorのcontract mismatchはskills repo単独では解消せず、cross-repo follow-up blockerとして維持する
+- implementation review cycle 2で再現したquoted JSON provider / credential marker bypassとunsafe URL schemeをfail closedにし、query側canonical taxonomy / ISO date validationとguard別subtestを追加した

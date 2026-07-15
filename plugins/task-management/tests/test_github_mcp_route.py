@@ -269,7 +269,10 @@ class GitHubMcpRouteContractTests(unittest.TestCase):
             and "tests" not in path.relative_to(PLUGIN_ROOT).parts
             and path.relative_to(PLUGIN_ROOT).as_posix() != "__init__.py"
         ]
-        self.assertEqual([], implementation_files)
+        self.assertEqual(
+            ["task_management/__init__.py", "task_management/read_adapter.py"],
+            implementation_files,
+        )
 
         combined_text = "\n".join(
             path.read_text(encoding="utf-8")
