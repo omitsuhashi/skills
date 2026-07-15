@@ -173,7 +173,7 @@ PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s 
 - plugin config は `kind`、`connection_ref`、capability、任意の field override を持つ。
 - plugin config は GitHub owner、project number、repository を必須または既定値として持たない。
 - destination は caller / profile / host-provided registration から `TaskBackendDestination` として渡す。
-- `github_projects_mcp` は default backend key として表現できるが、具体 project target を内包しない。
+- backend keyはprovider detailを内包せず、host-owned `default_backend`で選ぶ。POTASK-011の初期稼働defaultは`local_tasks`でよい。
 
 #### Verification
 
@@ -302,7 +302,7 @@ PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s 
 
 #### Acceptance Criteria
 
-- docs は GitHub Projects が first backend であり permanent architecture ではないことを明記する。
+- docsはinitial local JSON backendと、MCP / provider pluginへの差し替え可能性を明記する。GitHub Projectsをimplicit defaultにしない。
 - Portfolio OS は task state source of truth を持たない。
 - dedicated idempotency key、`task_sha` field、duplicate-prevention store は存在しない。
 - GitHub MCP Server read/write live smoke test は normal verification に含めない。
@@ -380,26 +380,26 @@ consumerがlocal file、GitHub Projects MCP、将来backendの違いを意識せ
 - host-owned read route config / loader
 - provider adapter protocol / router
 - read-only local JSON provider adapter
-- GitHub Projects MCP response adapter
+- external MCP / provider plugin `task_query` adapter
 - existing external MCP `task_query` compatibility
 - Hermes temporary-profile end-to-end smoke test / runbook
 - public skill / README / references / behavioral tests
 
 #### Acceptance Criteria
 
-- public toolは`task-management-read:task_query`、inputは`TaskQuery`とopaque `destination_ref`、outputは`TaskSnapshotResult`のまま変わらない。
+- public toolは`task-management-read:task_query`、inputは`TaskQuery`とopaque logical `destination_ref`、outputは`TaskSnapshotResult`のまま変わらない。public `TaskQuery.backend_key`は省略可能でhost defaultへ解決する。
 - consumer / model inputはadapter kind、MCP tool名、GitHub owner / project number / field ID、local path、route file pathを指定しない。
-- host-owned routeが`backend_key`と`destination_ref`から固定adapterとprovider destinationを解決する。
+- host-owned routeがoptional internal `backend_key`とlogical `destination_ref`から固定adapterとprovider destinationを解決する。初期稼働defaultはlocal JSONでよい。
 - local JSON adapterはrouteで固定されたhost-owned fileだけをread-onlyで読み、canonical query filter / limitを適用する。
-- GitHub Projects MCP adapterはrouteで固定された`mcp__<server>__projects_list`だけをHermes dispatchし、direct GitHub API / GraphQL / `gh` / credential clientを実装しない。
+- external tool adapterはrouteで固定された`mcp__<server>__task_query`または`task_adapter__<provider>__task_query`だけをHermes dispatchし、direct provider API / GraphQL / `gh` / credential clientを実装しない。
 - provider adapter outputはpublic facadeで再normalizeされ、provider raw ID、unknown metadata、credential-like valuesを返さない。
-- POTASK-010の`mcp__<server>__task_query` external adapter pathはcompatibility modeとして維持する。
+- POTASK-010の`mcp__<server>__task_query` external adapter pathはcompatibility modeとして維持し、別provider plugin toolを同じbackend-neutral result contractで追加できる。
 - temporary Hermes profileでpluginをloadし、local JSON backendを通じたpublic `task_query` callがnormalized snapshotを返す。
-- GitHub MCP live auth / networkはnormal testsの必須条件にしない。live connectionが用意された場合だけoptional smoke testを行う。
+- external provider auth / networkはnormal testsの必須条件にしない。live connectionが用意された場合だけoptional smoke testを行う。
 
 #### Non-goals
 
-- GitHub direct API / GraphQL / `gh` client、credential管理。
+- direct provider API / GraphQL / `gh` client、credential管理。`gh`はfallbackにも使用しない。
 - write adapter、task mutation、GitHub Projects schema repair。
 - model-supplied route / tool / file path / provider destination。
 - backend detailをSchedule Secretary、Portfolio OS、その他consumer contractへ公開すること。

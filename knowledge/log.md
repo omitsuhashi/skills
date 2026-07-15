@@ -1030,3 +1030,10 @@ append-only で使います。すべての entry は予測しやすい header �
 - GitHub adapterはhost-provided `projects_list` response mappingに限定し、direct API / GraphQL / `gh` / credential clientを持たない境界とした
 - public `task_query` / `TaskSnapshotResult`は維持し、model inputからadapter、tool、file path、GitHub destinationを選べないfail-closed方針を固定した
 - PR #29の追加scopeとして実装し、GitHub issue mirror、mergeは行わない
+
+## [2026-07-16] spec-review | Task-management initial local backend
+
+- user reviewを受け、`gh` commandをfallbackを含めて使用禁止とした
+- external backend接続はread-only MCP `task_query`または別provider pluginの`task_adapter__<provider>__task_query`に限定した
+- 初期稼働defaultはhost-owned local JSONでよく、GitHub Projectsをimplicit default / initial requirementにしない方針へ修正した
+- public `TaskQuery.backend_key`は省略可能とし、host-owned default routeで解決してconsumerからbackend差を隠す方針を追加した
