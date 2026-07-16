@@ -16,6 +16,8 @@ except ImportError:  # pragma: no cover - exercised by the Python 3.9 test runti
 ROUTES_FILE_ENV = "TASK_MANAGEMENT_READ_ROUTES_FILE"
 ROUTE_CONTRACT_VERSION = 1
 _KEY_RE = re.compile(r"^[A-Za-z0-9_-]+$")
+_MCP_TOOL_RE = re.compile(r"^mcp__[a-z0-9_]+__task_query$")
+_PLUGIN_TOOL_RE = re.compile(r"^task_adapter__[a-z0-9_]+__task_query$")
 
 
 class RouteConfigError(Exception):
@@ -112,6 +114,13 @@ def _within(path: Path, root: Path) -> bool:
         return False
 
 
+def _resolve_path(path: Path) -> Path:
+    try:
+        return path.resolve()
+    except (OSError, RuntimeError):
+        raise RouteConfigError("invalid_read_route", "Task read route path is invalid.")
+
+
 def load_read_route(
     path: Path,
     backend_key: Optional[str],
@@ -134,23 +143,28 @@ def load_read_route(
     destinations = backend.get("destinations")
     if not isinstance(destinations, dict):
         raise RouteConfigError("invalid_read_route", "Task read route destinations are invalid.")
-    destination = next(
-        (
-            item
-            for item in destinations.values()
-            if isinstance(item, dict) and item.get("public_ref") == destination_ref
-        ),
-        None,
-    )
-    if not isinstance(destination, dict):
+    public_refs = [
+        item.get("public_ref")
+        for item in destinations.values()
+        if isinstance(item, dict) and isinstance(item.get("public_ref"), str)
+    ]
+    if len(public_refs) != len(set(public_refs)):
+        raise RouteConfigError("invalid_read_route", "Task read route destinations are ambiguous.")
+    matching_destinations = [
+        item
+        for item in destinations.values()
+        if isinstance(item, dict) and item.get("public_ref") == destination_ref
+    ]
+    if not matching_destinations:
         raise RouteConfigError("read_route_not_found", "No task read route matches the request.")
+    destination = matching_destinations[0]
     provider_ref = _required_string(destination, "provider_ref")
     kind = _required_string(backend, "kind")
 
     if kind == "local_json":
-        config_dir = Path(path).resolve().parent
-        read_root = (config_dir / _required_string(backend, "read_root")).resolve()
-        source_path = (read_root / _required_string(backend, "source_path")).resolve()
+        config_dir = _resolve_path(Path(path)).parent
+        read_root = _resolve_path(config_dir / _required_string(backend, "read_root"))
+        source_path = _resolve_path(read_root / _required_string(backend, "source_path"))
         if not _within(source_path, read_root):
             raise RouteConfigError("invalid_read_route", "Local snapshot source is outside its read root.")
         return ResolvedTaskReadRoute(
@@ -163,11 +177,17 @@ def load_read_route(
         )
     if kind not in {"mcp", "plugin"}:
         raise RouteConfigError("invalid_read_route", "Task read route adapter kind is invalid.")
+    tool_name = _required_string(backend, "tool_name")
+    expected_tool_pattern = _MCP_TOOL_RE if kind == "mcp" else _PLUGIN_TOOL_RE
+    if expected_tool_pattern.fullmatch(tool_name) is None:
+        raise RouteConfigError(
+            "invalid_read_route",
+            "Task read route kind does not match its fixed tool namespace.",
+        )
     return ResolvedTaskReadRoute(
         selected_backend,
         kind,
         destination_ref,
         provider_ref,
-        tool_name=_required_string(backend, "tool_name"),
+        tool_name=tool_name,
     )
-

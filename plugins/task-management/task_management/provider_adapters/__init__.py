@@ -26,4 +26,3 @@ class AdapterTaskSnapshotResult:
 class ReadAdapter(Protocol):
     def query(self, request: Any, **kwargs: Any) -> AdapterTaskSnapshotResult:
         """Return canonical snapshot candidates for one resolved request."""
-

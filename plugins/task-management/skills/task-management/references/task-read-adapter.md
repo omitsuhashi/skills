@@ -34,7 +34,9 @@ All adapters implement the internal
 Hermes dispatch is bound when the adapter is constructed; the public request
 cannot replace it. Adapter contract version is 1. External adapters must handle
 pagination internally up to `query.limit`; the public contract exposes no
-provider cursor.
+provider cursor. External responses are capped at 5 MiB and 100 items, and the
+public `limit` is applied before normalization. Route kind/tool namespaces must
+match, and duplicate `public_ref` mappings fail as `invalid_read_route`.
 
 `TASK_MANAGEMENT_READ_ADAPTER_TOOL` remains a legacy single-MCP-route mode. It
 requires `query.backend_key` and never acts as a GitHub fallback.

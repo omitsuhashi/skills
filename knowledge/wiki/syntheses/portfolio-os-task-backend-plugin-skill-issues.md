@@ -403,6 +403,7 @@ consumerがlocal file、GitHub Projects MCP、将来backendの違いを意識せ
 - `provider_adapters/`がconstructor-bound dependencyを持つlocal JSON / exact MCP・plugin read adapterを共通request/result contractへ揃える。
 - public `task_query`はroute envなしでもHermesへ登録され、typed setup errorを返せる。POTASK-010 legacy MCP envも維持する。
 - installed Hermesの`PluginContext` / registryとtemporary `HERMES_HOME`を使うlocal snapshot smokeを追加した。
+- review cycle 1でpath resolve例外のtyped mapping、response byte/item上限、normalization前limit、route kind/tool namespace一致、duplicate destination拒否を追加した。
 
 #### Non-goals
 

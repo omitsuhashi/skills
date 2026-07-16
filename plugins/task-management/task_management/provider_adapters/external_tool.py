@@ -22,6 +22,18 @@ _PROVIDER_ERRORS = {
     "rate_limited": "read_adapter_rate_limited",
     "timeout": "read_adapter_timeout",
 }
+MAX_EXTERNAL_RESPONSE_BYTES = 5 * 1024 * 1024
+MAX_EXTERNAL_ITEMS = 100
+
+
+def _encoded_size(value: Any) -> int:
+    try:
+        if isinstance(value, str):
+            return len(value.encode("utf-8"))
+        serialized = json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+        return len(serialized.encode("utf-8"))
+    except (TypeError, ValueError, OverflowError, UnicodeError, RecursionError):
+        raise AdapterError("invalid_adapter_result", "External task read adapter returned an invalid result.")
 
 
 class ExternalToolAdapter:
@@ -42,6 +54,8 @@ class ExternalToolAdapter:
             raw = self._dispatch(self._tool_name, envelope, **dispatch_kwargs)
         except Exception:
             raise AdapterError("read_adapter_unavailable", "External task read adapter is unavailable.")
+        if _encoded_size(raw) > MAX_EXTERNAL_RESPONSE_BYTES:
+            raise AdapterError("invalid_adapter_result", "External task read adapter result is too large.")
         if isinstance(raw, str):
             try:
                 raw = json.loads(raw)
@@ -59,5 +73,6 @@ class ExternalToolAdapter:
         items = raw.get("items")
         if not isinstance(items, list):
             raise AdapterError("invalid_adapter_result", "External task read adapter must return an items array.")
+        if len(items) > MAX_EXTERNAL_ITEMS:
+            raise AdapterError("invalid_adapter_result", "External task read adapter returned too many items.")
         return AdapterTaskSnapshotResult(ADAPTER_CONTRACT_VERSION, items)
-

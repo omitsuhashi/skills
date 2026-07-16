@@ -15,8 +15,11 @@ MAX_SNAPSHOT_BYTES = 5 * 1024 * 1024
 
 class LocalJsonAdapter:
     def __init__(self, *, read_root: Path, source_path: Path):
-        self._read_root = read_root.resolve()
-        self._source_path = source_path.resolve()
+        try:
+            self._read_root = read_root.resolve()
+            self._source_path = source_path.resolve()
+        except (OSError, RuntimeError):
+            raise AdapterError("task_source_unreadable", "Local task snapshot path is unavailable.")
         try:
             self._source_path.relative_to(self._read_root)
         except ValueError:
@@ -29,7 +32,7 @@ class LocalJsonAdapter:
             if self._source_path.stat().st_size > MAX_SNAPSHOT_BYTES:
                 raise OSError("snapshot is too large")
             document = json.loads(self._source_path.read_text(encoding="utf-8"))
-        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        except (OSError, RuntimeError, UnicodeDecodeError, json.JSONDecodeError):
             raise AdapterError("task_source_unreadable", "Local task snapshot is unavailable or invalid.")
         if not isinstance(document, dict) or document.get("adapter_contract_version") != ADAPTER_CONTRACT_VERSION:
             raise AdapterError("adapter_contract_mismatch", "Local task snapshot contract version is unsupported.")
@@ -54,4 +57,3 @@ class LocalJsonAdapter:
             if due_date is None or not isinstance(due_date, str) or due_date > due_before:
                 return False
         return True
-

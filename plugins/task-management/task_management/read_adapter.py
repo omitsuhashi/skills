@@ -74,6 +74,8 @@ _TASK_TYPES = {
 _URGENCY_VALUES = {"low", "normal", "high", "blocked"}
 _IMPORTANCE_VALUES = {"low", "normal", "high", "critical"}
 _AUTOMATION_MODES = {"manual_only", "assistive", "trusted_after_approval"}
+MAX_ADAPTER_RESPONSE_BYTES = 5 * 1024 * 1024
+MAX_ADAPTER_ITEMS = 100
 
 
 TASK_QUERY_SCHEMA = {
@@ -121,8 +123,23 @@ def _error(code: str, message: str, **details: Any) -> Dict[str, Any]:
 
 def _parse_adapter_result(raw_result: Any) -> Optional[Dict[str, Any]]:
     if isinstance(raw_result, dict):
+        try:
+            serialized = json.dumps(
+                raw_result,
+                ensure_ascii=False,
+                separators=(",", ":"),
+            )
+            if len(serialized.encode("utf-8")) > MAX_ADAPTER_RESPONSE_BYTES:
+                return None
+        except (TypeError, ValueError, OverflowError, UnicodeError, RecursionError):
+            return None
         return raw_result
     if not isinstance(raw_result, str):
+        return None
+    try:
+        if len(raw_result.encode("utf-8")) > MAX_ADAPTER_RESPONSE_BYTES:
+            return None
+    except UnicodeError:
         return None
     try:
         value = json.loads(raw_result)
@@ -374,6 +391,12 @@ def query_tasks(
             "invalid_adapter_result",
             "Backend read adapter must return an items array.",
         )
+    if len(items) > MAX_ADAPTER_ITEMS:
+        return _error(
+            "invalid_adapter_result",
+            "Backend read adapter returned too many items.",
+        )
+    items = items[: query.get("limit", MAX_ADAPTER_ITEMS)]
 
     snapshots = []
     for item in items:

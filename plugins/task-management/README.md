@@ -45,7 +45,11 @@ External routes fix exactly one read-only tool in host config:
 The adapter contract is version 1 and capability `task_read`. External adapters
 own provider authorization, pagination, destination mapping, and provider-side
 errors. They must page internally up to the requested `limit`; provider cursors
-are not exposed by the public result. The facade allowlist-normalizes every item
+are not exposed by the public result. Responses are limited to 5 MiB and 100
+items, and the public `limit` is applied before snapshot normalization. Route
+kind and tool namespace must match (`mcp` to `mcp__...`, `plugin` to
+`task_adapter__...`), and duplicate logical destination refs invalidate the
+route. The facade allowlist-normalizes every item
 and rejects raw provider IDs, unknown metadata, unsafe links, and credential-like
 values.
 

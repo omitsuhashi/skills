@@ -1,13 +1,16 @@
 import json
+import os
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PLUGIN_ROOT))
 
+import task_management.provider_adapters.external_tool as external_tool
 from task_management.provider_adapters.external_tool import ExternalToolAdapter
 from task_management.provider_adapters.local_json import LocalJsonAdapter
 from task_management.route_config import (
@@ -106,6 +109,115 @@ provider_ref = "tasks:default"
 
         self.assertEqual("invalid_read_route", raised.exception.code)
 
+    def test_duplicate_public_destination_refs_are_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            config = route_file(
+                tmp,
+                '''contract_version = 1
+default_backend = "remote"
+[backends.remote]
+kind = "mcp"
+capability = "task_read"
+tool_name = "mcp__tasks__task_query"
+[backends.remote.destinations.one]
+public_ref = "tasks:default"
+provider_ref = "provider:one"
+[backends.remote.destinations.two]
+public_ref = "tasks:default"
+provider_ref = "provider:two"
+''',
+            )
+
+            with self.assertRaises(RouteConfigError) as raised:
+                load_read_route(config, None, "tasks:default")
+
+        self.assertEqual("invalid_read_route", raised.exception.code)
+
+    def test_duplicate_unselected_destination_refs_still_invalidate_the_route(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            config = route_file(
+                tmp,
+                '''contract_version = 1
+default_backend = "remote"
+[backends.remote]
+kind = "mcp"
+capability = "task_read"
+tool_name = "mcp__tasks__task_query"
+[backends.remote.destinations.selected]
+public_ref = "tasks:selected"
+provider_ref = "provider:selected"
+[backends.remote.destinations.one]
+public_ref = "tasks:duplicate"
+provider_ref = "provider:one"
+[backends.remote.destinations.two]
+public_ref = "tasks:duplicate"
+provider_ref = "provider:two"
+''',
+            )
+
+            with self.assertRaises(RouteConfigError) as raised:
+                load_read_route(config, None, "tasks:selected")
+
+        self.assertEqual("invalid_read_route", raised.exception.code)
+
+    def test_route_kind_must_match_the_external_tool_namespace(self):
+        for kind, tool_name in (
+            ("mcp", "task_adapter__linear__task_query"),
+            ("plugin", "mcp__tasks__task_query"),
+        ):
+            with self.subTest(kind=kind), tempfile.TemporaryDirectory() as tmp:
+                config = route_file(
+                    tmp,
+                    f'''contract_version = 1
+default_backend = "remote"
+[backends.remote]
+kind = "{kind}"
+capability = "task_read"
+tool_name = "{tool_name}"
+[backends.remote.destinations.default]
+public_ref = "tasks:default"
+provider_ref = "provider:default"
+''',
+                )
+
+                with self.assertRaises(RouteConfigError) as raised:
+                    load_read_route(config, None, "tasks:default")
+
+                self.assertEqual("invalid_read_route", raised.exception.code)
+
+    def test_symlink_loop_becomes_a_typed_public_route_error(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            loop = root / "loop"
+            try:
+                os.symlink("loop", loop)
+            except (OSError, NotImplementedError):
+                self.skipTest("symlinks are unavailable")
+            config = route_file(
+                root,
+                '''contract_version = 1
+default_backend = "local"
+[backends.local]
+kind = "local_json"
+capability = "task_read"
+read_root = "loop"
+source_path = "tasks.json"
+[backends.local.destinations.default]
+public_ref = "tasks:default"
+provider_ref = "tasks:default"
+''',
+            )
+            from task_management.read_adapter import query_tasks
+
+            result = query_tasks(
+                {"query": {}, "destination_ref": "tasks:default"},
+                dispatch=lambda *_args, **_kwargs: self.fail("dispatch must not run"),
+                routes_file=str(config),
+            )
+
+        self.assertFalse(result["ok"])
+        self.assertEqual("invalid_read_route", result["error"]["code"])
+
 
 class LocalJsonAdapterTests(unittest.TestCase):
     def test_local_snapshot_applies_filters_and_limit(self):
@@ -134,6 +246,23 @@ class LocalJsonAdapterTests(unittest.TestCase):
                 adapter.query(request)
 
         self.assertEqual("adapter_contract_mismatch", raised.exception.code)
+
+    def test_source_resolve_failure_is_typed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            loop = root / "loop"
+            try:
+                os.symlink("loop", loop)
+            except (OSError, NotImplementedError):
+                self.skipTest("symlinks are unavailable")
+
+            with self.assertRaises(Exception) as raised:
+                LocalJsonAdapter(read_root=root, source_path=loop)
+
+        self.assertEqual(
+            "task_source_unreadable",
+            getattr(raised.exception, "code", None),
+        )
 
 
 class ExternalToolAdapterTests(unittest.TestCase):
@@ -220,6 +349,39 @@ class ExternalToolAdapterTests(unittest.TestCase):
 
         self.assertEqual("read_adapter_auth_missing", raised.exception.code)
         self.assertNotIn("must-not-leak", str(raised.exception))
+
+    def test_external_response_size_is_bounded_for_strings_and_dicts(self):
+        responses = (
+            json.dumps({"adapter_contract_version": 1, "items": [], "padding": "x" * 100}),
+            {"adapter_contract_version": 1, "items": [], "padding": "x" * 100},
+        )
+        for response in responses:
+            with self.subTest(response_type=type(response).__name__), patch.object(
+                external_tool, "MAX_EXTERNAL_RESPONSE_BYTES", 64, create=True
+            ):
+                adapter = ExternalToolAdapter(
+                    tool_name="mcp__task_backend__task_query",
+                    dispatch=lambda *_args, **_kwargs: response,
+                )
+
+                with self.assertRaises(Exception) as raised:
+                    adapter.query(self.request())
+
+                self.assertEqual("invalid_adapter_result", raised.exception.code)
+
+    def test_external_item_array_is_bounded(self):
+        adapter = ExternalToolAdapter(
+            tool_name="mcp__task_backend__task_query",
+            dispatch=lambda *_args, **_kwargs: {
+                "adapter_contract_version": 1,
+                "items": [{} for _ in range(101)],
+            },
+        )
+
+        with self.assertRaises(Exception) as raised:
+            adapter.query(self.request())
+
+        self.assertEqual("invalid_adapter_result", raised.exception.code)
 
 
 if __name__ == "__main__":

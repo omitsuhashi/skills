@@ -5,6 +5,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
@@ -188,6 +189,52 @@ provider_ref = "tasks:default"
         self.assertTrue(result["ok"])
         self.assertEqual("local_tasks", result["backend_key"])
         self.assertEqual(["Prepare quarterly plan"], [item["title"] for item in result["task_snapshots"]])
+
+    def test_public_limit_is_applied_before_normalizing_string_or_dict_results(self):
+        first = self.valid_snapshot()
+        responses = (
+            {"items": [first, {}]},
+            json.dumps({"items": [first, {}]}),
+        )
+        for response in responses:
+            with self.subTest(response_type=type(response).__name__):
+                result = self.load_adapter().query_tasks(
+                    {
+                        "query": {"backend_key": "github_projects_mcp", "limit": 1},
+                        "destination_ref": "tasks:default",
+                    },
+                    dispatch=lambda *_args, **_kwargs: response,
+                    adapter_tool_name="mcp__task_backend__task_query",
+                )
+
+                self.assertTrue(result["ok"])
+                self.assertEqual(1, len(result["task_snapshots"]))
+
+    def test_public_facade_maps_local_resolve_failure_to_typed_source_error(self):
+        adapter = self.load_adapter()
+        route_type = importlib.import_module(
+            "task_management.route_config"
+        ).ResolvedTaskReadRoute
+        route = route_type(
+            backend_key="local_tasks",
+            kind="local_json",
+            destination_ref="tasks:default",
+            provider_destination_ref="tasks:default",
+            read_root=Path("/tmp/task-read-root"),
+            source_path=Path("/tmp/task-read-root/tasks.json"),
+        )
+        with patch.object(adapter, "load_read_route", return_value=route), patch.object(
+            adapter.Path, "resolve", side_effect=OSError("must-not-leak")
+        ):
+            result = adapter.query_tasks(
+                {"query": {}, "destination_ref": "tasks:default"},
+                dispatch=lambda *_args, **_kwargs: self.fail("dispatch must not run"),
+                routes_file="routes.toml",
+            )
+
+        self.assertFalse(result["ok"])
+        self.assertEqual("task_source_unreadable", result["error"]["code"])
+        self.assertNotIn("must-not-leak", json.dumps(result))
 
     def test_query_fails_closed_when_read_adapter_is_not_configured(self):
         adapter = self.load_adapter()

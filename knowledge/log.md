@@ -1054,3 +1054,10 @@ append-only で使います。すべての entry は予測しやすい header �
 - Codexはworkflow skill、Hermesはnative runtime toolである差をmanifest / READMEへ同期し、実在しないMCP server exportは追加しなかった
 - installed Hermesの`PluginContext` / registry、temporary `HERMES_HOME`、local fixtureを使うend-to-end smokeを追加した
 - local JSONはmutable source of truthではなくbootstrap read snapshotとし、write backendはMCP / provider plugin所有、direct API / GraphQL / `gh` fallbackなしの境界を同期した
+
+## [2026-07-16] review-fix | Task-management POTASK-011 cycle 1
+
+- route/local `Path.resolve`のsymlink loop / `OSError`を`invalid_read_route`または`task_source_unreadable`へ変換し、public facadeからraw exceptionを漏らさないregression testを追加した
+- external responseを5 MiB / 100 itemsへ制限し、JSON string / dictの両方で検証した。public query `limit`はsnapshot normalization前に適用するよう修正した
+- `kind=mcp|plugin`とfixed tool namespaceの一致を強制し、重複`public_ref`をfirst-matchせずambiguous routeとして拒否した
+- initial implementation commitにあったPython 4 filesのEOF blank-line warningを修正した

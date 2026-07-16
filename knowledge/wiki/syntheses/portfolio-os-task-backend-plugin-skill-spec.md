@@ -146,6 +146,8 @@ ReadAdapter.query(ResolvedTaskReadRequest) -> AdapterTaskSnapshotResult
 - `external_tool`はhost-owned routeから固定されたread-only `mcp__<server>__task_query`または`task_adapter__<provider>__task_query`だけをHermes `ctx.dispatch_tool`で呼ぶ。direct HTTP、GraphQL、`gh`、credential lookupは行わない。
 - POTASK-010の`TASK_MANAGEMENT_READ_ADAPTER_TOOL=mcp__<server>__task_query`はlegacy single-route compatibilityとして維持する。
 - facadeはadapter出力を再度allowlist normalizeし、provider raw ID、route secrets、unknown metadata、credential-like valuesをfail closedする。
+- route/local path解決の`OSError` / symlink loopはraw exceptionにせずtyped errorへ変換する。external responseは5 MiB / 100 itemsを上限とし、public `limit`をsnapshot normalization前に適用する。
+- external routeの`kind=mcp|plugin`はそれぞれ`mcp__...__task_query` / `task_adapter__...__task_query` namespaceと一致させ、同じ`public_ref`を持つ重複destinationはambiguous configとして拒否する。
 
 route configを差し替えてもconsumer、Schedule Secretary、Portfolio OS、Hermes prompt側のtool名とresult contractは変えない。将来backendを追加するときはprovider adapterとhost routeだけを追加し、public schemaへprovider-specific fieldを足さない。
 
