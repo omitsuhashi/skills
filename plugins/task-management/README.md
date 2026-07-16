@@ -53,6 +53,11 @@ route. The facade allowlist-normalizes every item
 and rejects raw provider IDs, unknown metadata, unsafe links, and credential-like
 values.
 
+See
+[`routing-flow.md`](skills/task-management/references/routing-flow.md) for the
+read routing overview, end-to-end sequence, backend switch, ownership table, and
+the separate state-changing boundary.
+
 `TASK_MANAGEMENT_READ_ADAPTER_TOOL=mcp__<server>__task_query` remains supported
 only as the POTASK-010 single-route compatibility mode. It requires
 `query.backend_key` because no host route is available to resolve a default.

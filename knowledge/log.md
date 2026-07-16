@@ -1075,3 +1075,9 @@ append-only で使います。すべての entry は予測しやすい header �
 - GitHub pluginを使ってPR title / bodyをPOTASK-011、plugin v0.3.0、83 tests、Hermes smoke、provider boundary、optional external live smokeへ同期した
 - `gh` commandは使用していない。PRはopen、mergeableであり、delivery evidence追記前のimplementation head `a024573`をconnectorで確認した
 - GitHub issue mirror、merge、live install、external provider auth / network smokeは実行していない
+
+## [2026-07-16] documentation | Task-management routing diagrams
+
+- consumer、Hermes public tool、facade、host-owned route、local / MCP / provider-plugin adapter、normalized resultの関係をMermaid routing図として追加した
+- public callからbackend分岐、external dispatch、normalization、typed error returnまでをsequence diagramで明示した
+- backend差し替え時もconsumer contractが不変であるstate transitionと、read pathから分離されたapproval-gated write boundaryを明示した

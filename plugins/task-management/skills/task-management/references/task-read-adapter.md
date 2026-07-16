@@ -63,3 +63,6 @@ requires a separate approved issue; mutable task state stays MCP/provider-owned.
 All failures omit raw adapter payloads and credentials. Successful items are
 re-normalized through the canonical `TaskSnapshot` allowlist, so provider IDs,
 unknown metadata, unsafe URLs, and credential-like values fail closed.
+
+For the actor-by-actor routing overview and sequence diagram, see
+[`routing-flow.md`](routing-flow.md).
