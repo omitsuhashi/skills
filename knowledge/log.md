@@ -1061,3 +1061,10 @@ append-only で使います。すべての entry は予測しやすい header �
 - external responseを5 MiB / 100 itemsへ制限し、JSON string / dictの両方で検証した。public query `limit`はsnapshot normalization前に適用するよう修正した
 - `kind=mcp|plugin`とfixed tool namespaceの一致を強制し、重複`public_ref`をfirst-matchせずambiguous routeとして拒否した
 - initial implementation commitにあったPython 4 filesのEOF blank-line warningを修正した
+
+## [2026-07-16] implementation-review | Task-management POTASK-011 cycle 2
+
+- independent spec reviewとstandards reviewの両方で、cycle 1のCritical / Importantがすべて解消済みであることを確認した
+- coordinator fresh verificationで83 tests、installed Hermes local-route smoke、plugin / skill validators、architecture / context validators、full-range `git diff --check`が成功した
+- worker commitsを既存draft PR branchへ統合し、POTASK-011を`PR_READY`とした。external providerのlive auth / network smokeは承認済み仕様どおりoptionalのため未実施とした
+- GitHub issue mirror、ready-for-review、merge、live installは実行していない
