@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "repo_root": "/Users/omitsuhashi/.codex/worktrees/8a21/skills",
+  "epic_id": "portfolio-os-task-backend-plugin-skill",
+  "artifact_root": "knowledge/wiki/syntheses",
+  "spec": {
+    "path": "knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-spec.md",
+    "approved_revision": 3,
+    "approved_hash": "sha256:06f04ea665320f697623c0a6bc53ad5433e85d9df3e48ef607a21c841d32ec2f"
+  },
+  "work_items": [
+    {
+      "id": "POTASK-011",
+      "title": "pluggable provider adapter と Hermes end-to-end call path を実装する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md"
+      },
+      "acceptance_criteria": [
+        "public task_query は backend_key を省略でき、host-owned default route が adapter を選ぶ",
+        "local JSON adapter は route 固定の read root 内 snapshot だけを read-only で読み canonical filters と limit を適用する",
+        "external adapter は route 固定の MCP または provider plugin read-only tool だけを dispatch する",
+        "typed setup/provider/contract errors と final normalization guard が raw provider data や credentials を漏らさない",
+        "Hermes の公開 tool を local snapshot backend まで end-to-end で呼べる",
+        "Codex skill surface と Hermes runtime tool surface の違いが manifest と docs で明示される"
+      ],
+      "non_goals": [
+        "write adapter、local task mutation、GitHub Projects schema repair",
+        "direct provider API、GraphQL、gh command または fallback",
+        "plugin 同梱 MCP server、credential 管理、live external provider を必須にする test"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 plugins/task-management/scripts/smoke_test_hermes_read.py",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 /Users/omitsuhashi/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/task-management",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_validate.py plugins/task-management/skills/task-management",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_architecture.py --all",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_context.py --all",
+        "git diff --check"
+      ],
+      "write_scope": [
+        "path:plugins/task-management",
+        "path:knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-spec.md",
+        "path:knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md",
+        "path:knowledge/index.md",
+        "path:knowledge/log.md"
+      ],
+      "dependencies": []
+    }
+  ],
+  "delivery_intent": "per_action"
+}
+

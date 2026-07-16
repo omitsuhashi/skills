@@ -1037,3 +1037,11 @@ append-only で使います。すべての entry は予測しやすい header �
 - external backend接続はread-only MCP `task_query`または別provider pluginの`task_adapter__<provider>__task_query`に限定した
 - 初期稼働defaultはhost-owned local JSONでよく、GitHub Projectsをimplicit default / initial requirementにしない方針へ修正した
 - public `TaskQuery.backend_key`は省略可能とし、host-owned default routeで解決してconsumerからbackend差を隠す方針を追加した
+
+## [2026-07-16] execution-plan | Task-management POTASK-011
+
+- plugin best-practice reviewを受け、route loader、stable adapter interface、local bootstrap snapshot、external MCP / provider plugin adapter、typed degradation、Hermes end-to-end smokeをPOTASK-011の実装順序として固定した
+- local JSONはmutable task management source of truthではなくread-only bootstrap snapshotとし、write backendはMCPまたはprovider pluginが所有する境界を採用した
+- Codexは同梱workflow skill、Hermesはnative `task-management-read:task_query` runtime toolであることを明示し、実在しないMCP server exportをmanifestへ追加しない方針を固定した
+- POTASK-011専用input packetとExecution Envelope v3を追加し、既存draft PR branchをepic base、専用branch/worktreeをworker所有として予約した
+- `gh` commandは使用せず、承認済みremote actionは既存draft PR branchのpush更新だけに限定した

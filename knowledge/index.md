@@ -110,6 +110,12 @@ _現在なし。_
   検索語: Portfolio OS, task backend, task-management, local issue, Issue Gate, POTASK-010, POTASK-011, provider adapter, local JSON, MCP, provider plugin, no gh, Hermes end-to-end, blocker graph, task-management-read, task_query, TaskSnapshotResult, adapter dispatch, TaskDraft, TaskBackendRoute, TaskBackendDestination
 - [Portfolio OS Task Backend Plugin Skill Input Packet](wiki/syntheses/portfolio-os-task-backend-plugin-skill-input-packet.json) — `portfolio-os-task-backend-plugin-skill` の Execution Plan Gate 承認済み input packet。承認済み POTASK-001 から POTASK-009 の source、acceptance criteria、write scope、dependencies、local-only delivery intent を正規化する。
   検索語: Portfolio OS, task backend, task-management, input packet, Execution Plan Gate, issue-implementation-loop, POTASK, write scope, dependencies, local_only
+- [Task Management Provider Adapters 実装計画](wiki/syntheses/2026-07-16-task-management-provider-adapters-implementation-plan.md) — POTASK-011 の test-first 実装順序、adapter 境界、Hermes smoke、文書同期、PR delivery を固定する計画。
+  検索語: POTASK-011, implementation plan, route config, local snapshot, provider adapter, Hermes smoke, TDD, PR #29
+- [Portfolio OS Task Backend Plugin Skill POTASK-011 Input Packet](wiki/syntheses/portfolio-os-task-backend-plugin-skill-potask-011-input-packet.json) — POTASK-011 だけを既存 draft PR branch 上で実装する normalized input packet。
+  検索語: POTASK-011, input packet, provider adapter, local JSON, MCP, provider plugin, per_action
+- [Portfolio OS Task Backend Plugin Skill POTASK-011 Execution Envelope](wiki/syntheses/portfolio-os-task-backend-plugin-skill-potask-011-execution-envelope.json) — worker-only 実装、専用 issue branch/worktree、最大 2 review cycle、既存 draft PR branch push を固定する Execution Envelope v3。
+  検索語: POTASK-011, execution envelope, worker context, issue branch, worktree, review cycle, draft PR #29
 
 ## クエリ起点成果物
 
