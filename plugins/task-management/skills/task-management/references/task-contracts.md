@@ -4,14 +4,14 @@ This reference defines the backend-neutral contracts used by the
 `task-management` skill. These contracts are the consumer-facing surface for
 Portfolio OS task intake, routing, previews, and adapter results.
 
-The backend remains the source of truth for task state. Portfolio OS may keep
+The mutable external backend remains the source of truth for task state. The
+local JSON route is only a bootstrap read snapshot and exposes no write tool. Portfolio OS may keep
 source trail, routing rationale, task drafts, backend refs, and decision logs,
 but it must not mirror provider task state.
 
-`github_projects_mcp` is the first backend route for this implementation, not a
-permanent architecture. The contracts below keep backend state, raw provider
-IDs, credentials, and write policy outside Portfolio OS so a later backend route
-can reuse the same task boundary.
+`local_tasks` is the initial reference read route. MCP and provider-plugin
+routes reuse the same contracts without making GitHub or any other provider an
+implicit fallback.
 
 ## Non-Goals
 
@@ -104,7 +104,7 @@ not provider IDs.
 
 Common fields:
 
-- `backend_key`
+- `backend_key`: optional; the host route resolves `default_backend` when absent.
 - `work_unit_id`
 - `task_type`
 - `status`
@@ -116,8 +116,9 @@ skill. Query fixtures must not require live GitHub, Hermes profiles, MCP
 servers, or credentials.
 
 The executable Hermes surface wraps these fields in an object containing
-`query` and opaque `destination_ref`. The adapter tool name is operator-owned
-configuration and must not be accepted as model input.
+`query` and opaque `destination_ref`. Route path, local path, provider
+destination, adapter kind, and adapter tool name are host-owned configuration
+and must not be accepted as model input.
 
 ## TaskSnapshot
 

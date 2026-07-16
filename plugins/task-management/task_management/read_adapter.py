@@ -3,10 +3,22 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from datetime import date
+from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 from urllib.parse import urlparse
+
+from .provider_adapters import AdapterError
+from .provider_adapters.external_tool import ExternalToolAdapter
+from .provider_adapters.local_json import LocalJsonAdapter
+from .route_config import (
+    ROUTES_FILE_ENV,
+    ResolvedTaskReadRequest,
+    RouteConfigError,
+    load_read_route,
+)
 
 
 ADAPTER_TOOL_ENV = "TASK_MANAGEMENT_READ_ADAPTER_TOOL"
@@ -89,7 +101,6 @@ TASK_QUERY_SCHEMA = {
                     "due_before": {"type": ["string", "null"]},
                     "limit": {"type": "integer", "minimum": 1, "maximum": 100},
                 },
-                "required": ["backend_key"],
             },
         },
         "required": ["destination_ref", "query"],
@@ -246,22 +257,11 @@ def query_tasks(
     arguments: Any,
     *,
     dispatch: Callable[..., Any],
-    adapter_tool_name: Optional[str],
+    adapter_tool_name: Optional[str] = None,
+    routes_file: Optional[str] = None,
     **dispatch_kwargs: Any,
 ) -> Dict[str, Any]:
     """Dispatch one backend-neutral TaskQuery and normalize TaskSnapshot values."""
-    if not adapter_tool_name:
-        return _error(
-            "read_adapter_unavailable",
-            "No backend read adapter tool is configured.",
-            configuration=ADAPTER_TOOL_ENV,
-        )
-    if _ADAPTER_TOOL_RE.fullmatch(adapter_tool_name) is None:
-        return _error(
-            "invalid_read_adapter_tool",
-            "The configured adapter must be an MCP task_query read tool.",
-            configuration=ADAPTER_TOOL_ENV,
-        )
     if not isinstance(arguments, dict):
         return _error("invalid_task_query", "Tool arguments must be an object.")
 
@@ -274,8 +274,6 @@ def query_tasks(
         )
     if set(query) - _QUERY_FIELDS:
         return _error("invalid_task_query", "TaskQuery contains unsupported fields.")
-    if not isinstance(query.get("backend_key"), str) or not query["backend_key"]:
-        return _error("invalid_task_query", "TaskQuery backend_key is required.")
     if any(
         field in query and not isinstance(query[field], str)
         for field in _QUERY_STRING_FIELDS
@@ -299,14 +297,68 @@ def query_tasks(
             "TaskQuery and destination_ref must not contain credential data.",
         )
 
-    try:
-        raw_result = dispatch(
-            adapter_tool_name,
-            {"query": query, "destination_ref": destination_ref},
-            **dispatch_kwargs,
-        )
-    except Exception:
-        return _error("read_adapter_failed", "Backend read adapter failed.")
+    expected_backend_key = query.get("backend_key")
+    if routes_file:
+        try:
+            route = load_read_route(
+                Path(routes_file),
+                expected_backend_key,
+                destination_ref,
+            )
+            expected_backend_key = route.backend_key
+            resolved_query = dict(query)
+            resolved_query["backend_key"] = route.backend_key
+            request = ResolvedTaskReadRequest(
+                backend_key=route.backend_key,
+                destination_ref=destination_ref,
+                provider_destination_ref=route.provider_destination_ref,
+                query=resolved_query,
+            )
+            if route.kind == "local_json":
+                adapter = LocalJsonAdapter(
+                    read_root=route.read_root,
+                    source_path=route.source_path,
+                )
+            else:
+                adapter = ExternalToolAdapter(
+                    tool_name=route.tool_name,
+                    dispatch=dispatch,
+                )
+            adapter_result = adapter.query(request, **dispatch_kwargs)
+            raw_result = {
+                "adapter_contract_version": adapter_result.adapter_contract_version,
+                "items": adapter_result.items,
+            }
+        except RouteConfigError as exc:
+            return _error(exc.code, str(exc), configuration=ROUTES_FILE_ENV)
+        except AdapterError as exc:
+            return _error(exc.code, str(exc))
+    else:
+        if not adapter_tool_name:
+            return _error(
+                "read_adapter_unavailable",
+                "No backend read adapter tool is configured.",
+                configuration=ADAPTER_TOOL_ENV,
+            )
+        if _ADAPTER_TOOL_RE.fullmatch(adapter_tool_name) is None:
+            return _error(
+                "invalid_read_adapter_tool",
+                "The configured adapter must be an MCP task_query read tool.",
+                configuration=ADAPTER_TOOL_ENV,
+            )
+        if not isinstance(expected_backend_key, str) or not expected_backend_key:
+            return _error(
+                "invalid_task_query",
+                "TaskQuery backend_key is required in legacy adapter mode.",
+            )
+        try:
+            raw_result = dispatch(
+                adapter_tool_name,
+                {"query": query, "destination_ref": destination_ref},
+                **dispatch_kwargs,
+            )
+        except Exception:
+            return _error("read_adapter_failed", "Backend read adapter failed.")
     adapter_result = _parse_adapter_result(raw_result)
     if adapter_result is None:
         return _error("invalid_adapter_result", "Backend read adapter returned invalid JSON.")
@@ -327,7 +379,7 @@ def query_tasks(
     for item in items:
         snapshot = _normalize_snapshot(
             item,
-            expected_backend_key=query["backend_key"],
+            expected_backend_key=expected_backend_key,
         )
         if snapshot is None:
             return _error(
@@ -345,21 +397,22 @@ def query_tasks(
     return {
         "result_type": "TaskSnapshotResult",
         "ok": True,
-        "backend_key": query["backend_key"],
+        "backend_key": expected_backend_key,
         "destination_ref": destination_ref,
         "task_snapshots": snapshots,
         "error": None,
     }
 
 
-def register_read_tool(ctx: Any, adapter_tool_name: Optional[str]) -> None:
+def register_read_tool(ctx: Any, adapter_tool_name: Optional[str] = None) -> None:
     """Register the read-only Hermes tool while keeping backend dispatch fixed."""
 
     def handler(arguments: Any, **kwargs: Any) -> str:
         result = query_tasks(
             arguments,
             dispatch=ctx.dispatch_tool,
-            adapter_tool_name=adapter_tool_name,
+            adapter_tool_name=os.environ.get(ADAPTER_TOOL_ENV, adapter_tool_name),
+            routes_file=os.environ.get(ROUTES_FILE_ENV),
             **kwargs,
         )
         return json.dumps(result, ensure_ascii=False)
@@ -369,6 +422,6 @@ def register_read_tool(ctx: Any, adapter_tool_name: Optional[str]) -> None:
         toolset=READ_TOOLSET,
         schema=TASK_QUERY_SCHEMA,
         handler=handler,
-        requires_env=[ADAPTER_TOOL_ENV],
+        requires_env=[],
         description="Read backend-neutral task snapshots without task mutations.",
     )

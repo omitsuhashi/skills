@@ -1045,3 +1045,12 @@ append-only で使います。すべての entry は予測しやすい header �
 - Codexは同梱workflow skill、Hermesはnative `task-management-read:task_query` runtime toolであることを明示し、実在しないMCP server exportをmanifestへ追加しない方針を固定した
 - POTASK-011専用input packetとExecution Envelope v3を追加し、既存draft PR branchをepic base、専用branch/worktreeをworker所有として予約した
 - `gh` commandは使用せず、承認済みremote actionは既存draft PR branchのpush更新だけに限定した
+
+## [2026-07-16] implementation | Task-management POTASK-011 provider adapters
+
+- versioned host-owned route loader、constructor-bound adapter contract、read-only local bootstrap snapshot、exact MCP / provider-plugin read tool adapterを実装した
+- public `task_query`の`backend_key`を省略可能にし、Hermes登録をexternal env非依存へ変更した。legacy single-MCP-route envは互換維持した
+- provider error taxonomy、contract mismatch、route/source failureをtyped errorにし、raw payload / credentialを返さない既存normalization guardへ接続した
+- Codexはworkflow skill、Hermesはnative runtime toolである差をmanifest / READMEへ同期し、実在しないMCP server exportは追加しなかった
+- installed Hermesの`PluginContext` / registry、temporary `HERMES_HOME`、local fixtureを使うend-to-end smokeを追加した
+- local JSONはmutable source of truthではなくbootstrap read snapshotとし、write backendはMCP / provider plugin所有、direct API / GraphQL / `gh` fallbackなしの境界を同期した

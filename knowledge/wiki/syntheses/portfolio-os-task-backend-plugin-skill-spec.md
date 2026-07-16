@@ -50,7 +50,7 @@ task backend は初期稼働時にlocal fileでもよく、後からMCPまたは
 ## 採用済み判断
 
 - 初期稼働backendはread-only local JSONでよく、GitHub ProjectsはMCPまたは別provider plugin経由で後から差し替え可能にする。
-- 選択されたbackendをtask stateのsource of truthとする。初期稼働ではhost-owned local JSONでよい。
+- mutable task stateのsource of truthはMCPまたはprovider plugin側のbackendとする。初期local JSONはwrite surfaceを持たないbootstrap read snapshotであり、mutable source of truthとは呼ばない。
 - Portfolio OS は task ledger / task state を独自に保持しない。
 - Backend migration は、旧 backend から新 backend へ task を移したうえで configured backend route を切り替える。Portfolio OS は migration source of truth にならない。
 - backend-neutral contract は `TaskDraft`、`TaskRef`、`TaskQuery`、`TaskSnapshot`、`TaskWriteResult`、`TaskBackendRoute`、`TaskBackendDestination` を中心に置く。
@@ -136,10 +136,10 @@ host-owned route file は次を解決する。
 2. adapterが使うfixed read surface。external backendの場合はread-only MCP / plugin `task_query` tool、local JSONの場合はhost-owned source file。
 3. provider destinationとcanonical fieldのmapping。これらはadapter内部入力であり、`TaskSnapshotResult`へ返さない。
 
-provider adapter は同じ内部protocolを実装する。
+provider adapter は同じ内部protocolを実装する。file readerやHermes dispatch、fixed toolはadapter生成時に束縛し、local adapterへdispatch dependencyを漏らさない。
 
 ```text
-query(route, destination, task_query, dispatch) -> AdapterTaskSnapshotItems
+ReadAdapter.query(ResolvedTaskReadRequest) -> AdapterTaskSnapshotResult
 ```
 
 - `local_json` はhost-owned JSON documentをread-onlyで読み、query filterとlimitを適用する。path traversalやmodel-supplied pathは許可しない。
@@ -168,7 +168,7 @@ Adapter Dispatch Review の preview には、選択された backend key、conne
 
 将来の project-management backend も同じ routing model で扱う。優先する integration surface は次の順序とする。
 
-1. **local read adapter**: host-owned local JSONをinitial source of truthとして使える。
+1. **local read adapter**: host-owned local JSONをread-only bootstrap snapshotとして使える。local writeは別承認issueとする。
 2. **MCP**: hostが提供するread-only `task_query` toolへ接続する。
 3. **provider plugin**: 別pluginが提供するread-only `task_adapter__<provider>__task_query`へ接続する。
 4. **URL surface**: backend URLはlinkable metadataとして扱えるが、task read execution surfaceにはしない。
@@ -217,7 +217,7 @@ destination_ref = "tasks:default"
 destination_label = "Default Tasks"
 ```
 
-最終的なtask stateは選択されたbackendに保存される。初期稼働ではhost-owned local JSONをsource of truthにできる。MCPまたは別provider pluginへrouteを差し替えた後は、そのbackendをsource of truthとする。Portfolio OS側に残せるのはsource trail、routing rationale、承認済みadapter dispatchのdecision log、backend key、backend task URL / item referenceなどの参照情報だけである。
+mutable task stateはMCPまたは別provider plugin側backendに保存される。初期host-owned local JSONはbootstrap read snapshotであり、task mutationやcanonical management storeを提供しない。Portfolio OS側に残せるのはsource trail、routing rationale、承認済みadapter dispatchのdecision log、backend key、backend task URL / item referenceなどの参照情報だけである。
 
 ## Hermes / MCP Integration
 
@@ -315,7 +315,7 @@ Spec Gate 承認後に、日本語 local-first ledger として issue 化する�
 ## 受け入れ基準
 
 - `plugins/task-management/.codex-plugin/plugin.json` が存在し、`plugin-creator` validator を通る。
-- `plugins/task-management/plugin.yaml` が存在し、Hermes native plugin manifest として `name: task-management`、`version: 0.2.0`、`kind: standalone`、`exports.toolsets = ["task-management-read"]` 相当を持つ。
+- `plugins/task-management/plugin.yaml` が存在し、Hermes native plugin manifest として `name: task-management`、`version: 0.3.0`、`kind: standalone`、`exports.toolsets = ["task-management-read"]` 相当を持つ。
 - `plugins/task-management/__init__.py` は同梱 skill と read-only `task_query` tool を登録するが、live Hermes profile、credentials、MCP registration、GitHub、network には触れない。
 - `plugins/task-management/README.md` は Hermes subdir install / enable 手順と、subdir install では `.git` が残らず `hermes plugins update task-management` が使えない場合の `install --force` 更新手順を明記する。
 - `plugins/task-management/skills/task-management/SKILL.md` が存在し、`skill-creator` quick validation を通る。

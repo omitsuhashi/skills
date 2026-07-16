@@ -14,6 +14,7 @@ CODEX_MANIFEST = ROOT / ".codex-plugin" / "plugin.json"
 ENTRYPOINT = ROOT / "__init__.py"
 README = ROOT / "README.md"
 SKILL = ROOT / "skills" / "task-management" / "SKILL.md"
+SMOKE = ROOT / "scripts" / "smoke_test_hermes_read.py"
 
 
 def parse_simple_yaml(path):
@@ -38,7 +39,7 @@ class HermesPluginManifestTests(unittest.TestCase):
         manifest = parse_simple_yaml(MANIFEST)
 
         self.assertEqual("task-management", manifest.get("name"))
-        self.assertEqual("0.2.0", manifest.get("version"))
+        self.assertEqual("0.3.0", manifest.get("version"))
         self.assertEqual("Omitsuhashi", manifest.get("author"))
         self.assertEqual(
             "standalone",
@@ -68,7 +69,7 @@ class HermesPluginManifestTests(unittest.TestCase):
 
         self.assertIn("provides_tools", manifest)
         self.assertIn("exports", manifest)
-        self.assertEqual("0.2.0", codex_manifest["version"])
+        self.assertEqual("0.3.0", codex_manifest["version"])
         self.assertEqual(codex_manifest["version"], manifest["version"])
         self.assertEqual(["task_query"], manifest["provides_tools"])
         self.assertEqual(
@@ -102,11 +103,7 @@ class HermesPluginManifestTests(unittest.TestCase):
                     raise AssertionError("registration must not dispatch")
 
             ctx = FakeContext()
-            with patch.dict(
-                os.environ,
-                {"TASK_MANAGEMENT_READ_ADAPTER_TOOL": "mcp__task_backend__task_query"},
-                clear=False,
-            ):
+            with patch.dict(os.environ, {}, clear=True):
                 module.register(ctx)
 
             self.assertEqual(1, len(ctx.tools))
@@ -115,10 +112,7 @@ class HermesPluginManifestTests(unittest.TestCase):
             self.assertEqual("task-management-read", registration["toolset"])
             self.assertEqual("task_query", registration["schema"]["name"])
             self.assertTrue(callable(registration["handler"]))
-            self.assertEqual(
-                ["TASK_MANAGEMENT_READ_ADAPTER_TOOL"],
-                registration["requires_env"],
-            )
+            self.assertEqual([], registration["requires_env"])
         finally:
             sys.modules.pop(spec.name, None)
 
@@ -133,6 +127,12 @@ class HermesPluginManifestTests(unittest.TestCase):
         self.assertIn("hermes plugins update task-management", text)
         self.assertIn(".git", text)
         self.assertIn("hermes plugins install --force", text)
+
+    def test_smoke_uses_real_hermes_context_and_registry_dispatch(self):
+        self.assertTrue(SMOKE.is_file())
+        text = SMOKE.read_text(encoding="utf-8")
+        self.assertIn("PluginContext", text)
+        self.assertIn("registry.dispatch", text)
 
 
 if __name__ == "__main__":

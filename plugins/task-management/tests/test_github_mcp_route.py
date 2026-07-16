@@ -270,8 +270,16 @@ class GitHubMcpRouteContractTests(unittest.TestCase):
             and path.relative_to(PLUGIN_ROOT).as_posix() != "__init__.py"
         ]
         self.assertEqual(
-            ["task_management/__init__.py", "task_management/read_adapter.py"],
-            implementation_files,
+            {
+                "task_management/__init__.py",
+                "task_management/read_adapter.py",
+                "task_management/route_config.py",
+                "task_management/provider_adapters/__init__.py",
+                "task_management/provider_adapters/local_json.py",
+                "task_management/provider_adapters/external_tool.py",
+                "scripts/smoke_test_hermes_read.py",
+            },
+            set(implementation_files),
         )
 
         combined_text = "\n".join(

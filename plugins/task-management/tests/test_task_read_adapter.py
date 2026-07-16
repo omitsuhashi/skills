@@ -1,5 +1,8 @@
 import json
+import importlib
 import importlib.util
+import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -15,13 +18,8 @@ class TaskReadAdapterBehaviorTests(unittest.TestCase):
             READ_ADAPTER.is_file(),
             "task-management needs an executable backend-neutral read adapter",
         )
-        spec = importlib.util.spec_from_file_location(
-            "task_management_read_adapter",
-            READ_ADAPTER,
-        )
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        return module
+        sys.path.insert(0, str(PLUGIN_ROOT))
+        return importlib.import_module("task_management.read_adapter")
 
     def valid_snapshot(self):
         return {
@@ -148,6 +146,48 @@ class TaskReadAdapterBehaviorTests(unittest.TestCase):
         self.assertNotIn("provider-only", json.dumps(result))
         self.assertNotIn("field_id", json.dumps(result))
         self.assertNotIn("node_id", json.dumps(result))
+
+    def test_public_schema_does_not_require_backend_key(self):
+        adapter = self.load_adapter()
+
+        required = adapter.TASK_QUERY_SCHEMA["parameters"]["properties"]["query"].get(
+            "required", []
+        )
+
+        self.assertNotIn("backend_key", required)
+
+    def test_public_query_uses_host_default_local_route(self):
+        adapter = self.load_adapter()
+        fixture = PLUGIN_ROOT / "tests" / "fixtures" / "local_tasks.json"
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "tasks.json"
+            source.write_text(fixture.read_text(encoding="utf-8"), encoding="utf-8")
+            routes = root / "routes.toml"
+            routes.write_text(
+                f'''contract_version = 1
+default_backend = "local_tasks"
+[backends.local_tasks]
+kind = "local_json"
+capability = "task_read"
+read_root = "{root}"
+source_path = "tasks.json"
+[backends.local_tasks.destinations.default]
+public_ref = "tasks:default"
+provider_ref = "tasks:default"
+''',
+                encoding="utf-8",
+            )
+
+            result = adapter.query_tasks(
+                {"query": {"status": "ready", "limit": 20}, "destination_ref": "tasks:default"},
+                dispatch=lambda *_args, **_kwargs: self.fail("local route must not dispatch"),
+                routes_file=str(routes),
+            )
+
+        self.assertTrue(result["ok"])
+        self.assertEqual("local_tasks", result["backend_key"])
+        self.assertEqual(["Prepare quarterly plan"], [item["title"] for item in result["task_snapshots"]])
 
     def test_query_fails_closed_when_read_adapter_is_not_configured(self):
         adapter = self.load_adapter()

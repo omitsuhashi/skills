@@ -34,15 +34,17 @@ class BackendRoutingConfigTests(unittest.TestCase):
     def load_config(self):
         return parse_example_toml(CONFIG_PATH.read_text(encoding="utf-8"))
 
-    def test_github_projects_mcp_is_default_route_without_project_target(self):
+    def test_local_bootstrap_snapshot_is_default_read_route(self):
         config = self.load_config()
 
-        self.assertEqual(config["default_backend"], "github_projects_mcp")
-        route = config["backends"]["github_projects_mcp"]
+        self.assertEqual(config["contract_version"], "1")
+        self.assertEqual(config["default_backend"], "local_tasks")
+        route = config["backends"]["local_tasks"]
 
-        self.assertEqual(route["kind"], "mcp")
-        self.assertEqual(route["connection_ref"], "github-projects")
-        self.assertEqual(route["capability"], "project_management")
+        self.assertEqual(route["kind"], "local_json")
+        self.assertEqual(route["capability"], "task_read")
+        self.assertEqual(route["read_root"], "../examples")
+        self.assertEqual(route["source_path"], "local-task-snapshot.example.json")
 
         forbidden_keys = {
             "owner",
@@ -58,12 +60,13 @@ class BackendRoutingConfigTests(unittest.TestCase):
         }
         self.assertTrue(forbidden_keys.isdisjoint(route.keys()))
 
-    def test_route_config_allows_only_field_overrides_not_destination_targets(self):
+    def test_route_config_maps_only_logical_destination_refs(self):
         config = self.load_config()
-        route = config["backends"]["github_projects_mcp"]
-        field_overrides = route.get("field_overrides", {})
+        route = config["backends"]["local_tasks"]
+        destination = route["destinations"]["default"]
 
-        self.assertIsInstance(field_overrides, dict)
+        self.assertEqual("tasks:default", destination["public_ref"])
+        self.assertEqual("tasks:default", destination["provider_ref"])
 
         forbidden_destination_fragments = (
             "owner",
@@ -74,7 +77,7 @@ class BackendRoutingConfigTests(unittest.TestCase):
             "credential",
             "secret",
         )
-        for key, value in field_overrides.items():
+        for key, value in destination.items():
             haystack = f"{key} {value}".lower()
             for fragment in forbidden_destination_fragments:
                 self.assertNotIn(fragment, haystack)
@@ -104,8 +107,8 @@ class BackendRoutingReferenceTests(unittest.TestCase):
         self.assertIn("destination_ref", reference)
         self.assertIn("content_target_ref", reference)
         self.assertIn("opaque references", reference)
-        self.assertIn("first backend", reference)
-        self.assertIn("not a permanent architecture", reference)
+        self.assertIn("bootstrap read snapshot", reference)
+        self.assertIn("no implicit GitHub fallback", reference)
 
     def test_reference_forbids_concrete_github_targets_in_plugin_config(self):
         reference = " ".join(self.load_reference().split())

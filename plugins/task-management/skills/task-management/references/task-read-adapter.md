@@ -1,93 +1,63 @@
 # Task Read Adapter
 
-The `task-management-read` toolset exposes one Hermes tool: `task_query`. It
-accepts a backend-neutral `TaskQuery`, calls a fixed host-provided read adapter,
-and returns `TaskSnapshotResult` with zero or more normalized `TaskSnapshot`
-values.
+Hermes exposes one public read-only tool: `task-management-read:task_query`.
+Codex uses the workflow skill and does not receive a runtime tool from the Codex
+manifest because this package bundles no MCP server.
 
 ## Public Input
 
 ```yaml
-destination_ref: github-projects:portfolio-os-task-board
+destination_ref: tasks:default
 query:
-  backend_key: github_projects_mcp
   work_unit_id: planning
-  task_type: coordination
   status: ready
   due_before: 2026-07-16
   limit: 20
 ```
 
-`destination_ref` remains opaque. `TaskQuery` must not contain GitHub owner,
-project number, repository, node ID, field ID, credential, raw payload, or
-adapter tool name.
+`query.backend_key` is optional. The host-owned route resolves its default.
+Callers never provide a route file, adapter kind, tool name, provider
+destination, local path, GitHub target, credential, raw payload, or cursor.
 
-## Host Adapter Contract
+## Versioned Host Contract
 
-The operator configures `TASK_MANAGEMENT_READ_ADAPTER_TOOL` with a registered
-Hermes MCP tool name matching `mcp__<server>__task_query`. The public tool does
-not accept an adapter tool name from the model, so it cannot be redirected to a
-write-capable MCP tool at call time.
+`TASK_MANAGEMENT_READ_ROUTES_FILE` points to a host-owned TOML document with
+`contract_version = 1`. A route fixes capability `task_read`, a logical
+destination mapping, and exactly one adapter:
 
-The host adapter owns provider API access, authorization, credentials,
-pagination, rate limiting, destination resolution, and provider field mapping.
-It accepts the same `destination_ref` and `query` envelope and returns an
-`items` array. Normal repository tests use a mock dispatch function and never
-require live Hermes, MCP, GitHub, or credentials.
+- `local_json`: reads one regular JSON file inside the configured `read_root`.
+- `mcp`: dispatches one exact `mcp__<server>__task_query` tool.
+- `plugin`: dispatches one exact `task_adapter__<provider>__task_query` tool.
 
-## Normalized Output
+All adapters implement the internal
+`ResolvedTaskReadRequest -> AdapterTaskSnapshotResult` boundary. File access or
+Hermes dispatch is bound when the adapter is constructed; the public request
+cannot replace it. Adapter contract version is 1. External adapters must handle
+pagination internally up to `query.limit`; the public contract exposes no
+provider cursor.
 
-Successful reads return:
+`TASK_MANAGEMENT_READ_ADAPTER_TOOL` remains a legacy single-MCP-route mode. It
+requires `query.backend_key` and never acts as a GitHub fallback.
 
-```yaml
-result_type: TaskSnapshotResult
-ok: true
-backend_key: github_projects_mcp
-destination_ref: github-projects:portfolio-os-task-board
-task_snapshots:
-  - result_type: TaskSnapshot
-    task_ref:
-      backend_key: github_projects_mcp
-      task_ref: external_ref
-      task_url: https://example.invalid/tasks/1
-      title: Prepare quarterly plan
-    title: Prepare quarterly plan
-    body: Draft and review the quarterly plan.
-    work_unit_id: planning
-    work_unit_name: Planning
-    task_type: coordination
-    status: ready
-    due_date: 2026-07-16
-    urgency: high
-    importance: high
-    automation_mode: assistive
-    approval_required: false
-    source_ref:
-      kind: task_backend
-      ref: external_ref
-      label: Portfolio OS Tasks
-    backend_metadata:
-      display_link:
-        name: Open task
-        url: https://example.invalid/tasks/1
-error: null
-```
+## Local Bootstrap Snapshot
 
-Only canonical `TaskRef`, `TaskSnapshot`, `source_ref`, and display-link fields
-survive normalization. Unknown backend metadata is dropped. Credential-like
-values and provider ID markers cause the whole result to fail closed rather
-than returning a partial or redacted snapshot. Query/snapshot taxonomy and ISO
-dates are validated. `task_url` and `backend_metadata.display_link.url` must be
-HTTP(S) URLs without embedded credentials.
+The local adapter is a read-only bootstrap/reference backend. It validates the
+versioned JSON envelope, file boundary, regular-file/size constraints, filters,
+and limit. It is not a mutable task state source of truth. Adding local writes
+requires a separate approved issue; mutable task state stays MCP/provider-owned.
 
 ## Typed Errors
 
-- `read_adapter_unavailable`: `TASK_MANAGEMENT_READ_ADAPTER_TOOL` is absent.
-- `invalid_read_adapter_tool`: the configured name is not an MCP `task_query` tool.
-- `invalid_task_query`: the public query shape is invalid.
-- `read_adapter_failed`: the host adapter returned an error.
-- `invalid_adapter_result`: the adapter result is not the required JSON object and items array.
-- `invalid_task_snapshot`: an item cannot satisfy the canonical `TaskSnapshot` shape.
-- `unsafe_task_snapshot`: a normalized value still contains provider credential material.
+- `read_route_missing`, `read_route_not_found`, `invalid_read_route`,
+  `read_route_contract_mismatch`
+- `read_adapter_unavailable`, `invalid_read_adapter_tool`,
+  `adapter_contract_mismatch`, `task_source_unreadable`
+- allowlisted provider states such as `read_adapter_auth_missing`,
+  `read_adapter_permission_denied`, `read_destination_not_found`,
+  `read_adapter_rate_limited`, and `read_adapter_timeout`
+- `invalid_task_query`, `invalid_adapter_result`, `invalid_task_snapshot`,
+  `unsafe_task_snapshot`
 
-All errors omit raw adapter payloads and credential values.
+All failures omit raw adapter payloads and credentials. Successful items are
+re-normalized through the canonical `TaskSnapshot` allowlist, so provider IDs,
+unknown metadata, unsafe URLs, and credential-like values fail closed.
