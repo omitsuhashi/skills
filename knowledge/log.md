@@ -1068,3 +1068,10 @@ append-only で使います。すべての entry は予測しやすい header �
 - coordinator fresh verificationで83 tests、installed Hermes local-route smoke、plugin / skill validators、architecture / context validators、full-range `git diff --check`が成功した
 - worker commitsを既存draft PR branchへ統合し、POTASK-011を`PR_READY`とした。external providerのlive auth / network smokeは承認済み仕様どおりoptionalのため未実施とした
 - GitHub issue mirror、ready-for-review、merge、live installは実行していない
+
+## [2026-07-16] delivery | Task-management POTASK-011 PR #29
+
+- verified integration branch `codex/task-management-read-capability`を`origin`へpushし、GitHub PR #29のheadを更新した
+- GitHub pluginを使ってPR title / bodyをPOTASK-011、plugin v0.3.0、83 tests、Hermes smoke、provider boundary、optional external live smokeへ同期した
+- `gh` commandは使用していない。PRはopen、mergeableであり、delivery evidence追記前のimplementation head `a024573`をconnectorで確認した
+- GitHub issue mirror、merge、live install、external provider auth / network smokeは実行していない

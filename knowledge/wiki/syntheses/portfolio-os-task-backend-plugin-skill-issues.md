@@ -2,7 +2,7 @@
 
 ## 状態
 
-Issue Gate / Execution Plan Gate 承認済み。POTASK-001 から POTASK-009 は local `PR_READY`。2026-07-15 に追加承認された POTASK-010 は local 実装・検証済みでPR delivery対象。2026-07-16 に追加承認された POTASK-011 は、backend差をconsumerから隠すpluggable provider adapterとHermes end-to-end call pathを追加する。implementation review 2 cyclesのskills-side Critical / Importantは対応済みで、current companies preflight がHermes `plugin.yaml` exportを読まないcross-repo blockerだけが残る。PR delivery は承認済み。GitHub issue mirror と merge はまだ行わない。
+Issue Gate / Execution Plan Gate 承認済み。POTASK-001 から POTASK-009 は local `PR_READY`。2026-07-15 に追加承認された POTASK-010 は local 実装・検証済みでPR delivery対象。2026-07-16 に追加承認された POTASK-011 は、backend差をconsumerから隠すpluggable provider adapterとHermes end-to-end call pathを追加する。implementation review 2 cyclesのskills-side Critical / Importantは対応済みで、current companies preflight がHermes `plugin.yaml` exportを読まないcross-repo blockerだけが残る。PR #29 のbranch pushと本文同期は完了した。GitHub issue mirror と merge はまだ行わない。
 
 ## Epic ID
 
