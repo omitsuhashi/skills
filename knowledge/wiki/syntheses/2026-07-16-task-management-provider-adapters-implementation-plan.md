@@ -88,4 +88,3 @@
 1. plugin tests、Hermes smoke、plugin/skill validators、repository architecture/context validators、`git diff --check` を実行する。
 2. independent review を最大 2 cycle 実施し、Critical / Important を修正して再検証する。
 3. worker commit を既存 draft PR branch に統合し、branch を push して PR #29 を更新する。`gh` command は使用しない。
-
