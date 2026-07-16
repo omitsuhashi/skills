@@ -1,0 +1,55 @@
+{
+  "adapter_contract_version": 1,
+  "items": [
+    {
+      "task_ref": {
+        "backend_key": "local_tasks",
+        "task_ref": "task-001",
+        "task_url": null,
+        "title": "Prepare quarterly plan"
+      },
+      "title": "Prepare quarterly plan",
+      "body": "Draft and review the quarterly plan.",
+      "work_unit_id": "planning",
+      "work_unit_name": "Planning",
+      "task_type": "coordination",
+      "status": "ready",
+      "due_date": "2026-07-16",
+      "urgency": "high",
+      "importance": "high",
+      "automation_mode": "assistive",
+      "approval_required": false,
+      "source_ref": {
+        "kind": "bootstrap_snapshot",
+        "ref": "task-001",
+        "label": "Local task snapshot"
+      },
+      "backend_metadata": {}
+    },
+    {
+      "task_ref": {
+        "backend_key": "local_tasks",
+        "task_ref": "task-002",
+        "task_url": null,
+        "title": "Archive old notes"
+      },
+      "title": "Archive old notes",
+      "body": "Archive completed planning notes.",
+      "work_unit_id": "planning",
+      "work_unit_name": "Planning",
+      "task_type": "maintenance",
+      "status": "done",
+      "due_date": "2026-07-18",
+      "urgency": "low",
+      "importance": "normal",
+      "automation_mode": "manual_only",
+      "approval_required": false,
+      "source_ref": {
+        "kind": "bootstrap_snapshot",
+        "ref": "task-002",
+        "label": "Local task snapshot"
+      },
+      "backend_metadata": {}
+    }
+  ]
+}

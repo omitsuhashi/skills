@@ -45,7 +45,7 @@ The route needs these values before an adapter-facing preview can be prepared:
 
 | Field | Contract |
 | --- | --- |
-| `backend_key` | Must be `github_projects_mcp` for the default GitHub Projects route. |
+| `backend_key` | Must be `github_projects_mcp` when the host selects the GitHub Projects route. |
 | `kind` | Must be `mcp`; other backend kinds use different route contracts. |
 | `connection_ref` | Opaque host or profile reference, for example `github-projects`. It is not a credential. |
 | `capability` | Host-declared capability such as `project_management`. |

@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from .task_management.read_adapter import register_read_tool
+
 
 def register(ctx):
     plugin_dir = Path(__file__).parent
@@ -9,3 +11,4 @@ def register(ctx):
         skill_path,
         description="Backend-neutral task intake and task backend routing workflow.",
     )
+    register_read_tool(ctx)

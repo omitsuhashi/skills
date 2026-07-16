@@ -2,7 +2,7 @@
 
 ## 状態
 
-Issue Gate / Execution Plan Gate 承認済み。POTASK-001、POTASK-002、POTASK-003、POTASK-004、POTASK-005、POTASK-006、POTASK-007、POTASK-008、POTASK-009 は local `PR_READY`。PR delivery は承認済み。GitHub issue mirror と merge はまだ行わない。
+Issue Gate / Execution Plan Gate 承認済み。POTASK-001 から POTASK-009 は local `PR_READY`。2026-07-15 に追加承認された POTASK-010 は local 実装・検証済みでPR delivery対象。2026-07-16 に追加承認された POTASK-011 は、backend差をconsumerから隠すpluggable provider adapterとHermes end-to-end call pathを追加する。implementation review 2 cyclesのskills-side Critical / Importantは対応済みで、current companies preflight がHermes `plugin.yaml` exportを読まないcross-repo blockerだけが残る。PR #29 のbranch pushと本文同期は完了した。GitHub issue mirror と merge はまだ行わない。
 
 ## Epic ID
 
@@ -11,7 +11,7 @@ Issue Gate / Execution Plan Gate 承認済み。POTASK-001、POTASK-002、POTASK
 ## 前提
 
 - 正本仕様: [Portfolio OS Task Backend Plugin Skill Spec](portfolio-os-task-backend-plugin-skill-spec.md)
-- 初回実装 scope は task taxonomy、`TaskDraft` composition、backend / destination routing、adapter operation envelope、preview / guard、typed result mapping まで。
+- 初回実装 scope は task taxonomy、`TaskDraft` composition、backend / destination routing、adapter operation envelope、preview / guard、typed result mapping まで。POTASK-010 ではbackend-neutral read facade、POTASK-011ではhost-owned routeとpluggable read-only provider adapterを追加する。
 - 外部 adapter の実 write 方針、GitHub Projects mutation、GitHub issue / PR、push、PR creation、merge は adapter / host / delivery workflow の責務であり、この ledger の実装対象外。
 - GitHub MCP Server 自体の read/write live smoke test は行わない。通常検証は固定テストデータ / 模擬 tool を使う。
 - local issue ledger を canonical とし、GitHub issues は未作成の optional mirror とする。
@@ -29,6 +29,8 @@ Issue Gate / Execution Plan Gate 承認済み。POTASK-001、POTASK-002、POTASK
 | `portfolio-os-task-backend-plugin-skill` | POTASK-007 | GitHub MCP route preflight と typed result mapping を実装する | 承認済み | 完了 | `PR_READY` `ed62de954b57ff4c5b32f6efaa6098843d85c1ac` | POTASK-002, POTASK-004, POTASK-006 | POTASK-008, POTASK-009 | 未作成 | approved: `0ce0ffa6eae53b7f085e64af1a453749f82cc3ba..ed62de954b57ff4c5b32f6efaa6098843d85c1ac` | 未作成 |
 | `portfolio-os-task-backend-plugin-skill` | POTASK-008 | Hermes adapter availability runbook と governance reference を作る | 承認済み | 完了 | `PR_READY` `06f9b6fc7801271f345a8c2772a6d64e7c64f310` | POTASK-004, POTASK-007 | POTASK-009 | 未作成 | approved: `ed62de954b57ff4c5b32f6efaa6098843d85c1ac..06f9b6fc7801271f345a8c2772a6d64e7c64f310` | 未作成 |
 | `portfolio-os-task-backend-plugin-skill` | POTASK-009 | docs / examples / verification / handoff boundary を統合する | 承認済み | 完了 | `PR_READY` `214349fff56bd55ff3e7e68612a499096096803f` | POTASK-006, POTASK-007, POTASK-008 | なし | 未作成 | approved: `06f9b6fc7801271f345a8c2772a6d64e7c64f310..214349fff56bd55ff3e7e68612a499096096803f` | 未作成 |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-010 | backend-neutral task read capability を実装する | 承認済み | 完了 | local verified / PR delivery対象 | POTASK-002, POTASK-007, POTASK-008 | POTASK-011 | 未作成 | PRで追跡 | [#29](https://github.com/omitsuhashi/skills/pull/29) |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-011 | pluggable provider adapter と Hermes end-to-end call path を実装する | 承認済み | 完了 | `PR_READY` `458f712` | POTASK-004, POTASK-010 | なし | 未作成 | approved: `feb8908..458f712` / 2 cycles | [#29](https://github.com/omitsuhashi/skills/pull/29) |
 
 ## Blocker Graph
 
@@ -43,7 +45,9 @@ POTASK-001
 │   │       │   └── POTASK-009
 │   │       └── POTASK-009
 │   ├── POTASK-006
-│   └── POTASK-007
+│   ├── POTASK-007
+│   └── POTASK-010
+│       └── POTASK-011
 ├── POTASK-003
 │   ├── POTASK-005
 │   └── POTASK-006
@@ -54,6 +58,7 @@ POTASK-001
 ```
 
 循環依存はない。Issue Gate 承認済みのため、全 issue の `レビュー状態` は `承認済み` とする。
+POTASK-010 は POTASK-002 の contract、POTASK-007 の typed adapter boundary、POTASK-008 の Hermes governance を再利用する follow-up であり、既存 issue を再開しない。POTASK-011 はPOTASK-010のpublic facadeを維持したまま、POTASK-004のroutingを実行可能なprovider adapterへ接続する。
 
 ## 依存順
 
@@ -64,6 +69,8 @@ POTASK-001
 5. POTASK-007
 6. POTASK-008
 7. POTASK-009
+8. POTASK-010
+9. POTASK-011
 
 ## Issues
 
@@ -166,7 +173,7 @@ PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s 
 - plugin config は `kind`、`connection_ref`、capability、任意の field override を持つ。
 - plugin config は GitHub owner、project number、repository を必須または既定値として持たない。
 - destination は caller / profile / host-provided registration から `TaskBackendDestination` として渡す。
-- `github_projects_mcp` は default backend key として表現できるが、具体 project target を内包しない。
+- backend keyはprovider detailを内包せず、host-owned `default_backend`で選ぶ。POTASK-011の初期稼働defaultは`local_tasks`でよい。
 
 #### Verification
 
@@ -295,7 +302,7 @@ PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s 
 
 #### Acceptance Criteria
 
-- docs は GitHub Projects が first backend であり permanent architecture ではないことを明記する。
+- docsはinitial local JSON backendと、MCP / provider pluginへの差し替え可能性を明記する。GitHub Projectsをimplicit defaultにしない。
 - Portfolio OS は task state source of truth を持たない。
 - dedicated idempotency key、`task_sha` field、duplicate-prevention store は存在しない。
 - GitHub MCP Server read/write live smoke test は normal verification に含めない。
@@ -309,6 +316,110 @@ PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 /Users/omitsuhashi/.code
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_validate.py plugins/task-management/skills/task-management
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_architecture.py --all
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_context.py --all
+git diff --check
+```
+
+### POTASK-010: backend-neutral task read capability を実装する
+
+#### 目的
+
+`TaskQuery` から host-provided read adapter を呼び、Schedule Secretary などの consumer へ provider raw ID、credential、raw payloadを漏らさない normalized `TaskSnapshotResult` を返す。Hermes runtime registration と authoritative exportを正確に `task-management-read` へ揃える。
+
+#### Scope
+
+- `plugins/task-management/task_management/read_adapter.py`
+- `plugins/task-management/__init__.py`
+- `plugins/task-management/plugin.yaml`
+- `plugins/task-management/.codex-plugin/plugin.json` のversion alignment
+- task read adapter reference / README / primary skill / task contracts
+- behavioral tests
+
+#### Acceptance Criteria
+
+- Hermes は `task_query` を `task-management-read` toolset に `ctx.register_tool` で登録する。
+- `plugin.yaml.exports.toolsets` は正確に `["task-management-read"]` であり、runtime registrationと一致する。
+- `.codex-plugin/plugin.json` は current `plugin-creator` validatorを通る。未サポートの `exports` fieldは追加しない。
+- operator-configured adapter toolは `mcp__<server>__task_query` だけを許可し、model inputから任意toolを選ばせない。
+- `TaskQuery` と opaque `destination_ref` をdispatchし、canonical fieldだけを含む `TaskSnapshotResult` を返す。
+- provider raw ID / unknown backend metadataはoutputから除外し、credential-like valueを含むsnapshotはgeneric typed errorでfail closedする。
+- normal testsはmock dispatchを使い、live Hermes / MCP / GitHub / credentialsを要求しない。
+
+#### Non-goals
+
+- GitHub API / GraphQL / `gh` clientの実装。
+- GitHub MCP Server registration、credential setup、profile edit、live install。
+- write adapter、task mutation、GitHub issue / PR / push / merge。
+- companies repositoryのpreflight変更。
+
+#### Verification
+
+```bash
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 /Users/omitsuhashi/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/task-management
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_validate.py plugins/task-management/skills/task-management
+git diff --check
+```
+
+#### Current evidence
+
+- behavioral testsはREDでadapter module、Hermes registration、manifest exportの欠落を確認後、GREENへ進めた。
+- plugin test suiteは60 tests成功。
+- installed Hermesの実`PluginContext` / registryでplugin moduleをloadし、`task_query`が`task-management-read`へ登録されることを確認した。
+- implementation review cycle 1のprovider marker / credential検出、backend一致、canonical taxonomy / ISO date、required `backend_metadata`の指摘を修正した。
+- implementation review cycle 2のquoted JSON marker bypassとunsafe link schemeを修正し、query taxonomy / date validationとguard別subtestを追加した。
+- delivery branch / commit / PRはGitHub delivery recordで追跡し、live installは実施しない。
+
+### POTASK-011: pluggable provider adapter と Hermes end-to-end call path を実装する
+
+#### 目的
+
+consumerがlocal file、GitHub Projects MCP、将来backendの違いを意識せず、Hermesの同じ`task_query`からnormalized `TaskSnapshotResult`を取得できるようにする。POTASK-010で外部前提だった`mcp__<server>__task_query`の実体不足を解消する。
+
+#### Scope
+
+- host-owned read route config / loader
+- provider adapter protocol / router
+- read-only local JSON provider adapter
+- external MCP / provider plugin `task_query` adapter
+- existing external MCP `task_query` compatibility
+- Hermes temporary-profile end-to-end smoke test / runbook
+- public skill / README / references / behavioral tests
+
+#### Acceptance Criteria
+
+- public toolは`task-management-read:task_query`、inputは`TaskQuery`とopaque logical `destination_ref`、outputは`TaskSnapshotResult`のまま変わらない。public `TaskQuery.backend_key`は省略可能でhost defaultへ解決する。
+- consumer / model inputはadapter kind、MCP tool名、GitHub owner / project number / field ID、local path、route file pathを指定しない。
+- host-owned routeがoptional internal `backend_key`とlogical `destination_ref`から固定adapterとprovider destinationを解決する。初期稼働defaultはlocal JSONでよい。
+- local JSON adapterはrouteで固定されたhost-owned fileだけをread-onlyで読み、canonical query filter / limitを適用する。
+- external tool adapterはrouteで固定された`mcp__<server>__task_query`または`task_adapter__<provider>__task_query`だけをHermes dispatchし、direct provider API / GraphQL / `gh` / credential clientを実装しない。
+- provider adapter outputはpublic facadeで再normalizeされ、provider raw ID、unknown metadata、credential-like valuesを返さない。
+- POTASK-010の`mcp__<server>__task_query` external adapter pathはcompatibility modeとして維持し、別provider plugin toolを同じbackend-neutral result contractで追加できる。
+- temporary Hermes profileでpluginをloadし、local JSON backendを通じたpublic `task_query` callがnormalized snapshotを返す。
+- external provider auth / networkはnormal testsの必須条件にしない。live connectionが用意された場合だけoptional smoke testを行う。
+
+#### Implementation Evidence
+
+- `route_config.py`がversioned host route、default backend、logical destination、local read-root guardを解決する。
+- `provider_adapters/`がconstructor-bound dependencyを持つlocal JSON / exact MCP・plugin read adapterを共通request/result contractへ揃える。
+- public `task_query`はroute envなしでもHermesへ登録され、typed setup errorを返せる。POTASK-010 legacy MCP envも維持する。
+- installed Hermesの`PluginContext` / registryとtemporary `HERMES_HOME`を使うlocal snapshot smokeを追加した。
+- review cycle 1でpath resolve例外のtyped mapping、response byte/item上限、normalization前limit、route kind/tool namespace一致、duplicate destination拒否を追加した。
+
+#### Non-goals
+
+- direct provider API / GraphQL / `gh` client、credential管理。`gh`はfallbackにも使用しない。
+- write adapter、task mutation、GitHub Projects schema repair。
+- model-supplied route / tool / file path / provider destination。
+- backend detailをSchedule Secretary、Portfolio OS、その他consumer contractへ公開すること。
+- companies repositoryのpreflight変更。
+
+#### Verification
+
+```bash
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 plugins/task-management/scripts/smoke_test_hermes_read.py
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 /Users/omitsuhashi/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/task-management
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_validate.py plugins/task-management/skills/task-management
 git diff --check
 ```
 

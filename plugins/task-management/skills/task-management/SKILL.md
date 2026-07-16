@@ -1,16 +1,18 @@
 ---
 name: task-management
-description: Use for backend-neutral task intake and task backend routing workflows, especially when converting capture/chat text into a reviewed task draft, preparing human approval text, checking task backend boundaries, or preparing adapter dispatch previews without implementing GitHub adapters, gh command planners, direct GraphQL clients, MCP servers, credentials, or external writes.
+description: Use for backend-neutral task intake, normalized task reads, and task backend routing workflows, especially when converting capture/chat text into a reviewed task draft, querying current task snapshots, preparing human approval text, checking task backend boundaries, or preparing adapter dispatch previews without implementing GitHub clients, gh command planners, direct GraphQL clients, MCP servers, credentials, or external writes.
 ---
 
 # Task Management
 
-Use this skill to normalize task intent, prepare reviewable task drafts, and keep task backend routing separate from Portfolio OS state. Treat the selected backend as the source of truth for task state.
+Use this skill to normalize task intent, prepare reviewable task drafts, and keep task backend routing separate from Portfolio OS state. Codex uses this workflow skill; Hermes additionally exposes the native read-only `task-management-read:task_query` runtime tool.
 
 ## References
 
 - Read `references/task-draft-contract.md` before composing TaskDraft title, body, taxonomy, inbox fallback, source-boundary content, or create/update preview text.
 - Read `references/task-contracts.md` when checking backend-neutral contract fields, normalized task refs, query/snapshot/write-result shapes, or raw provider ID/auth boundaries.
+- Read `references/task-read-adapter.md` before using the read-only `task_query` tool, configuring its host adapter route, or interpreting `TaskSnapshotResult` errors.
+- Read `references/routing-flow.md` when explaining the end-to-end actor sequence, backend switching, route ownership, or the boundary between read routing and approved state-changing dispatch.
 - Read `references/backend-routing.md` before selecting a backend key, resolving route registry entries, or requiring caller/profile/host destination input.
 - Read `references/adapter-dispatch.md` before preparing adapter operation envelopes or applying the Adapter Dispatch Review guard.
 - Read `references/github-mcp-projects.md` before representing GitHub Projects MCP route availability, typed route blocks, or adapter result normalization.
@@ -19,18 +21,20 @@ Use this skill to normalize task intent, prepare reviewable task drafts, and kee
 ## Operating Boundaries
 
 - Keep Portfolio OS out of task state ownership. It may keep source trail, routing rationale, draft previews, backend references, and decision logs.
-- Do not implement or call GitHub adapters, `gh` command planners, direct GraphQL clients, MCP servers, credential setup, MCP registration, remote writes, issue/PR creation, push, or merge.
-- Prefer host-provided MCP, reader, skill, CLI, or URL surfaces as external adapter routes. The plugin does not own backend API clients.
+- Use only `task-management-read:task_query` for task reads. Its host-owned route may select a local bootstrap read snapshot, `mcp__<server>__task_query`, or `task_adapter__<provider>__task_query`, and it returns only normalized `TaskSnapshot` values.
+- Do not implement or call direct GitHub clients, `gh` command planners, direct GraphQL clients, MCP servers, credential setup, MCP registration, remote writes, issue/PR creation, push, or merge.
+- External read/write task state belongs to an MCP server or provider plugin. The task-management plugin owns no provider API client, CLI fallback, credential client, or local write surface.
 - Stop before adapter dispatch unless the caller has provided a reviewable operation envelope and explicit approval path.
 - Keep GitHub Projects details such as raw node IDs, field IDs, tokens, owner, project number, and repository out of reusable skill contracts unless an external adapter result has already returned an opaque reference.
 
 ## Default Flow
 
 1. Read the caller's task source and identify the intended task outcome.
-2. Produce a backend-neutral task draft with title, body, task type, work unit fields when known, and review notes.
-3. Resolve backend routing from explicit override, caller/profile config, then `default_backend`; if none is available, use `github_projects_mcp`.
-4. Require a destination supplied by caller, profile, or host registration before any adapter-facing preview.
-5. Present a human review summary before any state-changing adapter route is used.
+2. For current backend state, call `task_query` with a backend-neutral `TaskQuery` and opaque destination reference; stop on any typed read-adapter error.
+3. Produce a backend-neutral task draft with title, body, task type, work unit fields when known, and review notes.
+4. Resolve backend routing from an optional internal override and then host `default_backend`. Stop with a typed setup error when neither resolves; never fall back implicitly to GitHub.
+5. Require a destination supplied by caller, profile, or host registration before any adapter-facing preview.
+6. Present a human review summary before any state-changing adapter route is used.
 
 ## Required Review Surface
 

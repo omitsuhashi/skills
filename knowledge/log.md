@@ -999,3 +999,85 @@ append-only で使います。すべての entry は予測しやすい header �
 - `grill-to-pr-loop` execution handoff と `issue-implementation-loop` execution envelope / worktree lifecycle references を、planning branch、`epic_base`、issue branch、integration work item の責務分離に同期した
 - schema version `1` / `2` envelope は historical / resume artifact として互換維持する方針にした
 - GitHub issue mirror、push、PR 作成、ready-for-review、merge、force push、production / credential / permission / billing / destructive action は実行していない
+
+## [2026-07-15] implementation | Task-management read capability
+
+- companies側 NPLM-006 blockerを確認し、POTASK-010としてbackend-neutral read adapter、Hermes read-only tool registration、`task-management-read` export alignment、normalized `TaskSnapshot` behavioral testを追加した
+- `plugins/task-management/task_management/read_adapter.py` は `TaskQuery` とopaque `destination_ref`をoperator-configured `mcp__<server>__task_query`へdispatchし、canonical `TaskSnapshotResult`だけを返す
+- model inputによるadapter tool選択、write-capable tool名、provider raw ID / unknown backend metadata / credential-like valueの返却をfail closedにした
+- `plugins/task-management/__init__.py` は`task_query`を`task-management-read` toolsetへ登録し、`plugin.yaml.exports.toolsets`とruntime registrationを一致させた
+- current `plugin-creator` validatorは`.codex-plugin/plugin.json.exports`を拒否するため、Codex manifestは有効なschemaを維持し、Hermes capability exportのauthoritative sourceを`plugin.yaml`とした
+- TDDでadapter module、Hermes registration、manifest export、input/output credential / nested raw ID rejection、invalid query type / adapter exception normalizationの欠落をRED確認し、plugin suite 60 testsをGREEN確認した
+- live Hermes / MCP / GitHub / credential、marketplace、cachebuster、install、push、PR作成は実行していない
+
+## [2026-07-15] lint | Task-management POTASK-010 wiki sync
+
+- `knowledge/index.md`、POTASK-010を含むspec / issue ledger、implementation logの相互参照とcanonical配置を確認した
+- draft canonicalize、redirect、tombstone、archive、external ingestは不要と判断した
+- checkout内にrepo-root wiki validatorは存在しないため、`skills/llm-wiki/tests` 6件の通過と対象Markdownの手動確認をlint evidenceとした
+
+## [2026-07-15] review-fix | Task-management read capability
+
+- implementation review cycle 1で、canonical scalar内のprovider marker / common credential key、queryとsnapshotのbackend不一致、canonical taxonomy / ISO date、required `backend_metadata`のfail-closed不足を確認した
+- forbidden-value detectionとnormalization validationを追加し、該当behavioral testsをREDからGREENへ進めた
+- `.codex-plugin/plugin.json`だけを読むcompanies preflightと、`exports`を拒否するcurrent `plugin-creator` validatorのcontract mismatchはskills repo単独では解消せず、cross-repo follow-up blockerとして維持する
+- implementation review cycle 2で再現したquoted JSON provider / credential marker bypassとunsafe URL schemeをfail closedにし、query側canonical taxonomy / ISO date validationとguard別subtestを追加した
+
+## [2026-07-16] spec | Task-management pluggable provider adapter
+
+- user approvalを受け、POTASK-011としてconsumerがbackend差を意識しない`task_query` contract、host-owned route、pluggable provider adapterを追加した
+- read-only local JSON adapterをcredential-free Hermes end-to-end verification backend、GitHub Projects MCP adapterをproduction first backendとして定義した
+- GitHub adapterはhost-provided `projects_list` response mappingに限定し、direct API / GraphQL / `gh` / credential clientを持たない境界とした
+- public `task_query` / `TaskSnapshotResult`は維持し、model inputからadapter、tool、file path、GitHub destinationを選べないfail-closed方針を固定した
+- PR #29の追加scopeとして実装し、GitHub issue mirror、mergeは行わない
+
+## [2026-07-16] spec-review | Task-management initial local backend
+
+- user reviewを受け、`gh` commandをfallbackを含めて使用禁止とした
+- external backend接続はread-only MCP `task_query`または別provider pluginの`task_adapter__<provider>__task_query`に限定した
+- 初期稼働defaultはhost-owned local JSONでよく、GitHub Projectsをimplicit default / initial requirementにしない方針へ修正した
+- public `TaskQuery.backend_key`は省略可能とし、host-owned default routeで解決してconsumerからbackend差を隠す方針を追加した
+
+## [2026-07-16] execution-plan | Task-management POTASK-011
+
+- plugin best-practice reviewを受け、route loader、stable adapter interface、local bootstrap snapshot、external MCP / provider plugin adapter、typed degradation、Hermes end-to-end smokeをPOTASK-011の実装順序として固定した
+- local JSONはmutable task management source of truthではなくread-only bootstrap snapshotとし、write backendはMCPまたはprovider pluginが所有する境界を採用した
+- Codexは同梱workflow skill、Hermesはnative `task-management-read:task_query` runtime toolであることを明示し、実在しないMCP server exportをmanifestへ追加しない方針を固定した
+- POTASK-011専用input packetとExecution Envelope v3を追加し、既存draft PR branchをepic base、専用branch/worktreeをworker所有として予約した
+- `gh` commandは使用せず、承認済みremote actionは既存draft PR branchのpush更新だけに限定した
+
+## [2026-07-16] implementation | Task-management POTASK-011 provider adapters
+
+- versioned host-owned route loader、constructor-bound adapter contract、read-only local bootstrap snapshot、exact MCP / provider-plugin read tool adapterを実装した
+- public `task_query`の`backend_key`を省略可能にし、Hermes登録をexternal env非依存へ変更した。legacy single-MCP-route envは互換維持した
+- provider error taxonomy、contract mismatch、route/source failureをtyped errorにし、raw payload / credentialを返さない既存normalization guardへ接続した
+- Codexはworkflow skill、Hermesはnative runtime toolである差をmanifest / READMEへ同期し、実在しないMCP server exportは追加しなかった
+- installed Hermesの`PluginContext` / registry、temporary `HERMES_HOME`、local fixtureを使うend-to-end smokeを追加した
+- local JSONはmutable source of truthではなくbootstrap read snapshotとし、write backendはMCP / provider plugin所有、direct API / GraphQL / `gh` fallbackなしの境界を同期した
+
+## [2026-07-16] review-fix | Task-management POTASK-011 cycle 1
+
+- route/local `Path.resolve`のsymlink loop / `OSError`を`invalid_read_route`または`task_source_unreadable`へ変換し、public facadeからraw exceptionを漏らさないregression testを追加した
+- external responseを5 MiB / 100 itemsへ制限し、JSON string / dictの両方で検証した。public query `limit`はsnapshot normalization前に適用するよう修正した
+- `kind=mcp|plugin`とfixed tool namespaceの一致を強制し、重複`public_ref`をfirst-matchせずambiguous routeとして拒否した
+- initial implementation commitにあったPython 4 filesのEOF blank-line warningを修正した
+
+## [2026-07-16] implementation-review | Task-management POTASK-011 cycle 2
+
+- independent spec reviewとstandards reviewの両方で、cycle 1のCritical / Importantがすべて解消済みであることを確認した
+- coordinator fresh verificationで83 tests、installed Hermes local-route smoke、plugin / skill validators、architecture / context validators、full-range `git diff --check`が成功した
+- worker commitsを既存draft PR branchへ統合し、POTASK-011を`PR_READY`とした。external providerのlive auth / network smokeは承認済み仕様どおりoptionalのため未実施とした
+- GitHub issue mirror、ready-for-review、merge、live installは実行していない
+
+## [2026-07-16] delivery | Task-management POTASK-011 PR #29
+
+- verified integration branch `codex/task-management-read-capability`を`origin`へpushし、GitHub PR #29のheadを更新した
+- GitHub pluginを使ってPR title / bodyをPOTASK-011、plugin v0.3.0、83 tests、Hermes smoke、provider boundary、optional external live smokeへ同期した
+- `gh` commandは使用していない。PRはopen、mergeableであり、delivery evidence追記前のimplementation head `a024573`をconnectorで確認した
+- GitHub issue mirror、merge、live install、external provider auth / network smokeは実行していない
+
+## [2026-07-16] documentation | Task-management routing diagrams
+
+- consumer、Hermes public tool、facade、host-owned route、local / MCP / provider-plugin adapter、normalized resultの関係をMermaid routing図として追加した
+- public callからbackend分岐、external dispatch、normalization、typed error returnまでをsequence diagramで明示した
+- backend差し替え時もconsumer contractが不変であるstate transitionと、read pathから分離されたapproval-gated write boundaryを明示した

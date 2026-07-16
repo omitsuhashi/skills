@@ -1,16 +1,22 @@
-# Example backend route registry for task-management.
-# This file describes connection surfaces only. It does not store credentials or
-# concrete GitHub owner/project/repository targets.
+# Versioned host-owned read route registry. This file contains no credentials.
+contract_version = 1
+default_backend = "local_tasks"
 
-default_backend = "github_projects_mcp"
+[backends.local_tasks]
+kind = "local_json"
+capability = "task_read"
+read_root = "../examples"
+source_path = "local-task-snapshot.example.json"
 
-[backends.github_projects_mcp]
-kind = "mcp"
-connection_ref = "github-projects"
-capability = "project_management"
+[backends.local_tasks.destinations.default]
+public_ref = "tasks:default"
+provider_ref = "tasks:default"
 
-[backends.github_projects_mcp.field_overrides]
-# Add entries only when a backend uses names that differ from the neutral field
-# names expected by the task-management skill.
-# work_unit_id = "Work Unit"
-# work_unit_name = "Work Unit Name"
+# External backends use one exact read-only tool registered by the Hermes host.
+# [backends.remote_tasks]
+# kind = "mcp" # or "plugin"
+# capability = "task_read"
+# tool_name = "mcp__task_backend__task_query"
+# [backends.remote_tasks.destinations.default]
+# public_ref = "tasks:default"
+# provider_ref = "provider-owned:project-ref"

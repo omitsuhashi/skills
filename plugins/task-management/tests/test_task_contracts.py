@@ -243,8 +243,8 @@ class TaskContractFixtureTests(unittest.TestCase):
         ):
             self.assertIn(forbidden_phrase, normalized_doc)
 
-        self.assertIn("first backend route", normalized_doc)
-        self.assertIn("not a permanent architecture", normalized_doc)
+        self.assertIn("initial reference read route", normalized_doc)
+        self.assertIn("without making GitHub or any other provider an implicit fallback", normalized_doc)
 
 
 if __name__ == "__main__":

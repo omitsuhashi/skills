@@ -22,6 +22,12 @@ The plugin may ship references, configuration templates, examples, static
 fixtures, and tests. It must not turn those artifacts into live host
 configuration during install.
 
+For reads, the host-owned route may fix either
+`mcp__<server>__task_query` or `task_adapter__<provider>__task_query`. The
+task-management plugin dispatches only that exact read-only name. Installing the
+plugin never registers or enables it. The local bootstrap snapshot route needs
+no provider credential and is used for the isolated Hermes smoke test only.
+
 ## Adapter Availability Gate
 
 The Adapter Availability Gate is a host / adapter-side readiness check. It is
