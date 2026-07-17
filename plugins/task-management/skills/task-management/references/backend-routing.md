@@ -1,29 +1,28 @@
 # Backend Routing
 
 The read route registry is host-owned. It lets every consumer use the same
-`task_query` contract while the host chooses a local bootstrap read snapshot,
-MCP tool, or provider-plugin tool. There is no implicit GitHub fallback.
+`task_query` contract while the host chooses an MCP tool or provider-plugin
+tool. There is no implicit GitHub fallback.
 
 ## Route Registry
 
 ```toml
 contract_version = 1
-default_backend = "local_tasks"
+default_backend = "remote_tasks"
 
-[backends.local_tasks]
-kind = "local_json"
+[backends.remote_tasks]
+kind = "mcp"
 capability = "task_read"
-read_root = "../examples"
-source_path = "local-task-snapshot.example.json"
+tool_name = "mcp__task_backend__task_query"
 
-[backends.local_tasks.destinations.default]
+[backends.remote_tasks.destinations.default]
 public_ref = "tasks:default"
 provider_ref = "tasks:default"
 ```
 
-The host can replace this with `kind = "mcp"` or `kind = "plugin"` and a fixed
-read-only `tool_name`. The config stores no credentials. The model cannot set
-`read_root`, `source_path`, `tool_name`, or `provider_ref`.
+The host can replace this with `kind = "plugin"` and a fixed
+`task_adapter__<provider>__task_query` name. The config stores no credentials.
+The model cannot set `tool_name` or `provider_ref`.
 
 ## Destination Input
 
@@ -45,12 +44,21 @@ option ID in route config.
 
 The plugin never invents a backend, destination, local path, or provider tool.
 Changing providers changes only host config and the adapter implementation;
-Schedule Secretary, Portfolio OS, and other consumers keep the same public
-query/result contract.
+consumers keep the same public query/result contract.
+
+## Test and Smoke Fixture
+
+The read-only `local_json` adapter is retained only as a plugin-owned test and
+smoke fixture seam. Tests use files under `tests/fixtures/`; the Hermes smoke
+copies that data into a temporary directory together with a temporary route and
+`HERMES_HOME`. These artifacts are discarded after the process exits.
+
+`local_json` is not a normal runtime backend, operator bootstrap route, or
+persistent task source of truth. Operator-facing route config uses an external
+MCP or provider-plugin tool.
 
 ## Read and Write Ownership
 
-`local_json` is a bootstrap read snapshot, not a mutable management system.
 The plugin exposes no local write adapter. Mutable task state and all provider
 writes belong to an MCP server or another provider plugin and still require the
 existing Adapter Dispatch Review. The task-management plugin has no direct API,

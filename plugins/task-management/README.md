@@ -31,11 +31,16 @@ Set the host-owned route file:
 export TASK_MANAGEMENT_READ_ROUTES_FILE=/host-owned/task-read-routes.toml
 ```
 
-Start from `config/task-backends.example.toml`. Its `local_tasks` route reads the
-versioned `examples/local-task-snapshot.example.json` file as a bootstrap read
-snapshot. It is not a mutable task-management source of truth and the plugin
-does not provide a local write tool. A mutable backend remains owned by an MCP
-server or another provider plugin.
+Start from `config/task-backends.example.toml`. Its default `remote_tasks` route
+shows a credential-free MCP configuration with one exact read-only tool. A
+provider-plugin route uses the same contract with `kind = "plugin"` and an exact
+`task_adapter__<provider>__task_query` tool name.
+
+The read-only `local_json` adapter is not a normal runtime backend. It is
+retained only as a plugin-owned test and smoke fixture seam. Plugin tests and
+`scripts/smoke_test_hermes_read.py` create temporary route and JSON files and
+discard them when the process exits. Operator config must use an external MCP
+or provider-plugin route, and mutable task state remains external-backend-owned.
 
 External routes fix exactly one read-only tool in host config:
 
@@ -67,8 +72,8 @@ fallback.
 ## Verification
 
 The isolated smoke test uses the installed Hermes `PluginContext` and registry,
-a temporary `HERMES_HOME`, and the local snapshot fixture. It does not edit a
-live profile or contact a provider:
+a temporary `HERMES_HOME`, and a plugin-owned local JSON fixture copied into a
+temporary directory. It does not edit a live profile or contact a provider:
 
 ```bash
 python3 scripts/smoke_test_hermes_read.py

@@ -1,22 +1,12 @@
 # Versioned host-owned read route registry. This file contains no credentials.
 contract_version = 1
-default_backend = "local_tasks"
+default_backend = "remote_tasks"
 
-[backends.local_tasks]
-kind = "local_json"
+[backends.remote_tasks]
+kind = "mcp"
 capability = "task_read"
-read_root = "../examples"
-source_path = "local-task-snapshot.example.json"
+tool_name = "mcp__task_backend__task_query"
 
-[backends.local_tasks.destinations.default]
+[backends.remote_tasks.destinations.default]
 public_ref = "tasks:default"
 provider_ref = "tasks:default"
-
-# External backends use one exact read-only tool registered by the Hermes host.
-# [backends.remote_tasks]
-# kind = "mcp" # or "plugin"
-# capability = "task_read"
-# tool_name = "mcp__task_backend__task_query"
-# [backends.remote_tasks.destinations.default]
-# public_ref = "tasks:default"
-# provider_ref = "provider-owned:project-ref"
