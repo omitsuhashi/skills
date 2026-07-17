@@ -1081,3 +1081,11 @@ append-only で使います。すべての entry は予測しやすい header �
 - consumer、Hermes public tool、facade、host-owned route、local / MCP / provider-plugin adapter、normalized resultの関係をMermaid routing図として追加した
 - public callからbackend分岐、external dispatch、normalization、typed error returnまでをsequence diagramで明示した
 - backend差し替え時もconsumer contractが不変であるstate transitionと、read pathから分離されたapproval-gated write boundaryを明示した
+
+## [2026-07-17] spec | Decide In Order skill
+
+- ユーザー提供原案を `knowledge/raw/sources/` へ不変 source として取り込み、source summary と承認済み設計を追加した
+- `decide-in-order` を task-management から独立した state-free skill とし、判断プロセスは厳密、内部状態は疎、表示は適応的、永続化境界だけ型付きにする方針を固定した
+- 初期実装では新規 plugin を作らず、既存 task-management plugin には思想を複製しない動作別 integration policy だけを追加する
+- skill-creator の scaffold / validator / forward test と、plugin-creator の既存 plugin validator / update boundary を完成条件へ組み込んだ
+- skill 本体、task-management integration policy、marketplace、cachebuster、live install、外部 write は未実施
