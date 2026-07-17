@@ -133,7 +133,7 @@ class DualHostCompatibilityTests(unittest.TestCase):
             plugin_dir = write_plugin(Path(tmpdir))
             (plugin_dir / "__init__.py").write_text(
                 "def register():\n"
-                "    other.register_skill('sample-plugin', "
+                "    ctx.register_skill('sample-plugin', "
                 "'skills/sample-plugin/SKILL.md')\n",
                 encoding="utf-8",
             )
