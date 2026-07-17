@@ -127,6 +127,22 @@ class BackendRoutingReferenceTests(unittest.TestCase):
         ):
             self.assertIn(reference, skill)
 
+    def test_skill_limits_portfolio_os_evidence_to_generic_plugin_lifecycle(self):
+        skill = " ".join(SKILL_PATH.read_text(encoding="utf-8").split())
+
+        self.assertIn(
+            "Portfolio OS must not own task route, task data, task result, or "
+            "task-specific evidence. It may keep only generic plugin selection, "
+            "native install, manifest identity / required-export verification, "
+            "and generic profile enablement evidence.",
+            skill,
+        )
+        self.assertNotIn(
+            "source trail, routing rationale, draft previews, backend references, "
+            "and decision logs",
+            skill,
+        )
+
     def test_reference_separates_route_registry_from_destination_input(self):
         reference = self.load_reference()
         normalized = " ".join(reference.split())
