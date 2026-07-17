@@ -1137,3 +1137,10 @@ append-only で使います。すべての entry は予測しやすい header �
 - Python 3.9 / 3.12 CI matrix に standalone `decide-in-order`、focused task-management decision-support、Hermes registration / manifest test を追加し、focused manifest test の PyYAML dependency を除去した
 - durable page は `knowledge/wiki/syntheses/hermes-dual-host-authoring-contract-design.md` と `knowledge/log.md` を更新した。`knowledge/index.md` の既存 summary は正確なため変更していない
 - RED は初回 validator 23 tests の 39 subtest failures、workflow contract 2 failures、self-review追加 scalar test の 3 failures、GREEN は validator 24件、workflow contract 2件、guidance 3件、llm-wiki 6件、decide-in-order 7件、task-management 89件、Hermes smoke 1 snapshot、creator validators、architecture / context、diff / Goal audit の成功で確認した
+
+## [2026-07-17] review-fix | Hermes registration and strict manifest contract
+
+- fake Hermes context の bundled skill registration を exactly 1件、name `task-management`、実 bundled `SKILL.md` への resolved path、非空で整合する description として検証し、同名・誤pathを見逃さない contract にした
+- PyYAML 非依存を維持しつつ、task-management manifest 専用 parser が全 meaningful line、top-level scalar、`provides_tools`、`exports.toolsets` の indentation / state、duplicate、unexpected content、required field を fail closed で検証するようにした
+- RED は Hermes manifest test 10件中6 failures と workflow contract 3件中1 failure、GREEN は Python 3.9.6 / 3.12 の両方で Hermes 10件、workflow 3件、full task-management 93件、validator 24件、decide-in-order 7件、llm-wiki 6件、architecture / context が成功した
+- durable page は `knowledge/wiki/syntheses/hermes-dual-host-authoring-contract-design.md` と `knowledge/log.md` を更新した。`knowledge/index.md` の既存 summary は正確なため変更していない

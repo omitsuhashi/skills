@@ -12,14 +12,14 @@ updated: 2026-07-17
 
 ## 実装・ローカル検証証跡
 
-`.github/workflows/skill-architecture.yml` は Python 3.9 / 3.12 matrix の `Validate skill context` 直後に、authoring guidance test、CI workflow contract、dual-host validator test、repository-wide compatibility validation を実行する。さらに standalone `decide-in-order` test、task-management decision-support test、Hermes registration / manifest test を同じ matrix で独立実行する。Hermes manifest test は PyYAML を使わず、標準ライブラリによる対象 section 限定の text parsing で `provides_tools` / `exports.toolsets` の完全一致を検証する。通常 CI は live Hermes home、profile、config、credential、skill / plugin installation を変更しない。
+`.github/workflows/skill-architecture.yml` は Python 3.9 / 3.12 matrix の `Validate skill context` 直後に、authoring guidance test、CI workflow contract、dual-host validator test、repository-wide compatibility validation を実行する。さらに standalone `decide-in-order` test、task-management decision-support test、Hermes registration / manifest test を同じ matrix で独立実行する。Hermes manifest test は PyYAML を使わず、標準ライブラリによる task-management manifest 専用 state machine で全 nonblank / noncomment line、許可 key、indent / section state、duplicate、required field を検証し、`provides_tools` / `exports.toolsets` の完全一致を確認する。fake Hermes context は bundled skill が1件だけであり、name、実 `SKILL.md` への resolved path、非空で整合する description が一致することも検証する。通常 CI は live Hermes home、profile、config、credential、skill / plugin installation を変更しない。
 
 2026-07-17 の最終ローカル検証結果は次のとおり。
 
 | コマンド | 実測結果 |
 | --- | --- |
 | `python3 scripts/test_dual_host_authoring_guidance.py` | 3 tests、Python 3.9.6 / 3.12 とも成功 |
-| `python3 scripts/test_dual_host_ci_workflow.py` | 2 tests、Python 3.9.6 / 3.12 とも成功 |
+| `python3 scripts/test_dual_host_ci_workflow.py` | 3 tests、Python 3.9.6 / 3.12 とも成功 |
 | `python3 scripts/test_validate_dual_host_compatibility.py` | 24 tests、Python 3.9.6 / 3.12 とも成功 |
 | `python3 scripts/validate_dual_host_compatibility.py --all` | Python 3.9.6 / 3.12 とも repository compatibility OK |
 | `python3 scripts/validate_skill_architecture.py --all` | Python 3.9.6 / 3.12 とも `repository-change-loop` policy OK |
@@ -27,8 +27,8 @@ updated: 2026-07-17
 | `python3 -m unittest discover -s skills/llm-wiki/tests` | 6 tests、Python 3.9.6 / 3.12 とも成功 |
 | `python3 -m unittest discover -s skills/decide-in-order/tests` | 7 tests、Python 3.9.6 / 3.12 とも成功 |
 | `python3 plugins/task-management/tests/test_decision_support_policy.py` | 6 tests、成功 |
-| `python3 plugins/task-management/tests/test_hermes_plugin_manifest.py` | 6 tests、成功、PyYAML dependency なし |
-| `python3 -m unittest discover -s plugins/task-management/tests` | 89 tests、Python 3.9.6 / 3.12 とも成功 |
+| `python3 plugins/task-management/tests/test_hermes_plugin_manifest.py` | 10 tests、Python 3.9.6 / 3.12 とも成功、PyYAML dependency なし |
+| `python3 -m unittest discover -s plugins/task-management/tests` | 93 tests、Python 3.9.6 / 3.12 とも成功 |
 | `python3 plugins/task-management/scripts/smoke_test_hermes_read.py` | Python 3.9.6 で 1 normalized snapshot、成功 |
 | skill-creator quick validation（standalone / bundled） | Python 3.9.6 で両方成功 |
 | plugin-creator validation（task-management） | Python 3.9.6 で成功 |

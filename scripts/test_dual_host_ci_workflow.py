@@ -35,6 +35,16 @@ class DualHostCiWorkflowTests(unittest.TestCase):
         self.assertNotIn("import yaml", text)
         self.assertNotIn("yaml.safe_load", text)
 
+    def test_hermes_registration_contract_checks_exact_bundled_skill(self):
+        text = HERMES_MANIFEST_TEST.read_text(encoding="utf-8")
+
+        self.assertIn("self.assertEqual(1, len(ctx.skills))", text)
+        self.assertIn(
+            "self.assertEqual(SKILL.resolve(), Path(skill_args[1]).resolve())",
+            text,
+        )
+        self.assertIn("skill_kwargs[\"description\"]", text)
+
 
 if __name__ == "__main__":
     unittest.main()
