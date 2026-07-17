@@ -1129,3 +1129,11 @@ append-only で使います。すべての entry は予測しやすい header �
 - 最終local matrixはguidance 3件、validator 15件、llm-wiki 6件、decide-in-order 7件、task-management 89件、context contract 3件、repository / architecture validation、Hermes hermetic smoke、`git diff --check`がすべて成功した
 - read-only live確認では`decide-in-order`は引き続き未表示、`task-management`はenabled user version `0.1.0`のままであり、repo version `0.3.0`との差をrepository failureではなくdistribution driftとして記録した
 - live Hermes profile、config、credential、skill / plugin installationは変更していない。live install / refreshとexpected version smokeは明示承認を要する別follow-upとして残した
+
+## [2026-07-17] review-fix | Codex / Hermes dual-host final review
+
+- missing / misspelled `skills_root`・`plugins_root` を direct / CLI JSON の両経路で fail closed にし、Codex / Hermes version の独立した非空 string 検証と YAML block marker scalar 拒否を追加した
+- bundled `SKILL.md` ごとの validated frontmatter name と exact `ctx.register_skill(<literal-name>, ...)` を照合し、複数 bundled skill の登録漏れと dynamic / wrong receiver を拒否した
+- Python 3.9 / 3.12 CI matrix に standalone `decide-in-order`、focused task-management decision-support、Hermes registration / manifest test を追加し、focused manifest test の PyYAML dependency を除去した
+- durable page は `knowledge/wiki/syntheses/hermes-dual-host-authoring-contract-design.md` と `knowledge/log.md` を更新した。`knowledge/index.md` の既存 summary は正確なため変更していない
+- RED は初回 validator 23 tests の 39 subtest failures、workflow contract 2 failures、self-review追加 scalar test の 3 failures、GREEN は validator 24件、workflow contract 2件、guidance 3件、llm-wiki 6件、decide-in-order 7件、task-management 89件、Hermes smoke 1 snapshot、creator validators、architecture / context、diff / Goal audit の成功で確認した

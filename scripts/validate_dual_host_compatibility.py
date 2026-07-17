@@ -7,6 +7,7 @@ import argparse
 import ast
 import json
 from pathlib import Path
+import re
 import sys
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -14,14 +15,52 @@ DEFAULT_SKILLS_ROOT = REPO_ROOT / "skills"
 DEFAULT_PLUGINS_ROOT = REPO_ROOT / "plugins"
 
 
-def _unquote(value: str) -> str:
+_YAML_BLOCK_MARKER = re.compile(r"[|>][+-]?")
+_YAML_INTEGER = re.compile(r"[-+]?(?:0|[1-9][0-9]*)")
+_YAML_FLOAT = re.compile(
+    r"[-+]?(?:(?:[0-9]+\.[0-9]*|\.[0-9]+)(?:[eE][-+]?[0-9]+)?|"
+    r"[0-9]+[eE][-+]?[0-9]+)"
+)
+
+
+class _QuotedYamlString(str):
+    pass
+
+
+def _parse_yaml_scalar(value: str) -> object:
     value = value.strip()
     if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
-        return value[1:-1]
+        return _QuotedYamlString(value[1:-1])
+    lowered = value.lower()
+    if lowered in {"null", "~"}:
+        return None
+    if lowered in {"true", "false"}:
+        return lowered == "true"
+    if _YAML_INTEGER.fullmatch(value):
+        return int(value)
+    if _YAML_FLOAT.fullmatch(value):
+        return float(value)
+    if (
+        len(value) >= 2
+        and (value[0], value[-1]) in {("[", "]"), ("{", "}")}
+    ):
+        return object()
     return value
 
 
-def parse_skill_frontmatter(path: Path) -> dict[str, str]:
+def _is_non_empty_string(value: object) -> bool:
+    return isinstance(value, str) and bool(value.strip())
+
+
+def _is_non_empty_yaml_scalar(value: object) -> bool:
+    if not _is_non_empty_string(value):
+        return False
+    if isinstance(value, _QuotedYamlString):
+        return True
+    return _YAML_BLOCK_MARKER.fullmatch(value.strip()) is None
+
+
+def parse_skill_frontmatter(path: Path) -> dict[str, object]:
     lines = path.read_text(encoding="utf-8").splitlines()
     if not lines or lines[0].strip() != "---":
         return {}
@@ -38,18 +77,18 @@ def parse_skill_frontmatter(path: Path) -> dict[str, str]:
         if not raw_line or raw_line[:1].isspace() or ":" not in raw_line:
             continue
         key, value = raw_line.split(":", 1)
-        parsed[key.strip()] = _unquote(value)
+        parsed[key.strip()] = _parse_yaml_scalar(value)
     return parsed
 
 
-def parse_top_level_yaml_scalars(path: Path) -> dict[str, str]:
+def parse_top_level_yaml_scalars(path: Path) -> dict[str, object]:
     parsed = {}
     for raw_line in path.read_text(encoding="utf-8").splitlines():
         line = raw_line.split("#", 1)[0].rstrip()
         if not line or line[:1].isspace() or ":" not in line:
             continue
         key, value = line.split(":", 1)
-        parsed[key.strip()] = _unquote(value)
+        parsed[key.strip()] = _parse_yaml_scalar(value)
     return parsed
 
 
@@ -76,15 +115,39 @@ def _register_function(path: Path) -> ast.FunctionDef | None:
     )
 
 
-def _calls_register_skill(function: ast.FunctionDef) -> bool:
-    return any(
-        isinstance(node, ast.Call)
-        and isinstance(node.func, ast.Attribute)
-        and isinstance(node.func.value, ast.Name)
-        and node.func.value.id == "ctx"
-        and node.func.attr == "register_skill"
-        for node in ast.walk(function)
-    )
+def _registered_skill_names(function: ast.FunctionDef) -> set[str]:
+    names = set()
+
+    class RegisterBodyVisitor(ast.NodeVisitor):
+        def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+            return None
+
+        def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
+            return None
+
+        def visit_ClassDef(self, node: ast.ClassDef) -> None:
+            return None
+
+        def visit_Lambda(self, node: ast.Lambda) -> None:
+            return None
+
+        def visit_Call(self, node: ast.Call) -> None:
+            if (
+                isinstance(node.func, ast.Attribute)
+                and isinstance(node.func.value, ast.Name)
+                and node.func.value.id == "ctx"
+                and node.func.attr == "register_skill"
+                and node.args
+                and isinstance(node.args[0], ast.Constant)
+                and type(node.args[0].value) is str
+            ):
+                names.add(node.args[0].value)
+            self.generic_visit(node)
+
+    visitor = RegisterBodyVisitor()
+    for statement in function.body:
+        visitor.visit(statement)
+    return names
 
 
 def validate_skill(skill_dir: Path) -> list[str]:
@@ -93,9 +156,13 @@ def validate_skill(skill_dir: Path) -> list[str]:
         return [f"{skill_dir.name}/SKILL.md is required"]
     fields = parse_skill_frontmatter(entrypoint)
     errors = []
-    if fields.get("name", "").strip() != skill_dir.name:
+    skill_name = fields.get("name")
+    if (
+        not _is_non_empty_yaml_scalar(skill_name)
+        or skill_name != skill_dir.name
+    ):
         errors.append(f"{skill_dir.name}: frontmatter name must equal directory name")
-    if not fields.get("description", "").strip():
+    if not _is_non_empty_yaml_scalar(fields.get("description")):
         errors.append(f"{skill_dir.name}: frontmatter description must be non-empty")
     if (skill_dir / "description.md").exists():
         errors.append(
@@ -128,16 +195,28 @@ def validate_plugin(plugin_dir: Path) -> list[str]:
     hermes = parse_top_level_yaml_scalars(hermes_path)
     if codex.get("name") != name or hermes.get("name") != name:
         errors.append(f"{name}: manifest names must equal directory name")
-    if codex.get("version") != hermes.get("version"):
+    codex_version = codex.get("version")
+    hermes_version = hermes.get("version")
+    codex_version_valid = _is_non_empty_string(codex_version)
+    hermes_version_valid = _is_non_empty_yaml_scalar(hermes_version)
+    if not codex_version_valid:
+        errors.append(f"{name}: Codex version must be a non-empty string")
+    if not hermes_version_valid:
+        errors.append(f"{name}: Hermes version must be a non-empty string")
+    if (
+        codex_version_valid
+        and hermes_version_valid
+        and codex_version != hermes_version
+    ):
         errors.append(f"{name}: Codex and Hermes versions must match")
     codex_description = codex.get("description")
     if not isinstance(codex_description, str) or not codex_description.strip():
         errors.append(f"{name}: Codex description must be non-empty")
-    if not hermes.get("description", "").strip():
+    if not _is_non_empty_yaml_scalar(hermes.get("description")):
         errors.append(f"{name}: Hermes description must be non-empty")
-    if hermes.get("manifest_version") != "1":
+    if hermes.get("manifest_version") != 1:
         errors.append(f"{name}: Hermes manifest_version must be 1")
-    if not hermes.get("kind", "").strip():
+    if not _is_non_empty_yaml_scalar(hermes.get("kind")):
         errors.append(f"{name}: Hermes kind must be non-empty")
     register = _register_function(entrypoint)
     if register is None:
@@ -145,18 +224,33 @@ def validate_plugin(plugin_dir: Path) -> list[str]:
         return errors
     skills_dir = plugin_dir / "skills"
     bundled = list(skills_dir.rglob("SKILL.md")) if skills_dir.is_dir() else []
+    bundled_names = set()
     for bundled_dir in sorted({path.parent for path in bundled}):
         errors.extend(validate_skill(bundled_dir))
-    if bundled and not _calls_register_skill(register):
-        errors.append(f"{name}: bundled skills require ctx.register_skill(...)")
+        bundled_name = parse_skill_frontmatter(bundled_dir / "SKILL.md").get("name")
+        if (
+            _is_non_empty_yaml_scalar(bundled_name)
+            and bundled_name == bundled_dir.name
+        ):
+            bundled_names.add(bundled_name)
+    registered_names = _registered_skill_names(register)
+    for bundled_name in sorted(bundled_names - registered_names):
+        errors.append(
+            f"{name}: bundled skill {bundled_name!r} requires matching "
+            "ctx.register_skill(...)"
+        )
     return errors
 
 
 def validate_repository(skills_root: Path, plugins_root: Path) -> list[str]:
     errors = []
+    if not skills_root.is_dir():
+        errors.append(f"skills root is not a directory: {skills_root}")
     if skills_root.is_dir():
         for path in sorted(item for item in skills_root.iterdir() if item.is_dir()):
             errors.extend(validate_skill(path))
+    if not plugins_root.is_dir():
+        errors.append(f"plugins root is not a directory: {plugins_root}")
     if plugins_root.is_dir():
         for path in sorted(item for item in plugins_root.iterdir() if item.is_dir()):
             errors.extend(validate_plugin(path))

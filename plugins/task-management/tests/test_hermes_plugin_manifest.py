@@ -5,8 +5,6 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-import yaml
-
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "plugin.yaml"
@@ -29,6 +27,26 @@ def parse_simple_yaml(path):
         if value.startswith('"') and value.endswith('"'):
             value = value[1:-1]
         parsed[key] = value
+    return parsed
+
+
+def parse_simple_yaml_lists(path):
+    parsed = {}
+    sections = []
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.split("#", 1)[0].rstrip()
+        if not line.strip():
+            continue
+        indent = len(line) - len(line.lstrip())
+        content = line.strip()
+        while sections and indent <= sections[-1][0]:
+            sections.pop()
+        if content.endswith(":"):
+            sections.append((indent, content[:-1]))
+            continue
+        if content.startswith("- "):
+            path_key = tuple(key for _indent, key in sections)
+            parsed.setdefault(path_key, []).append(content[2:].strip('"\''))
     return parsed
 
 
@@ -64,17 +82,16 @@ class HermesPluginManifestTests(unittest.TestCase):
         self.assertTrue(SKILL.exists(), "registered skill target must exist")
 
     def test_native_manifest_exports_exact_read_toolset(self):
-        manifest = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))
+        manifest = parse_simple_yaml(MANIFEST)
+        lists = parse_simple_yaml_lists(MANIFEST)
         codex_manifest = __import__("json").loads(CODEX_MANIFEST.read_text(encoding="utf-8"))
 
-        self.assertIn("provides_tools", manifest)
-        self.assertIn("exports", manifest)
         self.assertEqual("0.3.0", codex_manifest["version"])
         self.assertEqual(codex_manifest["version"], manifest["version"])
-        self.assertEqual(["task_query"], manifest["provides_tools"])
+        self.assertEqual(["task_query"], lists.get(("provides_tools",)))
         self.assertEqual(
             {"toolsets": ["task-management-read"]},
-            manifest["exports"],
+            {"toolsets": lists.get(("exports", "toolsets"))},
         )
 
     def test_native_entrypoint_registers_read_only_task_query_tool(self):

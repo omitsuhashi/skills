@@ -12,24 +12,29 @@ updated: 2026-07-17
 
 ## 実装・ローカル検証証跡
 
-`.github/workflows/skill-architecture.yml` は Python 3.9 / 3.12 matrix の `Validate skill context` 直後に、authoring guidance test、dual-host validator test、repository-wide compatibility validation を実行する。通常 CI は live Hermes home、profile、config、credential、skill / plugin installation を変更しない。
+`.github/workflows/skill-architecture.yml` は Python 3.9 / 3.12 matrix の `Validate skill context` 直後に、authoring guidance test、CI workflow contract、dual-host validator test、repository-wide compatibility validation を実行する。さらに standalone `decide-in-order` test、task-management decision-support test、Hermes registration / manifest test を同じ matrix で独立実行する。Hermes manifest test は PyYAML を使わず、標準ライブラリによる対象 section 限定の text parsing で `provides_tools` / `exports.toolsets` の完全一致を検証する。通常 CI は live Hermes home、profile、config、credential、skill / plugin installation を変更しない。
 
 2026-07-17 の最終ローカル検証結果は次のとおり。
 
 | コマンド | 実測結果 |
 | --- | --- |
-| `python3 scripts/test_dual_host_authoring_guidance.py` | 3 tests、成功 |
-| `python3 scripts/test_validate_dual_host_compatibility.py` | 15 tests、成功 |
-| `python3 scripts/validate_dual_host_compatibility.py --all` | repository compatibility OK |
-| `python3 scripts/validate_skill_architecture.py --all` | `repository-change-loop` policy OK |
-| `python3 scripts/validate_skill_context.py --all` | 3 context contracts、成功 |
-| `python3 -m unittest discover -s skills/llm-wiki/tests` | 6 tests、成功 |
-| `python3 -m unittest discover -s skills/decide-in-order/tests` | 7 tests、成功 |
-| `python3 -m unittest discover -s plugins/task-management/tests` | 89 tests、成功 |
-| `python3 plugins/task-management/scripts/smoke_test_hermes_read.py` | 1 normalized snapshot、成功 |
-| `git diff --check` | 成功 |
+| `python3 scripts/test_dual_host_authoring_guidance.py` | 3 tests、Python 3.9.6 / 3.12 とも成功 |
+| `python3 scripts/test_dual_host_ci_workflow.py` | 2 tests、Python 3.9.6 / 3.12 とも成功 |
+| `python3 scripts/test_validate_dual_host_compatibility.py` | 24 tests、Python 3.9.6 / 3.12 とも成功 |
+| `python3 scripts/validate_dual_host_compatibility.py --all` | Python 3.9.6 / 3.12 とも repository compatibility OK |
+| `python3 scripts/validate_skill_architecture.py --all` | Python 3.9.6 / 3.12 とも `repository-change-loop` policy OK |
+| `python3 scripts/validate_skill_context.py --all` | Python 3.9.6 / 3.12 とも 3 context contracts、成功 |
+| `python3 -m unittest discover -s skills/llm-wiki/tests` | 6 tests、Python 3.9.6 / 3.12 とも成功 |
+| `python3 -m unittest discover -s skills/decide-in-order/tests` | 7 tests、Python 3.9.6 / 3.12 とも成功 |
+| `python3 plugins/task-management/tests/test_decision_support_policy.py` | 6 tests、成功 |
+| `python3 plugins/task-management/tests/test_hermes_plugin_manifest.py` | 6 tests、成功、PyYAML dependency なし |
+| `python3 -m unittest discover -s plugins/task-management/tests` | 89 tests、Python 3.9.6 / 3.12 とも成功 |
+| `python3 plugins/task-management/scripts/smoke_test_hermes_read.py` | Python 3.9.6 で 1 normalized snapshot、成功 |
+| skill-creator quick validation（standalone / bundled） | Python 3.9.6 で両方成功 |
+| plugin-creator validation（task-management） | Python 3.9.6 で成功 |
+| `git diff --check` / Goal audit | 成功 / tracked・untracked・ignored の `goals/**/*.json` は各 0件 |
 
-Python command はすべて `PYTHONPYCACHEPREFIX=/tmp/skills-pycache` 付きで実行した。
+Python command はすべて `PYTHONPYCACHEPREFIX=/tmp/skills-pycache` 付きで実行した。本 review で追加・変更した CI matrix suite はローカルでも Python 3.9.6 / 3.12 の両方で再検証した。installed Hermes runtime と system skill/plugin creator のローカル Python 3.12 環境には外部 PyYAML がないため、これら外部 tool の smoke / creator validation は repository default の Python 3.9.6 で検証した。repository validator と focused CI tests には非標準依存を追加していない。
 
 ## 結論
 
@@ -132,7 +137,9 @@ tool vocabulary や対話品質のように機械判定で誤検知しやすい�
 - `.codex-plugin/plugin.json`、`plugin.yaml`、`__init__.py` の存在。
 - host manifests 間の name / version / description の整合。
 - `register(ctx)` の存在。
-- 同梱 skill がある場合の `ctx.register_skill(...)`。
+- 同梱 skill ごとに、validated frontmatter `name` と一致する literal name を持つ `ctx.register_skill(...)` が exact `ctx` receiver から呼ばれること。
+- `skills_root` / `plugins_root` のどちらかが directory でなければ repository validation を fail closed にすること。
+- Codex / Hermes の version を比較前にそれぞれ非空 string として検証し、YAML block marker だけの required scalar を拒否すること。
 - manifest が宣言する tool / toolset と registration の整合を、plugin 固有 contract test で確認できること。
 
 Python source の文字列検索だけで runtime registration の正しさを断定しない。静的 validator は欠落を早期検出し、import / fake context / Hermes smoke test が動作を確認する二層構成にする。
