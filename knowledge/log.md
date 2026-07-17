@@ -1125,7 +1125,7 @@ append-only で使います。すべての entry は予測しやすい header �
 
 ## [2026-07-17] implementation | Codex / Hermes dual-host authoring contract
 
-- 薄いrepo / directory guidance、標準ライブラリ共通validator、`decide-in-order` / `task-management` distribution契約を実装し、Python 3.9 / 3.12 CIへguidance test、validator test、repository-wide validationを追加した
+- landed scopeとして`.github/workflows/skill-architecture.yml`のPython 3.9 / 3.12 CIへguidance test、validator test、repository-wide validationを追加し、durable evidenceとして`knowledge/wiki/syntheses/hermes-dual-host-authoring-contract-design.md`と`knowledge/index.md`を更新した
 - 最終local matrixはguidance 3件、validator 15件、llm-wiki 6件、decide-in-order 7件、task-management 89件、context contract 3件、repository / architecture validation、Hermes hermetic smoke、`git diff --check`がすべて成功した
 - read-only live確認では`decide-in-order`は引き続き未表示、`task-management`はenabled user version `0.1.0`のままであり、repo version `0.3.0`との差をrepository failureではなくdistribution driftとして記録した
 - live Hermes profile、config、credential、skill / plugin installationは変更していない。live install / refreshとexpected version smokeは明示承認を要する別follow-upとして残した
