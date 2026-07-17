@@ -1089,3 +1089,10 @@ append-only で使います。すべての entry は予測しやすい header �
 - 初期実装では新規 plugin を作らず、既存 task-management plugin には思想を複製しない動作別 integration policy だけを追加する
 - skill-creator の scaffold / validator / forward test と、plugin-creator の既存 plugin validator / update boundary を完成条件へ組み込んだ
 - skill 本体、task-management integration policy、marketplace、cachebuster、live install、外部 write は未実施
+
+## [2026-07-17] implementation-plan | Decide In Order skill
+
+- 承認済み設計を4つのreviewable taskへ分解し、standalone skill、forward test、task-management integration、full verificationの順序を固定した
+- skill-creatorのinit/generator/validator、plugin-creatorの既存plugin validator、Python contract tests、fresh-agent behavior evaluationを具体的なcommandと期待結果へ落とした
+- 新規plugin、marketplace、cachebuster、live install、backend call、外部writeを計画scope外に維持した
+- 実装は未着手であり、次のexecution選択を待つ
