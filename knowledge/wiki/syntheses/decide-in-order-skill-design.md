@@ -237,6 +237,13 @@ forward test は期待回答を渡さない新しい subagent へ skill と生�
 
 評価は文面一致ではなく、判断順序、質問数、推定の区別、表示量、選択肢削減、最小行動、見直し条件、DecisionRecord 閾値、task-management 責務境界で行う。
 
+## Standalone Forward-test Evidence
+
+- 8 scenarios passed: clear execution, competing deadlines, sunk cost, bounded research, anxiety without probability evidence, irreversible risk, daily planning, and post-action review.
+- Evaluation used behavior invariants rather than exact-output matching.
+- Fresh agents received only the skill path and raw user request; no expected answer or live backend was provided.
+- Final behavior kept clear execution lightweight, asked at most one material question, and limited `DecisionRecord` candidates to material decisions.
+
 ## リスクと対策
 
 - 構造化しすぎて対話が重くなる: 内部状態を疎にし、通常表示を schema 化しない。

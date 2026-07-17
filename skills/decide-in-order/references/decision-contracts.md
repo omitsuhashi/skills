@@ -13,6 +13,7 @@ Use `DecisionFrame` as internal vocabulary, not as a required input or output sc
 
 DecisionGuidance is a rendering rule, not a second schema.
 
+- For an unresolved decision, begin with a one-sentence purpose statement or visible purpose assumption before showing a recommendation, constraints, method, or risk analysis; naming `purpose` as an abstract criterion is not enough.
 - For clear execution, show no special structure.
 - For light correction, show the central decision, minimum next action, and review trigger in two to four lines.
 - For deep handling, show only the relevant purpose, protected criteria, acceptable loss, decide-now, decide-later, next action, evidence, risk, assumptions, and review information.

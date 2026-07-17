@@ -19,6 +19,7 @@ Use for prioritization, daily planning, research framing, continue/stop/defer/de
 
 - Build a sparse working frame from known context.
 - Ask at most one material question per turn.
+- Phrase it as one interrogative sentence; do not bundle follow-up questions into it.
 - Prefer a concrete hypothesis the user can correct over a blank questionnaire.
 - Fix the core question before method comparison.
 - Reduce options and name what may wait or be discarded.
@@ -30,6 +31,7 @@ Use after action, at a scheduled review, or when assumptions change.
 
 - Compare the observed result with the purpose and protected criteria.
 - Review whether the reasoning order was reversed by urgency, sunk cost, excess research, or anxiety.
+- State in one explicit sentence whether the original choice began from purpose and protected criteria or was reversed by a later factor; reviewing only the result or changed assumption does not satisfy this step, and unavailable evidence must be named as unknown.
 - Identify which assumption changed and whether to continue, stop, or pivot.
 - Set the next review only when another provisional period is useful.
 
@@ -37,7 +39,7 @@ Use after action, at a scheduled review, or when assumptions change.
 
 ### Daily planning
 
-Choose the day's central decision before making a timetable. Place its smallest meaningful advance in the highest-energy period, then fit communication, administration, and routine work around it.
+Begin the visible answer with the day's purpose and central decision before mentioning schedule constraints or making a timetable. Place its smallest meaningful advance in the highest-energy period, then fit communication, administration, and routine work around it.
 
 ### Research
 
