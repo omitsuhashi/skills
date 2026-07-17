@@ -1102,6 +1102,7 @@ append-only で使います。すべての entry は予測しやすい header �
 - `skills/decide-in-order/` を skill-creator scaffoldから実装し、判断順序、light/deep/review、疎なDecisionFrame、適応的表示、DecisionRecord候補を分離した
 - standalone contract tests 6件、fresh-agent forward test 8 scenarios、skill validatorを通過した
 - task-managementへ思想を複製せず、動作別decision-support policyとcontract tests 6件を追加した
+- integration forward testは、機械的readの除外と判断感度の高いintakeの2 scenariosで最終`2/2 PASS`。no-data readの初回evaluatorは空結果を創作したが、実装無変更の新規evaluatorで再実行して通過し、raw responseをcommitせずevaluator varianceとして記録した
 - task-management full suite 89件、skill/plugin validators、llm-wiki tests 6件、skill architecture、3 context contractsを検証した
 - Task 3の独立review後、`4475668`でintegration testを強化し、review fixを含めて再検証した
 - baselineに既存の`goals/**/*.json`はなく、ignored、untracked、trackedはいずれも0件だったため、追跡確認だけを目的とするgoal JSONは作成しなかった

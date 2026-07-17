@@ -771,6 +771,7 @@ git commit -m "Integrate decision support with task management"
 
 **Files:**
 
+- Modify: `knowledge/wiki/syntheses/2026-07-17-decide-in-order-implementation-plan.md`
 - Modify: `knowledge/wiki/syntheses/decide-in-order-skill-design.md`
 - Modify: `knowledge/index.md`
 - Modify: `knowledge/log.md`
@@ -855,12 +856,13 @@ git status --short
 git ls-files 'goals/**/*.json'
 ```
 
-Expected: llm-wiki 6 tests pass; `rg` returns no placeholder matches; no whitespace errors; every existing `goals/**/*.json` file is listed by `git ls-files`; status lists only the intended documentation files before commit。
+Expected: llm-wiki 6 tests pass; `rg` returns no placeholder matches; no whitespace errors; every existing `goals/**/*.json` file is listed by `git ls-files`; status lists only the four intended documentation files, including this plan's final history correction, before commit。
 
 - [ ] **Step 5: Commit final documentation evidence**
 
 ```bash
-git add knowledge/wiki/syntheses/decide-in-order-skill-design.md knowledge/index.md knowledge/log.md
+git add knowledge/wiki/syntheses/2026-07-17-decide-in-order-implementation-plan.md \
+  knowledge/wiki/syntheses/decide-in-order-skill-design.md knowledge/index.md knowledge/log.md
 git commit -m "Record decide-in-order implementation evidence"
 ```
 
@@ -870,12 +872,12 @@ Run:
 
 ```bash
 git status --short --branch
-git log -8 --oneline
+git log -9 --oneline
 git status --short --untracked-files=all -- 'goals/**/*.json'
 git ls-files 'goals/**/*.json'
 ```
 
-Expected: clean checkout; no untracked `goals/**/*.json` remains; every existing goal JSON is tracked; eight commits are visible for design, implementation plan, the goal-JSON tracking amendment, standalone skill, forward test, integration, the Task 3 review fix, and final evidence。
+Expected: clean checkout; no untracked `goals/**/*.json` remains; every existing goal JSON is tracked; nine commits are visible for design, implementation plan, the goal-JSON tracking amendment, standalone skill, forward test, integration, the Task 3 review fix, final evidence, and the separate Task 4 plan-alignment review fix。
 
 ## Related Documents
 

@@ -250,6 +250,7 @@ forward test は期待回答を渡さない新しい subagent へ skill と生�
 - `decide-in-order` skill validation: passed.
 - Standalone forward tests: 8 scenarios passed using fresh agents and behavior-based evaluation.
 - task-management integration contract tests: 6 passed; full plugin suite: 89 passed.
+- Integration forward tests: final 2/2 passed, covering mechanical read exclusion and decision-sensitive intake. In the no-data read scenario, the first evaluator invented an empty result; a fresh evaluator rerun passed against the unchanged contract, recorded as evaluator variance without committing raw responses.
 - task-management skill validation and plugin validation: passed.
 - llm-wiki tests: 6 passed.
 - repository skill architecture and 3 context contracts: validated.
