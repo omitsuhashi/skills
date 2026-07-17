@@ -2,16 +2,17 @@
 
 This reference defines the backend-neutral contracts used by the
 `task-management` skill. These contracts are the consumer-facing surface for
-Portfolio OS task intake, routing, previews, and adapter results.
+task intake, routing, previews, and adapter results.
 
-The mutable external backend remains the source of truth for task state. The
-local JSON route is only a bootstrap read snapshot and exposes no write tool. Portfolio OS may keep
-source trail, routing rationale, task drafts, backend refs, and decision logs,
-but it must not mirror provider task state.
+The mutable external backend remains the source of truth for task state.
+Operator-facing read routes use MCP or provider-plugin tools and expose no
+local write tool.
 
-`local_tasks` is the initial reference read route. MCP and provider-plugin
-routes reuse the same contracts without making GitHub or any other provider an
-implicit fallback.
+The read-only `local_json` adapter is a temporary plugin-owned test and smoke
+fixture only. It is not an initial reference read route, runtime persistent
+source of truth, or normal bootstrap route. MCP and provider-plugin routes reuse
+the same contracts without making GitHub or any other provider an implicit
+fallback.
 
 ## Non-Goals
 
@@ -143,7 +144,7 @@ Required fields:
 
 `backend_metadata` may include display-only, backend-owned metadata such as a
 link label and HTTP(S) URL without embedded credentials. It must not expose
-provider-specific raw IDs, field IDs, or auth details to Portfolio OS core
+provider-specific raw IDs, field IDs, or auth details to task-management
 consumers. Snapshot task type, due date, urgency, importance, and automation
 mode use the same canonical values as `TaskDraft`.
 
@@ -194,3 +195,6 @@ data for this reference. They intentionally use opaque refs such as
 `external_ref`, `github-projects:portfolio-os-task-board`, and
 `source:commander-chat:2026-06-29T09-00-00Z` instead of GitHub node IDs,
 project numbers, repository IDs, field IDs, tokens, or live MCP tool payloads.
+The Hermes smoke copies its local JSON fixture into a temporary directory; no
+versioned operator-facing task snapshot or persistent local task store is part
+of this contract.

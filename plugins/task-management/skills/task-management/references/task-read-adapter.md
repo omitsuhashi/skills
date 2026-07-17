@@ -23,9 +23,8 @@ destination, local path, GitHub target, credential, raw payload, or cursor.
 
 `TASK_MANAGEMENT_READ_ROUTES_FILE` points to a host-owned TOML document with
 `contract_version = 1`. A route fixes capability `task_read`, a logical
-destination mapping, and exactly one adapter:
+destination mapping, and exactly one external adapter:
 
-- `local_json`: reads one regular JSON file inside the configured `read_root`.
 - `mcp`: dispatches one exact `mcp__<server>__task_query` tool.
 - `plugin`: dispatches one exact `task_adapter__<provider>__task_query` tool.
 
@@ -41,12 +40,15 @@ match, and duplicate `public_ref` mappings fail as `invalid_read_route`.
 `TASK_MANAGEMENT_READ_ADAPTER_TOOL` remains a legacy single-MCP-route mode. It
 requires `query.backend_key` and never acts as a GitHub fallback.
 
-## Local Bootstrap Snapshot
+## Test and Smoke Fixture
 
-The local adapter is a read-only bootstrap/reference backend. It validates the
-versioned JSON envelope, file boundary, regular-file/size constraints, filters,
-and limit. It is not a mutable task state source of truth. Adding local writes
-requires a separate approved issue; mutable task state stays MCP/provider-owned.
+The read-only `local_json` adapter is retained only for plugin-owned tests and
+the isolated Hermes smoke. It is not an operator-facing runtime backend,
+bootstrap route, or persistent task source of truth. The smoke copies a test
+fixture and route into a temporary directory and cleans them up when the process
+exits. The adapter still validates the JSON envelope, file boundary,
+regular-file/size constraints, filters, and limit. There is no local write
+adapter; mutable task state stays MCP/provider-owned.
 
 ## Typed Errors
 
