@@ -110,7 +110,7 @@ _現在なし。_
   検索語: decide-in-order, decision support, DecisionFrame, DecisionRecord, light, deep, review, task-management integration, skill-creator, plugin-creator, 決める順番, 意思決定支援, 日次計画, 継続判断, 調査方針, 許容損失
 - [Decide In Order Skill 実装計画](wiki/syntheses/2026-07-17-decide-in-order-implementation-plan.md) — skill-creator scaffold、contract tests、fresh-agent forward test、task-management integration、plugin回帰、wiki証跡同期を固定するtest-first実装計画。
   検索語: decide-in-order, implementation plan, skill-creator, plugin-creator, forward test, task-management integration, contract test, TDD, 実装計画, 意思決定支援, 回帰検証
-- [Codex / Hermes Dual-host Authoring Contract 設計](wiki/syntheses/hermes-dual-host-authoring-contract-design.md) — skill / plugin のリポジトリ互換、Hermes discovery、live load を分離し、薄い作成指示と共通検証で dual-host 必須条件を保証する設計。
+- [Codex / Hermes Dual-host Authoring Contract 設計](wiki/syntheses/hermes-dual-host-authoring-contract-design.md) — skill / plugin のリポジトリ互換、Hermes discovery、live load を分離し、薄い作成指示、共通検証、Python 3.9 / 3.12 CI enforcementを実装・ローカル検証済みの設計。
   検索語: Hermes Agent, Codex, dual-host, SKILL.md, description.md, plugin.yaml, register(ctx), external_dirs, install, discovery, live load, skill creator, plugin creator, 作成指示, 互換性, インストール, 検証
 - [Codex / Hermes Dual-host Authoring Contract 実装計画](wiki/syntheses/2026-07-17-hermes-dual-host-authoring-contract-implementation-plan.md) — 薄いauthoring guidance、標準ライブラリvalidator、既存skill/plugin導入契約、CIを4つのTDD単位で実装する計画。
   検索語: Hermes Agent, Codex, dual-host, implementation plan, AGENTS.md, validator, unittest, CI, TDD, SKILL.md, plugin.yaml, register(ctx), 実装計画, 作成ルール, 検証

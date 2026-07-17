@@ -36,6 +36,15 @@ jobs:
       - name: Validate skill context
         run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 scripts/validate_skill_context.py --all
 
+      - name: Test dual-host authoring guidance
+        run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 scripts/test_dual_host_authoring_guidance.py
+
+      - name: Test dual-host compatibility validator
+        run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 scripts/test_validate_dual_host_compatibility.py
+
+      - name: Validate dual-host compatibility
+        run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 scripts/validate_dual_host_compatibility.py --all
+
       - name: Write context report
         run: |
           mkdir -p .artifacts

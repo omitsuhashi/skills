@@ -1122,3 +1122,10 @@ append-only で使います。すべての entry は予測しやすい header �
 - 各 task は failing test、最小実装、targeted verification、scoped commitを持つTDD手順とした
 - repository compatibility、distribution / discovery、live loadを分離し、通常CIと本計画からlive Hermes profile変更を除外した
 - skill directory内へREADMEや`description.md`を追加せず、standalone companion skillをplugin内へ複製しない制約を維持した
+
+## [2026-07-17] implementation | Codex / Hermes dual-host authoring contract
+
+- 薄いrepo / directory guidance、標準ライブラリ共通validator、`decide-in-order` / `task-management` distribution契約を実装し、Python 3.9 / 3.12 CIへguidance test、validator test、repository-wide validationを追加した
+- 最終local matrixはguidance 3件、validator 15件、llm-wiki 6件、decide-in-order 7件、task-management 89件、context contract 3件、repository / architecture validation、Hermes hermetic smoke、`git diff --check`がすべて成功した
+- read-only live確認では`decide-in-order`は引き続き未表示、`task-management`はenabled user version `0.1.0`のままであり、repo version `0.3.0`との差をrepository failureではなくdistribution driftとして記録した
+- live Hermes profile、config、credential、skill / plugin installationは変更していない。live install / refreshとexpected version smokeは明示承認を要する別follow-upとして残した

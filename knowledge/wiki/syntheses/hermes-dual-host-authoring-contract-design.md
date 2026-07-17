@@ -8,7 +8,28 @@ updated: 2026-07-17
 
 ## 状態
 
-設計承認済み。2026-07-17 に written spec review を通過した。repo guidance、validator、CI、既存 skill / plugin 文書の変更はまだ行っていない。live Hermes の設定変更、再インストール、更新も本設計の実装 scope には含めない。
+実装済み、ローカル検証済み。2026-07-17 に written spec review を通過し、repo guidance、共通 validator、既存 skill / plugin の distribution 契約、Python 3.9 / 3.12 CI enforcement を実装した。live Hermes の設定変更、再インストール、更新は実施しておらず、引き続き本設計の実装 scope には含めない。
+
+## 実装・ローカル検証証跡
+
+`.github/workflows/skill-architecture.yml` は Python 3.9 / 3.12 matrix の `Validate skill context` 直後に、authoring guidance test、dual-host validator test、repository-wide compatibility validation を実行する。通常 CI は live Hermes home、profile、config、credential、skill / plugin installation を変更しない。
+
+2026-07-17 の最終ローカル検証結果は次のとおり。
+
+| コマンド | 実測結果 |
+| --- | --- |
+| `python3 scripts/test_dual_host_authoring_guidance.py` | 3 tests、成功 |
+| `python3 scripts/test_validate_dual_host_compatibility.py` | 15 tests、成功 |
+| `python3 scripts/validate_dual_host_compatibility.py --all` | repository compatibility OK |
+| `python3 scripts/validate_skill_architecture.py --all` | `repository-change-loop` policy OK |
+| `python3 scripts/validate_skill_context.py --all` | 3 context contracts、成功 |
+| `python3 -m unittest discover -s skills/llm-wiki/tests` | 6 tests、成功 |
+| `python3 -m unittest discover -s skills/decide-in-order/tests` | 7 tests、成功 |
+| `python3 -m unittest discover -s plugins/task-management/tests` | 89 tests、成功 |
+| `python3 plugins/task-management/scripts/smoke_test_hermes_read.py` | 1 normalized snapshot、成功 |
+| `git diff --check` | 成功 |
+
+Python command はすべて `PYTHONPYCACHEPREFIX=/tmp/skills-pycache` 付きで実行した。
 
 ## 結論
 
@@ -27,12 +48,14 @@ updated: 2026-07-17
 
 | 対象 | リポジトリ上の状態 | live Hermes の状態 | 判定 |
 | --- | --- | --- | --- |
-| `skills/decide-in-order` | `SKILL.md` に `name` / `description` あり | `skills.external_dirs: []` かつ `hermes skills list` に未表示 | 形式互換、未導入 |
+| `skills/decide-in-order` | `SKILL.md` に `name` / `description` あり | `hermes skills list` に未表示 | 形式互換、未導入 |
 | `plugins/task-management` | Codex manifest と Hermes manifest / registration あり、version `0.3.0` | `hermes plugins list` は enabled version `0.1.0` | dual-host 実装あり、live は stale |
-| repo-wide guidance | repo root は wiki router のみ | 該当なし | Hermes 必須契約が未定義 |
-| directory guidance | `skills/AGENTS.md` / `plugins/AGENTS.md` なし | 該当なし | 作成時の host 別条件が未定義 |
+| repo-wide guidance | repo root の薄い router に dual-host authoring requirement あり | 該当なし | 実装・検証済み |
+| directory guidance | `skills/AGENTS.md` / `plugins/AGENTS.md` に host 別最小契約あり | 該当なし | 実装・検証済み |
 
 この表の「形式互換」「導入済み」「live load 済み」は同義にしない。
+
+2026-07-17 の read-only 再確認では、`hermes skills list` は exit 0 で 42 enabled skills を返したが `decide-in-order` は未表示だった。`hermes plugins list --plain --no-bundled` は `task-management` を enabled user version `0.1.0` として返した。これは repository failure ではなく、repo version `0.3.0` に対する distribution drift である。live install / refresh と期待 version の load smoke は、明示承認を要する別 follow-up として残す。
 
 ## 設計原則
 
@@ -181,3 +204,5 @@ skill 本体は作り直さない。次を追加する。
 - [task-management Hermes manifest](../../../plugins/task-management/plugin.yaml)
 - [task-management Hermes registration](../../../plugins/task-management/__init__.py)
 - [task-management Codex manifest](../../../plugins/task-management/.codex-plugin/plugin.json)
+- 2026-07-17 read-only local evidence: `hermes skills list`（exit 0、42 enabled、`decide-in-order` row なし）
+- 2026-07-17 read-only local evidence: `hermes plugins list --plain --no-bundled`（exit 0、`enabled user 0.1.0 task-management`）
