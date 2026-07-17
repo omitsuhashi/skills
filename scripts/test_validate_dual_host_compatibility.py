@@ -176,6 +176,21 @@ class DualHostCompatibilityTests(unittest.TestCase):
                     validate_plugin(plugin_dir),
                 )
 
+    def test_hermes_manifest_version_requires_exact_integer_one(self):
+        for scalar in ("true", "1.0"):
+            with self.subTest(scalar=scalar), tempfile.TemporaryDirectory() as tmpdir:
+                plugin_dir = write_plugin(Path(tmpdir))
+                manifest = plugin_dir / "plugin.yaml"
+                text = manifest.read_text(encoding="utf-8").replace(
+                    "manifest_version: 1\n", f"manifest_version: {scalar}\n"
+                )
+                manifest.write_text(text, encoding="utf-8")
+
+                self.assertIn(
+                    "sample-plugin: Hermes manifest_version must be integer 1",
+                    validate_plugin(plugin_dir),
+                )
+
     def test_missing_plugin_skill_registration_fails(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             plugin_dir = write_plugin(Path(tmpdir))

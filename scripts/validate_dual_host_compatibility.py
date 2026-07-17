@@ -214,8 +214,9 @@ def validate_plugin(plugin_dir: Path) -> list[str]:
         errors.append(f"{name}: Codex description must be non-empty")
     if not _is_non_empty_yaml_scalar(hermes.get("description")):
         errors.append(f"{name}: Hermes description must be non-empty")
-    if hermes.get("manifest_version") != 1:
-        errors.append(f"{name}: Hermes manifest_version must be 1")
+    manifest_version = hermes.get("manifest_version")
+    if type(manifest_version) is not int or manifest_version != 1:
+        errors.append(f"{name}: Hermes manifest_version must be integer 1")
     if not _is_non_empty_yaml_scalar(hermes.get("kind")):
         errors.append(f"{name}: Hermes kind must be non-empty")
     register = _register_function(entrypoint)

@@ -1144,3 +1144,10 @@ append-only で使います。すべての entry は予測しやすい header �
 - PyYAML 非依存を維持しつつ、task-management manifest 専用 parser が全 meaningful line、top-level scalar、`provides_tools`、`exports.toolsets` の indentation / state、duplicate、unexpected content、required field を fail closed で検証するようにした
 - RED は Hermes manifest test 10件中6 failures と workflow contract 3件中1 failure、GREEN は Python 3.9.6 / 3.12 の両方で Hermes 10件、workflow 3件、full task-management 93件、validator 24件、decide-in-order 7件、llm-wiki 6件、architecture / context が成功した
 - durable page は `knowledge/wiki/syntheses/hermes-dual-host-authoring-contract-design.md` と `knowledge/log.md` を更新した。`knowledge/index.md` の既存 summary は正確なため変更していない
+
+## [2026-07-17] review-fix | Exact Hermes manifest version type
+
+- generic dual-host validator の `manifest_version` を `type(value) is int and value == 1` として検証し、Python equality では `1` と等しい YAML boolean `true` と float `1.0` を拒否した
+- task-management 専用 strict parser も unquoted integer `1` だけを Python `int` として返し、native manifest contract で exact type / value を固定した
+- RED は validator 25件中2 subtest failures と Hermes manifest 11件中3 failures、GREEN は Python 3.9.6 / 3.12 の両方で validator 25件、Hermes 11件、full task-management 94件、workflow 3件、decide-in-order 7件、llm-wiki 6件、architecture / context、repository `--all` が成功した
+- durable page は `knowledge/wiki/syntheses/hermes-dual-host-authoring-contract-design.md` と `knowledge/log.md` を更新した。`knowledge/index.md` の既存 summary は正確なため変更していない

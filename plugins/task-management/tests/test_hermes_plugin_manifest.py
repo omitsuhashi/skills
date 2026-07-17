@@ -84,7 +84,12 @@ def parse_task_management_manifest(path):
             if key in seen:
                 _manifest_error(line_number, f"duplicate key {key!r}")
             seen.add(key)
-            manifest[key] = _parse_manifest_value(line_number, value)
+            if key == "manifest_version":
+                if value.strip() != "1":
+                    _manifest_error(line_number, "manifest_version must be integer 1")
+                manifest[key] = 1
+            else:
+                manifest[key] = _parse_manifest_value(line_number, value)
             continue
 
         if state == "provides_tools":
@@ -180,11 +185,23 @@ class HermesPluginManifestTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             parse_manifest_text(text)
 
+    def test_manifest_parser_rejects_non_integer_manifest_version(self):
+        valid = MANIFEST.read_text(encoding="utf-8")
+        for scalar in ("true", "1.0"):
+            with self.subTest(scalar=scalar):
+                text = valid.replace(
+                    "manifest_version: 1\n", f"manifest_version: {scalar}\n"
+                )
+                with self.assertRaises(ValueError):
+                    parse_manifest_text(text)
+
     def test_native_hermes_manifest_exists_with_supported_kind(self):
         self.assertTrue(MANIFEST.exists(), "Hermes native plugins require plugin.yaml")
 
         manifest = parse_task_management_manifest(MANIFEST)
 
+        self.assertIs(type(manifest.get("manifest_version")), int)
+        self.assertEqual(1, manifest.get("manifest_version"))
         self.assertEqual("task-management", manifest.get("name"))
         self.assertEqual("0.3.0", manifest.get("version"))
         self.assertEqual("Omitsuhashi", manifest.get("author"))
