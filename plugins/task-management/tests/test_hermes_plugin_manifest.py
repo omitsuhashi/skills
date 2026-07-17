@@ -127,6 +127,14 @@ class HermesPluginManifestTests(unittest.TestCase):
         self.assertIn("hermes plugins update task-management", text)
         self.assertIn(".git", text)
         self.assertIn("hermes plugins install --force", text)
+        self.assertIn(
+            "hermes skills install omitsuhashi/skills/skills/decide-in-order",
+            text,
+        )
+        self.assertIn("hermes skills list", text)
+        self.assertIn("hermes plugins list --plain --no-bundled", text)
+        self.assertIn("must match `plugin.yaml`", text)
+        self.assertIn("Mechanical task operations continue", text)
 
     def test_smoke_uses_real_hermes_context_and_registry_dispatch(self):
         self.assertTrue(SMOKE.is_file())

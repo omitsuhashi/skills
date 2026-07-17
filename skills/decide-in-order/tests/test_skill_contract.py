@@ -34,6 +34,13 @@ class DecideInOrderSkillContractTests(unittest.TestCase):
         ):
             self.assertIn(trigger, frontmatter)
 
+    def test_hermes_uses_the_standard_skill_entrypoint(self) -> None:
+        frontmatter = self.skill_text.split("---", 2)[1]
+        self.assertIn("name: decide-in-order", frontmatter)
+        self.assertIn("description:", frontmatter)
+        self.assertFalse((SKILL_DIR / "description.md").exists())
+        self.assertTrue(OPENAI_YAML.is_file())
+
     def test_entrypoint_routes_to_each_reference_without_copying_the_numbered_order(self) -> None:
         for reference in (
             "references/core.md",
