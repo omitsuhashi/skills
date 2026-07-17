@@ -10,6 +10,7 @@ Use this skill to normalize task intent, prepare reviewable task drafts, and kee
 ## References
 
 - Read `references/task-draft-contract.md` before composing TaskDraft title, body, taxonomy, inbox fallback, source-boundary content, or create/update preview text.
+- Read `references/decision-support-policy.md` before composing a new TaskDraft from ambiguous intent, prioritizing or daily planning, research framing, continue/stop/defer/delegate choices, or periodic review. Do not use it for task reads, backend routing, or adapter previews.
 - Read `references/task-contracts.md` when checking backend-neutral contract fields, normalized task refs, query/snapshot/write-result shapes, or raw provider ID/auth boundaries.
 - Read `references/task-read-adapter.md` before using the read-only `task_query` tool, configuring its host adapter route, or interpreting `TaskSnapshotResult` errors.
 - Read `references/routing-flow.md` when explaining the end-to-end actor sequence, backend switching, route ownership, or the boundary between read routing and approved state-changing dispatch.
@@ -30,11 +31,12 @@ Use this skill to normalize task intent, prepare reviewable task drafts, and kee
 ## Default Flow
 
 1. Read the caller's task source and identify the intended task outcome.
-2. For current backend state, call `task_query` with a backend-neutral `TaskQuery` and opaque destination reference; stop on any typed read-adapter error.
-3. Produce a backend-neutral task draft with title, body, task type, work unit fields when known, and review notes.
-4. Resolve backend routing from an optional internal override and then host `default_backend`. Stop with a typed setup error when neither resolves; never fall back implicitly to GitHub.
-5. Require a destination supplied by caller, profile, or host registration before any adapter-facing preview.
-6. Present a human review summary before any state-changing adapter route is used.
+2. Before composing a new TaskDraft, follow `references/decision-support-policy.md`; keep clear execution lightweight and skip decision support for current-state reads, routing, and adapter previews.
+3. For current backend state, call `task_query` with a backend-neutral `TaskQuery` and opaque destination reference; stop on any typed read-adapter error.
+4. Produce a backend-neutral task draft with title, body, task type, work unit fields when known, and review notes.
+5. Resolve backend routing from an optional internal override and then host `default_backend`. Stop with a typed setup error when neither resolves; never fall back implicitly to GitHub.
+6. Require a destination supplied by caller, profile, or host registration before any adapter-facing preview.
+7. Present a human review summary before any state-changing adapter route is used.
 
 ## Required Review Surface
 

@@ -18,6 +18,31 @@ The Hermes entrypoint registers `task-management:task-management` through
 authoritative Hermes export is `plugin.yaml.exports.toolsets`, which exactly
 matches `task-management-read` at runtime.
 
+### Optional decision companion
+
+The plugin bundles `task-management`, but `$decide-in-order` remains a standalone
+skill and is not copied into this plugin. Install it separately when deep
+prioritization, continuation, or review support is required:
+
+```bash
+hermes skills install omitsuhashi/skills/skills/decide-in-order
+hermes skills list
+```
+
+Confirm that `decide-in-order` appears for the target profile. If it is absent,
+Mechanical task operations continue, but the plugin must not claim that deep
+decision support ran; severe irreversible decisions still stop for human review.
+
+Repository compatibility does not prove the loaded plugin version. Before an
+approved live smoke, run:
+
+```bash
+hermes plugins list --plain --no-bundled
+```
+
+The enabled `task-management` version must match `plugin.yaml`. Refresh with the
+documented force-install flow when the loaded version is stale.
+
 ## Read Routes
 
 The public tool accepts an opaque logical `destination_ref` and a neutral query.

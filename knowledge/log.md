@@ -1081,3 +1081,73 @@ append-only で使います。すべての entry は予測しやすい header �
 - consumer、Hermes public tool、facade、host-owned route、local / MCP / provider-plugin adapter、normalized resultの関係をMermaid routing図として追加した
 - public callからbackend分岐、external dispatch、normalization、typed error returnまでをsequence diagramで明示した
 - backend差し替え時もconsumer contractが不変であるstate transitionと、read pathから分離されたapproval-gated write boundaryを明示した
+
+## [2026-07-17] spec | Decide In Order skill
+
+- ユーザー提供原案を `knowledge/raw/sources/` へ不変 source として取り込み、source summary と承認済み設計を追加した
+- `decide-in-order` を task-management から独立した state-free skill とし、判断プロセスは厳密、内部状態は疎、表示は適応的、永続化境界だけ型付きにする方針を固定した
+- 初期実装では新規 plugin を作らず、既存 task-management plugin には思想を複製しない動作別 integration policy だけを追加する
+- skill-creator の scaffold / validator / forward test と、plugin-creator の既存 plugin validator / update boundary を完成条件へ組み込んだ
+- skill 本体、task-management integration policy、marketplace、cachebuster、live install、外部 write は未実施
+
+## [2026-07-17] implementation-plan | Decide In Order skill
+
+- 承認済み設計を4つのreviewable taskへ分解し、standalone skill、forward test、task-management integration、full verificationの順序を固定した
+- skill-creatorのinit/generator/validator、plugin-creatorの既存plugin validator、Python contract tests、fresh-agent behavior evaluationを具体的なcommandと期待結果へ落とした
+- 新規plugin、marketplace、cachebuster、live install、backend call、外部writeを計画scope外に維持した
+- 実装は未着手であり、次のexecution選択を待つ
+
+## [2026-07-17] implementation | Decide In Order skill
+
+- `skills/decide-in-order/` を skill-creator scaffoldから実装し、判断順序、light/deep/review、疎なDecisionFrame、適応的表示、DecisionRecord候補を分離した
+- standalone contract tests 6件、fresh-agent forward test 8 scenarios、skill validatorを通過した
+- task-managementへ思想を複製せず、動作別decision-support policyとcontract tests 6件を追加した
+- integration forward testは、機械的readの除外と判断感度の高いintakeの2 scenariosで最終`2/2 PASS`。no-data readの初回evaluatorは空結果を創作したが、実装無変更の新規evaluatorで再実行して通過し、raw responseをcommitせずevaluator varianceとして記録した
+- task-management full suite 89件、skill/plugin validators、llm-wiki tests 6件、skill architecture、3 context contractsを検証した
+- Task 3の独立review後、`4475668`でintegration testを強化し、review fixを含めて再検証した
+- baselineに既存の`goals/**/*.json`はなく、ignored、untracked、trackedはいずれも0件だったため、追跡確認だけを目的とするgoal JSONは作成しなかった
+- 新規plugin、marketplace、cachebuster、live install、backend call、外部writeは実施していない
+
+## [2026-07-17] design | Codex / Hermes dual-host authoring contract
+
+- `decide-in-order` は標準 `SKILL.md` 形式で互換だが live Hermes には未導入、`task-management` は dual-host 構造を持つが live version は repo より古いことを実ファイルと CLI で切り分けた
+- 既存作成指示を誤りとはせず、Hermes 必須 target としては discovery / live verification の保証が不足していたと整理した
+- repo root の薄い router、`skills/AGENTS.md`、`plugins/AGENTS.md`、共通 validator / CI、既存配布文書の補強を推奨設計として固定した
+- `description.md` の新設、standalone skill の plugin 内複製、通常 CI からの live Hermes config 変更は行わない
+- 会話上の設計承認後に written spec を作成し、実装前 review 待ちとした
+
+## [2026-07-17] implementation-plan | Codex / Hermes dual-host authoring contract
+
+- written spec 承認を受け、薄い repo / directory guidance、標準ライブラリ共通 validator、既存 `decide-in-order` / `task-management` の導入契約、CI / durable evidence の4 taskへ分解した
+- 各 task は failing test、最小実装、targeted verification、scoped commitを持つTDD手順とした
+- repository compatibility、distribution / discovery、live loadを分離し、通常CIと本計画からlive Hermes profile変更を除外した
+- skill directory内へREADMEや`description.md`を追加せず、standalone companion skillをplugin内へ複製しない制約を維持した
+
+## [2026-07-17] implementation | Codex / Hermes dual-host authoring contract
+
+- landed scopeとして`.github/workflows/skill-architecture.yml`のPython 3.9 / 3.12 CIへguidance test、validator test、repository-wide validationを追加し、durable evidenceとして`knowledge/wiki/syntheses/hermes-dual-host-authoring-contract-design.md`と`knowledge/index.md`を更新した
+- 最終local matrixはguidance 3件、validator 15件、llm-wiki 6件、decide-in-order 7件、task-management 89件、context contract 3件、repository / architecture validation、Hermes hermetic smoke、`git diff --check`がすべて成功した
+- read-only live確認では`decide-in-order`は引き続き未表示、`task-management`はenabled user version `0.1.0`のままであり、repo version `0.3.0`との差をrepository failureではなくdistribution driftとして記録した
+- live Hermes profile、config、credential、skill / plugin installationは変更していない。live install / refreshとexpected version smokeは明示承認を要する別follow-upとして残した
+
+## [2026-07-17] review-fix | Codex / Hermes dual-host final review
+
+- missing / misspelled `skills_root`・`plugins_root` を direct / CLI JSON の両経路で fail closed にし、Codex / Hermes version の独立した非空 string 検証と YAML block marker scalar 拒否を追加した
+- bundled `SKILL.md` ごとの validated frontmatter name と exact `ctx.register_skill(<literal-name>, ...)` を照合し、複数 bundled skill の登録漏れと dynamic / wrong receiver を拒否した
+- Python 3.9 / 3.12 CI matrix に standalone `decide-in-order`、focused task-management decision-support、Hermes registration / manifest test を追加し、focused manifest test の PyYAML dependency を除去した
+- durable page は `knowledge/wiki/syntheses/hermes-dual-host-authoring-contract-design.md` と `knowledge/log.md` を更新した。`knowledge/index.md` の既存 summary は正確なため変更していない
+- RED は初回 validator 23 tests の 39 subtest failures、workflow contract 2 failures、self-review追加 scalar test の 3 failures、GREEN は validator 24件、workflow contract 2件、guidance 3件、llm-wiki 6件、decide-in-order 7件、task-management 89件、Hermes smoke 1 snapshot、creator validators、architecture / context、diff / Goal audit の成功で確認した
+
+## [2026-07-17] review-fix | Hermes registration and strict manifest contract
+
+- fake Hermes context の bundled skill registration を exactly 1件、name `task-management`、実 bundled `SKILL.md` への resolved path、非空で整合する description として検証し、同名・誤pathを見逃さない contract にした
+- PyYAML 非依存を維持しつつ、task-management manifest 専用 parser が全 meaningful line、top-level scalar、`provides_tools`、`exports.toolsets` の indentation / state、duplicate、unexpected content、required field を fail closed で検証するようにした
+- RED は Hermes manifest test 10件中6 failures と workflow contract 3件中1 failure、GREEN は Python 3.9.6 / 3.12 の両方で Hermes 10件、workflow 3件、full task-management 93件、validator 24件、decide-in-order 7件、llm-wiki 6件、architecture / context が成功した
+- durable page は `knowledge/wiki/syntheses/hermes-dual-host-authoring-contract-design.md` と `knowledge/log.md` を更新した。`knowledge/index.md` の既存 summary は正確なため変更していない
+
+## [2026-07-17] review-fix | Exact Hermes manifest version type
+
+- generic dual-host validator の `manifest_version` を `type(value) is int and value == 1` として検証し、Python equality では `1` と等しい YAML boolean `true` と float `1.0` を拒否した
+- task-management 専用 strict parser も unquoted integer `1` だけを Python `int` として返し、native manifest contract で exact type / value を固定した
+- RED は validator 25件中2 subtest failures と Hermes manifest 11件中3 failures、GREEN は Python 3.9.6 / 3.12 の両方で validator 25件、Hermes 11件、full task-management 94件、workflow 3件、decide-in-order 7件、llm-wiki 6件、architecture / context、repository `--all` が成功した
+- durable page は `knowledge/wiki/syntheses/hermes-dual-host-authoring-contract-design.md` と `knowledge/log.md` を更新した。`knowledge/index.md` の既存 summary は正確なため変更していない
