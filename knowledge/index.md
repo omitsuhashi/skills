@@ -106,7 +106,7 @@ _現在なし。_
 - [Portfolio OS Install Review And Procedure](wiki/syntheses/portfolio-os-install-review-and-procedure.md) — `skills` repo に Portfolio OS 固有 runtime を混ぜないためのレビュー結果と導入手順。
 - [Decide In Order Skill 原案](wiki/sources/2026-07-17-decide-in-order-source-brief.md) — 目的、守るもの、許容損失、核心の問いから始める実行支援型 skill の一次資料と設計時の解釈。
   検索語: decide in order, decision ordering, task management, purpose, must protect, acceptable loss, core question, sunk cost, risk, review, 決める順番, 意思決定, 優先順位, サンクコスト, 見直し
-- [Decide In Order Skill 設計](wiki/syntheses/decide-in-order-skill-design.md) — 独立 state-free skill、厳密な判断順序、疎な内部状態、適応的表示、DecisionRecord、task-management利用ポリシーの承認済み設計。
+- [Decide In Order Skill 設計](wiki/syntheses/decide-in-order-skill-design.md) — 実装済みの独立state-free skill、厳密な判断順序、疎な内部状態、適応的表示、DecisionRecord、task-management利用ポリシーと検証証跡。
   検索語: decide-in-order, decision support, DecisionFrame, DecisionRecord, light, deep, review, task-management integration, skill-creator, plugin-creator, 決める順番, 意思決定支援, 日次計画, 継続判断, 調査方針, 許容損失
 - [Decide In Order Skill 実装計画](wiki/syntheses/2026-07-17-decide-in-order-implementation-plan.md) — skill-creator scaffold、contract tests、fresh-agent forward test、task-management integration、plugin回帰、wiki証跡同期を固定するtest-first実装計画。
   検索語: decide-in-order, implementation plan, skill-creator, plugin-creator, forward test, task-management integration, contract test, TDD, 実装計画, 意思決定支援, 回帰検証

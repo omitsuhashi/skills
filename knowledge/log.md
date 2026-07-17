@@ -1096,3 +1096,13 @@ append-only で使います。すべての entry は予測しやすい header �
 - skill-creatorのinit/generator/validator、plugin-creatorの既存plugin validator、Python contract tests、fresh-agent behavior evaluationを具体的なcommandと期待結果へ落とした
 - 新規plugin、marketplace、cachebuster、live install、backend call、外部writeを計画scope外に維持した
 - 実装は未着手であり、次のexecution選択を待つ
+
+## [2026-07-17] implementation | Decide In Order skill
+
+- `skills/decide-in-order/` を skill-creator scaffoldから実装し、判断順序、light/deep/review、疎なDecisionFrame、適応的表示、DecisionRecord候補を分離した
+- standalone contract tests 6件、fresh-agent forward test 8 scenarios、skill validatorを通過した
+- task-managementへ思想を複製せず、動作別decision-support policyとcontract tests 6件を追加した
+- task-management full suite 89件、skill/plugin validators、llm-wiki tests 6件、skill architecture、3 context contractsを検証した
+- Task 3の独立review後、`4475668`でintegration testを強化し、review fixを含めて再検証した
+- baselineに既存の`goals/**/*.json`はなく、ignored、untracked、trackedはいずれも0件だったため、追跡確認だけを目的とするgoal JSONは作成しなかった
+- 新規plugin、marketplace、cachebuster、live install、backend call、外部writeは実施していない

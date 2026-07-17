@@ -870,12 +870,12 @@ Run:
 
 ```bash
 git status --short --branch
-git log -7 --oneline
+git log -8 --oneline
 git status --short --untracked-files=all -- 'goals/**/*.json'
 git ls-files 'goals/**/*.json'
 ```
 
-Expected: clean checkout; no untracked `goals/**/*.json` remains; every existing goal JSON is tracked; seven commits are visible for design, implementation plan, the goal-JSON tracking amendment, standalone skill, forward test, integration, and final evidence。
+Expected: clean checkout; no untracked `goals/**/*.json` remains; every existing goal JSON is tracked; eight commits are visible for design, implementation plan, the goal-JSON tracking amendment, standalone skill, forward test, integration, the Task 3 review fix, and final evidence。
 
 ## Related Documents
 

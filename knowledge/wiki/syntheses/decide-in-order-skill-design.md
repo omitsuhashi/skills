@@ -10,7 +10,7 @@ source_files:
 
 ## 状態
 
-設計承認済み。skill 本体と task-management integration policy の実装は未着手。
+実装完了・local verification済み。`decide-in-order` standalone skill、standalone forward test、task-management integration policy、plugin regression verificationまで完了。marketplace、cachebuster、live install、外部writeは未実施。
 
 ## 目的
 
@@ -229,7 +229,7 @@ task-management 側には `plugins/task-management/skills/task-management/refere
 
 ## 検証方針
 
-静的検証は `skill-creator` の `quick_validate.py`、`plugin-creator` の `validate_plugin.py`、既存 task-management test suite、`git diff --check`、TODO / placeholder / 不要 resource 確認を行う。
+静的検証は `skill-creator` の `quick_validate.py`、`plugin-creator` の `validate_plugin.py`、既存 task-management test suite、`git diff --check`、未確定記述 / 不要 resource 確認を行う。
 
 forward test は期待回答を渡さない新しい subagent へ skill と生の依頼だけを渡し、live backend や外部 write を使わずに行う。
 
@@ -243,6 +243,19 @@ forward test は期待回答を渡さない新しい subagent へ skill と生�
 - Evaluation used behavior invariants rather than exact-output matching.
 - Fresh agents received only the skill path and raw user request; no expected answer or live backend was provided.
 - Final behavior kept clear execution lightweight, asked at most one material question, and limited `DecisionRecord` candidates to material decisions.
+
+## Implementation Evidence
+
+- `decide-in-order` contract tests: 6 passed.
+- `decide-in-order` skill validation: passed.
+- Standalone forward tests: 8 scenarios passed using fresh agents and behavior-based evaluation.
+- task-management integration contract tests: 6 passed; full plugin suite: 89 passed.
+- task-management skill validation and plugin validation: passed.
+- llm-wiki tests: 6 passed.
+- repository skill architecture and 3 context contracts: validated.
+- Task 3 review fix `4475668` strengthened integration tests after independent review.
+- The baseline contained no existing `goals/**/*.json`; ignored, untracked, and tracked counts were all zero, so no goal JSON was created solely for tracking verification.
+- No new plugin, marketplace edit, cachebuster, live install, backend call, or external write was performed.
 
 ## リスクと対策
 
