@@ -1107,3 +1107,11 @@ append-only で使います。すべての entry は予測しやすい header �
 - Task 3の独立review後、`4475668`でintegration testを強化し、review fixを含めて再検証した
 - baselineに既存の`goals/**/*.json`はなく、ignored、untracked、trackedはいずれも0件だったため、追跡確認だけを目的とするgoal JSONは作成しなかった
 - 新規plugin、marketplace、cachebuster、live install、backend call、外部writeは実施していない
+
+## [2026-07-17] design | Codex / Hermes dual-host authoring contract
+
+- `decide-in-order` は標準 `SKILL.md` 形式で互換だが live Hermes には未導入、`task-management` は dual-host 構造を持つが live version は repo より古いことを実ファイルと CLI で切り分けた
+- 既存作成指示を誤りとはせず、Hermes 必須 target としては discovery / live verification の保証が不足していたと整理した
+- repo root の薄い router、`skills/AGENTS.md`、`plugins/AGENTS.md`、共通 validator / CI、既存配布文書の補強を推奨設計として固定した
+- `description.md` の新設、standalone skill の plugin 内複製、通常 CI からの live Hermes config 変更は行わない
+- 会話上の設計承認後に written spec を作成し、実装前 review 待ちとした
