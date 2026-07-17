@@ -21,6 +21,7 @@
 - Emit a typed `DecisionRecord` candidate only for material decisions; caller owns ID, timestamp, storage, and write effects。
 - Ask at most one material clarifying question per turn in deep handling。
 - Preserve all task-management read, routing, TaskDraft, and adapter approval behavior。
+- Treat every `goals/**/*.json` file created or modified during execution as a Git-managed artifact; do not ignore it, and verify its tracked state before completion。
 - Use `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache` for Python validation commands。
 - Keep implementation and validation local-only; no push, PR, issue mirror, marketplace edit, or live backend call。
 
@@ -851,9 +852,10 @@ PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s 
 rg -n "T[B]D|\[T]ODO|PLACEHOLD[E]R" skills/decide-in-order plugins/task-management/skills/task-management knowledge/wiki/syntheses/decide-in-order-skill-design.md knowledge/index.md knowledge/log.md
 git diff --check
 git status --short
+git ls-files 'goals/**/*.json'
 ```
 
-Expected: llm-wiki 6 tests pass; `rg` returns no placeholder matches; no whitespace errors; status lists only the intended documentation files before commit。
+Expected: llm-wiki 6 tests pass; `rg` returns no placeholder matches; no whitespace errors; every existing `goals/**/*.json` file is listed by `git ls-files`; status lists only the intended documentation files before commit。
 
 - [ ] **Step 5: Commit final documentation evidence**
 
@@ -868,10 +870,12 @@ Run:
 
 ```bash
 git status --short --branch
-git log -6 --oneline
+git log -7 --oneline
+git status --short --untracked-files=all -- 'goals/**/*.json'
+git ls-files 'goals/**/*.json'
 ```
 
-Expected: clean checkout; six commits are visible for design, implementation plan, standalone skill, forward test, integration, and final evidence。
+Expected: clean checkout; no untracked `goals/**/*.json` remains; every existing goal JSON is tracked; seven commits are visible for design, implementation plan, the goal-JSON tracking amendment, standalone skill, forward test, integration, and final evidence。
 
 ## Related Documents
 
