@@ -65,13 +65,15 @@ class DualHostCompatibilityTests(unittest.TestCase):
             write_plugin(plugins_root)
             self.assertEqual([], validate_repository(skills_root, plugins_root))
 
-    def test_skill_contract_failures(self):
+    def test_missing_skill_entrypoint_fails(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            root = Path(tmpdir)
-            missing = root / "missing"
+            missing = Path(tmpdir) / "missing"
             missing.mkdir()
             self.assertIn("missing/SKILL.md is required", validate_skill(missing))
-            mismatch = write_skill(root, "folder-name", description="")
+
+    def test_skill_frontmatter_name_mismatch_fails(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            mismatch = write_skill(Path(tmpdir), "folder-name")
             path = mismatch / "SKILL.md"
             path.write_text(
                 path.read_text(encoding="utf-8").replace(
@@ -83,8 +85,13 @@ class DualHostCompatibilityTests(unittest.TestCase):
             self.assertIn(
                 "folder-name: frontmatter name must equal directory name", errors
             )
+
+    def test_empty_skill_frontmatter_description_fails(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            skill_dir = write_skill(Path(tmpdir), "sample-skill", description="")
+            errors = validate_skill(skill_dir)
             self.assertIn(
-                "folder-name: frontmatter description must be non-empty", errors
+                "sample-skill: frontmatter description must be non-empty", errors
             )
 
     def test_separate_description_md_discovery_file_fails(self):
@@ -98,22 +105,131 @@ class DualHostCompatibilityTests(unittest.TestCase):
                 validate_skill(skill_dir),
             )
 
-    def test_plugin_identity_and_registration_failures(self):
+    def test_plugin_version_mismatch_fails(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             plugin_dir = write_plugin(Path(tmpdir))
             codex_path = plugin_dir / ".codex-plugin" / "plugin.json"
             codex = json.loads(codex_path.read_text(encoding="utf-8"))
             codex["version"] = "2.0.0"
             codex_path.write_text(json.dumps(codex), encoding="utf-8")
+            errors = validate_plugin(plugin_dir)
+            self.assertIn(
+                "sample-plugin: Codex and Hermes versions must match", errors
+            )
+
+    def test_missing_plugin_skill_registration_fails(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            plugin_dir = write_plugin(Path(tmpdir))
             (plugin_dir / "__init__.py").write_text(
                 "def register(ctx):\n    pass\n", encoding="utf-8"
             )
             errors = validate_plugin(plugin_dir)
             self.assertIn(
-                "sample-plugin: Codex and Hermes versions must match", errors
+                "sample-plugin: bundled skills require ctx.register_skill(...)", errors
+            )
+
+    def test_register_without_ctx_parameter_fails(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            plugin_dir = write_plugin(Path(tmpdir))
+            (plugin_dir / "__init__.py").write_text(
+                "def register():\n"
+                "    other.register_skill('sample-plugin', "
+                "'skills/sample-plugin/SKILL.md')\n",
+                encoding="utf-8",
             )
             self.assertIn(
-                "sample-plugin: bundled skills require ctx.register_skill(...)", errors
+                "sample-plugin: __init__.py must define register(ctx)",
+                validate_plugin(plugin_dir),
+            )
+
+    def test_register_with_wrong_parameter_name_fails(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            plugin_dir = write_plugin(Path(tmpdir))
+            (plugin_dir / "__init__.py").write_text(
+                "def register(context):\n"
+                "    context.register_skill('sample-plugin', "
+                "'skills/sample-plugin/SKILL.md')\n",
+                encoding="utf-8",
+            )
+            self.assertIn(
+                "sample-plugin: __init__.py must define register(ctx)",
+                validate_plugin(plugin_dir),
+            )
+
+    def test_register_skill_call_with_wrong_receiver_fails(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            plugin_dir = write_plugin(Path(tmpdir))
+            (plugin_dir / "__init__.py").write_text(
+                "def register(ctx):\n"
+                "    other.register_skill('sample-plugin', "
+                "'skills/sample-plugin/SKILL.md')\n",
+                encoding="utf-8",
+            )
+            self.assertIn(
+                "sample-plugin: bundled skills require ctx.register_skill(...)",
+                validate_plugin(plugin_dir),
+            )
+
+    def test_invalid_bundled_skill_frontmatter_fails(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            plugin_dir = write_plugin(Path(tmpdir))
+            skill_path = plugin_dir / "skills" / "sample-plugin" / "SKILL.md"
+            skill_path.write_text(
+                skill_path.read_text(encoding="utf-8").replace(
+                    "description: Bundled workflow.", "description:"
+                ),
+                encoding="utf-8",
+            )
+            self.assertIn(
+                "sample-plugin: frontmatter description must be non-empty",
+                validate_plugin(plugin_dir),
+            )
+
+    def test_null_codex_description_fails(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            plugin_dir = write_plugin(Path(tmpdir))
+            codex_path = plugin_dir / ".codex-plugin" / "plugin.json"
+            codex = json.loads(codex_path.read_text(encoding="utf-8"))
+            codex["description"] = None
+            codex_path.write_text(json.dumps(codex), encoding="utf-8")
+            self.assertIn(
+                "sample-plugin: Codex description must be non-empty",
+                validate_plugin(plugin_dir),
+            )
+
+    def test_non_object_codex_manifest_fails_without_crashing(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            plugin_dir = write_plugin(Path(tmpdir))
+            codex_path = plugin_dir / ".codex-plugin" / "plugin.json"
+            codex_path.write_text("[]", encoding="utf-8")
+            self.assertIn(
+                "sample-plugin: Codex manifest must be a JSON object",
+                validate_plugin(plugin_dir),
+            )
+
+    def test_cli_json_non_object_manifest_failure(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            plugin_dir = write_plugin(Path(tmpdir))
+            codex_path = plugin_dir / ".codex-plugin" / "plugin.json"
+            codex_path.write_text("[]", encoding="utf-8")
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(VALIDATOR),
+                    "--plugin",
+                    str(plugin_dir),
+                    "--json",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            payload = json.loads(result.stdout)
+            self.assertEqual(1, result.returncode)
+            self.assertFalse(payload["ok"])
+            self.assertIn(
+                "sample-plugin: Codex manifest must be a JSON object",
+                payload["errors"],
             )
 
     def test_cli_json_failure(self):

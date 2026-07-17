@@ -62,7 +62,15 @@ def _register_function(path: Path) -> ast.FunctionDef | None:
         (
             node
             for node in module.body
-            if isinstance(node, ast.FunctionDef) and node.name == "register"
+            if isinstance(node, ast.FunctionDef)
+            and node.name == "register"
+            and not node.args.posonlyargs
+            and len(node.args.args) == 1
+            and node.args.args[0].arg == "ctx"
+            and node.args.vararg is None
+            and not node.args.kwonlyargs
+            and node.args.kwarg is None
+            and not node.args.defaults
         ),
         None,
     )
@@ -72,6 +80,8 @@ def _calls_register_skill(function: ast.FunctionDef) -> bool:
     return any(
         isinstance(node, ast.Call)
         and isinstance(node.func, ast.Attribute)
+        and isinstance(node.func.value, ast.Name)
+        and node.func.value.id == "ctx"
         and node.func.attr == "register_skill"
         for node in ast.walk(function)
     )
@@ -113,12 +123,15 @@ def validate_plugin(plugin_dir: Path) -> list[str]:
         codex = json.loads(codex_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return [f"{name}: Codex manifest must be valid JSON"]
+    if not isinstance(codex, dict):
+        return [f"{name}: Codex manifest must be a JSON object"]
     hermes = parse_top_level_yaml_scalars(hermes_path)
     if codex.get("name") != name or hermes.get("name") != name:
         errors.append(f"{name}: manifest names must equal directory name")
     if codex.get("version") != hermes.get("version"):
         errors.append(f"{name}: Codex and Hermes versions must match")
-    if not str(codex.get("description", "")).strip():
+    codex_description = codex.get("description")
+    if not isinstance(codex_description, str) or not codex_description.strip():
         errors.append(f"{name}: Codex description must be non-empty")
     if not hermes.get("description", "").strip():
         errors.append(f"{name}: Hermes description must be non-empty")
@@ -132,6 +145,8 @@ def validate_plugin(plugin_dir: Path) -> list[str]:
         return errors
     skills_dir = plugin_dir / "skills"
     bundled = list(skills_dir.rglob("SKILL.md")) if skills_dir.is_dir() else []
+    for bundled_dir in sorted({path.parent for path in bundled}):
+        errors.extend(validate_skill(bundled_dir))
     if bundled and not _calls_register_skill(register):
         errors.append(f"{name}: bundled skills require ctx.register_skill(...)")
     return errors
