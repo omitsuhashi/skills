@@ -8,7 +8,7 @@ updated: 2026-07-17
 
 ## 状態
 
-設計 draft。会話上の推奨案は承認済みだが、実装前に本書の review を行う。repo guidance、validator、CI、既存 skill / plugin 文書の変更はまだ行っていない。live Hermes の設定変更、再インストール、更新も本設計の実装 scope には含めない。
+設計承認済み。2026-07-17 に written spec review を通過した。repo guidance、validator、CI、既存 skill / plugin 文書の変更はまだ行っていない。live Hermes の設定変更、再インストール、更新も本設計の実装 scope には含めない。
 
 ## 結論
 
@@ -99,7 +99,7 @@ root guidance はこの router を超えて長くしない。
 - `skills/*/SKILL.md` の存在。
 - YAML frontmatter の非空 `name` / `description`。
 - directory 名と `name` の一致。
-- `description.md` を必須ファイルとして参照していないこと。
+- Hermes discovery 用の別ファイルとして `description.md` を追加していないこと。本文中の単なる言及は機械判定しない。
 - Hermes compatibility を主張する場合に、Codex metadata だけを根拠にしていないこと。
 
 tool vocabulary や対話品質のように機械判定で誤検知しやすい事項は、validator が雑に採点せず、review checklist と対象 skill の behavior test で扱う。

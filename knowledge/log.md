@@ -1115,3 +1115,10 @@ append-only で使います。すべての entry は予測しやすい header �
 - repo root の薄い router、`skills/AGENTS.md`、`plugins/AGENTS.md`、共通 validator / CI、既存配布文書の補強を推奨設計として固定した
 - `description.md` の新設、standalone skill の plugin 内複製、通常 CI からの live Hermes config 変更は行わない
 - 会話上の設計承認後に written spec を作成し、実装前 review 待ちとした
+
+## [2026-07-17] implementation-plan | Codex / Hermes dual-host authoring contract
+
+- written spec 承認を受け、薄い repo / directory guidance、標準ライブラリ共通 validator、既存 `decide-in-order` / `task-management` の導入契約、CI / durable evidence の4 taskへ分解した
+- 各 task は failing test、最小実装、targeted verification、scoped commitを持つTDD手順とした
+- repository compatibility、distribution / discovery、live loadを分離し、通常CIと本計画からlive Hermes profile変更を除外した
+- skill directory内へREADMEや`description.md`を追加せず、standalone companion skillをplugin内へ複製しない制約を維持した
