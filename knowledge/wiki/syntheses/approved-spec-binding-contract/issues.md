@@ -2,7 +2,7 @@
 
 ## 状態
 
-ASBC-001 から ASBC-006 は local 実装・独立 review・full verification を完了した。2026-07-22 の利用者 feedback に基づく artifact lifecycle follow-up を ASBC-007 から ASBC-009 として追加した。consolidated spec の exact path/raw-byte digest に対する Written Spec Gate 承認後、ASBC-007 の contract 実装と ASBC-008 の current artifact migration/reseal を完了した。次の runnable issue は ASBC-009。
+ASBC-001 から ASBC-006 は local 実装・独立 review・full verification を完了した。2026-07-22 の利用者 feedback に基づく artifact lifecycle follow-up では、consolidated spec の exact path/raw-byte digest に対する Written Spec Gate 承認後、ASBC-007 と ASBC-008 を `COMPLETE`、ASBC-009 を local `PR_READY` とした。mandatory controller task review / broad whole-branch review後のpushとDraft PR #32更新だけが非blocking delivery stepとして残る。
 
 ## Source
 
@@ -55,9 +55,9 @@ fresh agent が新仕様を読まず current skill だけを使った pressure t
 | approved-spec-binding-contract | ASBC-004 | routing/review/completion/delivery gate を fail closed にする | 承認済み | LOCAL_COMPLETE | 解消済み | ASBC-006 | 未作成（local_only） | Approved・open finding なし | 未作成（local_only） |
 | approved-spec-binding-contract | ASBC-005 | planning/execution skill contract と legacy surface を更新する | 承認済み | LOCAL_COMPLETE | 解消済み | ASBC-006 | 未作成（local_only） | Approved・open finding なし | 未作成（local_only） |
 | approved-spec-binding-contract | ASBC-006 | bootstrap seal、forward test、full verification、durable evidence を完了する | 承認済み | LOCAL_COMPLETE | 解消済み | なし | 未作成（local_only） | Approved・open finding なし | 未作成（local_only） |
-| approved-spec-binding-contract | ASBC-007 | Epic単位のdurable artifact layoutを契約化する | 承認済み | LOCAL_COMPLETE | 解消済み | ASBC-008 | Draft PR #32 | 完了・open findingなし | Draft PR #32 |
-| approved-spec-binding-contract | ASBC-008 | current Epicを新layoutへ移しruntime JSONをGit管理外にする | 承認済み | LOCAL_COMPLETE | 解消済み | ASBC-009 | Draft PR #32 | 完了・open findingなし | Draft PR #32 |
-| approved-spec-binding-contract | ASBC-009 | forward test・全検証・Draft PR更新を完了する | 承認済み | RUNNABLE | 解消済み | なし | Draft PR #32 | 未実施 | Draft PR #32 |
+| approved-spec-binding-contract | ASBC-007 | Epic単位のdurable artifact layoutを契約化する | 承認済み | COMPLETE | 解消済み | ASBC-008 | Draft PR #32 | `10c0d0c..ce70e6c` review完了・open findingなし | Draft PR #32 |
+| approved-spec-binding-contract | ASBC-008 | current Epicを新layoutへ移しruntime JSONをGit管理外にする | 承認済み | COMPLETE | 解消済み | ASBC-009 | Draft PR #32 | `ce70e6c..a15e7dc` review完了・open findingなし | Draft PR #32 |
+| approved-spec-binding-contract | ASBC-009 | forward test・全検証・Draft PR更新を完了する | 承認済み | PR_READY | 解消済み | なし | Draft PR #32 | local self-review完了・controller review pending | Draft PR #32 update pending |
 
 ## Blocker Graph
 
@@ -74,7 +74,7 @@ ASBC-006 -> ASBC-007 -> ASBC-008 -> ASBC-009
 - Dependency graph は順序どおり解消済み。first runnable issue は `ASBC-001` であり、最終 issue `ASBC-006` まで local completion 済み。
 - `ASBC-002` と `ASBC-003` は ASBC-001 の sealed packet/ref API 固定後、`ASBC-004` は両 state artifact family 固定後、`ASBC-006` は ASBC-004 / ASBC-005 完了後に実行した。
 - completion/delivery は ASBC-006 の acceptance/review/full verification 完了後にのみ local completion とした。
-- follow-up は ASBC-007 の TDD contract変更、ASBC-008 のartifact migration/resealまで完了し、ASBC-009 のfresh-agent verificationとDraft PR更新が次のrunnable issue。
+- follow-up は ASBC-007 の TDD contract変更、ASBC-008 のartifact migration/reseal、ASBC-009 のfresh-agent/full verificationとlocal risk reviewまで完了した。ASBC-009は`PR_READY`で、controller review後のpush/Draft PR更新だけがpending。
 - Cyclic blocker: なし。
 
 ## ASBC-001: Approved Spec Binding core と Input Packet v2 を実装する
@@ -353,17 +353,30 @@ artifact lifecycleがfuture agentへ伝わることをfresh contextで確認し�
 
 ### ASBC-007
 
-- Landed commit: `ce70e6c` (`feat: separate durable and runtime epic artifacts`)。
+- Review/diff range: `10c0d0cffc5960c1a841b7fdacb0cd7a7b592e32..ce70e6cf8ddacc07948c72320443f306c32585b2`。
+- Landed commit: `ce70e6cf8ddacc07948c72320443f306c32585b2` (`feat: separate durable and runtime epic artifacts`)。
 - Landed scope: Epic単位のtracked durable root、canonical basenames、artifact layout validator、Git common runtime rootとのownership seam。
 - Review: task-local review完了、open findingなし。
-- Evidence: public ASB-31〜ASB-36とissue-loop / grill suitesが成功し、seal capabilityは`approved_spec_seal.supported=true`。
+- Evidence: public ASB-31〜ASB-36、issue-loop 247 tests、grill 26 testsが成功し、seal capabilityは`approved_spec_seal.supported=true`。Input Packet v2 / Execution Envelope v4を含むschema versionは変更していない。
 
 ### ASBC-008
 
+- Review/diff range: `ce70e6cf8ddacc07948c72320443f306c32585b2..a15e7dc04a7c830ac09773268a820479ff25cea2`。
+- Landed commits: `bc1f32dd7a4ac01dd8651744ae7929402dfa9356` (`docs: group approved spec binding artifacts`) と `a15e7dc04a7c830ac09773268a820479ff25cea2` (`docs: record artifact lifecycle gate commit`)。
 - Landed scope: consolidated spec/ledger/plans/sealed packetを`knowledge/wiki/syntheses/approved-spec-binding-contract/`へ集約し、指定されたflat current 5 artifactsだけを削除した。
 - Binding: spec SHA-256 `2bd4fcdbed9828c988a9d5c24cdd02242434f0e44e802cceb34fc4a0e7b86193`、sealed packet SHA-256 `e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c`。
-- Evidence: public seal、Input Packet validator、binding verifyが成功。nested packetはtracked、current instantiated EnvelopeはGit indexに存在しない。
+- Review: task-local migration review完了、open findingなし。
+- Evidence: public seal、Input Packet validator、binding verify、issue-loop / grill / llm-wiki suitesが成功。nested packetはtracked、current instantiated EnvelopeはGit indexに存在しない。spec/packet bytesはgate commit後も不変。
 - Remote/live action: なし。Draft PR更新、PR ready化、merge、release、live installはASBC-008では実行していない。
+
+### ASBC-009
+
+- Local verification range: `a15e7dc04a7c830ac09773268a820479ff25cea2..HEAD`。本closeout commitでlocal `PR_READY` evidenceを固定する。
+- Fresh evaluator evidence: `cross-host-release-attestation`、`epic-runtime-boundary-audit`、`portable-approval-evidence-refresh`の3 read-only scenarioを、approved spec/desired answerを渡さずcurrent loop skill entrypointだけから評価した。3/3が`knowledge/wiki/syntheses/<epic-id>/{spec.md,issues.md,implementation-plan.md,input-packet.json}`をtracked durable tree、`$(git rev-parse --git-common-dir)/agent-runs/issue-implementation-loop/<epic-id>/`配下のEnvelope/runtime treeをuntrackedと判断した。raw transcriptはcommitしていない。
+- Full verification: issue-loop 247 tests、grill 26 tests、llm-wiki 6 tests、scripts 59 tests、architecture/context/strict context/dual-host/両creator validators、`git diff --check`が成功した。strict contextはissue-loop operation count `8 == 8`、top-level `warnings=[]`。initial briefのunsupported `--strict`はcurrent CLI/CI/test契約どおり`--require-baseline --fail-on-warning`へplan correctionした。
+- Local risk review: `origin/main...HEAD`をspec/implementation alignment、host-specific tracked path、stale flat current link、historical migration、schema/version drift、remote-scope expansionの6観点で確認し、local Critical / Important findingは0。initial plan内のflat pathはhistorical archive、test helperのflat basenameはlegacy drift fixture用test-only hard-link shimでありcurrent guidance/runtime pathではない。
+- Binding: spec SHA-256 `2bd4fcdbed9828c988a9d5c24cdd02242434f0e44e802cceb34fc4a0e7b86193`、sealed packet SHA-256 `e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c`。両bytesを編集していない。
+- Delivery boundary: mandatory controller task review / broad whole-branch review、branch push、Draft PR #32 summary/check更新はpending。これはlocal correctness concernではなく、controllerがreview後に実行する非blocking remote delivery stepである。PR ready化、merge、release、live installは引き続き非承認。
 
 ## Whole-Branch Hardening Re-closeout
 
@@ -410,11 +423,11 @@ approved spec 本文、tests、ledger、plan、意図した回答を渡さず、
 
 ## Final Verification
 
-- Public acceptance: ASB-01〜ASB-30 を current public operations / real entrypoint hooks へ一意に mappingし、全 row を実 test methodへ解決した。
-- Local suites: issue-implementation-loop 245 tests、grill-to-pr-loop 25 tests、llm-wiki 6 tests、scripts 59 tests が成功。
+- Public acceptance: ASB-01〜ASB-36 を current public operations / real entrypoint hooks へ一意に mappingし、artifact lifecycle ASB-31〜ASB-36を含む全 row を実 test methodへ解決した。
+- Local suites: issue-implementation-loop 247 tests、grill-to-pr-loop 26 tests、llm-wiki 6 tests、scripts 59 tests が成功。
 - Repository checks: skill architecture、skill context、strict context report、dual-host compatibility、両 loop skill の skill-creator quick validation、`git diff --check` が成功。strict context report は current / baseline operation count `8 == 8`、`warnings=[]`。
-- Current artifact checks: Input Packet v2 と corrected Execution Envelope v4 は public validator で `ok=true`。spec / packet / envelope の raw SHA-256 はそれぞれ `6cedbba982f891d8ffceb9204bfc453b276df9e6021dca048cb0612d359a3dcc`、`3779e815b4be7438b36e9fb53073fa1d3ab20f07cd5ad1c531fa075c11b457e7`、`c15a7e9f4dc18acf8899f8e660f8f6eff8753f39b9f72a5772e44daf22d89497`。
-- Implementation review: task-local review後に whole-branch reviewを2段階で完了し、metadata parity micro-fix `18a7fc4e8439421b28499f9105bf7653888b22de` の最終 focused reviewも Approved。open Critical / Important / Minor findingはない。
+- Current artifact checks: tracked Input Packet v2 はpublic validator / binding verifyで`ok=true`、current instantiated EnvelopeはGit indexに存在しない。consolidated spec / sealed packet SHA-256は`2bd4fcdbed9828c988a9d5c24cdd02242434f0e44e802cceb34fc4a0e7b86193` / `e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c`。
+- Implementation review: ASBC-007 review range `10c0d0c..ce70e6c`とASBC-008 review range `ce70e6c..a15e7dc`はApproved、open findingなし。ASBC-009 local risk self-reviewはCritical / Important 0で、mandatory controller task review / broad whole-branch reviewはremote delivery前のpending gateとして残す。
 
 ## Residual Risks And Remote Boundary
 
@@ -424,7 +437,8 @@ approved spec 本文、tests、ledger、plan、意図した回答を渡さず、
 - clean break により historical v1〜v3 artifact / old run は current validator で resume できない。operator action は migration ではなく new approval/new run である。
 - Codex/Hermes parity は isolated host-like CLI と repository dual-host validator で確認した。live Codex/Hermes install/runtime は承認範囲外のため未検証・未変更。
 - seal に必要な no-follow / descriptor-relative primitive がない host は state change を fail closed に停止する。read-only diagnostics のみ維持する。
-- push、GitHub Issue、PR、merge、live install は `local_only` policy により意図的に未実行。これらは別の明示承認なしに開始しない。
+- branch `codex/approved-spec-binding-contract`へのpushと既存Draft PR #32更新は承認済みだが、mandatory controller reviewを先に行うsequencingのためpending。PR ready化、merge、release、live installは非承認のまま。
+- test-only legacy drift fixtureはnested spec bytesと同一inodeを変異させるhard-link compatibility shimを保持する。product/runtime artifactではなくGit layout contractを迂回しないが、fixture cleanup時の見直し対象である。
 - Open implementation blocker: なし。
 
 ## Artifact Lifecycle Follow-up Gate
@@ -432,8 +446,9 @@ approved spec 本文、tests、ledger、plan、意図した回答を渡さず、
 - Written Spec Gate: [spec.md](spec.md) のexact path/raw-byte digestとsix-part scopeを2026-07-22T07:36:04+09:00に`session-user`が明示承認済み。
 - Follow-up issue count: 3（ASBC-007〜ASBC-009）。
 - Dependency order: `ASBC-007 -> ASBC-008 -> ASBC-009`。
-- First runnable issue after approval: ASBC-007。ASBC-007/ASBC-008 local completion後のcurrent runnable issueはASBC-009。
+- First runnable issue after approval: ASBC-007。ASBC-007/ASBC-008は`COMPLETE`、ASBC-009はlocal `PR_READY`。
 - Approved remote scope: branch `codex/approved-spec-binding-contract`へのpushと既存Draft PR #32更新のみ。
+- Pending delivery: mandatory controller task review / broad whole-branch review後のpushとDraft PR #32 summary/check更新。
 - PR ready化、merge、release、live installは非承認。
 
 ## Initial Issue Gate Record

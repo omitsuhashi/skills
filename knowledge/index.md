@@ -115,10 +115,10 @@ _現在なし。_
   検索語: grill-to-pr-loop, issue-implementation-loop, epic_base, epic-base, branch lifecycle, reconcile, pr_merged, final PR, ブランチ統制
 - [Loop Skill Approved Spec Binding Artifact Lifecycle Revision](wiki/syntheses/approved-spec-binding-contract/spec.md) — Epic単位のtracked durable rootとGit common directory配下のuntracked runtime rootを分離し、Input Packetだけをapproval lockとしてGitに残すWritten Spec Gate承認済みrevision。
   検索語: approved spec binding, artifact lifecycle, epic directory, artifact root, input packet lock, untracked execution envelope, runtime root, Git common dir, ASBC-007, ASBC-008, ASBC-009
-- [Loop Skill Approved Spec Binding Artifact Lifecycle Issues](wiki/syntheses/approved-spec-binding-contract/issues.md) — initial ASBC-001〜ASBC-006 evidenceを保持し、Written Spec Gate承認済みのlayout/runtime境界follow-up ASBC-007〜ASBC-009を定義するlocal ledger。
-  検索語: ASBC-007, ASBC-008, ASBC-009, artifact layout, runtime boundary, issue ledger, blocker graph, Written Spec Gate
-- [Loop Skill Approved Spec Binding Artifact Lifecycle Implementation Plan](wiki/syntheses/approved-spec-binding-contract/implementation-plan.md) — layout validation、current artifact migration/reseal、fresh-agent/full verification、Draft PR #32更新をTDD順に固定する承認済みscopeの実行plan。
-  検索語: artifact lifecycle implementation plan, TDD, reseal, input packet, execution envelope, full verification, Draft PR 32
+- [Loop Skill Approved Spec Binding Artifact Lifecycle Issues](wiki/syntheses/approved-spec-binding-contract/issues.md) — initial ASBC-001〜ASBC-006 evidenceを保持し、ASBC-007/ASBC-008 `COMPLETE`、ASBC-009 local `PR_READY`、controller review後のDraft PR #32更新pendingまでを集約する最終local ledger。
+  検索語: ASBC-007, ASBC-008, ASBC-009, COMPLETE, PR_READY, artifact layout, runtime boundary, issue ledger, full verification, pending remote delivery, Draft PR 32
+- [Loop Skill Approved Spec Binding Artifact Lifecycle Implementation Plan](wiki/syntheses/approved-spec-binding-contract/implementation-plan.md) — layout validation、current artifact migration/reseal、fresh-agent 3/3、full verification、local risk reviewとcontroller delivery境界を記録した実行plan。
+  検索語: artifact lifecycle implementation plan, TDD, reseal, input packet, execution envelope, fresh evaluator, full verification, PR_READY, controller review, Draft PR 32
 - [Loop Skill Approved Spec Binding Artifact Lifecycle Input Packet](wiki/syntheses/approved-spec-binding-contract/input-packet.json) — current executable Input Packet v2。承認済みconsolidated spec、six-part approval evidence、ASBC-007〜ASBC-009のexecution intentを同一Epic rootでsealする唯一のtracked machine-readable lock。
   検索語: ASBC-007, ASBC-008, ASBC-009, current Input Packet v2, approved spec binding, spec digest, approval evidence, per_action, executable artifact, seal
 - [Portfolio OS Install Review And Procedure](wiki/syntheses/portfolio-os-install-review-and-procedure.md) — `skills` repo に Portfolio OS 固有 runtime を混ぜないためのレビュー結果と導入手順。

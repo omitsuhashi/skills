@@ -1247,3 +1247,13 @@ append-only で使います。すべての entry は予測しやすい header �
 - gate commit: `bc1f32dd7a4ac01dd8651744ae7929402dfa9356` (`docs: group approved spec binding artifacts`)
 - gate commit内のspec raw-byte SHA-256は`2bd4fcdbed9828c988a9d5c24cdd02242434f0e44e802cceb34fc4a0e7b86193`、sealed Input Packet raw-byte SHA-256は`e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c`
 - `knowledge/wiki/syntheses/approved-spec-binding-contract/input-packet.json`はtracked、superseded current instantiated Envelope pathはGit indexに存在しない。spec/packet bytesはgate commit後に変更していない
+
+## [2026-07-22] local-pr-ready | Approved Spec Binding Artifact Lifecycle
+
+- ASBC-007 review range `10c0d0cffc5960c1a841b7fdacb0cd7a7b592e32..ce70e6cf8ddacc07948c72320443f306c32585b2`とASBC-008 review range `ce70e6cf8ddacc07948c72320443f306c32585b2..a15e7dc04a7c830ac09773268a820479ff25cea2`はApproved、open findingなし。ASBC-007/ASBC-008を`COMPLETE`、ASBC-009をlocal `PR_READY`とした
+- current loop skill entrypointだけを読むfresh read-only evaluator 3件は、hypothetical Epicごとに`knowledge/wiki/syntheses/<epic-id>/{spec.md,issues.md,implementation-plan.md,input-packet.json}`をtracked durable tree、`$(git rev-parse --git-common-dir)/agent-runs/issue-implementation-loop/<epic-id>/`配下のExecution Envelope/runtime artifactsをuntrackedと判断した。3/3 pass、raw transcriptはcommitしていない
+- final local verificationはissue-implementation-loop 247 tests、grill-to-pr-loop 26 tests、llm-wiki 6 tests、scripts 59 tests、skill architecture/context、strict context report、dual-host、両skill-creator validator、`git diff --check`が成功した。strict contextはissue-loop operation count `8 == 8`、top-level `warnings=[]`
+- initial briefの`report_skill_context.py --all --json --strict`はcurrent CLIに`--strict`がなくexit 2だった。CLI `--help`、CI workflow、strict report testsが定義するcanonical equivalent `--require-baseline --fail-on-warning`へimplementation planを訂正し、同commandのexit 0 / top-level `warnings=[]`を確認した。CLI/specは変更していない
+- `origin/main...HEAD` local risk reviewはspec/implementation alignment、host-specific tracked paths、stale flat current links、accidental historical migration、schema/version drift、remote-scope expansionを確認し、Critical / Important finding 0。historical initial planのflat pathとtest-only legacy drift fixture shimはcurrent runtime guidanceではない
+- immutable raw-byte SHA-256はspec `2bd4fcdbed9828c988a9d5c24cdd02242434f0e44e802cceb34fc4a0e7b86193`、sealed packet `e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c`。両bytesはgate commit後も不変
+- mandatory controller task review / broad whole-branch review、branch push、Draft PR #32 summary/check更新はnonblocking pending delivery。push/PR mutationは本taskで実行せず、PR ready化、merge、release、live installは引き続き非承認

@@ -8,6 +8,12 @@
 
 **Tech Stack:** Markdown skill contracts, Python 3 standard library, JSON Schema assets, `unittest`, Git.
 
+## 実行状態
+
+- ASBC-007: `COMPLETE`。review range `10c0d0cffc5960c1a841b7fdacb0cd7a7b592e32..ce70e6cf8ddacc07948c72320443f306c32585b2`、open findingなし。
+- ASBC-008: `COMPLETE`。review range `ce70e6cf8ddacc07948c72320443f306c32585b2..a15e7dc04a7c830ac09773268a820479ff25cea2`、gate commit `bc1f32dd7a4ac01dd8651744ae7929402dfa9356`、open findingなし。
+- ASBC-009: local `PR_READY`。fresh evaluator 3/3、full verification、`origin/main...HEAD` local risk reviewを完了した。mandatory controller task review / broad whole-branch review後のpushとDraft PR #32更新はpending remote deliveryであり、local correctness blockerではない。
+
 ## Global Constraints
 
 - Preserve Input Packet v2 as the only machine-readable approval/execution-intent source of truth.
@@ -242,13 +248,13 @@ Run `git diff --check`, stage only the ASBC-008 knowledge migration and packet, 
 **Interfaces:**
 
 - Consumes: ASBC-007 implementation commit and ASBC-008 gate commit.
-- Produces: fresh-agent evidence, full validation evidence, reviewed branch head, pushed Draft PR #32 update.
+- Produces in this task: fresh-agent evidence、full validation evidence、local reviewed branch head、`PR_READY` durable closeout。controller review後のpush/Draft PR #32 updateはpending delivery。
 
-- [ ] **Step 1: Forward-test the updated skills**
+- [x] **Step 1: Forward-test the updated skills**
 
 Give three fresh read-only evaluators only the current skill entrypoints and hypothetical Epic names. Require exact artifact paths and Git tracking decisions. Pass only if all three group durable files by Epic and place instantiated Envelope/runtime artifacts under Git common runtime root.
 
-- [ ] **Step 2: Run full verification**
+- [x] **Step 2: Run full verification**
 
 Run:
 
@@ -259,7 +265,7 @@ PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s 
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s scripts -p 'test_*.py'
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_architecture.py --all
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_context.py --all
-PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/report_skill_context.py --all --json --strict
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/report_skill_context.py --all --json --require-baseline --fail-on-warning
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_dual_host_compatibility.py --all
 python3 /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_validate.py skills/grill-to-pr-loop
 python3 /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_validate.py skills/issue-implementation-loop
@@ -268,17 +274,25 @@ git diff --check
 
 Expected: every command exits 0 and strict context warnings are empty.
 
-- [ ] **Step 3: Review the final branch diff**
+- [x] **Step 3: Review the final branch diff**
 
 Review `origin/main...HEAD` for spec/implementation alignment, host-specific tracked paths, stale flat current links, accidental historical migration, schema/version drift, and remote-scope expansion. Fix any Critical or Important finding and rerun Step 2.
 
-- [ ] **Step 4: Close durable evidence and commit**
+- [x] **Step 4: Close durable evidence and commit**
 
 Update ASBC-007 through ASBC-009 states, exact commit/review ranges, test counts, packet digest, and residual risks. Append the final verification event to `knowledge/log.md`. Commit with message `docs: close epic artifact lifecycle follow-up`.
 
-- [ ] **Step 5: Push and update the existing Draft PR**
+- [ ] **Step 5: Controller review後にpushし、既存Draft PRを更新する（pending remote delivery）**
 
-Push `codex/approved-spec-binding-contract` to `origin`. Update Draft PR #32 summary/checks to describe per-Epic durable roots, untracked runtime artifacts, the retained tracked Input Packet exception, and full verification evidence. Confirm the PR remains draft and do not merge or live-install.
+このTaskではpushもDraft PR #32 mutationも行わない。controllerがmandatory task reviewとbroad whole-branch reviewを先に完了した後、`codex/approved-spec-binding-contract`を`origin`へpushし、per-Epic durable root、untracked runtime artifacts、tracked Input Packet exception、full verification evidenceをDraft PR #32 summary/checkへ反映する。PRはdraftのまま維持し、ready化、merge、release、live installは行わない。
+
+## Task 3 Local PR_READY Evidence
+
+- Forward test: hypothetical Epic `cross-host-release-attestation`、`epic-runtime-boundary-audit`、`portable-approval-evidence-refresh`の3/3が、tracked `knowledge/wiki/syntheses/<epic-id>/`とuntracked Git common runtime rootを独立に選択した。raw transcriptはcommitしていない。
+- Verification: issue-loop 247、grill 26、llm-wiki 6、scripts 59 tests、architecture/context/strict context/dual-host/両creator validators、`git diff --check`が成功。strict contextはissue-loop operation count `8 == 8`、top-level `warnings=[]`。
+- Plan correction: initial briefの`--strict`はcurrent CLIに存在せずexit 2だった。CLI `--help`、CI、strict testsが共通して使うcanonical flags `--require-baseline --fail-on-warning`へ本plan commandを訂正し、product code/specは変更していない。
+- Immutable evidence: spec SHA-256 `2bd4fcdbed9828c988a9d5c24cdd02242434f0e44e802cceb34fc4a0e7b86193`、sealed packet SHA-256 `e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c`。両bytesを変更していない。
+- Risk review: spec alignment、host-specific tracked path、stale flat current link、historical migration、schema/version drift、remote-scope expansionを確認し、local Critical / Important findingは0。mandatory controller reviewsとremote updateだけをpendingとする。
 
 ## Self-Review
 
