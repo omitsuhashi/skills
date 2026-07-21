@@ -1205,3 +1205,11 @@ append-only で使います。すべての entry は予測しやすい header �
 - final local verificationはissue-implementation-loop 244 tests、grill-to-pr-loop 25 tests、llm-wiki 6 tests、architecture/context/strict context/dual-host/両creator validators、current Envelope validator、`git diff --check`が成功した。strict contextは`warnings=[]`、issue-loop operation countはapproved contractどおり8
 - immutable raw-byte SHA-256はspec `6cedbba982f891d8ffceb9204bfc453b276df9e6021dca048cb0612d359a3dcc`、sealed Input Packet `3779e815b4be7438b36e9fb53073fa1d3ab20f07cd5ad1c531fa075c11b457e7`のまま。corrected Envelope v4は`c15a7e9f4dc18acf8899f8e660f8f6eff8753f39b9f72a5772e44daf22d89497`
 - 全ASBC issueは最終的に`LOCAL_COMPLETE`、remote policyは`local_only`。push、GitHub Issue、PR、merge、live Codex/Hermes install/runtime changeは実行していない
+
+## [2026-07-22] final-verification | Loop Skill Approved Spec Binding Contract
+
+- commit `18a7fc4e8439421b28499f9105bf7653888b22de` (`fix: close binding metadata parity`) で Worker Packet の Envelope / Runtime / binding metadata exact parityと、strict context baselineのoperation-count self-consistencyを固定した
+- final focused review `7e9515a7e74f632c3202ae2ab81dd65e7102b4ac..18a7fc4e8439421b28499f9105bf7653888b22de` は Approved。Critical / Important / Minorすべて0で、open findingはない
+- final local verificationはissue-implementation-loop 245 tests、grill-to-pr-loop 25 tests、llm-wiki 6 tests、scripts 59 testsが成功した。strict contextはcurrent / baseline operation count `8 == 8`、`warnings=[]`
+- immutable raw-byte SHA-256はspec `6cedbba982f891d8ffceb9204bfc453b276df9e6021dca048cb0612d359a3dcc`、sealed Input Packet `3779e815b4be7438b36e9fb53073fa1d3ab20f07cd5ad1c531fa075c11b457e7`、corrected Envelope v4 `c15a7e9f4dc18acf8899f8e660f8f6eff8753f39b9f72a5772e44daf22d89497`のまま変更していない
+- 全ASBC issueは`LOCAL_COMPLETE`、remote policyは`local_only`。push、GitHub Issue、PR、merge、live Codex/Hermes install/runtime changeは実行していない

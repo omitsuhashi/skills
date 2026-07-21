@@ -2,7 +2,7 @@
 
 ## 状態
 
-Written Spec Gate / Issue Gate / Execution Plan Gate を通過し、ASBC-001 から ASBC-006 は local 実装・独立 review・full verification を完了した。2026-07-21 の初回 closeout は whole-branch review で再オープンし、2段階の hardening fix と最終 focused closure を経て 2026-07-22 に再完了した。全 issue は `LOCAL_COMPLETE`。remote policy は承認どおり `local_only` であり、push、PR、merge、live install は意図的に実行していない。
+Written Spec Gate / Issue Gate / Execution Plan Gate を通過し、ASBC-001 から ASBC-006 は local 実装・独立 review・full verification を完了した。2026-07-21 の初回 closeout は whole-branch review で再オープンし、2段階の hardening fix、metadata parity micro-fix、最終 zero-finding approval を経て 2026-07-22 に再完了した。全 issue は `LOCAL_COMPLETE`。remote policy は承認どおり `local_only` であり、push、PR、merge、live install は意図的に実行していない。
 
 ## Source
 
@@ -257,8 +257,8 @@ bootstrap approval を恒久 fallback にせず、実装済み v2 contract で�
 
 - Review/diff range: `2ba3ce920b15b63a8e560d3eb8319882c153e775..b3bfa4b5a8cb1dd7788aa61398679ce6c5f995dd`（landed commits: `8401b7a40087075342e91df65792b1bb959e30c8`、`a405262512e05b36d5f5e37093aa02f8b6da6579`、`b3bfa4b5a8cb1dd7788aa61398679ce6c5f995dd`）。
 - Landed scope: ASB-01〜ASB-30 の重複なし public acceptance matrix、connected reseal epoch、isolated Codex/Hermes CLI parity、complete current artifact/executable inventory、strict warning-free context baseline。
-- Review: task-local 2 cycle後の focused reviewに続き、initial closeout後の whole-branch reviewと final hardening reviewを実施した。両 review wave の全 blockerを閉じ、最終 focused closure は Critical / Important / Minor すべて 0。
-- Evidence: issue-loop 244 tests、grill 25 tests、llm-wiki 6 tests、strict context report `warnings=[]`、issue-loop operation count 8、全 repository/creator validators、Packet v2 / corrected Envelope v4 current validation が成功。
+- Review: task-local 2 cycle後の focused reviewに続き、initial closeout後の whole-branch reviewと final hardening reviewを実施した。両 review wave の全 blockerに加えて Worker Packet binding metadata parity と strict context baseline self-consistencyを閉じ、commit `18a7fc4e8439421b28499f9105bf7653888b22de` の最終 focused reviewは Approved、Critical / Important / Minor すべて 0。
+- Evidence: issue-loop 245 tests、grill 25 tests、llm-wiki 6 tests、scripts 59 tests、strict context report current / baseline operation count `8 == 8`、`warnings=[]`、全 repository/creator validators、Packet v2 / corrected Envelope v4 current validation が成功。
 
 ## Whole-Branch Hardening Re-closeout
 
@@ -287,6 +287,13 @@ bootstrap approval を恒久 fallback にせず、実装済み v2 contract で�
 - Corrected Envelope v4 raw SHA-256: `c15a7e9f4dc18acf8899f8e660f8f6eff8753f39b9f72a5772e44daf22d89497`。approved spec と sealed Input Packet bytes は変更していない。
 - Remote/live action: なし。`local_only` boundaryを維持した。
 
+### Final metadata parity micro-fix
+
+- Fix commit: `18a7fc4e8439421b28499f9105bf7653888b22de` (`fix: close binding metadata parity`)。Worker Packet validatorで Envelope / Runtime / binding metadata の exact parityを固定し、strict context baselineの宣言 operation count と metrics count の self-consistency checkを追加した。
+- Final focused review range: `7e9515a7e74f632c3202ae2ab81dd65e7102b4ac..18a7fc4e8439421b28499f9105bf7653888b22de`。
+- Verdict: Approved。Critical / Important / Minor すべて 0。
+- Approved spec / sealed Input Packet / corrected Envelope bytesは変更していない。remote/live actionはなく、`local_only` boundaryを維持した。
+
 ## Fresh-Agent Forward Tests
 
 approved spec 本文、tests、ledger、plan、意図した回答を渡さず、current skill entrypoint/default reference だけを与えた3 evaluatorで確認した。raw response は repository へ保存していない。
@@ -299,10 +306,10 @@ approved spec 本文、tests、ledger、plan、意図した回答を渡さず、
 ## Final Verification
 
 - Public acceptance: ASB-01〜ASB-30 を current public operations / real entrypoint hooks へ一意に mappingし、全 row を実 test methodへ解決した。
-- Local suites: issue-implementation-loop 244 tests、grill-to-pr-loop 25 tests、llm-wiki 6 tests が成功。
-- Repository checks: skill architecture、skill context、strict context report、dual-host compatibility、両 loop skill の skill-creator quick validation、`git diff --check` が成功。strict context report は `warnings=[]`、issue-loop operation count は approved contractどおり 8。
+- Local suites: issue-implementation-loop 245 tests、grill-to-pr-loop 25 tests、llm-wiki 6 tests、scripts 59 tests が成功。
+- Repository checks: skill architecture、skill context、strict context report、dual-host compatibility、両 loop skill の skill-creator quick validation、`git diff --check` が成功。strict context report は current / baseline operation count `8 == 8`、`warnings=[]`。
 - Current artifact checks: Input Packet v2 と corrected Execution Envelope v4 は public validator で `ok=true`。spec / packet / envelope の raw SHA-256 はそれぞれ `6cedbba982f891d8ffceb9204bfc453b276df9e6021dca048cb0612d359a3dcc`、`3779e815b4be7438b36e9fb53073fa1d3ab20f07cd5ad1c531fa075c11b457e7`、`c15a7e9f4dc18acf8899f8e660f8f6eff8753f39b9f72a5772e44daf22d89497`。
-- Implementation review: task-local review後に whole-branch reviewを2段階で完了し、最終 focused closureで open Critical / Important / Minor findingはない。
+- Implementation review: task-local review後に whole-branch reviewを2段階で完了し、metadata parity micro-fix `18a7fc4e8439421b28499f9105bf7653888b22de` の最終 focused reviewも Approved。open Critical / Important / Minor findingはない。
 
 ## Residual Risks And Remote Boundary
 
