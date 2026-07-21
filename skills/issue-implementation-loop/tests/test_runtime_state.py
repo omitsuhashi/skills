@@ -117,6 +117,23 @@ class RuntimeStateTests(unittest.TestCase):
                     self.assertNotEqual(result.returncode, 0)
                     self.assertIn("SCHEMA_UNSUPPORTED", result.stderr)
 
+    def test_rebuild_runtime_state_rejects_boolean_envelope_revision(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            events_path = Path(tmp) / "events.jsonl"
+            event = self.event(
+                "E-001",
+                type="issue_status_changed",
+                issue="G2PR-001",
+                status="RUNNING",
+            )
+            event["envelope_revision"] = True
+            events_path.write_text(json.dumps(event) + "\n", encoding="utf-8")
+
+            result = run_script("rebuild_runtime_state.py", str(events_path))
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("SCHEMA_UNSUPPORTED", result.stderr)
+
     def test_validate_runtime_state_rejects_unknown_root_and_issue_fields(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             cases = {
@@ -144,6 +161,46 @@ class RuntimeStateTests(unittest.TestCase):
             }
             for name, runtime in cases.items():
                 with self.subTest(name=name):
+                    runtime_path = Path(tmp) / f"{name}.json"
+                    write_json(runtime_path, runtime)
+
+                    result = run_script("validate_runtime_state.py", str(runtime_path))
+
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("SCHEMA_UNSUPPORTED", result.stderr)
+
+    def test_validate_runtime_state_rejects_booleans_for_integer_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cases = {
+                "envelope-revision": {
+                    "envelope_revision": True,
+                },
+                "events-applied": {
+                    "envelope_revision": 1,
+                    "rebuild": {
+                        "events_applied": True,
+                        "duplicate_events_ignored": 0,
+                    },
+                },
+                "duplicates-ignored": {
+                    "envelope_revision": 1,
+                    "rebuild": {
+                        "events_applied": 1,
+                        "duplicate_events_ignored": False,
+                    },
+                },
+            }
+            for name, fields in cases.items():
+                with self.subTest(name=name):
+                    runtime = current_runtime(
+                        {
+                            "schema_version": 2,
+                            "epic_id": "issue-implementation-loop",
+                            "issues": {},
+                            "human_requests": [],
+                            **fields,
+                        }
+                    )
                     runtime_path = Path(tmp) / f"{name}.json"
                     write_json(runtime_path, runtime)
 

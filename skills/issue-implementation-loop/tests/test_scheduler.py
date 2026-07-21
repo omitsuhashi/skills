@@ -4,6 +4,30 @@ from _helpers import *
 
 
 class SchedulerTests(unittest.TestCase):
+    def test_compute_next_actions_rejects_boolean_runtime_envelope_revision(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            envelope_path = Path(tmp) / "envelope.json"
+            runtime_path = Path(tmp) / "runtime.json"
+            write_json(envelope_path, base_envelope())
+            write_json(
+                runtime_path,
+                {
+                    "schema_version": 2,
+                    "epic_id": "issue-implementation-loop",
+                    "envelope_revision": True,
+                    "approved_spec_binding": approved_spec_binding(),
+                    "issues": {},
+                    "human_requests": [],
+                },
+            )
+
+            result = run_script(
+                "compute_next_actions.py", str(envelope_path), str(runtime_path)
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("SCHEMA_UNSUPPORTED", result.stderr)
+
     def test_compute_next_actions_rejects_runtime_from_another_binding_epoch(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             envelope_path = Path(tmp) / "envelope.json"

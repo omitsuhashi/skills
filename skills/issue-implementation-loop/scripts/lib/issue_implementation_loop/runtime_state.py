@@ -81,7 +81,7 @@ def validate_event(event: Any) -> list[str]:
     if not isinstance(event.get("epic_id"), str) or not event["epic_id"]:
         return ["epic_id is required"]
     if (
-        not isinstance(event.get("envelope_revision"), int)
+        type(event.get("envelope_revision")) is not int
         or event["envelope_revision"] < 1
     ):
         return ["SCHEMA_UNSUPPORTED"]

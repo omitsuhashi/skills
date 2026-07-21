@@ -74,7 +74,7 @@ def validate_runtime_state(state: dict[str, Any]) -> list[str]:
     if not isinstance(epic_id, str) or not is_lower_kebab(epic_id):
         errors.append("epic_id must be lower-kebab-case ASCII")
     if (
-        not isinstance(state.get("envelope_revision"), int)
+        type(state.get("envelope_revision")) is not int
         or state["envelope_revision"] < 1
     ):
         errors.append("SCHEMA_UNSUPPORTED")
@@ -83,7 +83,7 @@ def validate_runtime_state(state: dict[str, Any]) -> list[str]:
         not isinstance(rebuild, dict)
         or set(rebuild) != {"events_applied", "duplicate_events_ignored"}
         or any(
-            not isinstance(rebuild.get(field), int) or rebuild[field] < 0
+            type(rebuild.get(field)) is not int or rebuild[field] < 0
             for field in rebuild
         )
     ):
