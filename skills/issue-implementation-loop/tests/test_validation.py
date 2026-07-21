@@ -30,7 +30,7 @@ class ValidationTests(unittest.TestCase):
                     "title": "Bind runtime state",
                     "source": {
                         "type": "local",
-                        "path": "knowledge/wiki/syntheses/issues.md",
+                        "path": "knowledge/wiki/syntheses/approved-spec-binding/issues.md",
                     },
                     "acceptance_criteria": ["Reject mixed runtime bindings."],
                     "non_goals": ["Do not migrate old runs."],
@@ -150,7 +150,10 @@ class ValidationTests(unittest.TestCase):
                     if changed_path == "packet":
                         target = repo / binding["path"]
                     else:
-                        target = repo / "knowledge/wiki/syntheses/spec.md"
+                        target = (
+                            repo
+                            / "knowledge/wiki/syntheses/approved-spec-binding/spec.md"
+                        )
                     target.write_bytes(target.read_bytes() + b"drift")
                     git(repo, "add", target.relative_to(repo).as_posix())
                     git(repo, "commit", "-q", "-m", "drift projection")
@@ -236,9 +239,11 @@ class ValidationTests(unittest.TestCase):
             repo, binding, gate_commit = create_binding_repo(Path(tmp))
             base_commit = git(repo, "rev-parse", f"{gate_commit}^")
             packet_bytes = (repo / binding["path"]).read_bytes()
-            spec_bytes = (repo / "knowledge/wiki/syntheses/spec.md").read_bytes()
+            spec_bytes = (
+                repo / "knowledge/wiki/syntheses/approved-spec-binding/spec.md"
+            ).read_bytes()
             git(repo, "checkout", "-q", "-b", "side", base_commit)
-            synthesis = repo / "knowledge/wiki/syntheses"
+            synthesis = repo / "knowledge/wiki/syntheses/approved-spec-binding"
             synthesis.mkdir(parents=True)
             (synthesis / "spec.md").write_bytes(spec_bytes)
             (synthesis / "issues.md").write_text("# Issues\n", encoding="utf-8")
@@ -275,7 +280,10 @@ class ValidationTests(unittest.TestCase):
                         packet_path.write_bytes(packet_path.read_bytes() + b"\n")
                         binding["sha256"] = hashlib.sha256(packet_path.read_bytes()).hexdigest()
                     else:
-                        spec_path = repo / "knowledge/wiki/syntheses/spec.md"
+                        spec_path = (
+                            repo
+                            / "knowledge/wiki/syntheses/approved-spec-binding/spec.md"
+                        )
                         spec_path.write_text("new approved spec\n", encoding="utf-8")
                         packet_path = repo / binding["path"]
                         packet = json.loads(packet_path.read_text(encoding="utf-8"))
@@ -320,7 +328,7 @@ class ValidationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
             subprocess.run(["git", "init", "-q", str(repo)], check=True)
-            spec_path = repo / "knowledge/wiki/syntheses/spec.md"
+            spec_path = repo / "knowledge/wiki/syntheses/approved-spec-binding/spec.md"
             spec_path.parent.mkdir(parents=True)
             spec_path.write_text("spec\n", encoding="utf-8")
             issues_path = spec_path.with_name("issues.md")
@@ -357,7 +365,7 @@ class ValidationTests(unittest.TestCase):
             cases.append(("unsafe-path", unsafe, "PATH_TRAVERSAL"))
             unsafe_source = copy.deepcopy(packet)
             unsafe_source["work_items"][0]["source"]["path"] = (
-                "knowledge/wiki/syntheses/linked-issues.md"
+                "knowledge/wiki/syntheses/approved-spec-binding/linked-issues.md"
             )
             cases.append(("unsafe-source", unsafe_source, "PATH_SYMLINK"))
             unsafe_scope = copy.deepcopy(packet)
@@ -393,7 +401,7 @@ class ValidationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
             subprocess.run(["git", "init", "-q", str(repo)], check=True)
-            spec_path = repo / "knowledge/wiki/syntheses/spec.md"
+            spec_path = repo / "knowledge/wiki/syntheses/approved-spec-binding/spec.md"
             spec_path.parent.mkdir(parents=True)
             spec_path.write_text("spec\n", encoding="utf-8")
             spec_path.with_name("issues.md").write_text("issues\n", encoding="utf-8")
@@ -408,7 +416,7 @@ class ValidationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
             subprocess.run(["git", "init", "-q", str(repo)], check=True)
-            spec_path = repo / "knowledge/wiki/syntheses/spec.md"
+            spec_path = repo / "knowledge/wiki/syntheses/approved-spec-binding/spec.md"
             spec_path.parent.mkdir(parents=True)
             spec_path.write_text("spec\n", encoding="utf-8")
             spec_path.with_name("issues.md").write_text("issues\n", encoding="utf-8")

@@ -1,18 +1,24 @@
 # Runtime State
 
-Keep mutable execution state outside tracked issue branches:
+Keep all instantiated execution artifacts outside Git and tracked issue branches:
 
 ```text
 $(git rev-parse --git-common-dir)/agent-runs/issue-implementation-loop/<epic-id>/
+├── execution-envelope.json
+├── runtime-state.json
+├── events.jsonl
+├── reports/
+├── reviews/
+├── decisions/
+├── locks/
+├── recovery/
+└── delivery/
 ```
 
-Runtime root contents: `runtime-state.json`, `events.jsonl`, `reports/`,
-`reviews/`, `decisions/`, `locks/`, `recovery/`.
+Do not commit instantiated execution artifacts. Schemas, templates, and test fixtures remain tracked product assets.
 
-Only the coordinator writes central state: validate report, append event, update
-snapshot. Worker branches must not include `runtime-state.json`,
-`events.jsonl`, or live decision artifacts unless approved scope owns
-coordinator-state tooling.
+Only the coordinator writes state. Worker branches exclude `runtime-state.json`,
+`events.jsonl`, and live decisions unless scope owns coordinator tooling.
 
 Event v2 and Runtime State v2 carry one top-level `approved_spec_binding`.
 Validate before dedupe and after fold; reject mixed/unknown epochs. Reseal starts

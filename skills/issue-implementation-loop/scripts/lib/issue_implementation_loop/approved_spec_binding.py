@@ -76,6 +76,7 @@ DEFAULT_ACTIONS = {
     "GATE_COMMIT_NOT_ANCESTOR": "return_to_execution_plan_gate",
     "GATE_COMMIT_BLOB_MISMATCH": "return_to_execution_plan_gate",
     "AUXILIARY_ARTIFACT_BINDING_MISMATCH": "regenerate_for_active_binding",
+    "ARTIFACT_LAYOUT_MISMATCH": "return_to_execution_plan_gate",
     "PATH_ABSOLUTE": "regenerate_artifact",
     "PATH_TRAVERSAL": "regenerate_artifact",
     "PATH_OUTSIDE_REPO": "regenerate_artifact",
@@ -415,6 +416,20 @@ def _nonempty_string_list(value: Any) -> bool:
     )
 
 
+def _validate_artifact_layout(packet: Mapping[str, Any]) -> None:
+    artifact_root = PurePosixPath(_parse_repo_path(packet["artifact_root"]))
+    if artifact_root.name != packet["epic_id"]:
+        raise BindingError(
+            "ARTIFACT_LAYOUT_MISMATCH", path=artifact_root.as_posix()
+        )
+    paths = [packet["spec_binding"]["path"]]
+    paths.extend(item["source"]["path"] for item in packet["work_items"])
+    for value in paths:
+        safe = PurePosixPath(_parse_repo_path(value))
+        if safe.parent != artifact_root:
+            raise BindingError("ARTIFACT_LAYOUT_MISMATCH", path=safe.as_posix())
+
+
 def _validate_packet_shape(packet: Any) -> dict[str, Any]:
     if not isinstance(packet, dict) or packet.get("schema_version") != 2:
         raise BindingError("SCHEMA_UNSUPPORTED")
@@ -470,6 +485,7 @@ def _validate_packet_shape(packet: Any) -> dict[str, Any]:
             not isinstance(dependency, str) or dependency not in ids for dependency in dependencies
         ):
             raise BindingError("SCHEMA_UNSUPPORTED")
+    _validate_artifact_layout(packet)
     return packet
 
 
@@ -799,7 +815,7 @@ def seal_input_packet(
     _validate_packet_shape(packet)
     _validate_packet_files(root, packet)
     if PurePosixPath(output_safe).parent.as_posix() != packet["artifact_root"]:
-        raise BindingError("PATH_OUTSIDE_REPO", path=output_safe)
+        raise BindingError("ARTIFACT_LAYOUT_MISMATCH", path=output_safe)
     serialized = (
         json.dumps(packet, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     ).encode("utf-8")
@@ -984,6 +1000,8 @@ def verify_chain(
     if expected_packet_digest is not None and packet_digest != expected_packet_digest:
         raise BindingError("INPUT_PACKET_DIGEST_MISMATCH", path=packet_path)
     packet = _packet_from_bytes(raw)
+    if PurePosixPath(packet_path).parent.as_posix() != packet["artifact_root"]:
+        raise BindingError("ARTIFACT_LAYOUT_MISMATCH", path=packet_path)
     _validate_packet_files(root, packet)
     expected_spec = _coerce_spec_revision(packet["spec_binding"])
     current_spec = identify_spec(root, expected_spec.path)

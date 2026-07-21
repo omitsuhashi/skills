@@ -103,6 +103,18 @@ def git(repo: Path, *args: str) -> str:
     return result.stdout.strip()
 
 
+def _ensure_flat_fixture_aliases(repo: Path, artifact_root: Path) -> None:
+    """Expose old test mutation paths without using them in the packet contract."""
+
+    flat_root = repo / "knowledge/wiki/syntheses"
+    flat_root.mkdir(parents=True, exist_ok=True)
+    for name in ("spec.md", "issues.md"):
+        source = artifact_root / name
+        alias = flat_root / name
+        if source.exists() and not alias.exists():
+            os.link(source, alias)
+
+
 def approved_spec_binding(
     *,
     path: str = ASBC_PACKET_PATH,
@@ -250,7 +262,10 @@ def base_envelope() -> dict:
         "work_items": {
             "G2PR-001": {
                 "title": "Example issue A",
-                "source": {"type": "local", "path": "knowledge/wiki/syntheses/issues.md"},
+                "source": {
+                    "type": "local",
+                    "path": "knowledge/wiki/syntheses/issue-implementation-loop/issues.md",
+                },
                 "acceptance_criteria": ["Issue A is complete."],
                 "non_goals": ["Do not write remotely."],
                 "verification": ["python3 -m unittest"],
@@ -263,7 +278,10 @@ def base_envelope() -> dict:
             },
             "G2PR-002": {
                 "title": "Example issue B",
-                "source": {"type": "local", "path": "knowledge/wiki/syntheses/issues.md"},
+                "source": {
+                    "type": "local",
+                    "path": "knowledge/wiki/syntheses/issue-implementation-loop/issues.md",
+                },
                 "acceptance_criteria": ["Issue B is complete."],
                 "non_goals": ["Do not write remotely."],
                 "verification": ["python3 -m unittest"],
@@ -276,7 +294,10 @@ def base_envelope() -> dict:
             },
             "G2PR-003": {
                 "title": "Example issue C",
-                "source": {"type": "local", "path": "knowledge/wiki/syntheses/issues.md"},
+                "source": {
+                    "type": "local",
+                    "path": "knowledge/wiki/syntheses/issue-implementation-loop/issues.md",
+                },
                 "acceptance_criteria": ["Issue C is complete."],
                 "non_goals": ["Do not write remotely."],
                 "verification": ["python3 -m unittest"],
@@ -315,7 +336,7 @@ def create_binding_repo(
     git(repo, "add", "README.md")
     git(repo, "commit", "-q", "-m", "base")
 
-    synthesis = repo / "knowledge/wiki/syntheses"
+    synthesis = repo / "knowledge/wiki/syntheses/approved-spec-binding"
     synthesis.mkdir(parents=True)
     spec_path = synthesis / "spec.md"
     issues_path = synthesis / "issues.md"
@@ -329,10 +350,11 @@ def create_binding_repo(
     git(repo, "commit", "-q", "-m", "gate")
     gate_commit = git(repo, "rev-parse", "HEAD")
     binding = {
-        "path": "knowledge/wiki/syntheses/input-packet.json",
+        "path": "knowledge/wiki/syntheses/approved-spec-binding/input-packet.json",
         "sha256": packet_digest,
         "gate_commit": gate_commit,
     }
+    _ensure_flat_fixture_aliases(repo, synthesis)
     return repo, binding, gate_commit
 
 
@@ -350,15 +372,19 @@ def bind_envelope_fixture_repo(
         git(repo, "add", "README.md")
         git(repo, "commit", "-q", "-m", "base")
 
-    synthesis = repo / "knowledge/wiki/syntheses"
+    artifact_root = f"knowledge/wiki/syntheses/{envelope['epic_id']}"
+    for item in envelope["work_items"].values():
+        source_path = item["source"]["path"]
+        if source_path.startswith("knowledge/wiki/syntheses/"):
+            item["source"]["path"] = f"{artifact_root}/{Path(source_path).name}"
+    synthesis = repo / artifact_root
     synthesis.mkdir(parents=True, exist_ok=True)
     spec_path = synthesis / "spec.md"
     issues_path = synthesis / "issues.md"
     packet_path = synthesis / "input-packet.json"
     spec_path.write_text("approved fixture spec\n", encoding="utf-8")
     issues_path.write_text("# Fixture issues\n", encoding="utf-8")
-    packet = current_input_packet(repo)
-    packet["epic_id"] = envelope["epic_id"]
+    packet = current_input_packet(repo, epic_id=envelope["epic_id"])
     packet["delivery_intent"] = envelope["remote_write_policy"]["mode"]
     packet["work_items"] = [
         {
@@ -378,7 +404,7 @@ def bind_envelope_fixture_repo(
     git(repo, "commit", "-q", "--allow-empty", "-m", "gate")
     gate_commit = git(repo, "rev-parse", "HEAD")
     binding = {
-        "path": "knowledge/wiki/syntheses/input-packet.json",
+        "path": packet_path.relative_to(repo).as_posix(),
         "sha256": hashlib.sha256(packet_path.read_bytes()).hexdigest(),
         "gate_commit": gate_commit,
     }
@@ -387,6 +413,7 @@ def bind_envelope_fixture_repo(
     if envelope["remote_write_policy"]["mode"] == "batch_issue_prs":
         if git(repo, "branch", "--show-current") != envelope["epic_base"]["ref"]:
             git(repo, "branch", "-f", envelope["epic_base"]["ref"], gate_commit)
+    _ensure_flat_fixture_aliases(repo, synthesis)
     return binding, gate_commit
 
 
@@ -495,13 +522,15 @@ def write_binding_sources(
 ) -> tuple[Path, Path, Path]:
     envelope_path = repo / "execution-envelope.json"
     runtime_path = repo / "runtime-state.json"
-    issue_source = repo / "knowledge/wiki/syntheses/issues.md"
-    write_json(envelope_path, binding_envelope(repo, binding))
+    envelope_value = binding_envelope(repo, binding)
+    approved_item = next(iter(envelope_value["work_items"].values()))
+    issue_source = repo / approved_item["source"]["path"]
+    write_json(envelope_path, envelope_value)
     write_json(
         runtime_path,
         {
             "schema_version": 2,
-            "epic_id": "approved-spec-binding",
+            "epic_id": envelope_value["epic_id"],
             "envelope_revision": 1,
             "approved_spec_binding": copy.deepcopy(binding),
             "issues": {},
@@ -562,7 +591,7 @@ def current_worker_packet(
         },
         "read_paths": [
             {
-                "path": "knowledge/wiki/syntheses/issues.md",
+                "path": issue_source.relative_to(repo).as_posix(),
                 "purpose": "issue-ledger",
             }
         ],
@@ -625,13 +654,27 @@ def base_packet() -> dict:
     }
 
 
-def current_input_packet(repo: Path, *, delivery_intent: str = "local_only") -> dict:
-    spec_path = "knowledge/wiki/syntheses/spec.md"
+def current_input_packet(
+    repo: Path,
+    *,
+    delivery_intent: str = "local_only",
+    epic_id: str = "approved-spec-binding",
+) -> dict:
+    artifact_root = f"knowledge/wiki/syntheses/{epic_id}"
+    spec_path = f"{artifact_root}/spec.md"
+    nested_root = repo / artifact_root
+    flat_root = repo / "knowledge/wiki/syntheses"
+    nested_root.mkdir(parents=True, exist_ok=True)
+    for name in ("spec.md", "issues.md"):
+        nested = nested_root / name
+        flat = flat_root / name
+        if not nested.exists() and flat.exists():
+            os.link(flat, nested)
     digest = hashlib.sha256((repo / spec_path).read_bytes()).hexdigest()
     return {
         "schema_version": 2,
-        "epic_id": "approved-spec-binding",
-        "artifact_root": "knowledge/wiki/syntheses",
+        "epic_id": epic_id,
+        "artifact_root": artifact_root,
         "spec_binding": {"path": spec_path, "sha256": digest},
         "approval_evidence": {
             "decision": "approved",
@@ -653,7 +696,7 @@ def current_input_packet(repo: Path, *, delivery_intent: str = "local_only") -> 
                 "title": "Propagate approved binding",
                 "source": {
                     "type": "local",
-                    "path": "knowledge/wiki/syntheses/issues.md",
+                    "path": f"{artifact_root}/issues.md",
                 },
                 "acceptance_criteria": ["Reject mismatched worker projections."],
                 "non_goals": ["Stop before remote writes."],

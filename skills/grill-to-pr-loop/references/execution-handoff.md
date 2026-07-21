@@ -51,7 +51,7 @@ Seal re-reads the spec, atomically writes `spec_binding` and `approval_evidence`
 
 Packet drift has three outcomes. Exact restoration of unintended packet byte drift plus fresh validation retains the existing approved binding, Envelope revision, and runtime epoch. An intended non-spec packet byte change goes through the Execution Plan Gate for reconciliation and revalidation, a new reseal, and a new Envelope revision and runtime epoch, without a new human Spec Gate approval. A change to spec bytes, `spec_binding`, or `approval_evidence` goes through the human Spec Gate for a new approval and seal, then a new Envelope revision and runtime epoch. The non-spec route is exhaustive: execution-intent-only packet drift—issue scope, dependencies, write scope, or delivery intent—is only an example; any other sealed packet byte drift while `spec_binding` and `approval_evidence` remain exact follows it, including other packet fields and serialization or whitespace-only drift. On that route, reseal only when the changed bytes are intended; exact restoration reuses the seal. Old downstream artifacts do not cross either new-seal epoch.
 
-Commit the sealed packet and exact spec, then create an Execution Envelope v4 whose `approved_spec_binding` pins the packet digest and full gate commit.
+Commit the four durable planning files. Then create the untracked Execution Envelope v4, pinning the packet digest and full gate commit; execution owns its lifecycle.
 
 ## Implementation Context Handoff
 
@@ -76,7 +76,7 @@ python3 <issue-implementation-loop-skill-dir>/scripts/check_capabilities.py --in
 
 When Spec Gate and Issue Gate already approved scope, auto-continue without another human approval if `validate_input_packet.py` and capability preflight pass, scope stays approved, and remote policy has no unapproved external write or high-risk action.
 
-After Execution Plan Gate approval or auto-continue, commit approved artifacts, packet/evidence boundary, local ledger, and `knowledge/log.md`. Then run `issue-implementation-loop prepare` from a fresh or compacted coordinator context.
+After Execution Plan Gate approval or auto-continue, commit durable artifacts, packet/evidence, ledger, and `knowledge/log.md`. Then run `issue-implementation-loop prepare` from a fresh or compacted coordinator context; exclude its instantiated artifacts.
 
 Stop instead of auto-continuing if the approved scope would change, dirty changes overlap planned write scope, capability preflight fails, worker context is unavailable, or the observed remote policy does not match the approved remote policy.
 

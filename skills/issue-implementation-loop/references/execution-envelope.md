@@ -1,6 +1,6 @@
 # Execution Envelope
 
-The Execution Envelope is the approved execution contract. It is more specific than the input packet and includes reservations, policies, retry budgets, and remote-write boundaries.
+The Execution Envelope is the approved execution contract. Instantiated `execution-envelope.json` lives in `runtime-state.md`'s untracked tree; schemas/templates remain Git tracked.
 
 ## Required Sections
 

@@ -4,19 +4,17 @@ Use this reference for intake, Grill with Docs, spec/PRD synthesis, Spec Gate, I
 
 ## Artifact Contract
 
-Prefer repo-local conventions. In this repo:
+Track this tree for every current Epic:
 
-- long specs, ADRs, implementation plans, and Goal contracts: `knowledge/wiki/syntheses/`
-- raw source material: `knowledge/raw/sources/`
-- source summaries: `knowledge/wiki/sources/`
-- active catalog and timeline: `knowledge/index.md`, `knowledge/log.md`
+```text
+<durable-planning-root>/<epic-id>/
+├── spec.md
+├── issues.md
+├── implementation-plan.md
+└── input-packet.json
+```
 
-For repos without a knowledge wiki, fallback paths are:
-
-- Spec or PRD: `docs/grill-to-pr-loop/<topic>-spec.md`
-- Local issue ledger: `docs/grill-to-pr-loop/<topic>-issues.md`
-- Execution packet: `docs/grill-to-pr-loop/<topic>-input-packet.json`
-- Completion summary: `docs/grill-to-pr-loop/<topic>-completion.md`
+Here `<durable-planning-root>` is `knowledge/wiki/syntheses`; without a wiki use `docs/grill-to-pr-loop`. `artifact_root` is the exact Epic directory; spec, local issue sources, and sealed packet are direct children. Keep `knowledge/index.md` and `knowledge/log.md` current. Commit this tree; execution artifacts use the untracked lifecycle.
 
 ## Spec / PRD Minimum
 

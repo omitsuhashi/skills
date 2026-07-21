@@ -44,7 +44,7 @@ At 65% session pressure or phase exit, read `references/context-compaction.md`.
 - At prepare, dispatch/fix, review, resume/rebuild, completion, and delivery, freshly verify the same active `approved_spec_binding`; read-only status may diagnose without advancing.
 - Use core's three-outcome drift lifecycle: restoration, non-spec reseal, or human Spec Gate reseal.
 - Require `execution_policy.worker_context_required=true`, `coordinator_may_implement=false`, and `serial_fallback_mode=worker_context_only`.
-- Keep runtime state under `$(git rev-parse --git-common-dir)/agent-runs/issue-implementation-loop/<epic-id>/`, outside issue branches.
+- Keep instantiated artifacts in the operation's untracked runtime tree, outside issue branches.
 - Reserve every issue branch/worktree before execution; require `epic_base`, `base_policy`, typed dependencies, and `epic_base.branch_state` for `batch_issue_prs`.
 - Recompute runnable work after every event; a wave is not a completion barrier.
 - Use `tdd` or an approved equivalent, fresh verification, and a scoped commit before review or success.

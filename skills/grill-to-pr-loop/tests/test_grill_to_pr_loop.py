@@ -14,6 +14,8 @@ REPO_ROOT = SKILL_DIR.parents[1]
 CHECK_PREREQS = SKILL_DIR / "scripts" / "check_prereqs.py"
 CORE_REFERENCE = SKILL_DIR / "references" / "core.md"
 PLANNING_CONTRACT = SKILL_DIR / "references" / "planning-contract.md"
+EXECUTION_HANDOFF = SKILL_DIR / "references" / "execution-handoff.md"
+ISSUE_LOOP_DIR = REPO_ROOT / "skills" / "issue-implementation-loop"
 GRILL_AGENT_YAML = SKILL_DIR / "agents" / "openai.yaml"
 ISSUE_AGENT_YAML = REPO_ROOT / "skills" / "issue-implementation-loop" / "agents" / "openai.yaml"
 
@@ -37,6 +39,39 @@ def extract_default_prompt(path: Path) -> str:
 
 
 class GrillToPrLoopTests(unittest.TestCase):
+    def test_asb_34_to_36_documents_artifact_ownership_seam(self) -> None:
+        planning_text = PLANNING_CONTRACT.read_text(encoding="utf-8")
+        handoff_text = EXECUTION_HANDOFF.read_text(encoding="utf-8")
+        issue_skill_text = (ISSUE_LOOP_DIR / "SKILL.md").read_text(encoding="utf-8")
+        envelope_text = (
+            ISSUE_LOOP_DIR / "references" / "execution-envelope.md"
+        ).read_text(encoding="utf-8")
+        runtime_text = (
+            ISSUE_LOOP_DIR / "references" / "runtime-state.md"
+        ).read_text(encoding="utf-8")
+        combined = "\n".join(
+            (planning_text, handoff_text, issue_skill_text, envelope_text, runtime_text)
+        )
+
+        required = (
+            "<durable-planning-root>/<epic-id>/",
+            "spec.md",
+            "issues.md",
+            "implementation-plan.md",
+            "input-packet.json",
+            "$(git rev-parse --git-common-dir)/agent-runs/issue-implementation-loop/<epic-id>/",
+            "execution-envelope.json",
+            "Do not commit instantiated execution artifacts",
+        )
+        for value in required:
+            self.assertIn(value, combined)
+
+        planning_guidance = f"{planning_text}\n{handoff_text}"
+        self.assertNotRegex(
+            planning_guidance,
+            r"(?i)commit(?: the)? (?:an? )?Execution Envelope",
+        )
+
     def test_remote_delivery_reference_uses_current_delivery_validator_signature(self) -> None:
         text = (SKILL_DIR / "references" / "remote-delivery.md").read_text(
             encoding="utf-8"

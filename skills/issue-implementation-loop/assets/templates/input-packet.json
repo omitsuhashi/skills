@@ -13,12 +13,12 @@
     },
     "subject": "spec_binding"
   },
-  "artifact_root": "knowledge/wiki/syntheses",
+  "artifact_root": "knowledge/wiki/syntheses/example",
   "delivery_intent": "local_only",
-  "epic_id": "issue-implementation-loop",
+  "epic_id": "example",
   "schema_version": 2,
   "spec_binding": {
-    "path": "knowledge/wiki/syntheses/spec.md",
+    "path": "knowledge/wiki/syntheses/example/spec.md",
     "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
   },
   "work_items": [
@@ -28,7 +28,7 @@
       "id": "G2PR-001",
       "non_goals": ["対象外の挙動"],
       "source": {
-        "path": "knowledge/wiki/syntheses/issues.md",
+        "path": "knowledge/wiki/syntheses/example/issues.md",
         "type": "local"
       },
       "title": "短い日本語 issue タイトル",

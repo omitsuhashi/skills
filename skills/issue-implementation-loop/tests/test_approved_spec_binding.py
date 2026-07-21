@@ -158,6 +158,25 @@ ASB_PUBLIC_ACCEPTANCE_MATRIX = {
     "ASB-30": (
         "test_runtime_state.RuntimeStateTests.test_asb_30_reapproval_rejects_old_and_accepts_rerecorded_request",
     ),
+    "ASB-31": (
+        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_31_32_rejects_artifact_layout_mutations_without_output_mutation",
+    ),
+    "ASB-32": (
+        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_31_32_rejects_artifact_layout_mutations_without_output_mutation",
+        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_32_rejects_packet_copied_outside_artifact_root",
+    ),
+    "ASB-33": (
+        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_01_02_identify_and_seal_preserve_spec_and_verify",
+    ),
+    "ASB-34": (
+        "test_grill_to_pr_loop.GrillToPrLoopTests.test_asb_34_to_36_documents_artifact_ownership_seam",
+    ),
+    "ASB-35": (
+        "test_grill_to_pr_loop.GrillToPrLoopTests.test_asb_34_to_36_documents_artifact_ownership_seam",
+    ),
+    "ASB-36": (
+        "test_grill_to_pr_loop.GrillToPrLoopTests.test_asb_34_to_36_documents_artifact_ownership_seam",
+    ),
 }
 
 
@@ -234,13 +253,13 @@ class ApprovedSpecBindingTests(unittest.TestCase):
         self.tempdir = tempfile.TemporaryDirectory()
         self.repo = Path(self.tempdir.name)
         subprocess.run(["git", "init", "-q", str(self.repo)], check=True)
-        self.spec_path = "knowledge/wiki/syntheses/example-spec.md"
-        self.issues_path = "knowledge/wiki/syntheses/example-issues.md"
+        self.spec_path = "knowledge/wiki/syntheses/example/spec.md"
+        self.issues_path = "knowledge/wiki/syntheses/example/issues.md"
         (self.repo / self.spec_path).parent.mkdir(parents=True)
         (self.repo / self.spec_path).write_bytes("承認済み仕様\n".encode())
         (self.repo / self.issues_path).write_text("# Issues\n", encoding="utf-8")
         self.draft_path = self.repo / "draft.json"
-        self.output_path = self.repo / "knowledge/wiki/syntheses/example-input-packet.json"
+        self.output_path = self.repo / "knowledge/wiki/syntheses/example/input-packet.json"
         self.draft_path.write_text(
             json.dumps(self.draft(), ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
@@ -253,7 +272,7 @@ class ApprovedSpecBindingTests(unittest.TestCase):
         return {
             "schema_version": 2,
             "epic_id": "example",
-            "artifact_root": "knowledge/wiki/syntheses",
+            "artifact_root": "knowledge/wiki/syntheses/example",
             "work_items": [
                 {
                     "id": "ASBC-001",
@@ -305,7 +324,7 @@ class ApprovedSpecBindingTests(unittest.TestCase):
         self.assertEqual(raised.exception.code, expected)
 
     def test_asb_public_acceptance_matrix_is_complete_and_public(self) -> None:
-        expected_ids = [f"ASB-{number:02d}" for number in range(1, 31)]
+        expected_ids = [f"ASB-{number:02d}" for number in range(1, 37)]
         module_tree = ast.parse(
             Path(__file__).read_text(encoding="utf-8"), filename=__file__
         )
@@ -328,7 +347,14 @@ class ApprovedSpecBindingTests(unittest.TestCase):
         self.assertEqual(matrix_ids, expected_ids)
 
         public_tests: set[str] = set()
-        for test_path in sorted(Path(__file__).parent.glob("test_*.py")):
+        public_test_roots = (
+            Path(__file__).parent,
+            SKILL_DIR.parent / "grill-to-pr-loop" / "tests",
+        )
+        test_paths = sorted(
+            path for root in public_test_roots for path in root.glob("test_*.py")
+        )
+        for test_path in test_paths:
             tree = ast.parse(
                 test_path.read_text(encoding="utf-8"), filename=str(test_path)
             )
@@ -468,6 +494,82 @@ class ApprovedSpecBindingTests(unittest.TestCase):
         self.assert_code(
             "INPUT_PACKET_DIGEST_MISMATCH",
             lambda: module.verify_chain(self.repo, {"input_packet": ref.to_dict()}),
+        )
+
+    def test_asb_31_32_rejects_artifact_layout_mutations_without_output_mutation(self) -> None:
+        module = binding_module()
+        revision = module.identify_spec(self.repo, self.spec_path)
+        cases = {
+            "flat artifact root": {"artifact_root": "knowledge/wiki/syntheses"},
+            "foreign epic root": {
+                "artifact_root": "knowledge/wiki/syntheses/another-epic"
+            },
+            "ledger outside root": {
+                "source_path": "knowledge/wiki/syntheses/shared/issues.md"
+            },
+        }
+
+        for name, mutation in cases.items():
+            with self.subTest(name=name):
+                draft = self.draft()
+                if "artifact_root" in mutation:
+                    draft["artifact_root"] = mutation["artifact_root"]
+                if "source_path" in mutation:
+                    draft["work_items"][0]["source"]["path"] = mutation["source_path"]
+                    source = self.repo / mutation["source_path"]
+                    source.parent.mkdir(parents=True, exist_ok=True)
+                    source.write_text("# Shared issues\n", encoding="utf-8")
+                self.draft_path.write_text(
+                    json.dumps(draft, ensure_ascii=False, indent=2) + "\n",
+                    encoding="utf-8",
+                )
+                sentinel = f"existing output: {name}\n".encode()
+                self.output_path.write_bytes(sentinel)
+
+                with self.assertRaises(module.BindingError) as raised:
+                    module.seal_input_packet(
+                        self.repo,
+                        self.draft_path.relative_to(self.repo).as_posix(),
+                        self.output_path.relative_to(self.repo).as_posix(),
+                        revision,
+                        self.approval(),
+                    )
+
+                self.assertEqual(raised.exception.code, "ARTIFACT_LAYOUT_MISMATCH")
+                self.assertEqual(
+                    raised.exception.action, "return_to_execution_plan_gate"
+                )
+                self.assertEqual(self.output_path.read_bytes(), sentinel)
+
+        self.draft_path.write_text(
+            json.dumps(self.draft(), ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        outside_output = self.repo / "knowledge/wiki/syntheses/input-packet.json"
+        outside_output.write_bytes(b"outside sentinel\n")
+        with self.assertRaises(module.BindingError) as raised:
+            module.seal_input_packet(
+                self.repo,
+                self.draft_path.relative_to(self.repo).as_posix(),
+                outside_output.relative_to(self.repo).as_posix(),
+                revision,
+                self.approval(),
+            )
+        self.assertEqual(raised.exception.code, "ARTIFACT_LAYOUT_MISMATCH")
+        self.assertEqual(outside_output.read_bytes(), b"outside sentinel\n")
+
+    def test_asb_32_rejects_packet_copied_outside_artifact_root(self) -> None:
+        module, _, ref = self.seal()
+        copied_path = self.repo / "knowledge/wiki/syntheses/input-packet.json"
+        copied_path.write_bytes(self.output_path.read_bytes())
+        copied_ref = {
+            "path": copied_path.relative_to(self.repo).as_posix(),
+            "sha256": hashlib.sha256(copied_path.read_bytes()).hexdigest(),
+        }
+
+        self.assert_code(
+            "ARTIFACT_LAYOUT_MISMATCH",
+            lambda: module.verify_chain(self.repo, {"input_packet": copied_ref}),
         )
 
     def test_asb_19_connected_reseal_epoch_accepts_b_rejects_a_artifacts(self) -> None:
@@ -770,8 +872,8 @@ class ApprovedSpecBindingTests(unittest.TestCase):
             json.loads(result.stdout),
             {
                 "valid": False,
-                "code": "PATH_OUTSIDE_REPO",
-                "action": "regenerate_artifact",
+                "code": "ARTIFACT_LAYOUT_MISMATCH",
+                "action": "return_to_execution_plan_gate",
                 "path": escaped_output,
             },
         )
@@ -865,7 +967,7 @@ class ApprovedSpecBindingTests(unittest.TestCase):
             def swapping_open(path, flags, mode=0o777, *, dir_fd=None):
                 nonlocal swapped
                 rendered = os.fspath(path)
-                if not swapped and ".example-input-packet.json." in rendered:
+                if not swapped and ".input-packet.json." in rendered:
                     swapped = True
                     os.rename(output_parent, moved_parent)
                     output_parent.symlink_to(outside, target_is_directory=True)
