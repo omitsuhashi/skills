@@ -3,13 +3,66 @@ from __future__ import annotations
 import os
 from typing import Any
 
+from ..approved_spec_binding import BindingError, approved_spec_binding_ref
 from ..constants import SUCCESS_STATUSES
 from ..identifiers import commit_range_parts, is_full_commit_sha, is_issue_id, is_lower_kebab
 from ..review import review_approved_or_accepted
 
 
-def validate_worker_report(report: dict[str, Any]) -> list[str]:
+REPORT_FIELDS = {
+    "approved_spec_binding",
+    "base_sha",
+    "branch",
+    "changed_files",
+    "dispatch_id",
+    "epic_id",
+    "head_sha",
+    "implementation_review",
+    "issue_id",
+    "residual_risks",
+    "schema_version",
+    "status",
+    "verification",
+    "worktree",
+}
+
+
+def validate_worker_report(
+    report: dict[str, Any],
+    dispatch_packet: dict[str, Any] | None = None,
+    runtime_state: dict[str, Any] | None = None,
+) -> list[str]:
     errors: list[str] = []
+    if report.get("schema_version") != 2:
+        return ["SCHEMA_UNSUPPORTED"]
+    for field in sorted(report):
+        if field not in REPORT_FIELDS:
+            errors.append(f"unknown field: {field}")
+    try:
+        binding = approved_spec_binding_ref(
+            report.get("approved_spec_binding")
+        ).to_dict()
+    except BindingError as error:
+        return [error.code]
+    dispatch_id = report.get("dispatch_id")
+    if not isinstance(dispatch_id, str) or not dispatch_id.strip():
+        errors.append("dispatch_id is required")
+    if not isinstance(dispatch_packet, dict) or not isinstance(runtime_state, dict):
+        errors.append("dispatch packet and runtime state are required for intake")
+    else:
+        dispatch_binding = (
+            dispatch_packet.get("source_revision", {}).get("approved_spec_binding")
+            if isinstance(dispatch_packet.get("source_revision"), dict)
+            else None
+        )
+        runtime_binding = runtime_state.get("approved_spec_binding")
+        identity_fields = ("dispatch_id", "epic_id", "issue_id", "branch", "worktree")
+        if (
+            dispatch_binding != binding
+            or runtime_binding != binding
+            or any(report.get(field) != dispatch_packet.get(field) for field in identity_fields)
+        ):
+            return ["BINDING_MISMATCH"]
     epic_id = report.get("epic_id")
     if not isinstance(epic_id, str) or not is_lower_kebab(epic_id):
         errors.append("epic_id must be lower-kebab-case ASCII")

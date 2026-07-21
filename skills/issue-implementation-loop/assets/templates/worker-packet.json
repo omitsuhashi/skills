@@ -1,9 +1,14 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "packet_type": "issue_worker_dispatch",
   "task_kind": "implement",
   "access_mode": "read_write",
   "source_revision": {
+    "approved_spec_binding": {
+      "path": "knowledge/wiki/syntheses/<epic-id>-input-packet.json",
+      "sha256": "<raw-byte-sha256>",
+      "gate_commit": "<full-gate-commit>"
+    },
     "execution_envelope": {
       "path": "/abs/path/to/execution-envelope.json",
       "revision": 1,

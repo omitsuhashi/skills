@@ -6,14 +6,13 @@ from _helpers import *
 class GitReconcileTests(unittest.TestCase):
     def test_reconcile_git_state_reports_missing_epic_base_branch_for_batch_issue_prs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            repo = Path(tmp) / "repo"
-            repo.mkdir()
-            subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+            repo, binding, gate_commit = create_binding_repo(Path(tmp))
             envelope = base_envelope()
             envelope["epic_id"] = "missing-epic-base"
+            envelope["approved_spec_binding"] = binding
             envelope["epic_base"] = {
                 "ref": "codex/missing-epic-base/epic-base",
-                "sha": BASE_SHA,
+                "sha": gate_commit,
                 "branch_state": "reserved",
             }
             envelope["remote_write_policy"] = {
@@ -32,7 +31,7 @@ class GitReconcileTests(unittest.TestCase):
             envelope["work_items"]["G2PR-001"]["branch"] = "codex/missing-epic-base/G2PR-001-a"
             envelope["work_items"]["G2PR-002"]["branch"] = "codex/missing-epic-base/G2PR-002-b"
             envelope["work_items"]["G2PR-003"]["branch"] = "codex/missing-epic-base/G2PR-003-c"
-            envelope_path = Path(tmp) / "envelope.json"
+            envelope_path = repo / "envelope.json"
             write_json(envelope_path, envelope)
 
             result = run_script(

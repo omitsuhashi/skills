@@ -4,6 +4,133 @@ from _helpers import *
 
 
 class ValidationTests(unittest.TestCase):
+    def test_asb_04_execution_envelope_v4_verifies_valid_chain(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, binding, gate_commit = create_binding_repo(Path(tmp))
+            envelope_path = repo / "execution-envelope.json"
+            write_json(envelope_path, binding_envelope(repo, binding))
+
+            result = run_script(
+                "validate_execution_envelope.py",
+                str(envelope_path),
+                "--repo-root",
+                str(repo),
+                "--json",
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(json.loads(result.stdout)["errors"], [])
+            self.assertEqual(binding["gate_commit"], gate_commit)
+
+    def test_execution_envelope_v1_through_v3_are_unsupported(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            for version in (1, 2, 3):
+                with self.subTest(version=version):
+                    envelope = base_envelope()
+                    envelope["schema_version"] = version
+                    path = Path(tmp) / f"envelope-v{version}.json"
+                    write_json(path, envelope)
+                    result = run_script(
+                        "validate_execution_envelope.py", str(path), "--json"
+                    )
+                    self.assertEqual(result.returncode, 1)
+                    self.assertEqual(
+                        json.loads(result.stdout)["errors"], ["SCHEMA_UNSUPPORTED"]
+                    )
+
+    def test_asb_26_execution_envelope_requires_gate_commit(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, binding, _ = create_binding_repo(Path(tmp))
+            del binding["gate_commit"]
+            path = repo / "missing-gate.json"
+            write_json(path, binding_envelope(repo, binding))
+
+            result = run_script(
+                "validate_execution_envelope.py",
+                str(path),
+                "--repo-root",
+                str(repo),
+                "--json",
+            )
+
+            self.assertEqual(result.returncode, 1)
+            self.assertEqual(
+                json.loads(result.stdout)["errors"], ["GATE_COMMIT_MISSING"]
+            )
+
+    def test_asb_27_execution_envelope_rejects_non_ancestor_gate(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, binding, gate_commit = create_binding_repo(Path(tmp))
+            base_commit = git(repo, "rev-parse", f"{gate_commit}^")
+            packet_bytes = (repo / binding["path"]).read_bytes()
+            spec_bytes = (repo / "knowledge/wiki/syntheses/spec.md").read_bytes()
+            git(repo, "checkout", "-q", "-b", "side", base_commit)
+            synthesis = repo / "knowledge/wiki/syntheses"
+            synthesis.mkdir(parents=True)
+            (synthesis / "spec.md").write_bytes(spec_bytes)
+            (synthesis / "issues.md").write_text("# Issues\n", encoding="utf-8")
+            (repo / binding["path"]).write_bytes(packet_bytes)
+            git(repo, "add", "knowledge")
+            git(repo, "commit", "-q", "-m", "side projection")
+            target = git(repo, "rev-parse", "HEAD")
+            path = repo / "not-ancestor.json"
+            write_json(path, binding_envelope(repo, binding, target))
+
+            result = run_script(
+                "validate_execution_envelope.py",
+                str(path),
+                "--repo-root",
+                str(repo),
+                "--json",
+            )
+
+            self.assertEqual(result.returncode, 1)
+            self.assertEqual(
+                json.loads(result.stdout)["errors"], ["GATE_COMMIT_NOT_ANCESTOR"]
+            )
+
+    def test_asb_28_execution_envelope_rejects_gate_tree_blob_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for changed_path in ("input-packet", "spec"):
+                with self.subTest(changed_path=changed_path):
+                    case_root = root / changed_path
+                    case_root.mkdir()
+                    repo, binding, gate_commit = create_binding_repo(case_root)
+                    if changed_path == "input-packet":
+                        packet_path = repo / binding["path"]
+                        packet_path.write_bytes(packet_path.read_bytes() + b"\n")
+                        binding["sha256"] = hashlib.sha256(packet_path.read_bytes()).hexdigest()
+                    else:
+                        spec_path = repo / "knowledge/wiki/syntheses/spec.md"
+                        spec_path.write_text("new approved spec\n", encoding="utf-8")
+                        packet_path = repo / binding["path"]
+                        packet = json.loads(packet_path.read_text(encoding="utf-8"))
+                        packet["spec_binding"]["sha256"] = hashlib.sha256(
+                            spec_path.read_bytes()
+                        ).hexdigest()
+                        write_json(packet_path, packet)
+                        binding["sha256"] = hashlib.sha256(packet_path.read_bytes()).hexdigest()
+                    git(repo, "add", "knowledge")
+                    git(repo, "commit", "-q", "-m", "new projection")
+                    binding["gate_commit"] = gate_commit
+                    path = repo / "gate-blob-mismatch.json"
+                    write_json(path, binding_envelope(repo, binding))
+
+                    result = run_script(
+                        "validate_execution_envelope.py",
+                        str(path),
+                        "--repo-root",
+                        str(repo),
+                        "--json",
+                    )
+
+                    self.assertEqual(result.returncode, 1)
+                    self.assertEqual(
+                        json.loads(result.stdout)["errors"],
+                        ["GATE_COMMIT_BLOB_MISMATCH"],
+                    )
+
     def test_validate_execution_envelope_requires_context_policy(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             envelope = base_envelope()
@@ -234,7 +361,7 @@ class ValidationTests(unittest.TestCase):
                 self.assertNotEqual(result.returncode, 0, name)
                 self.assertIn(expected, result.stderr)
 
-    def test_validate_execution_envelope_requires_session_compaction_policy_for_schema_version_2_or_3(self) -> None:
+    def test_validate_execution_envelope_requires_session_compaction_policy(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             envelope = base_envelope()
             del envelope["context_policy"]["session_compaction"]
@@ -245,31 +372,6 @@ class ValidationTests(unittest.TestCase):
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("context_policy.session_compaction", result.stderr)
-
-    def test_validate_execution_envelope_accepts_legacy_schema_v1_without_session_compaction_policy(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            envelope = base_envelope()
-            envelope["schema_version"] = 1
-            del envelope["context_policy"]["session_compaction"]
-            del envelope["phase_branch_policy"]
-            path = Path(tmp) / "legacy-without-session-compaction.json"
-            write_json(path, envelope)
-
-            result = run_script("validate_execution_envelope.py", str(path))
-
-            self.assertEqual(result.returncode, 0, result.stderr)
-
-    def test_validate_execution_envelope_accepts_legacy_schema_v2_without_phase_branch_policy(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            envelope = base_envelope()
-            envelope["schema_version"] = 2
-            del envelope["phase_branch_policy"]
-            path = Path(tmp) / "legacy-v2-without-phase-branch-policy.json"
-            write_json(path, envelope)
-
-            result = run_script("validate_execution_envelope.py", str(path))
-
-            self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_validate_execution_envelope_rejects_invalid_session_compaction_policy(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -348,16 +450,13 @@ class ValidationTests(unittest.TestCase):
                     self.assertNotEqual(result.returncode, 0, field)
                     self.assertIn(f"context_policy.{field}", result.stderr)
 
-    def test_execution_envelope_schema_allows_legacy_or_complete_worker_packet_context_references(self) -> None:
+    def test_execution_envelope_schema_is_current_only(self) -> None:
         schema = json.loads(ENVELOPE_SCHEMA_FILE.read_text(encoding="utf-8"))
         context_schema = schema["properties"]["context_policy"]
 
-        self.assertEqual(schema["properties"]["schema_version"]["enum"], [1, 2, 3])
-        self.assertNotIn("session_compaction", context_schema["required"])
-        root_conditions = json.dumps(schema["allOf"], sort_keys=True)
-        self.assertIn('"const": 2', root_conditions)
-        self.assertIn('"const": 3', root_conditions)
-        self.assertIn('"session_compaction"', root_conditions)
+        self.assertEqual(schema["properties"]["schema_version"].get("const"), 4)
+        self.assertIn("approved_spec_binding", schema["required"])
+        self.assertIn("session_compaction", context_schema["required"])
         for field in (
             "worker_packet_schema",
             "worker_packet_template",
@@ -373,7 +472,7 @@ class ValidationTests(unittest.TestCase):
                 ],
             )
 
-    def test_validate_execution_envelope_requires_phase_branch_policy_for_schema_version_3(self) -> None:
+    def test_validate_execution_envelope_requires_phase_branch_policy(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             envelope = base_envelope()
             del envelope["phase_branch_policy"]
@@ -437,14 +536,14 @@ class ValidationTests(unittest.TestCase):
             "integration_branch_policy": "approved_integration_work_item_only",
         }
 
-        self.assertEqual(template["schema_version"], 3)
+        self.assertEqual(template["schema_version"], 4)
         self.assertEqual(template["phase_branch_policy"], expected_policy)
         self.assertEqual(policy_schema["required"], list(expected_policy))
         self.assertFalse(policy_schema["additionalProperties"])
         for field, value in expected_policy.items():
             self.assertEqual(policy_schema["properties"][field]["const"], value)
 
-    def test_validate_execution_envelope_accepts_resume_capable_tracked_legacy_envelopes(self) -> None:
+    def test_validate_execution_envelope_rejects_tracked_legacy_envelopes(self) -> None:
         envelope_dir = SKILL_DIR.parents[1] / "knowledge" / "wiki" / "syntheses"
 
         for name in (
@@ -453,8 +552,15 @@ class ValidationTests(unittest.TestCase):
             "skill-repository-optimization-v4-execution-envelope.json",
         ):
             with self.subTest(name):
-                result = run_script("validate_execution_envelope.py", str(envelope_dir / name))
-                self.assertEqual(result.returncode, 0, result.stderr)
+                result = run_script(
+                    "validate_execution_envelope.py",
+                    str(envelope_dir / name),
+                    "--json",
+                )
+                self.assertEqual(result.returncode, 1)
+                self.assertEqual(
+                    json.loads(result.stdout)["errors"], ["SCHEMA_UNSUPPORTED"]
+                )
 
     def test_loop_skill_v3_execution_envelope_records_worker_packet_context_references(self) -> None:
         envelope_path = (
@@ -1027,22 +1133,25 @@ class ValidationTests(unittest.TestCase):
 
     def test_validate_worker_report_requires_commit_metadata_for_pr_ready(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            report_path = Path(tmp) / "worker-report.json"
-            write_json(
-                report_path,
-                {
-                    "epic_id": "issue-implementation-loop",
-                    "issue_id": "G2PR-001",
-                    "branch": "codex/issue-implementation-loop/G2PR-001-a",
-                    "worktree": "/tmp/skills/issue-implementation-loop/G2PR-001-a",
-                    "changed_files": ["skills/a/SKILL.md"],
-                    "verification": [{"command": "python3 -m unittest", "result": "passed"}],
-                    "implementation_review": {"status": "approved", "range": REVIEW_RANGE},
-                    "status": "PR_READY",
-                },
-            )
+            repo, binding, _ = create_binding_repo(Path(tmp))
+            packet = current_worker_packet(repo, binding)
+            packet_path = repo / "worker-packet.json"
+            report_path = repo / "worker-report.json"
+            runtime_path = repo / "runtime-state.json"
+            write_json(packet_path, packet)
+            report = current_worker_report(repo, binding, packet)
+            del report["base_sha"]
+            del report["head_sha"]
+            write_json(report_path, report)
 
-            result = run_script("validate_worker_report.py", str(report_path))
+            result = run_script(
+                "validate_worker_report.py",
+                str(report_path),
+                "--dispatch-packet",
+                str(packet_path),
+                "--runtime-state",
+                str(runtime_path),
+            )
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("base_sha", result.stderr)
@@ -1050,47 +1159,127 @@ class ValidationTests(unittest.TestCase):
 
     def test_validate_worker_report_accepts_committed_pr_ready_report(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            report_path = Path(tmp) / "worker-report.json"
-            write_json(
-                report_path,
-                {
-                    "epic_id": "issue-implementation-loop",
-                    "issue_id": "G2PR-001",
-                    "branch": "codex/issue-implementation-loop/G2PR-001-a",
-                    "worktree": "/tmp/skills/issue-implementation-loop/G2PR-001-a",
-                    "changed_files": ["skills/a/SKILL.md"],
-                    "verification": [{"command": "python3 -m unittest", "result": "passed"}],
-                    "base_sha": BASE_SHA,
-                    "head_sha": HEAD_SHA,
-                    "implementation_review": {"status": "approved", "range": REVIEW_RANGE},
-                    "status": "PR_READY",
-                },
-            )
+            repo, binding, _ = create_binding_repo(Path(tmp))
+            packet = current_worker_packet(repo, binding)
+            packet_path = repo / "worker-packet.json"
+            report_path = repo / "worker-report.json"
+            runtime_path = repo / "runtime-state.json"
+            write_json(packet_path, packet)
+            write_json(report_path, current_worker_report(repo, binding, packet))
 
-            result = run_script("validate_worker_report.py", str(report_path))
+            result = run_script(
+                "validate_worker_report.py",
+                str(report_path),
+                "--dispatch-packet",
+                str(packet_path),
+                "--runtime-state",
+                str(runtime_path),
+            )
 
             self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_validate_worker_report_rejects_pr_ready_with_unapproved_review(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            report_path = Path(tmp) / "worker-report.json"
-            write_json(
-                report_path,
-                {
-                    "epic_id": "issue-implementation-loop",
-                    "issue_id": "G2PR-001",
-                    "branch": "codex/issue-implementation-loop/G2PR-001-a",
-                    "worktree": "/tmp/skills/issue-implementation-loop/G2PR-001-a",
-                    "changed_files": ["skills/a/SKILL.md"],
-                    "verification": [{"command": "python3 -m unittest", "result": "passed"}],
-                    "base_sha": BASE_SHA,
-                    "head_sha": HEAD_SHA,
-                    "implementation_review": {"status": "changes_requested", "range": REVIEW_RANGE},
-                    "status": "PR_READY",
-                },
-            )
+            repo, binding, _ = create_binding_repo(Path(tmp))
+            packet = current_worker_packet(repo, binding)
+            packet_path = repo / "worker-packet.json"
+            report_path = repo / "worker-report.json"
+            runtime_path = repo / "runtime-state.json"
+            write_json(packet_path, packet)
+            report = current_worker_report(repo, binding, packet)
+            report["implementation_review"]["status"] = "changes_requested"
+            write_json(report_path, report)
 
-            result = run_script("validate_worker_report.py", str(report_path))
+            result = run_script(
+                "validate_worker_report.py",
+                str(report_path),
+                "--dispatch-packet",
+                str(packet_path),
+                "--runtime-state",
+                str(runtime_path),
+            )
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("implementation_review.status must be approved", result.stderr)
+
+    def test_worker_report_v1_is_unsupported(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, binding, _ = create_binding_repo(Path(tmp))
+            packet = current_worker_packet(repo, binding)
+            packet_path = repo / "worker-packet.json"
+            report_path = repo / "worker-report.json"
+            runtime_path = repo / "runtime-state.json"
+            write_json(packet_path, packet)
+            report = current_worker_report(repo, binding, packet)
+            report["schema_version"] = 1
+            write_json(report_path, report)
+
+            result = run_script(
+                "validate_worker_report.py",
+                str(report_path),
+                "--dispatch-packet",
+                str(packet_path),
+                "--runtime-state",
+                str(runtime_path),
+                "--json",
+            )
+
+            self.assertEqual(result.returncode, 1)
+            self.assertEqual(
+                json.loads(result.stdout)["errors"], ["SCHEMA_UNSUPPORTED"]
+            )
+
+    def test_asb_13_worker_report_intake_rejects_resealed_runtime_binding(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, binding, _ = create_binding_repo(Path(tmp))
+            packet = current_worker_packet(repo, binding)
+            packet_path = repo / "worker-packet.json"
+            report_path = repo / "worker-report.json"
+            runtime_path = repo / "runtime-state.json"
+            write_json(packet_path, packet)
+            write_json(report_path, current_worker_report(repo, binding, packet))
+            runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+            runtime["approved_spec_binding"]["sha256"] = "a" * 64
+            write_json(runtime_path, runtime)
+
+            result = run_script(
+                "validate_worker_report.py",
+                str(report_path),
+                "--dispatch-packet",
+                str(packet_path),
+                "--runtime-state",
+                str(runtime_path),
+                "--json",
+            )
+
+            self.assertEqual(result.returncode, 1)
+            self.assertEqual(
+                json.loads(result.stdout)["errors"], ["BINDING_MISMATCH"]
+            )
+
+    def test_asb_22_reviewer_report_rejects_final_alignment_binding_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, binding, _ = create_binding_repo(Path(tmp))
+            packet = current_worker_packet(repo, binding, task_kind="review")
+            packet_path = repo / "reviewer-packet.json"
+            report_path = repo / "reviewer-report.json"
+            runtime_path = repo / "runtime-state.json"
+            write_json(packet_path, packet)
+            report = current_worker_report(repo, binding, packet)
+            report["approved_spec_binding"]["sha256"] = "b" * 64
+            write_json(report_path, report)
+
+            result = run_script(
+                "validate_worker_report.py",
+                str(report_path),
+                "--dispatch-packet",
+                str(packet_path),
+                "--runtime-state",
+                str(runtime_path),
+                "--json",
+            )
+
+            self.assertEqual(result.returncode, 1)
+            self.assertEqual(
+                json.loads(result.stdout)["errors"], ["BINDING_MISMATCH"]
+            )

@@ -2,11 +2,22 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Issue Implementation Loop Execution Envelope",
   "type": "object",
-  "required": ["schema_version", "epic_id", "revision", "epic_base", "execution_policy", "review_policy", "human_policy", "context_policy", "remote_write_policy", "work_items"],
+  "additionalProperties": false,
+  "required": ["schema_version", "epic_id", "revision", "approved_spec_binding", "epic_base", "execution_policy", "review_policy", "human_policy", "context_policy", "phase_branch_policy", "remote_write_policy", "work_items"],
   "properties": {
-    "schema_version": {"enum": [1, 2, 3]},
+    "schema_version": {"const": 4},
     "epic_id": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"},
     "revision": {"type": "integer", "minimum": 1},
+    "approved_spec_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "gate_commit"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^(?!/|~)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*\\\\)(?!.*\\u0000).+(?<!/)$"},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "gate_commit": {"type": "string", "pattern": "^[0-9a-f]+$"}
+      }
+    },
     "epic_base": {
       "type": "object",
       "required": ["ref", "sha"],
@@ -62,7 +73,7 @@
     "human_policy": {"type": "object"},
     "context_policy": {
       "type": "object",
-      "required": ["paths_first", "max_worker_packet_words", "max_worker_report_words", "include_full_spec_text", "include_full_ledger_text"],
+      "required": ["paths_first", "max_worker_packet_words", "max_worker_report_words", "include_full_spec_text", "include_full_ledger_text", "session_compaction"],
       "properties": {
         "paths_first": {"const": true},
         "max_worker_packet_words": {"type": "integer", "minimum": 1},
@@ -228,33 +239,6 @@
         "properties": {
           "epic_base": {
             "required": ["ref", "sha", "branch_state"]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {"schema_version": {"const": 2}},
-        "required": ["schema_version"]
-      },
-      "then": {
-        "properties": {
-          "context_policy": {
-            "required": ["paths_first", "max_worker_packet_words", "max_worker_report_words", "include_full_spec_text", "include_full_ledger_text", "session_compaction"]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {"schema_version": {"const": 3}},
-        "required": ["schema_version"]
-      },
-      "then": {
-        "required": ["phase_branch_policy"],
-        "properties": {
-          "context_policy": {
-            "required": ["paths_first", "max_worker_packet_words", "max_worker_report_words", "include_full_spec_text", "include_full_ledger_text", "session_compaction"]
           }
         }
       }

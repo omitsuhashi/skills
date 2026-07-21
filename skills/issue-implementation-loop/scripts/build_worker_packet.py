@@ -22,7 +22,6 @@ def main() -> int:
     parser.add_argument("--dispatch-id", required=True)
     parser.add_argument("--branch", required=True)
     parser.add_argument("--worktree", required=True)
-    parser.add_argument("--schema-version", type=int, choices=(1, 2), default=2)
     parser.add_argument("--task-kind", choices=("implement", "fix", "review", "inspect"), default="implement")
     parser.add_argument("--access-mode", choices=("read_write", "read_only"), default="read_write")
     parser.add_argument("--write-scope", action="append", default=[])
@@ -57,7 +56,6 @@ def main() -> int:
             stop_conditions=args.stop_condition,
             inline_excerpts=args.inline_excerpt,
             max_packet_words=args.max_packet_words,
-            schema_version=args.schema_version,
             task_kind=args.task_kind,
             access_mode=args.access_mode,
             source_envelope=args.source_envelope,

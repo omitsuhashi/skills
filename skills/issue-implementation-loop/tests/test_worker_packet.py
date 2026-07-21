@@ -4,58 +4,38 @@ from _helpers import *
 
 
 class WorkerPacketTests(unittest.TestCase):
-    def write_v2_sources(self, root: Path) -> tuple[Path, Path, Path]:
-        (root / "knowledge" / "wiki" / "syntheses").mkdir(parents=True, exist_ok=True)
-        issue_source = root / "knowledge" / "wiki" / "syntheses" / "issues.md"
-        envelope = root / "execution-envelope.json"
-        runtime = root / "runtime-state.json"
-        issue_source.write_text("## G2PR-004\nNormalize worker packet.\n", encoding="utf-8")
-        write_json(envelope, {"schema_version": 1, "epic_id": "loop-skill-architecture-v3", "revision": 2})
-        write_json(
-            runtime,
-            {
-                "schema_version": 1,
-                "epic_id": "loop-skill-architecture-v3",
-                "envelope_revision": 2,
-                "issues": {},
-                "human_requests": [],
-            },
-        )
-        return envelope, runtime, issue_source
-
-    def test_build_worker_packet_outputs_valid_v2_bounded_packet(self) -> None:
+    def test_build_worker_packet_outputs_valid_v3_bounded_packet(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp) / "worktree"
-            root.mkdir()
-            envelope, runtime, issue_source = self.write_v2_sources(root)
-            packet_path = root / "worker-packet.json"
+            repo, binding, _ = create_binding_repo(Path(tmp))
+            envelope, runtime, issue_source = write_binding_sources(repo, binding)
+            packet_path = repo / "worker-packet.json"
 
             result = run_script(
                 "build_worker_packet.py",
                 "--epic-id",
-                "loop-skill-architecture-v3",
+                "approved-spec-binding",
                 "--issue-id",
-                "G2PR-004",
+                "ASBC-002",
                 "--issue-title",
-                "Normalize worker packet",
+                "Propagate approved binding",
                 "--dispatch-id",
                 "dispatch-001",
                 "--branch",
-                "codex/loop-skill-architecture-v3/G2PR-004-worker-packet-budget",
+                "codex/approved-spec-binding/ASBC-002-workers",
                 "--worktree",
-                str(root),
+                str(repo),
                 "--task-kind",
                 "implement",
                 "--access-mode",
                 "read_write",
                 "--write-scope",
-                "path:skills/issue-implementation-loop/scripts/build_worker_packet.py",
+                "path:skills/issue-implementation-loop",
                 "--read-path",
-                "knowledge/wiki/syntheses/loop-skill-architecture-v3-spec.md",
+                "knowledge/wiki/syntheses/spec.md",
                 "--read-purpose",
                 "spec",
                 "--read-path",
-                "knowledge/wiki/syntheses/loop-skill-architecture-v3-issues.md",
+                "knowledge/wiki/syntheses/issues.md",
                 "--read-purpose",
                 "issue-ledger",
                 "--source-envelope",
@@ -65,156 +45,141 @@ class WorkerPacketTests(unittest.TestCase):
                 "--source-issue",
                 str(issue_source),
                 "--summary",
-                "Add paths-first worker dispatch packet generation and validation.",
+                "Propagate one approved binding through the dispatch packet.",
                 "--acceptance",
-                "Reject context budget overflow without truncating packet text.",
+                "Reject mismatched worker projections.",
                 "--verification",
                 "python3 -m unittest discover -s skills/issue-implementation-loop/tests",
                 "--stop-condition",
                 "Stop before remote writes.",
                 "--inline-excerpt",
-                "knowledge/wiki/syntheses/loop-skill-architecture-v3-issues.md::G2PR-004 requires a schema, template, builder, and validator.",
+                "knowledge/wiki/syntheses/issues.md::ASBC-002 requires binding propagation.",
                 "--output",
                 str(packet_path),
             )
 
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertTrue(packet_path.exists())
-
             validate_result = run_script("validate_worker_packet.py", str(packet_path))
-
             self.assertEqual(validate_result.returncode, 0, validate_result.stderr)
             packet = json.loads(packet_path.read_text(encoding="utf-8"))
-            self.assertEqual(packet["schema_version"], 2)
+            self.assertEqual(packet["schema_version"], 3)
+            self.assertEqual(packet["source_revision"]["approved_spec_binding"], binding)
             self.assertEqual(packet["task_kind"], "implement")
             self.assertEqual(packet["access_mode"], "read_write")
-            self.assertEqual(packet["source_revision"]["execution_envelope"]["revision"], 2)
-            self.assertEqual(packet["source_revision"]["runtime_state"]["envelope_revision"], 2)
-            self.assertIn("sha256", packet["source_revision"]["issue_source"])
-            self.assertEqual(packet["context_policy"]["max_packet_words"], 450)
             self.assertEqual(packet["context_policy"]["hard_max_packet_words"], 800)
             self.assertEqual(len(packet["read_paths"]), 2)
-            self.assertEqual(packet["read_paths"][0]["purpose"], "spec")
+
+    def test_builder_has_no_schema_version_compatibility_option(self) -> None:
+        result = run_script("build_worker_packet.py", "--help")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn("--schema-version", result.stdout)
 
     def test_worker_packet_budget_overflow_fails_without_truncating_output(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            packet_path = Path(tmp) / "overflow.json"
+            repo, binding, _ = create_binding_repo(Path(tmp))
+            envelope, runtime, issue_source = write_binding_sources(repo, binding)
+            packet_path = repo / "overflow.json"
             long_summary = " ".join(f"word{i}" for i in range(451))
-
             result = run_script(
                 "build_worker_packet.py",
                 "--epic-id",
-                "loop-skill-architecture-v3",
+                "approved-spec-binding",
                 "--issue-id",
-                "G2PR-004",
+                "ASBC-002",
                 "--issue-title",
-                "Normalize worker packet",
+                "Propagate approved binding",
                 "--dispatch-id",
                 "dispatch-002",
                 "--branch",
-                "codex/loop-skill-architecture-v3/G2PR-004-worker-packet-budget",
+                "codex/approved-spec-binding/ASBC-002-workers",
                 "--worktree",
-                "/tmp/skills/G2PR-004-worker-packet-budget",
-                "--schema-version",
-                "1",
+                str(repo),
                 "--write-scope",
-                "path:skills/issue-implementation-loop/scripts/build_worker_packet.py",
+                "path:skills/issue-implementation-loop",
                 "--read-path",
-                "knowledge/wiki/syntheses/loop-skill-architecture-v3-spec.md",
+                "knowledge/wiki/syntheses/spec.md",
+                "--source-envelope",
+                str(envelope),
+                "--source-runtime",
+                str(runtime),
+                "--source-issue",
+                str(issue_source),
                 "--summary",
                 long_summary,
                 "--acceptance",
                 "Reject overflow.",
                 "--verification",
-                "python3 -m unittest discover -s skills/issue-implementation-loop/tests",
+                "python3 -m unittest",
                 "--stop-condition",
                 "Stop before remote writes.",
                 "--output",
                 str(packet_path),
             )
-
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("PACKET_CONTEXT_BUDGET_EXCEEDED", result.stderr)
             self.assertFalse(packet_path.exists())
 
-    def test_v1_worker_packet_remains_valid_for_existing_runs(self) -> None:
+    def test_worker_packet_v1_and_v2_are_unsupported_and_v1_schema_is_removed(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            packet_path = Path(tmp) / "packet-v1.json"
-            write_json(packet_path, valid_worker_packet())
+            repo, binding, _ = create_binding_repo(Path(tmp))
+            for version in (1, 2):
+                with self.subTest(version=version):
+                    packet = current_worker_packet(repo, binding)
+                    packet["schema_version"] = version
+                    path = repo / f"worker-v{version}.json"
+                    write_json(path, packet)
+                    result = run_script("validate_worker_packet.py", str(path), "--json")
+                    self.assertEqual(result.returncode, 1)
+                    self.assertEqual(
+                        json.loads(result.stdout)["errors"], ["SCHEMA_UNSUPPORTED"]
+                    )
+        self.assertFalse(
+            (SKILL_DIR / "assets/schemas/worker-packet-v1.schema.json").exists()
+        )
 
-            result = run_script("validate_worker_packet.py", str(packet_path))
-
-            self.assertEqual(result.returncode, 0, result.stderr)
-            v1_schema = json.loads(
-                (SKILL_DIR / "assets" / "schemas" / "worker-packet-v1.schema.json").read_text(
-                    encoding="utf-8"
-                )
-            )
-            self.assertEqual(v1_schema["properties"]["schema_version"]["const"], 1)
-
-    def test_validate_worker_packet_rejects_full_spec_and_ledger_text_fields(self) -> None:
+    def test_validate_worker_packet_rejects_full_text_and_unknown_fields(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            packet = valid_worker_packet()
-            packet["full_spec_text"] = "Do not paste the full spec here."
-            packet["task"]["full_ledger_text"] = "Do not paste the full ledger here."
-            packet_path = Path(tmp) / "packet.json"
-            write_json(packet_path, packet)
-
-            result = run_script("validate_worker_packet.py", str(packet_path))
-
-            self.assertNotEqual(result.returncode, 0)
-            self.assertIn("full spec/full ledger text is forbidden", result.stderr)
-
-    def test_validate_worker_packet_rejects_unknown_top_level_and_nested_fields(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
             cases = [
                 (
+                    "full_text",
+                    lambda packet: packet.update({"full_spec_text": "full spec"}),
+                    "full spec/full ledger text is forbidden",
+                ),
+                (
                     "top_level",
-                    lambda packet: packet.update({"coordinator_notes": "extra context"}),
+                    lambda packet: packet.update({"coordinator_notes": "extra"}),
                     "unknown field: coordinator_notes",
                 ),
                 (
                     "nested_task",
-                    lambda packet: packet["task"].update({"notes": "extra context"}),
+                    lambda packet: packet["task"].update({"notes": "extra"}),
                     "unknown field: task.notes",
-                ),
-                (
-                    "full_spec_bypass",
-                    lambda packet: packet.update({"spec": {"text": "pasted full spec"}}),
-                    "unknown field: spec",
-                ),
-                (
-                    "full_ledger_bypass",
-                    lambda packet: packet.update({"ledger": {"text": "pasted full ledger"}}),
-                    "unknown field: ledger",
                 ),
                 (
                     "session_compaction",
                     lambda packet: packet["context_policy"].update(
-                        {
-                            "session_compaction": {
-                                "soft_trigger_percent": 65,
-                                "hard_stop_percent": 75,
-                            }
-                        }
+                        {"session_compaction": {"soft_trigger_percent": 65}}
                     ),
                     "unknown field: context_policy.session_compaction",
                 ),
             ]
             for name, mutate, expected in cases:
-                with self.subTest(name):
-                    packet = valid_worker_packet()
+                with self.subTest(name=name):
+                    case_root = root / name
+                    case_root.mkdir()
+                    repo, binding, _ = create_binding_repo(case_root)
+                    packet = current_worker_packet(repo, binding)
                     mutate(packet)
-                    packet_path = Path(tmp) / f"{name}.json"
+                    packet_path = repo / f"{name}.json"
                     write_json(packet_path, packet)
-
                     result = run_script("validate_worker_packet.py", str(packet_path))
-
-                    self.assertNotEqual(result.returncode, 0, name)
+                    self.assertNotEqual(result.returncode, 0)
                     self.assertIn(expected, result.stderr)
 
-    def test_validate_worker_packet_enforces_read_path_and_inline_excerpt_limits(self) -> None:
+    def test_validate_worker_packet_enforces_context_limits(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
             cases = [
                 (
                     "read_paths",
@@ -242,128 +207,79 @@ class WorkerPacketTests(unittest.TestCase):
                     ),
                     "exceeds 120 words",
                 ),
-                (
-                    "total_inline_excerpt",
-                    lambda packet: packet.update(
-                        {
-                            "inline_context": [
-                                {
-                                    "path": f"knowledge/source-{index}.md",
-                                    "excerpt": " ".join(f"word{word}" for word in range(101)),
-                                }
-                                for index in range(3)
-                            ]
-                        }
-                    ),
-                    "inline_context exceeds 300 total words",
-                ),
-                (
-                    "same_path_excerpt_total",
-                    lambda packet: packet.update(
-                        {
-                            "inline_context": [
-                                {
-                                    "path": "knowledge/wiki/syntheses/issues.md",
-                                    "excerpt": " ".join(f"first{word}" for word in range(70)),
-                                },
-                                {
-                                    "path": "knowledge/wiki/syntheses/issues.md",
-                                    "excerpt": " ".join(f"second{word}" for word in range(70)),
-                                },
-                            ]
-                        }
-                    ),
-                    "inline_context path knowledge/wiki/syntheses/issues.md exceeds 120 words",
-                ),
             ]
             for name, mutate, expected in cases:
-                with self.subTest(name):
-                    packet = valid_worker_packet()
+                with self.subTest(name=name):
+                    case_root = root / name
+                    case_root.mkdir()
+                    repo, binding, _ = create_binding_repo(case_root)
+                    packet = current_worker_packet(repo, binding)
                     packet["context_policy"]["max_packet_words"] = 800
                     mutate(packet)
-                    packet_path = Path(tmp) / f"{name}.json"
-                    write_json(packet_path, packet)
-
-                    result = run_script("validate_worker_packet.py", str(packet_path))
-
-                    self.assertNotEqual(result.returncode, 0, name)
+                    path = repo / f"{name}.json"
+                    write_json(path, packet)
+                    result = run_script("validate_worker_packet.py", str(path))
+                    self.assertNotEqual(result.returncode, 0)
                     self.assertIn(expected, result.stderr)
 
-    def test_validate_worker_packet_v2_enforces_task_kind_access_mode_contracts(self) -> None:
+    def test_validate_worker_packet_enforces_task_kind_access_contracts(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp) / "worktree"
-            root.mkdir()
-            source_paths = self.write_v2_sources(root)
+            root = Path(tmp)
             cases = [
                 (
                     "implement_read_only",
+                    "implement",
                     lambda packet: packet.update({"access_mode": "read_only"}),
                     "implement packets require access_mode=read_write",
                 ),
                 (
-                    "fix_empty_write_scope",
-                    lambda packet: packet.update({"task_kind": "fix", "write_scope": []}),
+                    "fix_empty_scope",
+                    "fix",
+                    lambda packet: packet.update({"write_scope": []}),
                     "fix packets require a non-empty write_scope",
                 ),
                 (
                     "review_read_write",
-                    lambda packet: packet.update({"task_kind": "review", "access_mode": "read_write"}),
+                    "review",
+                    lambda packet: packet.update({"access_mode": "read_write"}),
                     "review packets require access_mode=read_only",
                 ),
                 (
                     "inspect_write_scope",
-                    lambda packet: packet.update({"task_kind": "inspect", "access_mode": "read_only"}),
+                    "inspect",
+                    lambda packet: packet.update({"write_scope": ["path:skills"]}),
                     "inspect packets require write_scope=[]",
                 ),
             ]
-            for name, mutate, expected in cases:
-                with self.subTest(name):
-                    packet = valid_worker_packet_v2(root, *source_paths)
+            for name, task_kind, mutate, expected in cases:
+                with self.subTest(name=name):
+                    case_root = root / name
+                    case_root.mkdir()
+                    repo, binding, _ = create_binding_repo(case_root)
+                    packet = current_worker_packet(repo, binding, task_kind=task_kind)
                     mutate(packet)
-                    packet_path = root / f"{name}.json"
-                    write_json(packet_path, packet)
-
-                    result = run_script("validate_worker_packet.py", str(packet_path))
-
-                    self.assertNotEqual(result.returncode, 0, name)
+                    path = repo / f"{name}.json"
+                    write_json(path, packet)
+                    result = run_script("validate_worker_packet.py", str(path))
+                    self.assertNotEqual(result.returncode, 0)
                     self.assertIn(expected, result.stderr)
 
-            review_packet = valid_worker_packet_v2(root, *source_paths)
-            review_packet["task_kind"] = "review"
-            review_packet["access_mode"] = "read_only"
-            review_packet["write_scope"] = []
-            review_path = root / "review.json"
-            write_json(review_path, review_packet)
-
-            result = run_script("validate_worker_packet.py", str(review_path))
-
-            self.assertEqual(result.returncode, 0, result.stderr)
-
-    def test_validate_worker_packet_v2_rejects_path_traversal_and_worktree_external_paths(self) -> None:
+    def test_validate_worker_packet_rejects_worktree_external_paths(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp) / "worktree"
-            root.mkdir()
-            source_paths = self.write_v2_sources(root)
-            outside = Path(tmp) / "outside.md"
-            outside.write_text("outside", encoding="utf-8")
+            root = Path(tmp)
             cases = [
                 (
-                    "read_path_traversal",
+                    "read_path",
                     lambda packet: packet["read_paths"][0].update({"path": "../outside.md"}),
                     "read_paths[0].path must stay within worktree",
                 ),
                 (
-                    "read_path_external_absolute",
-                    lambda packet: packet["read_paths"][0].update({"path": str(outside)}),
-                    "read_paths[0].path must stay within worktree",
-                ),
-                (
-                    "write_scope_traversal",
+                    "write_scope",
                     lambda packet: packet.update({"write_scope": ["path:../outside"]}),
                     "write_scope[0] must stay within worktree",
                 ),
                 (
-                    "inline_context_traversal",
+                    "inline_context",
                     lambda packet: packet.update(
                         {"inline_context": [{"path": "../issues.md", "excerpt": "short"}]}
                     ),
@@ -371,155 +287,153 @@ class WorkerPacketTests(unittest.TestCase):
                 ),
             ]
             for name, mutate, expected in cases:
-                with self.subTest(name):
-                    packet = valid_worker_packet_v2(root, *source_paths)
+                with self.subTest(name=name):
+                    case_root = root / name
+                    case_root.mkdir()
+                    repo, binding, _ = create_binding_repo(case_root)
+                    packet = current_worker_packet(repo, binding)
                     mutate(packet)
-                    packet_path = root / f"{name}.json"
-                    write_json(packet_path, packet)
-
-                    result = run_script("validate_worker_packet.py", str(packet_path))
-
-                    self.assertNotEqual(result.returncode, 0, name)
+                    path = repo / f"{name}.json"
+                    write_json(path, packet)
+                    result = run_script("validate_worker_packet.py", str(path))
+                    self.assertNotEqual(result.returncode, 0)
                     self.assertIn(expected, result.stderr)
 
-    def test_validate_worker_packet_v2_rejects_stale_source_revisions(self) -> None:
+    def test_validate_worker_packet_rejects_stale_source_revisions(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp) / "worktree"
-            root.mkdir()
-            envelope, runtime, issue_source = self.write_v2_sources(root)
-            cases = [
-                (
-                    "envelope",
-                    lambda: write_json(
-                        envelope,
-                        {
-                            "schema_version": 1,
-                            "epic_id": "loop-skill-architecture-v3",
-                            "revision": 3,
-                        },
-                    ),
-                    "source_revision.execution_envelope.revision is stale",
-                ),
-                (
-                    "runtime",
-                    lambda: write_json(
-                        runtime,
-                        {
-                            "schema_version": 1,
-                            "epic_id": "loop-skill-architecture-v3",
-                            "envelope_revision": 3,
-                            "issues": {},
-                            "human_requests": [],
-                        },
-                    ),
-                    "source_revision.runtime_state.envelope_revision is stale",
-                ),
-                (
-                    "issue",
-                    lambda: issue_source.write_text("changed", encoding="utf-8"),
-                    "source_revision.issue_source.sha256 is stale",
-                ),
-            ]
-            for name, mutate, expected in cases:
-                with self.subTest(name):
-                    envelope, runtime, issue_source = self.write_v2_sources(root)
-                    packet = valid_worker_packet_v2(root, envelope, runtime, issue_source)
-                    mutate()
-                    packet_path = root / f"{name}.json"
+            root = Path(tmp)
+            for name in ("envelope", "runtime", "issue"):
+                with self.subTest(name=name):
+                    case_root = root / name
+                    case_root.mkdir()
+                    repo, binding, _ = create_binding_repo(case_root)
+                    packet = current_worker_packet(repo, binding)
+                    source = packet["source_revision"]
+                    if name == "envelope":
+                        path = Path(source["execution_envelope"]["path"])
+                        value = json.loads(path.read_text(encoding="utf-8"))
+                        value["revision"] = 2
+                        write_json(path, value)
+                        expected = "source_revision.execution_envelope.revision is stale"
+                    elif name == "runtime":
+                        path = Path(source["runtime_state"]["path"])
+                        value = json.loads(path.read_text(encoding="utf-8"))
+                        value["envelope_revision"] = 2
+                        write_json(path, value)
+                        expected = "source_revision.runtime_state.envelope_revision is stale"
+                    else:
+                        Path(source["issue_source"]["path"]).write_text("changed", encoding="utf-8")
+                        expected = "source_revision.issue_source.sha256 is stale"
+                    packet_path = repo / f"{name}.json"
                     write_json(packet_path, packet)
-
                     result = run_script("validate_worker_packet.py", str(packet_path))
-
-                    self.assertNotEqual(result.returncode, 0, name)
+                    self.assertNotEqual(result.returncode, 0)
                     self.assertIn(expected, result.stderr)
 
-    def test_worker_packet_schema_template_and_envelope_context_policy_are_linked(self) -> None:
+    def test_asb_10_11_worker_projection_missing_and_drift_fail_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for name, expected in (
+                ("missing", "PROJECTION_MISSING"),
+                ("drift", "PROJECTION_MISMATCH"),
+            ):
+                with self.subTest(name=name):
+                    case_root = root / name
+                    case_root.mkdir()
+                    repo, binding, _ = create_binding_repo(case_root)
+                    packet = current_worker_packet(repo, binding)
+                    dispatch_path = repo / "worker.json"
+                    write_json(dispatch_path, packet)
+                    bound_packet = repo / binding["path"]
+                    if name == "missing":
+                        bound_packet.unlink()
+                    else:
+                        bound_packet.write_bytes(bound_packet.read_bytes() + b"\n")
+                    result = run_script(
+                        "validate_worker_packet.py", str(dispatch_path), "--json"
+                    )
+                    self.assertEqual(result.returncode, 1)
+                    self.assertEqual(json.loads(result.stdout)["errors"], [expected])
+
+    def test_asb_12_worker_packet_rejects_runtime_binding_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for task_kind in ("implement", "review"):
+                with self.subTest(task_kind=task_kind):
+                    case_root = root / task_kind
+                    case_root.mkdir()
+                    repo, binding, _ = create_binding_repo(case_root)
+                    packet = current_worker_packet(repo, binding, task_kind=task_kind)
+                    runtime_path = Path(packet["source_revision"]["runtime_state"]["path"])
+                    runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+                    runtime["approved_spec_binding"]["sha256"] = "a" * 64
+                    write_json(runtime_path, runtime)
+                    packet["source_revision"]["runtime_state"]["sha256"] = hashlib.sha256(
+                        runtime_path.read_bytes()
+                    ).hexdigest()
+                    path = repo / "binding-mismatch.json"
+                    write_json(path, packet)
+                    result = run_script("validate_worker_packet.py", str(path), "--json")
+                    self.assertEqual(result.returncode, 1)
+                    self.assertEqual(
+                        json.loads(result.stdout)["errors"], ["BINDING_MISMATCH"]
+                    )
+
+    def test_worker_packet_schema_template_and_envelope_are_current(self) -> None:
         schema = json.loads(
-            (SKILL_DIR / "assets" / "schemas" / "worker-packet.schema.json").read_text(
+            (SKILL_DIR / "assets/schemas/worker-packet.schema.json").read_text(
                 encoding="utf-8"
             )
         )
-        packet_template = json.loads(
-            (SKILL_DIR / "assets" / "templates" / "worker-packet.json").read_text(
+        template = json.loads(
+            (SKILL_DIR / "assets/templates/worker-packet.json").read_text(
                 encoding="utf-8"
             )
         )
-        envelope_schema = json.loads(ENVELOPE_SCHEMA_FILE.read_text(encoding="utf-8"))
         envelope_template = json.loads(
-            (SKILL_DIR / "assets" / "templates" / "execution-envelope.json").read_text(
+            (SKILL_DIR / "assets/templates/execution-envelope.json").read_text(
                 encoding="utf-8"
             )
         )
-
-        self.assertEqual(schema["properties"]["context_policy"]["properties"]["max_packet_words"]["default"], 450)
-        self.assertEqual(schema["properties"]["schema_version"]["const"], 2)
+        self.assertEqual(schema["properties"]["schema_version"]["const"], 3)
+        self.assertIn(
+            "approved_spec_binding",
+            schema["properties"]["source_revision"]["required"],
+        )
+        self.assertEqual(template["schema_version"], 3)
+        self.assertEqual(envelope_template["schema_version"], 4)
         self.assertFalse(schema["additionalProperties"])
-        self.assertFalse(schema["properties"]["task"]["additionalProperties"])
-        self.assertEqual(packet_template["schema_version"], 2)
-        self.assertEqual(envelope_template["schema_version"], 3)
-        self.assertEqual(packet_template["context_policy"]["hard_max_packet_words"], 800)
-        context_schema = envelope_schema["properties"]["context_policy"]["properties"]
-        self.assertIn("worker_packet_schema", context_schema)
-        self.assertIn("worker_packet_template", context_schema)
-        self.assertIn("worker_packet_validator", context_schema)
-        session_schema = context_schema["session_compaction"]
-        self.assertEqual(session_schema["properties"]["soft_trigger_percent"]["const"], 65)
-        self.assertEqual(session_schema["properties"]["hard_stop_percent"]["const"], 75)
-        self.assertEqual(
-            envelope_template["context_policy"]["worker_packet_schema"],
-            "assets/schemas/worker-packet.schema.json",
-        )
-        self.assertEqual(
-            envelope_template["context_policy"]["session_compaction"]["soft_trigger_percent"],
-            65,
-        )
+        self.assertEqual(template["context_policy"]["hard_max_packet_words"], 800)
 
-    def test_worker_packet_rejects_session_level_hardening_candidate_decision_state(self) -> None:
+    def test_worker_packet_rejects_session_level_hardening_decision_state(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp) / "worktree"
-            root.mkdir()
-            envelope, runtime, issue_source = self.write_v2_sources(root)
+            root = Path(tmp)
             cases = [
+                ("top", lambda p: p.update({"hardening_candidates": []}), "unknown field: hardening_candidates"),
+                ("task", lambda p: p["task"].update({"candidate_decisions": []}), "unknown field: task.candidate_decisions"),
                 (
-                    "top_level",
-                    lambda packet: packet.update({"hardening_candidates": []}),
-                    "unknown field: hardening_candidates",
-                ),
-                (
-                    "review_policy",
-                    lambda packet: packet.update({"review_policy": {"hardening_candidates": {}}}),
-                    "unknown field: review_policy",
-                ),
-                (
-                    "task_decisions",
-                    lambda packet: packet["task"].update({"candidate_decisions": []}),
-                    "unknown field: task.candidate_decisions",
-                ),
-                (
-                    "context_policy_state",
-                    lambda packet: packet["context_policy"].update(
+                    "context",
+                    lambda p: p["context_policy"].update(
                         {"candidate_registry_path": "decisions/hardening-candidates.json"}
                     ),
                     "unknown field: context_policy.candidate_registry_path",
                 ),
             ]
             for name, mutate, expected in cases:
-                with self.subTest(name):
-                    packet = valid_worker_packet_v2(root, envelope, runtime, issue_source)
+                with self.subTest(name=name):
+                    case_root = root / name
+                    case_root.mkdir()
+                    repo, binding, _ = create_binding_repo(case_root)
+                    packet = current_worker_packet(repo, binding)
                     mutate(packet)
-                    packet_path = root / f"{name}.json"
-                    write_json(packet_path, packet)
-
-                    result = run_script("validate_worker_packet.py", str(packet_path))
-
-                    self.assertNotEqual(result.returncode, 0, name)
+                    path = repo / f"{name}.json"
+                    write_json(path, packet)
+                    result = run_script("validate_worker_packet.py", str(path))
+                    self.assertNotEqual(result.returncode, 0)
                     self.assertIn(expected, result.stderr)
 
-    def test_worker_contract_points_workers_to_normalized_packet_tools(self) -> None:
-        worker_contract = (SKILL_DIR / "references" / "worker-contract.md").read_text(
-            encoding="utf-8"
-        )
-
+    def test_worker_contract_points_to_current_packet_tools_and_binding(self) -> None:
+        contract = (SKILL_DIR / "references/worker-contract.md").read_text(encoding="utf-8")
         for required in (
             "assets/templates/worker-packet.json",
             "assets/schemas/worker-packet.schema.json",
@@ -528,120 +442,13 @@ class WorkerPacketTests(unittest.TestCase):
             "PACKET_CONTEXT_BUDGET_EXCEEDED",
             "task_kind",
             "access_mode",
-            "source_revision",
+            "source_revision.approved_spec_binding",
+            "Worker Packet v3",
+            "Worker Report v2",
         ):
-            self.assertIn(required, worker_contract)
-
-
-def valid_worker_packet() -> dict:
-    return {
-        "schema_version": 1,
-        "packet_type": "issue_worker_dispatch",
-        "epic_id": "loop-skill-architecture-v3",
-        "issue_id": "G2PR-004",
-        "issue_title": "Normalize worker packet",
-        "dispatch_id": "dispatch-valid",
-        "branch": "codex/loop-skill-architecture-v3/G2PR-004-worker-packet-budget",
-        "worktree": "/tmp/skills/G2PR-004-worker-packet-budget",
-        "write_scope": ["path:skills/issue-implementation-loop"],
-        "context_policy": {
-            "paths_first": True,
-            "max_packet_words": 450,
-            "hard_max_packet_words": 800,
-            "max_read_paths": 8,
-            "max_inline_excerpt_words_per_file": 120,
-            "max_inline_excerpt_words_total": 300,
-            "include_full_spec_text": False,
-            "include_full_ledger_text": False,
-        },
-        "read_paths": [
-            {
-                "path": "knowledge/wiki/syntheses/loop-skill-architecture-v3-spec.md",
-                "purpose": "spec",
-            }
-        ],
-        "inline_context": [],
-        "task": {
-            "summary": "Add a worker packet builder and validator.",
-            "acceptance_criteria": ["Budget overflow fails."],
-            "verification": ["python3 -m unittest discover -s skills/issue-implementation-loop/tests"],
-            "stop_conditions": ["Stop before remote writes."],
-        },
-        "report_contract": {
-            "format": "worker-report.json",
-            "validator": "skills/issue-implementation-loop/scripts/validate_worker_report.py",
-        },
-    }
-
-
-def _sha256(path: Path) -> str:
-    import hashlib
-
-    return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
-def valid_worker_packet_v2(
-    root: Path,
-    envelope: Path,
-    runtime: Path,
-    issue_source: Path,
-) -> dict:
-    return {
-        "schema_version": 2,
-        "packet_type": "issue_worker_dispatch",
-        "task_kind": "implement",
-        "access_mode": "read_write",
-        "source_revision": {
-            "execution_envelope": {
-                "path": str(envelope),
-                "revision": 2,
-                "sha256": _sha256(envelope),
-            },
-            "runtime_state": {
-                "path": str(runtime),
-                "envelope_revision": 2,
-                "sha256": _sha256(runtime),
-            },
-            "issue_source": {
-                "path": str(issue_source),
-                "sha256": _sha256(issue_source),
-            },
-        },
-        "epic_id": "loop-skill-architecture-v3",
-        "issue_id": "G2PR-004",
-        "issue_title": "Normalize worker packet",
-        "dispatch_id": "dispatch-valid",
-        "branch": "codex/loop-skill-architecture-v3/G2PR-004-worker-packet-budget",
-        "worktree": str(root),
-        "write_scope": ["path:skills/issue-implementation-loop"],
-        "context_policy": {
-            "paths_first": True,
-            "max_packet_words": 450,
-            "hard_max_packet_words": 800,
-            "max_read_paths": 8,
-            "max_inline_excerpt_words_per_file": 120,
-            "max_inline_excerpt_words_total": 300,
-            "include_full_spec_text": False,
-            "include_full_ledger_text": False,
-        },
-        "read_paths": [
-            {
-                "path": "knowledge/wiki/syntheses/issues.md",
-                "purpose": "issue-ledger",
-            }
-        ],
-        "inline_context": [],
-        "task": {
-            "summary": "Add a worker packet builder and validator.",
-            "acceptance_criteria": ["Budget overflow fails."],
-            "verification": ["python3 -m unittest discover -s skills/issue-implementation-loop/tests"],
-            "stop_conditions": ["Stop before remote writes."],
-        },
-        "report_contract": {
-            "format": "worker-report.json",
-            "validator": "skills/issue-implementation-loop/scripts/validate_worker_report.py",
-        },
-    }
+            self.assertIn(required, contract)
+        self.assertNotIn("worker-packet-v1.schema.json", contract)
+        self.assertNotIn("remains readable", contract)
 
 
 if __name__ == "__main__":

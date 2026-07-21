@@ -19,6 +19,13 @@ SKILL_FILE = SKILL_DIR / "SKILL.md"
 SCRIPTS_DIR = SKILL_DIR / "scripts"
 COMMON_SCRIPT = SCRIPTS_DIR / "_common.py"
 ENVELOPE_SCHEMA_FILE = SKILL_DIR / "assets" / "schemas" / "execution-envelope.schema.json"
+REPO_ROOT = SKILL_DIR.parents[1]
+ASBC_GATE_COMMIT = "ad9adeab69bcafd761d8457e9c33d1b4c26096d5"
+ASBC_PACKET_PATH = (
+    "knowledge/wiki/syntheses/"
+    "loop-skill-approved-spec-binding-contract-input-packet.json"
+)
+ASBC_PACKET_SHA256 = "3779e815b4be7438b36e9fb53073fa1d3ab20f07cd5ad1c531fa075c11b457e7"
 BASE_SHA = "0123456789abcdef0123456789abcdef01234567"
 HEAD_SHA = "89abcdef0123456789abcdef0123456789abcdef"
 REVIEW_RANGE = f"{BASE_SHA}..{HEAD_SHA}"
@@ -35,6 +42,25 @@ def run_script(script_name: str, *args: str) -> subprocess.CompletedProcess[str]
 
 def write_json(path: Path, value: object) -> None:
     path.write_text(json.dumps(value, indent=2), encoding="utf-8")
+
+
+def git(repo: Path, *args: str) -> str:
+    result = subprocess.run(
+        ["git", "-C", str(repo), *args],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout.strip()
+
+
+def approved_spec_binding(
+    *,
+    path: str = ASBC_PACKET_PATH,
+    sha256: str = ASBC_PACKET_SHA256,
+    gate_commit: str = ASBC_GATE_COMMIT,
+) -> dict[str, str]:
+    return {"path": path, "sha256": sha256, "gate_commit": gate_commit}
 
 
 def write_hardening_registry(path: Path, candidates: list[dict]) -> None:
@@ -84,10 +110,14 @@ def load_common_module():
 
 def base_envelope() -> dict:
     return {
-        "schema_version": 3,
+        "schema_version": 4,
         "epic_id": "issue-implementation-loop",
         "revision": 1,
-        "epic_base": {"ref": "main", "sha": BASE_SHA},
+        "approved_spec_binding": approved_spec_binding(),
+        "epic_base": {
+            "ref": "codex/approved-spec-binding-contract",
+            "sha": git(REPO_ROOT, "rev-parse", "HEAD"),
+        },
         "execution_policy": {
             "parallel_preferred": True,
             "serial_fallback_preapproved": True,
@@ -188,6 +218,172 @@ def base_envelope() -> dict:
                 ],
             },
         },
+    }
+
+
+def create_binding_repo(root: Path) -> tuple[Path, dict[str, str], str]:
+    """Create a sealed packet/spec commit and return repo, binding, gate SHA."""
+
+    repo = root / "repo"
+    repo.mkdir()
+    git(repo, "init", "-q")
+    git(repo, "config", "user.email", "test@example.com")
+    git(repo, "config", "user.name", "Test User")
+    (repo / "README.md").write_text("base\n", encoding="utf-8")
+    git(repo, "add", "README.md")
+    git(repo, "commit", "-q", "-m", "base")
+
+    synthesis = repo / "knowledge/wiki/syntheses"
+    synthesis.mkdir(parents=True)
+    spec_path = synthesis / "spec.md"
+    issues_path = synthesis / "issues.md"
+    packet_path = synthesis / "input-packet.json"
+    spec_path.write_text("approved spec\n", encoding="utf-8")
+    issues_path.write_text("# Issues\n", encoding="utf-8")
+    packet = current_input_packet(repo)
+    write_json(packet_path, packet)
+    packet_digest = hashlib.sha256(packet_path.read_bytes()).hexdigest()
+    git(repo, "add", "knowledge")
+    git(repo, "commit", "-q", "-m", "gate")
+    gate_commit = git(repo, "rev-parse", "HEAD")
+    binding = {
+        "path": "knowledge/wiki/syntheses/input-packet.json",
+        "sha256": packet_digest,
+        "gate_commit": gate_commit,
+    }
+    return repo, binding, gate_commit
+
+
+def binding_envelope(repo: Path, binding: dict[str, str], target: str | None = None) -> dict:
+    envelope = base_envelope()
+    envelope["epic_id"] = "approved-spec-binding"
+    envelope["approved_spec_binding"] = copy.deepcopy(binding)
+    envelope["epic_base"] = {
+        "ref": git(repo, "branch", "--show-current") or "HEAD",
+        "sha": target or git(repo, "rev-parse", "HEAD"),
+    }
+    envelope["work_items"] = {
+        "ASBC-002": {
+            "branch": "codex/approved-spec-binding/ASBC-002-workers",
+            "worktree_path": str(repo),
+            "worktree_state": "active",
+            "base_policy": {"type": "epic_base"},
+            "write_scope": ["path:skills/issue-implementation-loop"],
+            "dependencies": [],
+        }
+    }
+    return envelope
+
+
+def write_binding_sources(
+    repo: Path,
+    binding: dict[str, str],
+) -> tuple[Path, Path, Path]:
+    envelope_path = repo / "execution-envelope.json"
+    runtime_path = repo / "runtime-state.json"
+    issue_source = repo / "knowledge/wiki/syntheses/issues.md"
+    write_json(envelope_path, binding_envelope(repo, binding))
+    write_json(
+        runtime_path,
+        {
+            "schema_version": 1,
+            "epic_id": "approved-spec-binding",
+            "envelope_revision": 1,
+            "approved_spec_binding": copy.deepcopy(binding),
+            "issues": {},
+            "human_requests": [],
+        },
+    )
+    return envelope_path, runtime_path, issue_source
+
+
+def current_worker_packet(
+    repo: Path,
+    binding: dict[str, str],
+    *,
+    task_kind: str = "implement",
+) -> dict:
+    envelope, runtime, issue_source = write_binding_sources(repo, binding)
+    read_only = task_kind in {"review", "inspect"}
+    return {
+        "schema_version": 3,
+        "packet_type": "issue_worker_dispatch",
+        "task_kind": task_kind,
+        "access_mode": "read_only" if read_only else "read_write",
+        "source_revision": {
+            "approved_spec_binding": copy.deepcopy(binding),
+            "execution_envelope": {
+                "path": str(envelope),
+                "revision": 1,
+                "sha256": hashlib.sha256(envelope.read_bytes()).hexdigest(),
+            },
+            "runtime_state": {
+                "path": str(runtime),
+                "envelope_revision": 1,
+                "sha256": hashlib.sha256(runtime.read_bytes()).hexdigest(),
+            },
+            "issue_source": {
+                "path": str(issue_source),
+                "sha256": hashlib.sha256(issue_source.read_bytes()).hexdigest(),
+            },
+        },
+        "epic_id": "approved-spec-binding",
+        "issue_id": "ASBC-002",
+        "issue_title": "Propagate binding through worker artifacts",
+        "dispatch_id": f"dispatch-{task_kind}-001",
+        "branch": "codex/approved-spec-binding/ASBC-002-workers",
+        "worktree": str(repo),
+        "write_scope": [] if read_only else ["path:skills/issue-implementation-loop"],
+        "context_policy": {
+            "paths_first": True,
+            "max_packet_words": 450,
+            "hard_max_packet_words": 800,
+            "max_read_paths": 8,
+            "max_inline_excerpt_words_per_file": 120,
+            "max_inline_excerpt_words_total": 300,
+            "include_full_spec_text": False,
+            "include_full_ledger_text": False,
+        },
+        "read_paths": [
+            {
+                "path": "knowledge/wiki/syntheses/issues.md",
+                "purpose": "issue-ledger",
+            }
+        ],
+        "inline_context": [],
+        "task": {
+            "summary": "Propagate one approved binding.",
+            "acceptance_criteria": ["Mismatched bindings are rejected."],
+            "verification": ["python3 -m unittest"],
+            "stop_conditions": ["Stop before remote writes."],
+        },
+        "report_contract": {
+            "format": "worker-report.json",
+            "validator": "skills/issue-implementation-loop/scripts/validate_worker_report.py",
+        },
+    }
+
+
+def current_worker_report(
+    repo: Path,
+    binding: dict[str, str],
+    packet: dict,
+) -> dict:
+    return {
+        "schema_version": 2,
+        "approved_spec_binding": copy.deepcopy(binding),
+        "dispatch_id": packet["dispatch_id"],
+        "epic_id": packet["epic_id"],
+        "issue_id": packet["issue_id"],
+        "branch": packet["branch"],
+        "worktree": str(repo),
+        "changed_files": ["skills/issue-implementation-loop/SKILL.md"],
+        "verification": [{"command": "python3 -m unittest", "result": "passed"}],
+        "base_sha": BASE_SHA,
+        "head_sha": HEAD_SHA,
+        "implementation_review": {"status": "approved", "range": REVIEW_RANGE},
+        "status": "PR_READY",
+        "residual_risks": [],
     }
 
 

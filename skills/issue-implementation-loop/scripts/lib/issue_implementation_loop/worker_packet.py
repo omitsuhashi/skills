@@ -71,6 +71,7 @@ def source_revision_record(
     envelope = _load_json(envelope_file)
     runtime = _load_json(runtime_file)
     return {
+        "approved_spec_binding": envelope.get("approved_spec_binding"),
         "execution_envelope": {
             "path": str(envelope_file),
             "revision": envelope.get("revision"),
@@ -116,22 +117,19 @@ def build_worker_packet(
     stop_conditions: list[str],
     inline_excerpts: list[str],
     max_packet_words: int = DEFAULT_PACKET_WORDS,
-    schema_version: int = 2,
     task_kind: str = "implement",
     access_mode: str = "read_write",
     source_envelope: str | None = None,
     source_runtime: str | None = None,
     source_issue: str | None = None,
 ) -> dict[str, Any]:
-    if schema_version not in {1, 2}:
-        raise ValueError("schema_version must be 1 or 2")
     if read_purposes is None:
         read_purposes = ["source"] * len(read_paths)
     if len(read_purposes) != len(read_paths):
         raise ValueError("--read-purpose must be provided once per --read-path")
 
     packet: dict[str, Any] = {
-        "schema_version": schema_version,
+        "schema_version": 3,
         "packet_type": "issue_worker_dispatch",
         "epic_id": epic_id,
         "issue_id": issue_id,
@@ -157,16 +155,13 @@ def build_worker_packet(
             "validator": "skills/issue-implementation-loop/scripts/validate_worker_report.py",
         },
     }
-    if schema_version == 1:
-        return packet
-
     if task_kind not in TASK_KINDS:
         raise ValueError(f"task_kind must be one of {sorted(TASK_KINDS)}")
     if access_mode not in ACCESS_MODES:
         raise ValueError(f"access_mode must be one of {sorted(ACCESS_MODES)}")
     if not source_envelope or not source_runtime or not source_issue:
         raise ValueError(
-            "schema version 2 requires --source-envelope, --source-runtime, and --source-issue"
+            "worker packet v3 requires --source-envelope, --source-runtime, and --source-issue"
         )
     packet["task_kind"] = task_kind
     packet["access_mode"] = access_mode

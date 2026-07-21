@@ -1,63 +1,45 @@
 # Worker Contract
 
-Give each worker a normalized dispatch packet built from:
+Build and validate bounded handoffs with:
 
 - `assets/templates/worker-packet.json`
 - `assets/schemas/worker-packet.schema.json`
-- `assets/schemas/worker-packet-v1.schema.json` for existing-run compatibility only
 - `scripts/build_worker_packet.py`
 - `scripts/validate_worker_packet.py`
 
-The packet contains issue ID/title, Epic ID, dispatch ID, branch, worktree path,
-task kind, access mode, source revision, exclusive write scope, durable read
-paths with purpose, short task summary, acceptance criteria, verification
-commands, stop conditions, and report contract.
+Worker Packet v3 is current-only. V1/V2 return `SCHEMA_UNSUPPORTED`. Executor and
+reviewer packets share this schema; only `task_kind`, access policy, and write
+scope differ.
 
-`issue_title`、`task.summary`、`task.acceptance_criteria`、`task.stop_conditions` などの user-facing packet string は日本語をベースにする。schema key、path、command、ID、branch name、外部参照は維持する。
+## Packet Rules
 
-## Rules
+- Require `source_revision.approved_spec_binding` plus envelope, runtime, and issue-source revisions.
+- Revalidate packet/spec projection and gate ancestry in the assigned worktree before start.
+- Use `task_kind=implement|fix` with `access_mode=read_write` and non-empty `write_scope`.
+- Use `task_kind=review|inspect` with `access_mode=read_only` and `write_scope=[]`.
+- `issue_title`、`task.summary`、`task.acceptance_criteria`、`task.stop_conditions` などの user-facing packet string は日本語をベースにする。keys、paths、commands、IDs、branches は維持する。
+- Keep `context_policy` packet-local; never include `session_compaction` or session decision state.
+- Default/hard packet budgets are 450/800 words; `read_paths` allows at most 8 entries and requires `purpose`.
+- Inline excerpts allow 120 words per path and 300 total. Never paste full spec, ledger, ADR, glossary, or unrelated code.
+- `PACKET_CONTEXT_BUDGET_EXCEEDED` fails without truncation.
+- Reject path traversal and paths outside the assigned worktree. Stay inside write scope.
+- Workers do not edit coordinator-owned envelope, runtime, events, or shared ledger unless assigned.
+- Use `tdd` or an approved equivalent, run fresh verification, and commit locally before review or success.
 
-- Re-read assigned issue and spec from durable paths.
-- Keep the packet paths-first and validate it before dispatch. V2 is the default
-  packet contract; V1 remains readable for old runs only.
-- Use `task_kind=implement|fix|review|inspect`.
-- Use `access_mode=read_write` with non-empty `write_scope` for implement/fix.
-- Use `access_mode=read_only` with `write_scope=[]` for review/inspect.
-- Record `source_revision` for the execution envelope, runtime state, and issue
-  source so stale dispatch packets are rejected before work starts.
-- Keep worker `context_policy` packet-local; never include `session_compaction`.
-- Enforce default packet budget 450 words and hard budget 800 words.
-- Keep `read_paths` to 8 entries or fewer.
-- Require `read_paths[].purpose`.
-- Keep each inline excerpt to 120 words or fewer and all inline excerpts to 300 words or fewer.
-- Do not paste full spec, ledger, ADR, glossary, or unrelated code into the worker packet.
-- Treat `PACKET_CONTEXT_BUDGET_EXCEEDED` as fail-fast; do not auto-truncate packet text.
-- Stay inside write scope. V2 packet validation rejects path traversal and
-  worker-visible paths outside the assigned worktree.
-- Do not edit coordinator-owned envelope, runtime snapshot, event log, or shared ledger unless explicitly assigned.
-- Use `tdd` or an approved equivalent for behavior changes.
-- Run targeted verification, update issue-owned docs/progress, then run fresh final verification.
-- Produce a local scoped commit before issue review, blocker release, completion, or PR readiness. Review ranges use committed `BASE_SHA..HEAD_SHA`, not `working-tree`.
-- For `PR_READY`, `COMPLETE`, or `DONE`, report matching `base_sha`, `head_sha`, and implementation review range.
+## Worker Report v2
 
-## Worker Report
+Require `schema_version: 2`, `approved_spec_binding`, `dispatch_id`, issue/Epic
+identity, branch/worktree, changed files, verification, status, and residual
+risks. Success also requires matching base/head SHA and approved implementation
+review range.
 
-Report:
-
-- issue ID/title and Epic ID
-- branch and worktree path
-- changed files
-- verification commands and results
-- base/head SHA for success statuses
-- implementation review state and range
-- fixed findings and accepted residual risks
-- PR readiness
-- new blockers or released blockers
-
-Keep normal reports within `context_policy.max_worker_report_words`; write bulky evidence to report files and cite paths.
-
-Validate before coordinator intake:
+Validate intake against both dispatch and active runtime:
 
 ```bash
-python3 <skill-dir>/scripts/validate_worker_report.py <worker-report.json>
+python3 <skill-dir>/scripts/validate_worker_report.py <worker-report.json> \
+  --dispatch-packet <worker-or-reviewer-packet.json> \
+  --runtime-state <runtime-state.json>
 ```
+
+Report, dispatch, and runtime bindings plus dispatch identity must match;
+otherwise return `BINDING_MISMATCH`. Old reports return `SCHEMA_UNSUPPORTED`.

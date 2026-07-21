@@ -1,30 +1,33 @@
 {
   "schema_version": 4,
-  "epic_id": "<epic-id>",
+  "epic_id": "approved-spec-binding-contract",
   "revision": 1,
   "approved_spec_binding": {
-    "path": "knowledge/wiki/syntheses/<epic-id>-input-packet.json",
-    "sha256": "<raw-byte-sha256>",
-    "gate_commit": "<full-gate-commit>"
+    "path": "knowledge/wiki/syntheses/loop-skill-approved-spec-binding-contract-input-packet.json",
+    "sha256": "3779e815b4be7438b36e9fb53073fa1d3ab20f07cd5ad1c531fa075c11b457e7",
+    "gate_commit": "ad9adeab69bcafd761d8457e9c33d1b4c26096d5"
   },
   "epic_base": {
-    "ref": "codex/<epic-id>/epic-base",
-    "sha": "<initial-full-sha>",
-    "branch_state": "reserved"
+    "ref": "codex/approved-spec-binding-contract",
+    "sha": "ad9adeab69bcafd761d8457e9c33d1b4c26096d5",
+    "branch_state": "active",
+    "worktree_path": "/Users/omitsuhashi/.codex/worktrees/09cc/skills"
   },
   "execution_policy": {
-    "parallel_preferred": true,
+    "parallel_preferred": false,
     "serial_fallback_preapproved": true,
     "worker_context_required": true,
     "coordinator_may_implement": false,
     "serial_fallback_mode": "worker_context_only",
-    "implementation_slots": 4,
-    "review_slots": 2,
+    "implementation_slots": 1,
+    "review_slots": 1,
     "wave_is_barrier": false
   },
   "review_policy": {
     "primary": "requesting-code-review",
-    "fallbacks": ["equivalent-independent-reviewer"],
+    "fallbacks": [
+      "equivalent-independent-reviewer"
+    ],
     "manual_fallback_preapproved": false,
     "max_review_cycles": 2,
     "max_fix_cycles": 2,
@@ -48,9 +51,9 @@
     "max_worker_report_words": 350,
     "include_full_spec_text": false,
     "include_full_ledger_text": false,
-    "worker_packet_schema": "assets/schemas/worker-packet.schema.json",
-    "worker_packet_template": "assets/templates/worker-packet.json",
-    "worker_packet_validator": "scripts/validate_worker_packet.py",
+    "worker_packet_schema": "skills/issue-implementation-loop/assets/schemas/worker-packet.schema.json",
+    "worker_packet_template": "skills/issue-implementation-loop/assets/templates/worker-packet.json",
+    "worker_packet_validator": "skills/issue-implementation-loop/scripts/validate_worker_packet.py",
     "session_compaction": {
       "soft_trigger_percent": 65,
       "hard_stop_percent": 75,
@@ -76,32 +79,20 @@
     "integration_branch_policy": "approved_integration_work_item_only"
   },
   "remote_write_policy": {
-    "mode": "batch_issue_prs",
-    "approved_actions": [
-      "final_pr_push_head",
-      "final_pr_create_draft"
-    ],
-    "issue_prs": {
-      "base": "epic_base.ref",
-      "merge": "agent_default_with_human_escalation"
-    },
-    "final_pr": {
-      "head": "epic_base.ref",
-      "base": "main",
-      "merge": "human_only",
-      "draft_default": true
-    }
+    "mode": "local_only",
+    "approved_actions": []
   },
   "work_items": {
-    "G2PR-001": {
-      "branch": "codex/<epic-id>/G2PR-001-<slug>",
-      "worktree_path": "/abs/path/to/worktree",
-      "worktree_state": "create_on_run",
+    "ASBC-002": {
+      "branch": "codex/approved-spec-binding-contract/ASBC-002-workers",
+      "worktree_path": "/Users/omitsuhashi/.codex/worktrees/09cc/skills",
+      "worktree_state": "active",
       "base_policy": {
         "type": "epic_base"
       },
       "write_scope": [
-        "path:<scope>"
+        "path:skills/issue-implementation-loop",
+        "path:knowledge/wiki/syntheses/loop-skill-approved-spec-binding-contract-execution-envelope.json"
       ],
       "dependencies": []
     }

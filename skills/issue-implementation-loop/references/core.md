@@ -12,10 +12,10 @@ The original planning/grill session must not implement issue work. Workers own o
 
 ## Input Packet
 
-Normalize local or remote issues before execution:
+Input Packet v2 is the only executable packet contract:
 
-- `schema_version`, `repo_root`, `epic_id`, optional `artifact_root`
-- `spec.path`, plus approved revision/hash when available
+- `schema_version: 2`, `epic_id`, and repo-relative `artifact_root`
+- required `spec_binding` and complete `approval_evidence`
 - `work_items[]` with ID, title, source, acceptance criteria, non-goals, verification, write scope, and dependencies
 - `delivery_intent`: use `batch_issue_prs` for issue PRs into `codex/<epic-id>/epic-base` and a final PR to `main`
 
@@ -34,7 +34,9 @@ Return a local execution result:
 
 Use `assets/templates/execution-result.json` for the concrete shape.
 
-New Execution Envelopes use schema version `3` with `phase_branch_policy`; legacy `1` / `2` remain resumable.
+Execution Envelope v4 is current-only. It pins the sealed Input Packet v2 through
+`approved_spec_binding` and verifies the full gate commit, its ancestry, and its
+packet/spec tree blobs before state-changing work.
 
 ## Non-Goals
 

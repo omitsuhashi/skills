@@ -71,6 +71,10 @@ DEFAULT_ACTIONS = {
     "INPUT_PACKET_DIGEST_MISMATCH": "return_to_execution_plan_gate",
     "BINDING_MISMATCH": "return_to_execution_plan_gate",
     "PROJECTION_MISSING": "return_to_execution_plan_gate",
+    "PROJECTION_MISMATCH": "return_to_execution_plan_gate",
+    "GATE_COMMIT_MISSING": "return_to_execution_plan_gate",
+    "GATE_COMMIT_NOT_ANCESTOR": "return_to_execution_plan_gate",
+    "GATE_COMMIT_BLOB_MISMATCH": "return_to_execution_plan_gate",
     "PATH_ABSOLUTE": "regenerate_artifact",
     "PATH_TRAVERSAL": "regenerate_artifact",
     "PATH_OUTSIDE_REPO": "regenerate_artifact",
@@ -141,6 +145,20 @@ class InputPacketRef:
 
     def to_dict(self) -> dict[str, str]:
         return {"path": self.path, "sha256": self.sha256}
+
+
+@dataclass(frozen=True)
+class ApprovedSpecBindingRef:
+    path: str
+    sha256: str
+    gate_commit: str
+
+    def to_dict(self) -> dict[str, str]:
+        return {
+            "path": self.path,
+            "sha256": self.sha256,
+            "gate_commit": self.gate_commit,
+        }
 
 
 @dataclass(frozen=True)
@@ -805,6 +823,105 @@ def _packet_ref(value: Any) -> tuple[str, str | None]:
     if digest is None:
         raise BindingError("DIGEST_MISSING", action="return_to_execution_plan_gate")
     return path, _digest(digest, action="return_to_execution_plan_gate")
+
+
+def approved_spec_binding_ref(value: Any) -> ApprovedSpecBindingRef:
+    if not isinstance(value, Mapping):
+        raise BindingError("GATE_COMMIT_MISSING")
+    if "gate_commit" not in value or not value.get("gate_commit"):
+        raise BindingError("GATE_COMMIT_MISSING")
+    if set(value) != {"path", "sha256", "gate_commit"}:
+        raise BindingError("SCHEMA_UNSUPPORTED")
+    path = _parse_repo_path(value.get("path"))
+    digest = _digest(
+        value.get("sha256"), action="return_to_execution_plan_gate"
+    )
+    gate_commit = value.get("gate_commit")
+    if not isinstance(gate_commit, str):
+        raise BindingError("GATE_COMMIT_MISSING")
+    return ApprovedSpecBindingRef(path, digest, gate_commit)
+
+
+def _git_bytes(root: Path, *args: str) -> subprocess.CompletedProcess[bytes]:
+    try:
+        return subprocess.run(
+            ["git", "-C", str(root), *args],
+            check=False,
+            capture_output=True,
+        )
+    except (OSError, TypeError, ValueError):
+        raise BindingError("GATE_COMMIT_MISSING") from None
+
+
+def _full_git_object_id(root: Path, value: str) -> bool:
+    format_result = _git_bytes(root, "rev-parse", "--show-object-format")
+    if format_result.returncode != 0:
+        return False
+    object_format = format_result.stdout.decode("ascii", errors="ignore").strip()
+    expected_length = {"sha1": 40, "sha256": 64}.get(object_format)
+    if expected_length is None or len(value) != expected_length:
+        return False
+    return bool(re.fullmatch(r"[0-9a-f]+", value))
+
+
+def _git_blob(root: Path, commit: str, path: str) -> bytes:
+    object_result = _git_bytes(root, "rev-parse", f"{commit}:{path}")
+    if object_result.returncode != 0:
+        raise BindingError("GATE_COMMIT_BLOB_MISMATCH", path=path)
+    object_id = object_result.stdout.decode("ascii", errors="ignore").strip()
+    blob_result = _git_bytes(root, "cat-file", "blob", object_id)
+    if blob_result.returncode != 0:
+        raise BindingError("GATE_COMMIT_BLOB_MISMATCH", path=path)
+    return blob_result.stdout
+
+
+def verify_approved_spec_binding(
+    repo_root: str | os.PathLike[str],
+    value: Any,
+    *,
+    ancestor_ref: str | None = None,
+    projection_errors: bool = False,
+) -> VerifiedBinding:
+    """Verify current packet/spec projection plus its immutable Git gate."""
+
+    root = _trusted_repo_root(repo_root)
+    binding = approved_spec_binding_ref(value)
+    try:
+        verified = verify_chain(
+            root,
+            {"input_packet": {"path": binding.path, "sha256": binding.sha256}},
+        )
+    except BindingError as error:
+        if projection_errors and error.code in {"INPUT_PACKET_DIGEST_MISMATCH", "SPEC_DIGEST_MISMATCH"}:
+            raise BindingError("PROJECTION_MISMATCH", path=error.path) from None
+        if projection_errors and error.code in {"SPEC_MISSING", "PROJECTION_MISSING"}:
+            raise BindingError("PROJECTION_MISSING", path=error.path) from None
+        raise
+
+    if not _full_git_object_id(root, binding.gate_commit):
+        raise BindingError("GATE_COMMIT_MISSING")
+    commit_result = _git_bytes(root, "cat-file", "-e", f"{binding.gate_commit}^{{commit}}")
+    if commit_result.returncode != 0:
+        raise BindingError("GATE_COMMIT_MISSING")
+    if ancestor_ref is not None:
+        ancestor_result = _git_bytes(
+            root, "merge-base", "--is-ancestor", binding.gate_commit, ancestor_ref
+        )
+        if ancestor_result.returncode != 0:
+            raise BindingError("GATE_COMMIT_NOT_ANCESTOR")
+
+    gate_packet = _git_blob(root, binding.gate_commit, binding.path)
+    if hashlib.sha256(gate_packet).hexdigest() != binding.sha256:
+        raise BindingError("GATE_COMMIT_BLOB_MISMATCH", path=binding.path)
+    try:
+        packet = _packet_from_bytes(gate_packet)
+        spec = _coerce_spec_revision(packet["spec_binding"])
+    except BindingError:
+        raise BindingError("GATE_COMMIT_BLOB_MISMATCH", path=binding.path) from None
+    gate_spec = _git_blob(root, binding.gate_commit, spec.path)
+    if hashlib.sha256(gate_spec).hexdigest() != spec.sha256:
+        raise BindingError("GATE_COMMIT_BLOB_MISMATCH", path=spec.path)
+    return verified
 
 
 def verify_chain(

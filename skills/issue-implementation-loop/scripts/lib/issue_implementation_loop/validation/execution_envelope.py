@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from typing import Any
 
+from ..approved_spec_binding import BindingError, verify_approved_spec_binding
 from ..constants import (
     APPROVED_REMOTE_ACTIONS,
     BASE_EFFECTS,
@@ -117,11 +119,13 @@ def _validate_hardening_candidates_policy(
         errors.append(f"{prefix}.worker_packet_decision_state must be forbidden")
 
 
-def validate_execution_envelope(envelope: dict[str, Any]) -> list[str]:
+def validate_execution_envelope(
+    envelope: dict[str, Any], repo_root: str | os.PathLike[str] | None = None
+) -> list[str]:
     errors: list[str] = []
     schema_version = envelope.get("schema_version")
-    if schema_version not in (1, 2, 3):
-        errors.append("schema_version must be 1, 2, or 3")
+    if schema_version != 4:
+        return ["SCHEMA_UNSUPPORTED"]
 
     epic_id = envelope.get("epic_id")
     if not isinstance(epic_id, str) or not is_lower_kebab(epic_id):
@@ -265,8 +269,7 @@ def validate_execution_envelope(envelope: dict[str, Any]) -> list[str]:
             errors.append("context_policy.include_full_ledger_text must be false")
         session_compaction = context_policy.get("session_compaction")
         if session_compaction is None:
-            if schema_version in (2, 3):
-                errors.append("context_policy.session_compaction is required for schema_version 2 or 3")
+            errors.append("context_policy.session_compaction is required")
         elif not isinstance(session_compaction, dict):
             errors.append("context_policy.session_compaction must be an object")
         else:
@@ -292,8 +295,7 @@ def validate_execution_envelope(envelope: dict[str, Any]) -> list[str]:
 
     phase_branch_policy = envelope.get("phase_branch_policy")
     if phase_branch_policy is None:
-        if schema_version == 3:
-            errors.append("phase_branch_policy is required for schema_version 3")
+        errors.append("phase_branch_policy is required")
     else:
         _validate_exact_policy_object(
             phase_branch_policy,
@@ -417,4 +419,13 @@ def validate_execution_envelope(envelope: dict[str, Any]) -> list[str]:
     cycle = dependency_cycle(work_items)
     if cycle:
         errors.append("dependency cycle detected: " + " -> ".join(cycle))
+    if not errors and isinstance(epic_base, dict):
+        try:
+            verify_approved_spec_binding(
+                Path.cwd() if repo_root is None else repo_root,
+                envelope.get("approved_spec_binding"),
+                ancestor_ref=epic_base.get("sha"),
+            )
+        except BindingError as error:
+            return [error.code]
     return errors

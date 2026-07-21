@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 
 from _common import dump_json, load_json, validate_execution_envelope
 
@@ -12,10 +13,13 @@ from _common import dump_json, load_json, validate_execution_envelope
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("envelope")
+    parser.add_argument("--repo-root", help="Trusted Git worktree root (defaults to cwd).")
     parser.add_argument("--json", action="store_true", help="Emit JSON result.")
     args = parser.parse_args()
 
-    errors = validate_execution_envelope(load_json(args.envelope))
+    errors = validate_execution_envelope(
+        load_json(args.envelope), args.repo_root or Path.cwd()
+    )
     if args.json:
         print(dump_json({"ok": not errors, "errors": errors}), end="")
     elif errors:

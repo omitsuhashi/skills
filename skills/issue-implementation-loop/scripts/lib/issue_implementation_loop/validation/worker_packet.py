@@ -5,6 +5,11 @@ import os
 from pathlib import Path
 from typing import Any
 
+from ..approved_spec_binding import (
+    BindingError,
+    approved_spec_binding_ref,
+    verify_approved_spec_binding,
+)
 from ..identifiers import is_issue_id, is_lower_kebab
 from ..worker_packet import (
     ACCESS_MODES,
@@ -45,7 +50,7 @@ TOP_LEVEL_FIELDS = {
     "worktree",
     "write_scope",
 }
-TOP_LEVEL_FIELDS_V2 = TOP_LEVEL_FIELDS | {"access_mode", "source_revision", "task_kind"}
+TOP_LEVEL_FIELDS_V3 = TOP_LEVEL_FIELDS | {"access_mode", "source_revision", "task_kind"}
 CONTEXT_POLICY_FIELDS = {
     "hard_max_packet_words",
     "include_full_ledger_text",
@@ -60,7 +65,12 @@ READ_PATH_FIELDS = {"path", "purpose"}
 INLINE_CONTEXT_FIELDS = {"excerpt", "is_full_document", "path", "purpose"}
 TASK_FIELDS = {"acceptance_criteria", "stop_conditions", "summary", "verification"}
 REPORT_CONTRACT_FIELDS = {"format", "validator"}
-SOURCE_REVISION_FIELDS = {"execution_envelope", "runtime_state", "issue_source"}
+SOURCE_REVISION_FIELDS = {
+    "approved_spec_binding",
+    "execution_envelope",
+    "runtime_state",
+    "issue_source",
+}
 SOURCE_EXECUTION_ENVELOPE_FIELDS = {"path", "revision", "sha256"}
 SOURCE_RUNTIME_STATE_FIELDS = {"path", "envelope_revision", "sha256"}
 SOURCE_ISSUE_SOURCE_FIELDS = {"path", "sha256"}
@@ -190,12 +200,19 @@ def _source_path(record: dict[str, Any], field: str, errors: list[str]) -> Path 
     return Path(path).resolve(strict=False)
 
 
-def _validate_source_revision(packet: dict[str, Any], errors: list[str]) -> None:
+def _validate_source_revision(packet: dict[str, Any], errors: list[str]) -> dict[str, str] | None:
     source_revision = packet.get("source_revision")
     if not isinstance(source_revision, dict):
         errors.append("source_revision is required")
-        return
+        return None
     _reject_unknown_fields(source_revision, SOURCE_REVISION_FIELDS, "source_revision", errors)
+    try:
+        binding = approved_spec_binding_ref(
+            source_revision.get("approved_spec_binding")
+        ).to_dict()
+    except BindingError as error:
+        errors.append(error.code)
+        binding = None
 
     envelope = source_revision.get("execution_envelope")
     if not isinstance(envelope, dict):
@@ -211,6 +228,12 @@ def _validate_source_revision(packet: dict[str, Any], errors: list[str]) -> None
             current = _load_json_file(envelope_path, field, errors)
             if current is not None and current.get("revision") != revision:
                 errors.append(f"{field}.revision is stale")
+            if (
+                binding is not None
+                and current is not None
+                and current.get("approved_spec_binding") != binding
+            ):
+                errors.append("BINDING_MISMATCH")
             _validate_source_sha(envelope, envelope_path, field, errors)
 
     runtime = source_revision.get("runtime_state")
@@ -227,6 +250,13 @@ def _validate_source_revision(packet: dict[str, Any], errors: list[str]) -> None
             current = _load_json_file(runtime_path, field, errors)
             if current is not None and current.get("envelope_revision") != envelope_revision:
                 errors.append(f"{field}.envelope_revision is stale")
+            if (
+                binding is not None
+                and current is not None
+                and "approved_spec_binding" in current
+                and current.get("approved_spec_binding") != binding
+            ):
+                errors.append("BINDING_MISMATCH")
             _validate_source_sha(runtime, runtime_path, field, errors)
 
     issue_source = source_revision.get("issue_source")
@@ -238,16 +268,15 @@ def _validate_source_revision(packet: dict[str, Any], errors: list[str]) -> None
         issue_source_path = _source_path(issue_source, field, errors)
         if issue_source_path is not None:
             _validate_source_sha(issue_source, issue_source_path, field, errors)
+    return binding
 
 
 def validate_worker_packet(packet: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     schema_version = packet.get("schema_version")
-    is_v2 = schema_version == 2
-    _reject_unknown_fields(packet, TOP_LEVEL_FIELDS_V2 if is_v2 else TOP_LEVEL_FIELDS, "", errors)
-
-    if schema_version not in {1, 2}:
-        errors.append("schema_version must be 1 or 2")
+    if schema_version != 3:
+        return ["SCHEMA_UNSUPPORTED"]
+    _reject_unknown_fields(packet, TOP_LEVEL_FIELDS_V3, "", errors)
     if packet.get("packet_type") != "issue_worker_dispatch":
         errors.append("packet_type must be issue_worker_dispatch")
 
@@ -266,43 +295,41 @@ def validate_worker_packet(packet: dict[str, Any]) -> list[str]:
 
     task_kind = packet.get("task_kind")
     access_mode = packet.get("access_mode")
-    if is_v2:
-        if task_kind not in TASK_KINDS:
-            errors.append(f"task_kind must be one of {sorted(TASK_KINDS)}")
-        if access_mode not in ACCESS_MODES:
-            errors.append(f"access_mode must be one of {sorted(ACCESS_MODES)}")
-        _validate_source_revision(packet, errors)
+    if task_kind not in TASK_KINDS:
+        errors.append(f"task_kind must be one of {sorted(TASK_KINDS)}")
+    if access_mode not in ACCESS_MODES:
+        errors.append(f"access_mode must be one of {sorted(ACCESS_MODES)}")
+    binding = _validate_source_revision(packet, errors)
 
     write_scope = packet.get("write_scope")
-    if is_v2 and task_kind in {"review", "inspect"}:
+    if task_kind in {"review", "inspect"}:
         if write_scope != []:
             errors.append(f"{task_kind} packets require write_scope=[]")
-    elif is_v2 and task_kind in {"implement", "fix"}:
+    elif task_kind in {"implement", "fix"}:
         _as_string_list(write_scope, "write_scope", errors)
     else:
         _as_string_list(write_scope, "write_scope", errors)
 
-    if is_v2:
-        if task_kind in {"implement", "fix"}:
-            if access_mode != "read_write":
-                errors.append(f"{task_kind} packets require access_mode=read_write")
-            if not isinstance(write_scope, list) or not write_scope:
-                errors.append(f"{task_kind} packets require a non-empty write_scope")
-        if task_kind in {"review", "inspect"} and access_mode != "read_only":
-            errors.append(f"{task_kind} packets require access_mode=read_only")
-        if isinstance(worktree, str) and os.path.isabs(worktree) and isinstance(write_scope, list):
-            for index, scope in enumerate(write_scope):
-                if not isinstance(scope, str) or not scope.strip():
-                    continue
-                if not scope.startswith("path:"):
-                    errors.append(f"write_scope[{index}] must use path:<path>")
-                    continue
-                _validate_packet_path(
-                    worktree=worktree,
-                    raw_path=_write_scope_path(scope),
-                    field=f"write_scope[{index}]",
-                    errors=errors,
-                )
+    if task_kind in {"implement", "fix"}:
+        if access_mode != "read_write":
+            errors.append(f"{task_kind} packets require access_mode=read_write")
+        if not isinstance(write_scope, list) or not write_scope:
+            errors.append(f"{task_kind} packets require a non-empty write_scope")
+    if task_kind in {"review", "inspect"} and access_mode != "read_only":
+        errors.append(f"{task_kind} packets require access_mode=read_only")
+    if isinstance(worktree, str) and os.path.isabs(worktree) and isinstance(write_scope, list):
+        for index, scope in enumerate(write_scope):
+            if not isinstance(scope, str) or not scope.strip():
+                continue
+            if not scope.startswith("path:"):
+                errors.append(f"write_scope[{index}] must use path:<path>")
+                continue
+            _validate_packet_path(
+                worktree=worktree,
+                raw_path=_write_scope_path(scope),
+                field=f"write_scope[{index}]",
+                errors=errors,
+            )
 
     context_policy = packet.get("context_policy")
     if not isinstance(context_policy, dict):
@@ -362,7 +389,7 @@ def validate_worker_packet(packet: dict[str, Any]) -> list[str]:
         path = entry.get("path")
         if not isinstance(path, str) or not path.strip():
             errors.append(f"{prefix}.path must be a non-empty string")
-        elif is_v2 and isinstance(worktree, str) and os.path.isabs(worktree):
+        elif isinstance(worktree, str) and os.path.isabs(worktree):
             _validate_packet_path(
                 worktree=worktree,
                 raw_path=path,
@@ -370,7 +397,7 @@ def validate_worker_packet(packet: dict[str, Any]) -> list[str]:
                 errors=errors,
             )
         purpose = entry.get("purpose")
-        if is_v2 and (not isinstance(purpose, str) or not purpose.strip()):
+        if not isinstance(purpose, str) or not purpose.strip():
             errors.append(f"{prefix}.purpose must be a non-empty string")
         elif purpose is not None and (not isinstance(purpose, str) or not purpose.strip()):
             errors.append(f"{prefix}.purpose must be a non-empty string")
@@ -391,7 +418,7 @@ def validate_worker_packet(packet: dict[str, Any]) -> list[str]:
         excerpt = entry.get("excerpt")
         if not isinstance(path, str) or not path.strip():
             errors.append(f"{prefix}.path must be a non-empty string")
-        elif is_v2 and isinstance(worktree, str) and os.path.isabs(worktree):
+        elif isinstance(worktree, str) and os.path.isabs(worktree):
             _validate_packet_path(
                 worktree=worktree,
                 raw_path=path,
@@ -463,4 +490,14 @@ def validate_worker_packet(packet: dict[str, Any]) -> list[str]:
         errors.append(f"{PACKET_CONTEXT_BUDGET_EXCEEDED}: packet words {words} > {max_packet_words}")
     if words > HARD_PACKET_WORDS:
         errors.append(f"{PACKET_CONTEXT_BUDGET_EXCEEDED}: packet words {words} > hard {HARD_PACKET_WORDS}")
+    if not errors and binding is not None and isinstance(worktree, str):
+        try:
+            verify_approved_spec_binding(
+                worktree,
+                binding,
+                ancestor_ref="HEAD",
+                projection_errors=True,
+            )
+        except BindingError as error:
+            return [error.code]
     return errors
