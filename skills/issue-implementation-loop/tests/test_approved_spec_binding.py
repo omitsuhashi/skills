@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import hashlib
 import importlib.util
 from io import StringIO
 import json
@@ -66,6 +67,7 @@ ASB_PUBLIC_ACCEPTANCE_MATRIX = {
     ),
     "ASB-07": (
         "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_07_missing_and_malformed_digests_have_stable_errors",
+        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_07_rejects_malformed_packet_digest",
     ),
     "ASB-08": (
         "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_08_current_spec_drift_invalidates_sealed_packet",
@@ -78,6 +80,7 @@ ASB_PUBLIC_ACCEPTANCE_MATRIX = {
     ),
     "ASB-11": (
         "test_worker_packet.WorkerPacketTests.test_asb_10_11_worker_projection_missing_and_drift_fail_closed",
+        "test_worker_packet.WorkerPacketTests.test_asb_11_reviewer_projection_one_byte_drift_fails_before_start",
     ),
     "ASB-12": (
         "test_worker_packet.WorkerPacketTests.test_asb_12_worker_packet_rejects_runtime_binding_mismatch",
@@ -97,21 +100,18 @@ ASB_PUBLIC_ACCEPTANCE_MATRIX = {
     ),
     "ASB-17": (
         "test_resume_brief.ResumeBriefTests.test_resume_rejects_stale_packet_even_when_runtime_envelope_and_events_are_unchanged",
-        "test_resume_brief.ResumeBriefTests.test_validate_resume_brief_rejects_stale_meta_sources",
+        "test_resume_brief.ResumeBriefTests.test_asb_17_spec_drift_after_resume_metadata_publication_is_rejected",
     ),
     "ASB-18": (
         "test_runtime_state.RuntimeStateTests.test_rebuild_runtime_state_rejects_mixed_binding_events",
     ),
     "ASB-19": (
-        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_19_reapproval_reseals_new_epoch_and_invalidates_old_ref",
-        "test_validation.ValidationTests.test_asb_04_execution_envelope_v4_verifies_valid_chain",
-        "test_runtime_state.RuntimeStateTests.test_rebuild_runtime_state_binds_same_epoch_events_to_runtime_v2",
-        "test_validation.ValidationTests.test_asb_13_worker_report_intake_rejects_resealed_runtime_binding",
-        "test_review_gate.ReviewGateTests.test_asb_22_completion_rejects_result_binding_or_review_range_mismatch",
+        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_19_connected_reseal_epoch_accepts_b_rejects_a_artifacts",
     ),
     "ASB-20": (
         "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_20_rejects_unsafe_and_non_regular_spec_paths",
         "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_20_embedded_nul_is_stable_in_python_and_cli",
+        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_20_repo_escape_is_path_outside_repo",
     ),
     "ASB-21": (
         "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_21_detects_file_replacement_during_validation",
@@ -136,10 +136,10 @@ ASB_PUBLIC_ACCEPTANCE_MATRIX = {
         "test_delivery.DeliveryTests.test_delivery_plan_v1_is_unsupported",
     ),
     "ASB-24": (
-        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_24_contract_surface_has_no_consumer_specific_vocabulary",
+        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_24_all_current_artifact_surfaces_are_generic",
     ),
     "ASB-25": (
-        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_25_python_and_cli_identify_return_same_binding",
+        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_25_codex_and_hermes_host_envs_return_same_cli_binding_and_error",
         "test_entrypoint.EntrypointTests.test_skill_entrypoint_documents_seal_host_capability_boundary",
     ),
     "ASB-26": (
@@ -155,7 +155,68 @@ ASB_PUBLIC_ACCEPTANCE_MATRIX = {
         "test_candidate_registry.CandidateRegistryTests.test_delivery_rejects_registry_from_old_binding_epoch",
     ),
     "ASB-30": (
-        "test_runtime_state.RuntimeStateTests.test_validate_runtime_state_rejects_v1_and_old_epoch_human_request",
+        "test_runtime_state.RuntimeStateTests.test_asb_30_reapproval_rejects_old_and_accepts_rerecorded_request",
+    ),
+}
+
+
+ASB24_CURRENT_ARTIFACT_SURFACE = {
+    "input_packet": (
+        "assets/schemas/input-packet.schema.json",
+        "assets/templates/input-packet.json",
+        "scripts/lib/issue_implementation_loop/approved_spec_binding.py",
+        "scripts/lib/issue_implementation_loop/validation/input_packet.py",
+        "scripts/approved_spec_binding.py",
+        "scripts/validate_input_packet.py",
+    ),
+    "execution_envelope": (
+        "assets/schemas/execution-envelope.schema.json",
+        "assets/templates/execution-envelope.json",
+        "scripts/lib/issue_implementation_loop/validation/execution_envelope.py",
+        "scripts/validate_execution_envelope.py",
+    ),
+    "event_runtime_human_request": (
+        "assets/schemas/event.schema.json",
+        "assets/schemas/runtime-state.schema.json",
+        "assets/schemas/human-request.schema.json",
+        "scripts/lib/issue_implementation_loop/runtime_state.py",
+        "scripts/lib/issue_implementation_loop/validation/runtime_state.py",
+        "scripts/rebuild_runtime_state.py",
+        "scripts/validate_runtime_state.py",
+    ),
+    "worker_reviewer_packet_report": (
+        "assets/schemas/worker-packet.schema.json",
+        "assets/schemas/worker-report.schema.json",
+        "assets/templates/worker-packet.json",
+        "scripts/lib/issue_implementation_loop/worker_packet.py",
+        "scripts/lib/issue_implementation_loop/validation/worker_packet.py",
+        "scripts/lib/issue_implementation_loop/validation/worker_report.py",
+        "scripts/build_worker_packet.py",
+        "scripts/validate_worker_packet.py",
+        "scripts/validate_worker_report.py",
+    ),
+    "hardening_registry": (
+        "assets/schemas/hardening-candidates.schema.json",
+        "assets/templates/hardening-candidates.json",
+        "assets/templates/decisions.md",
+        "scripts/lib/issue_implementation_loop/delivery.py",
+    ),
+    "resume_metadata": (
+        "assets/templates/resume-brief.md",
+        "scripts/lib/issue_implementation_loop/resume_brief.py",
+        "scripts/build_resume_brief.py",
+        "scripts/validate_resume_brief.py",
+    ),
+    "execution_result": (
+        "assets/templates/execution-result.json",
+        "assets/templates/completion-summary.md",
+        "scripts/lib/issue_implementation_loop/validation/execution_result.py",
+        "scripts/validate_execution_result.py",
+    ),
+    "delivery_plan": (
+        "assets/templates/delivery-plan.json",
+        "scripts/lib/issue_implementation_loop/validation/delivery_plan.py",
+        "scripts/validate_delivery_plan.py",
     ),
 }
 
@@ -372,6 +433,17 @@ class ApprovedSpecBindingTests(unittest.TestCase):
             ),
         )
 
+    def test_asb_07_rejects_malformed_packet_digest(self) -> None:
+        module, _, ref = self.seal()
+
+        self.assert_code(
+            "DIGEST_MALFORMED",
+            lambda: module.verify_chain(
+                self.repo,
+                {"input_packet": {"path": ref.path, "sha256": "sha256:bad"}},
+            ),
+        )
+
     def test_asb_08_current_spec_drift_invalidates_sealed_packet(self) -> None:
         module, _, ref = self.seal()
         (self.repo / self.spec_path).write_bytes("one byte drift!\n".encode())
@@ -390,29 +462,201 @@ class ApprovedSpecBindingTests(unittest.TestCase):
             lambda: module.verify_chain(self.repo, {"input_packet": ref.to_dict()}),
         )
 
-    def test_asb_19_reapproval_reseals_new_epoch_and_invalidates_old_ref(self) -> None:
-        module, revision_a, ref_a = self.seal()
-        old_ref = ref_a.to_dict()
+    def test_asb_19_connected_reseal_epoch_accepts_b_rejects_a_artifacts(self) -> None:
+        import _helpers as fixtures
 
-        (self.repo / self.spec_path).write_bytes("再承認された仕様\n".encode())
-        revision_b = module.identify_spec(self.repo, self.spec_path)
-        ref_b = module.seal_input_packet(
-            self.repo,
-            self.draft_path.relative_to(self.repo).as_posix(),
-            self.output_path.relative_to(self.repo).as_posix(),
-            revision_b,
-            self.approval(),
-        )
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, binding_a, _ = fixtures.create_binding_repo(Path(tmp))
+            envelope_a = fixtures.binding_envelope(repo, binding_a)
+            runtime_a = {
+                "schema_version": 2,
+                "epic_id": envelope_a["epic_id"],
+                "envelope_revision": envelope_a["revision"],
+                "approved_spec_binding": dict(binding_a),
+                "issues": {
+                    "ASBC-002": {
+                        "status": "PR_READY",
+                        "base_sha": fixtures.BASE_SHA,
+                        "head_sha": fixtures.HEAD_SHA,
+                        "review": {
+                            "status": "approved",
+                            "range": fixtures.REVIEW_RANGE,
+                        },
+                    }
+                },
+                "human_requests": [],
+            }
+            review_packet_a = fixtures.current_worker_packet(
+                repo, binding_a, task_kind="review"
+            )
+            review_a = fixtures.current_worker_report(
+                repo, binding_a, review_packet_a
+            )
+            result_a = fixtures.current_execution_result(envelope_a, runtime_a)
+            review_packet_a_path = repo / "review-packet-a.json"
+            review_a_path = repo / "review-a.json"
+            fixtures.write_json(review_packet_a_path, review_packet_a)
+            fixtures.write_json(review_a_path, review_a)
+            accepted_review_a = fixtures.run_script(
+                "validate_worker_report.py",
+                str(review_a_path),
+                "--dispatch-packet",
+                str(review_packet_a_path),
+                "--runtime-state",
+                review_packet_a["source_revision"]["runtime_state"]["path"],
+                "--envelope",
+                review_packet_a["source_revision"]["execution_envelope"]["path"],
+                "--repo-root",
+                str(repo),
+                "--json",
+            )
+            self.assertEqual(accepted_review_a.returncode, 0, accepted_review_a.stderr)
+            envelope_a_path = repo / "execution-envelope.json"
+            runtime_a_path = repo / "runtime-state.json"
+            result_a_path = repo / "execution-result-a.json"
+            fixtures.write_json(envelope_a_path, envelope_a)
+            fixtures.write_json(runtime_a_path, runtime_a)
+            fixtures.write_json(result_a_path, result_a)
+            accepted_result_a = fixtures.run_script(
+                "validate_execution_result.py",
+                str(envelope_a_path),
+                str(runtime_a_path),
+                str(result_a_path),
+                "--repo-root",
+                str(repo),
+                "--json",
+            )
+            self.assertEqual(accepted_result_a.returncode, 0, accepted_result_a.stderr)
 
-        self.assertNotEqual(revision_a, revision_b)
-        self.assertNotEqual(ref_a, ref_b)
-        self.assertTrue(
-            module.verify_chain(self.repo, {"input_packet": ref_b.to_dict()}).valid
-        )
-        self.assert_code(
-            "INPUT_PACKET_DIGEST_MISMATCH",
-            lambda: module.verify_chain(self.repo, {"input_packet": old_ref}),
-        )
+            packet_path = repo / binding_a["path"]
+            packet_a = json.loads(packet_path.read_text(encoding="utf-8"))
+            draft_b = {
+                key: value
+                for key, value in packet_a.items()
+                if key not in {"spec_binding", "approval_evidence"}
+            }
+            draft_path = repo / "draft-b.json"
+            fixtures.write_json(draft_path, draft_b)
+            spec_path = repo / packet_a["spec_binding"]["path"]
+            spec_path.write_text("re-approved spec B\n", encoding="utf-8")
+            module = binding_module()
+            revision_b = module.identify_spec(repo, packet_a["spec_binding"]["path"])
+            approval_b = self.approval()
+            approval_b["actor_expression"] = "session-user-reapproval"
+            approval_b["approved_at"] = "2026-07-21T20:00:00+09:00"
+            ref_b = module.seal_input_packet(
+                repo,
+                draft_path.relative_to(repo).as_posix(),
+                binding_a["path"],
+                revision_b,
+                approval_b,
+            )
+            packet_b = json.loads(packet_path.read_text(encoding="utf-8"))
+            self.assertEqual(packet_b["approval_evidence"], approval_b)
+            fixtures.git(repo, "add", packet_a["spec_binding"]["path"], ref_b.path)
+            fixtures.git(repo, "commit", "-q", "-m", "approved gate B")
+            gate_b = fixtures.git(repo, "rev-parse", "HEAD")
+            binding_b = {
+                "path": ref_b.path,
+                "sha256": ref_b.sha256,
+                "gate_commit": gate_b,
+            }
+            self.assertNotEqual(binding_a, binding_b)
+            self.assertTrue(
+                module.verify_chain(repo, {"input_packet": ref_b.to_dict()}).valid
+            )
+
+            envelope_b = fixtures.binding_envelope(repo, binding_b)
+            envelope_b["revision"] = 2
+            envelope_path = repo / "execution-envelope.json"
+            fixtures.write_json(envelope_path, envelope_b)
+            checked_envelope = fixtures.run_script(
+                "validate_execution_envelope.py",
+                str(envelope_path),
+                "--repo-root",
+                str(repo),
+                "--json",
+            )
+            self.assertEqual(checked_envelope.returncode, 0, checked_envelope.stderr)
+
+            events_path = repo / "events-b.jsonl"
+            events_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 2,
+                        "event_id": "E-B-001",
+                        "epic_id": envelope_b["epic_id"],
+                        "envelope_revision": envelope_b["revision"],
+                        "approved_spec_binding": binding_b,
+                        "type": "issue_status_changed",
+                        "issue": "ASBC-002",
+                        "status": "PENDING",
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            rebuilt = fixtures.run_script("rebuild_runtime_state.py", str(events_path))
+            self.assertEqual(rebuilt.returncode, 0, rebuilt.stderr)
+            runtime_b = json.loads(rebuilt.stdout)
+            self.assertEqual(runtime_b["approved_spec_binding"], binding_b)
+            runtime_path = repo / "runtime-state.json"
+            fixtures.write_json(runtime_path, runtime_b)
+            checked_runtime = fixtures.run_script(
+                "validate_runtime_state.py", str(runtime_path), "--json"
+            )
+            self.assertEqual(checked_runtime.returncode, 0, checked_runtime.stderr)
+
+            review_packet_b = fixtures.current_worker_packet(
+                repo, binding_b, task_kind="review"
+            )
+            fixtures.write_json(envelope_path, envelope_b)
+            fixtures.write_json(runtime_path, runtime_b)
+            review_packet_b["source_revision"]["execution_envelope"].update(
+                {
+                    "revision": envelope_b["revision"],
+                    "sha256": hashlib.sha256(envelope_path.read_bytes()).hexdigest(),
+                }
+            )
+            review_packet_b["source_revision"]["runtime_state"].update(
+                {
+                    "envelope_revision": runtime_b["envelope_revision"],
+                    "sha256": hashlib.sha256(runtime_path.read_bytes()).hexdigest(),
+                }
+            )
+            review_packet_path = repo / "review-packet-b.json"
+            fixtures.write_json(review_packet_path, review_packet_b)
+            rejected_review = fixtures.run_script(
+                "validate_worker_report.py",
+                str(review_a_path),
+                "--dispatch-packet",
+                str(review_packet_path),
+                "--runtime-state",
+                str(runtime_path),
+                "--envelope",
+                str(envelope_path),
+                "--repo-root",
+                str(repo),
+                "--json",
+            )
+            self.assertEqual(rejected_review.returncode, 1)
+            self.assertEqual(
+                json.loads(rejected_review.stdout)["errors"], ["BINDING_MISMATCH"]
+            )
+
+            rejected_result = fixtures.run_script(
+                "validate_execution_result.py",
+                str(envelope_path),
+                str(runtime_path),
+                str(result_a_path),
+                "--repo-root",
+                str(repo),
+                "--json",
+            )
+            self.assertEqual(rejected_result.returncode, 1)
+            self.assertIn(
+                "BINDING_MISMATCH", json.loads(rejected_result.stdout)["errors"]
+            )
 
     def test_asb_20_rejects_unsafe_and_non_regular_spec_paths(self) -> None:
         module = binding_module()
@@ -463,6 +707,16 @@ class ApprovedSpecBindingTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1)
         self.assertEqual(json.loads(result.stdout)["code"], "PATH_TRAVERSAL")
         self.assertNotIn("Traceback", result.stderr)
+
+    def test_asb_20_repo_escape_is_path_outside_repo(self) -> None:
+        module = binding_module()
+        outside_path = self.repo.parent / "outside-spec.md"
+        outside_path.write_text("outside\n", encoding="utf-8")
+
+        self.assert_code(
+            "PATH_OUTSIDE_REPO",
+            lambda: module.trusted_argument_path(self.repo, outside_path),
+        )
 
     def test_asb_21_detects_file_replacement_during_validation(self) -> None:
         module = binding_module()
@@ -731,6 +985,37 @@ class ApprovedSpecBindingTests(unittest.TestCase):
         self.assertIsNone(re.search(r"\bcompanies\b", text))
         self.assertIsNone(re.search(r"\bcto\b", text))
 
+    def test_asb_24_all_current_artifact_surfaces_are_generic(self) -> None:
+        expected_families = {
+            "input_packet",
+            "execution_envelope",
+            "event_runtime_human_request",
+            "worker_reviewer_packet_report",
+            "hardening_registry",
+            "resume_metadata",
+            "execution_result",
+            "delivery_plan",
+        }
+        self.assertEqual(set(ASB24_CURRENT_ARTIFACT_SURFACE), expected_families)
+        inventory = {
+            path
+            for paths in ASB24_CURRENT_ARTIFACT_SURFACE.values()
+            for path in paths
+        }
+        current_assets = {
+            path.relative_to(SKILL_DIR).as_posix()
+            for directory in ("schemas", "templates")
+            for path in (SKILL_DIR / "assets" / directory).iterdir()
+            if path.is_file()
+        }
+        self.assertEqual(current_assets - inventory, set())
+        inventory_paths = [SKILL_DIR / path for path in sorted(inventory)]
+        self.assertTrue(all(path.is_file() for path in inventory_paths))
+        text = "\n".join(
+            path.read_text(encoding="utf-8") for path in inventory_paths
+        ).lower()
+        self.assertIsNone(re.search(r"\b(?:companies|cto)\b", text))
+
     def test_asb_25_python_and_cli_identify_return_same_binding(self) -> None:
         module = binding_module()
         revision = module.identify_spec(self.repo, self.spec_path)
@@ -752,6 +1037,69 @@ class ApprovedSpecBindingTests(unittest.TestCase):
         payload = json.loads(result.stdout)
         self.assertTrue(payload["valid"])
         self.assertEqual(payload["spec_revision"], revision.to_dict())
+
+    def test_asb_25_codex_and_hermes_host_envs_return_same_cli_binding_and_error(self) -> None:
+        cli = str(SCRIPTS_DIR / "approved_spec_binding.py")
+        host_context = tempfile.TemporaryDirectory()
+        self.addCleanup(host_context.cleanup)
+
+        def host_env(host: str) -> dict[str, str]:
+            env = {
+                "LANG": os.environ.get("LANG", "C.UTF-8"),
+                "PATH": os.environ.get("PATH", ""),
+                "PYTHONHASHSEED": "0",
+            }
+            host_root = Path(host_context.name) / f"{host}-host"
+            host_root.mkdir()
+            if host.startswith("codex"):
+                env.update(
+                    {"CODEX_HOME": str(host_root), "CODEX_SESSION_ID": "codex-session"}
+                )
+            else:
+                env.update(
+                    {
+                        "HERMES_HOME": str(host_root),
+                        "HERMES_SESSION_ID": "hermes-session",
+                    }
+                )
+            return env
+
+        def identify(env: dict[str, str], spec_path: str) -> subprocess.CompletedProcess[str]:
+            return subprocess.run(
+                [
+                    sys.executable,
+                    cli,
+                    "identify",
+                    "--repo-root",
+                    str(self.repo),
+                    "--spec-path",
+                    spec_path,
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+                env=env,
+            )
+
+        codex_success = identify(host_env("codex"), self.spec_path)
+        hermes_success = identify(host_env("hermes"), self.spec_path)
+        self.assertEqual(codex_success.returncode, 0, codex_success.stderr)
+        self.assertEqual(hermes_success.returncode, 0, hermes_success.stderr)
+        codex_binding = json.loads(codex_success.stdout)
+        hermes_binding = json.loads(hermes_success.stdout)
+        self.assertEqual(codex_binding, hermes_binding)
+        self.assertEqual(set(codex_binding), {"valid", "spec_revision"})
+
+        codex_failure = identify(host_env("codex-failure"), "missing-spec.md")
+        hermes_failure = identify(host_env("hermes-failure"), "missing-spec.md")
+        self.assertEqual(codex_failure.returncode, 1)
+        self.assertEqual(hermes_failure.returncode, 1)
+        codex_error = json.loads(codex_failure.stdout)
+        hermes_error = json.loads(hermes_failure.stdout)
+        self.assertEqual(codex_error["code"], "SPEC_MISSING")
+        self.assertEqual(codex_error["code"], hermes_error["code"])
+        self.assertNotIn("session", json.dumps(codex_binding).lower())
+        self.assertNotIn("session", json.dumps(hermes_binding).lower())
 
 
 if __name__ == "__main__":

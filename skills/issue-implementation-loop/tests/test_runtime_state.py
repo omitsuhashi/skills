@@ -298,6 +298,80 @@ class RuntimeStateTests(unittest.TestCase):
                     self.assertNotEqual(result.returncode, 0)
                     self.assertIn(expected[name], result.stderr)
 
+    def test_asb_30_reapproval_rejects_old_and_accepts_rerecorded_request(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            binding_a = approved_spec_binding()
+            binding_b = approved_spec_binding(sha256="a" * 64)
+            old_request_runtime = {
+                "schema_version": 2,
+                "epic_id": "issue-implementation-loop",
+                "envelope_revision": 2,
+                "approved_spec_binding": binding_b,
+                "issues": {},
+                "human_requests": [
+                    {
+                        "schema_version": 2,
+                        "approved_spec_binding": binding_a,
+                        "id": "HR-001",
+                        "scope": "epic",
+                        "reason": "decision from old binding",
+                    }
+                ],
+            }
+            old_path = root / "runtime-old-request.json"
+            write_json(old_path, old_request_runtime)
+
+            rejected = run_script("validate_runtime_state.py", str(old_path), "--json")
+
+            self.assertEqual(rejected.returncode, 1)
+            self.assertEqual(
+                json.loads(rejected.stdout)["errors"],
+                ["AUXILIARY_ARTIFACT_BINDING_MISMATCH"],
+            )
+
+            events_path = root / "events-b.jsonl"
+            opened = self.event(
+                "E-B-001",
+                binding=binding_b,
+                envelope_revision=2,
+                type="human_request_opened",
+                id="HR-B-001",
+                scope="epic",
+                reason="re-record decision under binding B",
+            )
+            resolved = self.event(
+                "E-B-002",
+                binding=binding_b,
+                envelope_revision=2,
+                type="human_request_resolved",
+                id="HR-B-001",
+            )
+            events_path.write_text(json.dumps(opened) + "\n", encoding="utf-8")
+
+            accepted_request = run_script("rebuild_runtime_state.py", str(events_path))
+
+            self.assertEqual(accepted_request.returncode, 0, accepted_request.stderr)
+            open_runtime = json.loads(accepted_request.stdout)
+            self.assertEqual(
+                open_runtime["human_requests"][0]["approved_spec_binding"], binding_b
+            )
+
+            events_path.write_text(
+                json.dumps(opened) + "\n" + json.dumps(resolved) + "\n",
+                encoding="utf-8",
+            )
+            accepted_resolution = run_script(
+                "rebuild_runtime_state.py", str(events_path)
+            )
+
+            self.assertEqual(
+                accepted_resolution.returncode, 0, accepted_resolution.stderr
+            )
+            rebuilt = json.loads(accepted_resolution.stdout)
+            self.assertEqual(rebuilt["approved_spec_binding"], binding_b)
+            self.assertEqual(rebuilt["human_requests"], [])
+
     def test_runtime_event_and_human_request_schemas_are_current_only_v2(self) -> None:
         schema_root = SKILL_DIR / "assets" / "schemas"
         for name in ("event", "runtime-state", "human-request"):

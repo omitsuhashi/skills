@@ -355,6 +355,24 @@ class WorkerPacketTests(unittest.TestCase):
                     self.assertEqual(result.returncode, 1)
                     self.assertEqual(json.loads(result.stdout)["errors"], [expected])
 
+    def test_asb_11_reviewer_projection_one_byte_drift_fails_before_start(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, binding, _ = create_binding_repo(Path(tmp))
+            packet = current_worker_packet(repo, binding, task_kind="review")
+            packet_path = repo / "reviewer-packet.json"
+            write_json(packet_path, packet)
+            bound_packet = repo / binding["path"]
+            bound_packet.write_bytes(bound_packet.read_bytes() + b" ")
+
+            result = run_script(
+                "validate_worker_packet.py", str(packet_path), "--json"
+            )
+
+            self.assertEqual(result.returncode, 1)
+            self.assertEqual(
+                json.loads(result.stdout)["errors"], ["PROJECTION_MISMATCH"]
+            )
+
     def test_asb_12_worker_packet_rejects_runtime_binding_mismatch(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

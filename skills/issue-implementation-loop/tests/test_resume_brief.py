@@ -125,6 +125,50 @@ class ResumeBriefTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("INPUT_PACKET_DIGEST_MISMATCH", result.stderr)
 
+    def test_asb_17_spec_drift_after_resume_metadata_publication_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, binding, _ = create_binding_repo(Path(tmp))
+            root = repo / "runtime"
+            envelope = binding_envelope(repo, binding)
+            runtime = {
+                "schema_version": 2,
+                "epic_id": "approved-spec-binding",
+                "envelope_revision": 1,
+                "approved_spec_binding": copy.deepcopy(binding),
+                "issues": {},
+                "human_requests": [],
+            }
+            events = [
+                {
+                    "schema_version": 2,
+                    "event_id": "E-001",
+                    "epic_id": "approved-spec-binding",
+                    "envelope_revision": 1,
+                    "approved_spec_binding": copy.deepcopy(binding),
+                    "type": "issue_status_changed",
+                    "issue": "ASBC-002",
+                    "status": "PENDING",
+                }
+            ]
+            self.write_runtime_root(
+                root, envelope=envelope, runtime=runtime, events=events
+            )
+            built = run_script(
+                "build_resume_brief.py", str(root), "--repo-root", str(repo)
+            )
+            self.assertEqual(built.returncode, 0, built.stderr)
+            self.assertTrue((root / "resume-brief.meta.json").is_file())
+
+            (repo / "knowledge/wiki/syntheses/spec.md").write_text(
+                "spec drift after metadata publication\n", encoding="utf-8"
+            )
+            result = run_script(
+                "validate_resume_brief.py", str(root), "--repo-root", str(repo)
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("SPEC_DIGEST_MISMATCH", result.stderr)
+
     def test_build_resume_brief_rejects_mixed_binding_event_epoch(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "runtime"
