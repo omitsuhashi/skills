@@ -16,7 +16,7 @@ FORBIDDEN_IMPLEMENTATION_PATTERNS = (
     r"\b(?:import|from)\s+(?:github(?:\.[A-Za-z_][A-Za-z0-9_]*)*|githubkit(?:\.[A-Za-z_][A-Za-z0-9_]*)*|task_adapter_github_projects(?:\.[A-Za-z_][A-Za-z0-9_]*)*)\b",
     r"\bfrom\s+urllib\s+import\s+request\b",
     r"\bfrom\s+http\s+import\s+client\b",
-    r"\b(?:api\.github\.com|/graphql)\b",
+    r"(?:api\.github\.com|/graphql)\b",
     r"\b(?:mutation|query)\s+[A-Za-z_]*\s*\{",
     r"[\"']gh[\"']",
 )
@@ -296,6 +296,7 @@ class GitHubMcpRouteContractTests(unittest.TestCase):
             "from github import Github",
             "import githubkit",
             "from task_adapter_github_projects import GithubProjectsAdapter",
+            'endpoint = "/graphql"',
         )
 
         for snippet in forbidden_snippets:
