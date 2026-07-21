@@ -1,3 +1,4 @@
+import re
 import unittest
 from pathlib import Path
 
@@ -118,27 +119,45 @@ class AdapterDispatchContractTests(unittest.TestCase):
                 self.assertNotIn(forbidden, relative_name)
 
         implementation_suffixes = {".py", ".js", ".ts", ".sh"}
-        implementation_files = [
-            path.relative_to(PLUGIN_ROOT).as_posix()
+        implementation_paths = [
+            path
             for path in scanned_paths
             if path.suffix in implementation_suffixes
             and path.relative_to(PLUGIN_ROOT).as_posix() != "__init__.py"
         ]
-
-        self.assertEqual(
-            {
-                "task_management/__init__.py",
-                "task_management/contracts.py",
-                "task_management/read_adapter.py",
-                "task_management/route_config.py",
-                "task_management/safety.py",
-                "task_management/provider_adapters/__init__.py",
-                "task_management/provider_adapters/local_json.py",
-                "task_management/provider_adapters/external_tool.py",
-                "scripts/smoke_test_hermes_read.py",
-            },
-            set(implementation_files),
+        implementation_files = [
+            path.relative_to(PLUGIN_ROOT).as_posix()
+            for path in implementation_paths
+        ]
+        required_implementation_files = {
+            "task_management/__init__.py",
+            "task_management/contracts.py",
+            "task_management/read_adapter.py",
+            "task_management/route_config.py",
+            "task_management/safety.py",
+            "task_management/provider_adapters/__init__.py",
+            "task_management/provider_adapters/local_json.py",
+            "task_management/provider_adapters/external_tool.py",
+            "scripts/smoke_test_hermes_read.py",
+        }
+        self.assertTrue(
+            required_implementation_files.issubset(set(implementation_files)),
+            "required backend-neutral implementation files must remain present",
         )
+
+        combined_implementation = "\n".join(
+            path.read_text(encoding="utf-8") for path in implementation_paths
+        )
+        forbidden_implementation_patterns = (
+            r"\b(?:import|from)\s+(?:requests|httpx|aiohttp|urllib3|urllib\.request|http\.client)\b",
+            r"\bfrom\s+urllib\s+import\s+request\b",
+            r"\bfrom\s+http\s+import\s+client\b",
+            r"\b(?:api\.github\.com|/graphql)\b",
+            r"\b(?:mutation|query)\s+[A-Za-z_]*\s*\{",
+            r"[\"']gh[\"']",
+        )
+        for pattern in forbidden_implementation_patterns:
+            self.assertIsNone(re.search(pattern, combined_implementation))
 
 
 if __name__ == "__main__":

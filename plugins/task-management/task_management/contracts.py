@@ -288,6 +288,14 @@ def _validate_task_backend_destination(value: Any, *, path: str) -> None:
                 "TaskBackendDestination fields must be non-empty strings.",
                 path=f"{path}.{field}",
             )
+    if "://" in destination["destination_ref"]:
+        try:
+            validate_safe_url(
+                destination["destination_ref"],
+                path=f"{path}.destination_ref",
+            )
+        except SafetyValidationError as error:
+            raise ContractValidationError(error.code, str(error), path=error.path)
     if "content_target_ref" in destination and destination["content_target_ref"] is not None:
         if not _is_nonempty_string(destination["content_target_ref"]):
             raise ContractValidationError(
