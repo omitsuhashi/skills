@@ -4,6 +4,84 @@ from _helpers import *
 
 
 class CandidateRegistryTests(unittest.TestCase):
+    def test_delivery_rejects_registry_from_old_binding_epoch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            envelope_path = root / "envelope.json"
+            runtime_path = root / "runtime-state.json"
+            plan_path = root / "delivery-plan.json"
+            registry_path = root / "decisions" / "hardening-candidates.json"
+            envelope = batch_issue_prs_envelope()
+            envelope["remote_write_policy"]["approved_actions"] = [
+                "final_pr_push_head",
+                "final_pr_create_draft",
+            ]
+            runtime = merged_runtime_state()
+            write_json(envelope_path, envelope)
+            write_json(runtime_path, runtime)
+            write_hardening_registry(registry_path, [])
+            registry = json.loads(registry_path.read_text(encoding="utf-8"))
+            registry["approved_spec_binding"] = approved_spec_binding(sha256="a" * 64)
+            write_json(registry_path, registry)
+            write_json(
+                plan_path,
+                {
+                    "action": "final_pr",
+                    "head": "codex/issue-implementation-loop/epic-base",
+                    "base": "main",
+                    "issue_scope": ["G2PR-001", "G2PR-002", "G2PR-003"],
+                },
+            )
+
+            result = run_script(
+                "validate_delivery_plan.py",
+                str(envelope_path),
+                str(runtime_path),
+                str(plan_path),
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("AUXILIARY_ARTIFACT_BINDING_MISMATCH", result.stderr)
+
+    def test_registry_v1_is_schema_unsupported(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            envelope_path = root / "envelope.json"
+            runtime_path = root / "runtime-state.json"
+            plan_path = root / "delivery-plan.json"
+            registry_path = root / "decisions" / "hardening-candidates.json"
+            envelope = batch_issue_prs_envelope()
+            envelope["remote_write_policy"]["approved_actions"] = [
+                "final_pr_push_head",
+                "final_pr_create_draft",
+            ]
+            write_json(envelope_path, envelope)
+            write_json(runtime_path, merged_runtime_state())
+            write_hardening_registry(registry_path, [])
+            registry = json.loads(registry_path.read_text(encoding="utf-8"))
+            registry["schema_version"] = 1
+            registry.pop("approved_spec_binding", None)
+            write_json(registry_path, registry)
+            write_json(
+                plan_path,
+                {
+                    "action": "final_pr",
+                    "head": "codex/issue-implementation-loop/epic-base",
+                    "base": "main",
+                    "issue_scope": ["G2PR-001", "G2PR-002", "G2PR-003"],
+                },
+            )
+
+            result = run_script(
+                "validate_delivery_plan.py",
+                str(envelope_path),
+                str(runtime_path),
+                str(plan_path),
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("SCHEMA_UNSUPPORTED", result.stderr)
+
     def test_candidate_registry_schema_and_template_define_bounded_artifact(self) -> None:
         schema_path = SKILL_DIR / "assets" / "schemas" / "hardening-candidates.schema.json"
         template_path = SKILL_DIR / "assets" / "templates" / "hardening-candidates.json"
@@ -13,6 +91,11 @@ class CandidateRegistryTests(unittest.TestCase):
 
         schema = json.loads(schema_path.read_text(encoding="utf-8"))
         template = json.loads(template_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(template["schema_version"], 2)
+        self.assertEqual(template["approved_spec_binding"]["path"], "knowledge/wiki/syntheses/<epic-id>-input-packet.json")
+        self.assertEqual(schema["properties"]["schema_version"]["const"], 2)
+        self.assertIn("approved_spec_binding", schema["required"])
 
         self.assertEqual(
             template["registry_path"],

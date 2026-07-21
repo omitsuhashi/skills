@@ -27,7 +27,7 @@ class OperationSelectionTests(unittest.TestCase):
             write_json(envelope_path, base_envelope())
             write_json(
                 runtime_path,
-                {
+                current_runtime({
                     "schema_version": 1,
                     "epic_id": "issue-implementation-loop",
                     "envelope_revision": 1,
@@ -36,7 +36,7 @@ class OperationSelectionTests(unittest.TestCase):
                         "G2PR-002": {"status": "PENDING"},
                     },
                     "human_requests": [],
-                },
+                }),
             )
 
             payload = self.run_selector(envelope_path=envelope_path, runtime_path=runtime_path)
@@ -74,13 +74,13 @@ class OperationSelectionTests(unittest.TestCase):
             write_json(envelope_path, envelope)
             write_json(
                 runtime_path,
-                {
+                current_runtime({
                     "schema_version": 1,
                     "epic_id": "other-epic",
                     "envelope_revision": 99,
                     "issues": {},
                     "human_requests": [],
-                },
+                }),
             )
 
             payload = self.run_selector(envelope_path=envelope_path, runtime_path=runtime_path)
@@ -96,7 +96,7 @@ class OperationSelectionTests(unittest.TestCase):
             write_json(envelope_path, base_envelope())
             write_json(
                 runtime_path,
-                {
+                current_runtime({
                     "schema_version": 1,
                     "epic_id": "issue-implementation-loop",
                     "envelope_revision": 1,
@@ -107,7 +107,7 @@ class OperationSelectionTests(unittest.TestCase):
                         }
                     },
                     "human_requests": [],
-                },
+                }),
             )
 
             payload = self.run_selector(envelope_path=envelope_path, runtime_path=runtime_path)
@@ -123,7 +123,7 @@ class OperationSelectionTests(unittest.TestCase):
             write_json(envelope_path, base_envelope())
             write_json(
                 runtime_path,
-                {
+                current_runtime({
                     "schema_version": 1,
                     "epic_id": "issue-implementation-loop",
                     "envelope_revision": 1,
@@ -134,7 +134,7 @@ class OperationSelectionTests(unittest.TestCase):
                     "human_requests": [
                         {"id": "HR-001", "scope": "issue", "issue": "G2PR-002"}
                     ],
-                },
+                }),
             )
 
             payload = self.run_selector(envelope_path=envelope_path, runtime_path=runtime_path)
@@ -150,7 +150,7 @@ class OperationSelectionTests(unittest.TestCase):
             write_json(envelope_path, base_envelope())
             write_json(
                 runtime_path,
-                {
+                current_runtime({
                     "schema_version": 1,
                     "epic_id": "issue-implementation-loop",
                     "envelope_revision": 1,
@@ -161,7 +161,7 @@ class OperationSelectionTests(unittest.TestCase):
                     "human_requests": [
                         {"id": "HR-001", "scope": "issue", "issue": "G2PR-001"}
                     ],
-                },
+                }),
             )
 
             payload = self.run_selector(envelope_path=envelope_path, runtime_path=runtime_path)
@@ -181,13 +181,13 @@ class OperationSelectionTests(unittest.TestCase):
             write_json(envelope_path, base_envelope())
             write_json(
                 runtime_path,
-                {
+                current_runtime({
                     "schema_version": 1,
                     "epic_id": "issue-implementation-loop",
                     "envelope_revision": 1,
                     "issues": {},
                     "human_requests": [],
-                },
+                }),
             )
 
             payload = self.run_selector(envelope_path=envelope_path, runtime_path=runtime_path)
@@ -204,7 +204,7 @@ class OperationSelectionTests(unittest.TestCase):
             write_json(envelope_path, base_envelope())
             write_json(
                 runtime_path,
-                {
+                current_runtime({
                     "schema_version": 1,
                     "epic_id": "issue-implementation-loop",
                     "envelope_revision": 1,
@@ -218,7 +218,7 @@ class OperationSelectionTests(unittest.TestCase):
                         for issue_id in ("G2PR-001", "G2PR-002", "G2PR-003")
                     },
                     "human_requests": [],
-                },
+                }),
             )
 
             payload = self.run_selector(envelope_path=envelope_path, runtime_path=runtime_path)
@@ -233,7 +233,7 @@ class OperationSelectionTests(unittest.TestCase):
             write_json(envelope_path, base_envelope())
             write_json(
                 runtime_path,
-                {
+                current_runtime({
                     "schema_version": 1,
                     "epic_id": "issue-implementation-loop",
                     "envelope_revision": 1,
@@ -243,7 +243,7 @@ class OperationSelectionTests(unittest.TestCase):
                         "G2PR-003": {"status": "RUNNING"},
                     },
                     "human_requests": [],
-                },
+                }),
             )
 
             payload = self.run_selector(envelope_path=envelope_path, runtime_path=runtime_path)

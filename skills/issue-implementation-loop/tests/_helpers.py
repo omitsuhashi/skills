@@ -63,12 +63,28 @@ def approved_spec_binding(
     return {"path": path, "sha256": sha256, "gate_commit": gate_commit}
 
 
+def current_runtime(value: dict) -> dict:
+    runtime = copy.deepcopy(value)
+    runtime["schema_version"] = 2
+    runtime.setdefault("approved_spec_binding", approved_spec_binding())
+    for request in runtime.get("human_requests", []):
+        if not isinstance(request, dict):
+            continue
+        request.setdefault("schema_version", 2)
+        request.setdefault(
+            "approved_spec_binding", copy.deepcopy(runtime["approved_spec_binding"])
+        )
+        request.setdefault("reason", "needs human decision")
+    return runtime
+
+
 def write_hardening_registry(path: Path, candidates: list[dict]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     write_json(
         path,
         {
-            "schema_version": 1,
+            "schema_version": 2,
+            "approved_spec_binding": approved_spec_binding(),
             "epic_id": "issue-implementation-loop",
             "registry_path": str(path),
             "limits": {
@@ -286,7 +302,7 @@ def write_binding_sources(
     write_json(
         runtime_path,
         {
-            "schema_version": 1,
+            "schema_version": 2,
             "epic_id": "approved-spec-binding",
             "envelope_revision": 1,
             "approved_spec_binding": copy.deepcopy(binding),
@@ -485,7 +501,8 @@ def merged_runtime_state(*, missing_merge: str | None = None) -> dict:
             "merge_commit": HEAD_SHA,
         }
     return {
-        "schema_version": 1,
+        "schema_version": 2,
+        "approved_spec_binding": approved_spec_binding(),
         "epic_id": "issue-implementation-loop",
         "envelope_revision": 1,
         "issues": issues,

@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .approved_spec_binding import BindingError, approved_spec_binding_ref
 from .constants import FINAL_PR_REQUIRED_APPROVED_ACTIONS
 from .identifiers import is_issue_id
 from .review import review_approved_or_accepted
@@ -137,8 +138,21 @@ def hardening_candidate_report(
         return report
     if candidate_registry is None:
         return report
-    if candidate_registry.get("schema_version") != 1:
-        report["errors"].append(f"{registry_label}: schema_version must be 1")
+    if candidate_registry.get("schema_version") != 2:
+        report["errors"].append("SCHEMA_UNSUPPORTED")
+        return report
+    registry_binding = candidate_registry.get("approved_spec_binding")
+    if not isinstance(registry_binding, dict):
+        report["errors"].append("SCHEMA_UNSUPPORTED")
+        return report
+    try:
+        approved_spec_binding_ref(registry_binding)
+    except BindingError as error:
+        report["errors"].append(error.code)
+        return report
+    if registry_binding != runtime.get("approved_spec_binding"):
+        report["errors"].append("AUXILIARY_ARTIFACT_BINDING_MISMATCH")
+        return report
     if candidate_registry.get("epic_id") != runtime.get("epic_id"):
         report["errors"].append(f"{registry_label}: epic_id must match runtime_state.epic_id")
     candidates = candidate_registry.get("candidates")

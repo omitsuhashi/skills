@@ -19,8 +19,8 @@ At 65% session pressure, start a checkpoint even before the next natural boundar
 ## Artifact Boundaries
 
 - Execution Envelope: approved execution policy, source revisions, reservations, budgets, and remote-write boundary.
-- Runtime state and events: canonical execution status, issue state, attempt/report/review events, human waits, and delivery state.
-- Resume brief: bounded cache rebuilt from runtime sources; never canonical.
+- Runtime State v2 and Event v2: one `approved_spec_binding` epoch containing canonical execution status, issue state, attempt/report/review events, human waits, and delivery state.
+- Resume brief: bounded cache rebuilt from runtime sources; v3 metadata binds it to the same approved spec and it is never canonical.
 - Worker packet: paths-first issue dispatch. Its strict `context_policy` is packet-local only and must not include `session_compaction` or other session-level fields.
 - Worker report and review report: evidence artifacts. Carry forward their paths, commit ranges, verdicts, and unresolved findings instead of full text.
 

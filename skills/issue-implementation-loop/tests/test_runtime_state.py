@@ -4,6 +4,173 @@ from _helpers import *
 
 
 class RuntimeStateTests(unittest.TestCase):
+    def event(self, event_id: str, *, binding: dict | None = None, **fields: object) -> dict:
+        return {
+            "schema_version": 2,
+            "event_id": event_id,
+            "epic_id": "issue-implementation-loop",
+            "envelope_revision": 1,
+            "approved_spec_binding": copy.deepcopy(binding or approved_spec_binding()),
+            **fields,
+        }
+
+    def test_rebuild_runtime_state_binds_same_epoch_events_to_runtime_v2(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            events_path = Path(tmp) / "events.jsonl"
+            events_path.write_text(
+                json.dumps(
+                    self.event(
+                        "E-001",
+                        type="issue_status_changed",
+                        issue="G2PR-001",
+                        status="RUNNING",
+                    )
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            result = run_script("rebuild_runtime_state.py", str(events_path))
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["schema_version"], 2)
+            self.assertEqual(payload["approved_spec_binding"], approved_spec_binding())
+
+    def test_rebuild_runtime_state_rejects_mixed_binding_events(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            binding_b = approved_spec_binding(sha256="a" * 64)
+            events_path = Path(tmp) / "events.jsonl"
+            events_path.write_text(
+                "".join(
+                    json.dumps(event) + "\n"
+                    for event in (
+                        self.event(
+                            "E-001",
+                            type="issue_status_changed",
+                            issue="G2PR-001",
+                            status="RUNNING",
+                        ),
+                        self.event(
+                            "E-002",
+                            binding=binding_b,
+                            type="issue_status_changed",
+                            issue="G2PR-001",
+                            status="PR_READY",
+                        ),
+                    )
+                ),
+                encoding="utf-8",
+            )
+
+            result = run_script("rebuild_runtime_state.py", str(events_path))
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("BINDING_MISMATCH", result.stderr)
+            self.assertEqual(result.stdout, "")
+
+    def test_rebuild_runtime_state_rejects_event_v1_and_missing_binding(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cases = {
+                "v1": {
+                    "schema_version": 1,
+                    "event_id": "E-001",
+                    "epic_id": "issue-implementation-loop",
+                    "type": "issue_status_changed",
+                },
+                "missing-binding": {
+                    "schema_version": 2,
+                    "event_id": "E-001",
+                    "epic_id": "issue-implementation-loop",
+                    "type": "issue_status_changed",
+                },
+            }
+            for name, event in cases.items():
+                with self.subTest(name=name):
+                    events_path = Path(tmp) / f"{name}.jsonl"
+                    events_path.write_text(json.dumps(event) + "\n", encoding="utf-8")
+
+                    result = run_script("rebuild_runtime_state.py", str(events_path))
+
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("SCHEMA_UNSUPPORTED", result.stderr)
+
+    def test_validate_runtime_state_rejects_v1_and_old_epoch_human_request(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            binding_b = approved_spec_binding(sha256="a" * 64)
+            cases = {
+                "runtime-v1": {
+                    "schema_version": 1,
+                    "epic_id": "issue-implementation-loop",
+                    "envelope_revision": 1,
+                    "issues": {},
+                    "human_requests": [],
+                },
+                "runtime-missing-binding": {
+                    "schema_version": 2,
+                    "epic_id": "issue-implementation-loop",
+                    "envelope_revision": 1,
+                    "issues": {},
+                    "human_requests": [],
+                },
+                "request-v1": {
+                    "schema_version": 2,
+                    "epic_id": "issue-implementation-loop",
+                    "envelope_revision": 2,
+                    "approved_spec_binding": binding_b,
+                    "issues": {},
+                    "human_requests": [
+                        {
+                            "schema_version": 1,
+                            "id": "HR-001",
+                            "scope": "epic",
+                            "reason": "old epoch",
+                        }
+                    ],
+                },
+                "old-request": {
+                    "schema_version": 2,
+                    "epic_id": "issue-implementation-loop",
+                    "envelope_revision": 2,
+                    "approved_spec_binding": binding_b,
+                    "issues": {},
+                    "human_requests": [
+                        {
+                            "schema_version": 2,
+                            "approved_spec_binding": approved_spec_binding(),
+                            "id": "HR-001",
+                            "scope": "epic",
+                            "reason": "reconfirm after reseal",
+                        }
+                    ],
+                },
+            }
+            expected = {
+                "runtime-v1": "SCHEMA_UNSUPPORTED",
+                "runtime-missing-binding": "SCHEMA_UNSUPPORTED",
+                "request-v1": "SCHEMA_UNSUPPORTED",
+                "old-request": "AUXILIARY_ARTIFACT_BINDING_MISMATCH",
+            }
+            for name, runtime in cases.items():
+                with self.subTest(name=name):
+                    runtime_path = Path(tmp) / f"{name}.json"
+                    write_json(runtime_path, runtime)
+
+                    result = run_script("validate_runtime_state.py", str(runtime_path))
+
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn(expected[name], result.stderr)
+
+    def test_runtime_event_and_human_request_schemas_are_current_only_v2(self) -> None:
+        schema_root = SKILL_DIR / "assets" / "schemas"
+        for name in ("event", "runtime-state", "human-request"):
+            with self.subTest(name=name):
+                schema = json.loads(
+                    (schema_root / f"{name}.schema.json").read_text(encoding="utf-8")
+                )
+                self.assertEqual(schema["properties"]["schema_version"]["const"], 2)
+                self.assertIn("approved_spec_binding", schema["required"])
+
     def test_validate_runtime_state_requires_committed_review_range_for_success_statuses(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             for status in ("PR_READY", "COMPLETE", "DONE"):
@@ -11,7 +178,8 @@ class RuntimeStateTests(unittest.TestCase):
                 write_json(
                     runtime_path,
                     {
-                        "schema_version": 1,
+                        "schema_version": 2,
+                        "approved_spec_binding": approved_spec_binding(),
                         "epic_id": "issue-implementation-loop",
                         "envelope_revision": 1,
                         "issues": {
@@ -35,7 +203,8 @@ class RuntimeStateTests(unittest.TestCase):
             write_json(
                 runtime_path,
                 {
-                    "schema_version": 1,
+                    "schema_version": 2,
+                    "approved_spec_binding": approved_spec_binding(),
                     "epic_id": "issue-implementation-loop",
                     "envelope_revision": 1,
                     "issues": {
@@ -62,7 +231,8 @@ class RuntimeStateTests(unittest.TestCase):
             write_json(
                 runtime_path,
                 {
-                    "schema_version": 1,
+                    "schema_version": 2,
+                    "approved_spec_binding": approved_spec_binding(),
                     "epic_id": "issue-implementation-loop",
                     "envelope_revision": 1,
                     "issues": {
@@ -91,7 +261,8 @@ class RuntimeStateTests(unittest.TestCase):
             write_json(
                 runtime_path,
                 {
-                    "schema_version": 1,
+                    "schema_version": 2,
+                    "approved_spec_binding": approved_spec_binding(),
                     "epic_id": "issue-implementation-loop",
                     "envelope_revision": 1,
                     "issues": {
@@ -120,7 +291,8 @@ class RuntimeStateTests(unittest.TestCase):
             write_json(
                 runtime_path,
                 {
-                    "schema_version": 1,
+                    "schema_version": 2,
+                    "approved_spec_binding": approved_spec_binding(),
                     "epic_id": "issue-implementation-loop",
                     "envelope_revision": 1,
                     "issues": {
@@ -148,17 +320,15 @@ class RuntimeStateTests(unittest.TestCase):
             events_path = Path(tmp) / "events.jsonl"
             events_path.write_text(
                 json.dumps(
-                    {
-                        "event_id": "E-001",
-                        "epic_id": "issue-implementation-loop",
-                        "envelope_revision": 1,
-                        "type": "review_status_changed",
-                        "issue": "G2PR-001",
-                        "status": "approved",
-                        "base_sha": BASE_SHA,
-                        "head_sha": HEAD_SHA,
-                        "range": REVIEW_RANGE,
-                    }
+                    self.event(
+                        "E-001",
+                        type="review_status_changed",
+                        issue="G2PR-001",
+                        status="approved",
+                        base_sha=BASE_SHA,
+                        head_sha=HEAD_SHA,
+                        range=REVIEW_RANGE,
+                    )
                 )
                 + "\n",
                 encoding="utf-8",
@@ -180,25 +350,21 @@ class RuntimeStateTests(unittest.TestCase):
                 "\n".join(
                     [
                         json.dumps(
-                            {
-                                "event_id": "E-001",
-                                "epic_id": "issue-implementation-loop",
-                                "envelope_revision": 1,
-                                "type": "pr_created",
-                                "issue": "G2PR-001",
-                                "pr": "https://github.com/org/repo/pull/1",
-                            }
+                            self.event(
+                                "E-001",
+                                type="pr_created",
+                                issue="G2PR-001",
+                                pr="https://github.com/org/repo/pull/1",
+                            )
                         ),
                         json.dumps(
-                            {
-                                "event_id": "E-002",
-                                "epic_id": "issue-implementation-loop",
-                                "envelope_revision": 1,
-                                "type": "pr_merged",
-                                "issue": "G2PR-001",
-                                "pr": "https://github.com/org/repo/pull/1",
-                                "merge_commit": HEAD_SHA,
-                            }
+                            self.event(
+                                "E-002",
+                                type="pr_merged",
+                                issue="G2PR-001",
+                                pr="https://github.com/org/repo/pull/1",
+                                merge_commit=HEAD_SHA,
+                            )
                         ),
                     ]
                 )
@@ -222,22 +388,20 @@ class RuntimeStateTests(unittest.TestCase):
                 "\n".join(
                     [
                         json.dumps(
-                            {
-                                "event_id": "E-001",
-                                "epic_id": "issue-implementation-loop",
-                                "type": "issue_status_changed",
-                                "issue": "G2PR-001",
-                                "status": "RUNNING",
-                            }
+                            self.event(
+                                "E-001",
+                                type="issue_status_changed",
+                                issue="G2PR-001",
+                                status="RUNNING",
+                            )
                         ),
                         json.dumps(
-                            {
-                                "event_id": "E-001",
-                                "epic_id": "issue-implementation-loop",
-                                "type": "issue_status_changed",
-                                "issue": "G2PR-001",
-                                "status": "PR_READY",
-                            }
+                            self.event(
+                                "E-001",
+                                type="issue_status_changed",
+                                issue="G2PR-001",
+                                status="PR_READY",
+                            )
                         ),
                     ]
                 )

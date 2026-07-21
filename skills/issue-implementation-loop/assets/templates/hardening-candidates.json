@@ -1,5 +1,10 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
+  "approved_spec_binding": {
+    "path": "knowledge/wiki/syntheses/<epic-id>-input-packet.json",
+    "sha256": "<64-lowercase-hex>",
+    "gate_commit": "<full-lowercase-git-object-id>"
+  },
   "epic_id": "<epic-id>",
   "registry_path": "<runtime-root>/decisions/hardening-candidates.json",
   "limits": {

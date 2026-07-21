@@ -22,6 +22,21 @@ class ResumeBriefTests(unittest.TestCase):
         events: list[dict],
     ) -> None:
         root.mkdir()
+        runtime = copy.deepcopy(runtime)
+        runtime["schema_version"] = 2
+        runtime.setdefault("approved_spec_binding", approved_spec_binding())
+        for request in runtime.get("human_requests", []):
+            request.setdefault("schema_version", 2)
+            request.setdefault(
+                "approved_spec_binding", copy.deepcopy(runtime["approved_spec_binding"])
+            )
+        events = copy.deepcopy(events)
+        for event in events:
+            event.setdefault("schema_version", 2)
+            event.setdefault("envelope_revision", runtime["envelope_revision"])
+            event.setdefault(
+                "approved_spec_binding", copy.deepcopy(runtime["approved_spec_binding"])
+            )
         if envelope is not None:
             write_json(root / "execution-envelope.json", envelope)
         write_json(root / "runtime-state.json", runtime)
@@ -35,6 +50,96 @@ class ResumeBriefTests(unittest.TestCase):
         reviews.mkdir()
         write_json(reports / "G2PR-001-worker-report.json", {"issue_id": "G2PR-001"})
         write_json(reviews / "G2PR-001-review.json", {"issue_id": "G2PR-001"})
+
+    def test_resume_metadata_v3_binds_current_epoch_and_rejects_v2_or_meta_less(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "runtime"
+            self.write_runtime_root(
+                root,
+                envelope=self.rich_envelope(),
+                runtime=self.rich_runtime(),
+                events=self.rich_events(),
+            )
+
+            build_result = run_script("build_resume_brief.py", str(root))
+
+            self.assertEqual(build_result.returncode, 0, build_result.stderr)
+            meta_path = root / "resume-brief.meta.json"
+            meta = json.loads(meta_path.read_text(encoding="utf-8"))
+            self.assertEqual(meta["schema_version"], 3)
+            self.assertEqual(
+                meta["sources"]["approved_spec_binding"], approved_spec_binding()
+            )
+
+            meta["schema_version"] = 2
+            write_json(meta_path, meta)
+            v2_result = run_script("validate_resume_brief.py", str(root))
+            self.assertNotEqual(v2_result.returncode, 0)
+            self.assertIn("SCHEMA_UNSUPPORTED", v2_result.stderr)
+
+            meta_path.unlink()
+            meta_less_result = run_script("validate_resume_brief.py", str(root))
+            self.assertNotEqual(meta_less_result.returncode, 0)
+            self.assertIn("SCHEMA_UNSUPPORTED", meta_less_result.stderr)
+
+    def test_resume_rejects_stale_packet_even_when_runtime_envelope_and_events_are_unchanged(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, binding, _gate = create_binding_repo(Path(tmp))
+            root = repo / "runtime"
+            envelope = binding_envelope(repo, binding)
+            runtime = {
+                "schema_version": 2,
+                "epic_id": "approved-spec-binding",
+                "envelope_revision": 1,
+                "approved_spec_binding": copy.deepcopy(binding),
+                "issues": {},
+                "human_requests": [],
+            }
+            events = [
+                {
+                    "schema_version": 2,
+                    "event_id": "E-001",
+                    "epic_id": "approved-spec-binding",
+                    "envelope_revision": 1,
+                    "approved_spec_binding": copy.deepcopy(binding),
+                    "type": "issue_status_changed",
+                    "issue": "ASBC-002",
+                    "status": "PENDING",
+                }
+            ]
+            self.write_runtime_root(root, envelope=envelope, runtime=runtime, events=events)
+            build_result = run_script(
+                "build_resume_brief.py", str(root), "--repo-root", str(repo)
+            )
+            self.assertEqual(build_result.returncode, 0, build_result.stderr)
+
+            packet_path = repo / binding["path"]
+            packet_path.write_bytes(packet_path.read_bytes() + b" ")
+
+            result = run_script(
+                "validate_resume_brief.py", str(root), "--repo-root", str(repo)
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("INPUT_PACKET_DIGEST_MISMATCH", result.stderr)
+
+    def test_build_resume_brief_rejects_mixed_binding_event_epoch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "runtime"
+            events = self.rich_events()
+            events[-1]["approved_spec_binding"] = approved_spec_binding(sha256="a" * 64)
+            self.write_runtime_root(
+                root,
+                envelope=self.rich_envelope(),
+                runtime=self.rich_runtime(),
+                events=events,
+            )
+
+            result = run_script("build_resume_brief.py", str(root))
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("BINDING_MISMATCH", result.stderr)
+
 
     def rich_envelope(self) -> dict:
         envelope = batch_issue_prs_envelope()
@@ -172,7 +277,10 @@ class ResumeBriefTests(unittest.TestCase):
             meta_path = root / "resume-brief.meta.json"
             self.assertTrue(meta_path.exists())
             meta = json.loads(meta_path.read_text(encoding="utf-8"))
-            self.assertEqual(meta["schema_version"], 2)
+            self.assertEqual(meta["schema_version"], 3)
+            self.assertEqual(
+                meta["sources"]["approved_spec_binding"], approved_spec_binding()
+            )
             self.assertEqual(meta["artifact"], "resume-brief")
             self.assertEqual(meta["sources"]["execution_envelope"]["revision"], 1)
             self.assertEqual(meta["sources"]["runtime_state"]["envelope_revision"], 1)
@@ -231,7 +339,7 @@ class ResumeBriefTests(unittest.TestCase):
                     self.assertNotEqual(result.returncode, 0, name)
                     self.assertIn(expected, result.stderr)
 
-    def test_validate_resume_brief_allows_legacy_brief_without_meta_for_existing_runs(self) -> None:
+    def test_validate_resume_brief_rejects_brief_without_meta(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "runtime"
             root.mkdir()
@@ -242,8 +350,8 @@ class ResumeBriefTests(unittest.TestCase):
 
             result = run_script("validate_resume_brief.py", str(root))
 
-            self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertIn("legacy resume brief without meta", result.stdout)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("SCHEMA_UNSUPPORTED", result.stderr)
 
     def test_build_resume_brief_orders_latest_report_paths_by_mtime_across_reports_and_reviews(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

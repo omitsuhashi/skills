@@ -31,6 +31,7 @@ def main() -> int:
     parser.add_argument("--output", help="Output path; defaults to <runtime-root>/resume-brief.md")
     parser.add_argument("--max-words", type=int, default=DEFAULT_MAX_WORDS)
     parser.add_argument("--stdout", action="store_true", help="Also print the brief markdown")
+    parser.add_argument("--repo-root", help="Trusted Git worktree root (defaults to cwd).")
     args = parser.parse_args()
 
     script_dir = Path(__file__).resolve().parents[1]
@@ -45,6 +46,7 @@ def main() -> int:
             template_text,
             envelope_path=args.envelope,
             max_words=args.max_words,
+            repo_root=args.repo_root or Path.cwd(),
         )
     except ResumeBriefBudgetError as exc:
         print(str(exc), file=sys.stderr)

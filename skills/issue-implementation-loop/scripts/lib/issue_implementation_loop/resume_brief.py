@@ -5,9 +5,15 @@ import re
 from pathlib import Path
 from typing import Any
 
+from .approved_spec_binding import (
+    BindingError,
+    approved_spec_binding_ref,
+    verify_approved_spec_binding,
+)
 from .constants import ACTIVE_STATUSES, REVIEWABLE_STATUSES, SUCCESS_STATUSES
 from .io import load_json
 from .review import review_approved_or_accepted
+from .runtime_state import EventFoldError, rebuild_state_from_events
 from .scheduler import compute_next_actions
 from .validation.execution_envelope import validate_execution_envelope
 from .validation.runtime_state import validate_runtime_state
@@ -126,14 +132,16 @@ def build_resume_brief_meta(
         if envelope_path
         else root / "execution-envelope.json"
     )
+    runtime = _json_object_or_empty(runtime_path)
     return {
-        "schema_version": 2,
+        "schema_version": 3,
         "artifact": "resume-brief",
         "runtime_root": str(root),
         "brief_path": str(Path(brief_path).resolve(strict=False)),
         "word_count": word_count,
         "max_words": max_words,
         "sources": {
+            "approved_spec_binding": runtime.get("approved_spec_binding"),
             "execution_envelope": _envelope_revision(candidate_envelope),
             "runtime_state": _runtime_revision(runtime_path),
             "events": _events_revision(events_path),
@@ -167,6 +175,7 @@ def validate_resume_brief_cache(
     runtime_root: str | Path,
     *,
     meta_path: str | Path | None = None,
+    repo_root: str | Path | None = None,
 ) -> tuple[list[str], list[str]]:
     root = Path(runtime_root)
     brief_path = root / DEFAULT_OUTPUT_NAME
@@ -174,15 +183,15 @@ def validate_resume_brief_cache(
     if not brief_path.exists():
         return [f"resume brief is missing: {brief_path}"], []
     if not resolved_meta_path.exists():
-        return [], ["legacy resume brief without meta"]
+        return ["SCHEMA_UNSUPPORTED"], []
 
     meta = load_json(resolved_meta_path)
     errors: list[str] = []
     warnings: list[str] = []
     if not isinstance(meta, dict):
         return ["resume brief meta must be a JSON object"], warnings
-    if meta.get("schema_version") != 2:
-        errors.append("resume brief meta schema_version must be 2")
+    if meta.get("schema_version") != 3:
+        return ["SCHEMA_UNSUPPORTED"], warnings
     if meta.get("artifact") != "resume-brief":
         errors.append("resume brief meta artifact must be resume-brief")
 
@@ -190,6 +199,15 @@ def validate_resume_brief_cache(
     if not isinstance(sources, dict):
         errors.append("resume brief meta sources is required")
         return errors, warnings
+
+    binding = sources.get("approved_spec_binding")
+    if not isinstance(binding, dict):
+        return ["SCHEMA_UNSUPPORTED"], warnings
+    try:
+        approved_spec_binding_ref(binding)
+        verify_approved_spec_binding(repo_root or Path.cwd(), binding)
+    except BindingError as error:
+        return [error.code], warnings
 
     envelope = sources.get("execution_envelope")
     if not isinstance(envelope, dict):
@@ -201,6 +219,8 @@ def validate_resume_brief_cache(
             current = _json_object_or_empty(Path(path))
             if current.get("revision") != envelope.get("revision"):
                 errors.append("execution_envelope.revision is stale")
+            if current.get("approved_spec_binding") != binding:
+                errors.append("BINDING_MISMATCH")
 
     runtime = sources.get("runtime_state")
     if not isinstance(runtime, dict):
@@ -212,6 +232,8 @@ def validate_resume_brief_cache(
             current = _json_object_or_empty(Path(path))
             if current.get("envelope_revision") != runtime.get("envelope_revision"):
                 errors.append("runtime_state.envelope_revision is stale")
+            if current.get("approved_spec_binding") != binding:
+                errors.append("BINDING_MISMATCH")
 
     events = sources.get("events")
     if not isinstance(events, dict):
@@ -225,103 +247,14 @@ def validate_resume_brief_cache(
                 errors.append("events.line_count is stale")
             if current.get("last_event_id") != events.get("last_event_id"):
                 errors.append("events.last_event_id is stale")
-    return errors, warnings
-
-
-def _copy_issue_metadata(record: dict[str, Any], event: dict[str, Any]) -> None:
-    for field in ("branch", "worktree", "base_sha", "head_sha"):
-        value = event.get(field)
-        if isinstance(value, str):
-            record[field] = value
-
-
-def _apply_event(state: dict[str, Any], event: dict[str, Any]) -> None:
-    event_type = event.get("type")
-    issue = event.get("issue")
-    if event.get("epic_id") and not state.get("epic_id"):
-        state["epic_id"] = event["epic_id"]
-    if event.get("envelope_revision") and not state.get("envelope_revision"):
-        state["envelope_revision"] = event["envelope_revision"]
-
-    if event_type == "issue_status_changed" and isinstance(issue, str):
-        record = state["issues"].setdefault(issue, {})
-        record["status"] = event.get("status", record.get("status", "PENDING"))
-        _copy_issue_metadata(record, event)
-    elif event_type == "review_status_changed" and isinstance(issue, str):
-        record = state["issues"].setdefault(issue, {})
-        _copy_issue_metadata(record, event)
-        review = record.setdefault("review", {})
-        review["status"] = event.get("status", review.get("status", "pending"))
-        review_range = event.get("range") or event.get("review_range")
-        if isinstance(review_range, str):
-            review["range"] = review_range
-    elif event_type == "pr_created" and isinstance(issue, str):
-        record = state["issues"].setdefault(issue, {})
-        _copy_issue_metadata(record, event)
-        if isinstance(event.get("pr"), str):
-            record["pr"] = event["pr"]
-        record["pr_opened"] = True
-    elif event_type == "pr_merged" and isinstance(issue, str):
-        record = state["issues"].setdefault(issue, {})
-        _copy_issue_metadata(record, event)
-        if isinstance(event.get("pr"), str):
-            record["pr"] = event["pr"]
-        if isinstance(event.get("merge_commit"), str):
-            record["merge_commit"] = event["merge_commit"]
-        record["pr_opened"] = True
-        record["pr_merged"] = True
-    elif event_type == "human_request_opened":
-        state["human_requests"].append(
-            {
-                key: value
-                for key, value in event.items()
-                if key in {"id", "scope", "issue", "resource", "reason", "created_at"}
-            }
-        )
-    elif event_type == "human_request_resolved":
-        request_id = event.get("id")
-        state["human_requests"] = [
-            request for request in state["human_requests"] if request.get("id") != request_id
-        ]
-
-
-def rebuild_state_from_events(events_path: Path) -> tuple[dict[str, Any], list[str]]:
-    seen: set[str] = set()
-    duplicate_events = 0
-    warnings: list[str] = []
-    state: dict[str, Any] = {
-        "schema_version": 1,
-        "epic_id": None,
-        "envelope_revision": None,
-        "issues": {},
-        "human_requests": [],
-    }
-
-    with events_path.open(encoding="utf-8") as handle:
-        for line_number, line in enumerate(handle, start=1):
-            if not line.strip():
-                continue
             try:
-                event = json.loads(line)
-            except json.JSONDecodeError as exc:
-                raise ResumeBriefInputError(f"invalid events.jsonl line {line_number}: {exc}") from exc
-            event_id = event.get("event_id")
-            if not isinstance(event_id, str):
-                warnings.append(f"events line {line_number} missing event_id")
-                continue
-            if event_id in seen:
-                duplicate_events += 1
-                continue
-            seen.add(event_id)
-            _apply_event(state, event)
-
-    if state["epic_id"] is None:
-        state["epic_id"] = "unknown"
-    if state["envelope_revision"] is None:
-        state["envelope_revision"] = 1
-    if duplicate_events:
-        warnings.append(f"{duplicate_events} duplicate event IDs ignored")
-    return state, warnings
+                rebuilt, _event_warnings = rebuild_state_from_events(Path(path))
+            except EventFoldError as error:
+                errors.append(error.code)
+            else:
+                if rebuilt.get("approved_spec_binding") != binding:
+                    errors.append("BINDING_MISMATCH")
+    return errors, warnings
 
 
 def _list_or_none(values: list[str]) -> str:
@@ -556,6 +489,7 @@ def build_resume_brief(
     *,
     envelope_path: str | Path | None = None,
     max_words: int = DEFAULT_MAX_WORDS,
+    repo_root: str | Path | None = None,
 ) -> tuple[str, int]:
     root = Path(runtime_root)
     runtime_path = root / "runtime-state.json"
@@ -566,10 +500,28 @@ def build_resume_brief(
         raise ResumeBriefInputError(f"missing event log: {events_path}")
 
     runtime = load_json(runtime_path)
-    rebuilt, event_warnings = rebuild_state_from_events(events_path)
+    runtime_errors = validate_runtime_state(runtime)
+    if (
+        not isinstance(runtime, dict)
+        or runtime.get("schema_version") != 2
+        or not isinstance(runtime.get("approved_spec_binding"), dict)
+    ):
+        raise ResumeBriefInputError("SCHEMA_UNSUPPORTED")
+    if "AUXILIARY_ARTIFACT_BINDING_MISMATCH" in runtime_errors:
+        raise ResumeBriefInputError("AUXILIARY_ARTIFACT_BINDING_MISMATCH")
+    binding = runtime["approved_spec_binding"]
+    try:
+        verify_approved_spec_binding(repo_root or Path.cwd(), binding)
+    except BindingError as error:
+        raise ResumeBriefInputError(error.code) from None
+    try:
+        rebuilt, event_warnings = rebuild_state_from_events(events_path)
+    except EventFoldError as error:
+        raise ResumeBriefInputError(error.code) from None
+    if rebuilt.get("approved_spec_binding") != binding:
+        raise ResumeBriefInputError("BINDING_MISMATCH")
     source_warnings = list(event_warnings)
     hard_inconsistencies = _runtime_event_inconsistencies(runtime, rebuilt)
-    runtime_errors = validate_runtime_state(runtime)
     hard_inconsistencies.extend(f"runtime validation: {error}" for error in runtime_errors)
 
     envelope: dict[str, Any] | None = None
@@ -577,7 +529,9 @@ def build_resume_brief(
     envelope_errors: list[str] = []
     if candidate_envelope.exists():
         envelope = load_json(candidate_envelope)
-        envelope_errors = validate_execution_envelope(envelope)
+        envelope_errors = validate_execution_envelope(envelope, repo_root or Path.cwd())
+        if not envelope_errors and envelope.get("approved_spec_binding") != binding:
+            envelope_errors.append("BINDING_MISMATCH")
         hard_inconsistencies.extend(
             f"execution envelope validation: {error}" for error in envelope_errors
         )

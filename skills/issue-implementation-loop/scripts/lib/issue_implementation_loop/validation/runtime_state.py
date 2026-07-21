@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from ..approved_spec_binding import BindingError, approved_spec_binding_ref
 from ..constants import SUCCESS_STATUSES
 from ..identifiers import commit_range_parts, is_full_commit_sha, is_lower_kebab
 from ..review import review_approved_or_accepted
@@ -9,8 +10,15 @@ from ..review import review_approved_or_accepted
 
 def validate_runtime_state(state: dict[str, Any]) -> list[str]:
     errors: list[str] = []
-    if state.get("schema_version") != 1:
-        errors.append("schema_version must be 1")
+    if not isinstance(state, dict) or state.get("schema_version") != 2:
+        return ["SCHEMA_UNSUPPORTED"]
+    binding = state.get("approved_spec_binding")
+    if not isinstance(binding, dict):
+        return ["SCHEMA_UNSUPPORTED"]
+    try:
+        approved_spec_binding_ref(binding)
+    except BindingError as error:
+        return [error.code]
     epic_id = state.get("epic_id")
     if not isinstance(epic_id, str) or not is_lower_kebab(epic_id):
         errors.append("epic_id must be lower-kebab-case ASCII")
@@ -63,6 +71,31 @@ def validate_runtime_state(state: dict[str, Any]) -> list[str]:
             if not isinstance(request, dict):
                 errors.append(f"{prefix} must be an object")
                 continue
+            if request.get("schema_version") != 2 or not isinstance(
+                request.get("approved_spec_binding"), dict
+            ):
+                errors.append("SCHEMA_UNSUPPORTED")
+                continue
+            try:
+                approved_spec_binding_ref(request["approved_spec_binding"])
+            except BindingError as error:
+                errors.append(error.code)
+                continue
+            if request["approved_spec_binding"] != binding:
+                errors.append("AUXILIARY_ARTIFACT_BINDING_MISMATCH")
+                continue
             if request.get("scope") not in {"issue", "descendants", "resource", "epic"}:
                 errors.append(f"{prefix}.scope must be issue, descendants, resource, or epic")
     return errors
+
+
+def validate_runtime_epoch(
+    envelope: dict[str, Any], runtime: dict[str, Any]
+) -> list[str]:
+    if envelope.get("approved_spec_binding") != runtime.get("approved_spec_binding"):
+        return ["BINDING_MISMATCH"]
+    if runtime.get("epic_id") != envelope.get("epic_id"):
+        return ["runtime_state.epic_id must match envelope.epic_id"]
+    if runtime.get("envelope_revision") != envelope.get("revision"):
+        return ["runtime_state.envelope_revision must match envelope.revision"]
+    return []

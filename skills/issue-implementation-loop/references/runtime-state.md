@@ -14,12 +14,20 @@ snapshot. Worker branches must not include `runtime-state.json`,
 `events.jsonl`, or live decision artifacts unless approved scope owns
 coordinator-state tooling.
 
+Event v2 and Runtime State v2 carry one top-level `approved_spec_binding`.
+Validate before dedupe and after fold; reject mixed/unknown epochs. Reseal starts
+empty state and never copies old events, reviews, requests, or decisions.
+
 `pr_created` sets `pr`/`pr_opened`; `pr_merged` also sets `pr_merged` and
 `merge_commit`. Delivery reads runtime state, not local `PR_READY` inference.
 
 ## Hardening Candidate Registry
 
 Path: `<runtime-root>/decisions/hardening-candidates.json`.
+
+Registry v2 carries runtime `approved_spec_binding`; missing means empty. Reject
+v1 or another epoch before decision reads (`SCHEMA_UNSUPPORTED` /
+`AUXILIARY_ARTIFACT_BINDING_MISMATCH`).
 
 This coordinator-owned runtime artifact is not a worker branch artifact or
 ledger replacement. Track only the schema/template in `assets/`; do not commit
@@ -63,6 +71,8 @@ python3 <skill-dir>/scripts/build_resume_brief.py <runtime-root>
 ```
 
 The brief reads runtime/events plus optional envelope and report/review paths,
-enforces 600 words, and writes `<runtime-root>/resume-brief.md` plus meta. Add
+enforces 600 words, and writes markdown plus required v3 metadata containing
+`sources.approved_spec_binding`. Verify current packet/spec before use/fold. Add
 `Pending hardening decisions: N` and the candidate registry path when needed; do
-not copy candidate full text. If stale, fix runtime/events and rebuild.
+not copy candidate full text. Meta-less and v2 caches are unsupported. If stale,
+fix runtime/events and rebuild.

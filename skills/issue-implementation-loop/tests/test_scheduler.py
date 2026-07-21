@@ -4,6 +4,30 @@ from _helpers import *
 
 
 class SchedulerTests(unittest.TestCase):
+    def test_compute_next_actions_rejects_runtime_from_another_binding_epoch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            envelope_path = Path(tmp) / "envelope.json"
+            runtime_path = Path(tmp) / "runtime.json"
+            write_json(envelope_path, base_envelope())
+            write_json(
+                runtime_path,
+                {
+                    "schema_version": 2,
+                    "epic_id": "issue-implementation-loop",
+                    "envelope_revision": 1,
+                    "approved_spec_binding": approved_spec_binding(sha256="a" * 64),
+                    "issues": {},
+                    "human_requests": [],
+                },
+            )
+
+            result = run_script(
+                "compute_next_actions.py", str(envelope_path), str(runtime_path)
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("BINDING_MISMATCH", result.stderr)
+
     def test_compute_next_actions_does_not_wait_for_wave_barrier(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             envelope_path = Path(tmp) / "envelope.json"
@@ -12,7 +36,8 @@ class SchedulerTests(unittest.TestCase):
             write_json(
                 runtime_path,
                 {
-                    "schema_version": 1,
+                    "schema_version": 2,
+                    "approved_spec_binding": approved_spec_binding(),
                     "epic_id": "issue-implementation-loop",
                     "envelope_revision": 1,
                     "issues": {
@@ -51,7 +76,8 @@ class SchedulerTests(unittest.TestCase):
             write_json(
                 runtime_path,
                 {
-                    "schema_version": 1,
+                    "schema_version": 2,
+                    "approved_spec_binding": approved_spec_binding(),
                     "epic_id": "issue-implementation-loop",
                     "envelope_revision": 1,
                     "issues": {
@@ -88,7 +114,8 @@ class SchedulerTests(unittest.TestCase):
             write_json(
                 runtime_path,
                 {
-                    "schema_version": 1,
+                    "schema_version": 2,
+                    "approved_spec_binding": approved_spec_binding(),
                     "epic_id": "issue-implementation-loop",
                     "envelope_revision": 1,
                     "issues": {
@@ -98,6 +125,8 @@ class SchedulerTests(unittest.TestCase):
                     },
                     "human_requests": [
                         {
+                            "schema_version": 2,
+                            "approved_spec_binding": approved_spec_binding(),
                             "id": "HR-001",
                             "scope": "issue",
                             "issue": "G2PR-001",
@@ -130,7 +159,8 @@ class SchedulerTests(unittest.TestCase):
             write_json(
                 runtime_path,
                 {
-                    "schema_version": 1,
+                    "schema_version": 2,
+                    "approved_spec_binding": approved_spec_binding(),
                     "epic_id": "issue-implementation-loop",
                     "envelope_revision": 1,
                     "issues": {
@@ -140,6 +170,8 @@ class SchedulerTests(unittest.TestCase):
                     },
                     "human_requests": [
                         {
+                            "schema_version": 2,
+                            "approved_spec_binding": approved_spec_binding(),
                             "id": "HR-001",
                             "scope": "resource",
                             "resource": "path:shared",
@@ -171,7 +203,8 @@ class SchedulerTests(unittest.TestCase):
             write_json(
                 runtime_path,
                 {
-                    "schema_version": 1,
+                    "schema_version": 2,
+                    "approved_spec_binding": approved_spec_binding(),
                     "epic_id": "issue-implementation-loop",
                     "envelope_revision": 1,
                     "issues": {

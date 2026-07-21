@@ -2,6 +2,13 @@
 
 Waves are launch cohorts, not completion barriers. Recompute runnable work after every event.
 
+Before reading issue status, dependencies, human requests, or write scopes,
+require Envelope v4 and Runtime State v2 to have the same
+`approved_spec_binding`, Epic ID, and envelope revision. Runtime validation also
+requires every Human Request v2 binding to match. Return `BINDING_MISMATCH` or
+`AUXILIARY_ARTIFACT_BINDING_MISMATCH` instead of producing a runnable set from
+mixed epochs.
+
 ## Parent Loop
 
 1. Reconcile runtime snapshot, event log, worker reports, review reports, and git state.

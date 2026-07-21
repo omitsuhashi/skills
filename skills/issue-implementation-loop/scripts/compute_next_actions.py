@@ -11,6 +11,7 @@ from _common import (
     dump_json,
     load_json,
     validate_execution_envelope,
+    validate_runtime_epoch,
     validate_runtime_state,
 )
 
@@ -24,6 +25,8 @@ def main() -> int:
     envelope = load_json(args.envelope)
     runtime = load_json(args.runtime_state)
     errors = validate_execution_envelope(envelope) + validate_runtime_state(runtime)
+    if not errors:
+        errors.extend(validate_runtime_epoch(envelope, runtime))
     if errors:
         for error in errors:
             print(error, file=sys.stderr)

@@ -13,6 +13,11 @@ Use `epic` only for envelope corruption, DAG/runtime corruption, shared-base saf
 
 ## Runtime Rule
 
+Human Request v2 carries the same top-level `approved_spec_binding` as Runtime
+State v2. Reject v1, missing binding, or a request from another runtime epoch
+before scheduler routing. After reseal, re-record a still-needed decision under
+the new binding; never copy the old request or decision forward.
+
 While waiting, continue unrelated runnable implementation work, review work, fix work, local verification, and recovery. Do not turn a narrow question into a global pause.
 
 ## Review Governance Waits
