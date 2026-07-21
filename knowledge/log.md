@@ -1210,3 +1210,11 @@ append-only で使います。すべての entry は予測しやすい header �
 - max review cycle到達後、runtime human request `hr-potask-012-review-exception-001`でPOTASK-012と全descendantを停止し、blockerをreleaseしなかった
 - ユーザーは残存2件だけをTDD修正して独立reviewする例外cycle 1回を承認した。新規または残存Critical / Important findingがあれば再停止し、risk acceptanceを自動推論しない
 - remote policyは`local_only`のまま。GitHub Issue、push、PR、merge、live Hermes / MCP / credential / Project / Issue変更は未実施
+
+## [2026-07-22] review-stop | POTASK-012 exceptional review
+
+- 人間承認済み例外fix `c47a9c7`はURL-shaped destination bypassとroot / provider import scan漏れをTDD修正し、write contracts 26 / 26、task-management full suite 127 / 127、read regression各18 / 18、`git diff --check`を通過した
+- 独立exception reviewは、両guardの`r"\b(?:api\.github\.com|/graphql)\b"`がquoted / string-start `/graphql`を検出できないImportant `intent_gap`を1件再現した。他のscope内findingは検出されなかった
+- 承認済みexception後にImportantが残ったためPOTASK-012を`WAITING_HUMAN`へ戻し、POTASK-013、POTASK-014、POTASK-016をreleaseしなかった
+- human request `hr-potask-012-post-exception-decision-001` は、regex boundaryと代表probeだけのmicro-fix + independent review 1回、既知riskの明示accept、実行停止のいずれかを要求する
+- remote policyは`local_only`のまま。追加fix、GitHub Issue、push、PR、merge、live Hermes / MCP / credential / Project / Issue変更は未実施
