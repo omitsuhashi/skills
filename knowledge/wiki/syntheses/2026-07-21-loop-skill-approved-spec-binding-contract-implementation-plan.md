@@ -8,6 +8,17 @@
 
 **Tech Stack:** Python 3 standard library、JSON Schema assets、Python `unittest`、Markdown skill contracts、Git object/tree verification、fresh-agent pressure tests、repository architecture/context/dual-host validators。
 
+## Local Completion Status
+
+2026-07-21 に ASBC-001〜ASBC-006 の TDD 実装、scoped review/fix、fresh-agent forward test、full verification、durable closeout を完了した。全 task は `LOCAL_COMPLETE`。current executable contract は Input Packet v2 / Execution Envelope v4 と downstream current-only artifact familyであり、historical v1〜v3 JSON は non-executable evidence として bytes を変更せず保持する。
+
+- Implementation head before durable closeout: `b3bfa4b5a8cb1dd7788aa61398679ce6c5f995dd`。
+- Approved spec / sealed packet / Envelope raw SHA-256: `6cedbba982f891d8ffceb9204bfc453b276df9e6021dca048cb0612d359a3dcc` / `3779e815b4be7438b36e9fb53073fa1d3ab20f07cd5ad1c531fa075c11b457e7` / `ac7630bf404b1c3607eb504bc18377bc45aef2c3b128be04e38d6737ca351af4`。
+- Public acceptance ASB-01〜ASB-30、issue-loop 230 tests、grill 24 tests、llm-wiki 6 tests、architecture/context/strict context report/dual-host/creator validators、Packet/Envelope current validators、`git diff --check` は成功。strict context warnings は空、repository-wide 最小 headroom は 21%、affected issue-loop 最小 headroom は 26%。
+- 3 fresh evaluator は planning drift、urgent execution mismatch、terminal後の stale delivery/resume をすべて fail closed に停止し、read-only diagnostic status だけを許可した。
+- Scoped review は各 task で完了し、最終時点で open Critical / Important finding はない。
+- Remote policy は `local_only` のまま。push、PR、merge、live Codex/Hermes install は意図的に実行していない。
+
 ## Global Constraints
 
 - Canonical spec: `knowledge/wiki/syntheses/loop-skill-approved-spec-binding-contract-spec.md`。
@@ -94,11 +105,11 @@
 - CLI: `approved_spec_binding.py identify|seal|verify --repo-root ...`
 - Stable failures use approved spec codes/actions and never mutate state on failure。
 
-- [ ] **Step 1: Add failing public-interface tests**
+- [x] **Step 1: Add failing public-interface tests**
 
 Create `test_approved_spec_binding.py` with temporary Git repository fixtures and tests for ASB-01, ASB-02, ASB-03, ASB-05〜ASB-09, ASB-20, ASB-21, ASB-24, ASB-25。Call public Python operations and CLI, not private hash helpers。Replace input packet tests so v2 closed shape succeeds and v1/missing approval/incomplete scope/malformed hash/unknown field/empty work items/unsafe paths fail with exact codes。
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 ```bash
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests -p 'test_approved_spec_binding.py'
@@ -107,19 +118,19 @@ PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s 
 
 Expected: missing module/CLI errors and failures because Input Packet v1 still validates。
 
-- [ ] **Step 3: Implement safe file identity and stable results**
+- [x] **Step 3: Implement safe file identity and stable results**
 
 Implement trusted repo-root canonicalization, POSIX path parsing, component `lstat`, no-follow open, `fstat`, streaming SHA-256, before/after identity comparison, and stable result/error mappings。Translate OS/Git exceptions without raw payload/credential leakage。
 
-- [ ] **Step 4: Implement identify/seal/verify and CLI**
+- [x] **Step 4: Implement identify/seal/verify and CLI**
 
 Implement the three operations and subcommands。Seal re-reads expected spec revision, injects exact approval evidence, serializes deterministic UTF-8/unescaped Unicode/LF/2-space/sorted-key/trailing-newline JSON, atomically replaces only output packet, and proves spec bytes unchanged。
 
-- [ ] **Step 5: Replace Input Packet v1 with v2**
+- [x] **Step 5: Replace Input Packet v1 with v2**
 
 Use exactly seven top-level fields, closed objects, exact six-field approval scope, and one-or-more strict work items。Remove optional `approved_revision`/`approved_hash` and persisted `repo_root`。Make public validation derive or accept a trusted Git root, then verify file/digest/approval。
 
-- [ ] **Step 6: Run GREEN**
+- [x] **Step 6: Run GREEN**
 
 ```bash
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests -p 'test_approved_spec_binding.py'
@@ -128,11 +139,11 @@ PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s 
 
 Expected: focused tests pass; v1 positives are deleted or inverted to `SCHEMA_UNSUPPORTED`。
 
-- [ ] **Step 7: Seal this implementation packet**
+- [x] **Step 7: Seal this implementation packet**
 
 Create a temporary untracked draft containing ASBC-001〜ASBC-006 and run the new CLI with exact spec path/digest and log approval fields。Output only the planned Input Packet v2 path。Validate it, confirm spec digest remains `6ced...d359a3dcc`, and delete the temporary draft with `apply_patch`。
 
-- [ ] **Step 8: Commit core and sealed packet**
+- [x] **Step 8: Commit core and sealed packet**
 
 ```bash
 git add skills/issue-implementation-loop knowledge/wiki/syntheses/loop-skill-approved-spec-binding-contract-input-packet.json
@@ -148,11 +159,11 @@ Expected: one scoped ASBC-001 commit; record its full object ID as the later gat
 
 **Files:** Envelope/Worker Packet/Worker Report schemas, templates, builders, validators, references, helpers, tests; delete V1 schema。
 
-- [ ] **Step 1: Add failing chain/gate tests**
+- [x] **Step 1: Add failing chain/gate tests**
 
 Add tests for ASB-04, ASB-10〜ASB-13, ASB-22, ASB-26〜ASB-28。Build temporary Git histories where the ASBC-001 gate commit is/is not an ancestor and tree packet/spec blobs match/differ。Assert Envelope v1〜v3 and Worker v1/v2 return `SCHEMA_UNSUPPORTED`。
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 ```bash
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests -p 'test_validation.py'
@@ -161,19 +172,19 @@ PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s 
 
 Expected: missing binding/gate checks fail and legacy-positive assertions expose old branches。
 
-- [ ] **Step 3: Replace Envelope with v4**
+- [x] **Step 3: Replace Envelope with v4**
 
 Require top-level binding。Validate packet path/raw digest/full current Git object ID, gate ancestor, gate-tree packet blob, and packet-referenced spec blob。Remove v1/v2/v3 conditions and compatibility wording/tests。
 
-- [ ] **Step 4: Replace worker/reviewer packet/report contracts**
+- [x] **Step 4: Replace worker/reviewer packet/report contracts**
 
 Delete V1 schema and `--schema-version`/V1/V2 branches。Require Packet v3 `source_revision.approved_spec_binding`; distinguish executor/reviewer by `task_kind`/access policy only。Require Report v2 binding plus dispatch identity and compare report/dispatch/runtime bindings at intake。
 
-- [ ] **Step 5: Create and validate Envelope v4**
+- [x] **Step 5: Create and validate Envelope v4**
 
 Create the planned Envelope path using the ASBC-001 full commit as `gate_commit` and sealed packet raw digest。Use the current isolated branch, maximum two review cycles, worker-only policy, and `local_only` remote policy。Validate through the public CLI。
 
-- [ ] **Step 6: Run GREEN and commit**
+- [x] **Step 6: Run GREEN and commit**
 
 ```bash
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests -p 'test_validation.py'
@@ -191,11 +202,11 @@ Expected: current-only chain tests pass and no legacy worker schema remains。
 
 **Files:** Event/Runtime/Human Request/Hardening Registry schemas/templates; rebuild, scheduler, registry, resume code/tests/references。
 
-- [ ] **Step 1: Add failing epoch tests**
+- [x] **Step 1: Add failing epoch tests**
 
 Add public-entrypoint tests for ASB-13, ASB-17〜ASB-19, ASB-23, ASB-29〜ASB-30 with same-binding, mixed-binding, resealed epoch, v1/v2/meta-less inputs。
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 ```bash
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests -p 'test_runtime_state.py'
@@ -205,15 +216,15 @@ PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s 
 
 Expected: mixed events fold, old registry/request is accepted, meta-less resume succeeds with warning。
 
-- [ ] **Step 3: Replace runtime/event and auxiliary contracts**
+- [x] **Step 3: Replace runtime/event and auxiliary contracts**
 
 Require Event v2 and Runtime State v2 binding; reject mixed/unknown bindings before and after fold。Require Human Request v2 and Hardening Registry v2 binding and compare to active runtime before routing/delivery reads。Reseal starts an empty new auxiliary epoch unless human re-records decisions。
 
-- [ ] **Step 4: Replace resume metadata with v3**
+- [x] **Step 4: Replace resume metadata with v3**
 
 Require `sources.approved_spec_binding`, validate it before cache use and event fold, and delete meta-less/v2 success branches。Stale spec/packet rejects resume independently of envelope/runtime/event freshness。
 
-- [ ] **Step 5: Run GREEN and commit**
+- [x] **Step 5: Run GREEN and commit**
 
 ```bash
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests -p 'test_runtime_state.py'
@@ -231,11 +242,11 @@ git commit -m "feat: bind runtime epoch to approved spec"
 
 **Files:** operation selection, scheduler/report intake, review, result/delivery contracts, public CLI, tests/references。
 
-- [ ] **Step 1: Add failing state-changing gate tests**
+- [x] **Step 1: Add failing state-changing gate tests**
 
 Add public tests for ASB-04, ASB-14〜ASB-16, ASB-22, ASB-29。Mutate spec/packet after runtime is terminal and prove explicit `deliver`, review, completion, and normal delivery are blocked while `status` is diagnostic only。
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 ```bash
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests -p 'test_operation_selection.py'
@@ -245,15 +256,15 @@ PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s 
 
 Expected: explicit deliver bypass and spec-unaware delivery tests fail new expectations。
 
-- [ ] **Step 3: Move binding verification before routing**
+- [x] **Step 3: Move binding verification before routing**
 
 Evaluate binding before explicit-mode short-circuits。Return `status` with `binding_valid=false`/state advance blocked; every other invalid-binding operation returns stable reapproval blocker without mutation。
 
-- [ ] **Step 4: Bind review/result/delivery**
+- [x] **Step 4: Bind review/result/delivery**
 
 Require review dispatch/report/approval to match active binding and `BASE_SHA..HEAD_SHA`。Replace Execution Result v1 and Delivery Plan v1 with v2。Verify envelope→packet→spec and runtime/report/review/result/plan/registry immediately before terminal transition/delivery。
 
-- [ ] **Step 5: Run GREEN and commit**
+- [x] **Step 5: Run GREEN and commit**
 
 ```bash
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests -p 'test_operation_selection.py'
@@ -270,11 +281,11 @@ git commit -m "feat: guard execution with spec binding"
 
 **Files:** both entrypoints, existing references/context tests, historical index annotations。
 
-- [ ] **Step 1: Add failing skill-contract tests**
+- [x] **Step 1: Add failing skill-contract tests**
 
 In grill tests require exact spec path/digest, six-field approval, seal, packet validation, and reapproval on any byte change。In issue-loop tests require prepare/dispatch/review/resume/completion/delivery guards and absence of legacy wording/options/files。Keep descriptions trigger-only and dual-host neutral。
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 ```bash
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/grill-to-pr-loop/tests
@@ -283,15 +294,15 @@ PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s 
 
 Expected: “when available”, old envelope/worker/resume clauses, and missing hooks fail。
 
-- [ ] **Step 3: Replace/compact current guidance**
+- [x] **Step 3: Replace/compact current guidance**
 
 Planning owns identify/present/approve/seal; execution owns verify/reapproval。Document one user approval, automatic checks, status-only exception, clean break, separate remote authorization。Replace existing references instead of adding an unconditional read-set。
 
-- [ ] **Step 4: Mark historical artifacts non-executable**
+- [x] **Step 4: Mark historical artifacts non-executable**
 
 Update `knowledge/index.md` summaries for historical Input Packet v1/Envelope v1-v3 pages; retain the files and do not rewrite them as current v2 artifacts。
 
-- [ ] **Step 5: Run GREEN and commit**
+- [x] **Step 5: Run GREEN and commit**
 
 ```bash
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/grill-to-pr-loop/tests
@@ -311,15 +322,15 @@ git commit -m "docs: require approved spec binding"
 
 **Files:** acceptance tests/fixtures as required, packet/envelope, issue ledger, plan, index, log。
 
-- [ ] **Step 1: Cover ASB-01〜ASB-30 through public surfaces**
+- [x] **Step 1: Cover ASB-01〜ASB-30 through public surfaces**
 
 Add a matrix in `test_approved_spec_binding.py` mapping each ASB ID to test method(s)。No row may be represented only by a private helper test。
 
-- [ ] **Step 2: Fresh-agent forward tests**
+- [x] **Step 2: Fresh-agent forward tests**
 
 Launch three fresh evaluators with current skills only and no intended answer/spec text: planning one-byte drift; execution stored/current mismatch under urgency; terminal runtime then stale binding before explicit delivery/resume。All must mechanically stop/reapprove; only status may remain diagnostic。Keep raw responses outside the repo and record concise evidence。
 
-- [ ] **Step 3: Run full verification**
+- [x] **Step 3: Run full verification**
 
 ```bash
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests
@@ -336,11 +347,11 @@ git diff --check
 
 Expected: all exit 0; context report warnings empty; no legacy schema/file/option or generic-vocabulary violation remains。
 
-- [ ] **Step 4: Independent implementation review**
+- [x] **Step 4: Independent implementation review**
 
 Review each scoped range against issue criteria, then final-align immutable spec and sealed packet。Maximum two review/fix cycles。Critical/Important findings block completion and go to a fresh bounded RED/GREEN worker。
 
-- [ ] **Step 5: Sync durable evidence and commit closeout**
+- [x] **Step 5: Sync durable evidence and commit closeout**
 
 Update ledger with ranges/evidence/review/verification/forward tests/residual risks; append log entries; update index summaries without changing spec bytes。
 

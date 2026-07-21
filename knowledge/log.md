@@ -1184,3 +1184,14 @@ append-only で使います。すべての entry は予測しやすい header �
 - bootstrap exception は ASBC-001 の core/Input Packet v2 実装だけに限定し、その commit で approved spec を v2 packet へ seal して以後の gate commit とする
 - Envelope/worker、runtime/auxiliary/resume、routing/review/completion/delivery、skill contract、fresh-agent forward test/full verification の依存順序と exact command set を記録した
 - scope は approved spec/issue ledger と同一、remote policy は `local_only`。worker 実装、review、push、PR、merge、live install はまだ実行していない
+
+## [2026-07-21] implementation-closeout | Loop Skill Approved Spec Binding Contract
+
+- ASBC-001〜ASBC-006 を dependency 順に TDD 実装し、全 issue を `LOCAL_COMPLETE` とした。implementation head は `b3bfa4b5a8cb1dd7788aa61398679ce6c5f995dd`、binding gate commit は `ad9adeab69bcafd761d8457e9c33d1b4c26096d5`
+- current executable contract は Input Packet v2 / Execution Envelope v4 / Event・Runtime・Human Request・Hardening Registry・Report・Result・Delivery v2 / Worker・Reviewer Packet v3 / Resume metadata v3。historical Input Packet v1 と Envelope v1〜v3 JSON は non-executable evidence として bytes を変更せず保持した
+- planning の exact identify/present/approve/seal と、prepare、dispatch、worker/reviewer start・report intake、resume/rebuild、review/completion、delivery の fresh fail-closed verificationをCodex/Hermes共通 skill contractへ同期した。invalid binding で許可するのは read-only diagnostic status だけとした
+- ASB-01〜ASB-30 を public operation / real entrypoint hookへ一意に mappingし、issue-implementation-loop 230 tests、grill-to-pr-loop 24 tests、llm-wiki 6 tests、architecture/context/strict context report/dual-host/creator validators、Packet v2 / Envelope v4 validators、`git diff --check` が成功した。strict context warnings は空、repository-wide 最小 headroom は 21%、affected issue-loop 最小 headroom は 26%
+- fresh-agent forward test 3件は planning one-byte drift、urgency下の execution mismatch、terminal後の stale delivery/resume をすべて停止し、read-only statusだけを許可した。scoped implementation reviewは全taskで完了し、open Critical / Important finding はない
+- immutable raw-byte SHA-256 は spec `6cedbba982f891d8ffceb9204bfc453b276df9e6021dca048cb0612d359a3dcc`、sealed packet `3779e815b4be7438b36e9fb53073fa1d3ab20f07cd5ad1c531fa075c11b457e7`、Envelope `ac7630bf404b1c3607eb504bc18377bc45aef2c3b128be04e38d6737ca351af4` のまま一致した
+- residual risk は raw-byte contract の保守性、validation後mutationの理論的可能性、actor expressionが暗号学的本人性を証明しないこと、clean breakで旧runをresumeできないこと、live host installを検証していないこと。各state-changing boundaryのfresh verification、new approval/new run、separate live authorizationを維持する
+- approved remote policy は `local_only`。push、GitHub Issue、PR、merge、live Codex/Hermes install/runtime changeは意図的に実行せず、別の明示承認が必要な境界として残した
