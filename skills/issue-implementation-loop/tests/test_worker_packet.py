@@ -401,6 +401,60 @@ class WorkerPacketTests(unittest.TestCase):
                     self.assertNotEqual(result.returncode, 0)
                     self.assertIn(expected, result.stderr)
 
+    def test_inline_context_optional_fields_match_schema_in_cli_and_api(self) -> None:
+        schema = json.loads(
+            (SKILL_DIR / "assets/schemas/worker-packet.schema.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        inline_properties = schema["properties"]["inline_context"]["items"][
+            "properties"
+        ]
+        self.assertEqual(inline_properties["purpose"], {"type": "string"})
+        self.assertEqual(inline_properties["is_full_document"], {"const": False})
+
+        lib_dir = str(SCRIPTS_DIR / "lib")
+        if lib_dir not in sys.path:
+            sys.path.insert(0, lib_dir)
+        from issue_implementation_loop import validate_worker_packet
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            cases = (
+                ("purpose_integer", "purpose", 7),
+                ("full_document_true", "is_full_document", True),
+                ("full_document_integer", "is_full_document", 1),
+                ("full_document_string", "is_full_document", "yes"),
+            )
+            for name, field, invalid_value in cases:
+                with self.subTest(name=name):
+                    case_root = root / name
+                    case_root.mkdir()
+                    repo, binding, _ = create_binding_repo(case_root)
+                    packet = current_worker_packet(repo, binding)
+                    packet["inline_context"] = [
+                        {
+                            "path": "knowledge/wiki/syntheses/issues.md",
+                            "excerpt": "bounded excerpt",
+                            field: invalid_value,
+                        }
+                    ]
+                    packet_path = repo / f"{name}.json"
+                    write_json(packet_path, packet)
+
+                    cli_result = run_worker_packet_validator(repo, packet_path)
+                    api_errors = validate_worker_packet(
+                        packet,
+                        repo_root=repo,
+                        assigned_worktree=repo,
+                        envelope_path=repo / "execution-envelope.json",
+                        runtime_state_path=repo / "runtime-state.json",
+                    )
+
+                    self.assertEqual(cli_result.returncode, 1)
+                    self.assertIn(field, cli_result.stderr)
+                    self.assertTrue(any(field in error for error in api_errors))
+
     def test_validate_worker_packet_enforces_task_kind_access_contracts(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

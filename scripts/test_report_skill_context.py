@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+import tempfile
 import unittest
 
 from validate_skill_architecture import DEFAULT_POLICY_PATH, REQUIRED_FAMILY_ID, load_policy
@@ -33,6 +34,39 @@ def loop_skill_names() -> set[str]:
 
 
 class SkillContextReportTests(unittest.TestCase):
+    def test_strict_report_rejects_inconsistent_baseline_operation_count(self) -> None:
+        baseline_path = (
+            REPO_ROOT
+            / "knowledge/wiki/syntheses/skill-repository-optimization-v4-context-baseline.json"
+        )
+        baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
+        baseline["skills"][0]["operation_count"] += 1
+        with tempfile.TemporaryDirectory() as tmp:
+            stale_path = Path(tmp) / "stale-baseline.json"
+            stale_path.write_text(json.dumps(baseline), encoding="utf-8")
+
+            result = run_script(
+                REPORT_SKILL_CONTEXT,
+                "--all",
+                "--baseline",
+                str(stale_path),
+                "--require-baseline",
+                "--fail-on-warning",
+            )
+
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("operation_count must equal len(operations)", result.stderr)
+
+    def test_current_baseline_operation_counts_are_self_consistent(self) -> None:
+        baseline_path = (
+            REPO_ROOT
+            / "knowledge/wiki/syntheses/skill-repository-optimization-v4-context-baseline.json"
+        )
+        baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
+        for skill in baseline["skills"]:
+            with self.subTest(skill=skill["skill"]):
+                self.assertEqual(skill["operation_count"], len(skill["operations"]))
+
     def test_json_report_includes_workflow_complexity_summary(self) -> None:
         result = run_script(REPORT_SKILL_CONTEXT, "--all", "--json")
 

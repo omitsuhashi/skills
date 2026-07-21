@@ -63,7 +63,11 @@ def _operation_names(skill_dir: Path) -> List[str]:
     return operation_names_for_context(skill_dir)
 
 
-def _load_baseline(path: Path) -> Dict[tuple[str, str], Mapping[str, object]]:
+def _load_baseline(
+    path: Path,
+    *,
+    require_self_consistency: bool = False,
+) -> Dict[tuple[str, str], Mapping[str, object]]:
     if not path.is_file():
         return {}
     try:
@@ -81,6 +85,14 @@ def _load_baseline(path: Path) -> Dict[tuple[str, str], Mapping[str, object]]:
         operations = skill.get("operations")
         if not isinstance(skill_name, str) or not isinstance(operations, list):
             continue
+        if (
+            require_self_consistency
+            and skill.get("operation_count") != len(operations)
+        ):
+            raise ContractError(
+                f"{path}: {skill_name}.operation_count must equal "
+                f"len(operations) ({len(operations)})"
+            )
         for operation in operations:
             if isinstance(operation, dict) and isinstance(operation.get("operation"), str):
                 baseline[(skill_name, operation["operation"])] = operation
@@ -395,7 +407,10 @@ def collect_report(
     baseline_path: Path = DEFAULT_BASELINE_PATH,
     require_baseline: bool = False,
 ) -> Dict[str, object]:
-    baseline = _load_baseline(baseline_path)
+    baseline = _load_baseline(
+        baseline_path,
+        require_self_consistency=require_baseline,
+    )
     warnings: List[str] = []
     report: Dict[str, object] = {
         "schema_version": 2,

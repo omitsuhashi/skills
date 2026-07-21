@@ -459,6 +459,13 @@ def validate_worker_packet(
                 f"{prefix}.excerpt exceeds {MAX_INLINE_EXCERPT_WORDS_PER_FILE} words"
             )
         purpose = entry.get("purpose")
+        if "purpose" in entry and not isinstance(purpose, str):
+            errors.append(f"{prefix}.purpose must be a string when provided")
+        if "is_full_document" in entry and (
+            type(entry.get("is_full_document")) is not bool
+            or entry.get("is_full_document") is not False
+        ):
+            errors.append(f"{prefix}.is_full_document must be false when provided")
         if entry.get("is_full_document") is True or _field_key(str(purpose or "")) in {
             "fullspec",
             "fullledger",
