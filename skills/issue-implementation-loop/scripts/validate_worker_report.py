@@ -14,6 +14,8 @@ def main() -> int:
     parser.add_argument("worker_report")
     parser.add_argument("--dispatch-packet", required=True)
     parser.add_argument("--runtime-state", required=True)
+    parser.add_argument("--envelope", required=True)
+    parser.add_argument("--repo-root", required=True, help="Trusted Git worktree root.")
     parser.add_argument("--json", action="store_true", help="Emit JSON result.")
     args = parser.parse_args()
 
@@ -21,6 +23,8 @@ def main() -> int:
         load_json(args.worker_report),
         load_json(args.dispatch_packet),
         load_json(args.runtime_state),
+        load_json(args.envelope),
+        args.repo_root,
     )
     if args.json:
         print(dump_json({"ok": not errors, "errors": errors}), end="")

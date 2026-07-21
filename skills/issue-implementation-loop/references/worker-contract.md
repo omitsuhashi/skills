@@ -33,13 +33,15 @@ identity, branch/worktree, changed files, verification, status, and residual
 risks in the required `residual_risks` string list. Success also requires matching base/head SHA and approved implementation
 review range.
 
-Validate intake against both dispatch and active runtime:
+Require fresh envelope -> packet -> spec validation of the dispatch snapshot and active runtime:
 
 ```bash
 python3 <skill-dir>/scripts/validate_worker_report.py <worker-report.json> \
   --dispatch-packet <worker-or-reviewer-packet.json> \
-  --runtime-state <runtime-state.json>
+  --runtime-state <runtime-state.json> \
+  --envelope <execution-envelope.json> \
+  --repo-root <repo-root>
 ```
 
-Report, dispatch, and runtime bindings plus dispatch identity must match;
+Envelope, report, dispatch, and runtime bindings plus dispatch identity must match;
 otherwise return `BINDING_MISMATCH`. Old reports return `SCHEMA_UNSUPPORTED`.

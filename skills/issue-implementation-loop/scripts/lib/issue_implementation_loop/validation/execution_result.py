@@ -46,6 +46,8 @@ ISSUE_REQUIRED = {
     "implementation_review",
     "residual_risks",
 }
+EPIC_BASE_FIELDS = {"branch", "initial_sha", "current_sha", "branch_exists"}
+OPTIONAL_PR_FIELDS = {"pr", "pr_opened", "pr_merged"}
 
 
 def validate_execution_result(
@@ -106,6 +108,22 @@ def validate_execution_result(
     if not isinstance(runtime_root, str) or not os.path.isabs(runtime_root):
         errors.append("runtime_state_root must be an absolute path")
 
+    epic_base = result.get("epic_base")
+    envelope_epic_base = envelope.get("epic_base", {})
+    if not isinstance(epic_base, dict) or set(epic_base) != EPIC_BASE_FIELDS:
+        errors.append("SCHEMA_UNSUPPORTED")
+    else:
+        if epic_base.get("branch") != envelope_epic_base.get("ref"):
+            errors.append("BINDING_MISMATCH")
+        if epic_base.get("initial_sha") != envelope_epic_base.get("sha"):
+            errors.append("BINDING_MISMATCH")
+        if not isinstance(epic_base.get("current_sha"), str) or not is_full_commit_sha(
+            epic_base["current_sha"]
+        ):
+            errors.append("SCHEMA_UNSUPPORTED")
+        if epic_base.get("branch_exists") is not True:
+            errors.append("SCHEMA_UNSUPPORTED")
+
     work_items = envelope.get("work_items", {})
     result_issues = result.get("issues")
     runtime_issues = runtime.get("issues", {})
@@ -114,7 +132,12 @@ def validate_execution_result(
     if not isinstance(runtime_issues, dict):
         return errors + ["BINDING_MISMATCH"]
     candidates = result.get("delivery_candidates")
-    if not isinstance(candidates, list) or set(candidates) - set(work_items):
+    if (
+        not isinstance(candidates, list)
+        or not candidates
+        or candidates != list(work_items)
+        or len(candidates) != len(set(candidates))
+    ):
         errors.append("BINDING_MISMATCH")
 
     for issue_id, item in work_items.items():
@@ -130,9 +153,16 @@ def validate_execution_result(
             continue
         if record.get("status") != runtime_record.get("status"):
             errors.append("BINDING_MISMATCH")
-        if record.get("branch") != item.get("branch"):
+        if (
+            record.get("branch") != item.get("branch")
+            or runtime_record.get("branch", item.get("branch")) != item.get("branch")
+        ):
             errors.append("BINDING_MISMATCH")
-        if record.get("worktree") != item.get("worktree_path"):
+        if (
+            record.get("worktree") != item.get("worktree_path")
+            or runtime_record.get("worktree", item.get("worktree_path"))
+            != item.get("worktree_path")
+        ):
             errors.append("BINDING_MISMATCH")
         for field in ("base_sha", "head_sha"):
             value = record.get(field)
@@ -157,4 +187,20 @@ def validate_execution_result(
             errors.append(f"issues.{issue_id}.verification must be passed")
         if not isinstance(record.get("residual_risks"), list):
             errors.append(f"issues.{issue_id}.residual_risks must be a list")
+        for field in OPTIONAL_PR_FIELDS:
+            runtime_has = field in runtime_record
+            result_has = field in record
+            if runtime_has != result_has:
+                errors.append("BINDING_MISMATCH")
+                continue
+            if not runtime_has:
+                continue
+            value = record[field]
+            if field == "pr":
+                if not isinstance(value, str) or not value.strip():
+                    errors.append("SCHEMA_UNSUPPORTED")
+            elif type(value) is not bool:
+                errors.append("SCHEMA_UNSUPPORTED")
+            if value != runtime_record[field]:
+                errors.append("BINDING_MISMATCH")
     return errors

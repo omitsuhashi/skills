@@ -4,6 +4,96 @@ from _helpers import *
 
 
 class OperationSelectionTests(unittest.TestCase):
+    def assert_diagnostic_status_and_blocked_mode(
+        self,
+        *,
+        envelope_path: Path,
+        runtime_path: Path,
+        requested_mode: str,
+    ) -> None:
+        status = self.run_selector(
+            envelope_path=envelope_path,
+            runtime_path=runtime_path,
+            requested_mode="status",
+        )
+        self.assertEqual(status["operation"], "status")
+        self.assertFalse(status["binding_valid"])
+        self.assertTrue(status["state_advance_blocked"])
+
+        blocked = self.run_selector(
+            envelope_path=envelope_path,
+            runtime_path=runtime_path,
+            requested_mode=requested_mode,
+        )
+        self.assertEqual(blocked["operation"], "blocked.reapproval")
+        self.assertFalse(blocked["binding_valid"])
+        self.assertTrue(blocked["state_advance_blocked"])
+
+    def test_invalid_envelope_reservation_and_runtime_mismatch_keep_status_diagnostic(self) -> None:
+        cases = {
+            "legacy-envelope": lambda envelope, runtime: envelope.update(
+                {"schema_version": 3}
+            ),
+            "incomplete-reservation": lambda envelope, runtime: envelope[
+                "work_items"
+            ]["G2PR-001"].pop("worktree_path"),
+            "runtime-branch-mismatch": lambda envelope, runtime: runtime["issues"].update(
+                {
+                    "G2PR-001": {
+                        "status": "RUNNING",
+                        "branch": "codex/issue-implementation-loop/G2PR-001-wrong",
+                    }
+                }
+            ),
+        }
+        for name, mutate in cases.items():
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as tmp:
+                envelope = base_envelope()
+                runtime = current_runtime(
+                    {
+                        "epic_id": envelope["epic_id"],
+                        "envelope_revision": envelope["revision"],
+                        "issues": {},
+                        "human_requests": [],
+                    }
+                )
+                mutate(envelope, runtime)
+                envelope_path = Path(tmp) / "envelope.json"
+                runtime_path = Path(tmp) / "runtime.json"
+                write_json(envelope_path, envelope)
+                write_json(runtime_path, runtime)
+                self.assert_diagnostic_status_and_blocked_mode(
+                    envelope_path=envelope_path,
+                    runtime_path=runtime_path,
+                    requested_mode="deliver",
+                )
+
+    def test_invalid_existing_envelope_blocks_prepare_execute_and_resume(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            envelope = base_envelope()
+            envelope["schema_version"] = 3
+            runtime = current_runtime(
+                {
+                    "epic_id": envelope["epic_id"],
+                    "envelope_revision": envelope["revision"],
+                    "issues": {},
+                    "human_requests": [],
+                }
+            )
+            envelope_path = Path(tmp) / "envelope.json"
+            runtime_path = Path(tmp) / "runtime.json"
+            write_json(envelope_path, envelope)
+            write_json(runtime_path, runtime)
+            for mode in ("prepare", "execute", "resume"):
+                with self.subTest(mode=mode):
+                    blocked = self.run_selector(
+                        envelope_path=envelope_path,
+                        runtime_path=runtime_path,
+                        requested_mode=mode,
+                    )
+                    self.assertEqual(blocked["operation"], "blocked.reapproval")
+                    self.assertTrue(blocked["state_advance_blocked"])
+
     def test_scheduler_reference_places_binding_gate_before_explicit_modes(self) -> None:
         text = (SKILL_DIR / "references" / "scheduler.md").read_text(
             encoding="utf-8"
@@ -188,9 +278,9 @@ class OperationSelectionTests(unittest.TestCase):
 
             payload = self.run_selector(envelope_path=envelope_path, runtime_path=runtime_path)
 
-            self.assertEqual(payload["operation"], "prepare")
-            self.assertEqual(payload["priority"], "unreserved")
-            self.assertEqual(payload["target_issue"], "G2PR-001")
+            self.assertEqual(payload["operation"], "blocked.reapproval")
+            self.assertEqual(payload["priority"], "reapproval_required")
+            self.assertTrue(payload["state_advance_blocked"])
 
     def test_state_mismatch_beats_reviewable_issue(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -215,9 +305,9 @@ class OperationSelectionTests(unittest.TestCase):
 
             payload = self.run_selector(envelope_path=envelope_path, runtime_path=runtime_path)
 
-            self.assertEqual(payload["operation"], "resume")
-            self.assertEqual(payload["priority"], "git_state_mismatch")
-            self.assertEqual(payload["target_issue"], "G2PR-001")
+            self.assertEqual(payload["operation"], "blocked.reapproval")
+            self.assertEqual(payload["priority"], "reapproval_required")
+            self.assertTrue(payload["state_advance_blocked"])
 
     def test_fixable_issue_takes_priority_over_human_wait_and_runnable(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

@@ -14,6 +14,9 @@ class CandidateRegistryTests(unittest.TestCase):
         plan["approved_spec_binding"] = copy.deepcopy(
             envelope["approved_spec_binding"]
         )
+        if plan.get("action") == "final_pr":
+            plan.setdefault("draft", True)
+            plan.setdefault("issue_scope", list(envelope["work_items"]))
         write_json(plan_path, plan)
         result_path = plan_path.with_name("execution-result.json")
         write_json(result_path, current_execution_result(envelope, runtime))

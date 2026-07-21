@@ -58,17 +58,15 @@ CANDIDATE_DECISIONS = {
     "risk_accepted",
     "implemented",
 }
-DELIVERY_PLAN_FIELDS = {
+DELIVERY_PLAN_COMMON_FIELDS = {
     "schema_version",
     "approved_spec_binding",
     "action",
     "head",
     "base",
-    "draft",
-    "ready_for_review",
-    "issue",
-    "issue_scope",
 }
+ISSUE_PR_PLAN_FIELDS = DELIVERY_PLAN_COMMON_FIELDS | {"issue"}
+FINAL_PR_PLAN_FIELDS = DELIVERY_PLAN_COMMON_FIELDS | {"draft", "issue_scope"}
 RECOMMENDED_DECISIONS = {
     "approved_for_current_pr",
     "deferred_follow_up",
@@ -365,8 +363,6 @@ def validate_delivery_plan(
 
     if not isinstance(plan, dict) or plan.get("schema_version") != 2:
         return ["SCHEMA_UNSUPPORTED"]
-    if set(plan) - DELIVERY_PLAN_FIELDS:
-        return ["SCHEMA_UNSUPPORTED"]
     try:
         plan_binding = approved_spec_binding_ref(
             plan.get("approved_spec_binding")
@@ -379,6 +375,13 @@ def validate_delivery_plan(
     if action not in {"issue_pr", "final_pr"}:
         errors.append("action must be issue_pr or final_pr")
         return errors
+    expected_fields = (
+        ISSUE_PR_PLAN_FIELDS if action == "issue_pr" else FINAL_PR_PLAN_FIELDS
+    )
+    if set(plan) != expected_fields:
+        if action == "final_pr" and "ready_for_review" in plan:
+            return ["ready-for-review is a separate human action"]
+        return ["SCHEMA_UNSUPPORTED"]
 
     remote_policy = envelope.get("remote_write_policy", {})
     if not isinstance(remote_policy, dict) or remote_policy.get("mode") != "batch_issue_prs":
@@ -429,8 +432,6 @@ def validate_delivery_plan(
         errors.append(f"remote_write_policy.approved_actions must include {action}")
     if plan.get("draft", True) is not True:
         errors.append("final_pr.draft must be true; ready-for-review is a separate human action")
-    if plan.get("ready_for_review") is True:
-        errors.append("ready-for-review is a separate human action")
 
     issues = delivery_issue_scope(envelope, plan, errors)
     runtime_issues = runtime.get("issues", {})

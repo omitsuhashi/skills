@@ -4,6 +4,93 @@ from _helpers import *
 
 
 class DeliveryTests(unittest.TestCase):
+    def call_delivery(
+        self,
+        repo: Path,
+        runtime_path: Path,
+        result_path: Path,
+        plan_path: Path,
+    ) -> subprocess.CompletedProcess[str]:
+        return run_script(
+            "validate_delivery_plan.py",
+            str(repo / "execution-envelope.json"),
+            str(runtime_path),
+            str(result_path),
+            str(plan_path),
+            "--repo-root",
+            str(repo),
+            "--json",
+        )
+
+    def test_delivery_plan_v2_is_closed_per_action(self) -> None:
+        final_cases = {
+            "issue-field": lambda plan: plan.update({"issue": "ASBC-002"}),
+            "ready-field": lambda plan: plan.update({"ready_for_review": False}),
+            "draft-not-bool": lambda plan: plan.update({"draft": 1}),
+            "scope-not-list": lambda plan: plan.update({"issue_scope": "ASBC-002"}),
+            "missing-draft": lambda plan: plan.pop("draft"),
+        }
+        issue_cases = {
+            "draft-field": lambda plan: plan.update({"draft": True}),
+            "ready-field": lambda plan: plan.update({"ready_for_review": False}),
+            "scope-field": lambda plan: plan.update({"issue_scope": ["ASBC-002"]}),
+            "missing-issue": lambda plan: plan.pop("issue"),
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for name, mutate in final_cases.items():
+                with self.subTest(action="final_pr", name=name):
+                    case_root = root / f"final-{name}"
+                    case_root.mkdir()
+                    repo, envelope, runtime_path, _, result_path, _, plan_path, plan = (
+                        self.binding_delivery_artifacts(case_root)
+                    )
+                    mutate(plan)
+                    write_json(plan_path, plan)
+                    checked = self.call_delivery(
+                        repo, runtime_path, result_path, plan_path
+                    )
+                    self.assertEqual(checked.returncode, 1)
+
+            for name, mutate in issue_cases.items():
+                with self.subTest(action="issue_pr", name=name):
+                    case_root = root / f"issue-{name}"
+                    case_root.mkdir()
+                    repo, envelope, runtime_path, _, result_path, _, plan_path, _ = (
+                        self.binding_delivery_artifacts(case_root)
+                    )
+                    plan = current_delivery_plan(
+                        envelope,
+                        action="issue_pr",
+                        issue="ASBC-002",
+                        head=envelope["work_items"]["ASBC-002"]["branch"],
+                        base=envelope["epic_base"]["ref"],
+                    )
+                    mutate(plan)
+                    write_json(plan_path, plan)
+                    checked = self.call_delivery(
+                        repo, runtime_path, result_path, plan_path
+                    )
+                    self.assertEqual(checked.returncode, 1)
+
+    def test_delivery_malformed_result_or_plan_returns_stable_error(self) -> None:
+        for artifact in ("result", "plan"):
+            with self.subTest(artifact=artifact), tempfile.TemporaryDirectory() as tmp:
+                repo, _, runtime_path, _, result_path, _, plan_path, _ = (
+                    self.binding_delivery_artifacts(Path(tmp))
+                )
+                target = result_path if artifact == "result" else plan_path
+                target.write_text("{not-json", encoding="utf-8")
+
+                checked = self.call_delivery(repo, runtime_path, result_path, plan_path)
+
+                self.assertEqual(checked.returncode, 1)
+                self.assertTrue(checked.stdout, checked.stderr)
+                self.assertEqual(
+                    json.loads(checked.stdout)["errors"], ["SCHEMA_UNSUPPORTED"]
+                )
+                self.assertEqual(checked.stderr, "")
+
     def run_delivery(self, script_name: str, *args: str) -> subprocess.CompletedProcess[str]:
         envelope_path = Path(args[0])
         runtime_path = Path(args[1])
@@ -16,6 +103,9 @@ class DeliveryTests(unittest.TestCase):
         plan.setdefault(
             "approved_spec_binding", copy.deepcopy(envelope["approved_spec_binding"])
         )
+        if plan.get("action") == "final_pr":
+            plan.setdefault("draft", True)
+            plan.setdefault("issue_scope", list(envelope["work_items"]))
         write_json(plan_path, plan)
         result_path = plan_path.with_name(plan_path.stem + "-execution-result.json")
         write_json(result_path, current_execution_result(envelope, runtime))

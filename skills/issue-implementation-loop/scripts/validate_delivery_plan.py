@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 
 from _common import (
@@ -25,10 +26,18 @@ def main() -> int:
     parser.add_argument("--json", action="store_true", help="Emit JSON result.")
     args = parser.parse_args()
 
-    envelope = load_json(args.envelope)
-    runtime = load_json(args.runtime_state)
-    execution_result = load_json(args.execution_result)
-    plan = load_json(args.delivery_plan)
+    try:
+        envelope = load_json(args.envelope)
+        runtime = load_json(args.runtime_state)
+        execution_result = load_json(args.execution_result)
+        plan = load_json(args.delivery_plan)
+    except (OSError, json.JSONDecodeError, TypeError, ValueError):
+        errors = ["SCHEMA_UNSUPPORTED"]
+        if args.json:
+            print(dump_json({"ok": False, "errors": errors}), end="")
+        else:
+            print(errors[0], file=sys.stderr)
+        return 1
     registry, registry_path, registry_load_error = load_hardening_candidate_registry(args.runtime_state)
     errors = validate_delivery_plan(
         envelope,

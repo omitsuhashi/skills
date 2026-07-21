@@ -532,6 +532,9 @@ def current_execution_result(
             "implementation_review": copy.deepcopy(record["review"]),
             "residual_risks": [],
         }
+        for field in ("pr", "pr_opened", "pr_merged"):
+            if field in record:
+                issues[issue_id][field] = record[field]
     return {
         "schema_version": 2,
         "approved_spec_binding": copy.deepcopy(envelope["approved_spec_binding"]),

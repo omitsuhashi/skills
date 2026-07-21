@@ -55,20 +55,11 @@ def select_operation(
     try:
         envelope = load_json(envelope_path)
     except (OSError, json.JSONDecodeError) as exc:
-        if requested_mode in EXPLICIT_MODE_OPERATIONS:
-            return _binding_gate_result(
-                skill_dir=skill_dir,
-                repo_root=repo_root,
-                requested_mode=requested_mode,
-                error=BindingError("REAPPROVAL_REQUIRED"),
-                reason=f"execution envelope cannot be read: {exc}",
-            )
-        return _result(
+        return _binding_gate_result(
             skill_dir=skill_dir,
             repo_root=repo_root,
             requested_mode=requested_mode,
-            priority="missing_envelope",
-            operation="prepare",
+            error=BindingError("SCHEMA_UNSUPPORTED"),
             reason=f"execution envelope cannot be read: {exc}",
         )
 
@@ -89,6 +80,33 @@ def select_operation(
             reason="active approved spec binding is invalid",
         )
 
+    envelope_errors = validate_execution_envelope(envelope, repo_root)
+    if envelope_errors:
+        code = envelope_errors[0]
+        return _binding_gate_result(
+            skill_dir=skill_dir,
+            repo_root=repo_root,
+            requested_mode=requested_mode,
+            error=BindingError(
+                code if code in DEFAULT_ACTIONS else "REAPPROVAL_REQUIRED"
+            ),
+            reason="execution envelope validation failed: " + "; ".join(envelope_errors),
+        )
+
+    unreserved_issue = _first_unreserved_issue(envelope)
+    if unreserved_issue or _epic_base_unreserved(envelope):
+        return _binding_gate_result(
+            skill_dir=skill_dir,
+            repo_root=repo_root,
+            requested_mode=requested_mode,
+            error=BindingError("REAPPROVAL_REQUIRED"),
+            reason=(
+                "work item is missing a branch/worktree reservation"
+                if unreserved_issue
+                else "epic base reservation is incomplete"
+            ),
+        )
+
     if requested_mode == "prepare":
         return _result(
             skill_dir=skill_dir,
@@ -99,72 +117,22 @@ def select_operation(
             reason="requested mode is prepare",
         )
 
-    unreserved_issue = _first_unreserved_issue(envelope)
-    if unreserved_issue:
-        return _result(
-            skill_dir=skill_dir,
-            repo_root=repo_root,
-            requested_mode=requested_mode,
-            priority="unreserved",
-            operation="prepare",
-            reason="work item is missing a branch/worktree reservation",
-            target_issue=unreserved_issue,
-        )
-    if _epic_base_unreserved(envelope):
-        return _result(
-            skill_dir=skill_dir,
-            repo_root=repo_root,
-            requested_mode=requested_mode,
-            priority="unreserved",
-            operation="prepare",
-            reason="epic base reservation is incomplete",
-        )
-
-    envelope_errors = validate_execution_envelope(envelope, repo_root)
-    if envelope_errors:
-        return _result(
-            skill_dir=skill_dir,
-            repo_root=repo_root,
-            requested_mode=requested_mode,
-            priority="git_state_mismatch",
-            operation="resume",
-            reason="execution envelope validation failed: " + "; ".join(envelope_errors),
-        )
-
     if runtime_path is None or not runtime_path.is_file():
-        if requested_mode in EXPLICIT_MODE_OPERATIONS:
-            return _binding_gate_result(
-                skill_dir=skill_dir,
-                repo_root=repo_root,
-                requested_mode=requested_mode,
-                error=BindingError("REAPPROVAL_REQUIRED"),
-                reason="runtime state is missing",
-            )
-        return _result(
+        return _binding_gate_result(
             skill_dir=skill_dir,
             repo_root=repo_root,
             requested_mode=requested_mode,
-            priority="git_state_mismatch",
-            operation="resume",
+            error=BindingError("REAPPROVAL_REQUIRED"),
             reason="runtime state is missing",
         )
     try:
         runtime = load_json(runtime_path)
     except (OSError, json.JSONDecodeError) as exc:
-        if requested_mode in EXPLICIT_MODE_OPERATIONS:
-            return _binding_gate_result(
-                skill_dir=skill_dir,
-                repo_root=repo_root,
-                requested_mode=requested_mode,
-                error=BindingError("REAPPROVAL_REQUIRED"),
-                reason=f"runtime state cannot be read: {exc}",
-            )
-        return _result(
+        return _binding_gate_result(
             skill_dir=skill_dir,
             repo_root=repo_root,
             requested_mode=requested_mode,
-            priority="git_state_mismatch",
-            operation="resume",
+            error=BindingError("SCHEMA_UNSUPPORTED"),
             reason=f"runtime state cannot be read: {exc}",
         )
 
@@ -197,17 +165,12 @@ def select_operation(
             reason="runtime state does not match the active binding epoch",
         )
     if state_mismatch:
-        reasons = []
-        if state_mismatch:
-            reasons.append(state_mismatch["reason"])
-        return _result(
+        return _binding_gate_result(
             skill_dir=skill_dir,
             repo_root=repo_root,
             requested_mode=requested_mode,
-            priority="git_state_mismatch",
-            operation="resume",
-            reason="; ".join(reasons),
-            target_issue=state_mismatch.get("issue") if state_mismatch else None,
+            error=BindingError("REAPPROVAL_REQUIRED"),
+            reason=state_mismatch["reason"],
         )
 
     if requested_mode in EXPLICIT_MODE_OPERATIONS:
@@ -218,6 +181,7 @@ def select_operation(
             priority=f"explicit_{requested_mode}",
             operation=EXPLICIT_MODE_OPERATIONS[requested_mode],
             reason=f"requested mode is {requested_mode}",
+            state_advance_blocked=requested_mode == "status",
         )
 
     next_actions = compute_next_actions(envelope, runtime)

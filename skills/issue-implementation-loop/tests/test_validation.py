@@ -1151,6 +1151,10 @@ class ValidationTests(unittest.TestCase):
                 str(packet_path),
                 "--runtime-state",
                 str(runtime_path),
+                "--envelope",
+                str(repo / "execution-envelope.json"),
+                "--repo-root",
+                str(repo),
             )
 
             self.assertNotEqual(result.returncode, 0)
@@ -1174,6 +1178,10 @@ class ValidationTests(unittest.TestCase):
                 str(packet_path),
                 "--runtime-state",
                 str(runtime_path),
+                "--envelope",
+                str(repo / "execution-envelope.json"),
+                "--repo-root",
+                str(repo),
             )
 
             self.assertEqual(result.returncode, 0, result.stderr)
@@ -1197,6 +1205,10 @@ class ValidationTests(unittest.TestCase):
                 str(packet_path),
                 "--runtime-state",
                 str(runtime_path),
+                "--envelope",
+                str(repo / "execution-envelope.json"),
+                "--repo-root",
+                str(repo),
             )
 
             self.assertNotEqual(result.returncode, 0)
@@ -1221,6 +1233,10 @@ class ValidationTests(unittest.TestCase):
                 str(packet_path),
                 "--runtime-state",
                 str(runtime_path),
+                "--envelope",
+                str(repo / "execution-envelope.json"),
+                "--repo-root",
+                str(repo),
                 "--json",
             )
 
@@ -1258,6 +1274,10 @@ class ValidationTests(unittest.TestCase):
                         str(packet_path),
                         "--runtime-state",
                         str(runtime_path),
+                        "--envelope",
+                        str(repo / "execution-envelope.json"),
+                        "--repo-root",
+                        str(repo),
                     )
 
                     self.assertEqual(result.returncode, 1)
@@ -1295,6 +1315,10 @@ class ValidationTests(unittest.TestCase):
                 str(packet_path),
                 "--runtime-state",
                 str(runtime_path),
+                "--envelope",
+                str(repo / "execution-envelope.json"),
+                "--repo-root",
+                str(repo),
                 "--json",
             )
 
@@ -1322,6 +1346,10 @@ class ValidationTests(unittest.TestCase):
                 str(packet_path),
                 "--runtime-state",
                 str(runtime_path),
+                "--envelope",
+                str(repo / "execution-envelope.json"),
+                "--repo-root",
+                str(repo),
                 "--json",
             )
 
