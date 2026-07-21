@@ -108,6 +108,20 @@ class GrillToPrLoopTests(unittest.TestCase):
         )
         combined = f"{skill_text}\n{handoff_text}"
 
+        lifecycle_outcomes = (
+            "Exact restoration of unintended packet byte drift plus fresh validation "
+            "retains the existing approved binding, Envelope revision, and runtime epoch.",
+            "An intended non-spec packet byte change goes through the Execution Plan Gate "
+            "for reconciliation and revalidation, a new reseal, and a new Envelope revision "
+            "and runtime epoch, without a new human Spec Gate approval.",
+            "A change to spec bytes, `spec_binding`, or `approval_evidence` goes through the "
+            "human Spec Gate for a new approval and seal, then a new Envelope revision and "
+            "runtime epoch.",
+        )
+        for outcome in lifecycle_outcomes:
+            self.assertIn(outcome, combined)
+        self.assertNotIn("Both routes", combined)
+
         for required in (
             "spec bytes, `spec_binding`, or `approval_evidence`",
             "human Spec Gate",

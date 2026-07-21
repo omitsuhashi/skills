@@ -42,7 +42,7 @@ At 65% session pressure or phase exit, read `references/context-compaction.md`.
 
 - Treat the packet as approved scope; do not redesign issues or criteria.
 - At prepare, dispatch/fix, review, resume/rebuild, completion, and delivery, freshly verify the same active `approved_spec_binding`; read-only status may diagnose without advancing.
-- Keep spec/approval drift on the human Spec Gate route and every other sealed packet byte drift on the exhaustive Execution Plan Gate route in core.
+- Use core's three-outcome drift lifecycle: restoration, non-spec reseal, or human Spec Gate reseal.
 - Require `execution_policy.worker_context_required=true`, `coordinator_may_implement=false`, and `serial_fallback_mode=worker_context_only`.
 - Keep runtime state under `$(git rev-parse --git-common-dir)/agent-runs/issue-implementation-loop/<epic-id>/`, outside issue branches.
 - Reserve every issue branch/worktree before execution; require `epic_base`, `base_policy`, typed dependencies, and `epic_base.branch_state` for `batch_issue_prs`.

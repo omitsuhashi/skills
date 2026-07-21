@@ -47,25 +47,19 @@ python3 <issue-implementation-loop-skill-dir>/scripts/approved_spec_binding.py s
   --approve-scope stop_conditions
 ```
 
-Seal re-reads the spec, atomically writes `spec_binding` and `approval_evidence`, and never edits the spec. Validate the sealed output; never hand off an invalid packet.
+Seal re-reads the spec, atomically writes `spec_binding` and `approval_evidence`, and never edits the spec. Never hand off an invalid sealed output.
 
-If spec bytes, `spec_binding`, or `approval_evidence` change, return to the human Spec Gate for a new approval and seal. Examples on the other route include execution-intent-only packet drift—issue scope, dependencies, write scope, or delivery intent—but are not exhaustive. The fallback covers any other sealed packet byte drift while `spec_binding` and `approval_evidence` remain exact, including other packet fields and serialization or whitespace-only drift, and returns to the Execution Plan Gate for reconciliation and revalidation. Restore unintended drift; reseal only when the changed bytes are intended, without a new human Spec Gate approval. Both routes require a new Envelope revision/runtime epoch; old downstream artifacts do not carry forward.
+Packet drift has three outcomes. Exact restoration of unintended packet byte drift plus fresh validation retains the existing approved binding, Envelope revision, and runtime epoch. An intended non-spec packet byte change goes through the Execution Plan Gate for reconciliation and revalidation, a new reseal, and a new Envelope revision and runtime epoch, without a new human Spec Gate approval. A change to spec bytes, `spec_binding`, or `approval_evidence` goes through the human Spec Gate for a new approval and seal, then a new Envelope revision and runtime epoch. The non-spec route is exhaustive: execution-intent-only packet drift—issue scope, dependencies, write scope, or delivery intent—is only an example; any other sealed packet byte drift while `spec_binding` and `approval_evidence` remain exact follows it, including other packet fields and serialization or whitespace-only drift. On that route, reseal only when the changed bytes are intended; exact restoration reuses the seal. Old downstream artifacts do not cross either new-seal epoch.
 
 Commit the sealed packet and exact spec, then create an Execution Envelope v4 whose `approved_spec_binding` pins the packet digest and full gate commit.
 
 ## Implementation Context Handoff
 
-Do not begin implementation from the expanded main planning context. Before handoff, compact the planning session or switch to a fresh execution coordinator.
-
-The execution side starts from the normalized packet path, a compressed handoff brief with approved scope / dependency order / write scopes / verification / stop conditions / policy, and durable spec / ledger paths instead of pasted full source text.
-
-The handoff brief is cache, not canonical state. If it conflicts with packet, ledger, or envelope, reconcile durable artifacts first.
+Before handoff, compact planning or use a fresh execution coordinator; never implement from expanded planning context. Start from the normalized packet, a bounded handoff brief (scope, dependencies, write scopes, verification, stops, policy), and durable spec/ledger paths. The brief is cache; reconcile conflicts to packet, ledger, and envelope.
 
 ## Review Governance Handoff
 
-The Execution Envelope carries minimal `review_policy.hardening_candidates`: registry path `decisions/hardening-candidates.json`, max `5` candidates per issue, max `80` summary words, `issue_completion_blocking=false`, `ready_or_merge_requires_decisions=true`, and `worker_packet_decision_state=forbidden`.
-
-This is policy only. Runtime owns records and decisions; worker packet text may name paths but not candidate decision state. Routine review checks issue intent fit, regression, and current PR delivery risk. The planning/grill session must not become an implementation worker.
+The Envelope carries `review_policy.hardening_candidates`: registry `decisions/hardening-candidates.json`, max `5` candidates/issue and `80` summary words, `issue_completion_blocking=false`, `ready_or_merge_requires_decisions=true`, `worker_packet_decision_state=forbidden`. Runtime owns records/decisions; worker packet text may name paths but no candidate decision state. Routine review checks intent fit, regression, and current PR risk; the planning/grill session must not become an implementation worker.
 
 ## Execution Plan Gate
 
@@ -88,8 +82,4 @@ Stop instead of auto-continuing if the approved scope would change, dirty change
 
 ## Execution Coordinator
 
-After the Execution Plan Gate, load `issue-implementation-loop`: `prepare` validates envelope/reservations; `execute` schedules implementation/review/fix; `resume` reconciles; `status` reports; `deliver` prepares approved remote delivery.
-
-Context split: the planning/grill session creates the approved packet and envelope, then stops implementation work; an execution coordinator runs `prepare`, `execute`, `resume`, and `status`; PR delivery runs in `deliver` mode from the coordinator or fresh delivery context.
-
-The workflow keeps final responsibility for ledger consistency, but the main planning/grill session must not become an implementation worker. If worker contexts are unavailable, stop before implementation.
+After the gate, load `issue-implementation-loop`: `prepare` validates envelope/reservations; `execute` schedules work/review/fix; `resume` reconciles; `status` reports; `deliver` prepares approved remote delivery. A fresh/compacted coordinator owns these operations and ledger consistency; planning/grill never implements. Without worker contexts, stop.
