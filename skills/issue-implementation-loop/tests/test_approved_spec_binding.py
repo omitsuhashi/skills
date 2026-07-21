@@ -111,6 +111,7 @@ ASB_PUBLIC_ACCEPTANCE_MATRIX = {
     "ASB-20": (
         "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_20_rejects_unsafe_and_non_regular_spec_paths",
         "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_20_embedded_nul_is_stable_in_python_and_cli",
+        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_20_public_cli_escape_returns_stable_path_outside_repo_json",
         "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_20_repo_escape_is_path_outside_repo",
     ),
     "ASB-21": (
@@ -217,6 +218,13 @@ ASB24_CURRENT_ARTIFACT_SURFACE = {
         "assets/templates/delivery-plan.json",
         "scripts/lib/issue_implementation_loop/validation/delivery_plan.py",
         "scripts/validate_delivery_plan.py",
+    ),
+    "binding_gate_status_capability": (
+        "scripts/lib/issue_implementation_loop/operation_selection.py",
+        "scripts/check_capabilities.py",
+        "scripts/compute_next_actions.py",
+        "scripts/reconcile_git_state.py",
+        "scripts/select_operation.py",
     ),
 }
 
@@ -718,6 +726,78 @@ class ApprovedSpecBindingTests(unittest.TestCase):
             lambda: module.trusted_argument_path(self.repo, outside_path),
         )
 
+    def test_asb_20_public_cli_escape_returns_stable_path_outside_repo_json(self) -> None:
+        module = binding_module()
+        revision = module.identify_spec(self.repo, self.spec_path)
+        escaped_output = "knowledge/wiki/escaped-input-packet.json"
+        command = [
+            sys.executable,
+            str(SCRIPTS_DIR / "approved_spec_binding.py"),
+            "seal",
+            "--repo-root",
+            str(self.repo),
+            "--draft-packet",
+            self.draft_path.relative_to(self.repo).as_posix(),
+            "--output-packet",
+            escaped_output,
+            "--spec-path",
+            revision.path,
+            "--spec-sha256",
+            revision.sha256,
+            "--decision",
+            "approved",
+            "--subject",
+            "spec_binding",
+            "--actor-expression",
+            "session-user",
+            "--approved-at",
+            "2026-07-21T17:55:36+09:00",
+        ]
+        for field in sorted(module.APPROVAL_SCOPE_FIELDS):
+            command.extend(("--approve-scope", field))
+
+        result = subprocess.run(
+            command, check=False, capture_output=True, text=True
+        )
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(
+            json.loads(result.stdout),
+            {
+                "valid": False,
+                "code": "PATH_OUTSIDE_REPO",
+                "action": "regenerate_artifact",
+                "path": escaped_output,
+            },
+        )
+        self.assertEqual(result.stderr, "")
+        self.assertFalse((self.repo / escaped_output).exists())
+
+        narrowed_root = subprocess.run(
+            [
+                sys.executable,
+                str(SCRIPTS_DIR / "approved_spec_binding.py"),
+                "identify",
+                "--repo-root",
+                str(self.repo / "knowledge"),
+                "--spec-path",
+                "wiki/syntheses/example-spec.md",
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(narrowed_root.returncode, 1)
+        self.assertEqual(
+            json.loads(narrowed_root.stdout),
+            {
+                "valid": False,
+                "code": "PATH_OUTSIDE_REPO",
+                "action": "regenerate_artifact",
+            },
+        )
+        self.assertEqual(narrowed_root.stderr, "")
+
     def test_asb_21_detects_file_replacement_during_validation(self) -> None:
         module = binding_module()
         original_read = module.os.read
@@ -995,6 +1075,7 @@ class ApprovedSpecBindingTests(unittest.TestCase):
             "resume_metadata",
             "execution_result",
             "delivery_plan",
+            "binding_gate_status_capability",
         }
         self.assertEqual(set(ASB24_CURRENT_ARTIFACT_SURFACE), expected_families)
         inventory = {
@@ -1009,6 +1090,39 @@ class ApprovedSpecBindingTests(unittest.TestCase):
             if path.is_file()
         }
         self.assertEqual(current_assets - inventory, set())
+        binding_markers = (
+            "approved_spec_seal",
+            "approved_spec_binding",
+            "binding_error",
+            "binding_valid",
+            "probe_seal_capabilities",
+            "select_operation",
+            "validate_execution_envelope",
+            "validate_input_packet",
+            "validate_runtime_epoch",
+        )
+        public_scripts = SKILL_DIR / "scripts"
+        discovered_executables: set[str] = set()
+        for path in public_scripts.glob("*.py"):
+            if path.name.startswith("_"):
+                continue
+            source = path.read_text(encoding="utf-8")
+            if (
+                path.stem.startswith(("build_", "rebuild_", "validate_"))
+                or any(marker in source for marker in binding_markers)
+            ):
+                discovered_executables.add(path.relative_to(SKILL_DIR).as_posix())
+        library_root = public_scripts / "lib" / "issue_implementation_loop"
+        for path in library_root.rglob("*.py"):
+            if path.name == "__init__.py":
+                continue
+            source = path.read_text(encoding="utf-8")
+            if path.parent.name == "validation" or any(
+                marker in source for marker in binding_markers
+            ):
+                discovered_executables.add(path.relative_to(SKILL_DIR).as_posix())
+        inventoried_executables = {path for path in inventory if path.endswith(".py")}
+        self.assertEqual(discovered_executables, inventoried_executables)
         inventory_paths = [SKILL_DIR / path for path in sorted(inventory)]
         self.assertTrue(all(path.is_file() for path in inventory_paths))
         text = "\n".join(
