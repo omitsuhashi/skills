@@ -1,0 +1,29 @@
+{
+  "adapter_contract_version": 2,
+  "accept": [
+    {"name": "task-draft", "contract": "TaskDraft", "path": "accept/task-draft.json"},
+    {"name": "destination", "contract": "TaskBackendDestination", "path": "accept/destination.json"},
+    {"name": "operation-create", "contract": "OperationEnvelope", "path": "accept/operation-create.json"},
+    {"name": "operation-update", "contract": "OperationEnvelope", "path": "accept/operation-update.json"},
+    {"name": "operation-comment", "contract": "OperationEnvelope", "path": "accept/operation-comment.json"},
+    {"name": "operation-report", "contract": "OperationEnvelope", "path": "accept/operation-report.json"},
+    {"name": "approval-preview", "contract": "ApprovalPreview", "path": "accept/approval-preview.json"},
+    {"name": "approval-receipt", "contract": "ApprovalReceipt", "path": "accept/approval-receipt.json"},
+    {"name": "preflight-ready", "contract": "TaskPreflightResult", "path": "accept/preflight-ready.json"},
+    {"name": "preflight-blocked", "contract": "TaskPreflightResult", "path": "accept/preflight-blocked.json"},
+    {"name": "write-created", "contract": "TaskWriteResult", "path": "accept/write-created.json"},
+    {"name": "write-partial", "contract": "TaskWriteResult", "path": "accept/write-partial.json"}
+  ],
+  "reject": [
+    {"name": "operation-delete", "contract": "OperationEnvelope", "path": "reject/operation-delete.json", "error_code": "unsupported_operation"},
+    {"name": "operation-create-task-ref", "contract": "OperationEnvelope", "path": "reject/operation-create-task-ref.json", "error_code": "invalid_task_ref"},
+    {"name": "operation-update-missing-task-ref", "contract": "OperationEnvelope", "path": "reject/operation-update-missing-task-ref.json", "error_code": "invalid_type"},
+    {"name": "operation-float", "contract": "OperationEnvelope", "path": "reject/operation-float.json", "error_code": "invalid_canonical_value"},
+    {"name": "operation-credential", "contract": "OperationEnvelope", "path": "reject/operation-credential.json", "error_code": "unsafe_data"},
+    {"name": "operation-raw-provider-id", "contract": "OperationEnvelope", "path": "reject/operation-raw-provider-id.json", "error_code": "unsafe_data"},
+    {"name": "operation-raw-payload", "contract": "OperationEnvelope", "path": "reject/operation-raw-payload.json", "error_code": "unsafe_data"},
+    {"name": "operation-unsafe-url", "contract": "OperationEnvelope", "path": "reject/operation-unsafe-url.json", "error_code": "unsafe_url"},
+    {"name": "receipt-invalid-decision", "contract": "ApprovalReceipt", "path": "reject/receipt-invalid-decision.json", "error_code": "invalid_approval_decision"},
+    {"name": "write-unexpected-field", "contract": "TaskWriteResult", "path": "reject/write-unexpected-field.json", "error_code": "unexpected_field"}
+  ]
+}

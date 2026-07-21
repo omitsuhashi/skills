@@ -128,8 +128,10 @@ class AdapterDispatchContractTests(unittest.TestCase):
         self.assertEqual(
             {
                 "task_management/__init__.py",
+                "task_management/contracts.py",
                 "task_management/read_adapter.py",
                 "task_management/route_config.py",
+                "task_management/safety.py",
                 "task_management/provider_adapters/__init__.py",
                 "task_management/provider_adapters/local_json.py",
                 "task_management/provider_adapters/external_tool.py",

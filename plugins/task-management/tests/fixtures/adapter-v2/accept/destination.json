@@ -1,0 +1,6 @@
+{
+  "backend_key": "remote_tasks",
+  "destination_ref": "tasks:default",
+  "destination_label": "Default tasks",
+  "content_target_ref": "task-content:default"
+}

@@ -6,7 +6,8 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Protocol
 
 
-ADAPTER_CONTRACT_VERSION = 1
+ADAPTER_CONTRACT_VERSION = 2
+LEGACY_READ_ADAPTER_CONTRACT_VERSION = 1
 
 
 class AdapterError(Exception):
@@ -26,3 +27,16 @@ class AdapterTaskSnapshotResult:
 class ReadAdapter(Protocol):
     def query(self, request: Any, **kwargs: Any) -> AdapterTaskSnapshotResult:
         """Return canonical snapshot candidates for one resolved request."""
+
+
+class TaskBackendAdapter(Protocol):
+    """Version-2 adapter seam; provider-specific CRUD is intentionally absent."""
+
+    def query(self, request: Any, **kwargs: Any) -> Any:
+        """Return backend-neutral task snapshots."""
+
+    def preflight(self, operation: Any, **kwargs: Any) -> Any:
+        """Return safe readiness, side effects, and approval hints."""
+
+    def apply(self, operation: Any, **kwargs: Any) -> Any:
+        """Apply one already preflighted backend-neutral operation."""
