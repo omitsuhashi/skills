@@ -1170,3 +1170,10 @@ append-only で使います。すべての entry は予測しやすい header �
 - approval scope: `accepted_decisions=true`、`non_goals=true`、`acceptance_criteria=true`、`verification=true`、`remote_policy=true`、`stop_conditions=true`
 - ユーザーの「承認」と実装依頼により Written Spec Gate を通過した。spec bytes は変更せず、この entry を bootstrap approval evidence とする
 - Issue Gate、Execution Plan Gate、実装、remote write はこの entry だけでは完了扱いにしない。実装は `local_only` で進め、push、PR、merge、live install は別承認とする
+
+## [2026-07-21] issue-gate | Loop Skill Approved Spec Binding Contract
+
+- ユーザーの明示的な「承認」「skill 作成のベストプラクティスに則った実装」依頼を受け、承認済み spec の scope を変更せず ASBC-001 から ASBC-006 へ分解した
+- dependency は core/input packet -> envelope/worker と runtime/auxiliary と docs -> state-changing guards -> bootstrap seal/full verification とし、first runnable issue を ASBC-001 に固定した
+- production change 前の fresh-agent baseline で、保存 spec digest と current bytes が不一致でも validator / Required Immediate Guard が exit 0 / ok=true になる RED を確認した
+- Issue Gate は承認済み。Execution Plan Gate、worker 実装、implementation review は未完了であり、remote policy は `local_only` のまま維持する

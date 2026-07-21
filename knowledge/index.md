@@ -105,6 +105,8 @@ _現在なし。_
   検索語: grill-to-pr-loop, issue-implementation-loop, epic_base, epic-base, branch lifecycle, reconcile, pr_merged, final PR, ブランチ統制
 - [Loop Skill Approved Spec Binding Contract 仕様](wiki/syntheses/loop-skill-approved-spec-binding-contract-spec.md) — `grill-to-pr-loop` が人間承認済み spec を exact raw-byte digest へ seal し、`issue-implementation-loop` が prepare から delivery まで同じ packet-rooted binding を fail closed に再検証する Written Spec Gate 承認済み clean-break 契約。
   検索語: approved spec binding, 承認済み仕様, exact revision, content digest, SHA-256, approval evidence, Spec Gate, input packet, execution envelope, worker packet, reviewer packet, prepare, dispatch, fix redispatch, review, resume, completion, delivery, stale spec, re-approval, fail closed, clean break, grill-to-pr-loop, issue-implementation-loop, 仕様引き継ぎ, 再承認
+- [Loop Skill Approved Spec Binding Contract Issues](wiki/syntheses/loop-skill-approved-spec-binding-contract-issues.md) — ASBC-001 から ASBC-006 の TDD 実装順序、blocker graph、acceptance criteria、local-only 境界を固定する Issue Gate 承認済み local-first ledger。
+  検索語: ASBC, approved spec binding, Issue Gate, local issue ledger, blocker graph, TDD, baseline RED, clean break, local_only, grill-to-pr-loop, issue-implementation-loop
 - [Portfolio OS Install Review And Procedure](wiki/syntheses/portfolio-os-install-review-and-procedure.md) — `skills` repo に Portfolio OS 固有 runtime を混ぜないためのレビュー結果と導入手順。
 - [Decide In Order Skill 原案](wiki/sources/2026-07-17-decide-in-order-source-brief.md) — 目的、守るもの、許容損失、核心の問いから始める実行支援型 skill の一次資料と設計時の解釈。
   検索語: decide in order, decision ordering, task management, purpose, must protect, acceptable loss, core question, sunk cost, risk, review, 決める順番, 意思決定, 優先順位, サンクコスト, 見直し
