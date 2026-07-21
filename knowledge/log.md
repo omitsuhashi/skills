@@ -1196,3 +1196,9 @@ append-only で使います。すべての entry は予測しやすい header �
 - Git reconciliationでEpic Baseのactive registrationと8 issue branch/worktree予約を確認し、collision 0件、初期実行可能issueをPOTASK-012と確定した
 - `worker_context_required=true`、`coordinator_may_implement=false`、最大2 review cycle、POTASK-015 / 019だけがmulti-head integrationを所有するExecution Planを固定した
 - remote policyは`local_only`。GitHub Issue、push、PR、merge、live Hermes / MCP / credential / Project / Issue変更は未承認・未実施のままfresh execution coordinatorへ引き継ぐ
+
+## [2026-07-21] gate-amendment | POTASK-012 regression guard scope
+
+- 初回worker dispatchは、承認済み`contracts.py` / `safety.py`追加と、既存exact implementation-file guard 2件のPOTASK-012 Write Scope外編集が両立しないことを編集前に検知してfail closedした
+- ユーザー承認により`plugins/task-management/tests/test_adapter_dispatch.py`と`plugins/task-management/tests/test_github_mcp_route.py`だけをPOTASK-012 Write Scopeへ追加した
+- input packetとExecution Envelope revision 2を同期した。機能scope、acceptance behavior、DAG、remote / live policyは変更していない

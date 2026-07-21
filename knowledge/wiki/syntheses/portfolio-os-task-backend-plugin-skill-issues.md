@@ -469,6 +469,8 @@ task-managementとseparate Adapterが共有するbackend-neutral wire contract v
 - `plugins/task-management/tests/fixtures/adapter-v2/`
 - `plugins/task-management/tests/test_write_contracts.py`
 - `plugins/task-management/tests/test_task_contracts.py`
+- `plugins/task-management/tests/test_adapter_dispatch.py`
+- `plugins/task-management/tests/test_github_mcp_route.py`
 
 #### Acceptance Criteria
 
@@ -797,3 +799,4 @@ git diff --check
 - POTASK-012からPOTASK-019を既存Epicのfollow-upとして扱い、新しいEpicを作らない方針。
 - remote policyはlocal-onlyとし、GitHub Issue作成、push、PR作成、merge、live activationをIssue Gate承認に含めない方針。
 - amendmentとしてPOTASK-015をPOTASK-013 / 014、POTASK-019をPOTASK-015 / 018のapproved integration work itemにする方針。
+- execution amendmentとして、必須の新規Moduleを列挙する既存regression guardを同期するため`test_adapter_dispatch.py`と`test_github_mcp_route.py`をPOTASK-012 Write Scopeへ追加する方針。機能scopeとDAGは変更しない。

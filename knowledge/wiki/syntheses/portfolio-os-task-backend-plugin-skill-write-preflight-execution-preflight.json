@@ -37,6 +37,19 @@
     "reserved_issue_count": 8,
     "initial_runnable_issue": "POTASK-012"
   },
+  "approved_execution_amendments": [
+    {
+      "approved_on": "2026-07-21",
+      "issue": "POTASK-012",
+      "reason": "Synchronize existing exact implementation-file regression guards with the approved contracts.py and safety.py modules.",
+      "added_write_scope": [
+        "path:plugins/task-management/tests/test_adapter_dispatch.py",
+        "path:plugins/task-management/tests/test_github_mcp_route.py"
+      ],
+      "functional_scope_changed": false,
+      "dependency_graph_changed": false
+    }
+  ],
   "remote_policy": {
     "mode": "local_only",
     "approved_actions": [],

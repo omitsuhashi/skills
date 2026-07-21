@@ -39,7 +39,9 @@
         "path:plugins/task-management/task_management/provider_adapters",
         "path:plugins/task-management/tests/fixtures/adapter-v2",
         "path:plugins/task-management/tests/test_write_contracts.py",
-        "path:plugins/task-management/tests/test_task_contracts.py"
+        "path:plugins/task-management/tests/test_task_contracts.py",
+        "path:plugins/task-management/tests/test_adapter_dispatch.py",
+        "path:plugins/task-management/tests/test_github_mcp_route.py"
       ],
       "dependencies": []
     },

@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
   "epic_id": "portfolio-os-task-backend-plugin-skill",
-  "revision": 1,
+  "revision": 2,
   "epic_base": {
     "ref": "codex/portfolio-os-task-backend-plugin-skill/epic-base",
     "sha": "cab8bd88351727f3495b657df447f7f64aa881d1",
@@ -91,7 +91,9 @@
         "path:plugins/task-management/task_management/provider_adapters",
         "path:plugins/task-management/tests/fixtures/adapter-v2",
         "path:plugins/task-management/tests/test_write_contracts.py",
-        "path:plugins/task-management/tests/test_task_contracts.py"
+        "path:plugins/task-management/tests/test_task_contracts.py",
+        "path:plugins/task-management/tests/test_adapter_dispatch.py",
+        "path:plugins/task-management/tests/test_github_mcp_route.py"
       ],
       "dependencies": []
     },
