@@ -25,6 +25,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--envelope", help="Execution Envelope JSON path")
     parser.add_argument("--runtime", help="runtime-state.json path")
+    parser.add_argument("--repo-root", help="Trusted Git worktree root (defaults to repository root).")
     parser.add_argument("--requested-mode", required=True, choices=REQUESTED_MODES)
     parser.add_argument("--json", action="store_true", help="emit JSON")
     args = parser.parse_args(argv)
@@ -35,7 +36,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         result = select_operation(
             skill_dir=skill_dir,
-            repo_root=repo_root,
+            repo_root=Path(args.repo_root) if args.repo_root else repo_root,
             requested_mode=args.requested_mode,
             envelope_path=Path(args.envelope) if args.envelope else None,
             runtime_path=Path(args.runtime) if args.runtime else None,

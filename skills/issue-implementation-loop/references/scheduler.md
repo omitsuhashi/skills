@@ -26,10 +26,12 @@ python3 <skill-dir>/scripts/compute_next_actions.py <execution-envelope.json> <r
 ```
 
 For mode routing, use `scripts/select_operation.py` before loading operation-specific
-references. It is read-only and selects in this order: explicit `deliver`/`status`,
-missing envelope, missing reservation, state mismatch, reviewable, fixable, human wait,
-runnable, terminal, then reconcile. The result includes the context-contract read set
-and word budget check for the selected operation.
+references. It fresh-verifies the active binding before explicit `deliver`, `status`, or `resume` routing. An invalid binding returns a reapproval blocker for every
+state-changing mode. `status` remains diagnostic and returns `binding_valid: false`
+with `state_advance_blocked: true`. After that gate, selection considers explicit mode,
+missing reservation, state mismatch, reviewable, fixable, human wait, runnable,
+terminal, then reconcile. The result includes the context-contract read set and word
+budget check for the selected operation.
 
 ## Dispatch Rules
 

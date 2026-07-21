@@ -19,18 +19,23 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("envelope")
     parser.add_argument("runtime_state")
+    parser.add_argument("execution_result")
     parser.add_argument("delivery_plan")
+    parser.add_argument("--repo-root", required=True, help="Trusted Git worktree root.")
     parser.add_argument("--json", action="store_true", help="Emit JSON result.")
     args = parser.parse_args()
 
     envelope = load_json(args.envelope)
     runtime = load_json(args.runtime_state)
+    execution_result = load_json(args.execution_result)
     plan = load_json(args.delivery_plan)
     registry, registry_path, registry_load_error = load_hardening_candidate_registry(args.runtime_state)
     errors = validate_delivery_plan(
         envelope,
         runtime,
+        execution_result,
         plan,
+        repo_root=args.repo_root,
         candidate_registry=registry,
         candidate_registry_path=registry_path,
         candidate_registry_load_error=registry_load_error,

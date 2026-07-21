@@ -1,4 +1,10 @@
 {
+  "schema_version": 2,
+  "approved_spec_binding": {
+    "path": "knowledge/wiki/syntheses/example-input-packet.json",
+    "sha256": "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+    "gate_commit": "0123456789abcdef0123456789abcdef01234567"
+  },
   "action": "final_pr",
   "head": "codex/<epic-id>/epic-base",
   "base": "main",

@@ -4,6 +4,206 @@ from _helpers import *
 
 
 class DeliveryTests(unittest.TestCase):
+    def run_delivery(self, script_name: str, *args: str) -> subprocess.CompletedProcess[str]:
+        envelope_path = Path(args[0])
+        runtime_path = Path(args[1])
+        plan_path = Path(args[2])
+        remaining = args[3:]
+        envelope = json.loads(envelope_path.read_text(encoding="utf-8"))
+        runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+        plan.setdefault("schema_version", 2)
+        plan.setdefault(
+            "approved_spec_binding", copy.deepcopy(envelope["approved_spec_binding"])
+        )
+        write_json(plan_path, plan)
+        result_path = plan_path.with_name(plan_path.stem + "-execution-result.json")
+        write_json(result_path, current_execution_result(envelope, runtime))
+        return run_script(
+            script_name,
+            str(envelope_path),
+            str(runtime_path),
+            str(result_path),
+            str(plan_path),
+            "--repo-root",
+            str(REPO_ROOT),
+            *remaining,
+        )
+
+    def binding_delivery_artifacts(
+        self, root: Path
+    ) -> tuple[Path, dict, Path, dict, Path, dict, Path, dict]:
+        repo, binding, _ = create_binding_repo(root)
+        envelope = binding_envelope(repo, binding)
+        envelope["epic_base"].update(
+            {
+                "ref": "codex/approved-spec-binding/epic-base",
+                "branch_state": "active",
+            }
+        )
+        envelope["remote_write_policy"] = {
+            "mode": "batch_issue_prs",
+            "approved_actions": [
+                "final_pr_push_head",
+                "final_pr_create_draft",
+            ],
+            "issue_prs": {
+                "base": "epic_base.ref",
+                "merge": "agent_default_with_human_escalation",
+            },
+            "final_pr": {
+                "head": "epic_base.ref",
+                "base": "main",
+                "merge": "human_only",
+            },
+        }
+        runtime = {
+            "schema_version": 2,
+            "approved_spec_binding": copy.deepcopy(binding),
+            "epic_id": envelope["epic_id"],
+            "envelope_revision": envelope["revision"],
+            "issues": {
+                "ASBC-002": {
+                    "status": "COMPLETE",
+                    "base_sha": BASE_SHA,
+                    "head_sha": HEAD_SHA,
+                    "review": {"status": "approved", "range": REVIEW_RANGE},
+                    "pr": "https://github.com/org/repo/pull/2",
+                    "pr_opened": True,
+                    "pr_merged": True,
+                    "merge_commit": HEAD_SHA,
+                }
+            },
+            "human_requests": [],
+        }
+        result = current_execution_result(envelope, runtime)
+        plan = current_delivery_plan(
+            envelope,
+            head=envelope["epic_base"]["ref"],
+            base="main",
+            draft=True,
+            issue_scope=["ASBC-002"],
+        )
+        envelope_path = repo / "execution-envelope.json"
+        runtime_path = repo / "runtime-state.json"
+        result_path = repo / "execution-result.json"
+        plan_path = repo / "delivery-plan.json"
+        write_json(envelope_path, envelope)
+        write_json(runtime_path, runtime)
+        write_json(result_path, result)
+        write_json(plan_path, plan)
+        return (
+            repo,
+            envelope,
+            runtime_path,
+            runtime,
+            result_path,
+            result,
+            plan_path,
+            plan,
+        )
+
+    def test_asb_04_delivery_v2_accepts_active_binding_chain(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, _, runtime_path, _, result_path, _, plan_path, _ = (
+                self.binding_delivery_artifacts(Path(tmp))
+            )
+
+            delivered = run_script(
+                "validate_delivery_plan.py",
+                str(repo / "execution-envelope.json"),
+                str(runtime_path),
+                str(result_path),
+                str(plan_path),
+                "--repo-root",
+                str(repo),
+                "--json",
+            )
+
+            self.assertEqual(delivered.returncode, 0, delivered.stderr)
+            self.assertEqual(json.loads(delivered.stdout)["errors"], [])
+
+    def test_asb_15_delivery_rechecks_spec_after_terminal_runtime(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, _, runtime_path, _, result_path, _, plan_path, _ = (
+                self.binding_delivery_artifacts(Path(tmp))
+            )
+            (repo / "knowledge/wiki/syntheses/spec.md").write_text(
+                "drift before delivery\n", encoding="utf-8"
+            )
+
+            delivered = run_script(
+                "validate_delivery_plan.py",
+                str(repo / "execution-envelope.json"),
+                str(runtime_path),
+                str(result_path),
+                str(plan_path),
+                "--repo-root",
+                str(repo),
+                "--json",
+            )
+
+            self.assertEqual(delivered.returncode, 1)
+            self.assertEqual(
+                json.loads(delivered.stdout)["errors"], ["SPEC_DIGEST_MISMATCH"]
+            )
+
+    def test_asb_22_delivery_rejects_stale_execution_result_binding(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, _, runtime_path, _, result_path, result, plan_path, _ = (
+                self.binding_delivery_artifacts(Path(tmp))
+            )
+            result["approved_spec_binding"]["sha256"] = "b" * 64
+            write_json(result_path, result)
+
+            delivered = run_script(
+                "validate_delivery_plan.py",
+                str(repo / "execution-envelope.json"),
+                str(runtime_path),
+                str(result_path),
+                str(plan_path),
+                "--repo-root",
+                str(repo),
+                "--json",
+            )
+
+            self.assertEqual(delivered.returncode, 1)
+            self.assertEqual(
+                json.loads(delivered.stdout)["errors"], ["BINDING_MISMATCH"]
+            )
+
+    def test_delivery_plan_v1_is_unsupported(self) -> None:
+        template = json.loads(
+            (SKILL_DIR / "assets/templates/delivery-plan.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertEqual(template.get("schema_version"), 2)
+        self.assertIn("approved_spec_binding", template)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, _, runtime_path, _, result_path, _, plan_path, plan = (
+                self.binding_delivery_artifacts(Path(tmp))
+            )
+            plan.pop("schema_version")
+            plan.pop("approved_spec_binding")
+            write_json(plan_path, plan)
+            rejected = run_script(
+                "validate_delivery_plan.py",
+                str(repo / "execution-envelope.json"),
+                str(runtime_path),
+                str(result_path),
+                str(plan_path),
+                "--repo-root",
+                str(repo),
+                "--json",
+            )
+
+            self.assertEqual(rejected.returncode, 1)
+            self.assertEqual(
+                json.loads(rejected.stdout)["errors"], ["SCHEMA_UNSUPPORTED"]
+            )
+
     def test_remote_delivery_docs_define_final_pr_auto_create_contract(self) -> None:
         text = (SKILL_DIR / "references" / "remote-delivery.md").read_text(encoding="utf-8")
         envelope_text = (SKILL_DIR / "references" / "execution-envelope.md").read_text(encoding="utf-8")
@@ -23,6 +223,10 @@ class DeliveryTests(unittest.TestCase):
             "ledger",
             "runtime state",
             "completion report",
+            "Execution Result v2",
+            "Delivery Plan v2",
+            "fresh envelope -> packet -> spec",
+            "execution result, delivery plan, runtime state, reviews, and candidate registry",
         ):
             self.assertIn(required, text)
         for required in (
@@ -53,7 +257,7 @@ class DeliveryTests(unittest.TestCase):
                 },
             )
 
-            result = run_script(
+            result = self.run_delivery(
                 "validate_delivery_plan.py",
                 str(envelope_path),
                 str(runtime_path),
@@ -81,7 +285,7 @@ class DeliveryTests(unittest.TestCase):
                 },
             )
 
-            result = run_script(
+            result = self.run_delivery(
                 "validate_delivery_plan.py",
                 str(envelope_path),
                 str(runtime_path),
@@ -118,7 +322,7 @@ class DeliveryTests(unittest.TestCase):
                 },
             )
 
-            result = run_script(
+            result = self.run_delivery(
                 "validate_delivery_plan.py",
                 str(envelope_path),
                 str(runtime_path),
@@ -175,7 +379,7 @@ class DeliveryTests(unittest.TestCase):
                 },
             )
 
-            result = run_script(
+            result = self.run_delivery(
                 "validate_delivery_plan.py",
                 str(envelope_path),
                 str(runtime_path),
@@ -224,7 +428,7 @@ class DeliveryTests(unittest.TestCase):
                     },
                 )
 
-                result = run_script(
+                result = self.run_delivery(
                     "validate_delivery_plan.py",
                     str(envelope_path),
                     str(runtime_path),
@@ -277,7 +481,7 @@ class DeliveryTests(unittest.TestCase):
                 },
             )
 
-            result = run_script(
+            result = self.run_delivery(
                 "validate_delivery_plan.py",
                 str(envelope_path),
                 str(runtime_path),
@@ -311,7 +515,7 @@ class DeliveryTests(unittest.TestCase):
                 },
             )
 
-            result = run_script(
+            result = self.run_delivery(
                 "validate_delivery_plan.py",
                 str(envelope_path),
                 str(runtime_path),
@@ -345,7 +549,7 @@ class DeliveryTests(unittest.TestCase):
                 },
             )
 
-            result = run_script(
+            result = self.run_delivery(
                 "validate_delivery_plan.py",
                 str(envelope_path),
                 str(runtime_path),
@@ -375,7 +579,7 @@ class DeliveryTests(unittest.TestCase):
                 },
             )
 
-            result = run_script(
+            result = self.run_delivery(
                 "validate_delivery_plan.py",
                 str(envelope_path),
                 str(runtime_path),
@@ -406,7 +610,7 @@ class DeliveryTests(unittest.TestCase):
                     },
                 )
 
-                result = run_script(
+                result = self.run_delivery(
                     "validate_delivery_plan.py",
                     str(envelope_path),
                     str(runtime_path),
@@ -435,7 +639,7 @@ class DeliveryTests(unittest.TestCase):
                 },
             )
 
-            result = run_script(
+            result = self.run_delivery(
                 "validate_delivery_plan.py",
                 str(envelope_path),
                 str(runtime_path),
@@ -467,7 +671,7 @@ class DeliveryTests(unittest.TestCase):
                 },
             )
 
-            result = run_script(
+            result = self.run_delivery(
                 "validate_delivery_plan.py",
                 str(envelope_path),
                 str(runtime_path),
@@ -498,7 +702,7 @@ class DeliveryTests(unittest.TestCase):
                 },
             )
 
-            result = run_script(
+            result = self.run_delivery(
                 "validate_delivery_plan.py",
                 str(envelope_path),
                 str(runtime_path),

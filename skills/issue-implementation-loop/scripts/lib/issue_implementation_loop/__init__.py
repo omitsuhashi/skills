@@ -74,6 +74,7 @@ from .scheduler import (
 )
 from .skill_discovery import find_skill, skill_roots
 from .validation.execution_envelope import validate_execution_envelope
+from .validation.execution_result import validate_execution_result
 from .validation.input_packet import validate_input_packet
 from .validation.runtime_state import validate_runtime_epoch, validate_runtime_state
 from .validation.worker_packet import validate_worker_packet
@@ -172,6 +173,7 @@ __all__ = [
     "skill_roots",
     "validate_delivery_plan",
     "validate_execution_envelope",
+    "validate_execution_result",
     "validate_event",
     "validate_input_packet",
     "validate_resume_brief_cache",

@@ -4,11 +4,20 @@ from _helpers import *
 
 
 class OperationSelectionTests(unittest.TestCase):
+    def test_scheduler_reference_places_binding_gate_before_explicit_modes(self) -> None:
+        text = (SKILL_DIR / "references" / "scheduler.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("before explicit `deliver`, `status`, or `resume` routing", text)
+        self.assertIn("`binding_valid: false`", text)
+        self.assertIn("`state_advance_blocked: true`", text)
+
     def run_selector(
         self,
         *,
         envelope_path: Path | None = None,
         runtime_path: Path | None = None,
+        repo_root: Path | None = None,
         requested_mode: str = "execute",
     ) -> dict:
         args = ["--requested-mode", requested_mode, "--json"]
@@ -16,6 +25,8 @@ class OperationSelectionTests(unittest.TestCase):
             args.extend(["--envelope", str(envelope_path)])
         if runtime_path is not None:
             args.extend(["--runtime", str(runtime_path)])
+        if repo_root is not None:
+            args.extend(["--repo-root", str(repo_root)])
         result = run_script("select_operation.py", *args)
         self.assertEqual(result.returncode, 0, result.stderr)
         return json.loads(result.stdout)
@@ -46,17 +57,109 @@ class OperationSelectionTests(unittest.TestCase):
             self.assertIn("skills/issue-implementation-loop/references/review-gate.md", payload["read_set"])
             self.assertTrue(payload["word_budget_result"]["within_budget"])
 
-    def test_explicit_status_and_deliver_modes_win_without_state_files(self) -> None:
-        cases = [
-            ("status", "status", "explicit_status", "references/scheduler.md"),
-            ("deliver", "deliver", "explicit_deliver", "references/remote-delivery.md"),
-        ]
-        for requested_mode, operation, priority, expected_reference in cases:
-            with self.subTest(requested_mode):
-                payload = self.run_selector(requested_mode=requested_mode)
-                self.assertEqual(payload["operation"], operation)
-                self.assertEqual(payload["priority"], priority)
-                self.assertTrue(any(expected_reference in path for path in payload["read_set"]))
+    def test_status_is_diagnostic_but_deliver_is_blocked_without_binding_state(self) -> None:
+        status = self.run_selector(requested_mode="status")
+        self.assertEqual(status["operation"], "status")
+        self.assertFalse(status.get("binding_valid"))
+        self.assertTrue(status.get("state_advance_blocked"))
+
+        deliver = self.run_selector(requested_mode="deliver")
+        self.assertEqual(deliver["operation"], "blocked.reapproval")
+        self.assertEqual(deliver["priority"], "reapproval_required")
+        self.assertFalse(deliver.get("binding_valid"))
+        self.assertTrue(deliver.get("state_advance_blocked"))
+
+    def test_asb_04_valid_binding_allows_review_selection(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, binding, _ = create_binding_repo(Path(tmp))
+            envelope_path, runtime_path, _ = write_binding_sources(repo, binding)
+            runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+            runtime["issues"] = {"ASBC-002": {"status": "IMPLEMENTED"}}
+            write_json(runtime_path, runtime)
+
+            payload = self.run_selector(
+                envelope_path=envelope_path,
+                runtime_path=runtime_path,
+                repo_root=repo,
+            )
+
+            self.assertEqual(payload["operation"], "execute.review")
+            self.assertTrue(payload["binding_valid"])
+            self.assertFalse(payload["state_advance_blocked"])
+
+    def test_asb_14_to_16_stale_spec_blocks_review_and_delivery_but_not_status(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, binding, _ = create_binding_repo(Path(tmp))
+            envelope_path, runtime_path, _ = write_binding_sources(repo, binding)
+            runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+            runtime["issues"] = {
+                "ASBC-002": {
+                    "status": "PR_READY",
+                    "base_sha": BASE_SHA,
+                    "head_sha": HEAD_SHA,
+                    "review": {"status": "approved", "range": REVIEW_RANGE},
+                }
+            }
+            write_json(runtime_path, runtime)
+            (repo / "knowledge/wiki/syntheses/spec.md").write_text(
+                "approved spec changed\n", encoding="utf-8"
+            )
+
+            for requested_mode in ("execute", "deliver", "resume"):
+                with self.subTest(requested_mode=requested_mode):
+                    payload = self.run_selector(
+                        envelope_path=envelope_path,
+                        runtime_path=runtime_path,
+                        repo_root=repo,
+                        requested_mode=requested_mode,
+                    )
+                    self.assertEqual(payload["operation"], "blocked.reapproval")
+                    self.assertEqual(payload["binding_error"]["code"], "SPEC_DIGEST_MISMATCH")
+                    self.assertFalse(payload["binding_valid"])
+                    self.assertTrue(payload["state_advance_blocked"])
+
+            status = self.run_selector(
+                envelope_path=envelope_path,
+                runtime_path=runtime_path,
+                repo_root=repo,
+                requested_mode="status",
+            )
+            self.assertEqual(status["operation"], "status")
+            self.assertEqual(status["binding_error"]["code"], "SPEC_DIGEST_MISMATCH")
+            self.assertFalse(status["binding_valid"])
+            self.assertTrue(status["state_advance_blocked"])
+
+    def test_status_is_diagnostic_and_other_modes_block_on_unsupported_runtime_epoch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, binding, _ = create_binding_repo(Path(tmp))
+            envelope_path, runtime_path, _ = write_binding_sources(repo, binding)
+            runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+            runtime["schema_version"] = 1
+            write_json(runtime_path, runtime)
+
+            status = self.run_selector(
+                envelope_path=envelope_path,
+                runtime_path=runtime_path,
+                repo_root=repo,
+                requested_mode="status",
+            )
+            self.assertEqual(status["operation"], "status")
+            self.assertEqual(status["binding_error"]["code"], "SCHEMA_UNSUPPORTED")
+            self.assertFalse(status["binding_valid"])
+            self.assertTrue(status["state_advance_blocked"])
+
+            for mode in ("execute", "resume", "deliver"):
+                with self.subTest(mode=mode):
+                    blocked = self.run_selector(
+                        envelope_path=envelope_path,
+                        runtime_path=runtime_path,
+                        repo_root=repo,
+                        requested_mode=mode,
+                    )
+                    self.assertEqual(blocked["operation"], "blocked.reapproval")
+                    self.assertEqual(
+                        blocked["binding_error"]["code"], "SCHEMA_UNSUPPORTED"
+                    )
 
     def test_missing_envelope_selects_prepare(self) -> None:
         payload = self.run_selector(requested_mode="execute")

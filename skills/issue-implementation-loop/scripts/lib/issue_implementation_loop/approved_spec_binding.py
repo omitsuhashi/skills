@@ -75,6 +75,7 @@ DEFAULT_ACTIONS = {
     "GATE_COMMIT_MISSING": "return_to_execution_plan_gate",
     "GATE_COMMIT_NOT_ANCESTOR": "return_to_execution_plan_gate",
     "GATE_COMMIT_BLOB_MISMATCH": "return_to_execution_plan_gate",
+    "AUXILIARY_ARTIFACT_BINDING_MISMATCH": "regenerate_for_active_binding",
     "PATH_ABSOLUTE": "regenerate_artifact",
     "PATH_TRAVERSAL": "regenerate_artifact",
     "PATH_OUTSIDE_REPO": "regenerate_artifact",
@@ -82,6 +83,7 @@ DEFAULT_ACTIONS = {
     "PATH_NOT_REGULAR_FILE": "regenerate_artifact",
     "FILE_CHANGED_DURING_VALIDATION": "retry_validation",
     "SCHEMA_UNSUPPORTED": "create_new_run",
+    "REAPPROVAL_REQUIRED": "return_to_spec_gate",
     "PLATFORM_UNSUPPORTED": "use_supported_host",
 }
 

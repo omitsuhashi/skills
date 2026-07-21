@@ -508,3 +508,59 @@ def merged_runtime_state(*, missing_merge: str | None = None) -> dict:
         "issues": issues,
         "human_requests": [],
     }
+
+
+def current_execution_result(
+    envelope: dict,
+    runtime: dict,
+    *,
+    runtime_state_root: str = "/tmp/runtime-root",
+) -> dict:
+    issues = {}
+    runtime_issues = runtime.get("issues", {})
+    for issue_id in envelope.get("work_items", {}):
+        record = copy.deepcopy(runtime_issues[issue_id])
+        issues[issue_id] = {
+            "status": record["status"],
+            "branch": record.get("branch", envelope["work_items"][issue_id]["branch"]),
+            "worktree": record.get(
+                "worktree", envelope["work_items"][issue_id]["worktree_path"]
+            ),
+            "base_sha": record["base_sha"],
+            "head_sha": record["head_sha"],
+            "verification": "passed",
+            "implementation_review": copy.deepcopy(record["review"]),
+            "residual_risks": [],
+        }
+    return {
+        "schema_version": 2,
+        "approved_spec_binding": copy.deepcopy(envelope["approved_spec_binding"]),
+        "epic_id": envelope["epic_id"],
+        "status": "local_complete",
+        "envelope_revision": envelope["revision"],
+        "epic_base": {
+            "branch": envelope["epic_base"]["ref"],
+            "initial_sha": envelope["epic_base"]["sha"],
+            "current_sha": envelope["epic_base"]["sha"],
+            "branch_exists": True,
+        },
+        "issues": issues,
+        "pending_human_requests": copy.deepcopy(runtime.get("human_requests", [])),
+        "delivery_candidates": list(envelope.get("work_items", {})),
+        "runtime_state_root": runtime_state_root,
+    }
+
+
+def current_delivery_plan(
+    envelope: dict,
+    *,
+    action: str = "final_pr",
+    **fields: object,
+) -> dict:
+    plan = {
+        "schema_version": 2,
+        "approved_spec_binding": copy.deepcopy(envelope["approved_spec_binding"]),
+        "action": action,
+    }
+    plan.update(fields)
+    return plan

@@ -9,6 +9,7 @@ from .constants import FINAL_PR_REQUIRED_APPROVED_ACTIONS
 from .identifiers import is_issue_id
 from .review import review_approved_or_accepted
 from .validation.execution_envelope import validate_execution_envelope
+from .validation.execution_result import validate_execution_result
 from .validation.runtime_state import validate_runtime_state
 
 
@@ -56,6 +57,17 @@ CANDIDATE_DECISIONS = {
     "declined",
     "risk_accepted",
     "implemented",
+}
+DELIVERY_PLAN_FIELDS = {
+    "schema_version",
+    "approved_spec_binding",
+    "action",
+    "head",
+    "base",
+    "draft",
+    "ready_for_review",
+    "issue",
+    "issue_scope",
 }
 RECOMMENDED_DECISIONS = {
     "approved_for_current_pr",
@@ -331,26 +343,38 @@ def hardening_candidate_report(
 def validate_delivery_plan(
     envelope: dict[str, Any],
     runtime: dict[str, Any],
+    execution_result: dict[str, Any],
     plan: dict[str, Any],
     *,
+    repo_root: str | Path,
     candidate_registry: dict[str, Any] | None = None,
     candidate_registry_path: str = "hardening-candidates.json",
     candidate_registry_load_error: str | None = None,
 ) -> list[str]:
-    errors: list[str] = []
-    errors.extend(f"envelope: {error}" for error in validate_execution_envelope(envelope))
-    errors.extend(f"runtime_state: {error}" for error in validate_runtime_state(runtime))
-    if errors:
-        return errors
-    if runtime.get("epic_id") != envelope.get("epic_id"):
-        errors.append("runtime_state.epic_id must match envelope.epic_id")
-    if runtime.get("envelope_revision") != envelope.get("revision"):
-        errors.append("runtime_state.envelope_revision must match envelope.revision")
+    errors = validate_execution_result(
+        envelope,
+        runtime,
+        execution_result,
+        repo_root=repo_root,
+        candidate_registry=candidate_registry,
+        candidate_registry_path=candidate_registry_path,
+        candidate_registry_load_error=candidate_registry_load_error,
+    )
     if errors:
         return errors
 
-    if not isinstance(plan, dict):
-        return ["delivery plan must be an object"]
+    if not isinstance(plan, dict) or plan.get("schema_version") != 2:
+        return ["SCHEMA_UNSUPPORTED"]
+    if set(plan) - DELIVERY_PLAN_FIELDS:
+        return ["SCHEMA_UNSUPPORTED"]
+    try:
+        plan_binding = approved_spec_binding_ref(
+            plan.get("approved_spec_binding")
+        ).to_dict()
+    except BindingError as error:
+        return [error.code]
+    if plan_binding != envelope.get("approved_spec_binding"):
+        return ["BINDING_MISMATCH"]
     action = plan.get("action")
     if action not in {"issue_pr", "final_pr"}:
         errors.append("action must be issue_pr or final_pr")

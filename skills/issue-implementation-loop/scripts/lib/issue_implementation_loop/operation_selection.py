@@ -5,13 +5,18 @@ import os
 from pathlib import Path
 from typing import Any
 
+from .approved_spec_binding import (
+    DEFAULT_ACTIONS,
+    BindingError,
+    verify_approved_spec_binding,
+)
 from .constants import TERMINAL_STATUSES, WORKTREE_STATES
 from .context_contract import operation_read_set
 from .graph import issue_status
 from .io import load_json
 from .scheduler import compute_next_actions
 from .validation.execution_envelope import validate_execution_envelope
-from .validation.runtime_state import validate_runtime_state
+from .validation.runtime_state import validate_runtime_epoch, validate_runtime_state
 
 
 EXPLICIT_MODE_OPERATIONS = {
@@ -29,26 +34,15 @@ def select_operation(
     runtime_path: Path | None,
 ) -> dict[str, Any]:
     requested_mode = requested_mode.lower()
-    if requested_mode in EXPLICIT_MODE_OPERATIONS:
-        return _result(
-            skill_dir=skill_dir,
-            repo_root=repo_root,
-            requested_mode=requested_mode,
-            priority=f"explicit_{requested_mode}",
-            operation=EXPLICIT_MODE_OPERATIONS[requested_mode],
-            reason=f"requested mode is {requested_mode}",
-        )
-    if requested_mode == "prepare":
-        return _result(
-            skill_dir=skill_dir,
-            repo_root=repo_root,
-            requested_mode=requested_mode,
-            priority="prepare",
-            operation="prepare",
-            reason="requested mode is prepare",
-        )
-
     if envelope_path is None or not envelope_path.is_file():
+        if requested_mode in EXPLICIT_MODE_OPERATIONS:
+            return _binding_gate_result(
+                skill_dir=skill_dir,
+                repo_root=repo_root,
+                requested_mode=requested_mode,
+                error=BindingError("REAPPROVAL_REQUIRED"),
+                reason="execution envelope is missing",
+            )
         return _result(
             skill_dir=skill_dir,
             repo_root=repo_root,
@@ -61,6 +55,14 @@ def select_operation(
     try:
         envelope = load_json(envelope_path)
     except (OSError, json.JSONDecodeError) as exc:
+        if requested_mode in EXPLICIT_MODE_OPERATIONS:
+            return _binding_gate_result(
+                skill_dir=skill_dir,
+                repo_root=repo_root,
+                requested_mode=requested_mode,
+                error=BindingError("REAPPROVAL_REQUIRED"),
+                reason=f"execution envelope cannot be read: {exc}",
+            )
         return _result(
             skill_dir=skill_dir,
             repo_root=repo_root,
@@ -68,6 +70,33 @@ def select_operation(
             priority="missing_envelope",
             operation="prepare",
             reason=f"execution envelope cannot be read: {exc}",
+        )
+
+    epic_base = envelope.get("epic_base", {})
+    ancestor_ref = epic_base.get("sha") if isinstance(epic_base, dict) else None
+    try:
+        verify_approved_spec_binding(
+            repo_root,
+            envelope.get("approved_spec_binding"),
+            ancestor_ref=ancestor_ref,
+        )
+    except BindingError as error:
+        return _binding_gate_result(
+            skill_dir=skill_dir,
+            repo_root=repo_root,
+            requested_mode=requested_mode,
+            error=error,
+            reason="active approved spec binding is invalid",
+        )
+
+    if requested_mode == "prepare":
+        return _result(
+            skill_dir=skill_dir,
+            repo_root=repo_root,
+            requested_mode=requested_mode,
+            priority="prepare",
+            operation="prepare",
+            reason="requested mode is prepare",
         )
 
     unreserved_issue = _first_unreserved_issue(envelope)
@@ -91,7 +120,7 @@ def select_operation(
             reason="epic base reservation is incomplete",
         )
 
-    envelope_errors = validate_execution_envelope(envelope)
+    envelope_errors = validate_execution_envelope(envelope, repo_root)
     if envelope_errors:
         return _result(
             skill_dir=skill_dir,
@@ -103,6 +132,14 @@ def select_operation(
         )
 
     if runtime_path is None or not runtime_path.is_file():
+        if requested_mode in EXPLICIT_MODE_OPERATIONS:
+            return _binding_gate_result(
+                skill_dir=skill_dir,
+                repo_root=repo_root,
+                requested_mode=requested_mode,
+                error=BindingError("REAPPROVAL_REQUIRED"),
+                reason="runtime state is missing",
+            )
         return _result(
             skill_dir=skill_dir,
             repo_root=repo_root,
@@ -114,6 +151,14 @@ def select_operation(
     try:
         runtime = load_json(runtime_path)
     except (OSError, json.JSONDecodeError) as exc:
+        if requested_mode in EXPLICIT_MODE_OPERATIONS:
+            return _binding_gate_result(
+                skill_dir=skill_dir,
+                repo_root=repo_root,
+                requested_mode=requested_mode,
+                error=BindingError("REAPPROVAL_REQUIRED"),
+                reason=f"runtime state cannot be read: {exc}",
+            )
         return _result(
             skill_dir=skill_dir,
             repo_root=repo_root,
@@ -125,10 +170,34 @@ def select_operation(
 
     state_mismatch = _state_mismatch(envelope, runtime)
     runtime_errors = validate_runtime_state(runtime)
-    if runtime_errors or state_mismatch:
+    if runtime_errors:
+        code = runtime_errors[0]
+        error = BindingError(
+            code if code in DEFAULT_ACTIONS else "REAPPROVAL_REQUIRED"
+        )
+        return _binding_gate_result(
+            skill_dir=skill_dir,
+            repo_root=repo_root,
+            requested_mode=requested_mode,
+            error=error,
+            reason="runtime state cannot participate in the active binding epoch",
+        )
+    epoch_errors = validate_runtime_epoch(envelope, runtime)
+    if epoch_errors:
+        error = BindingError(
+            "BINDING_MISMATCH"
+            if "BINDING_MISMATCH" in epoch_errors
+            else "REAPPROVAL_REQUIRED"
+        )
+        return _binding_gate_result(
+            skill_dir=skill_dir,
+            repo_root=repo_root,
+            requested_mode=requested_mode,
+            error=error,
+            reason="runtime state does not match the active binding epoch",
+        )
+    if state_mismatch:
         reasons = []
-        if runtime_errors:
-            reasons.append("runtime state validation failed: " + "; ".join(runtime_errors))
         if state_mismatch:
             reasons.append(state_mismatch["reason"])
         return _result(
@@ -139,6 +208,16 @@ def select_operation(
             operation="resume",
             reason="; ".join(reasons),
             target_issue=state_mismatch.get("issue") if state_mismatch else None,
+        )
+
+    if requested_mode in EXPLICIT_MODE_OPERATIONS:
+        return _result(
+            skill_dir=skill_dir,
+            repo_root=repo_root,
+            requested_mode=requested_mode,
+            priority=f"explicit_{requested_mode}",
+            operation=EXPLICIT_MODE_OPERATIONS[requested_mode],
+            reason=f"requested mode is {requested_mode}",
         )
 
     next_actions = compute_next_actions(envelope, runtime)
@@ -189,15 +268,20 @@ def _result(
     operation: str,
     reason: str,
     target_issue: str | None = None,
+    binding_valid: bool = True,
+    state_advance_blocked: bool = False,
+    binding_error: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    read_set = operation_read_set(skill_dir, repo_root, operation)
-    return {
+    read_set = operation_read_set(skill_dir, skill_dir.parents[1], operation)
+    result = {
         "schema_version": 1,
         "requested_mode": requested_mode,
         "priority": priority,
         "operation": operation,
         "reason": reason,
         "target_issue": target_issue,
+        "binding_valid": binding_valid,
+        "state_advance_blocked": state_advance_blocked,
         "read_set": read_set["files"],
         "word_budget_result": {
             "file_count": read_set["file_count"],
@@ -216,6 +300,36 @@ def _result(
             "within_budget": read_set["within_budget"],
         },
     }
+    if binding_error is not None:
+        result["binding_error"] = binding_error
+    return result
+
+
+def _binding_gate_result(
+    *,
+    skill_dir: Path,
+    repo_root: Path,
+    requested_mode: str,
+    error: BindingError,
+    reason: str,
+) -> dict[str, Any]:
+    if requested_mode == "status":
+        priority = "explicit_status"
+        operation = "status"
+    else:
+        priority = "reapproval_required"
+        operation = "blocked.reapproval"
+    return _result(
+        skill_dir=skill_dir,
+        repo_root=repo_root,
+        requested_mode=requested_mode,
+        priority=priority,
+        operation=operation,
+        reason=f"{reason}: {error.code}",
+        binding_valid=False,
+        state_advance_blocked=True,
+        binding_error=error.to_dict(),
+    )
 
 
 def _first_unreserved_issue(envelope: Any) -> str | None:

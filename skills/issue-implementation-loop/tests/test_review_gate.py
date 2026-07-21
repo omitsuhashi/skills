@@ -7,6 +7,193 @@ REVIEW_GATE = SKILL_DIR / "references" / "review-gate.md"
 
 
 class ReviewGateTests(unittest.TestCase):
+    def test_asb_04_execution_result_v2_accepts_active_binding_and_review_range(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, binding, _ = create_binding_repo(Path(tmp))
+            envelope = binding_envelope(repo, binding)
+            envelope_path = repo / "execution-envelope.json"
+            runtime_path = repo / "runtime-state.json"
+            result_path = repo / "execution-result.json"
+            runtime = {
+                "schema_version": 2,
+                "approved_spec_binding": copy.deepcopy(binding),
+                "epic_id": envelope["epic_id"],
+                "envelope_revision": envelope["revision"],
+                "issues": {
+                    "ASBC-002": {
+                        "status": "PR_READY",
+                        "base_sha": BASE_SHA,
+                        "head_sha": HEAD_SHA,
+                        "review": {"status": "approved", "range": REVIEW_RANGE},
+                    }
+                },
+                "human_requests": [],
+            }
+            write_json(envelope_path, envelope)
+            write_json(runtime_path, runtime)
+            write_json(result_path, current_execution_result(envelope, runtime))
+
+            completed = run_script(
+                "validate_execution_result.py",
+                str(envelope_path),
+                str(runtime_path),
+                str(result_path),
+                "--repo-root",
+                str(repo),
+                "--json",
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            self.assertEqual(json.loads(completed.stdout)["errors"], [])
+
+    def test_asb_14_completion_rechecks_current_spec_before_terminal_result(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, binding, _ = create_binding_repo(Path(tmp))
+            envelope = binding_envelope(repo, binding)
+            envelope_path = repo / "execution-envelope.json"
+            runtime_path = repo / "runtime-state.json"
+            result_path = repo / "execution-result.json"
+            runtime = {
+                "schema_version": 2,
+                "approved_spec_binding": copy.deepcopy(binding),
+                "epic_id": envelope["epic_id"],
+                "envelope_revision": envelope["revision"],
+                "issues": {
+                    "ASBC-002": {
+                        "status": "PR_READY",
+                        "base_sha": BASE_SHA,
+                        "head_sha": HEAD_SHA,
+                        "review": {"status": "approved", "range": REVIEW_RANGE},
+                    }
+                },
+                "human_requests": [],
+            }
+            write_json(envelope_path, envelope)
+            write_json(runtime_path, runtime)
+            write_json(result_path, current_execution_result(envelope, runtime))
+            (repo / "knowledge/wiki/syntheses/spec.md").write_text(
+                "drift after review\n", encoding="utf-8"
+            )
+
+            completed = run_script(
+                "validate_execution_result.py",
+                str(envelope_path),
+                str(runtime_path),
+                str(result_path),
+                "--repo-root",
+                str(repo),
+                "--json",
+            )
+
+            self.assertEqual(completed.returncode, 1)
+            self.assertEqual(
+                json.loads(completed.stdout)["errors"], ["SPEC_DIGEST_MISMATCH"]
+            )
+
+    def test_asb_22_completion_rejects_result_binding_or_review_range_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, binding, _ = create_binding_repo(Path(tmp))
+            envelope = binding_envelope(repo, binding)
+            envelope_path = repo / "execution-envelope.json"
+            runtime_path = repo / "runtime-state.json"
+            runtime = {
+                "schema_version": 2,
+                "approved_spec_binding": copy.deepcopy(binding),
+                "epic_id": envelope["epic_id"],
+                "envelope_revision": envelope["revision"],
+                "issues": {
+                    "ASBC-002": {
+                        "status": "PR_READY",
+                        "base_sha": BASE_SHA,
+                        "head_sha": HEAD_SHA,
+                        "review": {"status": "approved", "range": REVIEW_RANGE},
+                    }
+                },
+                "human_requests": [],
+            }
+            write_json(envelope_path, envelope)
+            write_json(runtime_path, runtime)
+            cases = {
+                "binding": lambda result: result["approved_spec_binding"].update(
+                    {"sha256": "b" * 64}
+                ),
+                "range": lambda result: result["issues"]["ASBC-002"][
+                    "implementation_review"
+                ].update({"range": f"{BASE_SHA}..{'a' * 40}"}),
+            }
+            for name, mutate in cases.items():
+                with self.subTest(name=name):
+                    result_path = repo / f"execution-result-{name}.json"
+                    result = current_execution_result(envelope, runtime)
+                    mutate(result)
+                    write_json(result_path, result)
+                    completed = run_script(
+                        "validate_execution_result.py",
+                        str(envelope_path),
+                        str(runtime_path),
+                        str(result_path),
+                        "--repo-root",
+                        str(repo),
+                        "--json",
+                    )
+                    self.assertEqual(completed.returncode, 1)
+                    self.assertIn(
+                        "BINDING_MISMATCH",
+                        json.loads(completed.stdout)["errors"],
+                    )
+
+    def test_execution_result_v1_is_unsupported(self) -> None:
+        template = json.loads(
+            (SKILL_DIR / "assets/templates/execution-result.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertEqual(template["schema_version"], 2)
+        self.assertIn("approved_spec_binding", template)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, binding, _ = create_binding_repo(Path(tmp))
+            envelope = binding_envelope(repo, binding)
+            envelope_path = repo / "execution-envelope.json"
+            runtime_path = repo / "runtime-state.json"
+            result_path = repo / "execution-result-v1.json"
+            runtime = {
+                "schema_version": 2,
+                "approved_spec_binding": copy.deepcopy(binding),
+                "epic_id": envelope["epic_id"],
+                "envelope_revision": envelope["revision"],
+                "issues": {
+                    "ASBC-002": {
+                        "status": "PR_READY",
+                        "base_sha": BASE_SHA,
+                        "head_sha": HEAD_SHA,
+                        "review": {"status": "approved", "range": REVIEW_RANGE},
+                    }
+                },
+                "human_requests": [],
+            }
+            result = current_execution_result(envelope, runtime)
+            result["schema_version"] = 1
+            result.pop("approved_spec_binding")
+            write_json(envelope_path, envelope)
+            write_json(runtime_path, runtime)
+            write_json(result_path, result)
+
+            rejected = run_script(
+                "validate_execution_result.py",
+                str(envelope_path),
+                str(runtime_path),
+                str(result_path),
+                "--repo-root",
+                str(repo),
+                "--json",
+            )
+
+            self.assertEqual(rejected.returncode, 1)
+            self.assertEqual(
+                json.loads(rejected.stdout)["errors"], ["SCHEMA_UNSUPPORTED"]
+            )
+
     def test_review_gate_defines_finding_taxonomy_and_fix_loop_rules(self) -> None:
         text = REVIEW_GATE.read_text(encoding="utf-8")
 
@@ -38,6 +225,9 @@ class ReviewGateTests(unittest.TestCase):
             "hard 900 words",
             "Do not paste full spec",
             "Do not paste full ledger",
+            "active `approved_spec_binding`",
+            "fresh envelope -> packet -> spec verification",
+            "binding and `BASE_SHA..HEAD_SHA`",
         ):
             self.assertIn(required, text)
 

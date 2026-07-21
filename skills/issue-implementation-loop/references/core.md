@@ -27,12 +27,17 @@ Run validate_input_packet.py. Seal only if check_capabilities.py --json reports 
 
 Return a local execution result:
 
-- `schema_version`, `epic_id`, `status`, and `envelope_revision`
+- current-only `schema_version: 2`, active `approved_spec_binding`, `epic_id`,
+  `status`, and `envelope_revision`
 - epic base branch status when delivery mode uses `batch_issue_prs`
 - per-issue status, branch, worktree, base/head SHA, verification, implementation review, and residual risks
 - `pending_human_requests`, `delivery_candidates`, and `runtime_state_root`
 
 Use `assets/templates/execution-result.json` for the concrete shape.
+Validate it with `scripts/validate_execution_result.py` immediately before reporting
+terminal completion. The validator fresh-checks the Envelope v4 packet/spec chain,
+Runtime State v2 epoch, committed review ranges, result binding, and any present
+hardening candidate registry. Execution Result v1 is unsupported.
 
 Execution Envelope v4 is current-only. It pins the sealed Input Packet v2 through
 `approved_spec_binding` and verifies the full gate commit, its ancestry, and its

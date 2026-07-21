@@ -4,6 +4,29 @@ from _helpers import *
 
 
 class CandidateRegistryTests(unittest.TestCase):
+    def run_delivery(
+        self, envelope_path: Path, runtime_path: Path, plan_path: Path
+    ) -> subprocess.CompletedProcess[str]:
+        envelope = json.loads(envelope_path.read_text(encoding="utf-8"))
+        runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+        plan["schema_version"] = 2
+        plan["approved_spec_binding"] = copy.deepcopy(
+            envelope["approved_spec_binding"]
+        )
+        write_json(plan_path, plan)
+        result_path = plan_path.with_name("execution-result.json")
+        write_json(result_path, current_execution_result(envelope, runtime))
+        return run_script(
+            "validate_delivery_plan.py",
+            str(envelope_path),
+            str(runtime_path),
+            str(result_path),
+            str(plan_path),
+            "--repo-root",
+            str(REPO_ROOT),
+        )
+
     def test_delivery_rejects_incomplete_or_open_registry_v2(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -44,12 +67,7 @@ class CandidateRegistryTests(unittest.TestCase):
                     mutate(registry)
                     write_json(registry_path, registry)
 
-                    result = run_script(
-                        "validate_delivery_plan.py",
-                        str(envelope_path),
-                        str(runtime_path),
-                        str(plan_path),
-                    )
+                    result = self.run_delivery(envelope_path, runtime_path, plan_path)
 
                     self.assertNotEqual(result.returncode, 0)
                     self.assertIn("SCHEMA_UNSUPPORTED", result.stderr)
@@ -83,12 +101,7 @@ class CandidateRegistryTests(unittest.TestCase):
                 },
             )
 
-            result = run_script(
-                "validate_delivery_plan.py",
-                str(envelope_path),
-                str(runtime_path),
-                str(plan_path),
-            )
+            result = self.run_delivery(envelope_path, runtime_path, plan_path)
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("AUXILIARY_ARTIFACT_BINDING_MISMATCH", result.stderr)
@@ -122,12 +135,7 @@ class CandidateRegistryTests(unittest.TestCase):
                 },
             )
 
-            result = run_script(
-                "validate_delivery_plan.py",
-                str(envelope_path),
-                str(runtime_path),
-                str(plan_path),
-            )
+            result = self.run_delivery(envelope_path, runtime_path, plan_path)
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("SCHEMA_UNSUPPORTED", result.stderr)

@@ -174,8 +174,9 @@ def validate_runtime_epoch(
 ) -> list[str]:
     if envelope.get("approved_spec_binding") != runtime.get("approved_spec_binding"):
         return ["BINDING_MISMATCH"]
+    errors: list[str] = []
     if runtime.get("epic_id") != envelope.get("epic_id"):
-        return ["runtime_state.epic_id must match envelope.epic_id"]
+        errors.append("runtime_state.epic_id must match envelope.epic_id")
     if runtime.get("envelope_revision") != envelope.get("revision"):
-        return ["runtime_state.envelope_revision must match envelope.revision"]
-    return []
+        errors.append("runtime_state.envelope_revision must match envelope.revision")
+    return errors
