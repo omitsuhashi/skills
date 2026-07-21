@@ -1151,3 +1151,20 @@ append-only で使います。すべての entry は予測しやすい header �
 - task-management 専用 strict parser も unquoted integer `1` だけを Python `int` として返し、native manifest contract で exact type / value を固定した
 - RED は validator 25件中2 subtest failures と Hermes manifest 11件中3 failures、GREEN は Python 3.9.6 / 3.12 の両方で validator 25件、Hermes 11件、full task-management 94件、workflow 3件、decide-in-order 7件、llm-wiki 6件、architecture / context、repository `--all` が成功した
 - durable page は `knowledge/wiki/syntheses/hermes-dual-host-authoring-contract-design.md` と `knowledge/log.md` を更新した。`knowledge/index.md` の既存 summary は正確なため変更していない
+
+## [2026-07-21] spec | Task-management write / preflight Interface and GitHub Projects Adapter
+
+- current `plugins/task-management` v0.3.0、97 focused tests、manifest / runtime registration、read route v1、Hermes v0.19.0 の public plugin dispatch seamをevidence-firstで監査した
+- official GitHub MCP Server main `9d130049e9074772c2afbbd5e904725d240443ad` のProjects実装を確認し、Issue create、Project add、field update、read-backはadapter orchestrationが必要で、Project-native draft item createはcurrent surfaceにないと確定した
+- `task-management` public interface v2、unified route v2 clean break、approval preview / digest、`approved | confidence_authorized` receipt、typed preflight / result normalizationをSpec Gate候補として追加した
+- 確証がないtaskは外部作成前に人間へpreviewを提示し、十分な確証と機械的eligibilityがある場合だけ`confidence_authorized`を使う運用を固定した
+- GitHub固有処理をseparate `plugins/task-adapter-github-projects/` distributionへ隔離し、初期createをlinked Issue onlyとした。draft item / content policyは追加しない
+- file-level TDD plan、shared contract/versioning、test strategy、route migration、Companies handoff contract、別Live Activation Gateを文書化した
+- Spec Gate前のためlocal issue ledger追加、実装、commit、push、PR、live Hermes / MCP / credential / GitHub Project / Issue変更は実施していない
+
+## [2026-07-21] gate | Task-management write / preflight Spec Gate
+
+- ユーザーがEpic `portfolio-os-task-backend-plugin-skill` のwrite / preflight Interface、separate GitHub Projects Adapter、file-level implementation planをSpec Gateとして承認した
+- `codex/portfolio-os-task-backend-plugin-skill/epic-base` branchと`/private/tmp/skills-portfolio-os-task-backend-plugin-skill/epic-base` worktreeを作成し、承認済みplanning artifactsをこのphase branchへ移した
+- 初期createはlinked Issue only、確証がないtaskはwrite前にhuman confirmation、十分な確証とeligibilityがある場合だけ`confidence_authorized`とする判断を維持した
+- 次phaseは既存canonical ledgerへのPOTASK follow-up issue分解とIssue Gateであり、実装、push、PR、live activation、GitHub / MCP / credential writeは未実施
