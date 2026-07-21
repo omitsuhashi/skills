@@ -16,8 +16,7 @@ class WorkerPacketTests(unittest.TestCase):
                 "ASBC-002",
                 "--dispatch-id",
                 "dispatch-001",
-                "--worktree",
-                str(repo),
+                *worker_trust_args(repo),
                 "--task-kind",
                 "implement",
                 "--read-path",
@@ -28,10 +27,6 @@ class WorkerPacketTests(unittest.TestCase):
                 "knowledge/wiki/syntheses/issues.md",
                 "--read-purpose",
                 "issue-ledger",
-                "--source-envelope",
-                str(envelope),
-                "--source-runtime",
-                str(runtime),
                 "--inline-excerpt",
                 "knowledge/wiki/syntheses/issues.md::ASBC-002 requires binding propagation.",
                 "--output",
@@ -39,7 +34,7 @@ class WorkerPacketTests(unittest.TestCase):
             )
 
             self.assertEqual(result.returncode, 0, result.stderr)
-            validate_result = run_script("validate_worker_packet.py", str(packet_path))
+            validate_result = run_worker_packet_validator(repo, packet_path)
             self.assertEqual(validate_result.returncode, 0, validate_result.stderr)
             packet = json.loads(packet_path.read_text(encoding="utf-8"))
             self.assertEqual(packet["schema_version"], 3)
@@ -75,6 +70,43 @@ class WorkerPacketTests(unittest.TestCase):
             "--stop-condition",
         ):
             self.assertNotIn(caller_semantic, result.stdout)
+        for trusted_input in (
+            "--repo-root",
+            "--assigned-worktree",
+            "--envelope",
+            "--runtime-state",
+        ):
+            self.assertIn(trusted_input, result.stdout)
+        self.assertNotIn("--worktree", result.stdout)
+        self.assertNotIn("--source-envelope", result.stdout)
+        self.assertNotIn("--source-runtime", result.stdout)
+
+    def test_worker_validator_public_api_and_cli_require_trusted_inputs(self) -> None:
+        help_result = run_script("validate_worker_packet.py", "--help")
+        self.assertEqual(help_result.returncode, 0, help_result.stderr)
+        for trusted_input in (
+            "--repo-root",
+            "--assigned-worktree",
+            "--envelope",
+            "--runtime-state",
+        ):
+            self.assertIn(trusted_input, help_result.stdout)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, binding, _ = create_binding_repo(Path(tmp))
+            packet = current_worker_packet(repo, binding)
+            packet_path = repo / "worker.json"
+            write_json(packet_path, packet)
+            missing_cli_trust = run_script("validate_worker_packet.py", str(packet_path))
+            self.assertEqual(missing_cli_trust.returncode, 2)
+
+            lib_dir = str(SCRIPTS_DIR / "lib")
+            if lib_dir not in sys.path:
+                sys.path.insert(0, lib_dir)
+            from issue_implementation_loop import validate_worker_packet
+
+            with self.assertRaises(TypeError):
+                validate_worker_packet(packet)
 
     def test_builder_rejects_runtime_from_another_epic_epoch(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -90,14 +122,9 @@ class WorkerPacketTests(unittest.TestCase):
                 "ASBC-002",
                 "--dispatch-id",
                 "dispatch-epoch-mismatch",
-                "--worktree",
-                str(repo),
+                *worker_trust_args(repo),
                 "--read-path",
                 "knowledge/wiki/syntheses/issues.md",
-                "--source-envelope",
-                str(envelope),
-                "--source-runtime",
-                str(runtime_path),
             )
 
             self.assertNotEqual(result.returncode, 0)
@@ -139,16 +166,103 @@ class WorkerPacketTests(unittest.TestCase):
                         mutate(packet)
                         packet_path = repo / f"{task_kind}-{name}.json"
                         write_json(packet_path, packet)
-                        result = run_script(
-                            "validate_worker_packet.py",
-                            str(packet_path),
-                            "--json",
+                        result = run_worker_packet_validator(
+                            repo, packet_path, "--json"
                         )
                         self.assertEqual(result.returncode, 1)
                         self.assertEqual(
                             json.loads(result.stdout)["errors"],
                             ["BINDING_MISMATCH"],
                         )
+
+    def test_worker_and_reviewer_packets_reject_untrusted_active_epoch_substitutions(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for task_kind in ("implement", "review"):
+                for name in (
+                    "packet_external_envelope",
+                    "trusted_external_envelope",
+                    "substituted_branch",
+                    "substituted_worktree",
+                    "cross_epic_runtime",
+                ):
+                    with self.subTest(task_kind=task_kind, name=name):
+                        case_root = root / f"{task_kind}-{name}"
+                        case_root.mkdir()
+                        repo, binding, _ = create_binding_repo(case_root)
+                        packet = current_worker_packet(repo, binding, task_kind=task_kind)
+                        source_revision = packet["source_revision"]
+                        active_envelope = repo / "execution-envelope.json"
+                        if name in {
+                            "packet_external_envelope",
+                            "trusted_external_envelope",
+                            "substituted_branch",
+                        }:
+                            active_path = repo / "execution-envelope.json"
+                            external_path = case_root / "external-envelope.json"
+                            external = json.loads(active_path.read_text(encoding="utf-8"))
+                            if name == "substituted_branch":
+                                branch = f"codex/{packet['epic_id']}/{packet['issue_id']}-substituted"
+                                external["work_items"][packet["issue_id"]]["branch"] = branch
+                                packet["branch"] = branch
+                            write_json(external_path, external)
+                            if name == "trusted_external_envelope":
+                                active_envelope = external_path
+                            else:
+                                source_revision["execution_envelope"]["path"] = str(
+                                    external_path
+                                )
+                                source_revision["execution_envelope"]["sha256"] = hashlib.sha256(
+                                    external_path.read_bytes()
+                                ).hexdigest()
+                        elif name == "substituted_worktree":
+                            substituted_worktree = case_root / "caller-selected-worktree"
+                            substituted_worktree.mkdir()
+                            packet["worktree"] = str(substituted_worktree)
+                        else:
+                            runtime_path = repo / "runtime-state.json"
+                            runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+                            runtime["epic_id"] = "another-epic"
+                            write_json(runtime_path, runtime)
+                            source_revision["runtime_state"]["sha256"] = hashlib.sha256(
+                                runtime_path.read_bytes()
+                            ).hexdigest()
+                        packet_path = repo / f"{name}.json"
+                        write_json(packet_path, packet)
+
+                        result = run_worker_packet_validator(
+                            repo,
+                            packet_path,
+                            "--json",
+                            envelope=active_envelope,
+                        )
+
+                        self.assertEqual(result.returncode, 1)
+                        self.assertEqual(
+                            json.loads(result.stdout)["errors"],
+                            ["BINDING_MISMATCH"],
+                        )
+
+    def test_custom_validator_requires_schema_required_context_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for field in ("inline_context", "max_packet_words"):
+                with self.subTest(field=field):
+                    case_root = root / field
+                    case_root.mkdir()
+                    repo, binding, _ = create_binding_repo(case_root)
+                    packet = current_worker_packet(repo, binding)
+                    if field == "inline_context":
+                        packet.pop(field)
+                    else:
+                        packet["context_policy"].pop(field)
+                    packet_path = repo / f"missing-{field}.json"
+                    write_json(packet_path, packet)
+
+                    result = run_worker_packet_validator(repo, packet_path)
+
+                    self.assertEqual(result.returncode, 1)
+                    self.assertIn(f"{field} is required", result.stderr)
 
     def test_worker_packet_budget_overflow_fails_without_truncating_output(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -174,14 +288,9 @@ class WorkerPacketTests(unittest.TestCase):
                 "ASBC-002",
                 "--dispatch-id",
                 "dispatch-002",
-                "--worktree",
-                str(repo),
+                *worker_trust_args(repo),
                 "--read-path",
                 "knowledge/wiki/syntheses/spec.md",
-                "--source-envelope",
-                str(envelope),
-                "--source-runtime",
-                str(runtime),
                 "--output",
                 str(packet_path),
             )
@@ -198,7 +307,7 @@ class WorkerPacketTests(unittest.TestCase):
                     packet["schema_version"] = version
                     path = repo / f"worker-v{version}.json"
                     write_json(path, packet)
-                    result = run_script("validate_worker_packet.py", str(path), "--json")
+                    result = run_worker_packet_validator(repo, path, "--json")
                     self.assertEqual(result.returncode, 1)
                     self.assertEqual(
                         json.loads(result.stdout)["errors"], ["SCHEMA_UNSUPPORTED"]
@@ -243,7 +352,7 @@ class WorkerPacketTests(unittest.TestCase):
                     mutate(packet)
                     packet_path = repo / f"{name}.json"
                     write_json(packet_path, packet)
-                    result = run_script("validate_worker_packet.py", str(packet_path))
+                    result = run_worker_packet_validator(repo, packet_path)
                     self.assertNotEqual(result.returncode, 0)
                     self.assertIn(expected, result.stderr)
 
@@ -288,7 +397,7 @@ class WorkerPacketTests(unittest.TestCase):
                     mutate(packet)
                     path = repo / f"{name}.json"
                     write_json(path, packet)
-                    result = run_script("validate_worker_packet.py", str(path))
+                    result = run_worker_packet_validator(repo, path)
                     self.assertNotEqual(result.returncode, 0)
                     self.assertIn(expected, result.stderr)
 
@@ -330,7 +439,7 @@ class WorkerPacketTests(unittest.TestCase):
                     mutate(packet)
                     path = repo / f"{name}.json"
                     write_json(path, packet)
-                    result = run_script("validate_worker_packet.py", str(path))
+                    result = run_worker_packet_validator(repo, path)
                     self.assertNotEqual(result.returncode, 0)
                     self.assertIn(expected, result.stderr)
 
@@ -365,7 +474,7 @@ class WorkerPacketTests(unittest.TestCase):
                     mutate(packet)
                     path = repo / f"{name}.json"
                     write_json(path, packet)
-                    result = run_script("validate_worker_packet.py", str(path))
+                    result = run_worker_packet_validator(repo, path)
                     self.assertNotEqual(result.returncode, 0)
                     self.assertIn(expected, result.stderr)
 
@@ -384,19 +493,19 @@ class WorkerPacketTests(unittest.TestCase):
                         value = json.loads(path.read_text(encoding="utf-8"))
                         value["revision"] = 2
                         write_json(path, value)
-                        expected = "source_revision.execution_envelope.revision is stale"
+                        expected = "BINDING_MISMATCH"
                     elif name == "runtime":
                         path = Path(source["runtime_state"]["path"])
                         value = json.loads(path.read_text(encoding="utf-8"))
                         value["envelope_revision"] = 2
                         write_json(path, value)
-                        expected = "source_revision.runtime_state.envelope_revision is stale"
+                        expected = "BINDING_MISMATCH"
                     else:
                         Path(source["issue_source"]["path"]).write_text("changed", encoding="utf-8")
-                        expected = "source_revision.issue_source.sha256 is stale"
+                        expected = "BINDING_MISMATCH"
                     packet_path = repo / f"{name}.json"
                     write_json(packet_path, packet)
-                    result = run_script("validate_worker_packet.py", str(packet_path))
+                    result = run_worker_packet_validator(repo, packet_path)
                     self.assertNotEqual(result.returncode, 0)
                     self.assertIn(expected, result.stderr)
 
@@ -419,8 +528,8 @@ class WorkerPacketTests(unittest.TestCase):
                         bound_packet.unlink()
                     else:
                         bound_packet.write_bytes(bound_packet.read_bytes() + b"\n")
-                    result = run_script(
-                        "validate_worker_packet.py", str(dispatch_path), "--json"
+                    result = run_worker_packet_validator(
+                        repo, dispatch_path, "--json"
                     )
                     self.assertEqual(result.returncode, 1)
                     self.assertEqual(json.loads(result.stdout)["errors"], [expected])
@@ -434,9 +543,7 @@ class WorkerPacketTests(unittest.TestCase):
             bound_packet = repo / binding["path"]
             bound_packet.write_bytes(bound_packet.read_bytes() + b" ")
 
-            result = run_script(
-                "validate_worker_packet.py", str(packet_path), "--json"
-            )
+            result = run_worker_packet_validator(repo, packet_path, "--json")
 
             self.assertEqual(result.returncode, 1)
             self.assertEqual(
@@ -461,7 +568,7 @@ class WorkerPacketTests(unittest.TestCase):
                     ).hexdigest()
                     path = repo / "binding-mismatch.json"
                     write_json(path, packet)
-                    result = run_script("validate_worker_packet.py", str(path), "--json")
+                    result = run_worker_packet_validator(repo, path, "--json")
                     self.assertEqual(result.returncode, 1)
                     self.assertEqual(
                         json.loads(result.stdout)["errors"], ["BINDING_MISMATCH"]
@@ -486,7 +593,7 @@ class WorkerPacketTests(unittest.TestCase):
                     path = repo / "missing-runtime-binding.json"
                     write_json(path, packet)
 
-                    result = run_script("validate_worker_packet.py", str(path), "--json")
+                    result = run_worker_packet_validator(repo, path, "--json")
 
                     self.assertEqual(result.returncode, 1)
                     self.assertEqual(
@@ -542,7 +649,7 @@ class WorkerPacketTests(unittest.TestCase):
                     mutate(packet)
                     path = repo / f"{name}.json"
                     write_json(path, packet)
-                    result = run_script("validate_worker_packet.py", str(path))
+                    result = run_worker_packet_validator(repo, path)
                     self.assertNotEqual(result.returncode, 0)
                     self.assertIn(expected, result.stderr)
 

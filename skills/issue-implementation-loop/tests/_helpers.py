@@ -40,6 +40,55 @@ def run_script(script_name: str, *args: str) -> subprocess.CompletedProcess[str]
     )
 
 
+def worker_trust_args(
+    repo: Path,
+    *,
+    assigned_worktree: Path | None = None,
+    envelope: Path | None = None,
+    runtime_state: Path | None = None,
+) -> tuple[str, ...]:
+    return (
+        "--repo-root",
+        str(repo),
+        "--assigned-worktree",
+        str(assigned_worktree or repo),
+        "--envelope",
+        str(envelope or repo / "execution-envelope.json"),
+        "--runtime-state",
+        str(runtime_state or repo / "runtime-state.json"),
+    )
+
+
+def worker_report_trust_args(repo: Path) -> tuple[str, ...]:
+    return (
+        "--repo-root",
+        str(repo),
+        "--assigned-worktree",
+        str(repo),
+    )
+
+
+def run_worker_packet_validator(
+    repo: Path,
+    packet_path: Path,
+    *args: str,
+    assigned_worktree: Path | None = None,
+    envelope: Path | None = None,
+    runtime_state: Path | None = None,
+) -> subprocess.CompletedProcess[str]:
+    return run_script(
+        "validate_worker_packet.py",
+        str(packet_path),
+        *worker_trust_args(
+            repo,
+            assigned_worktree=assigned_worktree,
+            envelope=envelope,
+            runtime_state=runtime_state,
+        ),
+        *args,
+    )
+
+
 def write_json(path: Path, value: object) -> None:
     path.write_text(json.dumps(value, indent=2), encoding="utf-8")
 
@@ -391,6 +440,7 @@ def binding_envelope(repo: Path, binding: dict[str, str], target: str | None = N
         "sha": target or git(repo, "rev-parse", "HEAD"),
     }
     envelope["work_items"] = {}
+    single_work_item = len(packet["work_items"]) == 1
     for index, approved_item in enumerate(packet["work_items"]):
         issue_id = approved_item["id"]
         envelope["work_items"][issue_id] = {
@@ -402,7 +452,7 @@ def binding_envelope(repo: Path, binding: dict[str, str], target: str | None = N
             "non_goals": copy.deepcopy(approved_item["non_goals"]),
             "verification": copy.deepcopy(approved_item["verification"]),
             "branch": f"codex/{packet['epic_id']}/{issue_id}-workers",
-            "worktree_path": str(repo / f"worktree-{index}"),
+            "worktree_path": str(repo if single_work_item else repo / f"worktree-{index}"),
             "worktree_state": "reserved" if approved_item["dependencies"] else "active",
             "base_policy": {"type": "epic_base"},
             "write_scope": copy.deepcopy(approved_item["write_scope"]),
@@ -479,17 +529,17 @@ def current_worker_packet(
         "source_revision": {
             "approved_spec_binding": copy.deepcopy(binding),
             "execution_envelope": {
-                "path": str(envelope),
+                "path": str(envelope.resolve()),
                 "revision": 1,
                 "sha256": hashlib.sha256(envelope.read_bytes()).hexdigest(),
             },
             "runtime_state": {
-                "path": str(runtime),
+                "path": str(runtime.resolve()),
                 "envelope_revision": 1,
                 "sha256": hashlib.sha256(runtime.read_bytes()).hexdigest(),
             },
             "issue_source": {
-                "path": str(issue_source),
+                "path": str(issue_source.resolve()),
                 "sha256": hashlib.sha256(issue_source.read_bytes()).hexdigest(),
             },
         },
@@ -498,7 +548,7 @@ def current_worker_packet(
         "issue_title": approved_item["title"],
         "dispatch_id": f"dispatch-{task_kind}-001",
         "branch": approved_item["branch"],
-        "worktree": str(repo),
+        "worktree": str(repo.resolve()),
         "write_scope": [] if read_only else copy.deepcopy(approved_item["write_scope"]),
         "context_policy": {
             "paths_first": True,
@@ -544,7 +594,7 @@ def current_worker_report(
         "epic_id": packet["epic_id"],
         "issue_id": packet["issue_id"],
         "branch": packet["branch"],
-        "worktree": str(repo),
+        "worktree": packet["worktree"],
         "changed_files": ["skills/issue-implementation-loop/SKILL.md"],
         "verification": [{"command": "python3 -m unittest", "result": "passed"}],
         "base_sha": BASE_SHA,

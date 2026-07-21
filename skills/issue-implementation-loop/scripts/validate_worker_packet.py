@@ -17,10 +17,26 @@ from issue_implementation_loop import dump_json, load_json, validate_worker_pack
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("worker_packet")
+    parser.add_argument("--repo-root", required=True, help="Trusted coordinator repo root.")
+    parser.add_argument(
+        "--assigned-worktree",
+        required=True,
+        help="Trusted coordinator-assigned worker worktree.",
+    )
+    parser.add_argument("--envelope", required=True, help="Trusted active Envelope path.")
+    parser.add_argument(
+        "--runtime-state", required=True, help="Trusted active Runtime State path."
+    )
     parser.add_argument("--json", action="store_true", help="Emit JSON result.")
     args = parser.parse_args()
 
-    errors = validate_worker_packet(load_json(args.worker_packet))
+    errors = validate_worker_packet(
+        load_json(args.worker_packet),
+        repo_root=args.repo_root,
+        assigned_worktree=args.assigned_worktree,
+        envelope_path=args.envelope,
+        runtime_state_path=args.runtime_state,
+    )
     if args.json:
         print(dump_json({"ok": not errors, "errors": errors}), end="")
     elif errors:

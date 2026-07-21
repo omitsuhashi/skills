@@ -7,6 +7,10 @@ Build and validate bounded handoffs with:
 - `scripts/build_worker_packet.py`
 - `scripts/validate_worker_packet.py`
 
+Builder and validator require coordinator-owned `--repo-root`,
+`--assigned-worktree`, `--envelope`, and `--runtime-state`. Canonicalize these
+independently; packet fields never select trust roots or active artifacts.
+
 Worker Packet v3 is current-only. V1/V2 return `SCHEMA_UNSUPPORTED`. Executor and
 reviewer packets share this schema; only `task_kind`, access policy, and write
 scope differ.
@@ -42,7 +46,8 @@ python3 <skill-dir>/scripts/validate_worker_report.py <worker-report.json> \
   --dispatch-packet <worker-or-reviewer-packet.json> \
   --runtime-state <runtime-state.json> \
   --envelope <execution-envelope.json> \
-  --repo-root <repo-root>
+  --repo-root <repo-root> \
+  --assigned-worktree <assigned-worktree>
 ```
 
 Envelope, report, dispatch, and runtime bindings plus dispatch identity must match;

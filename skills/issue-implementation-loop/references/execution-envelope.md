@@ -73,6 +73,9 @@ Every work item declares how its branch is created:
 - `{"type": "blocker_head", "issue": "G2PR-001"}`: branch from exactly one prerequisite issue head whose dependency edge uses `base_effect: "branch_from_blocker_head"`.
 - `{"type": "integration_head", "integration_issue": "G2PR-010"}`: branch from exactly one approved integration work item whose dependency edge uses `base_effect: "branch_from_integration_head"`.
 
+Dependency objects are not caller-selected expansions of the sealed dependency IDs.
+They must equal the canonical typed-edge projection in `dependency-contract.md`.
+
 Do not branch from multiple blocker or integration heads. Add an integration work item or integration branch when downstream code needs more than one prerequisite head.
 
 ## Remote Delivery Policy

@@ -70,6 +70,15 @@ class ValidationTests(unittest.TestCase):
                 "dependencies": lambda value: value["work_items"]["ASBC-003"].__setitem__(
                     "dependencies", []
                 ),
+                "dependency_strength": lambda value: value["work_items"]["ASBC-003"][
+                    "dependencies"
+                ][0].__setitem__("strength", "soft"),
+                "dependency_release": lambda value: value["work_items"]["ASBC-003"][
+                    "dependencies"
+                ][0].__setitem__("release_on", "artifact_ready"),
+                "dependency_base_effect": lambda value: value["work_items"]["ASBC-003"][
+                    "dependencies"
+                ][0].__setitem__("base_effect", "branch_from_blocker_head"),
                 "remote_policy": lambda value: value["remote_write_policy"].__setitem__(
                     "mode", "per_action"
                 ),
@@ -109,6 +118,12 @@ class ValidationTests(unittest.TestCase):
                 "nested_integer_bool": lambda value: value["review_policy"].__setitem__(
                     "max_review_cycles", True
                 ),
+                "session_boolean_as_integer": lambda value: value["context_policy"][
+                    "session_compaction"
+                ].__setitem__("mandatory_phase_transition_gc", 1),
+                "phase_boolean_as_integer": lambda value: value[
+                    "phase_branch_policy"
+                ].__setitem__("phase_approval_commit_required", 1),
             }
             for name, mutate in cases.items():
                 with self.subTest(name=name):
@@ -1307,8 +1322,7 @@ class ValidationTests(unittest.TestCase):
                 str(runtime_path),
                 "--envelope",
                 str(repo / "execution-envelope.json"),
-                "--repo-root",
-                str(repo),
+                *worker_report_trust_args(repo),
             )
 
             self.assertNotEqual(result.returncode, 0)
@@ -1334,8 +1348,7 @@ class ValidationTests(unittest.TestCase):
                 str(runtime_path),
                 "--envelope",
                 str(repo / "execution-envelope.json"),
-                "--repo-root",
-                str(repo),
+                *worker_report_trust_args(repo),
             )
 
             self.assertEqual(result.returncode, 0, result.stderr)
@@ -1361,8 +1374,7 @@ class ValidationTests(unittest.TestCase):
                 str(runtime_path),
                 "--envelope",
                 str(repo / "execution-envelope.json"),
-                "--repo-root",
-                str(repo),
+                *worker_report_trust_args(repo),
             )
 
             self.assertNotEqual(result.returncode, 0)
@@ -1389,8 +1401,7 @@ class ValidationTests(unittest.TestCase):
                 str(runtime_path),
                 "--envelope",
                 str(repo / "execution-envelope.json"),
-                "--repo-root",
-                str(repo),
+                *worker_report_trust_args(repo),
                 "--json",
             )
 
@@ -1430,8 +1441,7 @@ class ValidationTests(unittest.TestCase):
                         str(runtime_path),
                         "--envelope",
                         str(repo / "execution-envelope.json"),
-                        "--repo-root",
-                        str(repo),
+                        *worker_report_trust_args(repo),
                     )
 
                     self.assertEqual(result.returncode, 1)
@@ -1471,8 +1481,7 @@ class ValidationTests(unittest.TestCase):
                 str(runtime_path),
                 "--envelope",
                 str(repo / "execution-envelope.json"),
-                "--repo-root",
-                str(repo),
+                *worker_report_trust_args(repo),
                 "--json",
             )
 
@@ -1502,8 +1511,7 @@ class ValidationTests(unittest.TestCase):
                 str(runtime_path),
                 "--envelope",
                 str(repo / "execution-envelope.json"),
-                "--repo-root",
-                str(repo),
+                *worker_report_trust_args(repo),
                 "--json",
             )
 

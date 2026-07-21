@@ -11,6 +11,10 @@ Represent dependency edges as `blocked issue -> required prerequisite`.
 
 ## Rules
 
+- Project sealed dependency IDs exactly as `hard` / `review_approved`; derive
+  `base_effect` from `epic_base`, `blocker_head`, or `integration_head`. Reject any
+  typed-edge substitution with `BINDING_MISMATCH`.
+
 - Validate references and cycles before execution.
 - A hard edge must explain why downstream cannot safely start yet.
 - `release_on` must be observable from a coordinator event or runtime state.

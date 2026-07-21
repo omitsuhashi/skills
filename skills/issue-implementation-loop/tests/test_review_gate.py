@@ -13,6 +13,7 @@ class ReviewGateTests(unittest.TestCase):
         )
         self.assertIn("--envelope <execution-envelope.json>", text)
         self.assertIn("--repo-root <repo-root>", text)
+        self.assertIn("--assigned-worktree <assigned-worktree>", text)
         self.assertIn("fresh envelope -> packet -> spec", text)
 
     def result_artifacts(
@@ -82,8 +83,7 @@ class ReviewGateTests(unittest.TestCase):
                 str(runtime_path),
                 "--envelope",
                 str(envelope_path),
-                "--repo-root",
-                str(repo),
+                *worker_report_trust_args(repo),
                 "--json",
             )
 
@@ -113,8 +113,7 @@ class ReviewGateTests(unittest.TestCase):
                 str(runtime_path),
                 "--envelope",
                 str(envelope_path),
-                "--repo-root",
-                str(repo),
+                *worker_report_trust_args(repo),
                 "--json",
             )
 
@@ -159,8 +158,7 @@ class ReviewGateTests(unittest.TestCase):
                 str(runtime_path),
                 "--envelope",
                 str(envelope_path),
-                "--repo-root",
-                str(repo),
+                *worker_report_trust_args(repo),
                 "--json",
             )
 
@@ -197,8 +195,7 @@ class ReviewGateTests(unittest.TestCase):
                         str(paths["runtime"]),
                         "--envelope",
                         str(paths["envelope"]),
-                        "--repo-root",
-                        str(repo),
+                        *worker_report_trust_args(repo),
                         "--json",
                     )
 

@@ -17,6 +17,11 @@ def main() -> int:
     parser.add_argument("--runtime-state", required=True)
     parser.add_argument("--envelope", required=True)
     parser.add_argument("--repo-root", required=True, help="Trusted Git worktree root.")
+    parser.add_argument(
+        "--assigned-worktree",
+        required=True,
+        help="Trusted coordinator-assigned worker worktree.",
+    )
     parser.add_argument("--json", action="store_true", help="Emit JSON result.")
     args = parser.parse_args()
 
@@ -34,6 +39,7 @@ def main() -> int:
             runtime_state,
             envelope,
             args.repo_root,
+            assigned_worktree=args.assigned_worktree,
             envelope_path=args.envelope,
             runtime_state_path=args.runtime_state,
         )

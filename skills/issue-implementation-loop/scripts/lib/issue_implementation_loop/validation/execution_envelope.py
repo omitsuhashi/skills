@@ -189,9 +189,8 @@ def _validate_exact_policy_object(
     ):
         return
     for field, expected in required_values.items():
-        if value.get(field) != expected or (
-            type(expected) is int and type(value.get(field)) is not int
-        ):
+        actual = value.get(field)
+        if type(actual) is not type(expected) or actual != expected:
             rendered = str(expected).lower() if isinstance(expected, bool) else str(expected)
             errors.append(f"{prefix}.{field} must be {rendered}")
 
@@ -224,7 +223,12 @@ def _validate_hardening_candidates_policy(policy: Any, errors: list[str]) -> Non
         errors.append(f"{prefix}.worker_packet_decision_state must be forbidden")
 
 
-def _validate_approved_intent(envelope: dict[str, Any], packet: dict[str, Any]) -> bool:
+def _validate_approved_intent(
+    envelope: dict[str, Any],
+    packet: dict[str, Any],
+    *,
+    check_dependencies: bool = True,
+) -> bool:
     if envelope.get("epic_id") != packet.get("epic_id"):
         return False
     remote = envelope.get("remote_write_policy")
@@ -256,12 +260,32 @@ def _validate_approved_intent(envelope: dict[str, Any], packet: dict[str, Any]) 
         dependencies = item.get("dependencies")
         if not isinstance(dependencies, list):
             return False
-        projected = [
-            dependency.get("issue")
-            for dependency in dependencies
-            if isinstance(dependency, dict)
-        ]
-        if projected != approved.get("dependencies"):
+        base_policy = item.get("base_policy")
+        base_policy_type = (
+            base_policy.get("type") if isinstance(base_policy, dict) else None
+        )
+        projected = []
+        for dependency in approved.get("dependencies", []):
+            base_effect = "none"
+            if (
+                base_policy_type == "blocker_head"
+                and base_policy.get("issue") == dependency
+            ):
+                base_effect = "branch_from_blocker_head"
+            elif (
+                base_policy_type == "integration_head"
+                and base_policy.get("integration_issue") == dependency
+            ):
+                base_effect = "branch_from_integration_head"
+            projected.append(
+                {
+                    "issue": dependency,
+                    "strength": "hard",
+                    "release_on": "review_approved",
+                    "base_effect": base_effect,
+                }
+            )
+        if check_dependencies and dependencies != projected:
             return False
     return True
 
@@ -554,6 +578,29 @@ def validate_execution_envelope(
     if cycle:
         errors.append("dependency cycle detected: " + " -> ".join(cycle))
     if errors:
+        dependency_projection_errors_only = all(
+            error.startswith("work_items.")
+            and ".base_policy.type must be " in error
+            for error in errors
+        )
+        if dependency_projection_errors_only:
+            try:
+                packet = load_verified_input_packet(
+                    Path.cwd() if repo_root is None else repo_root,
+                    envelope.get("approved_spec_binding"),
+                    ancestor_ref=epic_base.get("sha") if isinstance(epic_base, dict) else None,
+                )
+            except BindingError:
+                return errors
+            if (
+                _validate_approved_intent(
+                    envelope,
+                    packet,
+                    check_dependencies=False,
+                )
+                and not _validate_approved_intent(envelope, packet)
+            ):
+                return ["BINDING_MISMATCH"]
         return errors
     try:
         packet = load_verified_input_packet(

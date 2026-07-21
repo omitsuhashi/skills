@@ -514,8 +514,7 @@ class ApprovedSpecBindingTests(unittest.TestCase):
                 review_packet_a["source_revision"]["runtime_state"]["path"],
                 "--envelope",
                 review_packet_a["source_revision"]["execution_envelope"]["path"],
-                "--repo-root",
-                str(repo),
+                *fixtures.worker_report_trust_args(repo),
                 "--json",
             )
             self.assertEqual(accepted_review_a.returncode, 0, accepted_review_a.stderr)
@@ -650,8 +649,7 @@ class ApprovedSpecBindingTests(unittest.TestCase):
                 str(runtime_path),
                 "--envelope",
                 str(envelope_path),
-                "--repo-root",
-                str(repo),
+                *fixtures.worker_report_trust_args(repo),
                 "--json",
             )
             self.assertEqual(rejected_review.returncode, 1)

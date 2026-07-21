@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import os
 from pathlib import Path
 from typing import Any
@@ -8,8 +7,6 @@ from typing import Any
 from ..approved_spec_binding import (
     BindingError,
     approved_spec_binding_ref,
-    load_verified_input_packet,
-    verify_approved_spec_binding,
 )
 from ..identifiers import is_issue_id, is_lower_kebab
 from ..worker_packet import (
@@ -22,8 +19,9 @@ from ..worker_packet import (
     PACKET_CONTEXT_BUDGET_EXCEEDED,
     TASK_KINDS,
     count_words,
-    file_sha256,
     packet_word_count,
+    source_revision_record,
+    trusted_worker_context,
 )
 
 
@@ -121,6 +119,17 @@ def _reject_unknown_fields(
             errors.append(f"unknown field: {display}")
 
 
+def _require_fields(
+    value: dict[str, Any],
+    required: set[str],
+    path: str,
+    errors: list[str],
+) -> None:
+    for key in sorted(required - set(value)):
+        display = f"{path}.{key}" if path else key
+        errors.append(f"{display} is required")
+
+
 def _resolve_packet_path(worktree: str, raw_path: str) -> Path | None:
     if not raw_path.strip() or raw_path.startswith("~"):
         return None
@@ -158,47 +167,34 @@ def _write_scope_path(scope: str) -> str:
     return scope.removeprefix("path:")
 
 
-def _load_json_file(path: Path, field: str, errors: list[str]) -> dict[str, Any] | None:
-    try:
-        with path.open(encoding="utf-8") as handle:
-            value = json.load(handle)
-    except OSError as exc:
-        errors.append(f"{field}.path is unreadable: {exc}")
-        return None
-    except json.JSONDecodeError as exc:
-        errors.append(f"{field}.path is not valid JSON: {exc}")
-        return None
-    if not isinstance(value, dict):
-        errors.append(f"{field}.path must contain a JSON object")
-        return None
-    return value
-
-
-def _validate_source_sha(
-    record: dict[str, Any],
-    path: Path,
+def _validate_source_record(
+    record: Any,
+    *,
+    fields: set[str],
+    integer_field: str | None,
     field: str,
     errors: list[str],
 ) -> None:
-    expected = record.get("sha256")
-    if not isinstance(expected, str) or not expected.strip():
-        errors.append(f"{field}.sha256 must be a non-empty string")
+    if not isinstance(record, dict):
+        errors.append(f"{field} is required")
         return
-    try:
-        actual = file_sha256(path)
-    except OSError as exc:
-        errors.append(f"{field}.path is unreadable: {exc}")
-        return
-    if actual != expected:
-        errors.append(f"{field}.sha256 is stale")
-
-
-def _source_path(record: dict[str, Any], field: str, errors: list[str]) -> Path | None:
+    _reject_unknown_fields(record, fields, field, errors)
+    _require_fields(record, fields, field, errors)
     path = record.get("path")
-    if not isinstance(path, str) or not path.strip():
-        errors.append(f"{field}.path must be a non-empty string")
-        return None
-    return Path(path).resolve(strict=False)
+    if not isinstance(path, str) or not path.strip() or not os.path.isabs(path):
+        errors.append(f"{field}.path must be an absolute path")
+    digest = record.get("sha256")
+    if not (
+        isinstance(digest, str)
+        and len(digest) == 64
+        and digest == digest.lower()
+        and all(character in "0123456789abcdef" for character in digest)
+    ):
+        errors.append(f"{field}.sha256 must be lowercase sha256 hex")
+    if integer_field is not None:
+        revision = record.get(integer_field)
+        if type(revision) is not int or revision < 1:
+            errors.append(f"{field}.{integer_field} must be a positive integer")
 
 
 def _validate_source_revision(packet: dict[str, Any], errors: list[str]) -> dict[str, str] | None:
@@ -207,6 +203,7 @@ def _validate_source_revision(packet: dict[str, Any], errors: list[str]) -> dict
         errors.append("source_revision is required")
         return None
     _reject_unknown_fields(source_revision, SOURCE_REVISION_FIELDS, "source_revision", errors)
+    _require_fields(source_revision, SOURCE_REVISION_FIELDS, "source_revision", errors)
     try:
         binding = approved_spec_binding_ref(
             source_revision.get("approved_spec_binding")
@@ -215,88 +212,36 @@ def _validate_source_revision(packet: dict[str, Any], errors: list[str]) -> dict
         errors.append(error.code)
         binding = None
 
-    envelope = source_revision.get("execution_envelope")
-    if not isinstance(envelope, dict):
-        errors.append("source_revision.execution_envelope is required")
-    else:
-        field = "source_revision.execution_envelope"
-        _reject_unknown_fields(envelope, SOURCE_EXECUTION_ENVELOPE_FIELDS, field, errors)
-        envelope_path = _source_path(envelope, field, errors)
-        revision = envelope.get("revision")
-        if not isinstance(revision, int) or revision < 1:
-            errors.append(f"{field}.revision must be a positive integer")
-        if envelope_path is not None:
-            current = _load_json_file(envelope_path, field, errors)
-            if current is not None and current.get("revision") != revision:
-                errors.append(f"{field}.revision is stale")
-            if (
-                binding is not None
-                and current is not None
-                and current.get("approved_spec_binding") != binding
-            ):
-                errors.append("BINDING_MISMATCH")
-            _validate_source_sha(envelope, envelope_path, field, errors)
-
-    runtime = source_revision.get("runtime_state")
-    if not isinstance(runtime, dict):
-        errors.append("source_revision.runtime_state is required")
-    else:
-        field = "source_revision.runtime_state"
-        _reject_unknown_fields(runtime, SOURCE_RUNTIME_STATE_FIELDS, field, errors)
-        runtime_path = _source_path(runtime, field, errors)
-        envelope_revision = runtime.get("envelope_revision")
-        if not isinstance(envelope_revision, int) or envelope_revision < 1:
-            errors.append(f"{field}.envelope_revision must be a positive integer")
-        if runtime_path is not None:
-            current = _load_json_file(runtime_path, field, errors)
-            if current is not None and current.get("envelope_revision") != envelope_revision:
-                errors.append(f"{field}.envelope_revision is stale")
-            if (
-                binding is not None
-                and current is not None
-                and current.get("approved_spec_binding") != binding
-            ):
-                errors.append("BINDING_MISMATCH")
-            _validate_source_sha(runtime, runtime_path, field, errors)
-
-    issue_source = source_revision.get("issue_source")
-    if not isinstance(issue_source, dict):
-        errors.append("source_revision.issue_source is required")
-    else:
-        field = "source_revision.issue_source"
-        _reject_unknown_fields(issue_source, SOURCE_ISSUE_SOURCE_FIELDS, field, errors)
-        issue_source_path = _source_path(issue_source, field, errors)
-        if issue_source_path is not None:
-            _validate_source_sha(issue_source, issue_source_path, field, errors)
+    _validate_source_record(
+        source_revision.get("execution_envelope"),
+        fields=SOURCE_EXECUTION_ENVELOPE_FIELDS,
+        integer_field="revision",
+        field="source_revision.execution_envelope",
+        errors=errors,
+    )
+    _validate_source_record(
+        source_revision.get("runtime_state"),
+        fields=SOURCE_RUNTIME_STATE_FIELDS,
+        integer_field="envelope_revision",
+        field="source_revision.runtime_state",
+        errors=errors,
+    )
+    _validate_source_record(
+        source_revision.get("issue_source"),
+        fields=SOURCE_ISSUE_SOURCE_FIELDS,
+        integer_field=None,
+        field="source_revision.issue_source",
+        errors=errors,
+    )
     return binding
 
 
-def _approved_semantics_match(
-    packet: dict[str, Any], binding: dict[str, str], worktree: str
-) -> bool:
+def _approved_semantics_match(packet: dict[str, Any], trusted: Any) -> bool:
     source_revision = packet.get("source_revision")
     if not isinstance(source_revision, dict):
         return False
-    envelope_record = source_revision.get("execution_envelope")
-    issue_record = source_revision.get("issue_source")
-    if not isinstance(envelope_record, dict) or not isinstance(issue_record, dict):
-        return False
-    envelope_path = envelope_record.get("path")
-    if not isinstance(envelope_path, str):
-        return False
-    try:
-        with Path(envelope_path).open(encoding="utf-8") as handle:
-            envelope = json.load(handle)
-        approved_packet = load_verified_input_packet(
-            worktree,
-            binding,
-            ancestor_ref="HEAD",
-            projection_errors=True,
-        )
-    except (OSError, json.JSONDecodeError, BindingError):
-        return False
-    if not isinstance(envelope, dict):
-        return False
+    envelope = trusted.envelope
+    approved_packet = trusted.approved_packet
     issue_id = packet.get("issue_id")
     approved = next(
         (
@@ -317,28 +262,37 @@ def _approved_semantics_match(
         "verification": approved["verification"],
         "stop_conditions": approved["non_goals"],
     }
-    expected_issue_source = (
-        Path(worktree) / approved["source"]["path"]
-    ).resolve(strict=False)
-    actual_issue_source = issue_record.get("path")
+    expected_sources = source_revision_record(
+        envelope_path=trusted.envelope_path,
+        runtime_path=trusted.runtime_state_path,
+        issue_source_path=trusted.issue_source,
+    )
     return (
-        packet.get("epic_id") == approved_packet.get("epic_id")
+        source_revision == expected_sources
+        and packet.get("worktree") == str(trusted.assigned_worktree)
+        and packet.get("epic_id") == approved_packet.get("epic_id")
         and envelope.get("epic_id") == approved_packet.get("epic_id")
         and packet.get("issue_title") == approved["title"]
         and packet.get("branch") == envelope_item.get("branch")
         and packet.get("write_scope") == expected_scope
         and packet.get("task") == expected_task
-        and isinstance(actual_issue_source, str)
-        and Path(actual_issue_source).resolve(strict=False) == expected_issue_source
     )
 
 
-def validate_worker_packet(packet: dict[str, Any]) -> list[str]:
+def validate_worker_packet(
+    packet: dict[str, Any],
+    *,
+    repo_root: str | os.PathLike[str],
+    assigned_worktree: str | os.PathLike[str],
+    envelope_path: str | os.PathLike[str],
+    runtime_state_path: str | os.PathLike[str],
+) -> list[str]:
     errors: list[str] = []
     schema_version = packet.get("schema_version")
     if schema_version != 3:
         return ["SCHEMA_UNSUPPORTED"]
     _reject_unknown_fields(packet, TOP_LEVEL_FIELDS_V3, "", errors)
+    _require_fields(packet, TOP_LEVEL_FIELDS_V3, "", errors)
     if packet.get("packet_type") != "issue_worker_dispatch":
         errors.append("packet_type must be issue_worker_dispatch")
 
@@ -354,6 +308,10 @@ def validate_worker_packet(packet: dict[str, Any]) -> list[str]:
     worktree = packet.get("worktree")
     if not isinstance(worktree, str) or not os.path.isabs(worktree):
         errors.append("worktree must be an absolute path")
+    try:
+        trusted_path_root = str(Path(assigned_worktree).resolve(strict=False))
+    except (OSError, TypeError):
+        return ["BINDING_MISMATCH"]
 
     task_kind = packet.get("task_kind")
     access_mode = packet.get("access_mode")
@@ -379,7 +337,7 @@ def validate_worker_packet(packet: dict[str, Any]) -> list[str]:
             errors.append(f"{task_kind} packets require a non-empty write_scope")
     if task_kind in {"review", "inspect"} and access_mode != "read_only":
         errors.append(f"{task_kind} packets require access_mode=read_only")
-    if isinstance(worktree, str) and os.path.isabs(worktree) and isinstance(write_scope, list):
+    if os.path.isabs(trusted_path_root) and isinstance(write_scope, list):
         for index, scope in enumerate(write_scope):
             if not isinstance(scope, str) or not scope.strip():
                 continue
@@ -387,7 +345,7 @@ def validate_worker_packet(packet: dict[str, Any]) -> list[str]:
                 errors.append(f"write_scope[{index}] must use path:<path>")
                 continue
             _validate_packet_path(
-                worktree=worktree,
+                worktree=trusted_path_root,
                 raw_path=_write_scope_path(scope),
                 field=f"write_scope[{index}]",
                 errors=errors,
@@ -399,9 +357,10 @@ def validate_worker_packet(packet: dict[str, Any]) -> list[str]:
         context_policy = {}
     else:
         _reject_unknown_fields(context_policy, CONTEXT_POLICY_FIELDS, "context_policy", errors)
+        _require_fields(context_policy, CONTEXT_POLICY_FIELDS, "context_policy", errors)
     if context_policy.get("paths_first") is not True:
         errors.append("context_policy.paths_first must be true")
-    max_packet_words = context_policy.get("max_packet_words", DEFAULT_PACKET_WORDS)
+    max_packet_words = context_policy.get("max_packet_words")
     hard_max_words = context_policy.get("hard_max_packet_words", HARD_PACKET_WORDS)
     max_read_paths = context_policy.get("max_read_paths", MAX_READ_PATHS)
     per_file_words = context_policy.get(
@@ -451,9 +410,9 @@ def validate_worker_packet(packet: dict[str, Any]) -> list[str]:
         path = entry.get("path")
         if not isinstance(path, str) or not path.strip():
             errors.append(f"{prefix}.path must be a non-empty string")
-        elif isinstance(worktree, str) and os.path.isabs(worktree):
+        elif os.path.isabs(trusted_path_root):
             _validate_packet_path(
-                worktree=worktree,
+                worktree=trusted_path_root,
                 raw_path=path,
                 field=f"{prefix}.path",
                 errors=errors,
@@ -464,7 +423,7 @@ def validate_worker_packet(packet: dict[str, Any]) -> list[str]:
         elif purpose is not None and (not isinstance(purpose, str) or not purpose.strip()):
             errors.append(f"{prefix}.purpose must be a non-empty string")
 
-    inline_context = packet.get("inline_context", [])
+    inline_context = packet.get("inline_context")
     if not isinstance(inline_context, list):
         errors.append("inline_context must be a list")
         inline_context = []
@@ -480,9 +439,9 @@ def validate_worker_packet(packet: dict[str, Any]) -> list[str]:
         excerpt = entry.get("excerpt")
         if not isinstance(path, str) or not path.strip():
             errors.append(f"{prefix}.path must be a non-empty string")
-        elif isinstance(worktree, str) and os.path.isabs(worktree):
+        elif os.path.isabs(trusted_path_root):
             _validate_packet_path(
-                worktree=worktree,
+                worktree=trusted_path_root,
                 raw_path=path,
                 field=f"{prefix}.path",
                 errors=errors,
@@ -552,16 +511,17 @@ def validate_worker_packet(packet: dict[str, Any]) -> list[str]:
         errors.append(f"{PACKET_CONTEXT_BUDGET_EXCEEDED}: packet words {words} > {max_packet_words}")
     if words > HARD_PACKET_WORDS:
         errors.append(f"{PACKET_CONTEXT_BUDGET_EXCEEDED}: packet words {words} > hard {HARD_PACKET_WORDS}")
-    if not errors and binding is not None and isinstance(worktree, str):
+    if not errors and binding is not None and isinstance(issue_id, str):
         try:
-            verify_approved_spec_binding(
-                worktree,
-                binding,
-                ancestor_ref="HEAD",
-                projection_errors=True,
+            trusted = trusted_worker_context(
+                repo_root=repo_root,
+                assigned_worktree=assigned_worktree,
+                envelope_path=envelope_path,
+                runtime_state_path=runtime_state_path,
+                issue_id=issue_id,
             )
-        except BindingError as error:
-            return [error.code]
-        if not _approved_semantics_match(packet, binding, worktree):
+        except ValueError as error:
+            return [str(error)]
+        if not _approved_semantics_match(packet, trusted):
             return ["BINDING_MISMATCH"]
     return errors

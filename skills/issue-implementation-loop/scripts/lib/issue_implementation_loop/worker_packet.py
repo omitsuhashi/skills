@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +24,20 @@ PACKET_CONTEXT_BUDGET_EXCEEDED = "PACKET_CONTEXT_BUDGET_EXCEEDED"
 WORD_RE = re.compile(r"[A-Za-z0-9_]+(?:[-'][A-Za-z0-9_]+)*|[^\W\s_]+", re.UNICODE)
 TASK_KINDS = {"implement", "fix", "review", "inspect"}
 ACCESS_MODES = {"read_write", "read_only"}
+
+
+@dataclass(frozen=True)
+class TrustedWorkerContext:
+    repo_root: Path
+    assigned_worktree: Path
+    envelope_path: Path
+    runtime_state_path: Path
+    envelope: dict[str, Any]
+    runtime_state: dict[str, Any]
+    approved_packet: dict[str, Any]
+    approved_item: dict[str, Any]
+    envelope_item: dict[str, Any]
+    issue_source: Path
 
 
 def count_words(text: str) -> int:
@@ -94,28 +110,57 @@ def source_revision_record(
     }
 
 
-def _approved_dispatch_intent(
+def _canonical_existing_path(
+    raw_path: str | Path,
     *,
-    worktree: str,
+    directory: bool,
+) -> Path:
+    candidate = Path(raw_path)
+    if not candidate.is_absolute():
+        raise ValueError("BINDING_MISMATCH")
+    try:
+        canonical = candidate.resolve(strict=True)
+    except OSError:
+        raise ValueError("BINDING_MISMATCH") from None
+    if directory and not canonical.is_dir():
+        raise ValueError("BINDING_MISMATCH")
+    if not directory and not canonical.is_file():
+        raise ValueError("BINDING_MISMATCH")
+    return canonical
+
+
+def _contains(root: Path, candidate: Path) -> bool:
+    try:
+        return os.path.commonpath([str(root), str(candidate)]) == str(root)
+    except ValueError:
+        return False
+
+
+def trusted_worker_context(
+    *,
+    repo_root: str | Path,
+    assigned_worktree: str | Path,
     envelope_path: str | Path,
-    runtime_path: str | Path,
+    runtime_state_path: str | Path,
     issue_id: str,
-) -> tuple[dict[str, Any], dict[str, Any], Path]:
+) -> TrustedWorkerContext:
     from .validation.execution_envelope import validate_execution_envelope
     from .validation.runtime_state import validate_runtime_epoch, validate_runtime_state
 
-    repo_root = Path(worktree)
-    envelope = _load_json(envelope_path)
-    envelope_errors = validate_execution_envelope(envelope, repo_root)
-    if envelope_errors:
-        raise ValueError(envelope_errors[0])
-    runtime = _load_json(runtime_path)
-    runtime_errors = validate_runtime_state(runtime)
-    if runtime_errors:
-        raise ValueError(runtime_errors[0])
-    epoch_errors = validate_runtime_epoch(envelope, runtime)
-    if epoch_errors:
+    canonical_repo = _canonical_existing_path(repo_root, directory=True)
+    canonical_worktree = _canonical_existing_path(assigned_worktree, directory=True)
+    canonical_envelope = _canonical_existing_path(envelope_path, directory=False)
+    canonical_runtime = _canonical_existing_path(runtime_state_path, directory=False)
+    if not _contains(canonical_repo, canonical_envelope):
         raise ValueError("BINDING_MISMATCH")
+    try:
+        envelope = _load_json(canonical_envelope)
+        runtime = _load_json(canonical_runtime)
+    except (OSError, json.JSONDecodeError):
+        raise ValueError("BINDING_MISMATCH") from None
+    if not isinstance(envelope, dict) or not isinstance(runtime, dict):
+        raise ValueError("BINDING_MISMATCH")
+    envelope_errors = validate_execution_envelope(envelope, canonical_repo)
     binding = envelope.get("approved_spec_binding")
     if runtime.get("approved_spec_binding") != binding:
         raise ValueError("BINDING_MISMATCH")
@@ -123,13 +168,21 @@ def _approved_dispatch_intent(
         raise ValueError("BINDING_MISMATCH")
     try:
         packet = load_verified_input_packet(
-            repo_root,
+            canonical_worktree,
             binding,
             ancestor_ref="HEAD",
             projection_errors=True,
         )
     except BindingError as error:
         raise ValueError(error.code) from None
+    if envelope_errors:
+        raise ValueError(envelope_errors[0])
+    runtime_errors = validate_runtime_state(runtime)
+    if runtime_errors:
+        raise ValueError(runtime_errors[0])
+    epoch_errors = validate_runtime_epoch(envelope, runtime)
+    if epoch_errors:
+        raise ValueError("BINDING_MISMATCH")
     approved = next(
         (
             item
@@ -141,8 +194,35 @@ def _approved_dispatch_intent(
     envelope_item = envelope.get("work_items", {}).get(issue_id)
     if not isinstance(approved, dict) or not isinstance(envelope_item, dict):
         raise ValueError("BINDING_MISMATCH")
-    issue_source = (repo_root / approved["source"]["path"]).resolve(strict=False)
-    return envelope, approved, issue_source
+    assigned_by_envelope = envelope_item.get("worktree_path")
+    if not isinstance(assigned_by_envelope, str):
+        raise ValueError("BINDING_MISMATCH")
+    try:
+        canonical_assigned = Path(assigned_by_envelope).resolve(strict=True)
+    except OSError:
+        raise ValueError("BINDING_MISMATCH") from None
+    if canonical_assigned != canonical_worktree:
+        raise ValueError("BINDING_MISMATCH")
+    try:
+        issue_source = (
+            canonical_worktree / approved["source"]["path"]
+        ).resolve(strict=True)
+    except (KeyError, OSError, TypeError):
+        raise ValueError("BINDING_MISMATCH") from None
+    if not issue_source.is_file() or not _contains(canonical_worktree, issue_source):
+        raise ValueError("BINDING_MISMATCH")
+    return TrustedWorkerContext(
+        repo_root=canonical_repo,
+        assigned_worktree=canonical_worktree,
+        envelope_path=canonical_envelope,
+        runtime_state_path=canonical_runtime,
+        envelope=envelope,
+        runtime_state=runtime,
+        approved_packet=packet,
+        approved_item=approved,
+        envelope_item=envelope_item,
+        issue_source=issue_source,
+    )
 
 
 def read_path_record(path: str, purpose: str = "source") -> dict[str, str]:
@@ -160,14 +240,15 @@ def build_worker_packet(
     *,
     issue_id: str,
     dispatch_id: str,
-    worktree: str,
+    repo_root: str,
+    assigned_worktree: str,
+    envelope_path: str,
+    runtime_state_path: str,
     read_paths: list[str],
     read_purposes: list[str] | None = None,
     inline_excerpts: list[str],
     max_packet_words: int = DEFAULT_PACKET_WORDS,
     task_kind: str = "implement",
-    source_envelope: str | None = None,
-    source_runtime: str | None = None,
 ) -> dict[str, Any]:
     if read_purposes is None:
         read_purposes = ["source"] * len(read_paths)
@@ -176,16 +257,15 @@ def build_worker_packet(
 
     if task_kind not in TASK_KINDS:
         raise ValueError(f"task_kind must be one of {sorted(TASK_KINDS)}")
-    if not source_envelope or not source_runtime:
-        raise ValueError(
-            "worker packet v3 requires --source-envelope and --source-runtime"
-        )
-    envelope, approved, issue_source = _approved_dispatch_intent(
-        worktree=worktree,
-        envelope_path=source_envelope,
-        runtime_path=source_runtime,
+    trusted = trusted_worker_context(
+        repo_root=repo_root,
+        assigned_worktree=assigned_worktree,
+        envelope_path=envelope_path,
+        runtime_state_path=runtime_state_path,
         issue_id=issue_id,
     )
+    envelope = trusted.envelope
+    approved = trusted.approved_item
     read_only = task_kind in {"review", "inspect"}
     access_mode = "read_only" if read_only else "read_write"
     write_scope = [] if read_only else list(approved["write_scope"])
@@ -197,8 +277,8 @@ def build_worker_packet(
         "issue_id": issue_id,
         "issue_title": approved["title"],
         "dispatch_id": dispatch_id,
-        "branch": envelope["work_items"][issue_id]["branch"],
-        "worktree": worktree,
+        "branch": trusted.envelope_item["branch"],
+        "worktree": str(trusted.assigned_worktree),
         "write_scope": write_scope,
         "context_policy": worker_packet_context_policy(max_packet_words),
         "read_paths": [
@@ -220,8 +300,8 @@ def build_worker_packet(
     packet["task_kind"] = task_kind
     packet["access_mode"] = access_mode
     packet["source_revision"] = source_revision_record(
-        envelope_path=source_envelope,
-        runtime_path=source_runtime,
-        issue_source_path=issue_source,
+        envelope_path=trusted.envelope_path,
+        runtime_path=trusted.runtime_state_path,
+        issue_source_path=trusted.issue_source,
     )
     return packet

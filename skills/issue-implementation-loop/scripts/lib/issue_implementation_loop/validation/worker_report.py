@@ -39,8 +39,9 @@ def validate_worker_report(
     envelope: dict[str, Any] | None = None,
     repo_root: str | os.PathLike[str] | None = None,
     *,
-    envelope_path: str | os.PathLike[str] | None = None,
-    runtime_state_path: str | os.PathLike[str] | None = None,
+    assigned_worktree: str | os.PathLike[str],
+    envelope_path: str | os.PathLike[str],
+    runtime_state_path: str | os.PathLike[str],
 ) -> list[str]:
     errors: list[str] = []
     if not isinstance(envelope, dict) or repo_root is None:
@@ -58,7 +59,13 @@ def validate_worker_report(
         return epoch_errors
     if not isinstance(dispatch_packet, dict):
         return ["BINDING_MISMATCH"]
-    packet_errors = validate_worker_packet(dispatch_packet)
+    packet_errors = validate_worker_packet(
+        dispatch_packet,
+        repo_root=repo_root,
+        assigned_worktree=assigned_worktree,
+        envelope_path=envelope_path,
+        runtime_state_path=runtime_state_path,
+    )
     if packet_errors:
         return packet_errors
     source_revision = dispatch_packet.get("source_revision", {})
@@ -77,7 +84,7 @@ def validate_worker_report(
         ),
     )
     for snapshot, active_path, revision_field, active_revision in active_snapshots:
-        if not isinstance(snapshot, dict) or active_path is None:
+        if not isinstance(snapshot, dict):
             return ["BINDING_MISMATCH"]
         resolved_active_path = Path(active_path).resolve(strict=False)
         try:
