@@ -1,0 +1,105 @@
+contract_version = 1
+
+[mcp_tools]
+projects_list = "mcp__github__projects_list"
+projects_get = "mcp__github__projects_get"
+projects_write = "mcp__github__projects_write"
+issue_write = "mcp__github__issue_write"
+add_issue_comment = "mcp__github__add_issue_comment"
+
+[host_attestation]
+projects_toolset_enabled = true
+issue_write_enabled = true
+comment_write_enabled = true
+raw_mcp_exposure = "adapter_only"
+adapter_write_exposure = "task_management_only"
+
+[destinations.portfolio_tasks]
+destination_ref = "tasks:portfolio-os"
+owner = "example-owner"
+project_number = 7
+
+[content_targets.portfolio_issues]
+content_target_ref = "task-content:portfolio-os"
+owner = "example-owner"
+repository = "example-repository"
+
+[field_mappings.work_unit_id]
+field_name = "Work Unit ID"
+field_type = "text"
+required = true
+
+[field_mappings.work_unit_name]
+field_name = "Work Unit"
+field_type = "text"
+required = true
+
+[field_mappings.task_type]
+field_name = "Task Type"
+field_type = "single_select"
+required = true
+
+[field_mappings.task_type.options]
+implementation = "Implementation"
+review = "Review"
+research = "Research"
+decision = "Decision"
+coordination = "Coordination"
+maintenance = "Maintenance"
+inbox_triage = "Inbox Triage"
+
+[field_mappings.due_date]
+field_name = "Due Date"
+field_type = "date"
+required = true
+
+[field_mappings.urgency]
+field_name = "Urgency"
+field_type = "single_select"
+required = true
+
+[field_mappings.urgency.options]
+low = "Low"
+normal = "Normal"
+high = "High"
+blocked = "Blocked"
+
+[field_mappings.importance]
+field_name = "Importance"
+field_type = "single_select"
+required = true
+
+[field_mappings.importance.options]
+low = "Low"
+normal = "Normal"
+high = "High"
+critical = "Critical"
+
+[field_mappings.automation_mode]
+field_name = "Automation Mode"
+field_type = "single_select"
+required = true
+
+[field_mappings.automation_mode.options]
+manual_only = "Manual Only"
+assistive = "Assistive"
+trusted_after_approval = "Trusted After Approval"
+
+[field_mappings.approval_required]
+field_name = "Approval Required"
+field_type = "single_select"
+required = true
+
+[field_mappings.approval_required.options]
+true = "Required"
+false = "Not Required"
+
+[field_mappings.source_label]
+field_name = "Source"
+field_type = "text"
+required = false
+
+[field_mappings.source_url]
+field_name = "Source URL"
+field_type = "text"
+required = false

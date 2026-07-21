@@ -1,0 +1,6 @@
+{
+  "backend_key": "remote_tasks",
+  "destination_ref": "https:example.invalid/tasks",
+  "destination_label": "Unsafe tasks",
+  "content_target_ref": null
+}

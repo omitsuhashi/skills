@@ -1,0 +1,26 @@
+{
+  "name": "task-adapter-github-projects",
+  "version": "0.1.0",
+  "description": "Dual-host GitHub Projects adapter contract, host configuration, and fail-closed runtime registration for backend-neutral task management.",
+  "author": {
+    "name": "Omitsuhashi"
+  },
+  "license": "UNLICENSED",
+  "keywords": [
+    "tasks",
+    "github-projects",
+    "portfolio-os"
+  ],
+  "interface": {
+    "displayName": "GitHub Projects Task Adapter",
+    "shortDescription": "Validate GitHub Projects task-adapter contracts and host policy.",
+    "longDescription": "Defines the credential-free GitHub Projects adapter contract and host configuration shared with the Hermes native runtime registration. Provider calls remain disabled until the executable adapter issues are implemented.",
+    "developerName": "Omitsuhashi",
+    "category": "Productivity",
+    "capabilities": [
+      "Tasks",
+      "Configuration"
+    ],
+    "defaultPrompt": "Check the GitHub Projects task-adapter contract and host configuration boundary."
+  }
+}
