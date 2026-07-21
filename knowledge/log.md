@@ -1225,3 +1225,10 @@ append-only で使います。すべての entry は予測しやすい header �
 - write scopeは`plugins/task-management/tests/test_adapter_dispatch.py`と`plugins/task-management/tests/test_github_mcp_route.py`の2ファイルに限定し、無効な先頭word-boundaryの修正と代表的`endpoint = "/graphql"` failing probe追加だけを許可する
 - 既存のclient / API / GraphQL / `gh` / provider禁止を維持し、最終review後もCritical / Important findingが残る場合は自動fixやrisk acceptanceを行わず再停止する
 - POTASK-012のblockerは最終review approvalまで維持する。remote policyは`local_only`のままで、GitHub Issue、push、PR、merge、live Hermes / MCP / credential / Project / Issue変更は未実施
+
+## [2026-07-22] implementation-review | POTASK-012 local PR_READY
+
+- 最終micro-fix `d539ebd`は2つのguard testだけを変更し、`endpoint = "/graphql"` probeを各helperへ追加してTDD RED 23 tests / 2 expected failuresからGREEN 23 / 23へ進めた
+- write contracts 26 / 26、task-management full suite 127 / 127、read adapter / routes各18 / 18、full / micro rangeの`git diff --check`を通過した
+- 独立reviewはfull range `cc1d428..d539ebd`とmicro range `c47a9c7..d539ebd`を`approved`とし、Critical / Important findingは0件だった
+- POTASK-012をlocal `PR_READY`へ移し、`artifact_ready`でPOTASK-013、POTASK-014、POTASK-016をreleaseした。remote / live writeは未実施
