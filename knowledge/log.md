@@ -1168,3 +1168,17 @@ append-only で使います。すべての entry は予測しやすい header �
 - `codex/portfolio-os-task-backend-plugin-skill/epic-base` branchと`/private/tmp/skills-portfolio-os-task-backend-plugin-skill/epic-base` worktreeを作成し、承認済みplanning artifactsをこのphase branchへ移した
 - 初期createはlinked Issue only、確証がないtaskはwrite前にhuman confirmation、十分な確証とeligibilityがある場合だけ`confidence_authorized`とする判断を維持した
 - 次phaseは既存canonical ledgerへのPOTASK follow-up issue分解とIssue Gateであり、実装、push、PR、live activation、GitHub / MCP / credential writeは未実施
+
+## [2026-07-21] issue-draft | Task-management write / preflight follow-up issues
+
+- 既存Epic `portfolio-os-task-backend-plugin-skill` のcanonical ledgerへPOTASK-012からPOTASK-019をIssue Gate draftとして追加した
+- shared Adapter contract v2を起点に、unified route / approval binding / public facadeと、separate GitHub Adapter scaffold / preflight / applyをdependency-awareに分解し、integration verificationへ収束させた
+- POTASK-012だけを`実行可能`、未完了blockerを持つPOTASK-013からPOTASK-019を`ブロック中`とし、blocked issueのphysical worktreeは作らない
+- 各issueにWrite Scope、Acceptance Criteria、Non-goals、Verificationを固定した。GitHub issue mirror、実装、push、PR、live activationは未実施
+
+## [2026-07-21] gate | Task-management write / preflight Issue Gate
+
+- ユーザーがPOTASK-012からPOTASK-019の粒度、blocker graph、dependency order、実行状態、Acceptance CriteriaをIssue Gateとして承認した
+- POTASK-012からPOTASK-019の`レビュー状態`を`承認済み`へ更新し、POTASK-012だけを`実行可能`、後続7件を`ブロック中`に維持した
+- local-first / local-only policyを承認し、GitHub issue mirror、push、PR、merge、live activationをexecution scopeへ追加していない
+- 次phaseはnormalized execution packet、capability preflight、Execution Plan Gate commitであり、implementationはfresh `issue-implementation-loop` coordinatorへ委譲する

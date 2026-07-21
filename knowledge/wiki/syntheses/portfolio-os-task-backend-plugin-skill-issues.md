@@ -2,7 +2,7 @@
 
 ## 状態
 
-Issue Gate / Execution Plan Gate 承認済み。POTASK-001 から POTASK-009 は local `PR_READY`。2026-07-15 に追加承認された POTASK-010 は local 実装・検証済みでPR delivery対象。2026-07-16 に追加承認された POTASK-011 は、backend差をconsumerから隠すpluggable provider adapterとHermes end-to-end call pathを追加する。implementation review 2 cyclesのskills-side Critical / Importantは対応済みで、current companies preflight がHermes `plugin.yaml` exportを読まないcross-repo blockerだけが残る。PR #29 のbranch pushと本文同期は完了した。GitHub issue mirror と merge はまだ行わない。
+POTASK-001 から POTASK-011 は既存 Issue Gate / Execution Plan Gate 承認済みで実装完了。2026-07-21 に、task-management write / preflight Interfaceとseparate GitHub Projects AdapterをPOTASK-012からPOTASK-019へ分解し、Issue Gate承認を得た。新規issueは未実装で、POTASK-012だけが実行可能、POTASK-013からPOTASK-019はblocker release待ち。GitHub issue mirror、push、PR、merge、live activationは行わない。
 
 ## Epic ID
 
@@ -11,8 +11,12 @@ Issue Gate / Execution Plan Gate 承認済み。POTASK-001 から POTASK-009 は
 ## 前提
 
 - 正本仕様: [Portfolio OS Task Backend Plugin Skill Spec](portfolio-os-task-backend-plugin-skill-spec.md)
-- 初回実装 scope は task taxonomy、`TaskDraft` composition、backend / destination routing、adapter operation envelope、preview / guard、typed result mapping まで。POTASK-010 ではbackend-neutral read facade、POTASK-011ではhost-owned routeとpluggable read-only provider adapterを追加する。
-- 外部 adapter の実 write 方針、GitHub Projects mutation、GitHub issue / PR、push、PR creation、merge は adapter / host / delivery workflow の責務であり、この ledger の実装対象外。
+- write / preflight正本仕様: [Task Management Write / Preflight Interface 仕様](task-management-write-preflight-interface-spec.md)
+- GitHub Adapter正本仕様: [GitHub Projects Task Backend Adapter 仕様](task-adapter-github-projects-spec.md)
+- file-level plan: [Task Management Write / Preflight 実装計画](2026-07-21-task-management-write-preflight-implementation-plan.md)
+- POTASK-001からPOTASK-011のhistorical scopeはtask taxonomy、`TaskDraft` composition、read-only routing / facade / provider adapter、docs-only write contractまでである。
+- POTASK-012からPOTASK-019はwrite / preflightを実行可能にし、GitHub Projects mutation Implementationをseparate Adapterへ追加するfollow-upである。route v2 clean break、executable approval binding、linked Issue onlyの新仕様が、旧route v1 compatibilityとdocs-only write記述を置き換える。
+- GitHub issue / PRによるdelivery、push、PR creation、mergeはadapter Implementationではなくremote delivery workflowの責務であり、今回のlocal issue実装scope外である。real GitHub Project / Issue mutationはLive Activation Gateまで行わない。
 - GitHub MCP Server 自体の read/write live smoke test は行わない。通常検証は固定テストデータ / 模擬 tool を使う。
 - local issue ledger を canonical とし、GitHub issues は未作成の optional mirror とする。
 
@@ -30,7 +34,15 @@ Issue Gate / Execution Plan Gate 承認済み。POTASK-001 から POTASK-009 は
 | `portfolio-os-task-backend-plugin-skill` | POTASK-008 | Hermes adapter availability runbook と governance reference を作る | 承認済み | 完了 | `PR_READY` `06f9b6fc7801271f345a8c2772a6d64e7c64f310` | POTASK-004, POTASK-007 | POTASK-009 | 未作成 | approved: `ed62de954b57ff4c5b32f6efaa6098843d85c1ac..06f9b6fc7801271f345a8c2772a6d64e7c64f310` | 未作成 |
 | `portfolio-os-task-backend-plugin-skill` | POTASK-009 | docs / examples / verification / handoff boundary を統合する | 承認済み | 完了 | `PR_READY` `214349fff56bd55ff3e7e68612a499096096803f` | POTASK-006, POTASK-007, POTASK-008 | なし | 未作成 | approved: `06f9b6fc7801271f345a8c2772a6d64e7c64f310..214349fff56bd55ff3e7e68612a499096096803f` | 未作成 |
 | `portfolio-os-task-backend-plugin-skill` | POTASK-010 | backend-neutral task read capability を実装する | 承認済み | 完了 | local verified / PR delivery対象 | POTASK-002, POTASK-007, POTASK-008 | POTASK-011 | 未作成 | PRで追跡 | [#29](https://github.com/omitsuhashi/skills/pull/29) |
-| `portfolio-os-task-backend-plugin-skill` | POTASK-011 | pluggable provider adapter と Hermes end-to-end call path を実装する | 承認済み | 完了 | `PR_READY` `458f712` | POTASK-004, POTASK-010 | なし | 未作成 | approved: `feb8908..458f712` / 2 cycles | [#29](https://github.com/omitsuhashi/skills/pull/29) |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-011 | pluggable provider adapter と Hermes end-to-end call path を実装する | 承認済み | 完了 | `PR_READY` `458f712` | POTASK-004, POTASK-010 | POTASK-012 | 未作成 | approved: `feb8908..458f712` / 2 cycles | [#29](https://github.com/omitsuhashi/skills/pull/29) |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-012 | shared Adapter contract v2 と安全なwrite契約を実装する | 承認済み | 実行可能 | 未着手 | POTASK-011 | POTASK-013, POTASK-014, POTASK-016 | 未作成 | 未実施 | 未作成 |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-013 | unified route v2へ移行しread Interfaceを回帰維持する | 承認済み | ブロック中 | 未着手 | POTASK-012 | POTASK-015 | 未作成 | 未実施 | 未作成 |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-014 | approval digestとconfidence-aware approval policyを実装する | 承認済み | ブロック中 | 未着手 | POTASK-012 | POTASK-015 | 未作成 | 未実施 | 未作成 |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-015 | executable `task_preflight` / `task_apply` facadeを実装する | 承認済み | ブロック中 | 未着手 | POTASK-013, POTASK-014 | POTASK-019 | 未作成 | 未実施 | 未作成 |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-016 | separate GitHub Projects Adapter pluginとhost configを作る | 承認済み | ブロック中 | 未着手 | POTASK-012 | POTASK-017 | 未作成 | 未実施 | 未作成 |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-017 | GitHub Adapterのexecutable preflight / queryを実装する | 承認済み | ブロック中 | 未着手 | POTASK-016 | POTASK-018 | 未作成 | 未実施 | 未作成 |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-018 | GitHub Adapterのcreate/update/comment/report applyを実装する | 承認済み | ブロック中 | 未着手 | POTASK-017 | POTASK-019 | 未作成 | 未実施 | 未作成 |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-019 | dual-host契約・文書・smoke・full verificationを統合する | 承認済み | ブロック中 | 未着手 | POTASK-015, POTASK-018 | なし | 未作成 | 未実施 | 未作成 |
 
 ## Blocker Graph
 
@@ -48,6 +60,16 @@ POTASK-001
 │   ├── POTASK-007
 │   └── POTASK-010
 │       └── POTASK-011
+│           └── POTASK-012
+│               ├── POTASK-013
+│               │   └── POTASK-015
+│               │       └── POTASK-019
+│               ├── POTASK-014
+│               │   └── POTASK-015
+│               └── POTASK-016
+│                   └── POTASK-017
+│                       └── POTASK-018
+│                           └── POTASK-019
 ├── POTASK-003
 │   ├── POTASK-005
 │   └── POTASK-006
@@ -57,8 +79,9 @@ POTASK-001
     └── POTASK-008
 ```
 
-循環依存はない。Issue Gate 承認済みのため、全 issue の `レビュー状態` は `承認済み` とする。
+循環依存はない。POTASK-001からPOTASK-011の`レビュー状態`は既存Issue Gate承認済み。POTASK-012からPOTASK-019も2026-07-21のIssue Gateで承認済みである。
 POTASK-010 は POTASK-002 の contract、POTASK-007 の typed adapter boundary、POTASK-008 の Hermes governance を再利用する follow-up であり、既存 issue を再開しない。POTASK-011 はPOTASK-010のpublic facadeを維持したまま、POTASK-004のroutingを実行可能なprovider adapterへ接続する。
+POTASK-012は完了済みPOTASK-011をbaseにするため`実行可能`。POTASK-013からPOTASK-019は未完了の新規blockerを持つため`ブロック中`で、blocked issueのphysical worktreeは作成しない。
 
 ## 依存順
 
@@ -71,6 +94,11 @@ POTASK-010 は POTASK-002 の contract、POTASK-007 の typed adapter boundary�
 7. POTASK-009
 8. POTASK-010
 9. POTASK-011
+10. POTASK-012
+11. POTASK-013、POTASK-014、POTASK-016
+12. POTASK-015、POTASK-017
+13. POTASK-018
+14. POTASK-019
 
 ## Issues
 
@@ -423,6 +451,330 @@ PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 /Users/omitsuhashi/.code
 git diff --check
 ```
 
+### POTASK-012: shared Adapter contract v2 と安全なwrite契約を実装する
+
+#### 目的
+
+task-managementとseparate Adapterが共有するbackend-neutral wire contract v2を実行可能な型・validator・normative fixturesとして固定し、後続issueが同じseamを独立に実装できるようにする。
+
+#### Write Scope
+
+- `plugins/task-management/task_management/contracts.py`
+- `plugins/task-management/task_management/safety.py`
+- `plugins/task-management/task_management/provider_adapters/`
+- `plugins/task-management/tests/fixtures/adapter-v2/`
+- `plugins/task-management/tests/test_write_contracts.py`
+- `plugins/task-management/tests/test_task_contracts.py`
+
+#### Acceptance Criteria
+
+- `OperationEnvelope`、`TaskPreflightResult`、`ApprovalPreview`、`ApprovalReceipt`、`TaskWriteResult` v2をstrict validationできる。
+- `task.create`、`task.update`、`task.comment`、`task.report`のrequired payloadと`task_ref`条件が仕様どおりである。deleteは拒否する。
+- `TaskDraft`と`TaskBackendDestination`は承認済みbackend-neutral fieldsを維持する。
+- adapter Interfaceは`query`、`preflight`、`apply`の3 operationだけを公開する。
+- unexpected field、float / invalid canonical value、credential-like data、raw provider ID、unsafe URL、raw payloadをfail closedにする。
+- normative accept/reject fixturesが後続GitHub Adapter contract testsから再利用できる。
+
+#### Non-goals
+
+- route v2、approval digest、Hermes tool registration、GitHub Adapter pluginの実装。
+- provider client、canonical task store、persistent ledger。
+
+#### Verification
+
+```bash
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests -p 'test_write_contracts.py'
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests
+git diff --check
+```
+
+### POTASK-013: unified route v2へ移行しread Interfaceを回帰維持する
+
+#### 目的
+
+read-only route v1を、query / preflight / applyのfixed Adapter trioを解決するhost-owned route v2へclean breakし、existing `task_query` consumer contractを維持する。
+
+#### Write Scope
+
+- `plugins/task-management/task_management/route_config.py`
+- `plugins/task-management/task_management/read_adapter.py`
+- `plugins/task-management/task_management/provider_adapters/`
+- `plugins/task-management/config/task-backends.example.toml`
+- `plugins/task-management/tests/test_task_read_routes.py`
+- `plugins/task-management/tests/test_task_read_adapter.py`
+- `plugins/task-management/scripts/smoke_test_hermes_read.py`
+
+#### Acceptance Criteria
+
+- `TASK_MANAGEMENT_ROUTES_FILE`と`contract_version = 2`を使い、`adapter_key`、`query_tool`、`preflight_tool`、`apply_tool`をhost configから解決する。
+- tool name、provider ref、file path、GitHub mappingをmodel inputにしない。
+- `TASK_MANAGEMENT_READ_ROUTES_FILE`、`TASK_MANAGEMENT_READ_ADAPTER_TOOL`、route v1 compatibility wrapperをproduction codeから除去する。
+- missing / duplicate / version mismatch / namespace mismatch / capability mismatchをdispatch前にtyped failureにする。
+- existing `task_query` request / `TaskSnapshotResult`とlocal_json fixture-only smokeが回帰しない。
+- implicit GitHub、direct GraphQL、`gh` fallbackを持たない。
+
+#### Non-goals
+
+- live route file配置、Hermes profile edit、MCP registration。
+- approval / write facade、GitHub field mapping。
+
+#### Verification
+
+```bash
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests -p 'test_task_read_routes.py'
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests -p 'test_task_read_adapter.py'
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 plugins/task-management/scripts/smoke_test_hermes_read.py
+git diff --check
+```
+
+### POTASK-014: approval digestとconfidence-aware approval policyを実装する
+
+#### 目的
+
+review時とapply時のoperation identityをcanonical digestで固定し、確証がないtaskをwrite前にhuman confirmationへ戻すfail-closed approval policyを実装する。
+
+#### Write Scope
+
+- `plugins/task-management/task_management/approval.py`
+- `plugins/task-management/task_management/preflight.py`
+- `plugins/task-management/tests/test_approval_binding.py`
+- `plugins/task-management/tests/test_preflight.py`
+- approval test vectors under `plugins/task-management/tests/fixtures/adapter-v2/`
+
+#### Acceptance Criteria
+
+- canonical JSONは`null`、boolean、integer、NFC string、array、objectだけを受理し、deterministic SHA-256 digestを作る。
+- digestはoperation type、backend / destination、task ref、task content / fields、content target、route binding、ordered expected side effectsをすべてbindingする。
+- 各binding fieldの1-field mutation、route変更、side-effect変更で`approval_mismatch`になり、adapter apply callは0回である。
+- `approval_required: true`、non-empty `fields.review_notes`、adapter uncertaintyは`human_required`を強制する。
+- `confidence_authorized`はpreflight pass、`confidence_eligible`、unresolved uncertaintyなしの場合だけ許す。
+- preflight passとwrite approvalを別状態・別testsにする。approval digestはactor identity proofと表現しない。
+
+#### Non-goals
+
+- signing key、approval database、queue、dispatcher、result store。
+- task intentの意味上の確証をtask-managementが自動推論すること。
+
+#### Verification
+
+```bash
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests -p 'test_approval_binding.py'
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests -p 'test_preflight.py'
+git diff --check
+```
+
+### POTASK-015: executable `task_preflight` / `task_apply` facadeを実装する
+
+#### 目的
+
+task-management public Interfaceとしてexecutable preflight / applyを公開し、route resolution、re-preflight、approval identity、Adapter dispatch、result normalizationを深いModuleの内側へ隠す。
+
+#### Write Scope
+
+- `plugins/task-management/task_management/write_adapter.py`
+- `plugins/task-management/task_management/normalization.py`
+- `plugins/task-management/task_management/__init__.py`
+- `plugins/task-management/__init__.py`
+- `plugins/task-management/plugin.yaml`
+- `plugins/task-management/.codex-plugin/plugin.json`
+- `plugins/task-management/tests/test_task_write_adapter.py`
+- `plugins/task-management/tests/test_write_normalization.py`
+- `plugins/task-management/tests/test_hermes_plugin_manifest.py`
+- `plugins/task-management/scripts/smoke_test_hermes_write.py`
+
+#### Acceptance Criteria
+
+- `task_preflight`と`task_apply`をruntime登録し、`plugin.yaml.exports.toolsets`に`task-management-write`を追加する。
+- `task_apply`はexact ApprovalPreviewとReceiptを受け、current route reloadとadapter re-preflight後に一致したoperationだけをdispatchする。
+- success、setup blocker、provider failure、partial failure、retryable / non-retryableをbackend-neutral `TaskWriteResult`へ正規化する。
+- resultはsafe task ref / HTTPS URL / title / human actionを許し、raw provider data、credential、GitHub raw IDを遮断する。
+- fake Adapter smokeでcreate success、human-required stop、approval mismatch dispatch 0回を実証する。
+- task-management versionを`0.4.0`へ同期し、Companies handoff Interface v2をmanifest / runtime / docsから検証できる。
+
+#### Non-goals
+
+- GitHub MCP method / field mapping、provider retry implementation。
+- live install / enable、Companies repo変更。
+
+#### Verification
+
+```bash
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 plugins/task-management/scripts/smoke_test_hermes_write.py
+python3 scripts/validate_dual_host_compatibility.py --plugin plugins/task-management
+git diff --check
+```
+
+### POTASK-016: separate GitHub Projects Adapter pluginとhost configを作る
+
+#### 目的
+
+GitHub provider knowledgeをtask-managementから隔離するdual-host plugin distributionを作り、fixed MCP tools、opaque destination mapping、field mapping、delegation attestationをfail-closed configとして定義する。
+
+#### Write Scope
+
+- `plugins/task-adapter-github-projects/.codex-plugin/plugin.json`
+- `plugins/task-adapter-github-projects/plugin.yaml`
+- `plugins/task-adapter-github-projects/__init__.py`
+- `plugins/task-adapter-github-projects/README.md`
+- `plugins/task-adapter-github-projects/config/github-projects.example.toml`
+- `plugins/task-adapter-github-projects/task_adapter_github_projects/{__init__,contracts,config,safety}.py`
+- `plugins/task-adapter-github-projects/tests/fixtures/`
+- `plugins/task-adapter-github-projects/tests/test_contract_compatibility.py`
+- `plugins/task-adapter-github-projects/tests/test_config.py`
+- `plugins/task-adapter-github-projects/tests/test_hermes_plugin.py`
+- `plugins/task-adapter-github-projects/tests/test_safety.py`
+
+#### Acceptance Criteria
+
+- `plugin-creator` scaffoldを基にCodex / Hermes manifests、importable `register(ctx)`、adapter runtime tool trioを持つversion `0.1.0` pluginが成立する。
+- configはexact MCP tool allowlist、opaque destination / content target、GitHub owner / project / repository、canonical field mapping、host attestationを持つ。
+- credential、caller-supplied tool name、arbitrary dispatch、unknown destination、unsafe `raw_mcp_exposure` / `adapter_write_exposure`を拒否する。
+- adapter write toolsetはhost policy上`task_management_only`であり、model / child agentへ直接公開しない。
+- task-management normative adapter-v2 fixturesとのcompatibility testsが通る。
+
+#### Non-goals
+
+- MCP registration、credential / permission setup、live Project / Issue access。
+- preflight provider call、query、write orchestration。
+
+#### Verification
+
+```bash
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-adapter-github-projects/tests
+python3 /Users/omitsuhashi/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/task-adapter-github-projects
+python3 scripts/validate_dual_host_compatibility.py --plugin plugins/task-adapter-github-projects
+git diff --check
+```
+
+### POTASK-017: GitHub Adapterのexecutable preflight / queryを実装する
+
+#### 目的
+
+official GitHub MCP Serverのread surfaceをfake dispatcher経由で呼び、auth / permission / Project / field / capability / delegation readinessとnormalized queryを実行可能にする。
+
+#### Write Scope
+
+- `plugins/task-adapter-github-projects/task_adapter_github_projects/adapter.py`
+- `plugins/task-adapter-github-projects/task_adapter_github_projects/normalization.py`
+- `plugins/task-adapter-github-projects/tests/test_preflight.py`
+- `plugins/task-adapter-github-projects/tests/test_query.py`
+- provider-shape fixtures under `plugins/task-adapter-github-projects/tests/fixtures/`
+
+#### Acceptance Criteria
+
+- `projects_get` / `projects_list`のread-only probeでdestination、field、item、paginationを検証する。
+- preflightはwrite toolを呼ばず、successをwrite approvalとして返さない。
+- adapter unavailable、tool disabled、auth missing、permission failure、destination unresolved、required field missing、field type mismatch、unsafe delegation exposure、capability mismatchをstable codeへ正規化する。
+- queryはcanonical filters / limitをprovider queryまたはbounded post-filterへ変換し、raw GraphQL payloadを返さない。
+- Hermes private registryを参照せず、host attestationとpublic `ctx.dispatch_tool()` seamだけを使う。
+
+#### Non-goals
+
+- Issue / Project mutation、schema repair、direct GraphQL / REST / `gh` fallback。
+- live GitHub smoke。
+
+#### Verification
+
+```bash
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-adapter-github-projects/tests -p 'test_preflight.py'
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-adapter-github-projects/tests -p 'test_query.py'
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-adapter-github-projects/tests
+git diff --check
+```
+
+### POTASK-018: GitHub Adapterのcreate/update/comment/report applyを実装する
+
+#### 目的
+
+official MCP toolsをAdapter内でorchestrationし、linked Issue create、Project add、field update、comment / structured report、read-back、partial failureをsafe adapter resultにする。
+
+#### Write Scope
+
+- `plugins/task-adapter-github-projects/task_adapter_github_projects/adapter.py`
+- `plugins/task-adapter-github-projects/task_adapter_github_projects/normalization.py`
+- `plugins/task-adapter-github-projects/tests/test_apply_create.py`
+- `plugins/task-adapter-github-projects/tests/test_apply_update.py`
+- `plugins/task-adapter-github-projects/tests/test_apply_comment_report.py`
+- `plugins/task-adapter-github-projects/tests/test_partial_failures.py`
+- `plugins/task-adapter-github-projects/scripts/smoke_test_hermes_adapter.py`
+- provider-shape fixtures under `plugins/task-adapter-github-projects/tests/fixtures/`
+
+#### Acceptance Criteria
+
+- createは`issue_write(create)`、`projects_write(add_project_item)`、fieldごとの`update_project_item`、read-backの順に実行する。
+- Project-native draft itemと`content_policy`を実装しない。createにはopaque `content_target_ref`を必須にする。
+- updateはIssue content / Project fields、commentは短いIssue comment、reportはstructured Markdown Issue commentとしてdistinct statusを返す。
+- Project-wide status updateを`task.report`に使わない。
+- Issue create後 / Project add後 / field update中の失敗をstage付きpartial failureにし、safe task ref / URL / title / human actionを保持する。
+- unknown write outcomeをblind retryableにせず、write未実行が確実なrate limit等だけretryableにできる。
+- backend-specific duplicate preventionをadapter内に置き、persistent local storeを追加しない。
+
+#### Non-goals
+
+- delete、Project schema repair、canonical task state、direct API fallback。
+- live GitHub mutation。
+
+#### Verification
+
+```bash
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-adapter-github-projects/tests
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 plugins/task-adapter-github-projects/scripts/smoke_test_hermes_adapter.py
+git diff --check
+```
+
+### POTASK-019: dual-host契約・文書・smoke・full verificationを統合する
+
+#### 目的
+
+task-management public Interface v2とGitHub Adapter v0.1をend-to-end fixtureで接続し、manifests、runtime registration、skill references、examples、knowledge、verification evidenceを同期する。
+
+#### Write Scope
+
+- `plugins/task-management/{plugin.yaml,.codex-plugin/plugin.json,README.md}`
+- `plugins/task-management/skills/task-management/SKILL.md`
+- `plugins/task-management/skills/task-management/references/`
+- `plugins/task-management/examples/`
+- `plugins/task-management/tests/fixtures/`
+- `plugins/task-adapter-github-projects/{plugin.yaml,.codex-plugin/plugin.json,README.md}`
+- `plugins/task-adapter-github-projects/config/`
+- `plugins/task-adapter-github-projects/tests/`
+
+`knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-{spec,issues}.md`、`knowledge/index.md`、`knowledge/log.md`はworker write scopeに含めない。integration resultを受けたcoordinatorがledger update invariantに従って同期する。
+
+#### Acceptance Criteria
+
+- task-management `0.4.0`とGitHub Adapter `0.1.0`のmanifest / runtime registration / docsがexact alignmentする。
+- `task-management-read`に`task_query`、`task-management-write`に`task_preflight` / `task_apply`が存在する。
+- task-managementからGitHub field mapping / MCP method / credential処理が検出されない。
+- adapterとtask-managementのcontract compatibility、preflight、approval、apply、read-backをfake MCP end-to-end testで実証する。
+- secret / raw ID / provider payload leakage scan、existing read regression、local_json fixture-only assertionが通る。
+- Companiesへ渡すpublic Interface v2がdurable docsで一意に参照できる。
+- live activation未実施と別GateをREADME / knowledge / completion evidenceに明記する。
+
+#### Non-goals
+
+- Companies repo変更、GitHub Issue mirror、push / PR / merge。
+- MCP registration、credential / permission、live Hermes profile / Project / Issue変更。
+
+#### Verification
+
+```bash
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests -v
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-adapter-github-projects/tests -v
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 plugins/task-management/scripts/smoke_test_hermes_read.py
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 plugins/task-management/scripts/smoke_test_hermes_write.py
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 plugins/task-adapter-github-projects/scripts/smoke_test_hermes_adapter.py
+python3 /Users/omitsuhashi/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/task-management
+python3 /Users/omitsuhashi/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/task-adapter-github-projects
+python3 /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_validate.py plugins/task-management/skills/task-management
+python3 scripts/validate_dual_host_compatibility.py --plugin plugins/task-management
+python3 scripts/validate_dual_host_compatibility.py --plugin plugins/task-adapter-github-projects
+python3 scripts/validate_skill_architecture.py --all
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/llm-wiki/tests -v
+git diff --check
+```
+
 ## Issue Gate で承認する事項
 
 - local issue ledger の粒度。
@@ -430,3 +782,5 @@ git diff --check
 - `実行可能` / `ブロック中` status。
 - 各 issue の acceptance criteria。
 - GitHub issue mirror を行わない local-first 方針。
+- POTASK-012からPOTASK-019を既存Epicのfollow-upとして扱い、新しいEpicを作らない方針。
+- remote policyはlocal-onlyとし、GitHub Issue作成、push、PR作成、merge、live activationをIssue Gate承認に含めない方針。
