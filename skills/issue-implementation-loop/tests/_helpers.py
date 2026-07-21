@@ -270,6 +270,46 @@ def create_binding_repo(root: Path) -> tuple[Path, dict[str, str], str]:
     return repo, binding, gate_commit
 
 
+def create_delivery_validation_repo(
+    root: Path,
+    envelope: dict,
+    runtime: dict,
+) -> Path:
+    artifact_root = root
+    validation_root = Path(tempfile.mkdtemp(prefix="delivery-validation-", dir=root))
+    repo, binding, gate_commit = create_binding_repo(validation_root)
+    prior_binding = copy.deepcopy(envelope["approved_spec_binding"])
+    git(repo, "branch", envelope["epic_base"]["ref"], gate_commit)
+    envelope["approved_spec_binding"] = copy.deepcopy(binding)
+    envelope["epic_base"]["sha"] = gate_commit
+    runtime["approved_spec_binding"] = copy.deepcopy(binding)
+    registry_path = artifact_root / "decisions" / "hardening-candidates.json"
+    if registry_path.exists():
+        registry = json.loads(registry_path.read_text(encoding="utf-8"))
+        if registry.get("approved_spec_binding") == prior_binding:
+            registry["approved_spec_binding"] = copy.deepcopy(binding)
+        write_json(registry_path, registry)
+    return repo
+
+
+def add_registry_residual_risks(result: dict, registry_path: Path) -> None:
+    if not registry_path.exists():
+        return
+    registry = json.loads(registry_path.read_text(encoding="utf-8"))
+    for candidate in registry.get("candidates", []):
+        if candidate.get("decision") not in {
+            "deferred_follow_up",
+            "declined",
+            "risk_accepted",
+        }:
+            continue
+        issue = result.get("issues", {}).get(candidate.get("source_issue"))
+        risk = candidate.get("risk")
+        if isinstance(issue, dict) and isinstance(risk, str) and risk.strip():
+            if risk not in issue["residual_risks"]:
+                issue["residual_risks"].append(risk)
+
+
 def binding_envelope(repo: Path, binding: dict[str, str], target: str | None = None) -> dict:
     envelope = base_envelope()
     envelope["epic_id"] = "approved-spec-binding"

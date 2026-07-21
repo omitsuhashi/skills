@@ -73,6 +73,65 @@ class DeliveryTests(unittest.TestCase):
                     )
                     self.assertEqual(checked.returncode, 1)
 
+    def test_final_plan_scope_is_optional_full_candidate_shorthand_or_exact(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, envelope, runtime_path, runtime, result_path, _, plan_path, _ = (
+                self.binding_delivery_artifacts(Path(tmp))
+            )
+            envelope["work_items"]["ASBC-003"] = copy.deepcopy(
+                envelope["work_items"]["ASBC-002"]
+            )
+            envelope["work_items"]["ASBC-003"].update(
+                {
+                    "branch": "codex/approved-spec-binding/ASBC-003-follow-up",
+                    "worktree_path": str(repo / "ASBC-003"),
+                }
+            )
+            runtime["issues"]["ASBC-003"] = copy.deepcopy(
+                runtime["issues"]["ASBC-002"]
+            )
+            result = current_execution_result(envelope, runtime)
+            write_json(repo / "execution-envelope.json", envelope)
+            write_json(runtime_path, runtime)
+            write_json(result_path, result)
+
+            omitted = current_delivery_plan(
+                envelope,
+                head=envelope["epic_base"]["ref"],
+                base="main",
+                draft=True,
+            )
+            write_json(plan_path, omitted)
+            shorthand = self.call_delivery(repo, runtime_path, result_path, plan_path)
+            self.assertEqual(shorthand.returncode, 0, shorthand.stderr)
+
+            for scope in (["ASBC-002"], ["ASBC-002", "ASBC-002"]):
+                with self.subTest(scope=scope):
+                    subset = copy.deepcopy(omitted)
+                    subset["issue_scope"] = scope
+                    write_json(plan_path, subset)
+                    rejected = self.call_delivery(
+                        repo, runtime_path, result_path, plan_path
+                    )
+                    self.assertEqual(rejected.returncode, 1)
+
+            exact = copy.deepcopy(omitted)
+            exact["issue_scope"] = ["ASBC-003", "ASBC-002"]
+            write_json(plan_path, exact)
+            accepted = self.call_delivery(repo, runtime_path, result_path, plan_path)
+            self.assertEqual(accepted.returncode, 0, accepted.stderr)
+
+            runtime["issues"]["ASBC-003"]["pr_merged"] = False
+            result = current_execution_result(envelope, runtime)
+            write_json(runtime_path, runtime)
+            write_json(result_path, result)
+            write_json(plan_path, omitted)
+            not_integrated = self.call_delivery(
+                repo, runtime_path, result_path, plan_path
+            )
+            self.assertEqual(not_integrated.returncode, 1)
+            self.assertIn("issues.ASBC-003.pr_merged", not_integrated.stdout)
+
     def test_delivery_malformed_result_or_plan_returns_stable_error(self) -> None:
         for artifact in ("result", "plan"):
             with self.subTest(artifact=artifact), tempfile.TemporaryDirectory() as tmp:
@@ -98,6 +157,11 @@ class DeliveryTests(unittest.TestCase):
         remaining = args[3:]
         envelope = json.loads(envelope_path.read_text(encoding="utf-8"))
         runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+        validation_repo = create_delivery_validation_repo(
+            plan_path.parent, envelope, runtime
+        )
+        write_json(envelope_path, envelope)
+        write_json(runtime_path, runtime)
         plan = json.loads(plan_path.read_text(encoding="utf-8"))
         plan.setdefault("schema_version", 2)
         plan.setdefault(
@@ -108,7 +172,12 @@ class DeliveryTests(unittest.TestCase):
             plan.setdefault("issue_scope", list(envelope["work_items"]))
         write_json(plan_path, plan)
         result_path = plan_path.with_name(plan_path.stem + "-execution-result.json")
-        write_json(result_path, current_execution_result(envelope, runtime))
+        execution_result = current_execution_result(envelope, runtime)
+        add_registry_residual_risks(
+            execution_result,
+            runtime_path.parent / "decisions" / "hardening-candidates.json",
+        )
+        write_json(result_path, execution_result)
         return run_script(
             script_name,
             str(envelope_path),
@@ -116,7 +185,7 @@ class DeliveryTests(unittest.TestCase):
             str(result_path),
             str(plan_path),
             "--repo-root",
-            str(REPO_ROOT),
+            str(validation_repo),
             *remaining,
         )
 
@@ -130,6 +199,12 @@ class DeliveryTests(unittest.TestCase):
                 "ref": "codex/approved-spec-binding/epic-base",
                 "branch_state": "active",
             }
+        )
+        git(
+            repo,
+            "branch",
+            envelope["epic_base"]["ref"],
+            envelope["epic_base"]["sha"],
         )
         envelope["remote_write_policy"] = {
             "mode": "batch_issue_prs",

@@ -9,6 +9,11 @@ class CandidateRegistryTests(unittest.TestCase):
     ) -> subprocess.CompletedProcess[str]:
         envelope = json.loads(envelope_path.read_text(encoding="utf-8"))
         runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+        validation_repo = create_delivery_validation_repo(
+            plan_path.parent, envelope, runtime
+        )
+        write_json(envelope_path, envelope)
+        write_json(runtime_path, runtime)
         plan = json.loads(plan_path.read_text(encoding="utf-8"))
         plan["schema_version"] = 2
         plan["approved_spec_binding"] = copy.deepcopy(
@@ -19,7 +24,12 @@ class CandidateRegistryTests(unittest.TestCase):
             plan.setdefault("issue_scope", list(envelope["work_items"]))
         write_json(plan_path, plan)
         result_path = plan_path.with_name("execution-result.json")
-        write_json(result_path, current_execution_result(envelope, runtime))
+        execution_result = current_execution_result(envelope, runtime)
+        add_registry_residual_risks(
+            execution_result,
+            runtime_path.parent / "decisions" / "hardening-candidates.json",
+        )
+        write_json(result_path, execution_result)
         return run_script(
             "validate_delivery_plan.py",
             str(envelope_path),
@@ -27,7 +37,7 @@ class CandidateRegistryTests(unittest.TestCase):
             str(result_path),
             str(plan_path),
             "--repo-root",
-            str(REPO_ROOT),
+            str(validation_repo),
         )
 
     def test_delivery_rejects_incomplete_or_open_registry_v2(self) -> None:

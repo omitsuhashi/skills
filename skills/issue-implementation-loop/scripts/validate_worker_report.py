@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 
 from _common import dump_json, load_json, validate_worker_report
@@ -19,13 +20,23 @@ def main() -> int:
     parser.add_argument("--json", action="store_true", help="Emit JSON result.")
     args = parser.parse_args()
 
-    errors = validate_worker_report(
-        load_json(args.worker_report),
-        load_json(args.dispatch_packet),
-        load_json(args.runtime_state),
-        load_json(args.envelope),
-        args.repo_root,
-    )
+    try:
+        report = load_json(args.worker_report)
+        dispatch_packet = load_json(args.dispatch_packet)
+        runtime_state = load_json(args.runtime_state)
+        envelope = load_json(args.envelope)
+    except (OSError, json.JSONDecodeError, TypeError, ValueError):
+        errors = ["SCHEMA_UNSUPPORTED"]
+    else:
+        errors = validate_worker_report(
+            report,
+            dispatch_packet,
+            runtime_state,
+            envelope,
+            args.repo_root,
+            envelope_path=args.envelope,
+            runtime_state_path=args.runtime_state,
+        )
     if args.json:
         print(dump_json({"ok": not errors, "errors": errors}), end="")
     elif errors:

@@ -56,7 +56,7 @@ Delivery plan shape:
 }
 ```
 
-For issue PRs, use `"action": "issue_pr"` plus `"issue": "<local-id>"`; the head must be that issue's reserved branch and the base must be `epic_base.ref`. For final PRs, `issue_scope` is the delivery candidate set; omit it only when the entire envelope work item set is in scope.
+For issue PRs, use `"action": "issue_pr"` plus `"issue": "<local-id>"`; the head must be that issue's reserved branch and the base must be `epic_base.ref`. For final PRs, `issue_scope` must exactly equal the Execution Result v2 `delivery_candidates` set; omit it only as shorthand for that full set.
 
 Agent issue PR merge is allowed only when the PR is mergeable, required checks pass, issue implementation review is approved, scope is unchanged, and no unresolved review or permission ambiguity remains. Escalate to the human when judgment is needed.
 

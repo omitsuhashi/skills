@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import os
+import subprocess
+from pathlib import Path
 from typing import Any
 
 from ..approved_spec_binding import BindingError, approved_spec_binding_ref
@@ -50,6 +52,33 @@ EPIC_BASE_FIELDS = {"branch", "initial_sha", "current_sha", "branch_exists"}
 OPTIONAL_PR_FIELDS = {"pr", "pr_opened", "pr_merged"}
 
 
+def _resolve_git_branch(repo_root: str | os.PathLike[str], branch: Any) -> str | None:
+    if not isinstance(branch, str) or not branch.strip():
+        return None
+    branch_ref = branch if branch.startswith("refs/heads/") else f"refs/heads/{branch}"
+    try:
+        resolved = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(Path(repo_root).resolve(strict=False)),
+                "show-ref",
+                "--verify",
+                "--hash",
+                branch_ref,
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except OSError:
+        return None
+    if resolved.returncode != 0:
+        return None
+    sha = resolved.stdout.strip().lower()
+    return sha if is_full_commit_sha(sha) else None
+
+
 def validate_execution_result(
     envelope: dict[str, Any],
     runtime: dict[str, Any],
@@ -86,12 +115,13 @@ def validate_execution_result(
 
     from ..delivery import hardening_candidate_report
 
-    registry_errors = hardening_candidate_report(
+    candidate_report = hardening_candidate_report(
         runtime,
         candidate_registry,
         candidate_registry_path=candidate_registry_path,
         candidate_registry_load_error=candidate_registry_load_error,
-    )["errors"]
+    )
+    registry_errors = candidate_report["errors"]
     if registry_errors:
         return registry_errors
 
@@ -123,6 +153,13 @@ def validate_execution_result(
             errors.append("SCHEMA_UNSUPPORTED")
         if epic_base.get("branch_exists") is not True:
             errors.append("SCHEMA_UNSUPPORTED")
+        resolved_epic_sha = _resolve_git_branch(repo_root, envelope_epic_base.get("ref"))
+        if (
+            resolved_epic_sha is None
+            or epic_base.get("branch_exists") is not True
+            or epic_base.get("current_sha") != resolved_epic_sha
+        ):
+            errors.append("BINDING_MISMATCH")
 
     work_items = envelope.get("work_items", {})
     result_issues = result.get("issues")
@@ -185,8 +222,16 @@ def validate_execution_result(
             errors.append("implementation_review.status must be approved or have human risk acceptance")
         if record.get("verification") != "passed":
             errors.append(f"issues.{issue_id}.verification must be passed")
-        if not isinstance(record.get("residual_risks"), list):
+        residual_risks = record.get("residual_risks")
+        if not isinstance(residual_risks, list):
             errors.append(f"issues.{issue_id}.residual_risks must be a list")
+        elif (
+            any(not isinstance(risk, str) or not risk.strip() for risk in residual_risks)
+            or len(residual_risks) != len(set(residual_risks))
+        ):
+            errors.append(
+                f"issues.{issue_id}.residual_risks must contain unique non-empty strings"
+            )
         for field in OPTIONAL_PR_FIELDS:
             runtime_has = field in runtime_record
             result_has = field in record
@@ -203,4 +248,23 @@ def validate_execution_result(
                 errors.append("SCHEMA_UNSUPPORTED")
             if value != runtime_record[field]:
                 errors.append("BINDING_MISMATCH")
+    for candidate in candidate_report["residual_risks"]:
+        if not isinstance(candidate, dict):
+            errors.append("BINDING_MISMATCH")
+            continue
+        source_issue = candidate.get("source_issue")
+        required_risk = candidate.get("risk")
+        source_record = result_issues.get(source_issue)
+        recorded_risks = (
+            source_record.get("residual_risks")
+            if isinstance(source_record, dict)
+            else None
+        )
+        if (
+            not isinstance(required_risk, str)
+            or not required_risk.strip()
+            or not isinstance(recorded_risks, list)
+            or required_risk not in recorded_risks
+        ):
+            errors.append("BINDING_MISMATCH")
     return errors

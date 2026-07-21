@@ -121,6 +121,93 @@ class ReviewGateTests(unittest.TestCase):
             self.assertEqual(intake.returncode, 1)
             self.assertTrue(json.loads(intake.stdout)["errors"])
 
+    def test_review_report_intake_requires_active_source_snapshot_equality(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, binding, _ = create_binding_repo(Path(tmp))
+            packet = current_worker_packet(repo, binding, task_kind="review")
+            envelope_path = repo / "execution-envelope.json"
+            runtime_path = repo / "runtime-state.json"
+            alternate_envelope_path = repo / "alternate-envelope.json"
+            alternate_runtime_path = repo / "alternate-runtime.json"
+            alternate_envelope = json.loads(envelope_path.read_text(encoding="utf-8"))
+            alternate_runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+            alternate_envelope["revision"] = 2
+            alternate_runtime["envelope_revision"] = 2
+            write_json(alternate_envelope_path, alternate_envelope)
+            write_json(alternate_runtime_path, alternate_runtime)
+            packet["source_revision"]["execution_envelope"] = {
+                "path": str(alternate_envelope_path),
+                "revision": 2,
+                "sha256": hashlib.sha256(alternate_envelope_path.read_bytes()).hexdigest(),
+            }
+            packet["source_revision"]["runtime_state"] = {
+                "path": str(alternate_runtime_path),
+                "envelope_revision": 2,
+                "sha256": hashlib.sha256(alternate_runtime_path.read_bytes()).hexdigest(),
+            }
+            packet_path = repo / "reviewer-packet.json"
+            report_path = repo / "reviewer-report.json"
+            write_json(packet_path, packet)
+            write_json(report_path, current_worker_report(repo, binding, packet))
+
+            intake = run_script(
+                "validate_worker_report.py",
+                str(report_path),
+                "--dispatch-packet",
+                str(packet_path),
+                "--runtime-state",
+                str(runtime_path),
+                "--envelope",
+                str(envelope_path),
+                "--repo-root",
+                str(repo),
+                "--json",
+            )
+
+            self.assertEqual(intake.returncode, 1)
+            self.assertIn("BINDING_MISMATCH", json.loads(intake.stdout)["errors"])
+
+    def test_worker_report_malformed_or_unreadable_json_returns_stable_error(self) -> None:
+        for artifact in ("report", "packet", "runtime", "envelope"):
+            for failure in ("malformed", "unreadable"):
+                with self.subTest(artifact=artifact, failure=failure), tempfile.TemporaryDirectory() as tmp:
+                    repo, binding, _ = create_binding_repo(Path(tmp))
+                    packet = current_worker_packet(repo, binding, task_kind="review")
+                    paths = {
+                        "report": repo / "reviewer-report.json",
+                        "packet": repo / "reviewer-packet.json",
+                        "runtime": repo / "runtime-state.json",
+                        "envelope": repo / "execution-envelope.json",
+                    }
+                    write_json(paths["report"], current_worker_report(repo, binding, packet))
+                    write_json(paths["packet"], packet)
+                    target = paths[artifact]
+                    if failure == "malformed":
+                        target.write_text("{not-json", encoding="utf-8")
+                    else:
+                        target = repo / f"missing-{artifact}.json"
+                        paths[artifact] = target
+
+                    checked = run_script(
+                        "validate_worker_report.py",
+                        str(paths["report"]),
+                        "--dispatch-packet",
+                        str(paths["packet"]),
+                        "--runtime-state",
+                        str(paths["runtime"]),
+                        "--envelope",
+                        str(paths["envelope"]),
+                        "--repo-root",
+                        str(repo),
+                        "--json",
+                    )
+
+                    self.assertEqual(checked.returncode, 1)
+                    self.assertEqual(
+                        json.loads(checked.stdout)["errors"], ["SCHEMA_UNSUPPORTED"]
+                    )
+                    self.assertEqual(checked.stderr, "")
+
     def test_execution_result_v2_closes_epic_base_and_delivery_candidates(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -158,6 +245,81 @@ class ReviewGateTests(unittest.TestCase):
                     write_json(result_path, result)
                     checked = self.validate_result(repo, runtime_path, result_path)
                     self.assertEqual(checked.returncode, 1)
+
+    def test_execution_result_v2_verifies_epic_base_against_real_git_ref(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, envelope, runtime_path, _, result_path, result = self.result_artifacts(
+                Path(tmp)
+            )
+            epic_ref = "codex/test/epic-base"
+            git(repo, "checkout", "-q", "-b", epic_ref)
+            envelope["epic_base"]["ref"] = epic_ref
+            result["epic_base"]["branch"] = epic_ref
+            write_json(repo / "execution-envelope.json", envelope)
+            (repo / "epic-change.txt").write_text("advance\n", encoding="utf-8")
+            git(repo, "add", "epic-change.txt")
+            git(repo, "commit", "-q", "-m", "advance epic base")
+            write_json(result_path, result)
+
+            stale = self.validate_result(repo, runtime_path, result_path)
+
+            self.assertEqual(stale.returncode, 1)
+            self.assertIn("BINDING_MISMATCH", json.loads(stale.stdout)["errors"])
+
+            result["epic_base"]["current_sha"] = git(repo, "rev-parse", epic_ref)
+            result["epic_base"]["branch_exists"] = True
+            write_json(result_path, result)
+            current = self.validate_result(repo, runtime_path, result_path)
+            self.assertEqual(current.returncode, 0, current.stderr)
+
+            envelope["epic_base"]["ref"] = "codex/test/missing-epic-base"
+            result["epic_base"]["branch"] = envelope["epic_base"]["ref"]
+            write_json(repo / "execution-envelope.json", envelope)
+            write_json(result_path, result)
+            missing = self.validate_result(repo, runtime_path, result_path)
+            self.assertEqual(missing.returncode, 1)
+
+    def test_execution_result_v2_binds_registry_residual_risks(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, envelope, runtime_path, runtime, result_path, result = self.result_artifacts(
+                Path(tmp)
+            )
+            risk = "Deferred guard may leave the delivery boundary under-protected."
+            registry_path = runtime_path.parent / "decisions" / "hardening-candidates.json"
+            registry_path.parent.mkdir()
+            candidate = hardening_candidate(
+                "HC-ASBC-002-001", decision="deferred_follow_up"
+            )
+            candidate.update({"source_issue": "ASBC-002", "risk": risk})
+            write_json(
+                registry_path,
+                {
+                    "schema_version": 2,
+                    "approved_spec_binding": copy.deepcopy(envelope["approved_spec_binding"]),
+                    "epic_id": envelope["epic_id"],
+                    "registry_path": str(registry_path),
+                    "limits": {
+                        "hardening_candidate_summary_words_default": 80,
+                        "hardening_candidates_per_issue_default": 5,
+                    },
+                    "candidates": [candidate],
+                },
+            )
+
+            missing = self.validate_result(repo, runtime_path, result_path)
+            self.assertEqual(missing.returncode, 1)
+
+            result["issues"]["ASBC-002"]["residual_risks"] = [risk]
+            write_json(result_path, result)
+            included = self.validate_result(repo, runtime_path, result_path)
+            self.assertEqual(included.returncode, 0, included.stderr)
+
+            for risks in (["  "], [risk, risk]):
+                with self.subTest(risks=risks):
+                    result["issues"]["ASBC-002"]["residual_risks"] = risks
+                    write_json(result_path, result)
+                    malformed = self.validate_result(repo, runtime_path, result_path)
+                    self.assertEqual(malformed.returncode, 1)
 
     def test_execution_result_v2_compares_issue_and_optional_pr_fields_to_runtime(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

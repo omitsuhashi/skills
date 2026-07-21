@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import hashlib
 import os
+from pathlib import Path
 from typing import Any
 
 from ..approved_spec_binding import BindingError, approved_spec_binding_ref
@@ -36,6 +38,9 @@ def validate_worker_report(
     runtime_state: dict[str, Any] | None = None,
     envelope: dict[str, Any] | None = None,
     repo_root: str | os.PathLike[str] | None = None,
+    *,
+    envelope_path: str | os.PathLike[str] | None = None,
+    runtime_state_path: str | os.PathLike[str] | None = None,
 ) -> list[str]:
     errors: list[str] = []
     if not isinstance(envelope, dict) or repo_root is None:
@@ -56,6 +61,37 @@ def validate_worker_report(
     packet_errors = validate_worker_packet(dispatch_packet)
     if packet_errors:
         return packet_errors
+    source_revision = dispatch_packet.get("source_revision", {})
+    active_snapshots = (
+        (
+            source_revision.get("execution_envelope"),
+            envelope_path,
+            "revision",
+            envelope.get("revision"),
+        ),
+        (
+            source_revision.get("runtime_state"),
+            runtime_state_path,
+            "envelope_revision",
+            runtime_state.get("envelope_revision"),
+        ),
+    )
+    for snapshot, active_path, revision_field, active_revision in active_snapshots:
+        if not isinstance(snapshot, dict) or active_path is None:
+            return ["BINDING_MISMATCH"]
+        resolved_active_path = Path(active_path).resolve(strict=False)
+        try:
+            active_sha256 = hashlib.sha256(resolved_active_path.read_bytes()).hexdigest()
+        except OSError:
+            return ["BINDING_MISMATCH"]
+        snapshot_path = snapshot.get("path")
+        if (
+            not isinstance(snapshot_path, str)
+            or Path(snapshot_path).resolve(strict=False) != resolved_active_path
+            or snapshot.get("sha256") != active_sha256
+            or snapshot.get(revision_field) != active_revision
+        ):
+            return ["BINDING_MISMATCH"]
     if report.get("schema_version") != 2:
         return ["SCHEMA_UNSUPPORTED"]
     for field in sorted(report):

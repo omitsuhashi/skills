@@ -67,6 +67,7 @@ DELIVERY_PLAN_COMMON_FIELDS = {
 }
 ISSUE_PR_PLAN_FIELDS = DELIVERY_PLAN_COMMON_FIELDS | {"issue"}
 FINAL_PR_PLAN_FIELDS = DELIVERY_PLAN_COMMON_FIELDS | {"draft", "issue_scope"}
+FINAL_PR_PLAN_FIELDS_SHORTHAND = DELIVERY_PLAN_COMMON_FIELDS | {"draft"}
 RECOMMENDED_DECISIONS = {
     "approved_for_current_pr",
     "deferred_follow_up",
@@ -106,14 +107,23 @@ def issue_branch_owner(envelope: dict[str, Any], branch: Any) -> str | None:
     return None
 
 
-def delivery_issue_scope(envelope: dict[str, Any], plan: dict[str, Any], errors: list[str]) -> list[str]:
+def delivery_issue_scope(
+    envelope: dict[str, Any],
+    execution_result: dict[str, Any],
+    plan: dict[str, Any],
+    errors: list[str],
+) -> list[str]:
     work_items = envelope.get("work_items", {})
     if not isinstance(work_items, dict):
         errors.append("work_items must be a non-empty object")
         return []
+    candidates = execution_result.get("delivery_candidates")
+    if not isinstance(candidates, list):
+        errors.append("delivery_candidates must be a list")
+        return []
     scope = plan.get("issue_scope")
     if scope is None:
-        return list(work_items)
+        return candidates
     if not isinstance(scope, list) or not scope:
         errors.append("issue_scope must be a non-empty list when provided")
         return []
@@ -126,6 +136,8 @@ def delivery_issue_scope(envelope: dict[str, Any], plan: dict[str, Any], errors:
             errors.append(f"issue_scope[{index}] references unknown issue {issue_id}")
             continue
         issues.append(issue_id)
+    if len(issues) != len(set(issues)) or set(issues) != set(candidates):
+        errors.append("final_pr.issue_scope must exactly match delivery_candidates")
     return issues
 
 
@@ -375,10 +387,12 @@ def validate_delivery_plan(
     if action not in {"issue_pr", "final_pr"}:
         errors.append("action must be issue_pr or final_pr")
         return errors
-    expected_fields = (
-        ISSUE_PR_PLAN_FIELDS if action == "issue_pr" else FINAL_PR_PLAN_FIELDS
+    expected_field_sets = (
+        (ISSUE_PR_PLAN_FIELDS,)
+        if action == "issue_pr"
+        else (FINAL_PR_PLAN_FIELDS, FINAL_PR_PLAN_FIELDS_SHORTHAND)
     )
-    if set(plan) != expected_fields:
+    if all(set(plan) != expected_fields for expected_fields in expected_field_sets):
         if action == "final_pr" and "ready_for_review" in plan:
             return ["ready-for-review is a separate human action"]
         return ["SCHEMA_UNSUPPORTED"]
@@ -433,10 +447,10 @@ def validate_delivery_plan(
     if plan.get("draft", True) is not True:
         errors.append("final_pr.draft must be true; ready-for-review is a separate human action")
 
-    issues = delivery_issue_scope(envelope, plan, errors)
+    delivery_issue_scope(envelope, execution_result, plan, errors)
     runtime_issues = runtime.get("issues", {})
     if isinstance(runtime_issues, dict):
-        for issue_id in issues:
+        for issue_id in execution_result.get("delivery_candidates", []):
             record = runtime_issues.get(issue_id)
             if not isinstance(record, dict) or record.get("pr_merged") is not True:
                 errors.append(f"issues.{issue_id}.pr_merged must be true before final PR")
