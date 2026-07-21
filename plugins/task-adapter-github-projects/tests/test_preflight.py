@@ -22,17 +22,28 @@ from task_adapter_github_projects.config import load_config  # noqa: E402
 
 
 PROJECT_FIELDS = [
-    {"id": 9101, "name": "Work Unit ID", "data_type": "TEXT"},
-    {"id": 9102, "name": "Work Unit", "data_type": "TEXT"},
-    {"id": 9103, "name": "Task Type", "data_type": "SINGLE_SELECT"},
-    {"id": 9104, "name": "Due Date", "data_type": "DATE"},
-    {"id": 9105, "name": "Urgency", "data_type": "SINGLE_SELECT"},
-    {"id": 9106, "name": "Importance", "data_type": "SINGLE_SELECT"},
-    {"id": 9107, "name": "Automation Mode", "data_type": "SINGLE_SELECT"},
-    {"id": 9108, "name": "Approval Required", "data_type": "SINGLE_SELECT"},
-    {"id": 9109, "name": "Source", "data_type": "TEXT"},
-    {"id": 9110, "name": "Source URL", "data_type": "TEXT"},
+    {"id": 9101, "name": "Work Unit ID", "data_type": "text"},
+    {"id": 9102, "name": "Work Unit", "data_type": "text"},
+    {"id": 9103, "name": "Task Type", "data_type": "single_select"},
+    {"id": 9104, "name": "Due Date", "data_type": "date"},
+    {"id": 9105, "name": "Urgency", "data_type": "single_select"},
+    {"id": 9106, "name": "Importance", "data_type": "single_select"},
+    {"id": 9107, "name": "Automation Mode", "data_type": "single_select"},
+    {"id": 9108, "name": "Approval Required", "data_type": "single_select"},
+    {"id": 9109, "name": "Source", "data_type": "text"},
+    {"id": 9110, "name": "Source URL", "data_type": "text"},
 ]
+
+
+def public_success(payload, *, include_structured_content=False):
+    envelope = {"result": json.dumps(payload, ensure_ascii=False)}
+    if include_structured_content:
+        envelope["structuredContent"] = payload
+    return json.dumps(envelope, ensure_ascii=False)
+
+
+def public_error(message):
+    return json.dumps({"error": message}, ensure_ascii=False)
 
 
 class GithubProjectsPreflightTests(unittest.TestCase):
@@ -43,22 +54,29 @@ class GithubProjectsPreflightTests(unittest.TestCase):
             calls.append((tool_name, arguments))
             method = arguments["method"]
             if method == "get_project":
-                return {
-                    "id": "PVT_private",
-                    "number": 7,
-                    "title": "Portfolio OS Tasks",
-                    "owner": {"login": "example-owner"},
-                }
+                return public_success(
+                    {
+                        "id": "PVT_private",
+                        "number": 7,
+                        "title": "Portfolio OS Tasks",
+                        "owner": {"login": "example-owner"},
+                    }
+                )
             if method == "list_project_fields":
-                return {
-                    "fields": PROJECT_FIELDS,
-                    "pageInfo": {"hasNextPage": False, "nextCursor": None},
-                }
+                return public_success(
+                    {
+                        "fields": PROJECT_FIELDS,
+                        "pageInfo": {"hasNextPage": False, "nextCursor": None},
+                    },
+                    include_structured_content=True,
+                )
             if method == "list_project_items":
-                return {
-                    "items": [],
-                    "pageInfo": {"hasNextPage": False, "nextCursor": None},
-                }
+                return public_success(
+                    {
+                        "items": [],
+                        "pageInfo": {"hasNextPage": False, "nextCursor": None},
+                    }
+                )
             self.fail(f"unexpected provider method: {method}")
 
         adapter = GithubProjectsAdapter(
@@ -106,35 +124,89 @@ class GithubProjectsPreflightTests(unittest.TestCase):
         self.assertNotIn("approval_digest", result)
         self.assertNotIn("approved", result)
 
+    def test_preflight_accepts_all_exact_lowercase_official_field_types(self):
+        self.assertEqual(
+            {"text", "date", "single_select"},
+            {field["data_type"] for field in PROJECT_FIELDS},
+        )
+
+        def dispatch(_tool_name, arguments):
+            if arguments["method"] == "get_project":
+                return public_success(
+                    {
+                        "number": 7,
+                        "title": "Portfolio OS Tasks",
+                        "owner": {"login": "example-owner"},
+                    }
+                )
+            if arguments["method"] == "list_project_fields":
+                return public_success(
+                    {
+                        "fields": PROJECT_FIELDS,
+                        "pageInfo": {"hasNextPage": False, "nextCursor": None},
+                    }
+                )
+            return public_success(
+                {
+                    "items": [],
+                    "pageInfo": {"hasNextPage": False, "nextCursor": None},
+                }
+            )
+
+        operation = json.loads(CREATE_OPERATION.read_text(encoding="utf-8"))
+        operation["destination_ref"] = "tasks:portfolio-os"
+        result = GithubProjectsAdapter(
+            config=load_config(EXAMPLE_CONFIG),
+            dispatch=dispatch,
+        ).preflight(
+            {
+                "adapter_contract_version": 2,
+                "operation": operation,
+                "destination_label": "Portfolio OS Tasks",
+                "content_target_ref": "task-content:portfolio-os",
+                "required_capability": "task.create",
+            }
+        )
+
+        self.assertTrue(result["ok"])
+
     def test_preflight_follows_bounded_field_pagination(self):
         calls = []
 
         def dispatch(tool_name, arguments):
             calls.append((tool_name, arguments))
             if arguments["method"] == "get_project":
-                return {
-                    "number": 7,
-                    "title": "Portfolio OS Tasks",
-                    "owner": {"login": "example-owner"},
-                }
+                return public_success(
+                    {
+                        "number": 7,
+                        "title": "Portfolio OS Tasks",
+                        "owner": {"login": "example-owner"},
+                    }
+                )
             if arguments["method"] == "list_project_fields":
                 if arguments.get("after") is None:
-                    return {
-                        "fields": PROJECT_FIELDS[:5],
-                        "pageInfo": {
-                            "hasNextPage": True,
-                            "nextCursor": "fields-page-2",
-                        },
+                    return public_success(
+                        {
+                            "fields": PROJECT_FIELDS[:5],
+                            "pageInfo": {
+                                "hasNextPage": True,
+                                "nextCursor": "fields-page-2",
+                            },
+                        }
+                    )
+                return public_success(
+                    {
+                        "fields": PROJECT_FIELDS[5:],
+                        "pageInfo": {"hasNextPage": False, "nextCursor": None},
                     }
-                return {
-                    "fields": PROJECT_FIELDS[5:],
-                    "pageInfo": {"hasNextPage": False, "nextCursor": None},
-                }
+                )
             if arguments["method"] == "list_project_items":
-                return {
-                    "items": [],
-                    "pageInfo": {"hasNextPage": False, "nextCursor": None},
-                }
+                return public_success(
+                    {
+                        "items": [],
+                        "pageInfo": {"hasNextPage": False, "nextCursor": None},
+                    }
+                )
             self.fail(f"unexpected provider method: {arguments['method']}")
 
         operation = json.loads(CREATE_OPERATION.read_text(encoding="utf-8"))
@@ -164,27 +236,24 @@ class GithubProjectsPreflightTests(unittest.TestCase):
 
     def test_preflight_maps_provider_failures_to_safe_stable_blockers(self):
         cases = (
-            ("tool_disabled", "tool_disabled"),
-            ("unauthorized", "auth_missing"),
-            ("forbidden", "permission_failure"),
-            ("not_found", "destination_unresolved"),
-            ("connection_failed", "adapter_unavailable"),
+            ("MCP tool disabled: method not found", "tool_disabled"),
+            ("unauthorized: authentication required", "auth_missing"),
+            ("forbidden: permission denied", "permission_failure"),
+            ("project not found", "destination_unresolved"),
+            ("MCP call failed: ConnectionError", "adapter_unavailable"),
         )
         operation = json.loads(CREATE_OPERATION.read_text(encoding="utf-8"))
         operation["destination_ref"] = "tasks:portfolio-os"
 
-        for provider_code, expected_code in cases:
-            with self.subTest(provider_code=provider_code):
+        for provider_error, expected_code in cases:
+            with self.subTest(provider_error=provider_error):
                 calls = []
 
                 def dispatch(tool_name, arguments):
                     calls.append((tool_name, arguments))
-                    return {
-                        "error": {
-                            "code": provider_code,
-                            "message": "Authorization: Bearer must-not-leak",
-                        }
-                    }
+                    return public_error(
+                        f"{provider_error}; Authorization: Bearer must-not-leak"
+                    )
 
                 result = GithubProjectsAdapter(
                     config=load_config(EXAMPLE_CONFIG),
@@ -242,7 +311,7 @@ class GithubProjectsPreflightTests(unittest.TestCase):
                         field
                         for field in provider_fields
                         if field["name"] == "Due Date"
-                    )["data_type"] = "TEXT"
+                    )["data_type"] = "text"
                 if case == "unsafe_delegation":
                     config = replace(
                         config,
@@ -259,23 +328,29 @@ class GithubProjectsPreflightTests(unittest.TestCase):
                 def dispatch(tool_name, arguments):
                     calls.append((tool_name, arguments))
                     if arguments["method"] == "get_project":
-                        return {
-                            "number": 7,
-                            "title": "Portfolio OS Tasks",
-                            "owner": {"login": "example-owner"},
-                        }
+                        return public_success(
+                            {
+                                "number": 7,
+                                "title": "Portfolio OS Tasks",
+                                "owner": {"login": "example-owner"},
+                            }
+                        )
                     if arguments["method"] == "list_project_fields":
-                        return {
-                            "fields": provider_fields,
-                            "pageInfo": {
-                                "hasNextPage": False,
-                                "nextCursor": None,
-                            },
+                        return public_success(
+                            {
+                                "fields": provider_fields,
+                                "pageInfo": {
+                                    "hasNextPage": False,
+                                    "nextCursor": None,
+                                },
+                            }
+                        )
+                    return public_success(
+                        {
+                            "items": [],
+                            "pageInfo": {"hasNextPage": False, "nextCursor": None},
                         }
-                    return {
-                        "items": [],
-                        "pageInfo": {"hasNextPage": False, "nextCursor": None},
-                    }
+                    )
 
                 result = GithubProjectsAdapter(
                     config=config,
@@ -297,11 +372,13 @@ class GithubProjectsPreflightTests(unittest.TestCase):
 
         def dispatch(tool_name, arguments):
             calls.append((tool_name, arguments))
-            return {
-                "number": 999,
-                "title": "Different Project",
-                "owner": {"login": "example-owner"},
-            }
+            return public_success(
+                {
+                    "number": 999,
+                    "title": "Different Project",
+                    "owner": {"login": "example-owner"},
+                }
+            )
 
         operation = json.loads(CREATE_OPERATION.read_text(encoding="utf-8"))
         operation["destination_ref"] = "tasks:portfolio-os"
@@ -325,18 +402,22 @@ class GithubProjectsPreflightTests(unittest.TestCase):
     def test_preflight_fails_typed_on_a_repeated_pagination_cursor(self):
         def dispatch(_tool_name, arguments):
             if arguments["method"] == "get_project":
-                return {
-                    "number": 7,
-                    "title": "Portfolio OS Tasks",
-                    "owner": {"login": "example-owner"},
+                return public_success(
+                    {
+                        "number": 7,
+                        "title": "Portfolio OS Tasks",
+                        "owner": {"login": "example-owner"},
+                    }
+                )
+            return public_success(
+                {
+                    "fields": PROJECT_FIELDS[:1],
+                    "pageInfo": {
+                        "hasNextPage": True,
+                        "nextCursor": "repeated-cursor",
+                    },
                 }
-            return {
-                "fields": PROJECT_FIELDS[:1],
-                "pageInfo": {
-                    "hasNextPage": True,
-                    "nextCursor": "repeated-cursor",
-                },
-            }
+            )
 
         operation = json.loads(CREATE_OPERATION.read_text(encoding="utf-8"))
         operation["destination_ref"] = "tasks:portfolio-os"

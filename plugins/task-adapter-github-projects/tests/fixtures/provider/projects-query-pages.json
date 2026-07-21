@@ -1,16 +1,16 @@
 {
   "fields": [
-    {"id": 9101, "name": "Work Unit ID", "data_type": "TEXT"},
-    {"id": 9102, "name": "Work Unit", "data_type": "TEXT"},
-    {"id": 9103, "name": "Task Type", "data_type": "SINGLE_SELECT"},
-    {"id": 9104, "name": "Due Date", "data_type": "DATE"},
-    {"id": 9105, "name": "Urgency", "data_type": "SINGLE_SELECT"},
-    {"id": 9106, "name": "Importance", "data_type": "SINGLE_SELECT"},
-    {"id": 9107, "name": "Automation Mode", "data_type": "SINGLE_SELECT"},
-    {"id": 9108, "name": "Approval Required", "data_type": "SINGLE_SELECT"},
-    {"id": 9109, "name": "Source", "data_type": "TEXT"},
-    {"id": 9110, "name": "Source URL", "data_type": "TEXT"},
-    {"id": 9111, "name": "Status", "data_type": "SINGLE_SELECT"}
+    {"id": 9101, "name": "Work Unit ID", "data_type": "text"},
+    {"id": 9102, "name": "Work Unit", "data_type": "text"},
+    {"id": 9103, "name": "Task Type", "data_type": "single_select"},
+    {"id": 9104, "name": "Due Date", "data_type": "date"},
+    {"id": 9105, "name": "Urgency", "data_type": "single_select"},
+    {"id": 9106, "name": "Importance", "data_type": "single_select"},
+    {"id": 9107, "name": "Automation Mode", "data_type": "single_select"},
+    {"id": 9108, "name": "Approval Required", "data_type": "single_select"},
+    {"id": 9109, "name": "Source", "data_type": "text"},
+    {"id": 9110, "name": "Source URL", "data_type": "text"},
+    {"id": 9111, "name": "Status", "data_type": "single_select"}
   ],
   "pages": [
     {
@@ -29,17 +29,17 @@
             "state": "open"
           },
           "fields": [
-            {"id": 6101, "name": "Work Unit ID", "data_type": "TEXT", "value": "planning"},
-            {"id": 6102, "name": "Work Unit", "data_type": "TEXT", "value": "Planning"},
-            {"id": 6103, "name": "Task Type", "data_type": "SINGLE_SELECT", "value": {"id": "PVTSSF_private_implementation", "name": "Implementation", "color": "BLUE"}},
-            {"id": 6104, "name": "Due Date", "data_type": "DATE", "value": "2026-07-30"},
-            {"id": 6105, "name": "Urgency", "data_type": "SINGLE_SELECT", "value": {"id": "PVTSSF_private_high", "name": "High", "color": "RED"}},
-            {"id": 6106, "name": "Importance", "data_type": "SINGLE_SELECT", "value": {"id": "PVTSSF_private_critical", "name": "Critical", "color": "RED"}},
-            {"id": 6107, "name": "Automation Mode", "data_type": "SINGLE_SELECT", "value": {"id": "PVTSSF_private_assistive", "name": "Assistive", "color": "YELLOW"}},
-            {"id": 6108, "name": "Approval Required", "data_type": "SINGLE_SELECT", "value": {"id": "PVTSSF_private_required", "name": "Required", "color": "RED"}},
-            {"id": 6109, "name": "Source", "data_type": "TEXT", "value": "Approved discussion"},
-            {"id": 6110, "name": "Source URL", "data_type": "TEXT", "value": "https://example.invalid/sources/1"},
-            {"id": 6111, "name": "Status", "data_type": "SINGLE_SELECT", "value": {"id": "PVTSSF_private_ready", "name": "ready", "color": "GREEN"}}
+            {"id": 6101, "name": "Work Unit ID", "data_type": "text", "value": "planning"},
+            {"id": 6102, "name": "Work Unit", "data_type": "text", "value": "Planning"},
+            {"id": 6103, "name": "Task Type", "data_type": "single_select", "value": {"id": "PVTSSF_private_implementation", "name": "Implementation", "color": "BLUE"}},
+            {"id": 6104, "name": "Due Date", "data_type": "date", "value": "2026-07-30"},
+            {"id": 6105, "name": "Urgency", "data_type": "single_select", "value": {"id": "PVTSSF_private_high", "name": "High", "color": "RED"}},
+            {"id": 6106, "name": "Importance", "data_type": "single_select", "value": {"id": "PVTSSF_private_critical", "name": "Critical", "color": "RED"}},
+            {"id": 6107, "name": "Automation Mode", "data_type": "single_select", "value": {"id": "PVTSSF_private_assistive", "name": "Assistive", "color": "YELLOW"}},
+            {"id": 6108, "name": "Approval Required", "data_type": "single_select", "value": {"id": "PVTSSF_private_required", "name": "Required", "color": "RED"}},
+            {"id": 6109, "name": "Source", "data_type": "text", "value": "Approved discussion"},
+            {"id": 6110, "name": "Source URL", "data_type": "text", "value": "https://example.invalid/sources/1"},
+            {"id": 6111, "name": "Status", "data_type": "single_select", "value": {"id": "PVTSSF_private_ready", "name": "ready", "color": "GREEN"}}
           ]
         },
         {
@@ -56,15 +56,15 @@
             "state": "closed"
           },
           "fields": [
-            {"id": 6201, "name": "Work Unit ID", "data_type": "TEXT", "value": "planning"},
-            {"id": 6202, "name": "Work Unit", "data_type": "TEXT", "value": "Planning"},
-            {"id": 6203, "name": "Task Type", "data_type": "SINGLE_SELECT", "value": {"id": "PVTSSF_private_implementation", "name": "Implementation"}},
-            {"id": 6204, "name": "Due Date", "data_type": "DATE", "value": "2026-07-20"},
-            {"id": 6205, "name": "Urgency", "data_type": "SINGLE_SELECT", "value": {"id": "PVTSSF_private_normal", "name": "Normal"}},
-            {"id": 6206, "name": "Importance", "data_type": "SINGLE_SELECT", "value": {"id": "PVTSSF_private_normal", "name": "Normal"}},
-            {"id": 6207, "name": "Automation Mode", "data_type": "SINGLE_SELECT", "value": {"id": "PVTSSF_private_manual", "name": "Manual Only"}},
-            {"id": 6208, "name": "Approval Required", "data_type": "SINGLE_SELECT", "value": {"id": "PVTSSF_private_not_required", "name": "Not Required"}},
-            {"id": 6211, "name": "Status", "data_type": "SINGLE_SELECT", "value": {"id": "PVTSSF_private_completed", "name": "completed"}}
+            {"id": 6201, "name": "Work Unit ID", "data_type": "text", "value": "planning"},
+            {"id": 6202, "name": "Work Unit", "data_type": "text", "value": "Planning"},
+            {"id": 6203, "name": "Task Type", "data_type": "single_select", "value": {"id": "PVTSSF_private_implementation", "name": "Implementation"}},
+            {"id": 6204, "name": "Due Date", "data_type": "date", "value": "2026-07-20"},
+            {"id": 6205, "name": "Urgency", "data_type": "single_select", "value": {"id": "PVTSSF_private_normal", "name": "Normal"}},
+            {"id": 6206, "name": "Importance", "data_type": "single_select", "value": {"id": "PVTSSF_private_normal", "name": "Normal"}},
+            {"id": 6207, "name": "Automation Mode", "data_type": "single_select", "value": {"id": "PVTSSF_private_manual", "name": "Manual Only"}},
+            {"id": 6208, "name": "Approval Required", "data_type": "single_select", "value": {"id": "PVTSSF_private_not_required", "name": "Not Required"}},
+            {"id": 6211, "name": "Status", "data_type": "single_select", "value": {"id": "PVTSSF_private_completed", "name": "completed"}}
           ]
         }
       ],
@@ -86,15 +86,15 @@
             "state": "open"
           },
           "fields": [
-            {"id": 6301, "name": "Work Unit ID", "data_type": "TEXT", "value": "planning"},
-            {"id": 6302, "name": "Work Unit", "data_type": "TEXT", "value": "Planning"},
-            {"id": 6303, "name": "Task Type", "data_type": "SINGLE_SELECT", "value": {"id": "PVTSSF_private_review", "name": "Review"}},
-            {"id": 6304, "name": "Due Date", "data_type": "DATE", "value": "2026-07-31"},
-            {"id": 6305, "name": "Urgency", "data_type": "SINGLE_SELECT", "value": {"id": "PVTSSF_private_high", "name": "High"}},
-            {"id": 6306, "name": "Importance", "data_type": "SINGLE_SELECT", "value": {"id": "PVTSSF_private_high", "name": "High"}},
-            {"id": 6307, "name": "Automation Mode", "data_type": "SINGLE_SELECT", "value": {"id": "PVTSSF_private_assistive", "name": "Assistive"}},
-            {"id": 6308, "name": "Approval Required", "data_type": "SINGLE_SELECT", "value": {"id": "PVTSSF_private_not_required", "name": "Not Required"}},
-            {"id": 6311, "name": "Status", "data_type": "SINGLE_SELECT", "value": {"id": "PVTSSF_private_ready", "name": "ready"}}
+            {"id": 6301, "name": "Work Unit ID", "data_type": "text", "value": "planning"},
+            {"id": 6302, "name": "Work Unit", "data_type": "text", "value": "Planning"},
+            {"id": 6303, "name": "Task Type", "data_type": "single_select", "value": {"id": "PVTSSF_private_review", "name": "Review"}},
+            {"id": 6304, "name": "Due Date", "data_type": "date", "value": "2026-07-31"},
+            {"id": 6305, "name": "Urgency", "data_type": "single_select", "value": {"id": "PVTSSF_private_high", "name": "High"}},
+            {"id": 6306, "name": "Importance", "data_type": "single_select", "value": {"id": "PVTSSF_private_high", "name": "High"}},
+            {"id": 6307, "name": "Automation Mode", "data_type": "single_select", "value": {"id": "PVTSSF_private_assistive", "name": "Assistive"}},
+            {"id": 6308, "name": "Approval Required", "data_type": "single_select", "value": {"id": "PVTSSF_private_not_required", "name": "Not Required"}},
+            {"id": 6311, "name": "Status", "data_type": "single_select", "value": {"id": "PVTSSF_private_ready", "name": "ready"}}
           ]
         }
       ],

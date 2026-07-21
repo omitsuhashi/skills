@@ -17,21 +17,35 @@ from .safety import (
 
 
 _PROVIDER_FIELD_TYPES = {
-    "text": "TEXT",
-    "date": "DATE",
-    "single_select": "SINGLE_SELECT",
+    "text": "text",
+    "date": "date",
+    "single_select": "single_select",
 }
 _MAX_PROVIDER_PAGES = 10
-_PROVIDER_ERROR_CODES = {
-    "tool_disabled": "tool_disabled",
-    "method_not_found": "tool_disabled",
-    "unauthorized": "auth_missing",
-    "unauthenticated": "auth_missing",
-    "auth_missing": "auth_missing",
-    "forbidden": "permission_failure",
-    "permission_denied": "permission_failure",
-    "not_found": "destination_unresolved",
-}
+_PUBLIC_ERROR_PATTERNS = (
+    (
+        (
+            "tool_disabled",
+            "tool disabled",
+            "method_not_found",
+            "method not found",
+            "not connected",
+            "unknown tool",
+        ),
+        "tool_disabled",
+    ),
+    (
+        (
+            "unauthorized",
+            "unauthenticated",
+            "authentication required",
+            "auth_missing",
+        ),
+        "auth_missing",
+    ),
+    (("forbidden", "permission_denied", "permission denied"), "permission_failure"),
+    (("not_found", "not found"), "destination_unresolved"),
+)
 _EXPECTED_SIDE_EFFECTS = {
     "task.create": [
         {
@@ -93,6 +107,19 @@ class _AdapterBlocker(Exception):
         super().__init__(code)
         self.code = code
         self.stage = stage
+
+
+def _reject_duplicate_keys(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("JSON object contains a duplicate key.")
+        result[key] = value
+    return result
+
+
+def _reject_non_json_constant(_value):
+    raise ValueError("JSON contains a non-standard numeric constant.")
 
 
 class GithubProjectsAdapter:
@@ -394,26 +421,59 @@ class GithubProjectsAdapter:
             raise _AdapterBlocker("tool_disabled", stage)
         except Exception:
             raise _AdapterBlocker("adapter_unavailable", stage)
-        if isinstance(result, str):
-            try:
-                result = json.loads(result)
-            except json.JSONDecodeError:
-                raise _AdapterBlocker("adapter_unavailable", stage)
-        if not isinstance(result, dict):
+        if not isinstance(result, str):
             raise _AdapterBlocker("adapter_unavailable", stage)
-        provider_error = result.get("error")
-        if provider_error:
-            code = (
-                provider_error.get("code")
-                if isinstance(provider_error, dict)
-                else None
+        try:
+            envelope = json.loads(
+                result,
+                object_pairs_hook=_reject_duplicate_keys,
+                parse_constant=_reject_non_json_constant,
             )
-            normalized = str(code).lower() if code is not None else ""
+        except (TypeError, ValueError):
+            raise _AdapterBlocker("adapter_unavailable", stage)
+        if not isinstance(envelope, dict):
+            raise _AdapterBlocker("adapter_unavailable", stage)
+
+        envelope_keys = set(envelope)
+        if envelope_keys == {"error"}:
             raise _AdapterBlocker(
-                _PROVIDER_ERROR_CODES.get(normalized, "adapter_unavailable"),
+                self._public_error_code(envelope["error"]),
                 stage,
             )
-        return result
+        if envelope_keys not in ({"result"}, {"result", "structuredContent"}):
+            raise _AdapterBlocker("adapter_unavailable", stage)
+
+        provider_result = envelope["result"]
+        if isinstance(provider_result, str):
+            try:
+                provider_result = json.loads(
+                    provider_result,
+                    object_pairs_hook=_reject_duplicate_keys,
+                    parse_constant=_reject_non_json_constant,
+                )
+            except (TypeError, ValueError):
+                raise _AdapterBlocker("adapter_unavailable", stage)
+        if not isinstance(provider_result, dict):
+            raise _AdapterBlocker("adapter_unavailable", stage)
+
+        if "structuredContent" in envelope:
+            structured_content = envelope["structuredContent"]
+            if (
+                not isinstance(structured_content, dict)
+                or structured_content != provider_result
+            ):
+                raise _AdapterBlocker("adapter_unavailable", stage)
+        return provider_result
+
+    @staticmethod
+    def _public_error_code(error: Any) -> str:
+        if not isinstance(error, str) or not error.strip():
+            return "adapter_unavailable"
+        normalized = error.casefold()
+        for patterns, code in _PUBLIC_ERROR_PATTERNS:
+            if any(pattern in normalized for pattern in patterns):
+                return code
+        return "adapter_unavailable"
 
     @staticmethod
     def _validate_project_identity(result: Any, destination: Any) -> None:

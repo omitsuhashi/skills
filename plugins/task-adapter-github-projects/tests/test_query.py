@@ -19,6 +19,17 @@ from task_adapter_github_projects.adapter import GithubProjectsAdapter  # noqa: 
 from task_adapter_github_projects.config import load_config  # noqa: E402
 
 
+def public_success(payload, *, include_structured_content=False):
+    envelope = {"result": json.dumps(payload, ensure_ascii=False)}
+    if include_structured_content:
+        envelope["structuredContent"] = payload
+    return json.dumps(envelope, ensure_ascii=False)
+
+
+def public_error(message):
+    return json.dumps({"error": message}, ensure_ascii=False)
+
+
 class GithubProjectsQueryTests(unittest.TestCase):
     def test_query_paginates_post_filters_and_returns_only_safe_snapshots(self):
         fixture = json.loads(QUERY_FIXTURE.read_text(encoding="utf-8"))
@@ -27,19 +38,26 @@ class GithubProjectsQueryTests(unittest.TestCase):
         def dispatch(tool_name, arguments):
             calls.append((tool_name, arguments))
             if arguments["method"] == "get_project":
-                return {
-                    "id": "PVT_private",
-                    "number": 7,
-                    "title": "Portfolio OS Tasks",
-                    "owner": {"login": "example-owner"},
-                }
+                return public_success(
+                    {
+                        "id": "PVT_private",
+                        "number": 7,
+                        "title": "Portfolio OS Tasks",
+                        "owner": {"login": "example-owner"},
+                    }
+                )
             if arguments["method"] == "list_project_fields":
-                return {
-                    "fields": fixture["fields"],
-                    "pageInfo": {"hasNextPage": False, "nextCursor": None},
-                }
+                return public_success(
+                    {
+                        "fields": fixture["fields"],
+                        "pageInfo": {"hasNextPage": False, "nextCursor": None},
+                    },
+                    include_structured_content=True,
+                )
             if arguments["method"] == "list_project_items":
-                return fixture["pages"][1 if arguments.get("after") else 0]
+                return public_success(
+                    fixture["pages"][1 if arguments.get("after") else 0]
+                )
             self.fail(f"unexpected provider method: {arguments['method']}")
 
         result = GithubProjectsAdapter(
@@ -91,23 +109,20 @@ class GithubProjectsQueryTests(unittest.TestCase):
     def test_query_maps_destination_and_provider_failures_to_safe_codes(self):
         cases = (
             ("unknown_destination", None, "destination_unresolved"),
-            ("provider", "tool_disabled", "tool_disabled"),
-            ("provider", "unauthorized", "auth_missing"),
-            ("provider", "forbidden", "permission_failure"),
-            ("provider", "connection_failed", "adapter_unavailable"),
+            ("provider", "MCP tool disabled: method not found", "tool_disabled"),
+            ("provider", "unauthorized: authentication required", "auth_missing"),
+            ("provider", "forbidden: permission denied", "permission_failure"),
+            ("provider", "MCP call failed: ConnectionError", "adapter_unavailable"),
         )
-        for case, provider_code, expected_code in cases:
-            with self.subTest(case=case, provider_code=provider_code):
+        for case, provider_error, expected_code in cases:
+            with self.subTest(case=case, provider_error=provider_error):
                 calls = []
 
                 def dispatch(tool_name, arguments):
                     calls.append((tool_name, arguments))
-                    return {
-                        "error": {
-                            "code": provider_code,
-                            "message": "Authorization: Bearer must-not-leak",
-                        }
-                    }
+                    return public_error(
+                        f"{provider_error}; Authorization: Bearer must-not-leak"
+                    )
 
                 result = GithubProjectsAdapter(
                     config=load_config(EXAMPLE_CONFIG),
@@ -167,20 +182,26 @@ class GithubProjectsQueryTests(unittest.TestCase):
 
         def dispatch(_tool_name, arguments):
             if arguments["method"] == "get_project":
-                return {
-                    "number": 7,
-                    "title": "Portfolio OS Tasks",
-                    "owner": {"login": "example-owner"},
-                }
+                return public_success(
+                    {
+                        "number": 7,
+                        "title": "Portfolio OS Tasks",
+                        "owner": {"login": "example-owner"},
+                    }
+                )
             if arguments["method"] == "list_project_fields":
-                return {
-                    "fields": fixture["fields"],
+                return public_success(
+                    {
+                        "fields": fixture["fields"],
+                        "pageInfo": {"hasNextPage": False, "nextCursor": None},
+                    }
+                )
+            return public_success(
+                {
+                    "items": [item],
                     "pageInfo": {"hasNextPage": False, "nextCursor": None},
                 }
-            return {
-                "items": [item],
-                "pageInfo": {"hasNextPage": False, "nextCursor": None},
-            }
+            )
 
         result = GithubProjectsAdapter(
             config=load_config(EXAMPLE_CONFIG),
@@ -197,6 +218,51 @@ class GithubProjectsQueryTests(unittest.TestCase):
         self.assertNotIn("error", result)
         self.assertEqual(1, len(result["items"]))
         self.assertIsNone(result["items"][0]["due_date"])
+
+    def test_query_rejects_malformed_or_ambiguous_public_envelopes_safely(self):
+        valid_project = {
+            "number": 7,
+            "title": "Portfolio OS Tasks",
+            "owner": {"login": "example-owner"},
+        }
+        cases = (
+            "provider-secret-not-json",
+            json.dumps({"result": "provider-secret-not-json"}),
+            json.dumps(valid_project),
+            json.dumps({"structuredContent": valid_project}),
+            json.dumps(
+                {
+                    "result": json.dumps(valid_project),
+                    "error": "forbidden provider-secret",
+                }
+            ),
+            json.dumps(
+                {
+                    "result": json.dumps(valid_project),
+                    "structuredContent": {"different": "provider-secret"},
+                }
+            ),
+            '{"result":"{\\"number\\":NaN}"}',
+            '{"result":"{\\"number\\":7,\\"number\\":8}"}',
+        )
+
+        for public_envelope in cases:
+            with self.subTest(public_envelope=public_envelope):
+                result = GithubProjectsAdapter(
+                    config=load_config(EXAMPLE_CONFIG),
+                    dispatch=lambda _tool_name, _arguments: public_envelope,
+                ).query(
+                    {
+                        "adapter_contract_version": 2,
+                        "backend_key": "github_projects_mcp",
+                        "destination_ref": "tasks:portfolio-os",
+                        "query": {"limit": 1},
+                    }
+                )
+
+                self.assertEqual([], result["items"])
+                self.assertEqual("adapter_unavailable", result["error"]["code"])
+                self.assertNotIn("provider-secret", json.dumps(result))
 
 
 if __name__ == "__main__":
