@@ -31,7 +31,7 @@ Before prepare, execute, resume, status, or deliver actions, run:
 python3 <skill-dir>/scripts/check_capabilities.py --input <packet.json> --json
 ```
 
-Read-only status/recovery may omit --input and ignore unsupported approved_spec_seal. State changes fail with PLATFORM_UNSUPPORTED: Codex and Hermes stop; no unsafe fallback. Missing tdd/review needs an approved equivalent.
+Any ok=false blocks state changes. Read-only status/recovery ignores only unsupported approved_spec_seal; other failures block. PLATFORM_UNSUPPORTED: Codex and Hermes stop; no unsafe fallback. Missing tdd/review needs an approved equivalent.
 
 ## Mode Router
 

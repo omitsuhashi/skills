@@ -62,6 +62,16 @@ class EntrypointTests(unittest.TestCase):
         ):
             self.assertIn(required, text + core)
 
+    def test_skill_entrypoint_preserves_exact_status_capability_exception(self) -> None:
+        text = SKILL_FILE.read_text(encoding="utf-8")
+
+        self.assertIn("Any ok=false blocks state changes.", text)
+        self.assertIn(
+            "Read-only status/recovery ignores only unsupported "
+            "approved_spec_seal; other failures block.",
+            text,
+        )
+
     def test_skill_entrypoint_routes_through_context_contract(self) -> None:
         text = SKILL_FILE.read_text(encoding="utf-8")
 
