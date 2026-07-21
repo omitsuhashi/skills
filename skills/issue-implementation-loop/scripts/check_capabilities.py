@@ -23,7 +23,7 @@ def main() -> int:
     common_dir_result = git_output(["rev-parse", "--git-common-dir"], cwd=args.repo) if git_path else None
     packet_errors: list[str] = []
     if args.input:
-        packet_errors = validate_input_packet(load_json(args.input))
+        packet_errors = validate_input_packet(load_json(args.input), repo_root=args.repo)
 
     result = {
         "ok": bool(git_path)

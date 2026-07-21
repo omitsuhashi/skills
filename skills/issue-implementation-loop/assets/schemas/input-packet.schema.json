@@ -1,40 +1,70 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Issue Implementation Loop Input Packet",
-  "type": "object",
-  "required": ["schema_version", "repo_root", "epic_id", "spec", "work_items", "delivery_intent"],
+  "additionalProperties": false,
   "properties": {
-    "schema_version": {"const": 1},
-    "repo_root": {"type": "string"},
-    "epic_id": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"},
-    "artifact_root": {"type": "string"},
-    "spec": {
-      "type": "object",
-      "required": ["path"],
+    "approval_evidence": {
+      "additionalProperties": false,
       "properties": {
-        "path": {"type": "string"},
-        "approved_revision": {"type": "integer"},
-        "approved_hash": {"type": "string"}
-      }
+        "actor_expression": {"minLength": 1, "type": "string"},
+        "approved_at": {"format": "date-time", "type": "string"},
+        "decision": {"const": "approved"},
+        "scope": {
+          "additionalProperties": false,
+          "properties": {
+            "acceptance_criteria": {"const": true},
+            "accepted_decisions": {"const": true},
+            "non_goals": {"const": true},
+            "remote_policy": {"const": true},
+            "stop_conditions": {"const": true},
+            "verification": {"const": true}
+          },
+          "required": ["accepted_decisions", "non_goals", "acceptance_criteria", "verification", "remote_policy", "stop_conditions"],
+          "type": "object"
+        },
+        "subject": {"const": "spec_binding"}
+      },
+      "required": ["decision", "subject", "actor_expression", "approved_at", "scope"],
+      "type": "object"
+    },
+    "artifact_root": {"minLength": 1, "type": "string"},
+    "delivery_intent": {"enum": ["local_only", "per_action", "batch_draft_prs", "batch_issue_prs"]},
+    "epic_id": {"pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "type": "string"},
+    "schema_version": {"const": 2},
+    "spec_binding": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {"minLength": 1, "type": "string"},
+        "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+      },
+      "required": ["path", "sha256"],
+      "type": "object"
     },
     "work_items": {
-      "type": "array",
-      "minItems": 1,
       "items": {
-        "type": "object",
-        "required": ["id", "title", "acceptance_criteria", "verification", "write_scope"],
+        "additionalProperties": false,
         "properties": {
-          "id": {"type": "string", "pattern": "^[A-Z0-9]+-[0-9]+$"},
-          "title": {"type": "string"},
-          "source": {"type": "object"},
-          "acceptance_criteria": {"type": "array", "items": {"type": "string"}},
-          "non_goals": {"type": "array", "items": {"type": "string"}},
-          "verification": {"type": "array", "items": {"type": "string"}},
-          "write_scope": {"type": "array", "items": {"type": "string"}},
-          "dependencies": {"type": "array"}
-        }
-      }
-    },
-    "delivery_intent": {"enum": ["local_only", "per_action", "batch_draft_prs", "batch_issue_prs"]}
-  }
+          "acceptance_criteria": {"items": {"minLength": 1, "type": "string"}, "minItems": 1, "type": "array"},
+          "dependencies": {"items": {"pattern": "^[A-Z0-9]+-[0-9]+$", "type": "string"}, "type": "array"},
+          "id": {"pattern": "^[A-Z0-9]+-[0-9]+$", "type": "string"},
+          "non_goals": {"items": {"minLength": 1, "type": "string"}, "minItems": 1, "type": "array"},
+          "source": {
+            "additionalProperties": false,
+            "properties": {"path": {"minLength": 1, "type": "string"}, "type": {"const": "local"}},
+            "required": ["type", "path"],
+            "type": "object"
+          },
+          "title": {"minLength": 1, "type": "string"},
+          "verification": {"items": {"minLength": 1, "type": "string"}, "minItems": 1, "type": "array"},
+          "write_scope": {"items": {"pattern": "^path:[^/].*$", "type": "string"}, "minItems": 1, "type": "array"}
+        },
+        "required": ["id", "title", "source", "acceptance_criteria", "non_goals", "verification", "write_scope", "dependencies"],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    }
+  },
+  "required": ["schema_version", "epic_id", "artifact_root", "spec_binding", "approval_evidence", "work_items", "delivery_intent"],
+  "title": "Issue Implementation Loop Input Packet",
+  "type": "object"
 }

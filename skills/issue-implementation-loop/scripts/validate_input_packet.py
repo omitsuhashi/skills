@@ -4,18 +4,22 @@
 from __future__ import annotations
 
 import argparse
+from pathlib import Path
 import sys
 
 from _common import load_json, validate_input_packet
+from issue_implementation_loop.approved_spec_binding import discover_repo_root
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("packet")
+    parser.add_argument("--repo-root", help="Trusted Git repository/worktree root.")
     parser.add_argument("--json", action="store_true", help="Emit JSON result.")
     args = parser.parse_args()
 
-    errors = validate_input_packet(load_json(args.packet))
+    repo_root = args.repo_root or discover_repo_root(Path(args.packet).resolve().parent)
+    errors = validate_input_packet(load_json(args.packet), repo_root=repo_root)
     if args.json:
         from _common import dump_json
 

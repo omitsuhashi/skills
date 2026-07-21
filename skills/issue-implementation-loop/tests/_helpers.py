@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import importlib.util
 import os
+import copy
+import hashlib
 import json
 from pathlib import Path
 import re
@@ -200,6 +202,47 @@ def base_packet() -> dict:
                 "id": "G2PR-001",
                 "title": "Example issue",
                 "acceptance_criteria": ["observable behavior"],
+                "verification": ["python3 -m unittest"],
+                "write_scope": ["path:skills/example"],
+                "dependencies": [],
+            }
+        ],
+        "delivery_intent": "batch_issue_prs",
+    }
+
+
+def current_input_packet(repo: Path) -> dict:
+    spec_path = "knowledge/wiki/syntheses/spec.md"
+    digest = hashlib.sha256((repo / spec_path).read_bytes()).hexdigest()
+    return {
+        "schema_version": 2,
+        "epic_id": "issue-implementation-loop",
+        "artifact_root": "knowledge/wiki/syntheses",
+        "spec_binding": {"path": spec_path, "sha256": digest},
+        "approval_evidence": {
+            "decision": "approved",
+            "subject": "spec_binding",
+            "actor_expression": "session-user",
+            "approved_at": "2026-07-21T17:55:36+09:00",
+            "scope": {
+                "accepted_decisions": True,
+                "non_goals": True,
+                "acceptance_criteria": True,
+                "verification": True,
+                "remote_policy": True,
+                "stop_conditions": True,
+            },
+        },
+        "work_items": [
+            {
+                "id": "G2PR-001",
+                "title": "Example issue",
+                "source": {
+                    "type": "local",
+                    "path": "knowledge/wiki/syntheses/issues.md",
+                },
+                "acceptance_criteria": ["observable behavior"],
+                "non_goals": ["remote write"],
                 "verification": ["python3 -m unittest"],
                 "write_scope": ["path:skills/example"],
                 "dependencies": [],

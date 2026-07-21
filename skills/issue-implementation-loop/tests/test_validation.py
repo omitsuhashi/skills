@@ -16,32 +16,72 @@ class ValidationTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("context_policy", result.stderr)
 
-    def test_validate_input_packet_rejects_missing_or_invalid_delivery_intent(self) -> None:
+    def test_validate_input_packet_v2_rejects_closed_shape_and_binding_errors(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            cases = [
-                ("missing", None, "delivery_intent"),
-                ("invalid", "unsafe_final_pr_agent_merge", "delivery_intent"),
-            ]
+            repo = Path(tmp)
+            subprocess.run(["git", "init", "-q", str(repo)], check=True)
+            spec_path = repo / "knowledge/wiki/syntheses/spec.md"
+            spec_path.parent.mkdir(parents=True)
+            spec_path.write_text("spec\n", encoding="utf-8")
+            issues_path = spec_path.with_name("issues.md")
+            issues_path.write_text("issues\n", encoding="utf-8")
+            linked_issues = spec_path.with_name("linked-issues.md")
+            linked_issues.symlink_to(issues_path)
+            packet = current_input_packet(repo)
+            cases = []
+            v1 = base_packet()
+            cases.append(("v1", v1, "SCHEMA_UNSUPPORTED"))
+            missing_approval = copy.deepcopy(packet)
+            del missing_approval["approval_evidence"]
+            cases.append(("missing-approval", missing_approval, "APPROVAL_MISSING"))
+            incomplete = copy.deepcopy(packet)
+            incomplete["approval_evidence"]["scope"]["verification"] = False
+            cases.append(("incomplete-scope", incomplete, "APPROVAL_SCOPE_INCOMPLETE"))
+            malformed = copy.deepcopy(packet)
+            malformed["spec_binding"]["sha256"] = "sha256:bad"
+            cases.append(("malformed-hash", malformed, "DIGEST_MALFORMED"))
+            unknown = copy.deepcopy(packet)
+            unknown["unknown"] = True
+            cases.append(("unknown-field", unknown, "SCHEMA_UNSUPPORTED"))
+            empty = copy.deepcopy(packet)
+            empty["work_items"] = []
+            cases.append(("empty-work-items", empty, "SCHEMA_UNSUPPORTED"))
+            malformed_item = copy.deepcopy(packet)
+            malformed_item["work_items"][0]["id"] = 1
+            cases.append(("malformed-item", malformed_item, "SCHEMA_UNSUPPORTED"))
+            unsafe = copy.deepcopy(packet)
+            unsafe["spec_binding"]["path"] = "../spec.md"
+            cases.append(("unsafe-path", unsafe, "PATH_TRAVERSAL"))
+            unsafe_source = copy.deepcopy(packet)
+            unsafe_source["work_items"][0]["source"]["path"] = (
+                "knowledge/wiki/syntheses/linked-issues.md"
+            )
+            cases.append(("unsafe-source", unsafe_source, "PATH_SYMLINK"))
             for name, value, expected in cases:
-                packet = base_packet()
-                if value is None:
-                    del packet["delivery_intent"]
-                else:
-                    packet["delivery_intent"] = value
-                path = Path(tmp) / f"{name}.json"
-                write_json(path, packet)
-
-                result = run_script("validate_input_packet.py", str(path))
-
+                path = repo / f"{name}.json"
+                write_json(path, value)
+                result = run_script(
+                    "validate_input_packet.py",
+                    str(path),
+                    "--repo-root",
+                    str(repo),
+                    "--json",
+                )
                 self.assertNotEqual(result.returncode, 0, name)
-                self.assertIn(expected, result.stderr)
+                self.assertEqual(json.loads(result.stdout)["errors"][0], expected, name)
 
-    def test_validate_input_packet_accepts_batch_issue_prs_delivery_intent(self) -> None:
+    def test_validate_input_packet_accepts_current_v2_closed_shape(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "packet.json"
-            write_json(path, base_packet())
+            repo = Path(tmp)
+            subprocess.run(["git", "init", "-q", str(repo)], check=True)
+            spec_path = repo / "knowledge/wiki/syntheses/spec.md"
+            spec_path.parent.mkdir(parents=True)
+            spec_path.write_text("spec\n", encoding="utf-8")
+            spec_path.with_name("issues.md").write_text("issues\n", encoding="utf-8")
+            path = repo / "packet.json"
+            write_json(path, current_input_packet(repo))
 
-            result = run_script("validate_input_packet.py", str(path))
+            result = run_script("validate_input_packet.py", str(path), "--repo-root", str(repo))
 
             self.assertEqual(result.returncode, 0, result.stderr)
 
