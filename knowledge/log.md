@@ -1213,3 +1213,31 @@ append-only で使います。すべての entry は予測しやすい header �
 - final local verificationはissue-implementation-loop 245 tests、grill-to-pr-loop 25 tests、llm-wiki 6 tests、scripts 59 testsが成功した。strict contextはcurrent / baseline operation count `8 == 8`、`warnings=[]`
 - immutable raw-byte SHA-256はspec `6cedbba982f891d8ffceb9204bfc453b276df9e6021dca048cb0612d359a3dcc`、sealed Input Packet `3779e815b4be7438b36e9fb53073fa1d3ab20f07cd5ad1c531fa075c11b457e7`、corrected Envelope v4 `c15a7e9f4dc18acf8899f8e660f8f6eff8753f39b9f72a5772e44daf22d89497`のまま変更していない
 - 全ASBC issueは`LOCAL_COMPLETE`、remote policyは`local_only`。push、GitHub Issue、PR、merge、live Codex/Hermes install/runtime changeは実行していない
+
+## [2026-07-22] spec-candidate | Approved Spec Binding Artifact Lifecycle
+
+- user feedbackを受け、同一Epicのdurable spec/ledger/plan/packetを`knowledge/wiki/syntheses/<epic-id>/`へ集約し、Envelope以後のinstantiated execution JSON/JSONLをGit common runtime rootへ分離するconsolidated revision candidateを作成した
+- current skillだけを使うfresh read-only baseline 3件では、planning artifactsは`syntheses/`直下へflat配置され、execution artifactsはGit common runtime rootへ非追跡配置された。planning layoutとruntime contractの不一致をproduction change前に再現した
+- Input Packet v2はexact approval/execution-intent lockかつgate commit blobなのでtrackedのまま維持し、Execution Envelope、runtime/events、worker/reviewer packets/reports、decisions、recovery、deliveryはGit非追跡とする。schema/template/test fixture JSONはproduct contractとしてtrackedを維持する
+- consolidated spec、follow-up ledger、initial plan archive、TDD implementation planを`knowledge/wiki/syntheses/approved-spec-binding-contract/`へ配置した。ASBC-007〜ASBC-009はexact spec path/raw-byte digestのWritten Spec Gate待ちで、production skill/code、sealed packet、remote PR stateは未変更
+- Written Spec Gate提示値はpath `knowledge/wiki/syntheses/approved-spec-binding-contract/spec.md`、raw-byte SHA-256 `2bd4fcdbed9828c988a9d5c24cdd02242434f0e44e802cceb34fc4a0e7b86193`。approval subjectは`spec_binding`、scopeはaccepted decisions / non-goals / acceptance criteria / verification / remote policy / stop conditionsの6項目で、decisionは未承認
+
+## [2026-07-22] spec-approval | Approved Spec Binding Artifact Lifecycle
+
+- actor expression: `session-user`
+- approved at: `2026-07-22T07:36:04+09:00`
+- exact spec path: `knowledge/wiki/syntheses/approved-spec-binding-contract/spec.md`
+- raw-byte SHA-256: `2bd4fcdbed9828c988a9d5c24cdd02242434f0e44e802cceb34fc4a0e7b86193`
+- approval subject: `spec_binding`
+- decision: `approved`
+- approval scope: `accepted_decisions=true`、`non_goals=true`、`acceptance_criteria=true`、`verification=true`、`remote_policy=true`、`stop_conditions=true`
+- ユーザーの「承認」により exact Written Spec Gate を通過した。承認後の `spec.md` bytes は変更せず、ASBC-007をfirst runnable issueとする
+- remote scopeはbranch `codex/approved-spec-binding-contract`へのpushと既存Draft PR #32の更新のみ。PR ready化、merge、release、live installは非承認
+
+## [2026-07-22] canonicalize-rehome | Approved Spec Binding Artifact Lifecycle
+
+- Written Spec Gateのexact path/raw-byte SHA-256、`session-user`、`approved`、`spec_binding`、six-part scopeをpublic `identify`で再確認し、ASBC-007のreviewed implementation commit `ce70e6c`をmigration前提として固定した
+- current durable spec、ledger、initial implementation plan、follow-up implementation plan、sealed Input Packet v2を`knowledge/wiki/syntheses/approved-spec-binding-contract/`へ集約し、current index linksをnested rootへ切り替えた
+- Input Packet v2をapproved spec SHA-256 `2bd4fcdbed9828c988a9d5c24cdd02242434f0e44e802cceb34fc4a0e7b86193`へresealした。packet SHA-256は`e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c`、public packet validatorとbinding verifyはいずれも成功した
+- superseded flat current spec、issues、implementation plan、Input Packet、Execution Envelopeの5 filesだけをcurrent treeから削除した。historical artifactは追加削除せず、current instantiated EnvelopeはGit indexから除外した
+- 本entryを含むartifact lifecycle gate commitのfull SHAは、commit作成後のappend-only follow-up entryに記録する。specとsealed packet bytesは以後変更しない

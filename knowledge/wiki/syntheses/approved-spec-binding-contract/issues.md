@@ -2,21 +2,24 @@
 
 ## 状態
 
-Written Spec Gate / Issue Gate / Execution Plan Gate を通過し、ASBC-001 から ASBC-006 は local 実装・独立 review・full verification を完了した。2026-07-21 の初回 closeout は whole-branch review で再オープンし、2段階の hardening fix、metadata parity micro-fix、最終 zero-finding approval を経て 2026-07-22 に再完了した。全 issue は `LOCAL_COMPLETE`。remote policy は承認どおり `local_only` であり、push、PR、merge、live install は意図的に実行していない。
+ASBC-001 から ASBC-006 は local 実装・独立 review・full verification を完了した。2026-07-22 の利用者 feedback に基づく artifact lifecycle follow-up を ASBC-007 から ASBC-009 として追加した。consolidated spec の exact path/raw-byte digest に対する Written Spec Gate 承認後、ASBC-007 の contract 実装と ASBC-008 の current artifact migration/reseal を完了した。次の runnable issue は ASBC-009。
 
 ## Source
 
 - Epic ID: `approved-spec-binding-contract`
-- 承認済み spec: [loop-skill-approved-spec-binding-contract-spec.md](loop-skill-approved-spec-binding-contract-spec.md)
+- Approved consolidated revision: [spec.md](spec.md)
+- Approved revision digest: `sha256:2bd4fcdbed9828c988a9d5c24cdd02242434f0e44e802cceb34fc4a0e7b86193`
+- Artifact lifecycle Spec Gate approval: 2026-07-22T07:36:04+09:00 `session-user`
+- Prior approved spec (historical Git path): `knowledge/wiki/syntheses/loop-skill-approved-spec-binding-contract-spec.md`。current treeではconsolidated revisionへsupersede済み。
 - Spec digest: `sha256:6cedbba982f891d8ffceb9204bfc453b276df9e6021dca048cb0612d359a3dcc`
 - Spec Gate commit: `bbf1585e05ad510242af3e4fa59be2447574d6ea`
 - Issue Gate commit: `fd6a3a38d52f1e83f293c133a6658912fbcdef99`
 - Execution Plan Gate commit: `2b8623047f723ba433f25997080377e3dec81f1e`
 - Spec Gate approval: 2026-07-21 `session-user`
 - Issue Gate approval: 2026-07-21。ユーザーの「承認」「skill 作成のベストプラクティスに則った実装」依頼を、承認済み scope を変更しない本 ledger の実装承認とする。
-- Remote policy: `local_only`
-- Current Input Packet v2: `knowledge/wiki/syntheses/loop-skill-approved-spec-binding-contract-input-packet.json`、raw SHA-256 `3779e815b4be7438b36e9fb53073fa1d3ab20f07cd5ad1c531fa075c11b457e7`
-- Current Execution Envelope v4: `knowledge/wiki/syntheses/loop-skill-approved-spec-binding-contract-execution-envelope.json`、raw SHA-256 `c15a7e9f4dc18acf8899f8e660f8f6eff8753f39b9f72a5772e44daf22d89497`
+- Remote policy: branch `codex/approved-spec-binding-contract` push and Draft PR #32 update approved; PR ready、merge、release、live install are not approved
+- Current Input Packet v2: `knowledge/wiki/syntheses/approved-spec-binding-contract/input-packet.json`、raw SHA-256 `e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c`
+- Tracked current Execution Envelope: なし。prior flat Envelopeはcurrent treeから削除し、次のinstantiated EnvelopeはGit common runtime rootだけに生成する。
 - Approved binding gate commit: `ad9adeab69bcafd761d8457e9c33d1b4c26096d5`
 - Local branch: `codex/approved-spec-binding-contract`
 
@@ -31,6 +34,17 @@ fresh agent が新仕様を読まず current skill だけを使った pressure t
 
 この RED は production change 前に取得した。新仕様を baseline evaluator へ漏らしていない。
 
+## Artifact Layout Baseline RED Evidence
+
+2026-07-22 に、new layout と診断を渡さず current skill entrypoints だけを使う read-only evaluator 3件を実行した。
+
+- planning evaluator 2件は spec、issues、implementation plan、Input Packetを`knowledge/wiki/syntheses/`直下へEpic prefix付きで平置きした。Epic directoryを選ぶ明示契約は見つからなかった。
+- 一方でexecution evaluator 2件はEnvelope、runtime state、events、reports、reviews、decisions、deliveryをGit common runtime rootへ置き、Git非追跡と判断した。
+- current repository testは`synthesis_root.glob("*input-packet.json")`と`glob("*execution-envelope.json")`を使い、nested Epic directoryを探索しない。
+- current tracked Envelopeはhost-local absolute worktree pathを含む。runtime contractがGit非追跡を指示する一方、初回implementation planはEnvelopeをsynthesesへ追加・commitする手順だった。
+
+このbaselineは「durable planning filesのfolder ownership不足」と「planning evidenceとruntime contractの不一致」を再現した。production skill/codeはまだ変更していない。
+
 ## Local Issue Ledger
 
 | Epic ID | ローカルID | タイトル | レビュー状態 | 実行状態 | ブロック元 | ブロック先 | GitHub Issue | 実装レビュー | PR |
@@ -41,6 +55,9 @@ fresh agent が新仕様を読まず current skill だけを使った pressure t
 | approved-spec-binding-contract | ASBC-004 | routing/review/completion/delivery gate を fail closed にする | 承認済み | LOCAL_COMPLETE | 解消済み | ASBC-006 | 未作成（local_only） | Approved・open finding なし | 未作成（local_only） |
 | approved-spec-binding-contract | ASBC-005 | planning/execution skill contract と legacy surface を更新する | 承認済み | LOCAL_COMPLETE | 解消済み | ASBC-006 | 未作成（local_only） | Approved・open finding なし | 未作成（local_only） |
 | approved-spec-binding-contract | ASBC-006 | bootstrap seal、forward test、full verification、durable evidence を完了する | 承認済み | LOCAL_COMPLETE | 解消済み | なし | 未作成（local_only） | Approved・open finding なし | 未作成（local_only） |
+| approved-spec-binding-contract | ASBC-007 | Epic単位のdurable artifact layoutを契約化する | 承認済み | LOCAL_COMPLETE | 解消済み | ASBC-008 | Draft PR #32 | 完了・open findingなし | Draft PR #32 |
+| approved-spec-binding-contract | ASBC-008 | current Epicを新layoutへ移しruntime JSONをGit管理外にする | 承認済み | LOCAL_COMPLETE | 解消済み | ASBC-009 | Draft PR #32 | 完了・open findingなし | Draft PR #32 |
+| approved-spec-binding-contract | ASBC-009 | forward test・全検証・Draft PR更新を完了する | 承認済み | RUNNABLE | 解消済み | なし | Draft PR #32 | 未実施 | Draft PR #32 |
 
 ## Blocker Graph
 
@@ -51,11 +68,13 @@ ASBC-001
   -> ASBC-005
 ASBC-002 + ASBC-003 -> ASBC-004
 ASBC-004 + ASBC-005 -> ASBC-006
+ASBC-006 -> ASBC-007 -> ASBC-008 -> ASBC-009
 ```
 
 - Dependency graph は順序どおり解消済み。first runnable issue は `ASBC-001` であり、最終 issue `ASBC-006` まで local completion 済み。
 - `ASBC-002` と `ASBC-003` は ASBC-001 の sealed packet/ref API 固定後、`ASBC-004` は両 state artifact family 固定後、`ASBC-006` は ASBC-004 / ASBC-005 完了後に実行した。
 - completion/delivery は ASBC-006 の acceptance/review/full verification 完了後にのみ local completion とした。
+- follow-up は ASBC-007 の TDD contract変更、ASBC-008 のartifact migration/resealまで完了し、ASBC-009 のfresh-agent verificationとDraft PR更新が次のrunnable issue。
 - Cyclic blocker: なし。
 
 ## ASBC-001: Approved Spec Binding core と Input Packet v2 を実装する
@@ -214,6 +233,78 @@ bootstrap approval を恒久 fallback にせず、実装済み v2 contract で�
 - baseline raw response を repository へ保存すること。
 - remote delivery や live environment の変更。
 
+## ASBC-007: Epic単位のdurable artifact layoutを契約化する
+
+### 目的
+
+filename prefixへ依存するflat layoutを廃止し、durable planning rootの下に`<epic-id>/` ownershipを固定する。
+
+### Scope
+
+- `skills/grill-to-pr-loop/SKILL.md`、planning/handoff references、tests
+- Input Packet v2 artifact layout validation、template、tests
+- `skills/issue-implementation-loop` runtime/envelope references
+
+### Acceptance Criteria
+
+- `artifact_root`の末尾segmentが`epic_id`と一致しないpacketを`ARTIFACT_LAYOUT_MISMATCH`で拒否する。
+- spec、local issue source、seal outputはすべて`<artifact_root>`直下だけをcurrent layoutとして受理する。
+- planning skillは`<durable-planning-root>/<epic-id>/`と4つのcanonical basenameをdefault reader surfaceから提示する。
+- execution skillはEnvelope以降のinstance artifactをGit common runtime rootへ置き、Git commit対象から除外する。
+
+### Non-goals
+
+- historical flat artifact全件のmigration。
+- schema/template/test fixture JSONのGit除外。
+
+## ASBC-008: current Epicを新layoutへ移しruntime JSONをGit管理外にする
+
+### 目的
+
+このEpicのdurable sourceをnested rootへ移し、host-local absolute pathを含むtracked Envelopeを削除してnew binding epochをsealする。
+
+### Scope
+
+- `knowledge/wiki/syntheses/approved-spec-binding-contract/{spec.md,issues.md,initial-implementation-plan.md,implementation-plan.md,input-packet.json}`
+- old flat current artifact pathsの削除
+- `knowledge/index.md`、append-only `knowledge/log.md`
+
+### Acceptance Criteria
+
+- final treeでcurrent spec/ledger/plans/packetはEpic directory内だけに存在する。
+- `loop-skill-approved-spec-binding-contract-execution-envelope.json`はGit indexから削除される。
+- new Input Packetはapproved consolidated spec digest、new canonical paths、ASBC-007〜ASBC-009を持ちpublic validatorを通る。
+- gate commitはnew specとpacketのexact blobsを含み、new runtime EnvelopeはGit common runtime rootでのみ生成可能なcontractになる。
+
+### Non-goals
+
+- completed historical runtimeのresume。
+- PR ready化、merge、release、live install。
+
+## ASBC-009: forward test・全検証・Draft PR更新を完了する
+
+### 目的
+
+artifact lifecycleがfuture agentへ伝わることをfresh contextで確認し、repository全体の回帰検証後に既存Draft PRへ反映する。
+
+### Scope
+
+- no-guidance/current-guidance baselineとupdated-skill forward tests
+- issue-loop、grill、wiki、scripts、architecture/context/dual-host/creator validators
+- branch push、Draft PR #32 body/check summary更新
+
+### Acceptance Criteria
+
+- fresh evaluatorはspec/ledger/plan/packetをEpic directory、Envelope/runtime/events/reports/decisions/deliveryをGit common runtime rootへ置く。
+- current test suitesと全repository validatorがwarning/errorなく成功する。
+- final diff reviewでCritical/Important findingが0になる。
+- pushは`codex/approved-spec-binding-contract`、PR操作はDraft PR #32更新だけに限定し、merge/live installを行わない。
+
+### Non-goals
+
+- final PR merge。
+- marketplace publishまたはlive Codex/Hermes verification。
+
 ## Local Completion Evidence
 
 各 `review/diff range` は Git の `base..head`、`landed commits` はその range 内で当該 issue に属する exact SHA を表す。
@@ -259,6 +350,20 @@ bootstrap approval を恒久 fallback にせず、実装済み v2 contract で�
 - Landed scope: ASB-01〜ASB-30 の重複なし public acceptance matrix、connected reseal epoch、isolated Codex/Hermes CLI parity、complete current artifact/executable inventory、strict warning-free context baseline。
 - Review: task-local 2 cycle後の focused reviewに続き、initial closeout後の whole-branch reviewと final hardening reviewを実施した。両 review wave の全 blockerに加えて Worker Packet binding metadata parity と strict context baseline self-consistencyを閉じ、commit `18a7fc4e8439421b28499f9105bf7653888b22de` の最終 focused reviewは Approved、Critical / Important / Minor すべて 0。
 - Evidence: issue-loop 245 tests、grill 25 tests、llm-wiki 6 tests、scripts 59 tests、strict context report current / baseline operation count `8 == 8`、`warnings=[]`、全 repository/creator validators、Packet v2 / corrected Envelope v4 current validation が成功。
+
+### ASBC-007
+
+- Landed commit: `ce70e6c` (`feat: separate durable and runtime epic artifacts`)。
+- Landed scope: Epic単位のtracked durable root、canonical basenames、artifact layout validator、Git common runtime rootとのownership seam。
+- Review: task-local review完了、open findingなし。
+- Evidence: public ASB-31〜ASB-36とissue-loop / grill suitesが成功し、seal capabilityは`approved_spec_seal.supported=true`。
+
+### ASBC-008
+
+- Landed scope: consolidated spec/ledger/plans/sealed packetを`knowledge/wiki/syntheses/approved-spec-binding-contract/`へ集約し、指定されたflat current 5 artifactsだけを削除した。
+- Binding: spec SHA-256 `2bd4fcdbed9828c988a9d5c24cdd02242434f0e44e802cceb34fc4a0e7b86193`、sealed packet SHA-256 `e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c`。
+- Evidence: public seal、Input Packet validator、binding verifyが成功。nested packetはtracked、current instantiated EnvelopeはGit indexに存在しない。
+- Remote/live action: なし。Draft PR更新、PR ready化、merge、release、live installはASBC-008では実行していない。
 
 ## Whole-Branch Hardening Re-closeout
 
@@ -322,7 +427,16 @@ approved spec 本文、tests、ledger、plan、意図した回答を渡さず、
 - push、GitHub Issue、PR、merge、live install は `local_only` policy により意図的に未実行。これらは別の明示承認なしに開始しない。
 - Open implementation blocker: なし。
 
-## Issue Gate 承認対象
+## Artifact Lifecycle Follow-up Gate
+
+- Written Spec Gate: [spec.md](spec.md) のexact path/raw-byte digestとsix-part scopeを2026-07-22T07:36:04+09:00に`session-user`が明示承認済み。
+- Follow-up issue count: 3（ASBC-007〜ASBC-009）。
+- Dependency order: `ASBC-007 -> ASBC-008 -> ASBC-009`。
+- First runnable issue after approval: ASBC-007。ASBC-007/ASBC-008 local completion後のcurrent runnable issueはASBC-009。
+- Approved remote scope: branch `codex/approved-spec-binding-contract`へのpushと既存Draft PR #32更新のみ。
+- PR ready化、merge、release、live installは非承認。
+
+## Initial Issue Gate Record
 
 - Approval: 2026-07-21 user approved implementation under skill best practices。
 - Local issue count: 6。

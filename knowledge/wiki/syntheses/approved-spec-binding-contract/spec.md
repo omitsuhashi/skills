@@ -2,7 +2,7 @@
 
 ## 状態
 
-2026-07-21 の会話上の設計選択で、normalized input packet を Approved Spec Binding の唯一の正本とする A 案は承認済み。この page は Written Spec Gate へ提示する immutable candidate である。approval decision は対象 spec bytes の中へ自己記録せず、`knowledge/log.md` と、実装後は Input Packet v2 に記録する。candidate 生成時点では Issue Gate、Execution Plan Gate、実装は未承認・未着手。
+2026-07-21 に承認された Approved Spec Binding 実装へ、Epic 単位の durable artifact root と Git 非追跡 runtime root を追加する consolidated revision candidate。2026-07-22 の user decision は設計方向を承認済みだが、この page の exact path/raw-byte digest に対する Written Spec Gate は未承認。approval decision は対象 spec bytes の中へ自己記録せず、`knowledge/log.md` と、承認後に再 seal する Input Packet v2 に記録する。
 
 ## Epic ID
 
@@ -21,6 +21,8 @@
 - Envelope v1〜v3、Worker Packet V1、metadata のない resume brief を受理する compatibility branch と成功テストが残っている。
 
 実データでも、`knowledge/wiki/syntheses/loop-review-governance-input-packet.json` に記録された spec digest と現在の spec bytes が不一致であるにもかかわらず、現行 validator は成功する。これは単なる未実装ではなく、optional digest と legacy acceptance を正としている現行契約の gap である。
+
+初回実装後の実利用では、同一 Epic の spec、ledger、plan、packet、Envelope が `knowledge/wiki/syntheses/` 直下へ長い prefix 付きで平置きされた。さらに tracked Envelope に host 固有の absolute worktree path が保存された。prefix は directory ownership の代替にならず、host-local execution context を Git の durable knowledge と混在させるため、artifact lifecycle の seam を追加で固定する。
 
 ## 契約目的
 
@@ -48,6 +50,48 @@ final spec raw bytes
 - Codex と Hermes Agent は同じ `SKILL.md`、JSON artifact、Python CLI を使う。host 固有 session metadata は binding identity に含めない。
 - persisted artifact から absolute `repo_root` を削除する。trusted repo/worktree root は実行時に caller または Git checkout から解決する。
 - backward compatibility は実装しない。旧 artifact の migration/resume branch、shim、成功テストを残さない。
+- durable planning root の直下へ `<epic-id>/` directory を必須化し、この repository のdefault basenameとして`spec.md`、`issues.md`、`implementation-plan.md`、`input-packet.json`を同居させる。
+- Input Packet v2 は承認された execution intent の lock artifact であり、spec と同じ gate commit に含める。ファイル形式が JSON であることを理由に Git 管理から外さない。
+- Execution Envelope v4 と、それ以後の instantiated JSON/JSONL artifact は coordinator-owned runtime context とし、`$(git rev-parse --git-common-dir)/agent-runs/issue-implementation-loop/<epic-id>/` に保存して Git 管理しない。
+- skill の schema、template、fixture は product contract であり、Epic instance artifact ではないため Git 管理を継続する。
+
+## Artifact lifecycle contract
+
+repository ごとの durable planning root を `<durable-planning-root>` とする。この repository では `knowledge/wiki/syntheses` である。新しい current Epic は次の tracked tree を持つ。
+
+```text
+<durable-planning-root>/<epic-id>/
+├── spec.md
+├── issues.md
+├── implementation-plan.md
+└── input-packet.json
+```
+
+- Input Packet `artifact_root` は `<durable-planning-root>/<epic-id>` と完全一致し、最後の path segment は packet の `epic_id` と一致しなければならない。
+- `spec_binding.path`、local work item の `source.path`、seal output はすべて`<artifact_root>`直下に置く。この repository の新規artifactは`spec.md`、`issues.md`、`input-packet.json`を使う。
+- repo-local ruleが別basenameを要求する場合はbasenameだけを置換できるが、Epic directory containmentは緩和しない。
+- `artifact_root` 外の spec、ledger、packet output は `ARTIFACT_LAYOUT_MISMATCH` で fail closed にする。
+- implementation plan は human-readable gate evidence であり packet binding の入力ではないが、同じ Epic directory に保存する。
+- `knowledge/index.md` は nested relative path を catalog し、`knowledge/log.md` は gate/implementation/delivery timeline を append-only で記録する。
+
+execution coordinator は次の untracked runtime tree を持つ。
+
+```text
+$(git rev-parse --git-common-dir)/agent-runs/issue-implementation-loop/<epic-id>/
+├── execution-envelope.json
+├── runtime-state.json
+├── events.jsonl
+├── reports/
+├── reviews/
+├── decisions/
+├── recovery/
+└── delivery/
+```
+
+- Envelope、runtime snapshot、event log、worker/reviewer packet/report、human request、decision registry、resume metadata、execution result、delivery plan は instantiated execution context として Git に commit しない。
+- runtime root は Git common directory 内にあるため repository `.gitignore` entry を要求しない。別 runtime adapter を使う場合も tracked worktree 外を必須にする。
+- Envelope に branch/worktree reservation の absolute path を持つことは許可するが、その host-local 値を durable planning artifact や binding identity として伝播しない。
+- durable ledger は status、commit/review range、verification、remote delivery evidence、residual risk を記録する。runtime JSON の全文を履歴証拠として複製しない。
 
 ## Ownership と module boundary
 
@@ -77,9 +121,9 @@ Input Packet v2 は `spec_binding` と `approval_evidence` を必須にする。
 {
   "schema_version": 2,
   "epic_id": "example",
-  "artifact_root": "knowledge/wiki/syntheses",
+  "artifact_root": "knowledge/wiki/syntheses/example",
   "spec_binding": {
-    "path": "knowledge/wiki/syntheses/example-spec.md",
+    "path": "knowledge/wiki/syntheses/example/spec.md",
     "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
   },
   "approval_evidence": {
@@ -102,7 +146,7 @@ Input Packet v2 は `spec_binding` と `approval_evidence` を必須にする。
       "title": "短い日本語 issue タイトル",
       "source": {
         "type": "local",
-        "path": "knowledge/wiki/syntheses/example-issues.md"
+        "path": "knowledge/wiki/syntheses/example/issues.md"
       },
       "acceptance_criteria": ["観測可能な受け入れ条件"],
       "non_goals": ["対象外の挙動"],
@@ -128,7 +172,7 @@ Input Packet v2 は `spec_binding` と `approval_evidence` を必須にする。
 
 v2 top-level の required/allowed field は `schema_version`、`epic_id`、`artifact_root`、`spec_binding`、`approval_evidence`、`work_items`、`delivery_intent` の 7 件だけとする。
 
-- `artifact_root` は repo-relative output directory とし、write 前に containment と symlink rule を検証する。
+- `artifact_root` は repo-relative Epic directory とし、write 前に containment、symlink rule、末尾 segment と `epic_id` の一致を検証する。
 - `work_items` は 1 件以上を要求し、各 item は `id`、`title`、local `source.path`、`acceptance_criteria`、`non_goals`、`verification`、`write_scope`、`dependencies` を必須にする。
 - sealed packet 内の `acceptance_criteria`、`non_goals`、`verification`、`write_scope`、`dependencies` が execution intent の正本である。source ledger は traceability evidence であり、後から packet の意味を上書きしない。
 - `delivery_intent` は `local_only`、`per_action`、`batch_draft_prs`、`batch_issue_prs` のいずれかとする。
@@ -140,7 +184,7 @@ Input packet より後の artifact は spec metadata を複製せず、同一 sh
 ```json
 {
   "approved_spec_binding": {
-    "path": "knowledge/wiki/syntheses/example-input-packet.json",
+    "path": "knowledge/wiki/syntheses/example/input-packet.json",
     "sha256": "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
     "gate_commit": "0123456789abcdef0123456789abcdef01234567"
   }
@@ -359,6 +403,12 @@ Input Packet v1、Runtime State v1、Human Request v1、Hardening Candidate Regi
 | ASB-28 | gate commit 内の spec/packet blob が binding と異なる | `GATE_COMMIT_BLOB_MISMATCH` |
 | ASB-29 | binding A の hardening registry を runtime/delivery B が読む | `AUXILIARY_ARTIFACT_BINDING_MISMATCH` |
 | ASB-30 | binding A の human request/decision を runtime B へ持ち込む | 拒否し、new binding で再判断 |
+| ASB-31 | `artifact_root` が durable planning root 直下または別 Epic 名で終わる | `ARTIFACT_LAYOUT_MISMATCH` |
+| ASB-32 | spec、local issue source、seal output のいずれかが `<artifact_root>` 直下にない | `ARTIFACT_LAYOUT_MISMATCH`、packet を書かない |
+| ASB-33 | `<durable-planning-root>/<epic-id>/{spec.md,issues.md,input-packet.json}` | identify/seal/verify が成功し gate commit の exact blobs を検証する |
+| ASB-34 | tracked current Envelope に host-local absolute worktree path がある | repository lifecycle test で拒否し runtime root へ再生成する |
+| ASB-35 | fresh agent が新 Epic の artifact paths と tracking policy を選ぶ | durable 4 files は Epic directory、Envelope 以後は Git common runtime root と判断する |
+| ASB-36 | schema、template、test fixture の JSON | product contract として Git tracked のまま維持する |
 
 tests は public 3-operation interface と実 entrypoint hook を通す。private helper だけの単体テストで acceptance を代替しない。temporary repo/worktree fixture で repo containment、projection、one-byte drift、symlink、report intake、resume、delivery を forward-test する。
 
@@ -370,6 +420,7 @@ tests は public 3-operation interface と実 entrypoint hook を通す。privat
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests -p 'test_approved_spec_binding.py'
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/grill-to-pr-loop/tests
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s scripts -p 'test_*.py'
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_architecture.py --all
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_context.py --all
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/report_skill_context.py --all --json
@@ -383,7 +434,7 @@ context contract は operation を増やさず、既存 `planning-contract.md`�
 
 ## Remote policy
 
-仕様作成、Issue Gate、implementation plan、実装、検証は `local_only` を既定とする。push、PR 作成、PR ready化、merge、live Codex/Hermes install はこの仕様による承認に含まれず、それぞれ exact action への別の明示承認を要する。final merge は human-only のまま維持する。
+仕様作成、Issue Gate、implementation plan、実装、検証は local-first とする。この follow-up の approved remote scope は branch `codex/approved-spec-binding-contract` への push と既存 Draft PR #32 の更新までに限定する。PR ready化、merge、release、live Codex/Hermes install は含めず、final merge は human-only のまま維持する。
 
 ## Written Spec Gate 承認対象
 
@@ -391,9 +442,9 @@ context contract は operation を増やさず、既存 `planning-contract.md`�
 
 - accepted decisions: packet-rooted ownership、3-operation module、artifact propagation、clean break
 - non-goals: signature/remote service/consumer固有化/legacy migrationを行わないこと
-- acceptance criteria: ASB-01〜ASB-30
+- acceptance criteria: ASB-01〜ASB-36
 - verification: focused/full tests、architecture/context、dual-host、skill-creator validator
-- remote policy: `local_only`、external write は別承認、final merge human-only
+- remote policy: current branch push と Draft PR #32 更新のみ、PR ready化/merge/release/live install は非承認、final merge human-only
 - stop conditions: 以下のいずれかに該当したら実装を止めること
 
 ## 停止条件
@@ -407,6 +458,9 @@ context contract は operation を増やさず、既存 `planning-contract.md`�
 - new user-facing skill、consumer固有 schema、remote service が必要になる。
 - context budget を守るために approval、stop、reapproval、delivery guard が default reader surface から消える。
 - remote write、破壊的操作、live runtime change が必要になる。
+- Input Packet 以外の Epic instance JSON/JSONL を tracked worktree に追加する。
+- artifact layout を変えず filename prefix だけで Epic ownership を表現する。
+- historical artifact 全件の一括 migration が必要になる。
 
 ## 既知のリスク
 
@@ -416,26 +470,28 @@ context contract は operation を増やさず、既存 `planning-contract.md`�
 - file-descriptor ベース検証でも検証後の mutation は起こり得るため、各 state-changing boundary の再検証を省略できない。
 - actor expression は durable audit evidence だが本人性を証明しない。署名要件が将来必要になった場合は別 spec とする。
 - clean break により既存 run は resume できない。operator action は migration ではなく new approval/new run である。
+- per-Epic directory への移動で path-based link、packet digest、gate commit が変わるため、旧 packet/envelope を書き換えて継続せず new approval/new seal/new runtime epoch を作る。
+- Git common runtime root は checkout 間で共有されるため、coordinator は Epic ID と active binding を毎回検証し、別 checkout の stale run を再利用しない。
 
 ## 関連ページ
 
-- [Loop Skill Architecture V3 Spec](loop-skill-architecture-v3-spec.md) — context contract、worker packet、resume brief の旧基盤と superseded compatibility clause。
-- [Loop Skill Codex 最適化仕様](loop-skill-codex-optimization-spec.md) — Envelope v3 と phase branch policy。branch policy は維持し、legacy acceptance だけを supersede する。
-- [Skill Repository Optimization V4 Spec](skill-repository-optimization-v4-spec.md) — Worker Packet V2 / Resume Brief V2 の freshness 基盤と superseded compatibility clause。
-- [Loop Skill 運用単純化仕様](loop-skill-operational-simplicity-spec.md) — user-facing skill を増やさず planning/execution ownership を維持する上位方針。
-- [Loop Review Governance Spec](loop-review-governance-spec.md) — reviewer と final alignment review の human authority boundary。
+- [Loop Skill Architecture V3 Spec](../loop-skill-architecture-v3-spec.md) — context contract、worker packet、resume brief の旧基盤と superseded compatibility clause。
+- [Loop Skill Codex 最適化仕様](../loop-skill-codex-optimization-spec.md) — Envelope v3 と phase branch policy。branch policy は維持し、legacy acceptance だけを supersede する。
+- [Skill Repository Optimization V4 Spec](../skill-repository-optimization-v4-spec.md) — Worker Packet V2 / Resume Brief V2 の freshness 基盤と superseded compatibility clause。
+- [Loop Skill 運用単純化仕様](../loop-skill-operational-simplicity-spec.md) — user-facing skill を増やさず planning/execution ownership を維持する上位方針。
+- [Loop Review Governance Spec](../loop-review-governance-spec.md) — reviewer と final alignment review の human authority boundary。
 
 ## 出典
 
-- [grill-to-pr-loop execution handoff](../../../skills/grill-to-pr-loop/references/execution-handoff.md)
-- [issue-implementation-loop input packet schema](../../../skills/issue-implementation-loop/assets/schemas/input-packet.schema.json)
-- [issue-implementation-loop input packet validator](../../../skills/issue-implementation-loop/scripts/lib/issue_implementation_loop/validation/input_packet.py)
-- [issue-implementation-loop execution envelope schema](../../../skills/issue-implementation-loop/assets/schemas/execution-envelope.schema.json)
-- [issue-implementation-loop worker packet schema](../../../skills/issue-implementation-loop/assets/schemas/worker-packet.schema.json)
-- [issue-implementation-loop runtime state schema](../../../skills/issue-implementation-loop/assets/schemas/runtime-state.schema.json)
-- [issue-implementation-loop event schema](../../../skills/issue-implementation-loop/assets/schemas/event.schema.json)
-- [issue-implementation-loop worker report schema](../../../skills/issue-implementation-loop/assets/schemas/worker-report.schema.json)
-- [issue-implementation-loop operation selection](../../../skills/issue-implementation-loop/scripts/lib/issue_implementation_loop/operation_selection.py)
-- [issue-implementation-loop review gate](../../../skills/issue-implementation-loop/references/review-gate.md)
-- [issue-implementation-loop recovery contract](../../../skills/issue-implementation-loop/references/recovery.md)
+- [grill-to-pr-loop execution handoff](../../../../skills/grill-to-pr-loop/references/execution-handoff.md)
+- [issue-implementation-loop input packet schema](../../../../skills/issue-implementation-loop/assets/schemas/input-packet.schema.json)
+- [issue-implementation-loop input packet validator](../../../../skills/issue-implementation-loop/scripts/lib/issue_implementation_loop/validation/input_packet.py)
+- [issue-implementation-loop execution envelope schema](../../../../skills/issue-implementation-loop/assets/schemas/execution-envelope.schema.json)
+- [issue-implementation-loop worker packet schema](../../../../skills/issue-implementation-loop/assets/schemas/worker-packet.schema.json)
+- [issue-implementation-loop runtime state schema](../../../../skills/issue-implementation-loop/assets/schemas/runtime-state.schema.json)
+- [issue-implementation-loop event schema](../../../../skills/issue-implementation-loop/assets/schemas/event.schema.json)
+- [issue-implementation-loop worker report schema](../../../../skills/issue-implementation-loop/assets/schemas/worker-report.schema.json)
+- [issue-implementation-loop operation selection](../../../../skills/issue-implementation-loop/scripts/lib/issue_implementation_loop/operation_selection.py)
+- [issue-implementation-loop review gate](../../../../skills/issue-implementation-loop/references/review-gate.md)
+- [issue-implementation-loop recovery contract](../../../../skills/issue-implementation-loop/references/recovery.md)
 - 2026-07-21 session user decision: packet-rooted A案を採用。

@@ -1,0 +1,102 @@
+{
+  "approval_evidence": {
+    "actor_expression": "session-user",
+    "approved_at": "2026-07-22T07:36:04+09:00",
+    "decision": "approved",
+    "scope": {
+      "acceptance_criteria": true,
+      "accepted_decisions": true,
+      "non_goals": true,
+      "remote_policy": true,
+      "stop_conditions": true,
+      "verification": true
+    },
+    "subject": "spec_binding"
+  },
+  "artifact_root": "knowledge/wiki/syntheses/approved-spec-binding-contract",
+  "delivery_intent": "per_action",
+  "epic_id": "approved-spec-binding-contract",
+  "schema_version": 2,
+  "spec_binding": {
+    "path": "knowledge/wiki/syntheses/approved-spec-binding-contract/spec.md",
+    "sha256": "2bd4fcdbed9828c988a9d5c24cdd02242434f0e44e802cceb34fc4a0e7b86193"
+  },
+  "work_items": [
+    {
+      "acceptance_criteria": [
+        "ASB-31〜ASB-36をpublic testsで検証する"
+      ],
+      "dependencies": [],
+      "id": "ASBC-007",
+      "non_goals": [
+        "historical flat artifact全件をmigrationしない"
+      ],
+      "source": {
+        "path": "knowledge/wiki/syntheses/approved-spec-binding-contract/issues.md",
+        "type": "local"
+      },
+      "title": "Epic単位のdurable artifact layoutを契約化する",
+      "verification": [
+        "python3 -m unittest discover -s skills/issue-implementation-loop/tests",
+        "python3 -m unittest discover -s skills/grill-to-pr-loop/tests"
+      ],
+      "write_scope": [
+        "path:skills/grill-to-pr-loop",
+        "path:skills/issue-implementation-loop"
+      ]
+    },
+    {
+      "acceptance_criteria": [
+        "current durable artifactsがEpic directoryに集約されtracked Envelopeが消える"
+      ],
+      "dependencies": [
+        "ASBC-007"
+      ],
+      "id": "ASBC-008",
+      "non_goals": [
+        "completed historical runtimeをresumeしない"
+      ],
+      "source": {
+        "path": "knowledge/wiki/syntheses/approved-spec-binding-contract/issues.md",
+        "type": "local"
+      },
+      "title": "current Epicを新layoutへ移しruntime JSONをGit管理外にする",
+      "verification": [
+        "python3 skills/issue-implementation-loop/scripts/validate_input_packet.py knowledge/wiki/syntheses/approved-spec-binding-contract/input-packet.json"
+      ],
+      "write_scope": [
+        "path:knowledge/wiki/syntheses/approved-spec-binding-contract",
+        "path:knowledge/index.md",
+        "path:knowledge/log.md"
+      ]
+    },
+    {
+      "acceptance_criteria": [
+        "fresh-agent forward test、full verification、Draft PR #32更新を完了する"
+      ],
+      "dependencies": [
+        "ASBC-008"
+      ],
+      "id": "ASBC-009",
+      "non_goals": [
+        "PR ready化、merge、release、live installを行わない"
+      ],
+      "source": {
+        "path": "knowledge/wiki/syntheses/approved-spec-binding-contract/issues.md",
+        "type": "local"
+      },
+      "title": "forward test・全検証・Draft PR更新を完了する",
+      "verification": [
+        "python3 scripts/validate_skill_architecture.py --all",
+        "python3 scripts/validate_skill_context.py --all",
+        "python3 scripts/validate_dual_host_compatibility.py --all",
+        "git diff --check"
+      ],
+      "write_scope": [
+        "path:knowledge/wiki/syntheses/approved-spec-binding-contract",
+        "path:knowledge/index.md",
+        "path:knowledge/log.md"
+      ]
+    }
+  ]
+}
