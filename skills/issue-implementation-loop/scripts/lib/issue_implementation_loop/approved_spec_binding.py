@@ -877,6 +877,17 @@ def _git_blob(root: Path, commit: str, path: str) -> bytes:
     return blob_result.stdout
 
 
+def _projection_blob(root: Path, commit: str, path: str) -> bytes:
+    object_result = _git_bytes(root, "rev-parse", f"{commit}:{path}")
+    if object_result.returncode != 0:
+        raise BindingError("PROJECTION_MISSING", path=path)
+    object_id = object_result.stdout.decode("ascii", errors="ignore").strip()
+    blob_result = _git_bytes(root, "cat-file", "blob", object_id)
+    if blob_result.returncode != 0:
+        raise BindingError("PROJECTION_MISSING", path=path)
+    return blob_result.stdout
+
+
 def verify_approved_spec_binding(
     repo_root: str | os.PathLike[str],
     value: Any,
@@ -923,7 +934,39 @@ def verify_approved_spec_binding(
     gate_spec = _git_blob(root, binding.gate_commit, spec.path)
     if hashlib.sha256(gate_spec).hexdigest() != spec.sha256:
         raise BindingError("GATE_COMMIT_BLOB_MISMATCH", path=spec.path)
+    if ancestor_ref is not None:
+        projected_packet = _projection_blob(root, ancestor_ref, binding.path)
+        if hashlib.sha256(projected_packet).hexdigest() != binding.sha256:
+            raise BindingError("PROJECTION_MISMATCH", path=binding.path)
+        projected_spec = _projection_blob(root, ancestor_ref, spec.path)
+        if hashlib.sha256(projected_spec).hexdigest() != spec.sha256:
+            raise BindingError("PROJECTION_MISMATCH", path=spec.path)
     return verified
+
+
+def load_verified_input_packet(
+    repo_root: str | os.PathLike[str],
+    value: Any,
+    *,
+    ancestor_ref: str | None = None,
+    projection_errors: bool = False,
+) -> dict[str, Any]:
+    """Return sealed packet intent only after the full current binding verifies."""
+
+    root = _trusted_repo_root(repo_root)
+    binding = approved_spec_binding_ref(value)
+    verify_approved_spec_binding(
+        root,
+        binding.to_dict(),
+        ancestor_ref=ancestor_ref,
+        projection_errors=projection_errors,
+    )
+    raw, digest = _read_regular_file(
+        root, binding.path, missing_code="PROJECTION_MISSING"
+    )
+    if digest != binding.sha256:
+        raise BindingError("INPUT_PACKET_DIGEST_MISMATCH", path=binding.path)
+    return _packet_from_bytes(raw)
 
 
 def verify_chain(

@@ -6,6 +6,11 @@ import re
 from pathlib import Path
 from typing import Any
 
+from .approved_spec_binding import (
+    BindingError,
+    load_verified_input_packet,
+)
+
 
 DEFAULT_PACKET_WORDS = 450
 HARD_PACKET_WORDS = 800
@@ -89,6 +94,57 @@ def source_revision_record(
     }
 
 
+def _approved_dispatch_intent(
+    *,
+    worktree: str,
+    envelope_path: str | Path,
+    runtime_path: str | Path,
+    issue_id: str,
+) -> tuple[dict[str, Any], dict[str, Any], Path]:
+    from .validation.execution_envelope import validate_execution_envelope
+    from .validation.runtime_state import validate_runtime_epoch, validate_runtime_state
+
+    repo_root = Path(worktree)
+    envelope = _load_json(envelope_path)
+    envelope_errors = validate_execution_envelope(envelope, repo_root)
+    if envelope_errors:
+        raise ValueError(envelope_errors[0])
+    runtime = _load_json(runtime_path)
+    runtime_errors = validate_runtime_state(runtime)
+    if runtime_errors:
+        raise ValueError(runtime_errors[0])
+    epoch_errors = validate_runtime_epoch(envelope, runtime)
+    if epoch_errors:
+        raise ValueError("BINDING_MISMATCH")
+    binding = envelope.get("approved_spec_binding")
+    if runtime.get("approved_spec_binding") != binding:
+        raise ValueError("BINDING_MISMATCH")
+    if runtime.get("envelope_revision") != envelope.get("revision"):
+        raise ValueError("BINDING_MISMATCH")
+    try:
+        packet = load_verified_input_packet(
+            repo_root,
+            binding,
+            ancestor_ref="HEAD",
+            projection_errors=True,
+        )
+    except BindingError as error:
+        raise ValueError(error.code) from None
+    approved = next(
+        (
+            item
+            for item in packet["work_items"]
+            if isinstance(item, dict) and item.get("id") == issue_id
+        ),
+        None,
+    )
+    envelope_item = envelope.get("work_items", {}).get(issue_id)
+    if not isinstance(approved, dict) or not isinstance(envelope_item, dict):
+        raise ValueError("BINDING_MISMATCH")
+    issue_source = (repo_root / approved["source"]["path"]).resolve(strict=False)
+    return envelope, approved, issue_source
+
+
 def read_path_record(path: str, purpose: str = "source") -> dict[str, str]:
     return {"path": path, "purpose": purpose}
 
@@ -102,40 +158,46 @@ def inline_excerpt_record(raw: str) -> dict[str, str]:
 
 def build_worker_packet(
     *,
-    epic_id: str,
     issue_id: str,
-    issue_title: str,
     dispatch_id: str,
-    branch: str,
     worktree: str,
-    write_scope: list[str],
     read_paths: list[str],
     read_purposes: list[str] | None = None,
-    summary: str,
-    acceptance: list[str],
-    verification: list[str],
-    stop_conditions: list[str],
     inline_excerpts: list[str],
     max_packet_words: int = DEFAULT_PACKET_WORDS,
     task_kind: str = "implement",
-    access_mode: str = "read_write",
     source_envelope: str | None = None,
     source_runtime: str | None = None,
-    source_issue: str | None = None,
 ) -> dict[str, Any]:
     if read_purposes is None:
         read_purposes = ["source"] * len(read_paths)
     if len(read_purposes) != len(read_paths):
         raise ValueError("--read-purpose must be provided once per --read-path")
 
+    if task_kind not in TASK_KINDS:
+        raise ValueError(f"task_kind must be one of {sorted(TASK_KINDS)}")
+    if not source_envelope or not source_runtime:
+        raise ValueError(
+            "worker packet v3 requires --source-envelope and --source-runtime"
+        )
+    envelope, approved, issue_source = _approved_dispatch_intent(
+        worktree=worktree,
+        envelope_path=source_envelope,
+        runtime_path=source_runtime,
+        issue_id=issue_id,
+    )
+    read_only = task_kind in {"review", "inspect"}
+    access_mode = "read_only" if read_only else "read_write"
+    write_scope = [] if read_only else list(approved["write_scope"])
+
     packet: dict[str, Any] = {
         "schema_version": 3,
         "packet_type": "issue_worker_dispatch",
-        "epic_id": epic_id,
+        "epic_id": envelope["epic_id"],
         "issue_id": issue_id,
-        "issue_title": issue_title,
+        "issue_title": approved["title"],
         "dispatch_id": dispatch_id,
-        "branch": branch,
+        "branch": envelope["work_items"][issue_id]["branch"],
         "worktree": worktree,
         "write_scope": write_scope,
         "context_policy": worker_packet_context_policy(max_packet_words),
@@ -145,29 +207,21 @@ def build_worker_packet(
         ],
         "inline_context": [inline_excerpt_record(excerpt) for excerpt in inline_excerpts],
         "task": {
-            "summary": summary,
-            "acceptance_criteria": acceptance,
-            "verification": verification,
-            "stop_conditions": stop_conditions,
+            "summary": approved["title"],
+            "acceptance_criteria": list(approved["acceptance_criteria"]),
+            "verification": list(approved["verification"]),
+            "stop_conditions": list(approved["non_goals"]),
         },
         "report_contract": {
             "format": "worker-report.json",
             "validator": "skills/issue-implementation-loop/scripts/validate_worker_report.py",
         },
     }
-    if task_kind not in TASK_KINDS:
-        raise ValueError(f"task_kind must be one of {sorted(TASK_KINDS)}")
-    if access_mode not in ACCESS_MODES:
-        raise ValueError(f"access_mode must be one of {sorted(ACCESS_MODES)}")
-    if not source_envelope or not source_runtime or not source_issue:
-        raise ValueError(
-            "worker packet v3 requires --source-envelope, --source-runtime, and --source-issue"
-        )
     packet["task_kind"] = task_kind
     packet["access_mode"] = access_mode
     packet["source_revision"] = source_revision_record(
         envelope_path=source_envelope,
         runtime_path=source_runtime,
-        issue_source_path=source_issue,
+        issue_source_path=issue_source,
     )
     return packet

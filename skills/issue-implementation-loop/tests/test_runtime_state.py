@@ -4,6 +4,22 @@ from _helpers import *
 
 
 class RuntimeStateTests(unittest.TestCase):
+    def run_fold(self, events_path: Path) -> subprocess.CompletedProcess[str]:
+        lib_dir = str(SCRIPTS_DIR / "lib")
+        if lib_dir not in sys.path:
+            sys.path.insert(0, lib_dir)
+        from issue_implementation_loop import runtime_state as runtime_module
+
+        try:
+            state, _warnings = runtime_module._fold_state_from_events(events_path)
+        except (runtime_module.EventFoldError, OSError) as error:
+            return subprocess.CompletedProcess(
+                ["_fold_state_from_events"], 1, "", str(error)
+            )
+        return subprocess.CompletedProcess(
+            ["_fold_state_from_events"], 0, json.dumps(state), ""
+        )
+
     def event(self, event_id: str, *, binding: dict | None = None, **fields: object) -> dict:
         return {
             "schema_version": 2,
@@ -13,6 +29,20 @@ class RuntimeStateTests(unittest.TestCase):
             "approved_spec_binding": copy.deepcopy(binding or approved_spec_binding()),
             **fields,
         }
+
+    def test_runtime_reference_requires_binding_aware_rebuild_and_resume(self) -> None:
+        text = (SKILL_DIR / "references" / "runtime-state.md").read_text(
+            encoding="utf-8"
+        )
+        for required in (
+            "rebuild_runtime_state.py <events.jsonl>",
+            "--repo-root <trusted-worktree-root>",
+            "--envelope <execution-envelope.json>",
+            "and after event folding",
+            "before publishing either cache file",
+            "unbound one-argument rebuild form is unsupported",
+        ):
+            self.assertIn(required, text)
 
     def test_rebuild_runtime_state_binds_same_epoch_events_to_runtime_v2(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -30,12 +60,107 @@ class RuntimeStateTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            result = run_script("rebuild_runtime_state.py", str(events_path))
+            result = self.run_fold(events_path)
 
             self.assertEqual(result.returncode, 0, result.stderr)
             payload = json.loads(result.stdout)
             self.assertEqual(payload["schema_version"], 2)
             self.assertEqual(payload["approved_spec_binding"], approved_spec_binding())
+
+    def test_rebuild_entrypoint_requires_and_freshly_verifies_envelope_binding(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, binding, _ = create_binding_repo(Path(tmp))
+            envelope_path, _runtime_path, _issue_source = write_binding_sources(
+                repo, binding
+            )
+            events_path = repo / "events.jsonl"
+            events_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 2,
+                        "event_id": "E-001",
+                        "epic_id": "approved-spec-binding",
+                        "envelope_revision": 1,
+                        "approved_spec_binding": binding,
+                        "type": "issue_status_changed",
+                        "issue": "ASBC-002",
+                        "status": "RUNNING",
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            missing_contract = run_script("rebuild_runtime_state.py", str(events_path))
+            self.assertNotEqual(missing_contract.returncode, 0)
+
+            (repo / "knowledge/wiki/syntheses/spec.md").write_text(
+                "drift before rebuild\n", encoding="utf-8"
+            )
+            stale = run_script(
+                "rebuild_runtime_state.py",
+                str(events_path),
+                "--repo-root",
+                str(repo),
+                "--envelope",
+                str(envelope_path),
+            )
+            self.assertNotEqual(stale.returncode, 0)
+            self.assertIn("SPEC_DIGEST_MISMATCH", stale.stderr)
+
+    def test_rebuild_public_function_reverifies_after_event_fold(self) -> None:
+        lib_dir = str(SCRIPTS_DIR / "lib")
+        if lib_dir not in sys.path:
+            sys.path.insert(0, lib_dir)
+        from issue_implementation_loop import runtime_state as runtime_module
+
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, binding, _ = create_binding_repo(Path(tmp))
+            envelope_path, _runtime_path, _issue_source = write_binding_sources(
+                repo, binding
+            )
+            events_path = repo / "events.jsonl"
+            events_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 2,
+                        "event_id": "E-001",
+                        "epic_id": "approved-spec-binding",
+                        "envelope_revision": 1,
+                        "approved_spec_binding": binding,
+                        "type": "issue_status_changed",
+                        "issue": "ASBC-002",
+                        "status": "RUNNING",
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            original = runtime_module.verify_approved_spec_binding
+            calls = 0
+
+            def drift_after_first_verify(*args: object, **kwargs: object):
+                nonlocal calls
+                calls += 1
+                result = original(*args, **kwargs)
+                if calls == 1:
+                    (repo / "knowledge/wiki/syntheses/spec.md").write_text(
+                        "drift during fold\n", encoding="utf-8"
+                    )
+                return result
+
+            with mock.patch.object(
+                runtime_module,
+                "verify_approved_spec_binding",
+                side_effect=drift_after_first_verify,
+            ):
+                with self.assertRaises(runtime_module.EventFoldError) as caught:
+                    runtime_module.rebuild_state_from_events(
+                        events_path,
+                        repo_root=repo,
+                        envelope_path=envelope_path,
+                    )
+            self.assertEqual(caught.exception.code, "SPEC_DIGEST_MISMATCH")
 
     def test_rebuild_runtime_state_rejects_mixed_binding_events(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -63,7 +188,7 @@ class RuntimeStateTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            result = run_script("rebuild_runtime_state.py", str(events_path))
+            result = self.run_fold(events_path)
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("BINDING_MISMATCH", result.stderr)
@@ -90,7 +215,7 @@ class RuntimeStateTests(unittest.TestCase):
                     events_path = Path(tmp) / f"{name}.jsonl"
                     events_path.write_text(json.dumps(event) + "\n", encoding="utf-8")
 
-                    result = run_script("rebuild_runtime_state.py", str(events_path))
+                    result = self.run_fold(events_path)
 
                     self.assertNotEqual(result.returncode, 0)
                     self.assertIn("SCHEMA_UNSUPPORTED", result.stderr)
@@ -112,7 +237,7 @@ class RuntimeStateTests(unittest.TestCase):
                     events_path = Path(tmp) / f"{name}.jsonl"
                     events_path.write_text(json.dumps(event) + "\n", encoding="utf-8")
 
-                    result = run_script("rebuild_runtime_state.py", str(events_path))
+                    result = self.run_fold(events_path)
 
                     self.assertNotEqual(result.returncode, 0)
                     self.assertIn("SCHEMA_UNSUPPORTED", result.stderr)
@@ -129,7 +254,7 @@ class RuntimeStateTests(unittest.TestCase):
             event["envelope_revision"] = True
             events_path.write_text(json.dumps(event) + "\n", encoding="utf-8")
 
-            result = run_script("rebuild_runtime_state.py", str(events_path))
+            result = self.run_fold(events_path)
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("SCHEMA_UNSUPPORTED", result.stderr)
@@ -227,7 +352,7 @@ class RuntimeStateTests(unittest.TestCase):
                         encoding="utf-8",
                     )
 
-                    result = run_script("rebuild_runtime_state.py", str(events_path))
+                    result = self.run_fold(events_path)
 
                     self.assertNotEqual(result.returncode, 0)
                     self.assertIn("SCHEMA_UNSUPPORTED", result.stderr)
@@ -349,7 +474,7 @@ class RuntimeStateTests(unittest.TestCase):
             )
             events_path.write_text(json.dumps(opened) + "\n", encoding="utf-8")
 
-            accepted_request = run_script("rebuild_runtime_state.py", str(events_path))
+            accepted_request = self.run_fold(events_path)
 
             self.assertEqual(accepted_request.returncode, 0, accepted_request.stderr)
             open_runtime = json.loads(accepted_request.stdout)
@@ -361,9 +486,7 @@ class RuntimeStateTests(unittest.TestCase):
                 json.dumps(opened) + "\n" + json.dumps(resolved) + "\n",
                 encoding="utf-8",
             )
-            accepted_resolution = run_script(
-                "rebuild_runtime_state.py", str(events_path)
-            )
+            accepted_resolution = self.run_fold(events_path)
 
             self.assertEqual(
                 accepted_resolution.returncode, 0, accepted_resolution.stderr
@@ -545,7 +668,7 @@ class RuntimeStateTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            result = run_script("rebuild_runtime_state.py", str(events_path))
+            result = self.run_fold(events_path)
 
             self.assertEqual(result.returncode, 0, result.stderr)
             payload = json.loads(result.stdout)
@@ -583,7 +706,7 @@ class RuntimeStateTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            result = run_script("rebuild_runtime_state.py", str(events_path))
+            result = self.run_fold(events_path)
 
             self.assertEqual(result.returncode, 0, result.stderr)
             issue = json.loads(result.stdout)["issues"]["G2PR-001"]
@@ -620,7 +743,7 @@ class RuntimeStateTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            result = run_script("rebuild_runtime_state.py", str(events_path))
+            result = self.run_fold(events_path)
 
             self.assertEqual(result.returncode, 0, result.stderr)
             payload = json.loads(result.stdout)

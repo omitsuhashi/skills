@@ -245,7 +245,7 @@ class ReviewGateTests(unittest.TestCase):
 
     def test_execution_result_v2_verifies_epic_base_against_real_git_ref(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            repo, envelope, runtime_path, _, result_path, result = self.result_artifacts(
+            repo, envelope, runtime_path, runtime, result_path, result = self.result_artifacts(
                 Path(tmp)
             )
             original_branch = git(repo, "branch", "--show-current")
@@ -266,7 +266,10 @@ class ReviewGateTests(unittest.TestCase):
                     "merge": "human_only",
                 },
             }
-            result["epic_base"]["branch"] = epic_ref
+            binding, _ = bind_envelope_fixture_repo(repo, envelope)
+            runtime["approved_spec_binding"] = copy.deepcopy(binding)
+            write_json(runtime_path, runtime)
+            result = current_execution_result(envelope, runtime)
             write_json(repo / "execution-envelope.json", envelope)
             (repo / "epic-change.txt").write_text("advance\n", encoding="utf-8")
             git(repo, "add", "epic-change.txt")

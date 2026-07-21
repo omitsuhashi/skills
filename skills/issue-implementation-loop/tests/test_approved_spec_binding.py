@@ -604,7 +604,14 @@ class ApprovedSpecBindingTests(unittest.TestCase):
                 + "\n",
                 encoding="utf-8",
             )
-            rebuilt = fixtures.run_script("rebuild_runtime_state.py", str(events_path))
+            rebuilt = fixtures.run_script(
+                "rebuild_runtime_state.py",
+                str(events_path),
+                "--repo-root",
+                str(repo),
+                "--envelope",
+                str(envelope_path),
+            )
             self.assertEqual(rebuilt.returncode, 0, rebuilt.stderr)
             runtime_b = json.loads(rebuilt.stdout)
             self.assertEqual(runtime_b["approved_spec_binding"], binding_b)

@@ -8,6 +8,7 @@ from typing import Any
 from ..approved_spec_binding import (
     BindingError,
     approved_spec_binding_ref,
+    load_verified_input_packet,
     verify_approved_spec_binding,
 )
 from ..identifiers import is_issue_id, is_lower_kebab
@@ -270,6 +271,68 @@ def _validate_source_revision(packet: dict[str, Any], errors: list[str]) -> dict
     return binding
 
 
+def _approved_semantics_match(
+    packet: dict[str, Any], binding: dict[str, str], worktree: str
+) -> bool:
+    source_revision = packet.get("source_revision")
+    if not isinstance(source_revision, dict):
+        return False
+    envelope_record = source_revision.get("execution_envelope")
+    issue_record = source_revision.get("issue_source")
+    if not isinstance(envelope_record, dict) or not isinstance(issue_record, dict):
+        return False
+    envelope_path = envelope_record.get("path")
+    if not isinstance(envelope_path, str):
+        return False
+    try:
+        with Path(envelope_path).open(encoding="utf-8") as handle:
+            envelope = json.load(handle)
+        approved_packet = load_verified_input_packet(
+            worktree,
+            binding,
+            ancestor_ref="HEAD",
+            projection_errors=True,
+        )
+    except (OSError, json.JSONDecodeError, BindingError):
+        return False
+    if not isinstance(envelope, dict):
+        return False
+    issue_id = packet.get("issue_id")
+    approved = next(
+        (
+            item
+            for item in approved_packet.get("work_items", [])
+            if isinstance(item, dict) and item.get("id") == issue_id
+        ),
+        None,
+    )
+    envelope_item = envelope.get("work_items", {}).get(issue_id)
+    if not isinstance(approved, dict) or not isinstance(envelope_item, dict):
+        return False
+    task_kind = packet.get("task_kind")
+    expected_scope = [] if task_kind in {"review", "inspect"} else approved["write_scope"]
+    expected_task = {
+        "summary": approved["title"],
+        "acceptance_criteria": approved["acceptance_criteria"],
+        "verification": approved["verification"],
+        "stop_conditions": approved["non_goals"],
+    }
+    expected_issue_source = (
+        Path(worktree) / approved["source"]["path"]
+    ).resolve(strict=False)
+    actual_issue_source = issue_record.get("path")
+    return (
+        packet.get("epic_id") == approved_packet.get("epic_id")
+        and envelope.get("epic_id") == approved_packet.get("epic_id")
+        and packet.get("issue_title") == approved["title"]
+        and packet.get("branch") == envelope_item.get("branch")
+        and packet.get("write_scope") == expected_scope
+        and packet.get("task") == expected_task
+        and isinstance(actual_issue_source, str)
+        and Path(actual_issue_source).resolve(strict=False) == expected_issue_source
+    )
+
+
 def validate_worker_packet(packet: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     schema_version = packet.get("schema_version")
@@ -499,4 +562,6 @@ def validate_worker_packet(packet: dict[str, Any]) -> list[str]:
             )
         except BindingError as error:
             return [error.code]
+        if not _approved_semantics_match(packet, binding, worktree):
+            return ["BINDING_MISMATCH"]
     return errors

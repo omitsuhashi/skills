@@ -15,9 +15,11 @@ scope differ.
 
 - Require `source_revision.approved_spec_binding` plus envelope, runtime, and issue-source revisions.
 - Revalidate packet/spec projection and gate ancestry in the assigned worktree before start.
+- Derive all approved identity/task/source/branch/scope fields from the freshly verified Envelope/Input Packet; builder CLI callers cannot override approved task semantics.
+- At worker/reviewer start require exact equality; any substitution returns `BINDING_MISMATCH`.
 - Use `task_kind=implement|fix` with `access_mode=read_write` and non-empty `write_scope`.
 - Use `task_kind=review|inspect` with `access_mode=read_only` and `write_scope=[]`.
-- `issue_title`、`task.summary`、`task.acceptance_criteria`、`task.stop_conditions` などの user-facing packet string は日本語をベースにする。keys、paths、commands、IDs、branches は維持する。
+- Upstream planning の `issue_title`、`task.summary`、`task.acceptance_criteria`、`task.stop_conditions` など user-facing packet string は日本語をベースにする。worker/reviewer は sealed approved language を翻訳・要約・書換えせず保持する。
 - Keep `context_policy` packet-local; never include `session_compaction` or session decision state.
 - Default/hard packet budgets are 450/800 words; `read_paths` allows at most 8 entries and requires `purpose`.
 - Inline excerpts allow 120 words per path and 300 total. Never paste full spec, ledger, ADR, glossary, or unrelated code.

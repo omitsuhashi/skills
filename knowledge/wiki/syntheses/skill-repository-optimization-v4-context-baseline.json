@@ -332,8 +332,8 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 13709,
-          "estimated_token_count": 5274,
+          "character_count": 15050,
+          "estimated_token_count": 5810,
           "file_count": 5,
           "files": [
             "skills/issue-implementation-loop/SKILL.md",
@@ -342,14 +342,14 @@
             "skills/issue-implementation-loop/references/worker-contract.md",
             "skills/issue-implementation-loop/references/runtime-state.md"
           ],
-          "headroom_percent": 34,
+          "headroom_percent": 27,
           "max_file_count": 6,
-          "non_whitespace_character_count": 11925,
+          "non_whitespace_character_count": 13176,
           "operation": "execute.dispatch",
           "schema_version": 2,
           "skill": "issue-implementation-loop",
           "word_budget": null,
-          "word_count": 1738
+          "word_count": 1853
         },
         {
           "budget": {
@@ -361,8 +361,8 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 10435,
-          "estimated_token_count": 4009,
+          "character_count": 12156,
+          "estimated_token_count": 4653,
           "file_count": 4,
           "files": [
             "skills/issue-implementation-loop/SKILL.md",
@@ -370,14 +370,14 @@
             "skills/issue-implementation-loop/references/human-wait.md",
             "skills/issue-implementation-loop/references/runtime-state.md"
           ],
-          "headroom_percent": 49,
+          "headroom_percent": 41,
           "max_file_count": 6,
-          "non_whitespace_character_count": 9062,
+          "non_whitespace_character_count": 10586,
           "operation": "execute.wait",
           "schema_version": 2,
           "skill": "issue-implementation-loop",
           "word_budget": null,
-          "word_count": 1324
+          "word_count": 1535
         },
         {
           "budget": {
@@ -418,8 +418,8 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 11068,
-          "estimated_token_count": 4263,
+          "character_count": 12281,
+          "estimated_token_count": 4737,
           "file_count": 4,
           "files": [
             "skills/issue-implementation-loop/SKILL.md",
@@ -427,14 +427,14 @@
             "skills/issue-implementation-loop/references/runtime-state.md",
             "skills/issue-implementation-loop/references/recovery.md"
           ],
-          "headroom_percent": 46,
+          "headroom_percent": 40,
           "max_file_count": 6,
-          "non_whitespace_character_count": 9616,
+          "non_whitespace_character_count": 10720,
           "operation": "resume",
           "schema_version": 2,
           "skill": "issue-implementation-loop",
           "word_budget": null,
-          "word_count": 1418
+          "word_count": 1544
         },
         {
           "budget": {
@@ -446,8 +446,8 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 10639,
-          "estimated_token_count": 4083,
+          "character_count": 12268,
+          "estimated_token_count": 4706,
           "file_count": 4,
           "files": [
             "skills/issue-implementation-loop/SKILL.md",
@@ -455,14 +455,14 @@
             "skills/issue-implementation-loop/references/runtime-state.md",
             "skills/issue-implementation-loop/references/scheduler.md"
           ],
-          "headroom_percent": 48,
+          "headroom_percent": 41,
           "max_file_count": 6,
-          "non_whitespace_character_count": 9260,
+          "non_whitespace_character_count": 10722,
           "operation": "status",
           "schema_version": 2,
           "skill": "issue-implementation-loop",
           "word_budget": null,
-          "word_count": 1342
+          "word_count": 1523
         },
         {
           "budget": {
@@ -490,33 +490,6 @@
           "skill": "issue-implementation-loop",
           "word_budget": null,
           "word_count": 1482
-        },
-        {
-          "budget": {
-            "character_budget": 18000,
-            "estimated_token_budget": 8000,
-            "max_file_count": 6,
-            "min_headroom_percent": 20,
-            "non_whitespace_character_budget": null,
-            "word_budget": null
-          },
-          "budget_headroom": null,
-          "character_count": 12605,
-          "estimated_token_count": 4773,
-          "file_count": 3,
-          "files": [
-            "skills/issue-implementation-loop/SKILL.md",
-            "skills/issue-implementation-loop/references/core.md",
-            "skills/issue-implementation-loop/references/execution-envelope.md"
-          ],
-          "headroom_percent": 40,
-          "max_file_count": 6,
-          "non_whitespace_character_count": 10982,
-          "operation": "blocked.reapproval",
-          "schema_version": 2,
-          "skill": "issue-implementation-loop",
-          "word_budget": null,
-          "word_count": 1564
         },
         {
           "budget": {

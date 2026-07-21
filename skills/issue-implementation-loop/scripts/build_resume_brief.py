@@ -25,6 +25,7 @@ from issue_implementation_loop.resume_brief import (  # noqa: E402
     build_resume_brief,
     build_resume_brief_meta,
     resume_source_snapshot,
+    verify_resume_binding,
 )
 
 
@@ -98,6 +99,11 @@ def main() -> int:
             != source_snapshot
         ):
             raise ResumeBriefError("RESUME_SOURCE_CHANGED")
+        verify_resume_binding(
+            runtime_root,
+            envelope_path=args.envelope,
+            repo_root=args.repo_root or Path.cwd(),
+        )
         os.replace(output_temp, output_path)
         output_temp = None
         os.replace(meta_temp, meta_path)

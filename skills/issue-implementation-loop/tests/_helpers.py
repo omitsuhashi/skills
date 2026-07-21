@@ -200,6 +200,11 @@ def base_envelope() -> dict:
         "remote_write_policy": {"mode": "local_only", "approved_actions": []},
         "work_items": {
             "G2PR-001": {
+                "title": "Example issue A",
+                "source": {"type": "local", "path": "knowledge/wiki/syntheses/issues.md"},
+                "acceptance_criteria": ["Issue A is complete."],
+                "non_goals": ["Do not write remotely."],
+                "verification": ["python3 -m unittest"],
                 "branch": "codex/issue-implementation-loop/G2PR-001-a",
                 "worktree_path": "/tmp/skills/issue-implementation-loop/G2PR-001-a",
                 "worktree_state": "create_on_run",
@@ -208,6 +213,11 @@ def base_envelope() -> dict:
                 "dependencies": [],
             },
             "G2PR-002": {
+                "title": "Example issue B",
+                "source": {"type": "local", "path": "knowledge/wiki/syntheses/issues.md"},
+                "acceptance_criteria": ["Issue B is complete."],
+                "non_goals": ["Do not write remotely."],
+                "verification": ["python3 -m unittest"],
                 "branch": "codex/issue-implementation-loop/G2PR-002-b",
                 "worktree_path": "/tmp/skills/issue-implementation-loop/G2PR-002-b",
                 "worktree_state": "create_on_run",
@@ -216,6 +226,11 @@ def base_envelope() -> dict:
                 "dependencies": [],
             },
             "G2PR-003": {
+                "title": "Example issue C",
+                "source": {"type": "local", "path": "knowledge/wiki/syntheses/issues.md"},
+                "acceptance_criteria": ["Issue C is complete."],
+                "non_goals": ["Do not write remotely."],
+                "verification": ["python3 -m unittest"],
                 "branch": "codex/issue-implementation-loop/G2PR-003-c",
                 "worktree_path": "/tmp/skills/issue-implementation-loop/G2PR-003-c",
                 "worktree_state": "reserved",
@@ -237,7 +252,9 @@ def base_envelope() -> dict:
     }
 
 
-def create_binding_repo(root: Path) -> tuple[Path, dict[str, str], str]:
+def create_binding_repo(
+    root: Path, *, delivery_intent: str = "local_only"
+) -> tuple[Path, dict[str, str], str]:
     """Create a sealed packet/spec commit and return repo, binding, gate SHA."""
 
     repo = root / "repo"
@@ -256,7 +273,7 @@ def create_binding_repo(root: Path) -> tuple[Path, dict[str, str], str]:
     packet_path = synthesis / "input-packet.json"
     spec_path.write_text("approved spec\n", encoding="utf-8")
     issues_path.write_text("# Issues\n", encoding="utf-8")
-    packet = current_input_packet(repo)
+    packet = current_input_packet(repo, delivery_intent=delivery_intent)
     write_json(packet_path, packet)
     packet_digest = hashlib.sha256(packet_path.read_bytes()).hexdigest()
     git(repo, "add", "knowledge")
@@ -270,6 +287,60 @@ def create_binding_repo(root: Path) -> tuple[Path, dict[str, str], str]:
     return repo, binding, gate_commit
 
 
+def bind_envelope_fixture_repo(
+    repo: Path, envelope: dict
+) -> tuple[dict[str, str], str]:
+    """Seal a packet that exactly matches a test Envelope in ``repo``."""
+
+    repo.mkdir(parents=True, exist_ok=True)
+    if not (repo / ".git").exists():
+        git(repo, "init", "-q")
+        git(repo, "config", "user.email", "test@example.com")
+        git(repo, "config", "user.name", "Test User")
+        (repo / "README.md").write_text("base\n", encoding="utf-8")
+        git(repo, "add", "README.md")
+        git(repo, "commit", "-q", "-m", "base")
+
+    synthesis = repo / "knowledge/wiki/syntheses"
+    synthesis.mkdir(parents=True, exist_ok=True)
+    spec_path = synthesis / "spec.md"
+    issues_path = synthesis / "issues.md"
+    packet_path = synthesis / "input-packet.json"
+    spec_path.write_text("approved fixture spec\n", encoding="utf-8")
+    issues_path.write_text("# Fixture issues\n", encoding="utf-8")
+    packet = current_input_packet(repo)
+    packet["epic_id"] = envelope["epic_id"]
+    packet["delivery_intent"] = envelope["remote_write_policy"]["mode"]
+    packet["work_items"] = [
+        {
+            "id": issue_id,
+            "title": item["title"],
+            "source": copy.deepcopy(item["source"]),
+            "acceptance_criteria": copy.deepcopy(item["acceptance_criteria"]),
+            "non_goals": copy.deepcopy(item["non_goals"]),
+            "verification": copy.deepcopy(item["verification"]),
+            "write_scope": copy.deepcopy(item["write_scope"]),
+            "dependencies": [dependency["issue"] for dependency in item["dependencies"]],
+        }
+        for issue_id, item in envelope["work_items"].items()
+    ]
+    write_json(packet_path, packet)
+    git(repo, "add", "knowledge")
+    git(repo, "commit", "-q", "--allow-empty", "-m", "gate")
+    gate_commit = git(repo, "rev-parse", "HEAD")
+    binding = {
+        "path": "knowledge/wiki/syntheses/input-packet.json",
+        "sha256": hashlib.sha256(packet_path.read_bytes()).hexdigest(),
+        "gate_commit": gate_commit,
+    }
+    envelope["approved_spec_binding"] = copy.deepcopy(binding)
+    envelope["epic_base"]["sha"] = gate_commit
+    if envelope["remote_write_policy"]["mode"] == "batch_issue_prs":
+        if git(repo, "branch", "--show-current") != envelope["epic_base"]["ref"]:
+            git(repo, "branch", "-f", envelope["epic_base"]["ref"], gate_commit)
+    return binding, gate_commit
+
+
 def create_delivery_validation_repo(
     root: Path,
     envelope: dict,
@@ -277,9 +348,9 @@ def create_delivery_validation_repo(
 ) -> Path:
     artifact_root = root
     validation_root = Path(tempfile.mkdtemp(prefix="delivery-validation-", dir=root))
-    repo, binding, gate_commit = create_binding_repo(validation_root)
     prior_binding = copy.deepcopy(envelope["approved_spec_binding"])
-    git(repo, "branch", envelope["epic_base"]["ref"], gate_commit)
+    repo = validation_root / "repo"
+    binding, gate_commit = bind_envelope_fixture_repo(repo, envelope)
     envelope["approved_spec_binding"] = copy.deepcopy(binding)
     envelope["epic_base"]["sha"] = gate_commit
     runtime["approved_spec_binding"] = copy.deepcopy(binding)
@@ -311,23 +382,60 @@ def add_registry_residual_risks(result: dict, registry_path: Path) -> None:
 
 
 def binding_envelope(repo: Path, binding: dict[str, str], target: str | None = None) -> dict:
+    packet = json.loads((repo / binding["path"]).read_text(encoding="utf-8"))
     envelope = base_envelope()
-    envelope["epic_id"] = "approved-spec-binding"
+    envelope["epic_id"] = packet["epic_id"]
     envelope["approved_spec_binding"] = copy.deepcopy(binding)
     envelope["epic_base"] = {
         "ref": git(repo, "branch", "--show-current") or "HEAD",
         "sha": target or git(repo, "rev-parse", "HEAD"),
     }
-    envelope["work_items"] = {
-        "ASBC-002": {
-            "branch": "codex/approved-spec-binding/ASBC-002-workers",
-            "worktree_path": str(repo),
-            "worktree_state": "active",
+    envelope["work_items"] = {}
+    for index, approved_item in enumerate(packet["work_items"]):
+        issue_id = approved_item["id"]
+        envelope["work_items"][issue_id] = {
+            "title": approved_item["title"],
+            "source": copy.deepcopy(approved_item["source"]),
+            "acceptance_criteria": copy.deepcopy(
+                approved_item["acceptance_criteria"]
+            ),
+            "non_goals": copy.deepcopy(approved_item["non_goals"]),
+            "verification": copy.deepcopy(approved_item["verification"]),
+            "branch": f"codex/{packet['epic_id']}/{issue_id}-workers",
+            "worktree_path": str(repo / f"worktree-{index}"),
+            "worktree_state": "reserved" if approved_item["dependencies"] else "active",
             "base_policy": {"type": "epic_base"},
-            "write_scope": ["path:skills/issue-implementation-loop"],
-            "dependencies": [],
+            "write_scope": copy.deepcopy(approved_item["write_scope"]),
+            "dependencies": [
+                {
+                    "issue": dependency,
+                    "strength": "hard",
+                    "release_on": "review_approved",
+                    "base_effect": "none",
+                }
+                for dependency in approved_item["dependencies"]
+            ],
         }
+    envelope["remote_write_policy"] = {
+        "mode": packet["delivery_intent"],
+        "approved_actions": [],
     }
+    if packet["delivery_intent"] == "batch_issue_prs":
+        envelope["epic_base"]["ref"] = f"codex/{packet['epic_id']}/epic-base"
+        envelope["epic_base"]["branch_state"] = "active"
+        envelope["remote_write_policy"].update(
+            {
+                "issue_prs": {
+                    "base": "epic_base.ref",
+                    "merge": "agent_default_with_human_escalation",
+                },
+                "final_pr": {
+                    "head": "epic_base.ref",
+                    "base": "main",
+                    "merge": "human_only",
+                },
+            }
+        )
     return envelope
 
 
@@ -360,6 +468,8 @@ def current_worker_packet(
     task_kind: str = "implement",
 ) -> dict:
     envelope, runtime, issue_source = write_binding_sources(repo, binding)
+    envelope_value = json.loads(envelope.read_text(encoding="utf-8"))
+    issue_id, approved_item = next(iter(envelope_value["work_items"].items()))
     read_only = task_kind in {"review", "inspect"}
     return {
         "schema_version": 3,
@@ -383,13 +493,13 @@ def current_worker_packet(
                 "sha256": hashlib.sha256(issue_source.read_bytes()).hexdigest(),
             },
         },
-        "epic_id": "approved-spec-binding",
-        "issue_id": "ASBC-002",
-        "issue_title": "Propagate binding through worker artifacts",
+        "epic_id": envelope_value["epic_id"],
+        "issue_id": issue_id,
+        "issue_title": approved_item["title"],
         "dispatch_id": f"dispatch-{task_kind}-001",
-        "branch": "codex/approved-spec-binding/ASBC-002-workers",
+        "branch": approved_item["branch"],
         "worktree": str(repo),
-        "write_scope": [] if read_only else ["path:skills/issue-implementation-loop"],
+        "write_scope": [] if read_only else copy.deepcopy(approved_item["write_scope"]),
         "context_policy": {
             "paths_first": True,
             "max_packet_words": 450,
@@ -408,10 +518,12 @@ def current_worker_packet(
         ],
         "inline_context": [],
         "task": {
-            "summary": "Propagate one approved binding.",
-            "acceptance_criteria": ["Mismatched bindings are rejected."],
-            "verification": ["python3 -m unittest"],
-            "stop_conditions": ["Stop before remote writes."],
+            "summary": approved_item["title"],
+            "acceptance_criteria": copy.deepcopy(
+                approved_item["acceptance_criteria"]
+            ),
+            "verification": copy.deepcopy(approved_item["verification"]),
+            "stop_conditions": copy.deepcopy(approved_item["non_goals"]),
         },
         "report_contract": {
             "format": "worker-report.json",
@@ -459,16 +571,16 @@ def base_packet() -> dict:
                 "dependencies": [],
             }
         ],
-        "delivery_intent": "batch_issue_prs",
+        "delivery_intent": "local_only",
     }
 
 
-def current_input_packet(repo: Path) -> dict:
+def current_input_packet(repo: Path, *, delivery_intent: str = "local_only") -> dict:
     spec_path = "knowledge/wiki/syntheses/spec.md"
     digest = hashlib.sha256((repo / spec_path).read_bytes()).hexdigest()
     return {
         "schema_version": 2,
-        "epic_id": "issue-implementation-loop",
+        "epic_id": "approved-spec-binding",
         "artifact_root": "knowledge/wiki/syntheses",
         "spec_binding": {"path": spec_path, "sha256": digest},
         "approval_evidence": {
@@ -487,20 +599,22 @@ def current_input_packet(repo: Path) -> dict:
         },
         "work_items": [
             {
-                "id": "G2PR-001",
-                "title": "Example issue",
+                "id": "ASBC-002",
+                "title": "Propagate approved binding",
                 "source": {
                     "type": "local",
                     "path": "knowledge/wiki/syntheses/issues.md",
                 },
-                "acceptance_criteria": ["observable behavior"],
-                "non_goals": ["remote write"],
-                "verification": ["python3 -m unittest"],
-                "write_scope": ["path:skills/example"],
+                "acceptance_criteria": ["Reject mismatched worker projections."],
+                "non_goals": ["Stop before remote writes."],
+                "verification": [
+                    "python3 -m unittest discover -s skills/issue-implementation-loop/tests"
+                ],
+                "write_scope": ["path:skills/issue-implementation-loop"],
                 "dependencies": [],
             }
         ],
-        "delivery_intent": "batch_issue_prs",
+        "delivery_intent": delivery_intent,
     }
 
 

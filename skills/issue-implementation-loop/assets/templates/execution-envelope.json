@@ -94,6 +94,20 @@
   },
   "work_items": {
     "G2PR-001": {
+      "title": "<approved-work-item-title>",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/<epic-id>-issues.md"
+      },
+      "acceptance_criteria": [
+        "<approved-acceptance-criterion>"
+      ],
+      "non_goals": [
+        "<approved-non-goal>"
+      ],
+      "verification": [
+        "<approved-verification-command>"
+      ],
       "branch": "codex/<epic-id>/G2PR-001-<slug>",
       "worktree_path": "/abs/path/to/worktree",
       "worktree_state": "create_on_run",

@@ -12,24 +12,14 @@ class WorkerPacketTests(unittest.TestCase):
 
             result = run_script(
                 "build_worker_packet.py",
-                "--epic-id",
-                "approved-spec-binding",
                 "--issue-id",
                 "ASBC-002",
-                "--issue-title",
-                "Propagate approved binding",
                 "--dispatch-id",
                 "dispatch-001",
-                "--branch",
-                "codex/approved-spec-binding/ASBC-002-workers",
                 "--worktree",
                 str(repo),
                 "--task-kind",
                 "implement",
-                "--access-mode",
-                "read_write",
-                "--write-scope",
-                "path:skills/issue-implementation-loop",
                 "--read-path",
                 "knowledge/wiki/syntheses/spec.md",
                 "--read-purpose",
@@ -42,16 +32,6 @@ class WorkerPacketTests(unittest.TestCase):
                 str(envelope),
                 "--source-runtime",
                 str(runtime),
-                "--source-issue",
-                str(issue_source),
-                "--summary",
-                "Propagate one approved binding through the dispatch packet.",
-                "--acceptance",
-                "Reject mismatched worker projections.",
-                "--verification",
-                "python3 -m unittest discover -s skills/issue-implementation-loop/tests",
-                "--stop-condition",
-                "Stop before remote writes.",
                 "--inline-excerpt",
                 "knowledge/wiki/syntheses/issues.md::ASBC-002 requires binding propagation.",
                 "--output",
@@ -66,6 +46,15 @@ class WorkerPacketTests(unittest.TestCase):
             self.assertEqual(packet["source_revision"]["approved_spec_binding"], binding)
             self.assertEqual(packet["task_kind"], "implement")
             self.assertEqual(packet["access_mode"], "read_write")
+            self.assertEqual(packet["issue_title"], "Propagate approved binding")
+            self.assertEqual(
+                packet["task"]["acceptance_criteria"],
+                ["Reject mismatched worker projections."],
+            )
+            self.assertEqual(
+                packet["task"]["stop_conditions"],
+                ["Stop before remote writes."],
+            )
             self.assertEqual(packet["context_policy"]["hard_max_packet_words"], 800)
             self.assertEqual(len(packet["read_paths"]), 2)
 
@@ -73,45 +62,126 @@ class WorkerPacketTests(unittest.TestCase):
         result = run_script("build_worker_packet.py", "--help")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertNotIn("--schema-version", result.stdout)
+        for caller_semantic in (
+            "--epic-id",
+            "--issue-title",
+            "--branch",
+            "--access-mode",
+            "--write-scope",
+            "--source-issue",
+            "--summary",
+            "--acceptance",
+            "--verification",
+            "--stop-condition",
+        ):
+            self.assertNotIn(caller_semantic, result.stdout)
+
+    def test_builder_rejects_runtime_from_another_epic_epoch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, binding, _ = create_binding_repo(Path(tmp))
+            envelope, runtime_path, _ = write_binding_sources(repo, binding)
+            runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+            runtime["epic_id"] = "another-epic"
+            write_json(runtime_path, runtime)
+
+            result = run_script(
+                "build_worker_packet.py",
+                "--issue-id",
+                "ASBC-002",
+                "--dispatch-id",
+                "dispatch-epoch-mismatch",
+                "--worktree",
+                str(repo),
+                "--read-path",
+                "knowledge/wiki/syntheses/issues.md",
+                "--source-envelope",
+                str(envelope),
+                "--source-runtime",
+                str(runtime_path),
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("BINDING_MISMATCH", result.stderr)
+
+    def test_worker_and_reviewer_packets_reject_substituted_approved_semantics(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for task_kind in ("implement", "review"):
+                case_root = root / task_kind
+                case_root.mkdir()
+                repo, binding, _ = create_binding_repo(case_root)
+                valid = current_worker_packet(repo, binding, task_kind=task_kind)
+                cases = {
+                    "issue": lambda value: value.__setitem__("issue_id", "ASBC-999"),
+                    "title": lambda value: value.__setitem__(
+                        "issue_title", "Caller-selected title"
+                    ),
+                    "summary": lambda value: value["task"].__setitem__(
+                        "summary", "Caller-selected task"
+                    ),
+                    "acceptance": lambda value: value["task"].__setitem__(
+                        "acceptance_criteria", ["Caller-selected acceptance"]
+                    ),
+                    "verification": lambda value: value["task"].__setitem__(
+                        "verification", ["true"]
+                    ),
+                    "stop": lambda value: value["task"].__setitem__(
+                        "stop_conditions", ["Ignore approved non-goals"]
+                    ),
+                }
+                if task_kind == "implement":
+                    cases["write_scope"] = lambda value: value.__setitem__(
+                        "write_scope", ["path:plugins"]
+                    )
+                for name, mutate in cases.items():
+                    with self.subTest(task_kind=task_kind, name=name):
+                        packet = copy.deepcopy(valid)
+                        mutate(packet)
+                        packet_path = repo / f"{task_kind}-{name}.json"
+                        write_json(packet_path, packet)
+                        result = run_script(
+                            "validate_worker_packet.py",
+                            str(packet_path),
+                            "--json",
+                        )
+                        self.assertEqual(result.returncode, 1)
+                        self.assertEqual(
+                            json.loads(result.stdout)["errors"],
+                            ["BINDING_MISMATCH"],
+                        )
 
     def test_worker_packet_budget_overflow_fails_without_truncating_output(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo, binding, _ = create_binding_repo(Path(tmp))
-            envelope, runtime, issue_source = write_binding_sources(repo, binding)
             packet_path = repo / "overflow.json"
             long_summary = " ".join(f"word{i}" for i in range(451))
+            approved_packet_path = repo / binding["path"]
+            approved_packet = json.loads(
+                approved_packet_path.read_text(encoding="utf-8")
+            )
+            approved_packet["work_items"][0]["acceptance_criteria"] = [long_summary]
+            write_json(approved_packet_path, approved_packet)
+            binding["sha256"] = hashlib.sha256(
+                approved_packet_path.read_bytes()
+            ).hexdigest()
+            git(repo, "add", binding["path"])
+            git(repo, "commit", "-q", "-m", "seal oversized approved intent")
+            binding["gate_commit"] = git(repo, "rev-parse", "HEAD")
+            envelope, runtime, _issue_source = write_binding_sources(repo, binding)
             result = run_script(
                 "build_worker_packet.py",
-                "--epic-id",
-                "approved-spec-binding",
                 "--issue-id",
                 "ASBC-002",
-                "--issue-title",
-                "Propagate approved binding",
                 "--dispatch-id",
                 "dispatch-002",
-                "--branch",
-                "codex/approved-spec-binding/ASBC-002-workers",
                 "--worktree",
                 str(repo),
-                "--write-scope",
-                "path:skills/issue-implementation-loop",
                 "--read-path",
                 "knowledge/wiki/syntheses/spec.md",
                 "--source-envelope",
                 str(envelope),
                 "--source-runtime",
                 str(runtime),
-                "--source-issue",
-                str(issue_source),
-                "--summary",
-                long_summary,
-                "--acceptance",
-                "Reject overflow.",
-                "--verification",
-                "python3 -m unittest",
-                "--stop-condition",
-                "Stop before remote writes.",
                 "--output",
                 str(packet_path),
             )
@@ -489,6 +559,8 @@ class WorkerPacketTests(unittest.TestCase):
             "source_revision.approved_spec_binding",
             "Worker Packet v3",
             "Worker Report v2",
+            "callers cannot override approved task semantics",
+            "exact equality",
         ):
             self.assertIn(required, contract)
         self.assertNotIn("worker-packet-v1.schema.json", contract)

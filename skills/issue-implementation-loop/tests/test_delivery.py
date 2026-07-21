@@ -87,6 +87,8 @@ class DeliveryTests(unittest.TestCase):
                     "worktree_path": str(repo / "ASBC-003"),
                 }
             )
+            binding, _ = bind_envelope_fixture_repo(repo, envelope)
+            runtime["approved_spec_binding"] = copy.deepcopy(binding)
             runtime["issues"]["ASBC-003"] = copy.deepcopy(
                 runtime["issues"]["ASBC-002"]
             )
@@ -222,6 +224,7 @@ class DeliveryTests(unittest.TestCase):
                 "merge": "human_only",
             },
         }
+        binding, _ = bind_envelope_fixture_repo(repo, envelope)
         runtime = {
             "schema_version": 2,
             "approved_spec_binding": copy.deepcopy(binding),

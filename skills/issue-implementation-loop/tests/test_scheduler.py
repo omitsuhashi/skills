@@ -4,6 +4,31 @@ from _helpers import *
 
 
 class SchedulerTests(unittest.TestCase):
+    def run_actions(
+        self, envelope_path: Path, runtime_path: Path
+    ) -> subprocess.CompletedProcess[str]:
+        envelope = json.loads(envelope_path.read_text(encoding="utf-8"))
+        runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+        prior_binding = copy.deepcopy(envelope.get("approved_spec_binding"))
+        binding, _ = bind_envelope_fixture_repo(envelope_path.parent, envelope)
+        if runtime.get("approved_spec_binding") in (
+            prior_binding,
+            approved_spec_binding(),
+        ):
+            runtime["approved_spec_binding"] = copy.deepcopy(binding)
+            for request in runtime.get("human_requests", []):
+                if isinstance(request, dict):
+                    request["approved_spec_binding"] = copy.deepcopy(binding)
+        write_json(envelope_path, envelope)
+        write_json(runtime_path, runtime)
+        return run_script(
+            "compute_next_actions.py",
+            str(envelope_path),
+            str(runtime_path),
+            "--repo-root",
+            str(envelope_path.parent),
+        )
+
     def test_compute_next_actions_rejects_boolean_runtime_envelope_revision(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             envelope_path = Path(tmp) / "envelope.json"
@@ -21,9 +46,7 @@ class SchedulerTests(unittest.TestCase):
                 },
             )
 
-            result = run_script(
-                "compute_next_actions.py", str(envelope_path), str(runtime_path)
-            )
+            result = self.run_actions(envelope_path, runtime_path)
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("SCHEMA_UNSUPPORTED", result.stderr)
@@ -45,9 +68,7 @@ class SchedulerTests(unittest.TestCase):
                 },
             )
 
-            result = run_script(
-                "compute_next_actions.py", str(envelope_path), str(runtime_path)
-            )
+            result = self.run_actions(envelope_path, runtime_path)
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("BINDING_MISMATCH", result.stderr)
@@ -81,11 +102,7 @@ class SchedulerTests(unittest.TestCase):
                 },
             )
 
-            result = run_script(
-                "compute_next_actions.py",
-                str(envelope_path),
-                str(runtime_path),
-            )
+            result = self.run_actions(envelope_path, runtime_path)
 
             self.assertEqual(result.returncode, 0, result.stderr)
             payload = json.loads(result.stdout)
@@ -121,11 +138,7 @@ class SchedulerTests(unittest.TestCase):
                 },
             )
 
-            result = run_script(
-                "compute_next_actions.py",
-                str(envelope_path),
-                str(runtime_path),
-            )
+            result = self.run_actions(envelope_path, runtime_path)
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("review.status must be approved", result.stderr)
@@ -160,11 +173,7 @@ class SchedulerTests(unittest.TestCase):
                 },
             )
 
-            result = run_script(
-                "compute_next_actions.py",
-                str(envelope_path),
-                str(runtime_path),
-            )
+            result = self.run_actions(envelope_path, runtime_path)
 
             self.assertEqual(result.returncode, 0, result.stderr)
             payload = json.loads(result.stdout)
@@ -205,11 +214,7 @@ class SchedulerTests(unittest.TestCase):
                 },
             )
 
-            result = run_script(
-                "compute_next_actions.py",
-                str(envelope_path),
-                str(runtime_path),
-            )
+            result = self.run_actions(envelope_path, runtime_path)
 
             self.assertEqual(result.returncode, 0, result.stderr)
             payload = json.loads(result.stdout)
@@ -240,11 +245,7 @@ class SchedulerTests(unittest.TestCase):
                 },
             )
 
-            result = run_script(
-                "compute_next_actions.py",
-                str(envelope_path),
-                str(runtime_path),
-            )
+            result = self.run_actions(envelope_path, runtime_path)
 
             self.assertEqual(result.returncode, 0, result.stderr)
             payload = json.loads(result.stdout)

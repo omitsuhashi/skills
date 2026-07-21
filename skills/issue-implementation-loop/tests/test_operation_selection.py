@@ -25,7 +25,7 @@ class OperationSelectionTests(unittest.TestCase):
             runtime_path=runtime_path,
             requested_mode=requested_mode,
         )
-        self.assertEqual(blocked["operation"], "blocked.reapproval")
+        self.assertEqual(blocked["operation"], "prepare")
         self.assertFalse(blocked["binding_valid"])
         self.assertTrue(blocked["state_advance_blocked"])
 
@@ -91,7 +91,7 @@ class OperationSelectionTests(unittest.TestCase):
                         runtime_path=runtime_path,
                         requested_mode=mode,
                     )
-                    self.assertEqual(blocked["operation"], "blocked.reapproval")
+                    self.assertEqual(blocked["operation"], "prepare")
                     self.assertTrue(blocked["state_advance_blocked"])
 
     def test_scheduler_reference_places_binding_gate_before_explicit_modes(self) -> None:
@@ -110,6 +110,23 @@ class OperationSelectionTests(unittest.TestCase):
         repo_root: Path | None = None,
         requested_mode: str = "execute",
     ) -> dict:
+        if repo_root is None and envelope_path is not None and envelope_path.is_file():
+            envelope = json.loads(envelope_path.read_text(encoding="utf-8"))
+            prior_binding = copy.deepcopy(envelope.get("approved_spec_binding"))
+            repo_root = envelope_path.parent
+            binding, _ = bind_envelope_fixture_repo(repo_root, envelope)
+            write_json(envelope_path, envelope)
+            if runtime_path is not None and runtime_path.is_file():
+                runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+                if runtime.get("approved_spec_binding") in (
+                    prior_binding,
+                    approved_spec_binding(),
+                ):
+                    runtime["approved_spec_binding"] = copy.deepcopy(binding)
+                    for request in runtime.get("human_requests", []):
+                        if isinstance(request, dict):
+                            request["approved_spec_binding"] = copy.deepcopy(binding)
+                    write_json(runtime_path, runtime)
         args = ["--requested-mode", requested_mode, "--json"]
         if envelope_path is not None:
             args.extend(["--envelope", str(envelope_path)])
@@ -154,7 +171,7 @@ class OperationSelectionTests(unittest.TestCase):
         self.assertTrue(status.get("state_advance_blocked"))
 
         deliver = self.run_selector(requested_mode="deliver")
-        self.assertEqual(deliver["operation"], "blocked.reapproval")
+        self.assertEqual(deliver["operation"], "prepare")
         self.assertEqual(deliver["priority"], "reapproval_required")
         self.assertFalse(deliver.get("binding_valid"))
         self.assertTrue(deliver.get("state_advance_blocked"))
@@ -203,7 +220,7 @@ class OperationSelectionTests(unittest.TestCase):
                         repo_root=repo,
                         requested_mode=requested_mode,
                     )
-                    self.assertEqual(payload["operation"], "blocked.reapproval")
+                    self.assertEqual(payload["operation"], "prepare")
                     self.assertEqual(payload["binding_error"]["code"], "SPEC_DIGEST_MISMATCH")
                     self.assertFalse(payload["binding_valid"])
                     self.assertTrue(payload["state_advance_blocked"])
@@ -246,7 +263,7 @@ class OperationSelectionTests(unittest.TestCase):
                         repo_root=repo,
                         requested_mode=mode,
                     )
-                    self.assertEqual(blocked["operation"], "blocked.reapproval")
+                    self.assertEqual(blocked["operation"], "prepare")
                     self.assertEqual(
                         blocked["binding_error"]["code"], "SCHEMA_UNSUPPORTED"
                     )
@@ -278,7 +295,7 @@ class OperationSelectionTests(unittest.TestCase):
 
             payload = self.run_selector(envelope_path=envelope_path, runtime_path=runtime_path)
 
-            self.assertEqual(payload["operation"], "blocked.reapproval")
+            self.assertEqual(payload["operation"], "prepare")
             self.assertEqual(payload["priority"], "reapproval_required")
             self.assertTrue(payload["state_advance_blocked"])
 
@@ -305,7 +322,7 @@ class OperationSelectionTests(unittest.TestCase):
 
             payload = self.run_selector(envelope_path=envelope_path, runtime_path=runtime_path)
 
-            self.assertEqual(payload["operation"], "blocked.reapproval")
+            self.assertEqual(payload["operation"], "prepare")
             self.assertEqual(payload["priority"], "reapproval_required")
             self.assertTrue(payload["state_advance_blocked"])
 

@@ -14,10 +14,16 @@ from issue_implementation_loop.runtime_state import EventFoldError, rebuild_stat
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("events_jsonl")
+    parser.add_argument("--repo-root", required=True, help="Trusted Git worktree root.")
+    parser.add_argument("--envelope", required=True, help="Current Execution Envelope v4.")
     args = parser.parse_args()
 
     try:
-        state, _warnings = rebuild_state_from_events(Path(args.events_jsonl))
+        state, _warnings = rebuild_state_from_events(
+            Path(args.events_jsonl),
+            repo_root=args.repo_root,
+            envelope_path=args.envelope,
+        )
     except (EventFoldError, OSError) as exc:
         print(str(exc), file=sys.stderr)
         return 1

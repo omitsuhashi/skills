@@ -4,7 +4,12 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .approved_spec_binding import BindingError, approved_spec_binding_ref
+from .approved_spec_binding import (
+    BindingError,
+    approved_spec_binding_ref,
+    verify_approved_spec_binding,
+)
+from .validation.execution_envelope import validate_execution_envelope
 from .validation.runtime_state import validate_runtime_state
 
 
@@ -161,9 +166,7 @@ def _apply_event(state: dict[str, Any], event: dict[str, Any]) -> None:
         ]
 
 
-def rebuild_state_from_events(
-    events_path: str | Path,
-) -> tuple[dict[str, Any], list[str]]:
+def _fold_state_from_events(events_path: str | Path) -> tuple[dict[str, Any], list[str]]:
     path = Path(events_path)
     seen: set[str] = set()
     duplicate_events = 0
@@ -229,4 +232,64 @@ def rebuild_state_from_events(
     warnings: list[str] = []
     if duplicate_events:
         warnings.append(f"{duplicate_events} duplicate event IDs ignored")
+    return state, warnings
+
+
+def _verified_envelope(
+    *, repo_root: str | Path, envelope_path: str | Path
+) -> dict[str, Any]:
+    try:
+        with Path(envelope_path).open(encoding="utf-8") as handle:
+            envelope = json.load(handle)
+    except (OSError, json.JSONDecodeError) as error:
+        raise EventFoldError("SCHEMA_UNSUPPORTED") from error
+    if not isinstance(envelope, dict):
+        raise EventFoldError("SCHEMA_UNSUPPORTED")
+    errors = validate_execution_envelope(envelope, repo_root)
+    if errors:
+        raise EventFoldError(errors[0])
+    try:
+        verify_approved_spec_binding(
+            repo_root,
+            envelope["approved_spec_binding"],
+            ancestor_ref=envelope["epic_base"]["sha"],
+        )
+    except BindingError as error:
+        raise EventFoldError(error.code) from None
+    return envelope
+
+
+def rebuild_state_from_events(
+    events_path: str | Path,
+    *,
+    repo_root: str | Path,
+    envelope_path: str | Path,
+) -> tuple[dict[str, Any], list[str]]:
+    """Fresh-verify Envelope/packet/spec before and after folding an event epoch."""
+
+    before = _verified_envelope(
+        repo_root=repo_root,
+        envelope_path=envelope_path,
+    )
+    state, warnings = _fold_state_from_events(events_path)
+    after = _verified_envelope(
+        repo_root=repo_root,
+        envelope_path=envelope_path,
+    )
+    if before != after:
+        raise EventFoldError("BINDING_MISMATCH", "execution envelope changed")
+    if (
+        state.get("approved_spec_binding") != after.get("approved_spec_binding")
+        or state.get("epic_id") != after.get("epic_id")
+        or state.get("envelope_revision") != after.get("revision")
+    ):
+        raise EventFoldError("BINDING_MISMATCH", "event epoch differs from envelope")
+    try:
+        verify_approved_spec_binding(
+            repo_root,
+            after["approved_spec_binding"],
+            ancestor_ref=after["epic_base"]["sha"],
+        )
+    except BindingError as error:
+        raise EventFoldError(error.code) from None
     return state, warnings

@@ -20,11 +20,12 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("envelope")
     parser.add_argument("runtime_state")
+    parser.add_argument("--repo-root", help="Trusted Git worktree root; defaults to cwd.")
     args = parser.parse_args()
 
     envelope = load_json(args.envelope)
     runtime = load_json(args.runtime_state)
-    errors = validate_execution_envelope(envelope) + validate_runtime_state(runtime)
+    errors = validate_execution_envelope(envelope, args.repo_root) + validate_runtime_state(runtime)
     if not errors:
         errors.extend(validate_runtime_epoch(envelope, runtime))
     if errors:

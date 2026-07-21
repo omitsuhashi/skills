@@ -282,7 +282,7 @@ def _binding_gate_result(
         operation = "status"
     else:
         priority = "reapproval_required"
-        operation = "blocked.reapproval"
+        operation = "prepare"
     return _result(
         skill_dir=skill_dir,
         repo_root=repo_root,

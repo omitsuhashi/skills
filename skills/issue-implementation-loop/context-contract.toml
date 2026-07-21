@@ -43,8 +43,5 @@ references = ["references/runtime-state.md", "references/scheduler.md"]
 [operations.deliver]
 references = ["references/remote-delivery.md"]
 
-[operations."blocked.reapproval"]
-references = ["references/execution-envelope.md"]
-
 [operations.context-compaction]
 references = ["references/context-compaction.md"]

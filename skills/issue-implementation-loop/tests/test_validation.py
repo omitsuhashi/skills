@@ -3,7 +3,165 @@ from __future__ import annotations
 from _helpers import *
 
 
+class ExecutionEnvelopeReferenceTests(unittest.TestCase):
+    def test_reference_requires_exact_closed_packet_projection(self) -> None:
+        text = (SKILL_DIR / "references" / "execution-envelope.md").read_text(
+            encoding="utf-8"
+        )
+        for required in (
+            "closed at every object level",
+            "must exactly project the",
+            "verified Input Packet",
+            "exact `epic_base.sha`",
+            "new sealed packet",
+        ):
+            self.assertIn(required, text)
+
+
 class ValidationTests(unittest.TestCase):
+    def test_execution_envelope_rejects_every_approved_intent_projection_substitution(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, binding, _ = create_binding_repo(Path(tmp))
+            packet_path = repo / binding["path"]
+            packet = json.loads(packet_path.read_text(encoding="utf-8"))
+            packet["work_items"].append(
+                {
+                    "id": "ASBC-003",
+                    "title": "Bind runtime state",
+                    "source": {
+                        "type": "local",
+                        "path": "knowledge/wiki/syntheses/issues.md",
+                    },
+                    "acceptance_criteria": ["Reject mixed runtime bindings."],
+                    "non_goals": ["Do not migrate old runs."],
+                    "verification": ["python3 -m unittest"],
+                    "write_scope": ["path:skills/issue-implementation-loop"],
+                    "dependencies": ["ASBC-002"],
+                }
+            )
+            write_json(packet_path, packet)
+            binding["sha256"] = hashlib.sha256(packet_path.read_bytes()).hexdigest()
+            git(repo, "add", binding["path"])
+            git(repo, "commit", "-q", "-m", "seal two approved items")
+            binding["gate_commit"] = git(repo, "rev-parse", "HEAD")
+            valid = binding_envelope(repo, binding)
+            cases = {
+                "id": lambda value: value["work_items"].__setitem__(
+                    "ASBC-999", value["work_items"].pop("ASBC-003")
+                ),
+                "title": lambda value: value["work_items"]["ASBC-002"].__setitem__(
+                    "title", "Substituted title"
+                ),
+                "source": lambda value: value["work_items"]["ASBC-002"][
+                    "source"
+                ].__setitem__("path", "knowledge/wiki/syntheses/spec.md"),
+                "acceptance": lambda value: value["work_items"]["ASBC-002"].__setitem__(
+                    "acceptance_criteria", ["Caller-selected acceptance"]
+                ),
+                "non_goals": lambda value: value["work_items"]["ASBC-002"].__setitem__(
+                    "non_goals", ["Caller-selected non-goal"]
+                ),
+                "verification": lambda value: value["work_items"]["ASBC-002"].__setitem__(
+                    "verification", ["true"]
+                ),
+                "write_scope": lambda value: value["work_items"]["ASBC-002"].__setitem__(
+                    "write_scope", ["path:plugins"]
+                ),
+                "dependencies": lambda value: value["work_items"]["ASBC-003"].__setitem__(
+                    "dependencies", []
+                ),
+                "remote_policy": lambda value: value["remote_write_policy"].__setitem__(
+                    "mode", "per_action"
+                ),
+                "remote_actions": lambda value: value["remote_write_policy"].__setitem__(
+                    "approved_actions", ["final_pr_push_head"]
+                ),
+            }
+            for name, mutate in cases.items():
+                with self.subTest(name=name):
+                    envelope = copy.deepcopy(valid)
+                    mutate(envelope)
+                    path = repo / f"substituted-{name}.json"
+                    write_json(path, envelope)
+                    result = run_script(
+                        "validate_execution_envelope.py",
+                        str(path),
+                        "--repo-root",
+                        str(repo),
+                        "--json",
+                    )
+                    self.assertEqual(result.returncode, 1)
+                    self.assertEqual(
+                        json.loads(result.stdout)["errors"], ["BINDING_MISMATCH"]
+                    )
+
+    def test_execution_envelope_is_closed_and_rejects_boolean_integers(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, binding, _ = create_binding_repo(Path(tmp))
+            valid = binding_envelope(repo, binding)
+            cases = {
+                "missing_human_policy": lambda value: value.pop("human_policy"),
+                "unknown_top_level": lambda value: value.__setitem__("human_polciy", {}),
+                "revision_bool": lambda value: value.__setitem__("revision", True),
+                "unknown_nested": lambda value: value["human_policy"].__setitem__(
+                    "typo", True
+                ),
+                "nested_integer_bool": lambda value: value["review_policy"].__setitem__(
+                    "max_review_cycles", True
+                ),
+            }
+            for name, mutate in cases.items():
+                with self.subTest(name=name):
+                    envelope = copy.deepcopy(valid)
+                    mutate(envelope)
+                    path = repo / f"closed-{name}.json"
+                    write_json(path, envelope)
+                    result = run_script(
+                        "validate_execution_envelope.py",
+                        str(path),
+                        "--repo-root",
+                        str(repo),
+                    )
+                    self.assertNotEqual(result.returncode, 0)
+
+    def test_prepare_rejects_packet_or_spec_blob_drift_at_exact_epic_base(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for changed_path in ("packet", "spec"):
+                with self.subTest(changed_path=changed_path):
+                    case_root = root / changed_path
+                    case_root.mkdir()
+                    repo, binding, gate_commit = create_binding_repo(case_root)
+                    if changed_path == "packet":
+                        target = repo / binding["path"]
+                    else:
+                        target = repo / "knowledge/wiki/syntheses/spec.md"
+                    target.write_bytes(target.read_bytes() + b"drift")
+                    git(repo, "add", target.relative_to(repo).as_posix())
+                    git(repo, "commit", "-q", "-m", "drift projection")
+                    epic_base = git(repo, "rev-parse", "HEAD")
+                    target.write_bytes(
+                        subprocess.run(
+                            ["git", "-C", str(repo), "show", f"{gate_commit}:{target.relative_to(repo).as_posix()}"],
+                            check=True,
+                            capture_output=True,
+                        ).stdout
+                    )
+                    envelope = binding_envelope(repo, binding, epic_base)
+                    path = repo / f"epic-base-{changed_path}.json"
+                    write_json(path, envelope)
+                    result = run_script(
+                        "validate_execution_envelope.py",
+                        str(path),
+                        "--repo-root",
+                        str(repo),
+                        "--json",
+                    )
+                    self.assertEqual(result.returncode, 1)
+                    self.assertEqual(
+                        json.loads(result.stdout)["errors"], ["PROJECTION_MISMATCH"]
+                    )
+
     def test_asb_04_execution_envelope_v4_verifies_valid_chain(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo, binding, gate_commit = create_binding_repo(Path(tmp))
@@ -411,17 +569,20 @@ class ValidationTests(unittest.TestCase):
 
     def test_validate_execution_envelope_accepts_current_context_policy_without_optional_worker_packet_references(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            envelope = base_envelope()
+            repo, binding, _ = create_binding_repo(Path(tmp))
+            envelope = binding_envelope(repo, binding)
             for field in (
                 "worker_packet_schema",
                 "worker_packet_template",
                 "worker_packet_validator",
             ):
                 del envelope["context_policy"][field]
-            path = Path(tmp) / "current-envelope-without-worker-packet-refs.json"
+            path = repo / "current-envelope-without-worker-packet-refs.json"
             write_json(path, envelope)
 
-            result = run_script("validate_execution_envelope.py", str(path))
+            result = run_script(
+                "validate_execution_envelope.py", str(path), "--repo-root", str(repo)
+            )
 
             self.assertEqual(result.returncode, 0, result.stderr)
 
@@ -653,10 +814,13 @@ class ValidationTests(unittest.TestCase):
         self.assertEqual(policy_schema["properties"]["max_summary_words"]["maximum"], 80)
 
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "envelope.json"
-            write_json(path, base_envelope())
+            repo, binding, _ = create_binding_repo(Path(tmp))
+            path = repo / "envelope.json"
+            write_json(path, binding_envelope(repo, binding))
 
-            result = run_script("validate_execution_envelope.py", str(path))
+            result = run_script(
+                "validate_execution_envelope.py", str(path), "--repo-root", str(repo)
+            )
 
             self.assertEqual(result.returncode, 0, result.stderr)
 
@@ -769,54 +933,35 @@ class ValidationTests(unittest.TestCase):
 
     def test_validate_execution_envelope_accepts_batch_issue_prs_to_epic_base_policy(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            envelope = base_envelope()
-            envelope["epic_base"]["ref"] = "codex/issue-implementation-loop/epic-base"
-            envelope["epic_base"]["branch_state"] = "reserved"
-            envelope["remote_write_policy"] = {
-                "mode": "batch_issue_prs",
-                "approved_actions": [],
-                "issue_prs": {
-                    "base": "epic_base.ref",
-                    "merge": "agent_default_with_human_escalation",
-                },
-                "final_pr": {
-                    "head": "epic_base.ref",
-                    "base": "main",
-                    "merge": "human_only",
-                },
-            }
-            path = Path(tmp) / "envelope.json"
+            repo, binding, _ = create_binding_repo(
+                Path(tmp), delivery_intent="batch_issue_prs"
+            )
+            envelope = binding_envelope(repo, binding)
+            path = repo / "envelope.json"
             write_json(path, envelope)
 
-            result = run_script("validate_execution_envelope.py", str(path))
+            result = run_script(
+                "validate_execution_envelope.py", str(path), "--repo-root", str(repo)
+            )
 
             self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_validate_execution_envelope_accepts_final_pr_auto_create_actions(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            envelope = base_envelope()
-            envelope["epic_base"]["ref"] = "codex/issue-implementation-loop/epic-base"
-            envelope["epic_base"]["branch_state"] = "reserved"
-            envelope["remote_write_policy"] = {
-                "mode": "batch_issue_prs",
-                "approved_actions": [
-                    "final_pr_push_head",
-                    "final_pr_create_draft",
-                ],
-                "issue_prs": {
-                    "base": "epic_base.ref",
-                    "merge": "agent_default_with_human_escalation",
-                },
-                "final_pr": {
-                    "head": "epic_base.ref",
-                    "base": "main",
-                    "merge": "human_only",
-                },
-            }
-            path = Path(tmp) / "envelope.json"
+            repo, binding, _ = create_binding_repo(
+                Path(tmp), delivery_intent="batch_issue_prs"
+            )
+            envelope = binding_envelope(repo, binding)
+            envelope["remote_write_policy"]["approved_actions"] = [
+                "final_pr_push_head",
+                "final_pr_create_draft",
+            ]
+            path = repo / "envelope.json"
             write_json(path, envelope)
 
-            result = run_script("validate_execution_envelope.py", str(path))
+            result = run_script(
+                "validate_execution_envelope.py", str(path), "--repo-root", str(repo)
+            )
 
             self.assertEqual(result.returncode, 0, result.stderr)
 
@@ -1022,6 +1167,15 @@ class ValidationTests(unittest.TestCase):
             "final_pr_create_draft",
         ])
         self.assertEqual(approved_actions["uniqueItems"], True)
+        local_rule = next(
+            rule
+            for rule in schema["properties"]["remote_write_policy"]["allOf"]
+            if rule["if"]["properties"]["mode"].get("const") == "local_only"
+        )
+        self.assertEqual(
+            local_rule["then"]["properties"]["approved_actions"]["maxItems"],
+            0,
+        )
 
     def test_execution_envelope_schema_defines_epic_base_branch_lifecycle(self) -> None:
         schema = json.loads(ENVELOPE_SCHEMA_FILE.read_text(encoding="utf-8"))

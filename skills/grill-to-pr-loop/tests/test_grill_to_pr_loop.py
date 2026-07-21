@@ -37,6 +37,20 @@ def extract_default_prompt(path: Path) -> str:
 
 
 class GrillToPrLoopTests(unittest.TestCase):
+    def test_remote_delivery_reference_uses_current_delivery_validator_signature(self) -> None:
+        text = (SKILL_DIR / "references" / "remote-delivery.md").read_text(
+            encoding="utf-8"
+        )
+        command = (
+            "validate_delivery_plan.py <execution-envelope.json> "
+            "<runtime-state.json> <execution-result.json> <delivery-plan.json> "
+            "--repo-root <trusted-worktree-root> --json"
+        )
+        self.assertIn(command, text)
+        self.assertNotIn(
+            "<runtime-state.json> <delivery-plan.json> --json", text
+        )
+
     def test_skill_description_is_trigger_only(self) -> None:
         text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
         description = next(

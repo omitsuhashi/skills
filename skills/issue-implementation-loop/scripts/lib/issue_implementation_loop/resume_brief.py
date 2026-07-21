@@ -138,6 +138,35 @@ def resume_source_snapshot(
     }
 
 
+def verify_resume_binding(
+    runtime_root: str | Path,
+    *,
+    envelope_path: str | Path | None,
+    repo_root: str | Path,
+) -> dict[str, str]:
+    root = Path(runtime_root)
+    runtime = _json_object_or_empty(root / "runtime-state.json")
+    binding = runtime.get("approved_spec_binding")
+    if not isinstance(binding, dict):
+        raise ResumeBriefInputError("SCHEMA_UNSUPPORTED")
+    try:
+        verify_approved_spec_binding(repo_root, binding)
+    except BindingError as error:
+        raise ResumeBriefInputError(error.code) from None
+    candidate = Path(envelope_path) if envelope_path else root / "execution-envelope.json"
+    envelope = _json_object_or_empty(candidate)
+    errors = validate_execution_envelope(envelope, repo_root)
+    if errors:
+        raise ResumeBriefInputError(errors[0])
+    if (
+        envelope.get("approved_spec_binding") != binding
+        or envelope.get("revision") != runtime.get("envelope_revision")
+        or envelope.get("epic_id") != runtime.get("epic_id")
+    ):
+        raise ResumeBriefInputError("BINDING_MISMATCH")
+    return binding
+
+
 def build_resume_brief_meta(
     runtime_root: str | Path,
     *,
@@ -270,13 +299,26 @@ def validate_resume_brief_cache(
                 errors.append("events.line_count is stale")
             if current.get("last_event_id") != events.get("last_event_id"):
                 errors.append("events.last_event_id is stale")
-            try:
-                rebuilt, _event_warnings = rebuild_state_from_events(Path(path))
-            except EventFoldError as error:
-                errors.append(error.code)
+            envelope_source = sources.get("execution_envelope")
+            envelope_path = (
+                envelope_source.get("path")
+                if isinstance(envelope_source, dict)
+                else None
+            )
+            if not isinstance(envelope_path, str):
+                errors.append("execution_envelope.path is required")
             else:
-                if rebuilt.get("approved_spec_binding") != binding:
-                    errors.append("BINDING_MISMATCH")
+                try:
+                    rebuilt, _event_warnings = rebuild_state_from_events(
+                        Path(path),
+                        repo_root=repo_root or Path.cwd(),
+                        envelope_path=envelope_path,
+                    )
+                except EventFoldError as error:
+                    errors.append(error.code)
+                else:
+                    if rebuilt.get("approved_spec_binding") != binding:
+                        errors.append("BINDING_MISMATCH")
     return errors, warnings
 
 
@@ -532,13 +574,18 @@ def build_resume_brief(
         raise ResumeBriefInputError("SCHEMA_UNSUPPORTED")
     if "AUXILIARY_ARTIFACT_BINDING_MISMATCH" in runtime_errors:
         raise ResumeBriefInputError("AUXILIARY_ARTIFACT_BINDING_MISMATCH")
-    binding = runtime["approved_spec_binding"]
+    candidate_envelope = Path(envelope_path) if envelope_path else root / "execution-envelope.json"
+    binding = verify_resume_binding(
+        root,
+        envelope_path=candidate_envelope,
+        repo_root=repo_root or Path.cwd(),
+    )
     try:
-        verify_approved_spec_binding(repo_root or Path.cwd(), binding)
-    except BindingError as error:
-        raise ResumeBriefInputError(error.code) from None
-    try:
-        rebuilt, event_warnings = rebuild_state_from_events(events_path)
+        rebuilt, event_warnings = rebuild_state_from_events(
+            events_path,
+            repo_root=repo_root or Path.cwd(),
+            envelope_path=candidate_envelope,
+        )
     except EventFoldError as error:
         raise ResumeBriefInputError(error.code) from None
     if rebuilt.get("approved_spec_binding") != binding:
@@ -548,7 +595,6 @@ def build_resume_brief(
     hard_inconsistencies.extend(f"runtime validation: {error}" for error in runtime_errors)
 
     envelope: dict[str, Any] | None = None
-    candidate_envelope = Path(envelope_path) if envelope_path else root / "execution-envelope.json"
     envelope_errors: list[str] = []
     if candidate_envelope.exists():
         envelope = load_json(candidate_envelope)

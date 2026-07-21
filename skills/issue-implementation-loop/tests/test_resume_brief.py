@@ -23,22 +23,33 @@ class ResumeBriefTests(unittest.TestCase):
         runtime: dict,
         events: list[dict],
     ) -> None:
+        fixture_envelope = envelope if envelope is not None else base_envelope()
+        fixture_envelope["epic_id"] = runtime["epic_id"]
+        existing_binding = fixture_envelope.get("approved_spec_binding", {})
+        existing_packet = root.parent / str(existing_binding.get("path", ""))
+        if (
+            isinstance(existing_binding, dict)
+            and existing_packet.is_file()
+            and hashlib.sha256(existing_packet.read_bytes()).hexdigest()
+            == existing_binding.get("sha256")
+        ):
+            binding = copy.deepcopy(existing_binding)
+        else:
+            binding, _ = bind_envelope_fixture_repo(root.parent, fixture_envelope)
         root.mkdir()
         runtime = copy.deepcopy(runtime)
         runtime["schema_version"] = 2
-        runtime.setdefault("approved_spec_binding", approved_spec_binding())
+        runtime["approved_spec_binding"] = copy.deepcopy(binding)
         for request in runtime.get("human_requests", []):
             request.setdefault("schema_version", 2)
-            request.setdefault(
-                "approved_spec_binding", copy.deepcopy(runtime["approved_spec_binding"])
-            )
+            request["approved_spec_binding"] = copy.deepcopy(binding)
         events = copy.deepcopy(events)
         for event in events:
             event.setdefault("schema_version", 2)
             event.setdefault("envelope_revision", runtime["envelope_revision"])
-            event.setdefault(
-                "approved_spec_binding", copy.deepcopy(runtime["approved_spec_binding"])
-            )
+            existing_binding = event.get("approved_spec_binding")
+            if existing_binding is None or existing_binding == approved_spec_binding():
+                event["approved_spec_binding"] = copy.deepcopy(binding)
         if envelope is not None:
             write_json(root / "execution-envelope.json", envelope)
         write_json(root / "runtime-state.json", runtime)
@@ -63,24 +74,33 @@ class ResumeBriefTests(unittest.TestCase):
                 events=self.rich_events(),
             )
 
-            build_result = run_script("build_resume_brief.py", str(root))
+            build_result = run_script(
+                "build_resume_brief.py", str(root), "--repo-root", str(root.parent)
+            )
 
             self.assertEqual(build_result.returncode, 0, build_result.stderr)
             meta_path = root / "resume-brief.meta.json"
             meta = json.loads(meta_path.read_text(encoding="utf-8"))
             self.assertEqual(meta["schema_version"], 3)
             self.assertEqual(
-                meta["sources"]["approved_spec_binding"], approved_spec_binding()
+                meta["sources"]["approved_spec_binding"],
+                json.loads((root / "runtime-state.json").read_text(encoding="utf-8"))[
+                    "approved_spec_binding"
+                ],
             )
 
             meta["schema_version"] = 2
             write_json(meta_path, meta)
-            v2_result = run_script("validate_resume_brief.py", str(root))
+            v2_result = run_script(
+                "validate_resume_brief.py", str(root), "--repo-root", str(root.parent)
+            )
             self.assertNotEqual(v2_result.returncode, 0)
             self.assertIn("SCHEMA_UNSUPPORTED", v2_result.stderr)
 
             meta_path.unlink()
-            meta_less_result = run_script("validate_resume_brief.py", str(root))
+            meta_less_result = run_script(
+                "validate_resume_brief.py", str(root), "--repo-root", str(root.parent)
+            )
             self.assertNotEqual(meta_less_result.returncode, 0)
             self.assertIn("SCHEMA_UNSUPPORTED", meta_less_result.stderr)
 
@@ -181,7 +201,9 @@ class ResumeBriefTests(unittest.TestCase):
                 events=events,
             )
 
-            result = run_script("build_resume_brief.py", str(root))
+            result = run_script(
+                "build_resume_brief.py", str(root), "--repo-root", str(root.parent)
+            )
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("BINDING_MISMATCH", result.stderr)
@@ -228,7 +250,11 @@ class ResumeBriefTests(unittest.TestCase):
             stderr = StringIO()
             with (
                 mock.patch.object(module, "build_resume_brief_meta", side_effect=swap_events),
-                mock.patch.object(sys, "argv", [str(script_path), str(root)]),
+                mock.patch.object(
+                    sys,
+                    "argv",
+                    [str(script_path), str(root), "--repo-root", str(root.parent)],
+                ),
                 redirect_stdout(stdout),
                 redirect_stderr(stderr),
             ):
@@ -239,6 +265,77 @@ class ResumeBriefTests(unittest.TestCase):
             self.assertFalse((root / "resume-brief.md").exists())
             self.assertFalse((root / "resume-brief.meta.json").exists())
 
+    def test_build_resume_brief_reverifies_binding_before_cache_publication(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, binding, _ = create_binding_repo(Path(tmp))
+            runtime_root = repo / "runtime"
+            envelope = binding_envelope(repo, binding)
+            runtime = {
+                "schema_version": 2,
+                "epic_id": envelope["epic_id"],
+                "envelope_revision": envelope["revision"],
+                "approved_spec_binding": copy.deepcopy(binding),
+                "issues": {},
+                "human_requests": [],
+            }
+            events = [
+                {
+                    "schema_version": 2,
+                    "event_id": "E-001",
+                    "epic_id": envelope["epic_id"],
+                    "envelope_revision": envelope["revision"],
+                    "approved_spec_binding": copy.deepcopy(binding),
+                    "type": "issue_status_changed",
+                    "issue": "ASBC-002",
+                    "status": "PENDING",
+                }
+            ]
+            self.write_runtime_root(
+                runtime_root,
+                envelope=envelope,
+                runtime=runtime,
+                events=events,
+            )
+            script_path = SCRIPTS_DIR / "build_resume_brief.py"
+            spec = importlib.util.spec_from_file_location(
+                "build_resume_brief_binding_race", script_path
+            )
+            assert spec and spec.loader
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            original_meta_builder = module.build_resume_brief_meta
+
+            def drift_spec(*args: object, **kwargs: object) -> dict:
+                value = original_meta_builder(*args, **kwargs)
+                (repo / "knowledge/wiki/syntheses/spec.md").write_text(
+                    "drift before publication\n", encoding="utf-8"
+                )
+                return value
+
+            stderr = StringIO()
+            with (
+                mock.patch.object(
+                    module, "build_resume_brief_meta", side_effect=drift_spec
+                ),
+                mock.patch.object(
+                    sys,
+                    "argv",
+                    [
+                        str(script_path),
+                        str(runtime_root),
+                        "--repo-root",
+                        str(repo),
+                    ],
+                ),
+                redirect_stderr(stderr),
+            ):
+                result = module.main()
+
+            self.assertNotEqual(result, 0)
+            self.assertIn("SPEC_DIGEST_MISMATCH", stderr.getvalue())
+            self.assertFalse((runtime_root / "resume-brief.md").exists())
+            self.assertFalse((runtime_root / "resume-brief.meta.json").exists())
+
 
     def rich_envelope(self) -> dict:
         envelope = batch_issue_prs_envelope()
@@ -248,6 +345,14 @@ class ResumeBriefTests(unittest.TestCase):
             "G2PR-006": "path:skills/f",
         }.items():
             envelope["work_items"][issue_id] = {
+                "title": f"Example issue {issue_id}",
+                "source": {
+                    "type": "local",
+                    "path": "knowledge/wiki/syntheses/issues.md",
+                },
+                "acceptance_criteria": [f"{issue_id} is complete."],
+                "non_goals": ["Do not write outside the approved scope."],
+                "verification": ["python3 -m unittest"],
                 "branch": f"codex/issue-implementation-loop/{issue_id}-x",
                 "worktree_path": f"/tmp/skills/issue-implementation-loop/{issue_id}-x",
                 "worktree_state": "create_on_run",
@@ -353,7 +458,9 @@ class ResumeBriefTests(unittest.TestCase):
                 events=self.rich_events(),
             )
 
-            result = run_script("build_resume_brief.py", str(root))
+            result = run_script(
+                "build_resume_brief.py", str(root), "--repo-root", str(root.parent)
+            )
 
             self.assertEqual(result.returncode, 0, result.stderr)
             brief_path = root / "resume-brief.md"
@@ -378,14 +485,19 @@ class ResumeBriefTests(unittest.TestCase):
             meta = json.loads(meta_path.read_text(encoding="utf-8"))
             self.assertEqual(meta["schema_version"], 3)
             self.assertEqual(
-                meta["sources"]["approved_spec_binding"], approved_spec_binding()
+                meta["sources"]["approved_spec_binding"],
+                json.loads((root / "runtime-state.json").read_text(encoding="utf-8"))[
+                    "approved_spec_binding"
+                ],
             )
             self.assertEqual(meta["artifact"], "resume-brief")
             self.assertEqual(meta["sources"]["execution_envelope"]["revision"], 1)
             self.assertEqual(meta["sources"]["runtime_state"]["envelope_revision"], 1)
             self.assertIn("sha256", meta["sources"]["events"])
 
-            validate_result = run_script("validate_resume_brief.py", str(root))
+            validate_result = run_script(
+                "validate_resume_brief.py", str(root), "--repo-root", str(root.parent)
+            )
 
             self.assertEqual(validate_result.returncode, 0, validate_result.stderr)
 
@@ -429,11 +541,21 @@ class ResumeBriefTests(unittest.TestCase):
                         runtime=self.rich_runtime(),
                         events=self.rich_events(),
                     )
-                    build_result = run_script("build_resume_brief.py", str(root))
+                    build_result = run_script(
+                        "build_resume_brief.py",
+                        str(root),
+                        "--repo-root",
+                        str(root.parent),
+                    )
                     self.assertEqual(build_result.returncode, 0, build_result.stderr)
                     mutate(root)
 
-                    result = run_script("validate_resume_brief.py", str(root))
+                    result = run_script(
+                        "validate_resume_brief.py",
+                        str(root),
+                        "--repo-root",
+                        str(root.parent),
+                    )
 
                     self.assertNotEqual(result.returncode, 0, name)
                     self.assertIn(expected, result.stderr)
@@ -474,7 +596,9 @@ class ResumeBriefTests(unittest.TestCase):
                 timestamp = 1_700_000_000 - offset
                 os.utime(path, (timestamp, timestamp))
 
-            result = run_script("build_resume_brief.py", str(root))
+            result = run_script(
+                "build_resume_brief.py", str(root), "--repo-root", str(root.parent)
+            )
 
             self.assertEqual(result.returncode, 0, result.stderr)
             brief = (root / "resume-brief.md").read_text(encoding="utf-8")
@@ -496,12 +620,19 @@ class ResumeBriefTests(unittest.TestCase):
                 events=self.rich_events(),
             )
 
-            result = run_script("build_resume_brief.py", str(root), "--max-words", "10")
+            result = run_script(
+                "build_resume_brief.py",
+                str(root),
+                "--max-words",
+                "10",
+                "--repo-root",
+                str(root.parent),
+            )
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("RESUME_BRIEF_WORD_BUDGET_EXCEEDED", result.stderr)
 
-    def test_build_resume_brief_surfaces_runtime_event_inconsistencies(self) -> None:
+    def test_build_resume_brief_rejects_missing_execution_envelope(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "runtime"
             runtime = {
@@ -523,16 +654,14 @@ class ResumeBriefTests(unittest.TestCase):
             ]
             self.write_runtime_root(root, envelope=None, runtime=runtime, events=events)
 
-            result = run_script("build_resume_brief.py", str(root))
-
-            self.assertEqual(result.returncode, 0, result.stderr)
-            brief = (root / "resume-brief.md").read_text(encoding="utf-8")
-            self.assertIn("Runnable: unavailable - execution envelope missing", brief)
-            self.assertIn(
-                "runtime/events mismatch for G2PR-001 status: runtime=PENDING events=RUNNING",
-                brief,
+            result = run_script(
+                "build_resume_brief.py", str(root), "--repo-root", str(root.parent)
             )
-            self.assertIn("Recommended next operation: resume.recover", brief)
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("SCHEMA_UNSUPPORTED", result.stderr)
+            self.assertFalse((root / "resume-brief.md").exists())
+            self.assertFalse((root / "resume-brief.meta.json").exists())
 
     def test_build_resume_brief_prioritizes_waiting_human_before_runnable_dispatch(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -584,7 +713,9 @@ class ResumeBriefTests(unittest.TestCase):
             ]
             self.write_runtime_root(root, envelope=batch_issue_prs_envelope(), runtime=runtime, events=events)
 
-            result = run_script("build_resume_brief.py", str(root))
+            result = run_script(
+                "build_resume_brief.py", str(root), "--repo-root", str(root.parent)
+            )
 
             self.assertEqual(result.returncode, 0, result.stderr)
             brief = (root / "resume-brief.md").read_text(encoding="utf-8")
@@ -642,7 +773,9 @@ class ResumeBriefTests(unittest.TestCase):
             ]
             self.write_runtime_root(root, envelope=batch_issue_prs_envelope(), runtime=runtime, events=events)
 
-            result = run_script("build_resume_brief.py", str(root))
+            result = run_script(
+                "build_resume_brief.py", str(root), "--repo-root", str(root.parent)
+            )
 
             self.assertEqual(result.returncode, 0, result.stderr)
             brief = (root / "resume-brief.md").read_text(encoding="utf-8")
@@ -716,7 +849,9 @@ class ResumeBriefTests(unittest.TestCase):
             ]
             self.write_runtime_root(root, envelope=self.rich_envelope(), runtime=runtime, events=events)
 
-            result = run_script("build_resume_brief.py", str(root))
+            result = run_script(
+                "build_resume_brief.py", str(root), "--repo-root", str(root.parent)
+            )
 
             self.assertEqual(result.returncode, 0, result.stderr)
             brief = (root / "resume-brief.md").read_text(encoding="utf-8")

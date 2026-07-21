@@ -31,6 +31,8 @@ class GitReconcileTests(unittest.TestCase):
             envelope["work_items"]["G2PR-001"]["branch"] = "codex/missing-epic-base/G2PR-001-a"
             envelope["work_items"]["G2PR-002"]["branch"] = "codex/missing-epic-base/G2PR-002-b"
             envelope["work_items"]["G2PR-003"]["branch"] = "codex/missing-epic-base/G2PR-003-c"
+            bind_envelope_fixture_repo(repo, envelope)
+            git(repo, "branch", "-D", envelope["epic_base"]["ref"])
             envelope_path = repo / "envelope.json"
             write_json(envelope_path, envelope)
 

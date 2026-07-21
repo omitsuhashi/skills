@@ -59,6 +59,18 @@ require scoped `human_request_opened`.
 
 Validate snapshots with `python3 <skill-dir>/scripts/validate_runtime_state.py <runtime-state.json>`.
 
+Rebuild only through the binding-aware interface:
+
+```bash
+python3 <skill-dir>/scripts/rebuild_runtime_state.py <events.jsonl> \
+  --repo-root <trusted-worktree-root> \
+  --envelope <execution-envelope.json>
+```
+
+The rebuild verifies the closed Envelope and exact packet/spec projection before
+and after event folding, then verifies the binding again before returning the
+snapshot. The unbound one-argument rebuild form is unsupported.
+
 For `PR_READY`, `COMPLETE`, or `DONE`, record matching `base_sha`, `head_sha`,
 and committed `BASE_SHA..HEAD_SHA` review range; never use `working-tree`.
 
@@ -67,12 +79,16 @@ and committed `BASE_SHA..HEAD_SHA` review range; never use `working-tree`.
 Build a regenerable cache:
 
 ```bash
-python3 <skill-dir>/scripts/build_resume_brief.py <runtime-root>
+python3 <skill-dir>/scripts/build_resume_brief.py <runtime-root> \
+  --repo-root <trusted-worktree-root> \
+  --envelope <execution-envelope.json>
 ```
 
-The brief reads runtime/events plus optional envelope and report/review paths,
+The brief requires the current envelope and reads runtime/events plus
+report/review paths,
 enforces 600 words, and writes markdown plus required v3 metadata containing
-`sources.approved_spec_binding`. Verify current packet/spec before use/fold. Add
+`sources.approved_spec_binding`. Verify current packet/spec before and after the
+fold and again immediately before publishing either cache file. Add
 `Pending hardening decisions: N` and the candidate registry path when needed; do
 not copy candidate full text. Meta-less and v2 caches are unsupported. If stale,
 fix runtime/events and rebuild.

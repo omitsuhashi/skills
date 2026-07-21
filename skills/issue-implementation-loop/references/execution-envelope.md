@@ -15,7 +15,13 @@ The Execution Envelope is the approved execution contract. It is more specific t
 - `context_policy`: paths-first worker packet and report budgets
 - `phase_branch_policy`: Codex phase branch ownership and context handoff policy
 - `remote_write_policy`: `local_only`, `per_action`, `batch_draft_prs`, or `batch_issue_prs`
-- `work_items`: one entry per approved issue
+- `work_items`: exactly one entry per sealed Input Packet work item, with the same ID, title, source, acceptance criteria, non-goals, verification commands, write scope, and ordered dependency IDs
+
+Envelope v4 is closed at every object level: missing required fields, unknown
+fields, and booleans substituted for integer fields are invalid. Its
+`epic_id`, complete work-item set, and remote mode must exactly project the
+verified Input Packet; a valid packet digest never authorizes caller-supplied
+execution intent.
 
 ## Execution Context Boundary
 
@@ -37,8 +43,9 @@ Envelope v4 always requires `phase_branch_policy`. The fixed policy says: planni
 
 Before prepare, verify the current packet/spec projection, require `gate_commit`
 to be an ancestor of `epic_base.sha`, and compare the exact packet and referenced
-spec blobs in the gate tree. Fail with the stable binding code; do not convert
-these failures into general Git reconciliation advice.
+spec blobs both in the gate tree and at the exact `epic_base.sha`. Fail with the
+stable binding code; do not convert these failures into general Git
+reconciliation advice.
 
 ## Review Governance Policy
 
@@ -106,3 +113,6 @@ Create a new envelope revision before changing:
 - context policy
 
 Routine state transitions within an approved envelope do not need another approval.
+Any change to packet-owned intent first requires the applicable Execution Plan
+or Spec Gate and a new sealed packet; the new Envelope revision must then be
+projected from that packet rather than independently editing those fields.

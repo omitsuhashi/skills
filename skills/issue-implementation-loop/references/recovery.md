@@ -26,7 +26,7 @@ On resume, compare:
 Use:
 
 ```bash
-python3 <skill-dir>/scripts/rebuild_runtime_state.py <events.jsonl>
+python3 <skill-dir>/scripts/rebuild_runtime_state.py <events.jsonl> --repo-root <trusted-worktree-root> --envelope <execution-envelope.json>
 python3 <skill-dir>/scripts/reconcile_git_state.py <execution-envelope.json> --json
 ```
 

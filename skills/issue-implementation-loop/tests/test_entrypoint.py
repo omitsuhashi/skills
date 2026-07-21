@@ -67,10 +67,11 @@ class EntrypointTests(unittest.TestCase):
 
         self.assertIn("Any ok=false blocks state changes.", text)
         self.assertIn(
-            "Read-only status/recovery ignores only unsupported "
-            "approved_spec_seal; other failures block.",
+            "Read-only status remains available on any capability or binding failure, "
+            "reports `binding_valid=false`, and keeps state advance blocked.",
             text,
         )
+        self.assertNotIn("status/recovery ignores", text)
 
     def test_entrypoint_exposes_fresh_binding_guards_and_reapproval(self) -> None:
         text = SKILL_FILE.read_text(encoding="utf-8")
