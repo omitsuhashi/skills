@@ -102,8 +102,13 @@ class EntrypointTests(unittest.TestCase):
             "human Spec Gate",
             "new approval and seal",
             "execution-intent-only packet drift",
+            "any other sealed packet byte drift",
+            "while `spec_binding` and `approval_evidence` remain exact",
+            "other packet fields",
+            "serialization or whitespace-only drift",
             "Execution Plan Gate",
-            "revalidate and reseal the packet",
+            "reconciliation and revalidation",
+            "reseal only when the changed bytes are intended",
             "without a new human Spec Gate approval",
         ):
             self.assertIn(required, combined)

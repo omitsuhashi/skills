@@ -114,8 +114,13 @@ class GrillToPrLoopTests(unittest.TestCase):
             "new approval and seal",
             "execution-intent-only packet drift",
             "issue scope, dependencies, write scope, or delivery intent",
+            "any other sealed packet byte drift",
+            "while `spec_binding` and `approval_evidence` remain exact",
+            "other packet fields",
+            "serialization or whitespace-only drift",
             "Execution Plan Gate",
-            "revalidate and reseal the packet",
+            "reconciliation and revalidation",
+            "reseal only when the changed bytes are intended",
             "without a new human Spec Gate approval",
         ):
             self.assertIn(required, combined)

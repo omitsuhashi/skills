@@ -6,7 +6,7 @@ Use this reference when preparing the normalized input packet, presenting the Ex
 
 Use an optional planning branch, immutable `epic_base.sha`, one reservation per issue, typed dependencies, and local `PR_READY`. Issue PRs target `epic_base.ref`; final PR targets `main` and merge is human-only.
 
-Use branch names like `codex/<epic-id>/<local-id>-<slug>`. Blocked issues may reserve names/paths, but physical worktrees stay absent until release.
+Issue branches use `codex/<epic-id>/<local-id>-<slug>`; blocked worktrees remain uncreated until release.
 
 Codex phase branch policy: gate planning artifacts on the current planning branch; workers inherit but do not author them. Envelope v4 carries `approved_spec_binding` and `phase_branch_policy`; a fresh/compacted coordinator owns execution resources.
 
@@ -49,7 +49,7 @@ python3 <issue-implementation-loop-skill-dir>/scripts/approved_spec_binding.py s
 
 Seal re-reads the spec, atomically writes `spec_binding` and `approval_evidence`, and never edits the spec. Validate the sealed output; never hand off an invalid packet.
 
-If spec bytes, `spec_binding`, or `approval_evidence` change, return to the human Spec Gate for a new approval and seal. For execution-intent-only packet drift—issue scope, dependencies, write scope, or delivery intent—return to the Execution Plan Gate; revalidate and reseal the packet with the unchanged spec approval, without a new human Spec Gate approval. Both routes require a new Envelope revision/runtime epoch; old downstream artifacts do not carry forward.
+If spec bytes, `spec_binding`, or `approval_evidence` change, return to the human Spec Gate for a new approval and seal. Examples on the other route include execution-intent-only packet drift—issue scope, dependencies, write scope, or delivery intent—but are not exhaustive. The fallback covers any other sealed packet byte drift while `spec_binding` and `approval_evidence` remain exact, including other packet fields and serialization or whitespace-only drift, and returns to the Execution Plan Gate for reconciliation and revalidation. Restore unintended drift; reseal only when the changed bytes are intended, without a new human Spec Gate approval. Both routes require a new Envelope revision/runtime epoch; old downstream artifacts do not carry forward.
 
 Commit the sealed packet and exact spec, then create an Execution Envelope v4 whose `approved_spec_binding` pins the packet digest and full gate commit.
 

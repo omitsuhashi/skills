@@ -23,7 +23,7 @@ Execution Envelope v4 pins Input Packet v2 through `approved_spec_binding`, incl
 
 ## Binding Gate Map
 
-Prepare; dispatch and fix redispatch; review dispatch and approval intake; resume and rebuild; completion; and delivery all freshly verify the same active `approved_spec_binding`. Read-only status may return `binding_valid=false`, but state advance remains blocked. Changes to spec bytes, `spec_binding`, or `approval_evidence` return to the human Spec Gate for a new approval and seal. execution-intent-only packet drift returns to the Execution Plan Gate to revalidate and reseal the packet without a new human Spec Gate approval. Both routes start a new envelope/runtime epoch; never reuse old reports/results.
+Prepare; dispatch and fix redispatch; review dispatch and approval intake; resume and rebuild; completion; and delivery all freshly verify the same active `approved_spec_binding`. Read-only status may return `binding_valid=false`, but state advance remains blocked. Changes to spec bytes, `spec_binding`, or `approval_evidence` return to the human Spec Gate for a new approval and seal. execution-intent-only packet drift is only an example: any other sealed packet byte drift while `spec_binding` and `approval_evidence` remain exact, including other packet fields and serialization or whitespace-only drift, returns to the Execution Plan Gate for reconciliation and revalidation. Restore unintended drift; reseal only when the changed bytes are intended, without a new human Spec Gate approval. Both routes start a new envelope/runtime epoch; never reuse old reports/results.
 
 ## Non-Goals
 
