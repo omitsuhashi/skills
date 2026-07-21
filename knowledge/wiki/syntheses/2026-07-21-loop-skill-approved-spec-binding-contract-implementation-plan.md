@@ -10,14 +10,23 @@
 
 ## Local Completion Status
 
-2026-07-21 に ASBC-001〜ASBC-006 の TDD 実装、scoped review/fix、fresh-agent forward test、full verification、durable closeout を完了した。全 task は `LOCAL_COMPLETE`。current executable contract は Input Packet v2 / Execution Envelope v4 と downstream current-only artifact familyであり、historical v1〜v3 JSON は non-executable evidence として bytes を変更せず保持する。
+ASBC-001〜ASBC-006 の TDD 実装、scoped review/fix、fresh-agent forward test、full verification、durable closeout を完了した。2026-07-21 の初回 closeout は whole-branch reviewで再オープンし、2段階の hardening fixと最終 focused closureを経て2026-07-22に再完了した。全 task は `LOCAL_COMPLETE`。current executable contract は Input Packet v2 / corrected Execution Envelope v4 と downstream current-only artifact familyであり、historical v1〜v3 JSON は non-executable evidence として bytes を変更せず保持する。
 
-- Implementation head before durable closeout: `b3bfa4b5a8cb1dd7788aa61398679ce6c5f995dd`。
-- Approved spec / sealed packet / Envelope raw SHA-256: `6cedbba982f891d8ffceb9204bfc453b276df9e6021dca048cb0612d359a3dcc` / `3779e815b4be7438b36e9fb53073fa1d3ab20f07cd5ad1c531fa075c11b457e7` / `ac7630bf404b1c3607eb504bc18377bc45aef2c3b128be04e38d6737ca351af4`。
-- Public acceptance ASB-01〜ASB-30、issue-loop 230 tests、grill 24 tests、llm-wiki 6 tests、architecture/context/strict context report/dual-host/creator validators、Packet/Envelope current validators、`git diff --check` は成功。strict context warnings は空、repository-wide 最小 headroom は 21%、affected issue-loop 最小 headroom は 26%。
+- Implementation head before durable re-closeout: `7e9515a7e74f632c3202ae2ab81dd65e7102b4ac`。
+- Approved spec / sealed packet / corrected Envelope raw SHA-256: `6cedbba982f891d8ffceb9204bfc453b276df9e6021dca048cb0612d359a3dcc` / `3779e815b4be7438b36e9fb53073fa1d3ab20f07cd5ad1c531fa075c11b457e7` / `c15a7e9f4dc18acf8899f8e660f8f6eff8753f39b9f72a5772e44daf22d89497`。
+- Public acceptance ASB-01〜ASB-30、issue-loop 244 tests、grill 25 tests、llm-wiki 6 tests、architecture/context/strict context report/dual-host/creator validators、Packet/Envelope current validators、`git diff --check` は成功。strict context warnings は空、issue-loop operation count は approved contractどおり 8。
 - 3 fresh evaluator は planning drift、urgent execution mismatch、terminal後の stale delivery/resume をすべて fail closed に停止し、read-only diagnostic status だけを許可した。
-- Scoped review は各 task で完了し、最終時点で open Critical / Important finding はない。
+- Scoped reviewに加え whole-branch reviewを2段階で完了し、最終 focused closureは Critical / Important / Minorすべて0。
 - Remote policy は `local_only` のまま。push、PR、merge、live Codex/Hermes install は意図的に実行していない。
+
+## Whole-Branch Hardening Addendum
+
+- [x] 初回 closeout `6f0158c66710ee0dcce1f868d0fbe6c85bc72602` 後の whole-branch reviewで、2 Critical / 6 Importantを検出し completion claimを再オープンした。
+- [x] `f8f69bb3b9396ee5daa49f0fb710a28e1086ee94` で Envelope/Input Packet exact intent projection、Worker/Reviewer projection、runtime/resume fresh verification、closed/strict typing、status/context/docs/remote-delivery、exact Epic-base blob verificationを修正した。
+- [x] fix後の hardening reviewで2 Critical / 1 Important / 1 Minorを検出し、dependency edge semantics、worker trust root、exact boolean typing、required-field parityを未完了として再度停止した。
+- [x] `7e9515a7e74f632c3202ae2ab81dd65e7102b4ac` で canonical dependency edges、trusted repo/assigned worktree/active Envelope/Runtime verification、exact primitive types、closed Worker Packet fieldsを修正した。
+- [x] final focused review `f8f69bb3b9396ee5daa49f0fb710a28e1086ee94..7e9515a7e74f632c3202ae2ab81dd65e7102b4ac` は Critical / Important / Minorすべて0。244 / 25 / 6 tests、`warnings=[]`、8 issue-loop operations、corrected Envelope `ok=true`を確認した。
+- [x] approved specとsealed Input Packet bytesは維持し、corrected Envelope digestだけをdurable evidenceへ更新した。remote/live actionは実行していない。
 
 ## Global Constraints
 
