@@ -1202,3 +1202,11 @@ append-only で使います。すべての entry は予測しやすい header �
 - 初回worker dispatchは、承認済み`contracts.py` / `safety.py`追加と、既存exact implementation-file guard 2件のPOTASK-012 Write Scope外編集が両立しないことを編集前に検知してfail closedした
 - ユーザー承認により`plugins/task-management/tests/test_adapter_dispatch.py`と`plugins/task-management/tests/test_github_mcp_route.py`だけをPOTASK-012 Write Scopeへ追加した
 - input packetとExecution Envelope revision 2を同期した。機能scope、acceptance behavior、DAG、remote / live policyは変更していない
+
+## [2026-07-22] human-decision | POTASK-012 exceptional review cycle
+
+- POTASK-012 workerは`bb66aff`とreview fix `5f4c0dc`を作成し、write contracts 26 / 26、task-management full suite 123 / 123、read regression各18 / 18、`git diff --check`を通過した
+- 独立review cycle 2 / 2で、scheme-relative / colon-form URL-shaped `destination_ref` bypassと、root plugin entrypoint / direct provider SDK / separate-adapter importのguard scan漏れがImportant `intent_gap`として残った
+- max review cycle到達後、runtime human request `hr-potask-012-review-exception-001`でPOTASK-012と全descendantを停止し、blockerをreleaseしなかった
+- ユーザーは残存2件だけをTDD修正して独立reviewする例外cycle 1回を承認した。新規または残存Critical / Important findingがあれば再停止し、risk acceptanceを自動推論しない
+- remote policyは`local_only`のまま。GitHub Issue、push、PR、merge、live Hermes / MCP / credential / Project / Issue変更は未実施
