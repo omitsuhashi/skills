@@ -1177,3 +1177,10 @@ append-only で使います。すべての entry は予測しやすい header �
 - dependency は core/input packet -> envelope/worker と runtime/auxiliary と docs -> state-changing guards -> bootstrap seal/full verification とし、first runnable issue を ASBC-001 に固定した
 - production change 前の fresh-agent baseline で、保存 spec digest と current bytes が不一致でも validator / Required Immediate Guard が exit 0 / ok=true になる RED を確認した
 - Issue Gate は承認済み。Execution Plan Gate、worker 実装、implementation review は未完了であり、remote policy は `local_only` のまま維持する
+
+## [2026-07-21] execution-plan | Loop Skill Approved Spec Binding Contract
+
+- ASBC-001 から ASBC-006 を、各 issue の RED -> minimal GREEN -> targeted verification -> scoped commit として実行する詳細計画を固定した
+- bootstrap exception は ASBC-001 の core/Input Packet v2 実装だけに限定し、その commit で approved spec を v2 packet へ seal して以後の gate commit とする
+- Envelope/worker、runtime/auxiliary/resume、routing/review/completion/delivery、skill contract、fresh-agent forward test/full verification の依存順序と exact command set を記録した
+- scope は approved spec/issue ledger と同一、remote policy は `local_only`。worker 実装、review、push、PR、merge、live install はまだ実行していない
