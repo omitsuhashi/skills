@@ -151,15 +151,19 @@ def validate_execution_result(
             epic_base["current_sha"]
         ):
             errors.append("SCHEMA_UNSUPPORTED")
-        if epic_base.get("branch_exists") is not True:
+        if type(epic_base.get("branch_exists")) is not bool:
             errors.append("SCHEMA_UNSUPPORTED")
-        resolved_epic_sha = _resolve_git_branch(repo_root, envelope_epic_base.get("ref"))
-        if (
-            resolved_epic_sha is None
-            or epic_base.get("branch_exists") is not True
-            or epic_base.get("current_sha") != resolved_epic_sha
-        ):
-            errors.append("BINDING_MISMATCH")
+        remote_policy = envelope.get("remote_write_policy", {})
+        if isinstance(remote_policy, dict) and remote_policy.get("mode") == "batch_issue_prs":
+            resolved_epic_sha = _resolve_git_branch(
+                repo_root, envelope_epic_base.get("ref")
+            )
+            if (
+                resolved_epic_sha is None
+                or epic_base.get("branch_exists") is not True
+                or epic_base.get("current_sha") != resolved_epic_sha
+            ):
+                errors.append("BINDING_MISMATCH")
 
     work_items = envelope.get("work_items", {})
     result_issues = result.get("issues")

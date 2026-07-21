@@ -224,9 +224,6 @@ class ReviewGateTests(unittest.TestCase):
                 "non-boolean-exists": lambda result: result["epic_base"].update(
                     {"branch_exists": 1}
                 ),
-                "missing-branch": lambda result: result["epic_base"].update(
-                    {"branch_exists": False}
-                ),
                 "empty-candidates": lambda result: result.update(
                     {"delivery_candidates": []}
                 ),
@@ -251,9 +248,24 @@ class ReviewGateTests(unittest.TestCase):
             repo, envelope, runtime_path, _, result_path, result = self.result_artifacts(
                 Path(tmp)
             )
-            epic_ref = "codex/test/epic-base"
+            original_branch = git(repo, "branch", "--show-current")
+            epic_ref = "codex/approved-spec-binding/epic-base"
             git(repo, "checkout", "-q", "-b", epic_ref)
             envelope["epic_base"]["ref"] = epic_ref
+            envelope["epic_base"]["branch_state"] = "active"
+            envelope["remote_write_policy"] = {
+                "mode": "batch_issue_prs",
+                "approved_actions": [],
+                "issue_prs": {
+                    "base": "epic_base.ref",
+                    "merge": "agent_default_with_human_escalation",
+                },
+                "final_pr": {
+                    "head": "epic_base.ref",
+                    "base": "main",
+                    "merge": "human_only",
+                },
+            }
             result["epic_base"]["branch"] = epic_ref
             write_json(repo / "execution-envelope.json", envelope)
             (repo / "epic-change.txt").write_text("advance\n", encoding="utf-8")
@@ -272,12 +284,32 @@ class ReviewGateTests(unittest.TestCase):
             current = self.validate_result(repo, runtime_path, result_path)
             self.assertEqual(current.returncode, 0, current.stderr)
 
-            envelope["epic_base"]["ref"] = "codex/test/missing-epic-base"
-            result["epic_base"]["branch"] = envelope["epic_base"]["ref"]
-            write_json(repo / "execution-envelope.json", envelope)
-            write_json(result_path, result)
+            git(repo, "checkout", "-q", original_branch)
+            git(repo, "branch", "-D", epic_ref)
             missing = self.validate_result(repo, runtime_path, result_path)
             self.assertEqual(missing.returncode, 1)
+
+    def test_execution_result_v2_local_only_allows_planned_epic_base_ref(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, envelope, runtime_path, _, result_path, result = self.result_artifacts(
+                Path(tmp)
+            )
+            planned_ref = "codex/approved-spec-binding/planned-epic-base"
+            envelope["epic_base"]["ref"] = planned_ref
+            result["epic_base"].update(
+                {
+                    "branch": planned_ref,
+                    "current_sha": "a" * 40,
+                    "branch_exists": False,
+                }
+            )
+            write_json(repo / "execution-envelope.json", envelope)
+            write_json(result_path, result)
+
+            checked = self.validate_result(repo, runtime_path, result_path)
+
+            self.assertEqual(checked.returncode, 0, checked.stderr)
+            self.assertEqual(json.loads(checked.stdout)["errors"], [])
 
     def test_execution_result_v2_binds_registry_residual_risks(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
