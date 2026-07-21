@@ -1241,3 +1241,9 @@ append-only で使います。すべての entry は予測しやすい header �
 - Input Packet v2をapproved spec SHA-256 `2bd4fcdbed9828c988a9d5c24cdd02242434f0e44e802cceb34fc4a0e7b86193`へresealした。packet SHA-256は`e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c`、public packet validatorとbinding verifyはいずれも成功した
 - superseded flat current spec、issues、implementation plan、Input Packet、Execution Envelopeの5 filesだけをcurrent treeから削除した。historical artifactは追加削除せず、current instantiated EnvelopeはGit indexから除外した
 - 本entryを含むartifact lifecycle gate commitのfull SHAは、commit作成後のappend-only follow-up entryに記録する。specとsealed packet bytesは以後変更しない
+
+## [2026-07-22] artifact-lifecycle-gate | Approved Spec Binding Artifact Lifecycle
+
+- gate commit: `bc1f32dd7a4ac01dd8651744ae7929402dfa9356` (`docs: group approved spec binding artifacts`)
+- gate commit内のspec raw-byte SHA-256は`2bd4fcdbed9828c988a9d5c24cdd02242434f0e44e802cceb34fc4a0e7b86193`、sealed Input Packet raw-byte SHA-256は`e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c`
+- `knowledge/wiki/syntheses/approved-spec-binding-contract/input-packet.json`はtracked、superseded current instantiated Envelope pathはGit indexに存在しない。spec/packet bytesはgate commit後に変更していない
