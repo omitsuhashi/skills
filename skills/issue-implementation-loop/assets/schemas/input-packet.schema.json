@@ -6,7 +6,7 @@
       "additionalProperties": false,
       "properties": {
         "actor_expression": {"minLength": 1, "type": "string"},
-        "approved_at": {"format": "date-time", "type": "string"},
+        "approved_at": {"format": "date-time", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$", "type": "string"},
         "decision": {"const": "approved"},
         "scope": {
           "additionalProperties": false,
@@ -26,14 +26,14 @@
       "required": ["decision", "subject", "actor_expression", "approved_at", "scope"],
       "type": "object"
     },
-    "artifact_root": {"minLength": 1, "type": "string"},
+    "artifact_root": {"minLength": 1, "pattern": "^(?![/~])(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*\\\\)(?!.*\\x00)[^/]+(?:/[^/]+)*$", "type": "string"},
     "delivery_intent": {"enum": ["local_only", "per_action", "batch_draft_prs", "batch_issue_prs"]},
     "epic_id": {"pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "type": "string"},
     "schema_version": {"const": 2},
     "spec_binding": {
       "additionalProperties": false,
       "properties": {
-        "path": {"minLength": 1, "type": "string"},
+        "path": {"minLength": 1, "pattern": "^(?![/~])(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*\\\\)(?!.*\\x00)[^/]+(?:/[^/]+)*$", "type": "string"},
         "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
       },
       "required": ["path", "sha256"],
@@ -49,13 +49,13 @@
           "non_goals": {"items": {"minLength": 1, "type": "string"}, "minItems": 1, "type": "array"},
           "source": {
             "additionalProperties": false,
-            "properties": {"path": {"minLength": 1, "type": "string"}, "type": {"const": "local"}},
+            "properties": {"path": {"minLength": 1, "pattern": "^(?![/~])(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*\\\\)(?!.*\\x00)[^/]+(?:/[^/]+)*$", "type": "string"}, "type": {"const": "local"}},
             "required": ["type", "path"],
             "type": "object"
           },
           "title": {"minLength": 1, "type": "string"},
           "verification": {"items": {"minLength": 1, "type": "string"}, "minItems": 1, "type": "array"},
-          "write_scope": {"items": {"pattern": "^path:[^/].*$", "type": "string"}, "minItems": 1, "type": "array"}
+          "write_scope": {"items": {"pattern": "^path:(?![/~])(?!\\.{1,2}(?:/|$))(?!.*\\/\\.{1,2}(?:/|$))(?!.*//)(?!.*\\\\)(?!.*\\x00)[^/]+(?:/[^/]+)*$", "type": "string"}, "minItems": 1, "type": "array"}
         },
         "required": ["id", "title", "source", "acceptance_criteria", "non_goals", "verification", "write_scope", "dependencies"],
         "type": "object"

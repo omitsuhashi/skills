@@ -7,9 +7,9 @@ import json
 import os
 from pathlib import Path, PurePosixPath
 import re
+import secrets
 import stat
 import subprocess
-import tempfile
 from typing import Any, Mapping
 
 from .constants import DELIVERY_INTENTS
@@ -17,6 +17,9 @@ from .identifiers import is_issue_id, is_lower_kebab
 
 
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+RFC3339_RE = re.compile(
+    r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$"
+)
 APPROVAL_SCOPE_FIELDS = frozenset(
     {
         "accepted_decisions",
@@ -193,7 +196,7 @@ def _parse_repo_path(value: Any) -> str:
         raise BindingError("PATH_TRAVERSAL")
     if value.startswith("/") or value.startswith("~"):
         raise BindingError("PATH_ABSOLUTE", path=value)
-    if "\\" in value or "//" in value or value.endswith("/"):
+    if "\x00" in value or "\\" in value or "//" in value or value.endswith("/"):
         raise BindingError("PATH_TRAVERSAL", path=value)
     parts = value.split("/")
     if any(part in {"", ".", ".."} for part in parts):
@@ -206,6 +209,10 @@ def _parse_repo_path(value: Any) -> str:
 
 def _identity(value: os.stat_result) -> tuple[int, int, int, int]:
     return (value.st_dev, value.st_ino, value.st_size, value.st_mtime_ns)
+
+
+def _node_identity(value: os.stat_result) -> tuple[int, int]:
+    return (value.st_dev, value.st_ino)
 
 
 def _read_regular_file(
@@ -319,7 +326,12 @@ def _validate_approval(value: Any) -> dict[str, Any]:
         raise BindingError("SCHEMA_UNSUPPORTED")
     actor = value.get("actor_expression")
     timestamp = value.get("approved_at")
-    if not isinstance(actor, str) or not actor.strip() or not isinstance(timestamp, str):
+    if (
+        not isinstance(actor, str)
+        or not actor.strip()
+        or not isinstance(timestamp, str)
+        or not RFC3339_RE.fullmatch(timestamp)
+    ):
         raise BindingError("SCHEMA_UNSUPPORTED")
     try:
         parsed = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
@@ -419,11 +431,36 @@ def _validate_directory(root: Path, repo_path: str) -> None:
             raise BindingError("PATH_OUTSIDE_REPO", path=safe_path)
 
 
+def _validate_existing_components(root: Path, repo_path: str) -> None:
+    safe_path = _parse_repo_path(repo_path)
+    current = root
+    parts = safe_path.split("/")
+    for index, part in enumerate(parts):
+        current = current / part
+        try:
+            component = os.lstat(current)
+        except FileNotFoundError:
+            return
+        except OSError:
+            raise BindingError("PATH_OUTSIDE_REPO", path=safe_path) from None
+        if stat.S_ISLNK(component.st_mode):
+            raise BindingError("PATH_SYMLINK", path=safe_path)
+        if index < len(parts) - 1 and not stat.S_ISDIR(component.st_mode):
+            raise BindingError("PATH_NOT_REGULAR_FILE", path=safe_path)
+
+
 def _validate_packet_files(root: Path, packet: Mapping[str, Any]) -> None:
     _validate_directory(root, packet["artifact_root"])
     source_paths = {item["source"]["path"] for item in packet["work_items"]}
     for source_path in sorted(source_paths):
         _read_regular_file(root, source_path, missing_code="PROJECTION_MISSING")
+    write_paths = {
+        scope[5:]
+        for item in packet["work_items"]
+        for scope in item["write_scope"]
+    }
+    for write_path in sorted(write_paths):
+        _validate_existing_components(root, write_path)
 
 
 def identify_spec(
@@ -435,56 +472,162 @@ def identify_spec(
     return SpecRevision(safe_path, digest)
 
 
-def _prepare_output(root: Path, output_path: str) -> Path:
+def _directory_flags() -> int:
+    flags = os.O_RDONLY
+    if hasattr(os, "O_DIRECTORY"):
+        flags |= os.O_DIRECTORY
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    return flags
+
+
+def _open_directory_chain(
+    root: Path, output_path: str
+) -> tuple[list[int], list[tuple[Path, tuple[int, int]]], str]:
     safe_path = _parse_repo_path(output_path)
-    output = root / safe_path
-    current = root
-    for part in safe_path.split("/")[:-1]:
-        current = current / part
-        try:
-            component = os.lstat(current)
-        except OSError:
-            raise BindingError("PATH_OUTSIDE_REPO", path=safe_path) from None
-        if stat.S_ISLNK(component.st_mode):
-            raise BindingError("PATH_SYMLINK", path=safe_path)
-        if not stat.S_ISDIR(component.st_mode):
-            raise BindingError("PATH_OUTSIDE_REPO", path=safe_path)
+    parts = safe_path.split("/")
+    descriptors: list[int] = []
+    identities: list[tuple[Path, tuple[int, int]]] = []
+    current_path = root
     try:
-        existing = os.lstat(output)
-    except FileNotFoundError:
-        return output
+        current_fd = os.open(root, _directory_flags())
+        descriptors.append(current_fd)
+        identities.append((root, _node_identity(os.fstat(current_fd))))
+        for part in parts[:-1]:
+            current_path = current_path / part
+            current_fd = os.open(
+                part, _directory_flags(), dir_fd=descriptors[-1]
+            )
+            descriptors.append(current_fd)
+            identities.append((current_path, _node_identity(os.fstat(current_fd))))
     except OSError:
-        raise BindingError("PATH_OUTSIDE_REPO", path=safe_path) from None
-    if stat.S_ISLNK(existing.st_mode):
-        raise BindingError("PATH_SYMLINK", path=safe_path)
-    if not stat.S_ISREG(existing.st_mode):
-        raise BindingError("PATH_NOT_REGULAR_FILE", path=safe_path)
-    return output
-
-
-def _atomic_replace(output: Path, raw: bytes) -> None:
-    descriptor = -1
-    temporary: str | None = None
-    try:
-        descriptor, temporary = tempfile.mkstemp(prefix=f".{output.name}.", dir=output.parent)
-        os.fchmod(descriptor, 0o644)
-        with os.fdopen(descriptor, "wb", closefd=True) as handle:
-            descriptor = -1
-            handle.write(raw)
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.replace(temporary, output)
-        temporary = None
-    except OSError:
-        raise BindingError("PATH_OUTSIDE_REPO", path=output.name) from None
-    finally:
-        if descriptor >= 0:
+        for descriptor in reversed(descriptors):
             os.close(descriptor)
-        if temporary is not None:
+        raise BindingError("FILE_CHANGED_DURING_VALIDATION", path=safe_path) from None
+    return descriptors, identities, parts[-1]
+
+
+def _verify_directory_chain(
+    identities: list[tuple[Path, tuple[int, int]]], output_path: str
+) -> None:
+    for component_path, expected_identity in identities:
+        try:
+            current = os.lstat(component_path)
+        except OSError:
+            raise BindingError(
+                "FILE_CHANGED_DURING_VALIDATION", path=output_path
+            ) from None
+        if (
+            stat.S_ISLNK(current.st_mode)
+            or _node_identity(current) != expected_identity
+        ):
+            raise BindingError("FILE_CHANGED_DURING_VALIDATION", path=output_path)
+
+
+def _write_all(descriptor: int, raw: bytes) -> None:
+    offset = 0
+    while offset < len(raw):
+        written = os.write(descriptor, raw[offset:])
+        if written <= 0:
+            raise OSError("short write")
+        offset += written
+
+
+def _atomic_replace(root: Path, output_path: str, raw: bytes) -> None:
+    descriptors, identities, leaf = _open_directory_chain(root, output_path)
+    parent_fd = descriptors[-1]
+    temporary = f".{leaf}.{secrets.token_hex(8)}.tmp"
+    backup = f".{leaf}.{secrets.token_hex(8)}.bak"
+    temporary_exists = False
+    backup_exists = False
+    output_existed = False
+    try:
+        _verify_directory_chain(identities, output_path)
+        try:
+            existing = os.stat(leaf, dir_fd=parent_fd, follow_symlinks=False)
+        except FileNotFoundError:
+            existing = None
+        if existing is not None:
+            if stat.S_ISLNK(existing.st_mode):
+                raise BindingError("PATH_SYMLINK", path=output_path)
+            if not stat.S_ISREG(existing.st_mode):
+                raise BindingError("PATH_NOT_REGULAR_FILE", path=output_path)
+            output_existed = True
+        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+        if hasattr(os, "O_NOFOLLOW"):
+            flags |= os.O_NOFOLLOW
+        descriptor = os.open(temporary, flags, 0o644, dir_fd=parent_fd)
+        temporary_exists = True
+        try:
+            _write_all(descriptor, raw)
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+        _verify_directory_chain(identities, output_path)
+        if output_existed:
+            os.link(
+                leaf,
+                backup,
+                src_dir_fd=parent_fd,
+                dst_dir_fd=parent_fd,
+                follow_symlinks=False,
+            )
+            backup_exists = True
+        os.replace(
+            temporary,
+            leaf,
+            src_dir_fd=parent_fd,
+            dst_dir_fd=parent_fd,
+        )
+        temporary_exists = False
+        try:
+            _verify_directory_chain(identities, output_path)
+        except BindingError:
+            if output_existed:
+                os.replace(
+                    backup,
+                    leaf,
+                    src_dir_fd=parent_fd,
+                    dst_dir_fd=parent_fd,
+                )
+                backup_exists = False
+            else:
+                os.unlink(leaf, dir_fd=parent_fd)
+            raise
+        if backup_exists:
             try:
-                os.unlink(temporary)
+                os.unlink(backup, dir_fd=parent_fd)
+                backup_exists = False
+            except OSError:
+                os.replace(
+                    backup,
+                    leaf,
+                    src_dir_fd=parent_fd,
+                    dst_dir_fd=parent_fd,
+                )
+                backup_exists = False
+                raise BindingError(
+                    "FILE_CHANGED_DURING_VALIDATION", path=output_path
+                ) from None
+    except BindingError:
+        raise
+    except OSError:
+        raise BindingError(
+            "FILE_CHANGED_DURING_VALIDATION", path=output_path
+        ) from None
+    finally:
+        if temporary_exists:
+            try:
+                os.unlink(temporary, dir_fd=parent_fd)
             except OSError:
                 pass
+        if backup_exists:
+            try:
+                os.unlink(backup, dir_fd=parent_fd)
+            except OSError:
+                pass
+        for descriptor in reversed(descriptors):
+            os.close(descriptor)
 
 
 def seal_input_packet(
@@ -518,14 +661,13 @@ def seal_input_packet(
     _validate_packet_files(root, packet)
     if PurePosixPath(output_safe).parent.as_posix() != packet["artifact_root"]:
         raise BindingError("PATH_OUTSIDE_REPO", path=output_safe)
-    output = _prepare_output(root, output_safe)
     serialized = (
         json.dumps(packet, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     ).encode("utf-8")
     final_check = identify_spec(root, expected.path)
     if final_check != current:
         raise BindingError("FILE_CHANGED_DURING_VALIDATION", path=expected.path)
-    _atomic_replace(output, serialized)
+    _atomic_replace(root, output_safe, serialized)
     return InputPacketRef(output_safe, hashlib.sha256(serialized).hexdigest())
 
 

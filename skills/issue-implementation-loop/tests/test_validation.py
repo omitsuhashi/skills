@@ -27,6 +27,9 @@ class ValidationTests(unittest.TestCase):
             issues_path.write_text("issues\n", encoding="utf-8")
             linked_issues = spec_path.with_name("linked-issues.md")
             linked_issues.symlink_to(issues_path)
+            outside = repo / "outside-target"
+            outside.mkdir()
+            (repo / "linked-outside").symlink_to(outside, target_is_directory=True)
             packet = current_input_packet(repo)
             cases = []
             v1 = base_packet()
@@ -57,6 +60,21 @@ class ValidationTests(unittest.TestCase):
                 "knowledge/wiki/syntheses/linked-issues.md"
             )
             cases.append(("unsafe-source", unsafe_source, "PATH_SYMLINK"))
+            unsafe_scope = copy.deepcopy(packet)
+            unsafe_scope["work_items"][0]["write_scope"] = [
+                "path:linked-outside/file"
+            ]
+            cases.append(("unsafe-write-scope", unsafe_scope, "PATH_SYMLINK"))
+            for index, timestamp in enumerate(
+                (
+                    "2026-07-21 17:55:36+09:00",
+                    "2026-07-21T17:55:36+0900",
+                    "2026-07-21T17:55:36",
+                )
+            ):
+                invalid_time = copy.deepcopy(packet)
+                invalid_time["approval_evidence"]["approved_at"] = timestamp
+                cases.append((f"invalid-time-{index}", invalid_time, "SCHEMA_UNSUPPORTED"))
             for name, value, expected in cases:
                 path = repo / f"{name}.json"
                 write_json(path, value)
@@ -84,6 +102,37 @@ class ValidationTests(unittest.TestCase):
             result = run_script("validate_input_packet.py", str(path), "--repo-root", str(repo))
 
             self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_input_packet_schema_path_patterns_match_runtime_lexical_rules(self) -> None:
+        schema = json.loads(
+            (SKILL_DIR / "assets/schemas/input-packet.schema.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        patterns = [
+            schema["properties"]["artifact_root"]["pattern"],
+            schema["properties"]["spec_binding"]["properties"]["path"]["pattern"],
+            schema["properties"]["work_items"]["items"]["properties"]["source"]["properties"]["path"]["pattern"],
+        ]
+        invalid_paths = (
+            "/absolute",
+            "~/home",
+            "a/../outside",
+            "a/./file",
+            "a//file",
+            "a\\file",
+            "a/invalid\x00file",
+        )
+        for pattern in patterns:
+            self.assertIsNotNone(re.fullmatch(pattern, "knowledge/wiki/spec.md"))
+            for value in invalid_paths:
+                with self.subTest(pattern=pattern, value=value):
+                    self.assertIsNone(re.fullmatch(pattern, value))
+        scope_pattern = schema["properties"]["work_items"]["items"]["properties"]["write_scope"]["items"]["pattern"]
+        self.assertIsNotNone(re.fullmatch(scope_pattern, "path:skills/example"))
+        for value in ("path:/absolute", "path:../outside", "path:a/./file", "path:a\\file"):
+            with self.subTest(value=value):
+                self.assertIsNone(re.fullmatch(scope_pattern, value))
 
     def test_validate_execution_envelope_rejects_invalid_context_policy(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

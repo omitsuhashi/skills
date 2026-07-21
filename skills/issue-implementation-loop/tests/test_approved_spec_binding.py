@@ -114,6 +114,10 @@ class ApprovedSpecBindingTests(unittest.TestCase):
         verified = module.verify_chain(self.repo, {"input_packet": ref.to_dict()})
         self.assertTrue(verified.valid)
         self.assertEqual(verified.spec_revision, revision)
+        _, repeated_revision, repeated_ref = self.seal()
+        self.assertEqual(repeated_revision, revision)
+        self.assertEqual(repeated_ref, ref)
+        self.assertEqual(self.output_path.read_bytes(), sealed)
 
     def test_asb_03_changed_spec_prevents_seal_and_output_mutation(self) -> None:
         module = binding_module()
@@ -223,6 +227,38 @@ class ApprovedSpecBindingTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assert_code(expected, lambda path=path: module.identify_spec(self.repo, path))
 
+    def test_asb_20_embedded_nul_is_stable_in_python_and_cli(self) -> None:
+        module, _, ref = self.seal()
+        self.assert_code(
+            "PATH_TRAVERSAL",
+            lambda: module.identify_spec(self.repo, "knowledge/invalid\x00spec.md"),
+        )
+        packet = json.loads(self.output_path.read_text(encoding="utf-8"))
+        packet["spec_binding"]["path"] = "knowledge/invalid\x00spec.md"
+        raw = (json.dumps(packet, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode()
+        self.output_path.write_bytes(raw)
+        packet_digest = __import__("hashlib").sha256(raw).hexdigest()
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(SCRIPTS_DIR / "approved_spec_binding.py"),
+                "verify",
+                "--repo-root",
+                str(self.repo),
+                "--input-packet",
+                ref.path,
+                "--input-packet-sha256",
+                packet_digest,
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(json.loads(result.stdout)["code"], "PATH_TRAVERSAL")
+        self.assertNotIn("Traceback", result.stderr)
+
     def test_asb_21_detects_file_replacement_during_validation(self) -> None:
         module = binding_module()
         original_read = module.os.read
@@ -267,6 +303,65 @@ class ApprovedSpecBindingTests(unittest.TestCase):
                 "FILE_CHANGED_DURING_VALIDATION",
                 lambda: module.identify_spec(self.repo, self.spec_path),
             )
+
+    def test_asb_21_seal_rejects_output_parent_swap_without_external_write(self) -> None:
+        module = binding_module()
+        revision = module.identify_spec(self.repo, self.spec_path)
+        output_parent = self.output_path.parent
+        moved_parent = self.repo / "moved-syntheses"
+        original_open = module.os.open
+        swapped = False
+        sentinel = b"existing output\n"
+        self.output_path.write_bytes(sentinel)
+
+        with tempfile.TemporaryDirectory() as outside_tmp:
+            outside = Path(outside_tmp)
+
+            def swapping_open(path, flags, mode=0o777, *, dir_fd=None):
+                nonlocal swapped
+                rendered = os.fspath(path)
+                if not swapped and ".example-input-packet.json." in rendered:
+                    swapped = True
+                    os.rename(output_parent, moved_parent)
+                    output_parent.symlink_to(outside, target_is_directory=True)
+                if dir_fd is None:
+                    return original_open(path, flags, mode)
+                return original_open(path, flags, mode, dir_fd=dir_fd)
+
+            with mock.patch.object(module.os, "open", side_effect=swapping_open):
+                self.assert_code(
+                    "FILE_CHANGED_DURING_VALIDATION",
+                    lambda: module.seal_input_packet(
+                        self.repo,
+                        self.draft_path.relative_to(self.repo).as_posix(),
+                        self.output_path.relative_to(self.repo).as_posix(),
+                        revision,
+                        self.approval(),
+                    ),
+                )
+            self.assertFalse((outside / self.output_path.name).exists())
+            self.assertFalse(any(outside.iterdir()))
+            self.assertEqual((moved_parent / self.output_path.name).read_bytes(), sentinel)
+
+    def test_check_capabilities_default_repo_validates_v2_packet(self) -> None:
+        _, _, ref = self.seal()
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(SCRIPTS_DIR / "check_capabilities.py"),
+                "--input",
+                ref.path,
+                "--json",
+            ],
+            cwd=self.repo,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertTrue(payload["ok"])
+        self.assertTrue(payload["input_packet"]["ok"])
 
     def test_asb_24_contract_surface_has_no_consumer_specific_vocabulary(self) -> None:
         binding_module()
