@@ -1,0 +1,294 @@
+{
+  "schema_version": 3,
+  "epic_id": "portfolio-os-task-backend-plugin-skill",
+  "revision": 1,
+  "epic_base": {
+    "ref": "codex/portfolio-os-task-backend-plugin-skill/epic-base",
+    "sha": "cab8bd88351727f3495b657df447f7f64aa881d1",
+    "branch_state": "active",
+    "worktree_path": "/private/tmp/skills-portfolio-os-task-backend-plugin-skill/epic-base"
+  },
+  "execution_policy": {
+    "parallel_preferred": true,
+    "serial_fallback_preapproved": true,
+    "worker_context_required": true,
+    "coordinator_may_implement": false,
+    "serial_fallback_mode": "worker_context_only",
+    "implementation_slots": 2,
+    "review_slots": 1,
+    "wave_is_barrier": false
+  },
+  "review_policy": {
+    "primary": "requesting-code-review",
+    "fallbacks": [
+      "equivalent-independent-reviewer"
+    ],
+    "manual_fallback_preapproved": false,
+    "max_review_cycles": 2,
+    "max_fix_cycles": 2,
+    "same_finding_limit": 2,
+    "hardening_candidates": {
+      "candidate_registry_path": "decisions/hardening-candidates.json",
+      "max_candidates_per_issue": 5,
+      "max_summary_words": 80,
+      "issue_completion_blocking": false,
+      "ready_or_merge_requires_decisions": true,
+      "worker_packet_decision_state": "forbidden"
+    }
+  },
+  "human_policy": {
+    "default_scope": "issue",
+    "epic_scope_requires_reason": true
+  },
+  "context_policy": {
+    "paths_first": true,
+    "max_worker_packet_words": 450,
+    "max_worker_report_words": 350,
+    "include_full_spec_text": false,
+    "include_full_ledger_text": false,
+    "worker_packet_schema": "skills/issue-implementation-loop/assets/schemas/worker-packet.schema.json",
+    "worker_packet_template": "skills/issue-implementation-loop/assets/templates/worker-packet.json",
+    "worker_packet_validator": "skills/issue-implementation-loop/scripts/validate_worker_packet.py",
+    "session_compaction": {
+      "soft_trigger_percent": 65,
+      "hard_stop_percent": 75,
+      "mandatory_handoff_compaction": 1,
+      "mandatory_phase_transition_gc": true,
+      "carry_forward_capsule_words_default": 400,
+      "carry_forward_capsule_words_hard": 600,
+      "inline_json_code_diff_lines_hard": 80
+    }
+  },
+  "phase_branch_policy": {
+    "planning_artifacts_branch": "current_session_branch",
+    "phase_approval_commit_required": true,
+    "phase_transition_requires_clean_scope": true,
+    "execution_coordinator_context": "fresh_or_compacted",
+    "main_planning_session_may_implement": false,
+    "worktree_per_issue": true,
+    "branch_prefix": "codex",
+    "epic_base_ref_pattern": "codex/<epic-id>/epic-base",
+    "issue_branch_pattern": "codex/<epic-id>/<local-id>-<slug>",
+    "epic_base_owner": "execution_coordinator",
+    "issue_branch_owner": "worker",
+    "integration_branch_policy": "approved_integration_work_item_only"
+  },
+  "remote_write_policy": {
+    "mode": "local_only",
+    "approved_actions": []
+  },
+  "work_items": {
+    "POTASK-012": {
+      "branch": "codex/portfolio-os-task-backend-plugin-skill/POTASK-012-contract-v2",
+      "worktree_path": "/private/tmp/skills-portfolio-os-task-backend-plugin-skill/worktrees/POTASK-012-contract-v2",
+      "worktree_state": "create_on_run",
+      "base_policy": {
+        "type": "epic_base"
+      },
+      "write_scope": [
+        "path:plugins/task-management/task_management/contracts.py",
+        "path:plugins/task-management/task_management/safety.py",
+        "path:plugins/task-management/task_management/provider_adapters",
+        "path:plugins/task-management/tests/fixtures/adapter-v2",
+        "path:plugins/task-management/tests/test_write_contracts.py",
+        "path:plugins/task-management/tests/test_task_contracts.py"
+      ],
+      "dependencies": []
+    },
+    "POTASK-013": {
+      "branch": "codex/portfolio-os-task-backend-plugin-skill/POTASK-013-route-v2",
+      "worktree_path": "/private/tmp/skills-portfolio-os-task-backend-plugin-skill/worktrees/POTASK-013-route-v2",
+      "worktree_state": "reserved",
+      "base_policy": {
+        "type": "blocker_head",
+        "issue": "POTASK-012"
+      },
+      "write_scope": [
+        "path:plugins/task-management/task_management/route_config.py",
+        "path:plugins/task-management/task_management/read_adapter.py",
+        "path:plugins/task-management/task_management/provider_adapters",
+        "path:plugins/task-management/config/task-backends.example.toml",
+        "path:plugins/task-management/tests/test_task_read_routes.py",
+        "path:plugins/task-management/tests/test_task_read_adapter.py",
+        "path:plugins/task-management/scripts/smoke_test_hermes_read.py"
+      ],
+      "dependencies": [
+        {
+          "issue": "POTASK-012",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    },
+    "POTASK-014": {
+      "branch": "codex/portfolio-os-task-backend-plugin-skill/POTASK-014-approval-binding",
+      "worktree_path": "/private/tmp/skills-portfolio-os-task-backend-plugin-skill/worktrees/POTASK-014-approval-binding",
+      "worktree_state": "reserved",
+      "base_policy": {
+        "type": "blocker_head",
+        "issue": "POTASK-012"
+      },
+      "write_scope": [
+        "path:plugins/task-management/task_management/approval.py",
+        "path:plugins/task-management/task_management/preflight.py",
+        "path:plugins/task-management/tests/test_approval_binding.py",
+        "path:plugins/task-management/tests/test_preflight.py",
+        "path:plugins/task-management/tests/fixtures/adapter-v2"
+      ],
+      "dependencies": [
+        {
+          "issue": "POTASK-012",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    },
+    "POTASK-015": {
+      "branch": "codex/portfolio-os-task-backend-plugin-skill/POTASK-015-write-facade-integration",
+      "worktree_path": "/private/tmp/skills-portfolio-os-task-backend-plugin-skill/worktrees/POTASK-015-write-facade-integration",
+      "worktree_state": "reserved",
+      "base_policy": {
+        "type": "blocker_head",
+        "issue": "POTASK-013"
+      },
+      "write_scope": [
+        "path:plugins/task-management/task_management/write_adapter.py",
+        "path:plugins/task-management/task_management/normalization.py",
+        "path:plugins/task-management/task_management/__init__.py",
+        "path:plugins/task-management/__init__.py",
+        "path:plugins/task-management/plugin.yaml",
+        "path:plugins/task-management/.codex-plugin/plugin.json",
+        "path:plugins/task-management/tests/test_task_write_adapter.py",
+        "path:plugins/task-management/tests/test_write_normalization.py",
+        "path:plugins/task-management/tests/test_hermes_plugin_manifest.py",
+        "path:plugins/task-management/scripts/smoke_test_hermes_write.py",
+        "path:plugins/task-management/task_management/route_config.py",
+        "path:plugins/task-management/task_management/read_adapter.py",
+        "path:plugins/task-management/task_management/provider_adapters",
+        "path:plugins/task-management/task_management/approval.py",
+        "path:plugins/task-management/task_management/preflight.py",
+        "path:plugins/task-management/config/task-backends.example.toml",
+        "path:plugins/task-management/tests/test_task_read_routes.py",
+        "path:plugins/task-management/tests/test_task_read_adapter.py",
+        "path:plugins/task-management/tests/test_approval_binding.py",
+        "path:plugins/task-management/tests/test_preflight.py",
+        "path:plugins/task-management/tests/fixtures/adapter-v2",
+        "path:plugins/task-management/scripts/smoke_test_hermes_read.py"
+      ],
+      "dependencies": [
+        {
+          "issue": "POTASK-013",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        },
+        {
+          "issue": "POTASK-014",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "none"
+        }
+      ]
+    },
+    "POTASK-016": {
+      "branch": "codex/portfolio-os-task-backend-plugin-skill/POTASK-016-github-adapter-scaffold",
+      "worktree_path": "/private/tmp/skills-portfolio-os-task-backend-plugin-skill/worktrees/POTASK-016-github-adapter-scaffold",
+      "worktree_state": "reserved",
+      "base_policy": {
+        "type": "blocker_head",
+        "issue": "POTASK-012"
+      },
+      "write_scope": [
+        "path:plugins/task-adapter-github-projects"
+      ],
+      "dependencies": [
+        {
+          "issue": "POTASK-012",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    },
+    "POTASK-017": {
+      "branch": "codex/portfolio-os-task-backend-plugin-skill/POTASK-017-github-preflight-query",
+      "worktree_path": "/private/tmp/skills-portfolio-os-task-backend-plugin-skill/worktrees/POTASK-017-github-preflight-query",
+      "worktree_state": "reserved",
+      "base_policy": {
+        "type": "blocker_head",
+        "issue": "POTASK-016"
+      },
+      "write_scope": [
+        "path:plugins/task-adapter-github-projects/task_adapter_github_projects/adapter.py",
+        "path:plugins/task-adapter-github-projects/task_adapter_github_projects/normalization.py",
+        "path:plugins/task-adapter-github-projects/tests/test_preflight.py",
+        "path:plugins/task-adapter-github-projects/tests/test_query.py",
+        "path:plugins/task-adapter-github-projects/tests/fixtures"
+      ],
+      "dependencies": [
+        {
+          "issue": "POTASK-016",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    },
+    "POTASK-018": {
+      "branch": "codex/portfolio-os-task-backend-plugin-skill/POTASK-018-github-apply",
+      "worktree_path": "/private/tmp/skills-portfolio-os-task-backend-plugin-skill/worktrees/POTASK-018-github-apply",
+      "worktree_state": "reserved",
+      "base_policy": {
+        "type": "blocker_head",
+        "issue": "POTASK-017"
+      },
+      "write_scope": [
+        "path:plugins/task-adapter-github-projects/task_adapter_github_projects/adapter.py",
+        "path:plugins/task-adapter-github-projects/task_adapter_github_projects/normalization.py",
+        "path:plugins/task-adapter-github-projects/tests/test_apply_create.py",
+        "path:plugins/task-adapter-github-projects/tests/test_apply_update.py",
+        "path:plugins/task-adapter-github-projects/tests/test_apply_comment_report.py",
+        "path:plugins/task-adapter-github-projects/tests/test_partial_failures.py",
+        "path:plugins/task-adapter-github-projects/tests/fixtures",
+        "path:plugins/task-adapter-github-projects/scripts/smoke_test_hermes_adapter.py"
+      ],
+      "dependencies": [
+        {
+          "issue": "POTASK-017",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    },
+    "POTASK-019": {
+      "branch": "codex/portfolio-os-task-backend-plugin-skill/POTASK-019-full-integration",
+      "worktree_path": "/private/tmp/skills-portfolio-os-task-backend-plugin-skill/worktrees/POTASK-019-full-integration",
+      "worktree_state": "reserved",
+      "base_policy": {
+        "type": "blocker_head",
+        "issue": "POTASK-018"
+      },
+      "write_scope": [
+        "path:plugins/task-management",
+        "path:plugins/task-adapter-github-projects"
+      ],
+      "dependencies": [
+        {
+          "issue": "POTASK-015",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "none"
+        },
+        {
+          "issue": "POTASK-018",
+          "strength": "hard",
+          "release_on": "review_approved",
+          "base_effect": "branch_from_blocker_head"
+        }
+      ]
+    }
+  }
+}

@@ -124,6 +124,14 @@ _現在なし。_
   検索語: task-management, implementation plan, TDD, issue-implementation-loop, write adapter, preflight, approval binding, GitHub adapter, file-level plan, verification matrix
 - [Portfolio OS Task Backend Plugin Skill Issues](wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md) — `portfolio-os-task-backend-plugin-skill` のcanonical local-first ledger。POTASK-001からPOTASK-011の完了履歴と、write / preflight / GitHub Adapterを分解したIssue Gate承認済みPOTASK-012からPOTASK-019を定義する。
   検索語: Portfolio OS, task backend, task-management, local issue, Issue Gate, POTASK-010, POTASK-011, POTASK-012, POTASK-019, task-management-write, preflight, approval binding, GitHub Projects Adapter, blocker graph, task_query, task_apply
+- [Task Management Write / Preflight Input Packet](wiki/syntheses/portfolio-os-task-backend-plugin-skill-write-preflight-input-packet.json) — POTASK-012からPOTASK-019のacceptance criteria、write scope、dependencies、local-only delivery intentを正規化したExecution Plan Gate packet。
+  検索語: task-management, write, preflight, input packet, POTASK-012, POTASK-019, execution plan, local_only, integration work item
+- [Task Management Write / Preflight Execution Envelope](wiki/syntheses/portfolio-os-task-backend-plugin-skill-write-preflight-execution-envelope.json) — worker-only実行、issue branch/worktree予約、single-base integration ownership、最大2 review cycleを固定したExecution Envelope v3。
+  検索語: task-management, execution envelope, worker context, issue branch, worktree, POTASK, review cycle, epic base, local_only
+- [Task Management Write / Preflight Execution Preflight](wiki/syntheses/portfolio-os-task-backend-plugin-skill-write-preflight-execution-preflight.json) — packet / envelope / capability / Git reconciliationとremote・live boundaryの検証証跡。
+  検索語: task-management, execution preflight, capability check, git reconciliation, worktree reservation, local_only, live activation
+- [Task Management Write / Preflight Handoff Brief](wiki/syntheses/portfolio-os-task-backend-plugin-skill-write-preflight-handoff-brief.md) — fresh execution coordinator向けpaths-first carry-forward capsuleとstop conditions。
+  検索語: task-management, handoff brief, issue-implementation-loop, fresh coordinator, worker context, stop condition
 - [Portfolio OS Task Backend Plugin Skill Input Packet](wiki/syntheses/portfolio-os-task-backend-plugin-skill-input-packet.json) — `portfolio-os-task-backend-plugin-skill` の Execution Plan Gate 承認済み input packet。承認済み POTASK-001 から POTASK-009 の source、acceptance criteria、write scope、dependencies、local-only delivery intent を正規化する。
   検索語: Portfolio OS, task backend, task-management, input packet, Execution Plan Gate, issue-implementation-loop, POTASK, write scope, dependencies, local_only
 - [Task Management Provider Adapters 実装計画](wiki/syntheses/2026-07-16-task-management-provider-adapters-implementation-plan.md) — POTASK-011 の test-first 実装順序、adapter 境界、Hermes smoke、文書同期、PR delivery を固定する計画。

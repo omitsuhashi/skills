@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "epic_id": "portfolio-os-task-backend-plugin-skill",
+  "checked_on": "2026-07-21",
+  "repo_root": "/private/tmp/skills-portfolio-os-task-backend-plugin-skill/epic-base",
+  "planning_head_before_gate_commit": "19dcacd",
+  "approved_spec": {
+    "path": "knowledge/wiki/syntheses/task-management-write-preflight-interface-spec.md",
+    "revision": 1,
+    "hash": "sha256:c4b452a8097d654b75653a526ac7ce8887b4a4b3356c58b69a6f2123025b3c8f"
+  },
+  "artifacts": {
+    "input_packet": {
+      "path": "knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-write-preflight-input-packet.json",
+      "valid": true,
+      "errors": []
+    },
+    "execution_envelope": {
+      "path": "knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-write-preflight-execution-envelope.json",
+      "valid": true,
+      "errors": []
+    }
+  },
+  "capabilities": {
+    "git_repo": true,
+    "tdd_skill": true,
+    "requesting_code_review_skill": true,
+    "worker_context_required": true,
+    "parallel_execution": "platform_dependent",
+    "serial_fallback": "worker_context_only"
+  },
+  "git_reconciliation": {
+    "ok": true,
+    "epic_base_registered": true,
+    "epic_base_active": true,
+    "reservation_collisions": [],
+    "reserved_issue_count": 8,
+    "initial_runnable_issue": "POTASK-012"
+  },
+  "remote_policy": {
+    "mode": "local_only",
+    "approved_actions": [],
+    "github_issue_creation": false,
+    "push": false,
+    "pull_request_creation": false,
+    "merge": false
+  },
+  "live_activation": {
+    "approved": false,
+    "hermes_profile_edit": false,
+    "mcp_registration": false,
+    "credential_change": false,
+    "github_project_or_issue_mutation": false
+  },
+  "result": "ready_for_fresh_execution_coordinator"
+}

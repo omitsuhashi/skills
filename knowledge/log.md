@@ -1182,3 +1182,17 @@ append-only で使います。すべての entry は予測しやすい header �
 - POTASK-012からPOTASK-019の`レビュー状態`を`承認済み`へ更新し、POTASK-012だけを`実行可能`、後続7件を`ブロック中`に維持した
 - local-first / local-only policyを承認し、GitHub issue mirror、push、PR、merge、live activationをexecution scopeへ追加していない
 - 次phaseはnormalized execution packet、capability preflight、Execution Plan Gate commitであり、implementationはfresh `issue-implementation-loop` coordinatorへ委譲する
+
+## [2026-07-21] gate-amendment | Task-management integration work items
+
+- Execution Envelopeのsingle-base policyに合わせ、ユーザーがPOTASK-015 / POTASK-019のintegration ownership amendmentを承認した
+- POTASK-015はPOTASK-013 headをbaseにPOTASK-014 headを統合し、POTASK-019はPOTASK-018 headをbaseにPOTASK-015 headを統合する
+- Issue ID、機能scope、acceptance behavior、DAG、local-only remote policyは変更せず、integration responsibilityと必要なwrite scopeだけを追加した
+
+## [2026-07-21] gate | Task-management write / preflight Execution Plan Gate
+
+- POTASK-012からPOTASK-019のnormalized input packetとExecution Envelope v3を作成し、packet / envelope validatorをerror 0で通過した
+- capability preflightでgit repository、TDD skill、independent review skillを確認した。parallel availabilityはplatform依存とし、serial fallbackもworker context内だけに限定した
+- Git reconciliationでEpic Baseのactive registrationと8 issue branch/worktree予約を確認し、collision 0件、初期実行可能issueをPOTASK-012と確定した
+- `worker_context_required=true`、`coordinator_may_implement=false`、最大2 review cycle、POTASK-015 / 019だけがmulti-head integrationを所有するExecution Planを固定した
+- remote policyは`local_only`。GitHub Issue、push、PR、merge、live Hermes / MCP / credential / Project / Issue変更は未承認・未実施のままfresh execution coordinatorへ引き継ぐ

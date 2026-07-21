@@ -1,0 +1,309 @@
+{
+  "schema_version": 1,
+  "repo_root": "/private/tmp/skills-portfolio-os-task-backend-plugin-skill/epic-base",
+  "epic_id": "portfolio-os-task-backend-plugin-skill",
+  "artifact_root": "knowledge/wiki/syntheses",
+  "spec": {
+    "path": "knowledge/wiki/syntheses/task-management-write-preflight-interface-spec.md",
+    "approved_revision": 1,
+    "approved_hash": "sha256:c4b452a8097d654b75653a526ac7ce8887b4a4b3356c58b69a6f2123025b3c8f"
+  },
+  "work_items": [
+    {
+      "id": "POTASK-012",
+      "title": "shared Adapter contract v2 と安全なwrite契約を実装する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md"
+      },
+      "acceptance_criteria": [
+        "OperationEnvelope、TaskPreflightResult、ApprovalPreview、ApprovalReceipt、TaskWriteResult v2をstrict validationできる",
+        "task.create、task.update、task.comment、task.reportのrequired payloadとtask_ref条件を検証し、deleteを拒否する",
+        "TaskDraftとTaskBackendDestinationのbackend-neutral contractを維持する",
+        "Adapter Interfaceをquery、preflight、applyの3 operationに限定する",
+        "unexpected field、invalid canonical value、credential-like data、raw provider ID、unsafe URL、raw payloadをfail closedにする",
+        "後続GitHub Adapter contract testsが再利用できるnormative accept/reject fixturesを追加する"
+      ],
+      "non_goals": [
+        "route v2、approval digest、Hermes write tool registration、GitHub Adapter pluginの実装",
+        "provider client、canonical task store、persistent local ledger"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests -p 'test_write_contracts.py'",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests",
+        "git diff --check"
+      ],
+      "write_scope": [
+        "path:plugins/task-management/task_management/contracts.py",
+        "path:plugins/task-management/task_management/safety.py",
+        "path:plugins/task-management/task_management/provider_adapters",
+        "path:plugins/task-management/tests/fixtures/adapter-v2",
+        "path:plugins/task-management/tests/test_write_contracts.py",
+        "path:plugins/task-management/tests/test_task_contracts.py"
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "POTASK-013",
+      "title": "unified route v2へ移行しread Interfaceを回帰維持する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md"
+      },
+      "acceptance_criteria": [
+        "TASK_MANAGEMENT_ROUTES_FILEとcontract_version 2でfixed Adapter trioをhost configから解決する",
+        "tool name、provider ref、file path、GitHub mappingをmodel inputにしない",
+        "legacy read route environmentとroute v1 compatibility wrapperをproduction codeから除去する",
+        "missing route、duplicate、version mismatch、namespace mismatch、capability mismatchをdispatch前にtyped failureにする",
+        "existing task_query request、TaskSnapshotResult、local_json fixture-only smokeを回帰維持する",
+        "implicit GitHub、direct GraphQL、gh fallbackを追加しない"
+      ],
+      "non_goals": [
+        "live route file配置、Hermes profile edit、MCP registration",
+        "approval / write facade、GitHub field mapping"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests -p 'test_task_read_routes.py'",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests -p 'test_task_read_adapter.py'",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 plugins/task-management/scripts/smoke_test_hermes_read.py",
+        "git diff --check"
+      ],
+      "write_scope": [
+        "path:plugins/task-management/task_management/route_config.py",
+        "path:plugins/task-management/task_management/read_adapter.py",
+        "path:plugins/task-management/task_management/provider_adapters",
+        "path:plugins/task-management/config/task-backends.example.toml",
+        "path:plugins/task-management/tests/test_task_read_routes.py",
+        "path:plugins/task-management/tests/test_task_read_adapter.py",
+        "path:plugins/task-management/scripts/smoke_test_hermes_read.py"
+      ],
+      "dependencies": ["POTASK-012"]
+    },
+    {
+      "id": "POTASK-014",
+      "title": "approval digestとconfidence-aware approval policyを実装する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md"
+      },
+      "acceptance_criteria": [
+        "限定JSON domain、NFC string、deterministic SHA-256によるcanonical operation digestを実装する",
+        "operation、backend / destination、task ref、task content / fields、content target、route binding、ordered side effectsをdigestに含める",
+        "各binding fieldのmutationとroute / side-effect変更をapproval_mismatchにしてadapter applyを呼ばない",
+        "approval_required、review_notes、adapter uncertaintyをhuman_requiredにする",
+        "confidence_authorizedをpreflight passかつconfidence_eligibleの場合だけ許す",
+        "preflight readinessとwrite approvalを別状態・別testsで固定する"
+      ],
+      "non_goals": [
+        "signing key、approval database、queue、dispatcher、result store",
+        "task intentの意味上の確証をtask-managementが自動推論すること"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests -p 'test_approval_binding.py'",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests -p 'test_preflight.py'",
+        "git diff --check"
+      ],
+      "write_scope": [
+        "path:plugins/task-management/task_management/approval.py",
+        "path:plugins/task-management/task_management/preflight.py",
+        "path:plugins/task-management/tests/test_approval_binding.py",
+        "path:plugins/task-management/tests/test_preflight.py",
+        "path:plugins/task-management/tests/fixtures/adapter-v2"
+      ],
+      "dependencies": ["POTASK-012"]
+    },
+    {
+      "id": "POTASK-015",
+      "title": "executable task_preflight / task_apply facadeを実装する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md"
+      },
+      "acceptance_criteria": [
+        "task_preflightとtask_applyをruntime登録し、task-management-write toolsetをmanifestへ追加する",
+        "task_applyがcurrent route reload、adapter re-preflight、ApprovalPreview / Receipt identity check後だけdispatchする",
+        "success、setup blocker、provider failure、partial failure、retryable stateをbackend-neutral TaskWriteResultへ正規化する",
+        "safe task ref / HTTPS URL / title / human actionだけを許し、raw provider data、credential、GitHub raw IDを遮断する",
+        "fake Adapter smokeでsuccess、human-required stop、approval mismatch dispatch 0回を実証する",
+        "task-management 0.4.0とCompanies handoff Interface v2をmanifest / runtime / docsで同期する",
+        "POTASK-013 headをbaseにreview approvedなPOTASK-014 headをapproved integration scopeとして取り込み、統合後rangeをreviewする"
+      ],
+      "non_goals": [
+        "GitHub MCP method / field mapping、provider retry implementation",
+        "live install / enable、Companies repo変更"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 plugins/task-management/scripts/smoke_test_hermes_write.py",
+        "python3 scripts/validate_dual_host_compatibility.py --plugin plugins/task-management",
+        "git diff --check"
+      ],
+      "write_scope": [
+        "path:plugins/task-management/task_management/write_adapter.py",
+        "path:plugins/task-management/task_management/normalization.py",
+        "path:plugins/task-management/task_management/__init__.py",
+        "path:plugins/task-management/__init__.py",
+        "path:plugins/task-management/plugin.yaml",
+        "path:plugins/task-management/.codex-plugin/plugin.json",
+        "path:plugins/task-management/tests/test_task_write_adapter.py",
+        "path:plugins/task-management/tests/test_write_normalization.py",
+        "path:plugins/task-management/tests/test_hermes_plugin_manifest.py",
+        "path:plugins/task-management/scripts/smoke_test_hermes_write.py",
+        "path:plugins/task-management/task_management/route_config.py",
+        "path:plugins/task-management/task_management/read_adapter.py",
+        "path:plugins/task-management/task_management/provider_adapters",
+        "path:plugins/task-management/task_management/approval.py",
+        "path:plugins/task-management/task_management/preflight.py",
+        "path:plugins/task-management/config/task-backends.example.toml",
+        "path:plugins/task-management/tests/test_task_read_routes.py",
+        "path:plugins/task-management/tests/test_task_read_adapter.py",
+        "path:plugins/task-management/tests/test_approval_binding.py",
+        "path:plugins/task-management/tests/test_preflight.py",
+        "path:plugins/task-management/tests/fixtures/adapter-v2",
+        "path:plugins/task-management/scripts/smoke_test_hermes_read.py"
+      ],
+      "dependencies": ["POTASK-013", "POTASK-014"]
+    },
+    {
+      "id": "POTASK-016",
+      "title": "separate GitHub Projects Adapter pluginとhost configを作る",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md"
+      },
+      "acceptance_criteria": [
+        "plugin-creator scaffoldを基にCodex / Hermes manifests、register(ctx)、Adapter runtime tool trioを持つ0.1.0 pluginを作る",
+        "exact MCP tool allowlist、opaque destination / content target、GitHub destination、canonical field mapping、host attestationをconfigで表現する",
+        "credential、caller-supplied tool、arbitrary dispatch、unknown destination、unsafe delegation attestationを拒否する",
+        "Adapter write toolsetをhost policy上task_management_onlyにする",
+        "task-management normative adapter-v2 fixturesとのcompatibility testsを通す"
+      ],
+      "non_goals": [
+        "MCP registration、credential / permission setup、live Project / Issue access",
+        "provider preflight / query / apply orchestration"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-adapter-github-projects/tests",
+        "python3 /Users/omitsuhashi/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/task-adapter-github-projects",
+        "python3 scripts/validate_dual_host_compatibility.py --plugin plugins/task-adapter-github-projects",
+        "git diff --check"
+      ],
+      "write_scope": [
+        "path:plugins/task-adapter-github-projects"
+      ],
+      "dependencies": ["POTASK-012"]
+    },
+    {
+      "id": "POTASK-017",
+      "title": "GitHub Adapterのexecutable preflight / queryを実装する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md"
+      },
+      "acceptance_criteria": [
+        "projects_get / projects_listのread-only probeでdestination、field、item、paginationを検証する",
+        "preflightがwrite toolを呼ばず、readiness successをwrite approvalとして返さない",
+        "adapter / tool / auth / permission / destination / field / delegation / capability failureをstable codeへ正規化する",
+        "queryがcanonical filters / limitをbounded provider queryまたはpost-filterへ変換する",
+        "Hermes private registryを参照せずpublic ctx.dispatch_tool seamだけを使う",
+        "raw GraphQL payloadをadapter resultへ返さない"
+      ],
+      "non_goals": [
+        "Issue / Project mutation、schema repair、direct GraphQL / REST / gh fallback",
+        "live GitHub smoke"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-adapter-github-projects/tests -p 'test_preflight.py'",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-adapter-github-projects/tests -p 'test_query.py'",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-adapter-github-projects/tests",
+        "git diff --check"
+      ],
+      "write_scope": [
+        "path:plugins/task-adapter-github-projects/task_adapter_github_projects/adapter.py",
+        "path:plugins/task-adapter-github-projects/task_adapter_github_projects/normalization.py",
+        "path:plugins/task-adapter-github-projects/tests/test_preflight.py",
+        "path:plugins/task-adapter-github-projects/tests/test_query.py",
+        "path:plugins/task-adapter-github-projects/tests/fixtures"
+      ],
+      "dependencies": ["POTASK-016"]
+    },
+    {
+      "id": "POTASK-018",
+      "title": "GitHub Adapterのcreate/update/comment/report applyを実装する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md"
+      },
+      "acceptance_criteria": [
+        "createをissue_write、add_project_item、field update、read-backの順にorchestrateする",
+        "Project-native draft item / content_policyを実装せずcreateにopaque content_target_refを必須にする",
+        "update、comment、structured reportをdistinct operation / statusとして実装する",
+        "task.reportにProject-wide status updateを使わない",
+        "各write stageのpartial failureにsafe task ref / URL / title / human actionを保持する",
+        "unknown write outcomeをblind retryableにせず、backend-specific duplicate preventionをAdapter内に置く"
+      ],
+      "non_goals": [
+        "delete、Project schema repair、canonical task state、direct API fallback",
+        "live GitHub mutation"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-adapter-github-projects/tests",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 plugins/task-adapter-github-projects/scripts/smoke_test_hermes_adapter.py",
+        "git diff --check"
+      ],
+      "write_scope": [
+        "path:plugins/task-adapter-github-projects/task_adapter_github_projects/adapter.py",
+        "path:plugins/task-adapter-github-projects/task_adapter_github_projects/normalization.py",
+        "path:plugins/task-adapter-github-projects/tests/test_apply_create.py",
+        "path:plugins/task-adapter-github-projects/tests/test_apply_update.py",
+        "path:plugins/task-adapter-github-projects/tests/test_apply_comment_report.py",
+        "path:plugins/task-adapter-github-projects/tests/test_partial_failures.py",
+        "path:plugins/task-adapter-github-projects/tests/fixtures",
+        "path:plugins/task-adapter-github-projects/scripts/smoke_test_hermes_adapter.py"
+      ],
+      "dependencies": ["POTASK-017"]
+    },
+    {
+      "id": "POTASK-019",
+      "title": "dual-host契約・文書・smoke・full verificationを統合する",
+      "source": {
+        "type": "local",
+        "path": "knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md"
+      },
+      "acceptance_criteria": [
+        "task-management 0.4.0とGitHub Adapter 0.1.0のmanifest / runtime registration / docsをexact alignmentする",
+        "task-management-readにtask_query、task-management-writeにtask_preflight / task_applyを公開する",
+        "task-managementからGitHub field mapping / MCP method / credential処理が検出されない",
+        "fake MCP end-to-end testでcontract compatibility、preflight、approval、apply、read-backを実証する",
+        "leakage scan、existing read regression、local_json fixture-only assertionを通す",
+        "Companies public Interface v2と別Live Activation Gateをdurable docsへ同期する",
+        "POTASK-018 headをbaseにreview approvedなPOTASK-015 headをapproved integration scopeとして取り込み、統合後rangeをreviewする"
+      ],
+      "non_goals": [
+        "Companies repo変更、GitHub Issue mirror、push / PR / merge",
+        "MCP registration、credential / permission、live Hermes profile / Project / Issue変更"
+      ],
+      "verification": [
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests -v",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-adapter-github-projects/tests -v",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 plugins/task-management/scripts/smoke_test_hermes_read.py",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 plugins/task-management/scripts/smoke_test_hermes_write.py",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 plugins/task-adapter-github-projects/scripts/smoke_test_hermes_adapter.py",
+        "python3 /Users/omitsuhashi/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/task-management",
+        "python3 /Users/omitsuhashi/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/task-adapter-github-projects",
+        "python3 /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_validate.py plugins/task-management/skills/task-management",
+        "python3 scripts/validate_dual_host_compatibility.py --plugin plugins/task-management",
+        "python3 scripts/validate_dual_host_compatibility.py --plugin plugins/task-adapter-github-projects",
+        "python3 scripts/validate_skill_architecture.py --all",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/llm-wiki/tests -v",
+        "git diff --check"
+      ],
+      "write_scope": [
+        "path:plugins/task-management",
+        "path:plugins/task-adapter-github-projects"
+      ],
+      "dependencies": ["POTASK-015", "POTASK-018"]
+    }
+  ],
+  "delivery_intent": "local_only"
+}

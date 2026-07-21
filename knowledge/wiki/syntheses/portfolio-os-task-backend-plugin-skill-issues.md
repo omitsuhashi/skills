@@ -14,6 +14,9 @@ POTASK-001 から POTASK-011 は既存 Issue Gate / Execution Plan Gate 承認�
 - write / preflight正本仕様: [Task Management Write / Preflight Interface 仕様](task-management-write-preflight-interface-spec.md)
 - GitHub Adapter正本仕様: [GitHub Projects Task Backend Adapter 仕様](task-adapter-github-projects-spec.md)
 - file-level plan: [Task Management Write / Preflight 実装計画](2026-07-21-task-management-write-preflight-implementation-plan.md)
+- normalized packet: [Task Management Write / Preflight Input Packet](portfolio-os-task-backend-plugin-skill-write-preflight-input-packet.json)
+- execution contract: [Task Management Write / Preflight Execution Envelope](portfolio-os-task-backend-plugin-skill-write-preflight-execution-envelope.json)
+- execution preflight: [Task Management Write / Preflight Execution Preflight](portfolio-os-task-backend-plugin-skill-write-preflight-execution-preflight.json)
 - POTASK-001からPOTASK-011のhistorical scopeはtask taxonomy、`TaskDraft` composition、read-only routing / facade / provider adapter、docs-only write contractまでである。
 - POTASK-012からPOTASK-019はwrite / preflightを実行可能にし、GitHub Projects mutation Implementationをseparate Adapterへ追加するfollow-upである。route v2 clean break、executable approval binding、linked Issue onlyの新仕様が、旧route v1 compatibilityとdocs-only write記述を置き換える。
 - GitHub issue / PRによるdelivery、push、PR creation、mergeはadapter Implementationではなくremote delivery workflowの責務であり、今回のlocal issue実装scope外である。real GitHub Project / Issue mutationはLive Activation Gateまで行わない。
@@ -82,6 +85,7 @@ POTASK-001
 循環依存はない。POTASK-001からPOTASK-011の`レビュー状態`は既存Issue Gate承認済み。POTASK-012からPOTASK-019も2026-07-21のIssue Gateで承認済みである。
 POTASK-010 は POTASK-002 の contract、POTASK-007 の typed adapter boundary、POTASK-008 の Hermes governance を再利用する follow-up であり、既存 issue を再開しない。POTASK-011 はPOTASK-010のpublic facadeを維持したまま、POTASK-004のroutingを実行可能なprovider adapterへ接続する。
 POTASK-012は完了済みPOTASK-011をbaseにするため`実行可能`。POTASK-013からPOTASK-019は未完了の新規blockerを持つため`ブロック中`で、blocked issueのphysical worktreeは作成しない。
+2026-07-21のIssue Gate amendmentにより、POTASK-015はPOTASK-013 headをbaseにreview approvedなPOTASK-014 headを統合するintegration work item、POTASK-019はPOTASK-018 headをbaseにreview approvedなPOTASK-015 headを統合するintegration work itemとする。複数blocker headを通常workerがad-hoc mergeしない。
 
 ## 依存順
 
@@ -569,6 +573,8 @@ git diff --check
 
 task-management public Interfaceとしてexecutable preflight / applyを公開し、route resolution、re-preflight、approval identity、Adapter dispatch、result normalizationを深いModuleの内側へ隠す。
 
+このissueはPOTASK-013 / POTASK-014のapproved integration work itemでもある。POTASK-013 headをbaseにし、POTASK-014がimplementation review approvedになった後、そのheadをintegration scopeとして取り込み、両方のcontract上でpublic facadeを実装する。
+
 #### Write Scope
 
 - `plugins/task-management/task_management/write_adapter.py`
@@ -581,6 +587,8 @@ task-management public Interfaceとしてexecutable preflight / applyを公開�
 - `plugins/task-management/tests/test_write_normalization.py`
 - `plugins/task-management/tests/test_hermes_plugin_manifest.py`
 - `plugins/task-management/scripts/smoke_test_hermes_write.py`
+- POTASK-013 Write Scopeに含まれるroute / read filesとtests
+- POTASK-014 Write Scopeに含まれるapproval / preflight files、tests、fixtures
 
 #### Acceptance Criteria
 
@@ -590,6 +598,7 @@ task-management public Interfaceとしてexecutable preflight / applyを公開�
 - resultはsafe task ref / HTTPS URL / title / human actionを許し、raw provider data、credential、GitHub raw IDを遮断する。
 - fake Adapter smokeでcreate success、human-required stop、approval mismatch dispatch 0回を実証する。
 - task-management versionを`0.4.0`へ同期し、Companies handoff Interface v2をmanifest / runtime / docsから検証できる。
+- POTASK-013 / POTASK-014のreview approved headsをこのissueだけが統合し、統合後rangeでtargeted regressionとimplementation reviewを通す。
 
 #### Non-goals
 
@@ -729,6 +738,8 @@ git diff --check
 
 task-management public Interface v2とGitHub Adapter v0.1をend-to-end fixtureで接続し、manifests、runtime registration、skill references、examples、knowledge、verification evidenceを同期する。
 
+このissueはPOTASK-015 / POTASK-018のapproved final integration work itemでもある。POTASK-018 headをbaseにし、POTASK-015がimplementation review approvedになった後、そのheadをintegration scopeとして取り込み、両Moduleのend-to-end contractを検証する。
+
 #### Write Scope
 
 - `plugins/task-management/{plugin.yaml,.codex-plugin/plugin.json,README.md}`
@@ -751,6 +762,7 @@ task-management public Interface v2とGitHub Adapter v0.1をend-to-end fixture�
 - secret / raw ID / provider payload leakage scan、existing read regression、local_json fixture-only assertionが通る。
 - Companiesへ渡すpublic Interface v2がdurable docsで一意に参照できる。
 - live activation未実施と別GateをREADME / knowledge / completion evidenceに明記する。
+- POTASK-015 / POTASK-018のreview approved headsをこのissueだけが統合し、統合後rangeでfull verificationとimplementation reviewを通す。
 
 #### Non-goals
 
@@ -784,3 +796,4 @@ git diff --check
 - GitHub issue mirror を行わない local-first 方針。
 - POTASK-012からPOTASK-019を既存Epicのfollow-upとして扱い、新しいEpicを作らない方針。
 - remote policyはlocal-onlyとし、GitHub Issue作成、push、PR作成、merge、live activationをIssue Gate承認に含めない方針。
+- amendmentとしてPOTASK-015をPOTASK-013 / 014、POTASK-019をPOTASK-015 / 018のapproved integration work itemにする方針。
