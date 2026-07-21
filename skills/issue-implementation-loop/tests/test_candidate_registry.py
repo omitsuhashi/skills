@@ -4,6 +4,56 @@ from _helpers import *
 
 
 class CandidateRegistryTests(unittest.TestCase):
+    def test_delivery_rejects_incomplete_or_open_registry_v2(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            envelope_path = root / "envelope.json"
+            runtime_path = root / "runtime-state.json"
+            plan_path = root / "delivery-plan.json"
+            registry_path = root / "decisions" / "hardening-candidates.json"
+            envelope = batch_issue_prs_envelope()
+            envelope["remote_write_policy"]["approved_actions"] = [
+                "final_pr_push_head",
+                "final_pr_create_draft",
+            ]
+            write_json(envelope_path, envelope)
+            write_json(runtime_path, merged_runtime_state())
+            write_json(
+                plan_path,
+                {
+                    "action": "final_pr",
+                    "head": "codex/issue-implementation-loop/epic-base",
+                    "base": "main",
+                    "issue_scope": ["G2PR-001", "G2PR-002", "G2PR-003"],
+                },
+            )
+            mutations = {
+                "missing-registry-path": lambda registry: registry.pop("registry_path"),
+                "missing-limits": lambda registry: registry.pop("limits"),
+                "unknown-root": lambda registry: registry.update({"injected": True}),
+                "unknown-candidate": lambda registry: registry["candidates"][0].update(
+                    {"injected": True}
+                ),
+            }
+            for name, mutate in mutations.items():
+                with self.subTest(name=name):
+                    write_hardening_registry(
+                        registry_path, [hardening_candidate("HC-G2PR-001-001")]
+                    )
+                    registry = json.loads(registry_path.read_text(encoding="utf-8"))
+                    mutate(registry)
+                    write_json(registry_path, registry)
+
+                    result = run_script(
+                        "validate_delivery_plan.py",
+                        str(envelope_path),
+                        str(runtime_path),
+                        str(plan_path),
+                    )
+
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("SCHEMA_UNSUPPORTED", result.stderr)
+
     def test_delivery_rejects_registry_from_old_binding_epoch(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

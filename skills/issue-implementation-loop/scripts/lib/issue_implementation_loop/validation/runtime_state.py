@@ -8,9 +8,60 @@ from ..identifiers import commit_range_parts, is_full_commit_sha, is_lower_kebab
 from ..review import review_approved_or_accepted
 
 
+RUNTIME_FIELDS = {
+    "schema_version",
+    "epic_id",
+    "envelope_revision",
+    "approved_spec_binding",
+    "issues",
+    "human_requests",
+    "rebuild",
+}
+ISSUE_FIELDS = {
+    "status",
+    "review",
+    "signals",
+    "branch",
+    "worktree",
+    "base_sha",
+    "head_sha",
+    "pr",
+    "pr_opened",
+    "pr_merged",
+    "merge_commit",
+}
+HUMAN_REQUEST_FIELDS = {
+    "schema_version",
+    "approved_spec_binding",
+    "id",
+    "scope",
+    "issue",
+    "resource",
+    "reason",
+    "created_at",
+}
+RUNTIME_REQUIRED = {
+    "schema_version",
+    "epic_id",
+    "envelope_revision",
+    "approved_spec_binding",
+    "issues",
+    "human_requests",
+}
+HUMAN_REQUEST_REQUIRED = {
+    "schema_version",
+    "approved_spec_binding",
+    "id",
+    "scope",
+    "reason",
+}
+
+
 def validate_runtime_state(state: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     if not isinstance(state, dict) or state.get("schema_version") != 2:
+        return ["SCHEMA_UNSUPPORTED"]
+    if set(state) - RUNTIME_FIELDS or not RUNTIME_REQUIRED.issubset(state):
         return ["SCHEMA_UNSUPPORTED"]
     binding = state.get("approved_spec_binding")
     if not isinstance(binding, dict):
@@ -22,12 +73,30 @@ def validate_runtime_state(state: dict[str, Any]) -> list[str]:
     epic_id = state.get("epic_id")
     if not isinstance(epic_id, str) or not is_lower_kebab(epic_id):
         errors.append("epic_id must be lower-kebab-case ASCII")
+    if (
+        not isinstance(state.get("envelope_revision"), int)
+        or state["envelope_revision"] < 1
+    ):
+        errors.append("SCHEMA_UNSUPPORTED")
+    rebuild = state.get("rebuild")
+    if rebuild is not None and (
+        not isinstance(rebuild, dict)
+        or set(rebuild) != {"events_applied", "duplicate_events_ignored"}
+        or any(
+            not isinstance(rebuild.get(field), int) or rebuild[field] < 0
+            for field in rebuild
+        )
+    ):
+        errors.append("SCHEMA_UNSUPPORTED")
     if not isinstance(state.get("issues", {}), dict):
         errors.append("issues must be an object")
     else:
         for issue_id, record in state.get("issues", {}).items():
             if not isinstance(record, dict):
                 errors.append(f"issues.{issue_id} must be an object")
+                continue
+            if set(record) - ISSUE_FIELDS:
+                errors.append("SCHEMA_UNSUPPORTED")
                 continue
             status = record.get("status")
             review = record.get("review", {})
@@ -71,6 +140,11 @@ def validate_runtime_state(state: dict[str, Any]) -> list[str]:
             if not isinstance(request, dict):
                 errors.append(f"{prefix} must be an object")
                 continue
+            if set(request) - HUMAN_REQUEST_FIELDS or not HUMAN_REQUEST_REQUIRED.issubset(
+                request
+            ):
+                errors.append("SCHEMA_UNSUPPORTED")
+                continue
             if request.get("schema_version") != 2 or not isinstance(
                 request.get("approved_spec_binding"), dict
             ):
@@ -84,8 +158,14 @@ def validate_runtime_state(state: dict[str, Any]) -> list[str]:
             if request["approved_spec_binding"] != binding:
                 errors.append("AUXILIARY_ARTIFACT_BINDING_MISMATCH")
                 continue
+            if not isinstance(request.get("id"), str) or not request["id"].strip():
+                errors.append("SCHEMA_UNSUPPORTED")
+                continue
+            if not isinstance(request.get("reason"), str) or not request["reason"].strip():
+                errors.append("SCHEMA_UNSUPPORTED")
+                continue
             if request.get("scope") not in {"issue", "descendants", "resource", "epic"}:
-                errors.append(f"{prefix}.scope must be issue, descendants, resource, or epic")
+                errors.append("SCHEMA_UNSUPPORTED")
     return errors
 
 

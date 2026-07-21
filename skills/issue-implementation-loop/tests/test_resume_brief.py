@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import re
+from contextlib import redirect_stderr, redirect_stdout
+from io import StringIO
 
 from _helpers import *
 
@@ -139,6 +141,59 @@ class ResumeBriefTests(unittest.TestCase):
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("BINDING_MISMATCH", result.stderr)
+
+    def test_build_resume_brief_rejects_source_swap_before_metadata_publish(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "runtime"
+            self.write_runtime_root(
+                root,
+                envelope=self.rich_envelope(),
+                runtime=self.rich_runtime(),
+                events=self.rich_events(),
+            )
+            script_path = SCRIPTS_DIR / "build_resume_brief.py"
+            spec = importlib.util.spec_from_file_location(
+                "build_resume_brief_under_test", script_path
+            )
+            assert spec and spec.loader
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            original_meta_builder = module.build_resume_brief_meta
+
+            def swap_events(*args: object, **kwargs: object) -> dict:
+                events_path = root / "events.jsonl"
+                with events_path.open("a", encoding="utf-8") as handle:
+                    handle.write(
+                        json.dumps(
+                            {
+                                "schema_version": 2,
+                                "event_id": "E-source-swap",
+                                "epic_id": "issue-implementation-loop",
+                                "envelope_revision": 1,
+                                "approved_spec_binding": approved_spec_binding(),
+                                "type": "signal_recorded",
+                                "issue": "G2PR-002",
+                                "signal": "swapped",
+                            }
+                        )
+                        + "\n"
+                    )
+                return original_meta_builder(*args, **kwargs)
+
+            stdout = StringIO()
+            stderr = StringIO()
+            with (
+                mock.patch.object(module, "build_resume_brief_meta", side_effect=swap_events),
+                mock.patch.object(sys, "argv", [str(script_path), str(root)]),
+                redirect_stdout(stdout),
+                redirect_stderr(stderr),
+            ):
+                result = module.main()
+
+            self.assertNotEqual(result, 0)
+            self.assertIn("RESUME_SOURCE_CHANGED", stderr.getvalue())
+            self.assertFalse((root / "resume-brief.md").exists())
+            self.assertFalse((root / "resume-brief.meta.json").exists())
 
 
     def rich_envelope(self) -> dict:
@@ -409,7 +464,7 @@ class ResumeBriefTests(unittest.TestCase):
                 "schema_version": 1,
                 "epic_id": "issue-implementation-loop",
                 "envelope_revision": 1,
-                "issues": {"G2PR-001": {"status": "RUNNING"}},
+                "issues": {"G2PR-001": {"status": "PENDING"}},
                 "human_requests": [],
             }
             events = [
@@ -419,7 +474,7 @@ class ResumeBriefTests(unittest.TestCase):
                     "envelope_revision": 1,
                     "type": "issue_status_changed",
                     "issue": "G2PR-001",
-                    "status": "COMPLETE",
+                    "status": "RUNNING",
                 }
             ]
             self.write_runtime_root(root, envelope=None, runtime=runtime, events=events)
@@ -430,7 +485,7 @@ class ResumeBriefTests(unittest.TestCase):
             brief = (root / "resume-brief.md").read_text(encoding="utf-8")
             self.assertIn("Runnable: unavailable - execution envelope missing", brief)
             self.assertIn(
-                "runtime/events mismatch for G2PR-001 status: runtime=RUNNING events=COMPLETE",
+                "runtime/events mismatch for G2PR-001 status: runtime=PENDING events=RUNNING",
                 brief,
             )
             self.assertIn("Recommended next operation: resume.recover", brief)
@@ -581,7 +636,7 @@ class ResumeBriefTests(unittest.TestCase):
                         "review": {"status": "changes_requested", "range": fix_range},
                     },
                     "G2PR-003": {
-                        "status": "COMPLETE",
+                        "status": "IMPLEMENTED",
                         "base_sha": unapproved_base,
                         "head_sha": unapproved_head,
                         "review": {"status": "changes_requested", "range": unapproved_range},

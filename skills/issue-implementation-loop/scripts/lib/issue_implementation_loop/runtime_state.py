@@ -5,6 +5,42 @@ from pathlib import Path
 from typing import Any
 
 from .approved_spec_binding import BindingError, approved_spec_binding_ref
+from .validation.runtime_state import validate_runtime_state
+
+
+EVENT_TYPES = {
+    "issue_status_changed",
+    "review_status_changed",
+    "pr_created",
+    "pr_merged",
+    "signal_recorded",
+    "human_request_opened",
+    "human_request_resolved",
+}
+EVENT_FIELDS = {
+    "schema_version",
+    "event_id",
+    "epic_id",
+    "envelope_revision",
+    "approved_spec_binding",
+    "type",
+    "issue",
+    "status",
+    "branch",
+    "worktree",
+    "base_sha",
+    "head_sha",
+    "range",
+    "review_range",
+    "pr",
+    "merge_commit",
+    "signal",
+    "id",
+    "scope",
+    "resource",
+    "reason",
+    "created_at",
+}
 
 
 class EventFoldError(Exception):
@@ -34,6 +70,8 @@ def validate_event(event: Any) -> list[str]:
         return ["SCHEMA_UNSUPPORTED"]
     if "approved_spec_binding" not in event:
         return ["SCHEMA_UNSUPPORTED"]
+    if set(event) - EVENT_FIELDS or event.get("type") not in EVENT_TYPES:
+        return ["SCHEMA_UNSUPPORTED"]
     try:
         _binding(event["approved_spec_binding"])
     except EventFoldError as error:
@@ -42,6 +80,11 @@ def validate_event(event: Any) -> list[str]:
         return ["event_id is required"]
     if not isinstance(event.get("epic_id"), str) or not event["epic_id"]:
         return ["epic_id is required"]
+    if (
+        not isinstance(event.get("envelope_revision"), int)
+        or event["envelope_revision"] < 1
+    ):
+        return ["SCHEMA_UNSUPPORTED"]
     return []
 
 
@@ -176,11 +219,14 @@ def rebuild_state_from_events(
 
     if binding is None:
         raise EventFoldError("BINDING_MISMATCH", "event stream has no binding epoch")
-    warnings: list[str] = []
-    if duplicate_events:
-        warnings.append(f"{duplicate_events} duplicate event IDs ignored")
     state["rebuild"] = {
         "events_applied": len(seen),
         "duplicate_events_ignored": duplicate_events,
     }
+    errors = validate_runtime_state(state)
+    if errors:
+        raise EventFoldError(errors[0])
+    warnings: list[str] = []
+    if duplicate_events:
+        warnings.append(f"{duplicate_events} duplicate event IDs ignored")
     return state, warnings

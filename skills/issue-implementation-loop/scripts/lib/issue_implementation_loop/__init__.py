@@ -61,6 +61,7 @@ from .resume_brief import (
     ResumeBriefInputError,
     build_resume_brief,
     build_resume_brief_meta,
+    resume_source_snapshot,
     validate_resume_brief_cache,
     word_count,
 )
@@ -134,6 +135,7 @@ __all__ = [
     "EventFoldError",
     "build_resume_brief",
     "build_resume_brief_meta",
+    "resume_source_snapshot",
     "build_worker_packet",
     "canonical_issue_branch",
     "commit_range_parts",

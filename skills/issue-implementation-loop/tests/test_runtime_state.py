@@ -95,6 +95,86 @@ class RuntimeStateTests(unittest.TestCase):
                     self.assertNotEqual(result.returncode, 0)
                     self.assertIn("SCHEMA_UNSUPPORTED", result.stderr)
 
+    def test_rebuild_runtime_state_rejects_unknown_event_type_and_field(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cases = {
+                "unknown-type": self.event("E-001", type="epoch_rewritten"),
+                "unknown-field": self.event(
+                    "E-001",
+                    type="issue_status_changed",
+                    issue="G2PR-001",
+                    status="RUNNING",
+                    injected=True,
+                ),
+            }
+            for name, event in cases.items():
+                with self.subTest(name=name):
+                    events_path = Path(tmp) / f"{name}.jsonl"
+                    events_path.write_text(json.dumps(event) + "\n", encoding="utf-8")
+
+                    result = run_script("rebuild_runtime_state.py", str(events_path))
+
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("SCHEMA_UNSUPPORTED", result.stderr)
+
+    def test_validate_runtime_state_rejects_unknown_root_and_issue_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cases = {
+                "root": current_runtime(
+                    {
+                        "schema_version": 2,
+                        "epic_id": "issue-implementation-loop",
+                        "envelope_revision": 1,
+                        "issues": {},
+                        "human_requests": [],
+                        "injected": True,
+                    }
+                ),
+                "issue": current_runtime(
+                    {
+                        "schema_version": 2,
+                        "epic_id": "issue-implementation-loop",
+                        "envelope_revision": 1,
+                        "issues": {
+                            "G2PR-001": {"status": "RUNNING", "injected": True}
+                        },
+                        "human_requests": [],
+                    }
+                ),
+            }
+            for name, runtime in cases.items():
+                with self.subTest(name=name):
+                    runtime_path = Path(tmp) / f"{name}.json"
+                    write_json(runtime_path, runtime)
+
+                    result = run_script("validate_runtime_state.py", str(runtime_path))
+
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("SCHEMA_UNSUPPORTED", result.stderr)
+
+    def test_rebuild_runtime_state_rejects_invalid_human_request_fold(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            for missing in ("id", "scope", "reason"):
+                with self.subTest(missing=missing):
+                    fields = {
+                        "type": "human_request_opened",
+                        "id": "HR-001",
+                        "scope": "issue",
+                        "issue": "G2PR-001",
+                        "reason": "needs decision",
+                    }
+                    del fields[missing]
+                    events_path = Path(tmp) / f"missing-{missing}.jsonl"
+                    events_path.write_text(
+                        json.dumps(self.event("E-001", **fields)) + "\n",
+                        encoding="utf-8",
+                    )
+
+                    result = run_script("rebuild_runtime_state.py", str(events_path))
+
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("SCHEMA_UNSUPPORTED", result.stderr)
+
     def test_validate_runtime_state_rejects_v1_and_old_epoch_human_request(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             binding_b = approved_spec_binding(sha256="a" * 64)

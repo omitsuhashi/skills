@@ -15,6 +15,54 @@ from .validation.runtime_state import validate_runtime_state
 RESIDUAL_RISK_DECISIONS = {"deferred_follow_up", "declined", "risk_accepted"}
 SAFETY_ESCALATION_RESOLUTION_DECISIONS = {"risk_accepted", "implemented"}
 READY_IMPLEMENTATION_STATUSES = {"PR_READY"}
+REGISTRY_FIELDS = {
+    "schema_version",
+    "approved_spec_binding",
+    "epic_id",
+    "registry_path",
+    "limits",
+    "candidates",
+}
+REGISTRY_LIMITS = {
+    "hardening_candidate_summary_words_default": 80,
+    "hardening_candidates_per_issue_default": 5,
+}
+CANDIDATE_REQUIRED_FIELDS = {
+    "candidate_id",
+    "source_issue",
+    "classification",
+    "summary",
+    "risk",
+    "estimated_scope",
+    "decision",
+    "implementation_issue",
+}
+CANDIDATE_FIELDS = CANDIDATE_REQUIRED_FIELDS | {
+    "delivery_blocker",
+    "recommended_decision",
+    "decision_reason",
+    "decided_by",
+    "decided_at",
+}
+CANDIDATE_CLASSIFICATIONS = {
+    "hardening_candidate",
+    "safety_escalation",
+    "classification_needed",
+}
+CANDIDATE_DECISIONS = {
+    "pending_decision",
+    "approved_for_current_pr",
+    "deferred_follow_up",
+    "declined",
+    "risk_accepted",
+    "implemented",
+}
+RECOMMENDED_DECISIONS = {
+    "approved_for_current_pr",
+    "deferred_follow_up",
+    "declined",
+    "risk_accepted",
+}
 
 
 def hardening_candidate_registry_path(runtime_state_path: str | Path) -> Path:
@@ -75,6 +123,80 @@ def _candidate_id(candidate: Any, index: int) -> str:
     if isinstance(candidate, dict) and isinstance(candidate.get("candidate_id"), str):
         return candidate["candidate_id"]
     return f"candidates[{index}]"
+
+
+def _valid_optional_string_or_null(value: Any) -> bool:
+    return value is None or isinstance(value, str)
+
+
+def _candidate_registry_is_closed(registry: dict[str, Any]) -> bool:
+    if set(registry) != REGISTRY_FIELDS:
+        return False
+    if registry.get("schema_version") != 2:
+        return False
+    if not isinstance(registry.get("epic_id"), str) or not registry["epic_id"]:
+        return False
+    if (
+        not isinstance(registry.get("registry_path"), str)
+        or not registry["registry_path"]
+    ):
+        return False
+    if registry.get("limits") != REGISTRY_LIMITS:
+        return False
+    candidates = registry.get("candidates")
+    if not isinstance(candidates, list):
+        return False
+
+    source_counts: dict[str, int] = {}
+    for candidate in candidates:
+        if not isinstance(candidate, dict):
+            return False
+        if set(candidate) - CANDIDATE_FIELDS or not CANDIDATE_REQUIRED_FIELDS.issubset(
+            candidate
+        ):
+            return False
+        for field in ("candidate_id", "source_issue", "summary", "risk"):
+            if not isinstance(candidate.get(field), str) or not candidate[field]:
+                return False
+        if candidate.get("classification") not in CANDIDATE_CLASSIFICATIONS:
+            return False
+        if candidate.get("decision") not in CANDIDATE_DECISIONS:
+            return False
+        estimated_scope = candidate.get("estimated_scope")
+        if not isinstance(estimated_scope, list) or any(
+            not isinstance(scope, str) for scope in estimated_scope
+        ):
+            return False
+        implementation_issue = candidate.get("implementation_issue")
+        if not _valid_optional_string_or_null(implementation_issue):
+            return False
+        if "delivery_blocker" in candidate and not isinstance(
+            candidate["delivery_blocker"], bool
+        ):
+            return False
+        if (
+            "recommended_decision" in candidate
+            and candidate["recommended_decision"] not in RECOMMENDED_DECISIONS
+        ):
+            return False
+        for field in ("decision_reason", "decided_by", "decided_at"):
+            if field in candidate and not _valid_optional_string_or_null(
+                candidate[field]
+            ):
+                return False
+
+        source_issue = candidate["source_issue"]
+        source_counts[source_issue] = source_counts.get(source_issue, 0) + 1
+        if (
+            source_counts[source_issue]
+            > REGISTRY_LIMITS["hardening_candidates_per_issue_default"]
+        ):
+            return False
+        if len(candidate["summary"].split()) > REGISTRY_LIMITS[
+            "hardening_candidate_summary_words_default"
+        ]:
+            return False
+    return True
 
 
 def _candidate_completion_summary(candidate: dict[str, Any], index: int) -> dict[str, Any]:
@@ -138,7 +260,7 @@ def hardening_candidate_report(
         return report
     if candidate_registry is None:
         return report
-    if candidate_registry.get("schema_version") != 2:
+    if not _candidate_registry_is_closed(candidate_registry):
         report["errors"].append("SCHEMA_UNSUPPORTED")
         return report
     registry_binding = candidate_registry.get("approved_spec_binding")

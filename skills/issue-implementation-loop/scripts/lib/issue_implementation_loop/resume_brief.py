@@ -116,13 +116,10 @@ def _envelope_revision(path: Path) -> dict[str, Any]:
     }
 
 
-def build_resume_brief_meta(
+def resume_source_snapshot(
     runtime_root: str | Path,
     *,
-    brief_path: str | Path,
     envelope_path: str | Path | None = None,
-    word_count: int,
-    max_words: int,
 ) -> dict[str, Any]:
     root = Path(runtime_root).resolve(strict=False)
     runtime_path = root / "runtime-state.json"
@@ -134,18 +131,37 @@ def build_resume_brief_meta(
     )
     runtime = _json_object_or_empty(runtime_path)
     return {
+        "approved_spec_binding": runtime.get("approved_spec_binding"),
+        "execution_envelope": _envelope_revision(candidate_envelope),
+        "runtime_state": _runtime_revision(runtime_path),
+        "events": _events_revision(events_path),
+    }
+
+
+def build_resume_brief_meta(
+    runtime_root: str | Path,
+    *,
+    brief_path: str | Path,
+    envelope_path: str | Path | None = None,
+    word_count: int,
+    max_words: int,
+    sources: dict[str, Any] | None = None,
+    brief_sha256: str | None = None,
+) -> dict[str, Any]:
+    root = Path(runtime_root).resolve(strict=False)
+    source_snapshot = sources or resume_source_snapshot(
+        root, envelope_path=envelope_path
+    )
+    return {
         "schema_version": 3,
         "artifact": "resume-brief",
         "runtime_root": str(root),
         "brief_path": str(Path(brief_path).resolve(strict=False)),
+        "brief_sha256": brief_sha256
+        or (file_sha256(brief_path) if Path(brief_path).exists() else None),
         "word_count": word_count,
         "max_words": max_words,
-        "sources": {
-            "approved_spec_binding": runtime.get("approved_spec_binding"),
-            "execution_envelope": _envelope_revision(candidate_envelope),
-            "runtime_state": _runtime_revision(runtime_path),
-            "events": _events_revision(events_path),
-        },
+        "sources": source_snapshot,
     }
 
 
@@ -194,6 +210,13 @@ def validate_resume_brief_cache(
         return ["SCHEMA_UNSUPPORTED"], warnings
     if meta.get("artifact") != "resume-brief":
         errors.append("resume brief meta artifact must be resume-brief")
+    expected_brief_sha = meta.get("brief_sha256")
+    if not isinstance(expected_brief_sha, str) or not re.fullmatch(
+        r"[0-9a-f]{64}", expected_brief_sha
+    ):
+        errors.append("SCHEMA_UNSUPPORTED")
+    elif file_sha256(brief_path) != expected_brief_sha:
+        errors.append("resume brief sha256 is stale")
 
     sources = meta.get("sources")
     if not isinstance(sources, dict):
