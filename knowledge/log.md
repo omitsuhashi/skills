@@ -1151,3 +1151,22 @@ append-only で使います。すべての entry は予測しやすい header �
 - task-management 専用 strict parser も unquoted integer `1` だけを Python `int` として返し、native manifest contract で exact type / value を固定した
 - RED は validator 25件中2 subtest failures と Hermes manifest 11件中3 failures、GREEN は Python 3.9.6 / 3.12 の両方で validator 25件、Hermes 11件、full task-management 94件、workflow 3件、decide-in-order 7件、llm-wiki 6件、architecture / context、repository `--all` が成功した
 - durable page は `knowledge/wiki/syntheses/hermes-dual-host-authoring-contract-design.md` と `knowledge/log.md` を更新した。`knowledge/index.md` の既存 summary は正確なため変更していない
+
+## [2026-07-21] spec-candidate | Loop Skill Approved Spec Binding Contract
+
+- ユーザーが選択した A 案を `knowledge/wiki/syntheses/loop-skill-approved-spec-binding-contract-spec.md` に書面化し、normalized input packet を machine-readable approval evidence と spec binding の唯一の正本にする設計を固定した
+- planning 側が final spec digest を human へ提示して一度だけ seal し、execution 側が prepare、dispatch、fix redispatch、report intake、review、resume、completion、delivery で同じ binding を fail closed に再検証する ownership seam を定義した
+- approval circularity、worktree projection、runtime/event/report identity、TOCTOU、explicit delivery/resume bypass を acceptance matrix と停止条件へ反映した
+- legacy packet、envelope、worker packet、metadataなしresumeの executable compatibility は維持しない clean break とし、historical wiki evidence は保持する一方で current validator/resume surface から外す方針にした
+- CTO / Companies 固有 schema、queue、dispatcher、result store は generic contract に含めず、Codex / Hermes 共通 CLI と repository validators を完成条件にした
+- `knowledge/index.md` に summary と検索語を登録した。A案の会話上の方向承認は済んでいるが、written spec review、Issue Gate、implementation plan、実装は未着手
+
+## [2026-07-21] spec-approval | Loop Skill Approved Spec Binding Contract
+
+- actor expression: `session-user`
+- approved at: `2026-07-21T17:55:36+09:00`
+- exact spec path: `knowledge/wiki/syntheses/loop-skill-approved-spec-binding-contract-spec.md`
+- raw-byte SHA-256: `6cedbba982f891d8ffceb9204bfc453b276df9e6021dca048cb0612d359a3dcc`
+- approval scope: `accepted_decisions=true`、`non_goals=true`、`acceptance_criteria=true`、`verification=true`、`remote_policy=true`、`stop_conditions=true`
+- ユーザーの「承認」と実装依頼により Written Spec Gate を通過した。spec bytes は変更せず、この entry を bootstrap approval evidence とする
+- Issue Gate、Execution Plan Gate、実装、remote write はこの entry だけでは完了扱いにしない。実装は `local_only` で進め、push、PR、merge、live install は別承認とする
