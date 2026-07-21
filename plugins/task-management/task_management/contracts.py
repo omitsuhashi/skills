@@ -288,10 +288,16 @@ def _validate_task_backend_destination(value: Any, *, path: str) -> None:
                 "TaskBackendDestination fields must be non-empty strings.",
                 path=f"{path}.{field}",
             )
-    if "://" in destination["destination_ref"]:
+    destination_ref = destination["destination_ref"]
+    is_url_shaped = (
+        destination_ref.startswith("//")
+        or re.match(r"^https?:", destination_ref, flags=re.IGNORECASE) is not None
+        or "://" in destination_ref
+    )
+    if is_url_shaped:
         try:
             validate_safe_url(
-                destination["destination_ref"],
+                destination_ref,
                 path=f"{path}.destination_ref",
             )
         except SafetyValidationError as error:

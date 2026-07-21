@@ -8,6 +8,35 @@ PLUGIN_ROOT = REPO_ROOT / "plugins/task-management"
 SKILL = PLUGIN_ROOT / "skills/task-management/SKILL.md"
 REFERENCE = PLUGIN_ROOT / "skills/task-management/references/adapter-dispatch.md"
 EXAMPLE = PLUGIN_ROOT / "examples/task-create-preview.example.md"
+IMPLEMENTATION_SUFFIXES = {".py", ".js", ".ts", ".sh"}
+FORBIDDEN_IMPLEMENTATION_PATTERNS = (
+    r"\b(?:import|from)\s+(?:requests|httpx|aiohttp|urllib3|urllib\.request|http\.client)\b",
+    r"\b(?:import|from)\s+(?:github(?:\.[A-Za-z_][A-Za-z0-9_]*)*|githubkit(?:\.[A-Za-z_][A-Za-z0-9_]*)*|task_adapter_github_projects(?:\.[A-Za-z_][A-Za-z0-9_]*)*)\b",
+    r"\bfrom\s+urllib\s+import\s+request\b",
+    r"\bfrom\s+http\s+import\s+client\b",
+    r"\b(?:api\.github\.com|/graphql)\b",
+    r"\b(?:mutation|query)\s+[A-Za-z_]*\s*\{",
+    r"[\"']gh[\"']",
+)
+
+
+def _implementation_paths():
+    return [
+        path
+        for path in PLUGIN_ROOT.rglob("*")
+        if path.is_file()
+        and "tests" not in path.relative_to(PLUGIN_ROOT).parts
+        and ".codex-plugin" not in path.relative_to(PLUGIN_ROOT).parts
+        and path.suffix in IMPLEMENTATION_SUFFIXES
+    ]
+
+
+def _forbidden_implementation_matches(text):
+    return tuple(
+        pattern
+        for pattern in FORBIDDEN_IMPLEMENTATION_PATTERNS
+        if re.search(pattern, text)
+    )
 
 
 class AdapterDispatchContractTests(unittest.TestCase):
@@ -94,6 +123,25 @@ class AdapterDispatchContractTests(unittest.TestCase):
         self.assertIn("Adapter Dispatch Review: required", text)
         self.assertIn("Do not dispatch until review_status is approved.", text)
 
+    def test_implementation_guard_scans_root_runtime_entrypoint(self):
+        relative_paths = {
+            path.relative_to(PLUGIN_ROOT).as_posix()
+            for path in _implementation_paths()
+        }
+
+        self.assertIn("__init__.py", relative_paths)
+
+    def test_implementation_guard_rejects_provider_and_separate_adapter_imports(self):
+        forbidden_snippets = (
+            "from github import Github",
+            "import githubkit",
+            "from task_adapter_github_projects import GithubProjectsAdapter",
+        )
+
+        for snippet in forbidden_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertTrue(_forbidden_implementation_matches(snippet))
+
     def test_plugin_does_not_add_adapter_implementation_or_backend_clients(self):
         forbidden_name_parts = (
             "graphql",
@@ -118,13 +166,7 @@ class AdapterDispatchContractTests(unittest.TestCase):
             for forbidden in forbidden_name_parts:
                 self.assertNotIn(forbidden, relative_name)
 
-        implementation_suffixes = {".py", ".js", ".ts", ".sh"}
-        implementation_paths = [
-            path
-            for path in scanned_paths
-            if path.suffix in implementation_suffixes
-            and path.relative_to(PLUGIN_ROOT).as_posix() != "__init__.py"
-        ]
+        implementation_paths = _implementation_paths()
         implementation_files = [
             path.relative_to(PLUGIN_ROOT).as_posix()
             for path in implementation_paths
@@ -148,15 +190,7 @@ class AdapterDispatchContractTests(unittest.TestCase):
         combined_implementation = "\n".join(
             path.read_text(encoding="utf-8") for path in implementation_paths
         )
-        forbidden_implementation_patterns = (
-            r"\b(?:import|from)\s+(?:requests|httpx|aiohttp|urllib3|urllib\.request|http\.client)\b",
-            r"\bfrom\s+urllib\s+import\s+request\b",
-            r"\bfrom\s+http\s+import\s+client\b",
-            r"\b(?:api\.github\.com|/graphql)\b",
-            r"\b(?:mutation|query)\s+[A-Za-z_]*\s*\{",
-            r"[\"']gh[\"']",
-        )
-        for pattern in forbidden_implementation_patterns:
+        for pattern in FORBIDDEN_IMPLEMENTATION_PATTERNS:
             self.assertIsNone(re.search(pattern, combined_implementation))
 
 

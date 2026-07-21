@@ -10,6 +10,16 @@ REFERENCE = PLUGIN_ROOT / "skills/task-management/references/github-mcp-projects
 FIXTURES = PLUGIN_ROOT / "tests/fixtures/github_mcp_route"
 PREFLIGHT_FIXTURE = FIXTURES / "preflight-results.json"
 ADAPTER_FIXTURE = FIXTURES / "adapter-results.json"
+IMPLEMENTATION_SUFFIXES = {".py", ".js", ".ts", ".sh"}
+FORBIDDEN_IMPLEMENTATION_PATTERNS = (
+    r"\b(?:import|from)\s+(?:requests|httpx|aiohttp|urllib3|urllib\.request|http\.client)\b",
+    r"\b(?:import|from)\s+(?:github(?:\.[A-Za-z_][A-Za-z0-9_]*)*|githubkit(?:\.[A-Za-z_][A-Za-z0-9_]*)*|task_adapter_github_projects(?:\.[A-Za-z_][A-Za-z0-9_]*)*)\b",
+    r"\bfrom\s+urllib\s+import\s+request\b",
+    r"\bfrom\s+http\s+import\s+client\b",
+    r"\b(?:api\.github\.com|/graphql)\b",
+    r"\b(?:mutation|query)\s+[A-Za-z_]*\s*\{",
+    r"[\"']gh[\"']",
+)
 
 
 PREFLIGHT_TYPED_CODES = {
@@ -53,6 +63,25 @@ FORBIDDEN_NORMALIZED_VALUE_PATTERNS = (
     r"\bgithub_pat_[A-Za-z0-9_]+",
     r"\btoken\s*[:=]",
 )
+
+
+def _implementation_paths():
+    return [
+        path
+        for path in PLUGIN_ROOT.rglob("*")
+        if path.is_file()
+        and ".codex-plugin" not in path.relative_to(PLUGIN_ROOT).parts
+        and path.suffix in IMPLEMENTATION_SUFFIXES
+        and "tests" not in path.relative_to(PLUGIN_ROOT).parts
+    ]
+
+
+def _forbidden_implementation_matches(text):
+    return tuple(
+        pattern
+        for pattern in FORBIDDEN_IMPLEMENTATION_PATTERNS
+        if re.search(pattern, text)
+    )
 
 
 def _load_json(path):
@@ -254,6 +283,25 @@ class GitHubMcpRouteContractTests(unittest.TestCase):
             _forbidden_value_paths(normalized, FORBIDDEN_NORMALIZED_VALUE_PATTERNS),
         )
 
+    def test_implementation_guard_scans_root_runtime_entrypoint(self):
+        relative_paths = {
+            path.relative_to(PLUGIN_ROOT).as_posix()
+            for path in _implementation_paths()
+        }
+
+        self.assertIn("__init__.py", relative_paths)
+
+    def test_implementation_guard_rejects_provider_and_separate_adapter_imports(self):
+        forbidden_snippets = (
+            "from github import Github",
+            "import githubkit",
+            "from task_adapter_github_projects import GithubProjectsAdapter",
+        )
+
+        for snippet in forbidden_snippets:
+            with self.subTest(snippet=snippet):
+                self.assertTrue(_forbidden_implementation_matches(snippet))
+
     def test_plugin_contains_no_live_github_client_command_planner_or_graphql_query(self):
         scanned_paths = [
             path
@@ -261,14 +309,7 @@ class GitHubMcpRouteContractTests(unittest.TestCase):
             if path.is_file() and ".codex-plugin" not in path.relative_to(PLUGIN_ROOT).parts
         ]
 
-        implementation_suffixes = {".py", ".js", ".ts", ".sh"}
-        implementation_paths = [
-            path
-            for path in scanned_paths
-            if path.suffix in implementation_suffixes
-            and "tests" not in path.relative_to(PLUGIN_ROOT).parts
-            and path.relative_to(PLUGIN_ROOT).as_posix() != "__init__.py"
-        ]
+        implementation_paths = _implementation_paths()
         implementation_files = [
             path.relative_to(PLUGIN_ROOT).as_posix()
             for path in implementation_paths
@@ -306,15 +347,7 @@ class GitHubMcpRouteContractTests(unittest.TestCase):
         combined_implementation = "\n".join(
             path.read_text(encoding="utf-8") for path in implementation_paths
         )
-        forbidden_implementation_patterns = (
-            r"\b(?:import|from)\s+(?:requests|httpx|aiohttp|urllib3|urllib\.request|http\.client)\b",
-            r"\bfrom\s+urllib\s+import\s+request\b",
-            r"\bfrom\s+http\s+import\s+client\b",
-            r"\b(?:api\.github\.com|/graphql)\b",
-            r"\b(?:mutation|query)\s+[A-Za-z_]*\s*\{",
-            r"[\"']gh[\"']",
-        )
-        for pattern in forbidden_implementation_patterns:
+        for pattern in FORBIDDEN_IMPLEMENTATION_PATTERNS:
             self.assertIsNone(re.search(pattern, combined_implementation))
 
 
