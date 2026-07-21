@@ -51,6 +51,17 @@ class EntrypointTests(unittest.TestCase):
         ):
             self.assertIn(required, text)
 
+    def test_skill_entrypoint_documents_seal_host_capability_boundary(self) -> None:
+        text = SKILL_FILE.read_text(encoding="utf-8")
+        core = (SKILL_DIR / "references/core.md").read_text(encoding="utf-8")
+        for required in (
+            "approved_spec_seal",
+            "PLATFORM_UNSUPPORTED",
+            "Codex and Hermes",
+            "no unsafe fallback",
+        ):
+            self.assertIn(required, text + core)
+
     def test_skill_entrypoint_routes_through_context_contract(self) -> None:
         text = SKILL_FILE.read_text(encoding="utf-8")
 

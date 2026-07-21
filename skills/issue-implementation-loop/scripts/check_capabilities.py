@@ -4,11 +4,13 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 import shutil
 import sys
 
 from _common import dump_json, find_skill, git_output, load_json, validate_input_packet
+from issue_implementation_loop.approved_spec_binding import probe_seal_capabilities
 
 
 def main() -> int:
@@ -21,18 +23,27 @@ def main() -> int:
     git_path = shutil.which("git")
     repo_result = git_output(["rev-parse", "--show-toplevel"], cwd=args.repo) if git_path else None
     common_dir_result = git_output(["rev-parse", "--git-common-dir"], cwd=args.repo) if git_path else None
+    seal_capabilities = probe_seal_capabilities()
     packet_errors: list[str] = []
     if args.input:
-        if repo_result and repo_result.returncode == 0:
-            packet_errors = validate_input_packet(
-                load_json(args.input), repo_root=repo_result.stdout.strip()
-            )
-        else:
-            packet_errors = ["PATH_OUTSIDE_REPO"]
+        try:
+            if repo_result and repo_result.returncode == 0:
+                packet_errors = validate_input_packet(
+                    load_json(args.input), repo_root=repo_result.stdout.strip()
+                )
+            else:
+                packet_errors = ["PATH_OUTSIDE_REPO"]
+        except FileNotFoundError:
+            packet_errors = ["PROJECTION_MISSING"]
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            packet_errors = ["SCHEMA_UNSUPPORTED"]
+        except (OSError, TypeError, ValueError):
+            packet_errors = ["FILE_CHANGED_DURING_VALIDATION"]
 
     result = {
         "ok": bool(git_path)
         and bool(repo_result and repo_result.returncode == 0)
+        and seal_capabilities.supported
         and not packet_errors,
         "git": {
             "path": git_path,
@@ -48,6 +59,7 @@ def main() -> int:
             "ok": not packet_errors,
             "errors": packet_errors,
         },
+        "approved_spec_seal": seal_capabilities.to_dict(),
         "skills": {
             "tdd": find_skill("tdd"),
             "requesting-code-review": find_skill("requesting-code-review"),
@@ -71,6 +83,8 @@ def main() -> int:
         if packet_errors:
             for error in packet_errors:
                 print(error, file=sys.stderr)
+        if not seal_capabilities.supported:
+            print("PLATFORM_UNSUPPORTED", file=sys.stderr)
     return 0 if result["ok"] else 1
 
 

@@ -70,6 +70,7 @@ class ValidationTests(unittest.TestCase):
                     "2026-07-21 17:55:36+09:00",
                     "2026-07-21T17:55:36+0900",
                     "2026-07-21T17:55:36",
+                    "2026-07-21T17:55:36+09:60",
                 )
             ):
                 invalid_time = copy.deepcopy(packet)
@@ -103,6 +104,70 @@ class ValidationTests(unittest.TestCase):
 
             self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_input_packet_runtime_rejects_whitespace_only_strings(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            subprocess.run(["git", "init", "-q", str(repo)], check=True)
+            spec_path = repo / "knowledge/wiki/syntheses/spec.md"
+            spec_path.parent.mkdir(parents=True)
+            spec_path.write_text("spec\n", encoding="utf-8")
+            spec_path.with_name("issues.md").write_text("issues\n", encoding="utf-8")
+            packet = current_input_packet(repo)
+            cases = []
+            actor = copy.deepcopy(packet)
+            actor["approval_evidence"]["actor_expression"] = "   "
+            cases.append(("actor", actor))
+            title = copy.deepcopy(packet)
+            title["work_items"][0]["title"] = "\t"
+            cases.append(("title", title))
+            criterion = copy.deepcopy(packet)
+            criterion["work_items"][0]["acceptance_criteria"] = ["  "]
+            cases.append(("criterion", criterion))
+            for name, value in cases:
+                path = repo / f"{name}.json"
+                write_json(path, value)
+                result = run_script(
+                    "validate_input_packet.py",
+                    str(path),
+                    "--repo-root",
+                    str(repo),
+                    "--json",
+                )
+                self.assertEqual(result.returncode, 1, name)
+                self.assertEqual(
+                    json.loads(result.stdout)["errors"],
+                    ["SCHEMA_UNSUPPORTED"],
+                )
+
+    def test_validate_input_packet_cli_discovery_and_json_errors_are_stable(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            outside = Path(tmp) / "outside.json"
+            outside.write_text("{}\n", encoding="utf-8")
+            result = run_script("validate_input_packet.py", str(outside), "--json")
+            self.assertEqual(result.returncode, 1)
+            self.assertEqual(
+                json.loads(result.stdout)["errors"], ["PATH_OUTSIDE_REPO"]
+            )
+            self.assertNotIn("Traceback", result.stderr)
+
+            repo = Path(tmp) / "repo"
+            repo.mkdir()
+            subprocess.run(["git", "init", "-q", str(repo)], check=True)
+            malformed = repo / "malformed.json"
+            malformed.write_text("{not-json}\n", encoding="utf-8")
+            result = run_script(
+                "validate_input_packet.py",
+                str(malformed),
+                "--repo-root",
+                str(repo),
+                "--json",
+            )
+            self.assertEqual(result.returncode, 1)
+            self.assertEqual(
+                json.loads(result.stdout)["errors"], ["SCHEMA_UNSUPPORTED"]
+            )
+            self.assertNotIn("Traceback", result.stderr)
+
     def test_input_packet_schema_path_patterns_match_runtime_lexical_rules(self) -> None:
         schema = json.loads(
             (SKILL_DIR / "assets/schemas/input-packet.schema.json").read_text(
@@ -133,6 +198,21 @@ class ValidationTests(unittest.TestCase):
         for value in ("path:/absolute", "path:../outside", "path:a/./file", "path:a\\file"):
             with self.subTest(value=value):
                 self.assertIsNone(re.fullmatch(scope_pattern, value))
+
+    def test_input_packet_schema_rejects_whitespace_only_runtime_strings(self) -> None:
+        schema = json.loads(
+            (SKILL_DIR / "assets/schemas/input-packet.schema.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        actor_pattern = schema["properties"]["approval_evidence"]["properties"]["actor_expression"]["pattern"]
+        item_properties = schema["properties"]["work_items"]["items"]["properties"]
+        self.assertIsNone(re.search(actor_pattern, "   "))
+        self.assertIsNone(re.search(item_properties["title"]["pattern"], "\t"))
+        for field in ("acceptance_criteria", "non_goals", "verification"):
+            self.assertIsNone(
+                re.search(item_properties[field]["items"]["pattern"], "  ")
+            )
 
     def test_validate_execution_envelope_rejects_invalid_context_policy(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

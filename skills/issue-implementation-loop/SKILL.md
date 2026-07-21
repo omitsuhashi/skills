@@ -31,7 +31,7 @@ Before prepare, execute, resume, status, or deliver actions, run:
 python3 <skill-dir>/scripts/check_capabilities.py --input <packet.json> --json
 ```
 
-If no packet exists, omit `--input` only for status/recovery inspection. Stop before execution when git, repo, or packet validation fails. Missing `tdd` or `requesting-code-review` requires an approved equivalent or manual fallback in the Execution Envelope.
+Packetless status/recovery may omit --input. Stop on check failure. Unsupported approved_spec_seal yields PLATFORM_UNSUPPORTED: Codex and Hermes stop; no unsafe fallback. Missing tdd/review capability needs an approved equivalent.
 
 ## Mode Router
 

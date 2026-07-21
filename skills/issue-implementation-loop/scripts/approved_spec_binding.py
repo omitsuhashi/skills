@@ -86,6 +86,10 @@ def main() -> int:
     except BindingError as error:
         _print(error.to_dict())
         return 1
+    except (OSError, TypeError, ValueError):
+        error = BindingError("FILE_CHANGED_DURING_VALIDATION")
+        _print(error.to_dict())
+        return 1
     return 0
 
 

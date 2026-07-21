@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 import hashlib
+import inspect
 import json
 import os
 from pathlib import Path, PurePosixPath
@@ -18,7 +19,8 @@ from .identifiers import is_issue_id, is_lower_kebab
 
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 RFC3339_RE = re.compile(
-    r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$"
+    r"^\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d"
+    r"(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$"
 )
 APPROVAL_SCOPE_FIELDS = frozenset(
     {
@@ -76,16 +78,27 @@ DEFAULT_ACTIONS = {
     "PATH_NOT_REGULAR_FILE": "regenerate_artifact",
     "FILE_CHANGED_DURING_VALIDATION": "retry_validation",
     "SCHEMA_UNSUPPORTED": "create_new_run",
+    "PLATFORM_UNSUPPORTED": "use_supported_host",
 }
 
 
 class BindingError(Exception):
     """Stable, non-sensitive failure returned by binding operations."""
 
-    def __init__(self, code: str, *, action: str | None = None, path: str | None = None) -> None:
+    def __init__(
+        self,
+        code: str,
+        *,
+        action: str | None = None,
+        path: str | None = None,
+        recovery_path: str | None = None,
+        missing_capabilities: tuple[str, ...] = (),
+    ) -> None:
         self.code = code
         self.action = action or DEFAULT_ACTIONS[code]
         self.path = path
+        self.recovery_path = recovery_path
+        self.missing_capabilities = missing_capabilities
         super().__init__(code)
 
     def to_dict(self) -> dict[str, Any]:
@@ -96,7 +109,20 @@ class BindingError(Exception):
         }
         if self.path is not None:
             result["path"] = self.path
+        if self.recovery_path is not None:
+            result["recovery_path"] = self.recovery_path
+        if self.missing_capabilities:
+            result["missing_capabilities"] = list(self.missing_capabilities)
         return result
+
+
+@dataclass(frozen=True)
+class SealCapabilities:
+    supported: bool
+    missing: tuple[str, ...]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"supported": self.supported, "missing": list(self.missing)}
 
 
 @dataclass(frozen=True)
@@ -132,15 +158,22 @@ class VerifiedBinding:
 
 
 def _trusted_repo_root(repo_root: str | os.PathLike[str]) -> Path:
-    candidate = Path(repo_root)
-    if not candidate.is_absolute():
-        raise BindingError("PATH_OUTSIDE_REPO")
     try:
+        candidate = Path(repo_root)
+        if not candidate.is_absolute():
+            raise BindingError("PATH_OUTSIDE_REPO")
         canonical = candidate.resolve(strict=True)
-    except OSError:
+    except BindingError:
+        raise
+    except (OSError, TypeError, ValueError):
         raise BindingError("PATH_OUTSIDE_REPO") from None
-    if not canonical.is_dir():
-        raise BindingError("PATH_OUTSIDE_REPO")
+    try:
+        if not canonical.is_dir():
+            raise BindingError("PATH_OUTSIDE_REPO")
+    except BindingError:
+        raise
+    except (OSError, TypeError, ValueError):
+        raise BindingError("PATH_OUTSIDE_REPO") from None
     try:
         result = subprocess.run(
             ["git", "-C", str(canonical), "rev-parse", "--show-toplevel"],
@@ -148,13 +181,13 @@ def _trusted_repo_root(repo_root: str | os.PathLike[str]) -> Path:
             capture_output=True,
             text=True,
         )
-    except OSError:
+    except (OSError, TypeError, ValueError):
         raise BindingError("PATH_OUTSIDE_REPO") from None
     if result.returncode != 0:
         raise BindingError("PATH_OUTSIDE_REPO")
     try:
         git_root = Path(result.stdout.strip()).resolve(strict=True)
-    except OSError:
+    except (OSError, TypeError, ValueError):
         raise BindingError("PATH_OUTSIDE_REPO") from None
     if git_root != canonical:
         raise BindingError("PATH_OUTSIDE_REPO")
@@ -167,24 +200,27 @@ def trusted_argument_path(
     """Convert a trusted CLI path argument to a safe repository-relative path."""
 
     root = _trusted_repo_root(repo_root)
-    candidate = Path(path)
-    if not candidate.is_absolute():
-        return _parse_repo_path(os.fspath(path))
     try:
+        candidate = Path(path)
+        if not candidate.is_absolute():
+            return _parse_repo_path(os.fspath(path))
         return candidate.resolve(strict=False).relative_to(root).as_posix()
-    except (OSError, ValueError):
+    except BindingError:
+        raise
+    except (OSError, TypeError, ValueError):
         raise BindingError("PATH_OUTSIDE_REPO") from None
 
 
 def discover_repo_root(start: str | os.PathLike[str]) -> Path:
     try:
+        rendered = os.fspath(start)
         result = subprocess.run(
-            ["git", "-C", os.fspath(start), "rev-parse", "--show-toplevel"],
+            ["git", "-C", rendered, "rev-parse", "--show-toplevel"],
             check=False,
             capture_output=True,
             text=True,
         )
-    except OSError:
+    except (OSError, TypeError, ValueError):
         raise BindingError("PATH_OUTSIDE_REPO") from None
     if result.returncode != 0:
         raise BindingError("PATH_OUTSIDE_REPO")
@@ -287,8 +323,17 @@ def _read_regular_file(
         ):
             raise BindingError("FILE_CHANGED_DURING_VALIDATION", path=safe_path)
         return b"".join(chunks), digest.hexdigest()
+    except BindingError:
+        raise
+    except (OSError, ValueError):
+        raise BindingError(
+            "FILE_CHANGED_DURING_VALIDATION", path=safe_path
+        ) from None
     finally:
-        os.close(descriptor)
+        try:
+            os.close(descriptor)
+        except OSError:
+            pass
 
 
 def _digest(value: Any, *, action: str = "return_to_spec_gate") -> str:
@@ -472,6 +517,50 @@ def identify_spec(
     return SpecRevision(safe_path, digest)
 
 
+def _has_keyword_parameters(function: Any, *names: str) -> bool:
+    try:
+        parameters = inspect.signature(function).parameters
+    except (TypeError, ValueError):
+        return False
+    return all(name in parameters for name in names)
+
+
+def probe_seal_capabilities() -> SealCapabilities:
+    """Report whether this host can perform fail-closed descriptor-relative seal."""
+
+    missing: list[str] = []
+    if not hasattr(os, "O_NOFOLLOW"):
+        missing.append("flag:O_NOFOLLOW")
+    if not hasattr(os, "O_DIRECTORY"):
+        missing.append("flag:O_DIRECTORY")
+    dir_fd_support = getattr(os, "supports_dir_fd", ())
+    no_follow_support = getattr(os, "supports_follow_symlinks", ())
+    for name in ("open", "stat", "link", "unlink"):
+        function = getattr(os, name, None)
+        if function is None or function not in dir_fd_support:
+            missing.append(f"dir_fd:{name}")
+    for name in ("stat", "link"):
+        function = getattr(os, name, None)
+        if function is None or function not in no_follow_support:
+            missing.append(f"no_follow:{name}")
+    replace = getattr(os, "replace", None)
+    if replace is None or not _has_keyword_parameters(
+        replace, "src_dir_fd", "dst_dir_fd"
+    ):
+        missing.append("dir_fd:replace")
+    ordered = tuple(sorted(missing))
+    return SealCapabilities(supported=not ordered, missing=ordered)
+
+
+def _require_seal_capabilities() -> None:
+    capabilities = probe_seal_capabilities()
+    if not capabilities.supported:
+        raise BindingError(
+            "PLATFORM_UNSUPPORTED",
+            missing_capabilities=capabilities.missing,
+        )
+
+
 def _directory_flags() -> int:
     flags = os.O_RDONLY
     if hasattr(os, "O_DIRECTORY"):
@@ -500,9 +589,12 @@ def _open_directory_chain(
             )
             descriptors.append(current_fd)
             identities.append((current_path, _node_identity(os.fstat(current_fd))))
-    except OSError:
+    except (OSError, TypeError, ValueError):
         for descriptor in reversed(descriptors):
-            os.close(descriptor)
+            try:
+                os.close(descriptor)
+            except OSError:
+                pass
         raise BindingError("FILE_CHANGED_DURING_VALIDATION", path=safe_path) from None
     return descriptors, identities, parts[-1]
 
@@ -541,6 +633,7 @@ def _atomic_replace(root: Path, output_path: str, raw: bytes) -> None:
     temporary_exists = False
     backup_exists = False
     output_existed = False
+    preserve_backup = False
     try:
         _verify_directory_chain(identities, output_path)
         try:
@@ -584,13 +677,24 @@ def _atomic_replace(root: Path, output_path: str, raw: bytes) -> None:
             _verify_directory_chain(identities, output_path)
         except BindingError:
             if output_existed:
-                os.replace(
-                    backup,
-                    leaf,
-                    src_dir_fd=parent_fd,
-                    dst_dir_fd=parent_fd,
-                )
-                backup_exists = False
+                try:
+                    os.replace(
+                        backup,
+                        leaf,
+                        src_dir_fd=parent_fd,
+                        dst_dir_fd=parent_fd,
+                    )
+                    backup_exists = False
+                except (OSError, TypeError, ValueError):
+                    preserve_backup = True
+                    recovery_path = (
+                        PurePosixPath(output_path).parent / backup
+                    ).as_posix()
+                    raise BindingError(
+                        "FILE_CHANGED_DURING_VALIDATION",
+                        path=output_path,
+                        recovery_path=recovery_path,
+                    ) from None
             else:
                 os.unlink(leaf, dir_fd=parent_fd)
             raise
@@ -598,20 +702,31 @@ def _atomic_replace(root: Path, output_path: str, raw: bytes) -> None:
             try:
                 os.unlink(backup, dir_fd=parent_fd)
                 backup_exists = False
-            except OSError:
-                os.replace(
-                    backup,
-                    leaf,
-                    src_dir_fd=parent_fd,
-                    dst_dir_fd=parent_fd,
-                )
-                backup_exists = False
+            except (OSError, TypeError, ValueError):
+                try:
+                    os.replace(
+                        backup,
+                        leaf,
+                        src_dir_fd=parent_fd,
+                        dst_dir_fd=parent_fd,
+                    )
+                    backup_exists = False
+                except (OSError, TypeError, ValueError):
+                    preserve_backup = True
+                    recovery_path = (
+                        PurePosixPath(output_path).parent / backup
+                    ).as_posix()
+                    raise BindingError(
+                        "FILE_CHANGED_DURING_VALIDATION",
+                        path=output_path,
+                        recovery_path=recovery_path,
+                    ) from None
                 raise BindingError(
                     "FILE_CHANGED_DURING_VALIDATION", path=output_path
                 ) from None
     except BindingError:
         raise
-    except OSError:
+    except (OSError, TypeError, ValueError):
         raise BindingError(
             "FILE_CHANGED_DURING_VALIDATION", path=output_path
         ) from None
@@ -621,13 +736,16 @@ def _atomic_replace(root: Path, output_path: str, raw: bytes) -> None:
                 os.unlink(temporary, dir_fd=parent_fd)
             except OSError:
                 pass
-        if backup_exists:
+        if backup_exists and not preserve_backup:
             try:
                 os.unlink(backup, dir_fd=parent_fd)
             except OSError:
                 pass
         for descriptor in reversed(descriptors):
-            os.close(descriptor)
+            try:
+                os.close(descriptor)
+            except OSError:
+                pass
 
 
 def seal_input_packet(
@@ -637,6 +755,7 @@ def seal_input_packet(
     expected_spec_revision: SpecRevision | Mapping[str, Any],
     approval: Mapping[str, Any] | None,
 ) -> InputPacketRef:
+    _require_seal_capabilities()
     root = _trusted_repo_root(repo_root)
     expected = _coerce_spec_revision(expected_spec_revision)
     current = identify_spec(root, expected.path)

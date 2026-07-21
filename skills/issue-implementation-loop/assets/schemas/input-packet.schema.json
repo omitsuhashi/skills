@@ -5,8 +5,8 @@
     "approval_evidence": {
       "additionalProperties": false,
       "properties": {
-        "actor_expression": {"minLength": 1, "type": "string"},
-        "approved_at": {"format": "date-time", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$", "type": "string"},
+        "actor_expression": {"minLength": 1, "pattern": "\\S", "type": "string"},
+        "approved_at": {"format": "date-time", "pattern": "^\\d{4}-\\d{2}-\\d{2}T(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|[+-](?:[01]\\d|2[0-3]):[0-5]\\d)$", "type": "string"},
         "decision": {"const": "approved"},
         "scope": {
           "additionalProperties": false,
@@ -43,18 +43,18 @@
       "items": {
         "additionalProperties": false,
         "properties": {
-          "acceptance_criteria": {"items": {"minLength": 1, "type": "string"}, "minItems": 1, "type": "array"},
+          "acceptance_criteria": {"items": {"minLength": 1, "pattern": "\\S", "type": "string"}, "minItems": 1, "type": "array"},
           "dependencies": {"items": {"pattern": "^[A-Z0-9]+-[0-9]+$", "type": "string"}, "type": "array"},
           "id": {"pattern": "^[A-Z0-9]+-[0-9]+$", "type": "string"},
-          "non_goals": {"items": {"minLength": 1, "type": "string"}, "minItems": 1, "type": "array"},
+          "non_goals": {"items": {"minLength": 1, "pattern": "\\S", "type": "string"}, "minItems": 1, "type": "array"},
           "source": {
             "additionalProperties": false,
             "properties": {"path": {"minLength": 1, "pattern": "^(?![/~])(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*\\\\)(?!.*\\x00)[^/]+(?:/[^/]+)*$", "type": "string"}, "type": {"const": "local"}},
             "required": ["type", "path"],
             "type": "object"
           },
-          "title": {"minLength": 1, "type": "string"},
-          "verification": {"items": {"minLength": 1, "type": "string"}, "minItems": 1, "type": "array"},
+          "title": {"minLength": 1, "pattern": "\\S", "type": "string"},
+          "verification": {"items": {"minLength": 1, "pattern": "\\S", "type": "string"}, "minItems": 1, "type": "array"},
           "write_scope": {"items": {"pattern": "^path:(?![/~])(?!\\.{1,2}(?:/|$))(?!.*\\/\\.{1,2}(?:/|$))(?!.*//)(?!.*\\\\)(?!.*\\x00)[^/]+(?:/[^/]+)*$", "type": "string"}, "minItems": 1, "type": "array"}
         },
         "required": ["id", "title", "source", "acceptance_criteria", "non_goals", "verification", "write_scope", "dependencies"],

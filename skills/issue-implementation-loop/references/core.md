@@ -21,11 +21,7 @@ Normalize local or remote issues before execution:
 
 Use `assets/templates/input-packet.json` for the concrete shape and `assets/schemas/input-packet.schema.json` for the field contract.
 
-Validate with:
-
-```bash
-python3 <skill-dir>/scripts/validate_input_packet.py <packet.json>
-```
+Run validate_input_packet.py. Seal only if check_capabilities.py --json reports approved_spec_seal supported; else PLATFORM_UNSUPPORTED.
 
 ## Output Contract
 

@@ -310,6 +310,7 @@ class ApprovedSpecBindingTests(unittest.TestCase):
         output_parent = self.output_path.parent
         moved_parent = self.repo / "moved-syntheses"
         original_open = module.os.open
+        capabilities = module.probe_seal_capabilities()
         swapped = False
         sentinel = b"existing output\n"
         self.output_path.write_bytes(sentinel)
@@ -328,7 +329,9 @@ class ApprovedSpecBindingTests(unittest.TestCase):
                     return original_open(path, flags, mode)
                 return original_open(path, flags, mode, dir_fd=dir_fd)
 
-            with mock.patch.object(module.os, "open", side_effect=swapping_open):
+            with mock.patch.object(
+                module, "probe_seal_capabilities", return_value=capabilities
+            ), mock.patch.object(module.os, "open", side_effect=swapping_open):
                 self.assert_code(
                     "FILE_CHANGED_DURING_VALIDATION",
                     lambda: module.seal_input_packet(
@@ -342,6 +345,126 @@ class ApprovedSpecBindingTests(unittest.TestCase):
             self.assertFalse((outside / self.output_path.name).exists())
             self.assertFalse(any(outside.iterdir()))
             self.assertEqual((moved_parent / self.output_path.name).read_bytes(), sentinel)
+
+    def test_failed_rollback_preserves_discoverable_recovery_copy(self) -> None:
+        module = binding_module()
+        revision = module.identify_spec(self.repo, self.spec_path)
+        sentinel = b"original packet bytes\n"
+        self.output_path.write_bytes(sentinel)
+        original_verify = module._verify_directory_chain
+        original_replace = module.os.replace
+        capabilities = module.probe_seal_capabilities()
+        verify_calls = 0
+        replace_calls = 0
+
+        def fail_after_install(identities, output_path):
+            nonlocal verify_calls
+            verify_calls += 1
+            if verify_calls == 3:
+                raise module.BindingError(
+                    "FILE_CHANGED_DURING_VALIDATION", path=output_path
+                )
+            return original_verify(identities, output_path)
+
+        def fail_rollback(src, dst, *, src_dir_fd=None, dst_dir_fd=None):
+            nonlocal replace_calls
+            replace_calls += 1
+            if replace_calls == 2:
+                raise OSError("injected rollback failure")
+            return original_replace(
+                src,
+                dst,
+                src_dir_fd=src_dir_fd,
+                dst_dir_fd=dst_dir_fd,
+            )
+
+        with mock.patch.object(
+            module, "_verify_directory_chain", side_effect=fail_after_install
+        ), mock.patch.object(
+            module, "probe_seal_capabilities", return_value=capabilities
+        ), mock.patch.object(module.os, "replace", side_effect=fail_rollback):
+            with self.assertRaises(module.BindingError) as raised:
+                module.seal_input_packet(
+                    self.repo,
+                    self.draft_path.relative_to(self.repo).as_posix(),
+                    self.output_path.relative_to(self.repo).as_posix(),
+                    revision,
+                    self.approval(),
+                )
+
+        self.assertEqual(raised.exception.code, "FILE_CHANGED_DURING_VALIDATION")
+        self.assertIsNotNone(raised.exception.recovery_path)
+        recovery = self.repo / raised.exception.recovery_path
+        self.assertTrue(recovery.is_file())
+        self.assertEqual(recovery.read_bytes(), sentinel)
+        self.assertNotEqual(self.output_path.read_bytes(), sentinel)
+        self.assertEqual(
+            raised.exception.to_dict()["recovery_path"],
+            raised.exception.recovery_path,
+        )
+
+    def test_malformed_root_and_read_os_errors_are_stable(self) -> None:
+        module = binding_module()
+        self.assert_code(
+            "PATH_OUTSIDE_REPO",
+            lambda: module.identify_spec(None, self.spec_path),
+        )
+        original_fstat = module.os.fstat
+        spec_inode = os.lstat(self.repo / self.spec_path).st_ino
+
+        def failing_fstat(descriptor):
+            result = original_fstat(descriptor)
+            if result.st_ino == spec_inode:
+                raise OSError("injected fstat failure with sensitive payload")
+            return result
+
+        with mock.patch.object(module.os, "fstat", side_effect=failing_fstat):
+            self.assert_code(
+                "FILE_CHANGED_DURING_VALIDATION",
+                lambda: module.identify_spec(self.repo, self.spec_path),
+            )
+
+    def test_binding_cli_failure_is_stable_json_without_traceback(self) -> None:
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(SCRIPTS_DIR / "approved_spec_binding.py"),
+                "identify",
+                "--repo-root",
+                "",
+                "--spec-path",
+                self.spec_path,
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(json.loads(result.stdout)["code"], "PATH_OUTSIDE_REPO")
+        self.assertNotIn("Traceback", result.stderr)
+
+    def test_seal_platform_capability_is_probed_and_fails_closed(self) -> None:
+        module = binding_module()
+        revision = module.identify_spec(self.repo, self.spec_path)
+        self.output_path.write_bytes(b"unchanged\n")
+        unsupported = module.SealCapabilities(
+            supported=False,
+            missing=("dir_fd:open",),
+        )
+        with mock.patch.object(
+            module, "probe_seal_capabilities", return_value=unsupported
+        ):
+            self.assert_code(
+                "PLATFORM_UNSUPPORTED",
+                lambda: module.seal_input_packet(
+                    self.repo,
+                    self.draft_path.relative_to(self.repo).as_posix(),
+                    self.output_path.relative_to(self.repo).as_posix(),
+                    revision,
+                    self.approval(),
+                ),
+            )
+        self.assertEqual(self.output_path.read_bytes(), b"unchanged\n")
 
     def test_check_capabilities_default_repo_validates_v2_packet(self) -> None:
         _, _, ref = self.seal()
@@ -362,6 +485,8 @@ class ApprovedSpecBindingTests(unittest.TestCase):
         payload = json.loads(result.stdout)
         self.assertTrue(payload["ok"])
         self.assertTrue(payload["input_packet"]["ok"])
+        self.assertTrue(payload["approved_spec_seal"]["supported"])
+        self.assertEqual(payload["approved_spec_seal"]["missing"], [])
 
     def test_asb_24_contract_surface_has_no_consumer_specific_vocabulary(self) -> None:
         binding_module()
