@@ -41,10 +41,12 @@ Self-review the spec for placeholders, contradictions, ambiguous criteria, stale
 
 ### Spec Gate
 
+Before any binding command, run `python3 <skill-dir>/scripts/check_prereqs.py --phase execution --json`. Derive `<issue-implementation-loop-skill-dir>` as the parent directory of the `SKILL.md` path in `required["issue-implementation-loop"]`; never assume the target repository contains a source checkout of the skill.
+
 Finalize the spec before approval. Identify its repo-relative spec path and exact raw-byte SHA-256 with:
 
 ```bash
-python3 skills/issue-implementation-loop/scripts/approved_spec_binding.py identify \
+python3 <issue-implementation-loop-skill-dir>/scripts/approved_spec_binding.py identify \
   --repo-root <repo-root> --spec-path <repo-relative-spec-path>
 ```
 

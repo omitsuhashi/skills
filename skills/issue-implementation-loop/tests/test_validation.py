@@ -409,7 +409,7 @@ class ValidationTests(unittest.TestCase):
                     self.assertNotEqual(result.returncode, 0, name)
                     self.assertIn(expected, result.stderr)
 
-    def test_validate_execution_envelope_accepts_legacy_context_policy_without_worker_packet_references(self) -> None:
+    def test_validate_execution_envelope_accepts_current_context_policy_without_optional_worker_packet_references(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             envelope = base_envelope()
             for field in (
@@ -418,7 +418,7 @@ class ValidationTests(unittest.TestCase):
                 "worker_packet_validator",
             ):
                 del envelope["context_policy"][field]
-            path = Path(tmp) / "legacy-envelope.json"
+            path = Path(tmp) / "current-envelope-without-worker-packet-refs.json"
             write_json(path, envelope)
 
             result = run_script("validate_execution_envelope.py", str(path))

@@ -4,11 +4,11 @@ Use this reference when preparing the normalized input packet, presenting the Ex
 
 ## Branch / Base / Commit Policy
 
-Do not model the run as a mutable development main branch. Use an optional planning branch, per-epic `epic_base.ref` with immutable `epic_base.sha`, one branch/worktree reservation per issue, typed dependencies, and local `PR_READY` until remote delivery is approved. Issue PRs target `epic_base.ref`; final PR targets `main` and final merge is human-only.
+Use an optional planning branch, immutable `epic_base.sha`, one reservation per issue, typed dependencies, and local `PR_READY`. Issue PRs target `epic_base.ref`; final PR targets `main` and merge is human-only.
 
 Use branch names like `codex/<epic-id>/<local-id>-<slug>`. Blocked issues may reserve names/paths, but physical worktrees stay absent until release.
 
-Codex phase branch policy: keep planning artifacts on the current planning branch through gate commits; issue workers inherit but do not author them; create an Execution Envelope v4 with `approved_spec_binding` and `phase_branch_policy`; hand execution to a fresh or compacted coordinator context; let `issue-implementation-loop` own `epic_base.ref`, reservations, and integration work items.
+Codex phase branch policy: gate planning artifacts on the current planning branch; workers inherit but do not author them. Envelope v4 carries `approved_spec_binding` and `phase_branch_policy`; a fresh/compacted coordinator owns execution resources.
 
 Base policies: `epic_base` branches from `codex/<epic-id>/epic-base`, `blocker_head` from exactly one prerequisite issue head, and `integration_head` from an approved integration work item. Do not let a downstream worker merge multiple blocker heads; add an integration work item.
 
@@ -26,9 +26,32 @@ Build an Input Packet v2 file for `issue-implementation-loop`; use a file instea
 
 `work_items[].title`、`acceptance_criteria`、`non_goals` などの user-facing packet string は日本語をベースにする。schema key、path、command、ID、外部参照は維持する。
 
-Seal the draft with `approved_spec_binding.py seal`, passing the approved repo-relative path, exact raw-byte SHA-256, actor expression/time, and all six `--approve-scope` values. Seal re-reads the spec, atomically writes required `spec_binding` and `approval_evidence`, and does not edit the spec. Then run `validate_input_packet.py`; never hand off an unsealed or invalid packet.
+Use the prerequisite-derived `<issue-implementation-loop-skill-dir>` from the planning contract. Seal with the exact approved revision and approval record:
 
-Commit the sealed packet and exact spec, then create an Execution Envelope v4 whose `approved_spec_binding` pins the packet digest and full gate commit. Any spec or packet byte drift requires human re-approval and a new seal/envelope/runtime epoch; old reviews and results do not carry forward.
+```bash
+python3 <issue-implementation-loop-skill-dir>/scripts/approved_spec_binding.py seal \
+  --repo-root <repo-root> \
+  --draft-packet <repo-relative-draft-packet> \
+  --output-packet <repo-relative-sealed-packet> \
+  --spec-path <repo-relative-spec-path> \
+  --spec-sha256 <approved-raw-byte-sha256> \
+  --decision approved \
+  --subject spec_binding \
+  --actor-expression <actor-expression> \
+  --approved-at <timezone-qualified-rfc3339> \
+  --approve-scope accepted_decisions \
+  --approve-scope non_goals \
+  --approve-scope acceptance_criteria \
+  --approve-scope verification \
+  --approve-scope remote_policy \
+  --approve-scope stop_conditions
+```
+
+Seal re-reads the spec, atomically writes `spec_binding` and `approval_evidence`, and never edits the spec. Validate the sealed output; never hand off an invalid packet.
+
+If spec bytes, `spec_binding`, or `approval_evidence` change, return to the human Spec Gate for a new approval and seal. For execution-intent-only packet drift—issue scope, dependencies, write scope, or delivery intent—return to the Execution Plan Gate; revalidate and reseal the packet with the unchanged spec approval, without a new human Spec Gate approval. Both routes require a new Envelope revision/runtime epoch; old downstream artifacts do not carry forward.
+
+Commit the sealed packet and exact spec, then create an Execution Envelope v4 whose `approved_spec_binding` pins the packet digest and full gate commit.
 
 ## Implementation Context Handoff
 
@@ -53,8 +76,8 @@ Leave durable evidence before auto-continuation: normalized packet path and vali
 Validate with:
 
 ```bash
-python3 skills/issue-implementation-loop/scripts/validate_input_packet.py <packet.json>
-python3 skills/issue-implementation-loop/scripts/check_capabilities.py --input <packet.json> --json
+python3 <issue-implementation-loop-skill-dir>/scripts/validate_input_packet.py <packet.json>
+python3 <issue-implementation-loop-skill-dir>/scripts/check_capabilities.py --input <packet.json> --json
 ```
 
 When Spec Gate and Issue Gate already approved scope, auto-continue without another human approval if `validate_input_packet.py` and capability preflight pass, scope stays approved, and remote policy has no unapproved external write or high-risk action.

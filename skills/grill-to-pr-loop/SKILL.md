@@ -49,7 +49,8 @@ At `65%` context pressure, keep the current operation read-set loaded and add `r
 
 - Keep durable planning artifacts in the repo-local path (`knowledge/wiki/syntheses/` here). Specs/PRDs/ledgers use Japanese; preserve IDs, paths, commands, schema keys, branches, errors, and external refs.
 - Planning owns spec/ledger/packet; the local issue ledger stays canonical and GitHub is an optional mirror/delivery record.
-- Planning owns final spec identification, one human approval of its exact path/raw-byte digest and six-part scope, and Input Packet v2 sealing. Any later byte change returns to human re-approval and a new seal.
+- Planning owns final spec identification, one human approval of its exact path/raw-byte digest and six-part scope, and Input Packet v2 sealing. Changes to spec bytes, `spec_binding`, or `approval_evidence` return to the human Spec Gate for a new approval and seal.
+- execution-intent-only packet drift returns to the Execution Plan Gate to revalidate and reseal the packet without a new human Spec Gate approval.
 - Each gate is a phase approval commit boundary: commit artifacts/ledger/log. Before handoff, context 圧縮 or use a fresh coordinator with the packet and bounded brief.
 - Execution Envelope v4 carries `approved_spec_binding` and `phase_branch_policy`; planning commits, `epic_base`, issue branches, and worktrees remain separate.
 - `issue-implementation-loop` owns reservations, scheduling, runtime, workers, review, recovery, and `PR_READY`; planning never implements.

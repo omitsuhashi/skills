@@ -67,17 +67,58 @@ class GrillToPrLoopTests(unittest.TestCase):
             "verification",
             "remote_policy",
             "stop_conditions",
-            "approved_spec_binding.py identify",
-            "approved_spec_binding.py seal",
-            "validate_input_packet.py",
+            "check_prereqs.py --phase execution --json",
+            'required["issue-implementation-loop"]',
+            "<issue-implementation-loop-skill-dir>/scripts/approved_spec_binding.py identify",
+            "<issue-implementation-loop-skill-dir>/scripts/approved_spec_binding.py seal",
+            "<issue-implementation-loop-skill-dir>/scripts/validate_input_packet.py",
+            "<issue-implementation-loop-skill-dir>/scripts/check_capabilities.py",
+            "--draft-packet",
+            "--output-packet",
+            "--spec-path",
+            "--spec-sha256",
+            "--decision approved",
+            "--subject spec_binding",
+            "--actor-expression",
+            "--approved-at",
             "Any spec byte change requires re-approval and a new seal",
             "Input Packet v2",
             "Execution Envelope v4",
         ):
             self.assertIn(required, combined)
 
+        for scope_field in (
+            "accepted_decisions",
+            "non_goals",
+            "acceptance_criteria",
+            "verification",
+            "remote_policy",
+            "stop_conditions",
+        ):
+            self.assertIn(f"--approve-scope {scope_field}", combined)
+
         self.assertNotIn("when available", combined)
         self.assertNotIn("schema version `3` Execution Envelope", combined)
+        self.assertNotIn("skills/issue-implementation-loop/", combined)
+
+    def test_planning_contract_splits_spec_and_execution_intent_drift_routes(self) -> None:
+        skill_text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+        handoff_text = (SKILL_DIR / "references" / "execution-handoff.md").read_text(
+            encoding="utf-8"
+        )
+        combined = f"{skill_text}\n{handoff_text}"
+
+        for required in (
+            "spec bytes, `spec_binding`, or `approval_evidence`",
+            "human Spec Gate",
+            "new approval and seal",
+            "execution-intent-only packet drift",
+            "issue scope, dependencies, write scope, or delivery intent",
+            "Execution Plan Gate",
+            "revalidate and reseal the packet",
+            "without a new human Spec Gate approval",
+        ):
+            self.assertIn(required, combined)
 
     def test_historical_packets_and_envelopes_are_indexed_as_non_executable(self) -> None:
         index_text = (REPO_ROOT / "knowledge" / "index.md").read_text(encoding="utf-8")

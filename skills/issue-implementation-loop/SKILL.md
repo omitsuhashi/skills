@@ -7,9 +7,9 @@ description: Use when implementing approved repository issues after spec, accept
 
 ## Overview
 
-Run approved repository work items to local `PR_READY`. Keep one execution coordinator context for global state, blocker release, review decisions, and reporting; the planning/grill session must not implement issue work. Workers/reviewers receive isolated tasks.
+Run approved items to local `PR_READY`. Keep one execution coordinator context; the planning/grill session must not implement issue work. Workers/reviewers own isolated tasks.
 
-Do not create user-owned Codex threads. Without worker contexts, stop; without parallel workers, use approved serial fallback as bounded worker-context jobs.
+Do not create user-owned Codex threads. Without workers, stop; serial fallback uses bounded worker-context jobs.
 
 Use `grill-to-pr-loop` first for design, PRD/spec creation, and issue decomposition.
 
@@ -17,11 +17,11 @@ Read `references/mental-model.md` for the first role-boundary page.
 
 ## Applicability
 
-Use this skill only when a normalized approved packet exists, worker-only execution is required, worker context is available, and assigned write scope is sufficient.
+Use this skill only when a normalized approved packet exists, worker context is available, and scope fits.
 
-Do not use this skill for small one-off edits, direct implementation without a packet, unapproved or changing scope, design interrogation, issue creation, or cases where the coordinator must implement to make progress.
+Do not use this skill for small one-off edits, direct work without a packet, unapproved or changing scope, design, or issue creation.
 
-The coordinator must not implement; it coordinates state, scheduling, waits, review, and blocker release. Workers own bounded changes and evidence.
+The coordinator must not implement; it coordinates state, scheduling, waits, review, and blockers.
 
 ## Immediate Guard
 
@@ -35,13 +35,14 @@ Any ok=false blocks state changes. Read-only status/recovery ignores only unsupp
 
 ## Mode Router
 
-Always read `references/core.md`. For operation-specific context, use `scripts/select_operation.py` and `context-contract.toml`; the contract file is the single read-set source. Do not list or load every reference by default.
+Always read `references/core.md`; use `scripts/select_operation.py` and `context-contract.toml` for the operation read-set.
 At 65% session pressure or phase exit, read `references/context-compaction.md`.
 
 ## Required Rules
 
 - Treat the packet as approved scope; do not redesign issues or criteria.
-- At prepare, dispatch/fix, review, resume/rebuild, completion, and delivery, freshly verify the same active `approved_spec_binding`. Drift blocks state advance and requires human re-approval and a new seal; read-only status may diagnose without advancing.
+- At prepare, dispatch/fix, review, resume/rebuild, completion, and delivery, freshly verify the same active `approved_spec_binding`; read-only status may diagnose without advancing.
+- Keep spec/approval drift on the human Spec Gate route and execution-intent-only packet drift on the Execution Plan Gate route defined in core; never collapse them.
 - Require `execution_policy.worker_context_required=true`, `coordinator_may_implement=false`, and `serial_fallback_mode=worker_context_only`.
 - Keep runtime state under `$(git rev-parse --git-common-dir)/agent-runs/issue-implementation-loop/<epic-id>/`, outside issue branches.
 - Reserve every issue branch/worktree before execution; require `epic_base`, `base_policy`, typed dependencies, and `epic_base.branch_state` for `batch_issue_prs`.

@@ -88,7 +88,23 @@ class EntrypointTests(unittest.TestCase):
             "same active `approved_spec_binding`",
             "Read-only status",
             "state advance remains blocked",
-            "human re-approval and a new seal",
+            "new approval and seal",
+        ):
+            self.assertIn(required, combined)
+
+    def test_entrypoint_splits_spec_and_execution_intent_drift_routes(self) -> None:
+        text = SKILL_FILE.read_text(encoding="utf-8")
+        core = (SKILL_DIR / "references/core.md").read_text(encoding="utf-8")
+        combined = f"{text}\n{core}"
+
+        for required in (
+            "spec bytes, `spec_binding`, or `approval_evidence`",
+            "human Spec Gate",
+            "new approval and seal",
+            "execution-intent-only packet drift",
+            "Execution Plan Gate",
+            "revalidate and reseal the packet",
+            "without a new human Spec Gate approval",
         ):
             self.assertIn(required, combined)
 
@@ -110,6 +126,13 @@ class EntrypointTests(unittest.TestCase):
         self.assertFalse(
             (SKILL_DIR / "assets/schemas/worker-packet-v1.schema.json").exists()
         )
+
+        validation_tests = (SKILL_DIR / "tests/test_validation.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertNotIn("accepts_legacy", validation_tests)
+        self.assertNotIn('"legacy-envelope.json"', validation_tests)
+        self.assertIn("rejects_tracked_legacy_envelopes", validation_tests)
 
     def test_skill_entrypoint_routes_through_context_contract(self) -> None:
         text = SKILL_FILE.read_text(encoding="utf-8")

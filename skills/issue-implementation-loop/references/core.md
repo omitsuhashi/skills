@@ -1,12 +1,6 @@
 # Core Contract
 
-After issue approval, the execution coordinator owns:
-
-- input packet and approved Execution Envelope
-- append-only event log and mutable runtime snapshot
-- blocker release and human request routing
-- issue completion and PR-ready decisions
-- final report and remote-write approval boundary
+After issue approval, the coordinator owns packet/envelope, runtime/events, blockers/waits, completion/`PR_READY`, reporting, and remote boundaries.
 
 Planning does not implement. Workers own assigned branch/worktree/scope/evidence; reviewers own packet-scoped findings.
 
@@ -29,7 +23,7 @@ Execution Envelope v4 pins Input Packet v2 through `approved_spec_binding`, incl
 
 ## Binding Gate Map
 
-Prepare; dispatch and fix redispatch; review dispatch and approval intake; resume and rebuild; completion; and delivery all freshly verify the same active `approved_spec_binding`. Read-only status may return `binding_valid=false`, but state advance remains blocked. Drift requires human re-approval and a new seal/envelope/runtime epoch; never infer approval or reuse old reports/results.
+Prepare; dispatch and fix redispatch; review dispatch and approval intake; resume and rebuild; completion; and delivery all freshly verify the same active `approved_spec_binding`. Read-only status may return `binding_valid=false`, but state advance remains blocked. Changes to spec bytes, `spec_binding`, or `approval_evidence` return to the human Spec Gate for a new approval and seal. execution-intent-only packet drift returns to the Execution Plan Gate to revalidate and reseal the packet without a new human Spec Gate approval. Both routes start a new envelope/runtime epoch; never reuse old reports/results.
 
 ## Non-Goals
 
