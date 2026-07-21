@@ -1229,6 +1229,52 @@ class ValidationTests(unittest.TestCase):
                 json.loads(result.stdout)["errors"], ["SCHEMA_UNSUPPORTED"]
             )
 
+    def test_worker_report_v2_requires_well_formed_residual_risks(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            cases = (
+                ("missing", lambda report: report.pop("residual_risks"), "residual_risks must be a list"),
+                ("not-list", lambda report: report.update({"residual_risks": "none"}), "residual_risks must be a list"),
+                ("empty-item", lambda report: report.update({"residual_risks": ["  "]}), "residual_risks[0] must be a non-empty string"),
+            )
+            for name, mutate, expected in cases:
+                with self.subTest(name=name):
+                    case_root = root / name
+                    case_root.mkdir()
+                    repo, binding, _ = create_binding_repo(case_root)
+                    packet = current_worker_packet(repo, binding)
+                    packet_path = repo / "worker-packet.json"
+                    report_path = repo / "worker-report.json"
+                    runtime_path = repo / "runtime-state.json"
+                    write_json(packet_path, packet)
+                    report = current_worker_report(repo, binding, packet)
+                    mutate(report)
+                    write_json(report_path, report)
+
+                    result = run_script(
+                        "validate_worker_report.py",
+                        str(report_path),
+                        "--dispatch-packet",
+                        str(packet_path),
+                        "--runtime-state",
+                        str(runtime_path),
+                    )
+
+                    self.assertEqual(result.returncode, 1)
+                    self.assertIn(expected, result.stderr)
+
+    def test_worker_report_v2_schema_requires_residual_risks(self) -> None:
+        schema = json.loads(
+            (SKILL_DIR / "assets/schemas/worker-report.schema.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertIn("residual_risks", schema["required"])
+        self.assertEqual(
+            schema["properties"]["residual_risks"]["items"]["pattern"],
+            r".*\S.*",
+        )
+
     def test_asb_13_worker_report_intake_rejects_resealed_runtime_binding(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo, binding, _ = create_binding_repo(Path(tmp))

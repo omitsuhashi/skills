@@ -253,7 +253,6 @@ def _validate_source_revision(packet: dict[str, Any], errors: list[str]) -> dict
             if (
                 binding is not None
                 and current is not None
-                and "approved_spec_binding" in current
                 and current.get("approved_spec_binding") != binding
             ):
                 errors.append("BINDING_MISMATCH")

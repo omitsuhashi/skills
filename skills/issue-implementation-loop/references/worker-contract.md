@@ -30,7 +30,7 @@ scope differ.
 
 Require `schema_version: 2`, `approved_spec_binding`, `dispatch_id`, issue/Epic
 identity, branch/worktree, changed files, verification, status, and residual
-risks. Success also requires matching base/head SHA and approved implementation
+risks in the required `residual_risks` string list. Success also requires matching base/head SHA and approved implementation
 review range.
 
 Validate intake against both dispatch and active runtime:

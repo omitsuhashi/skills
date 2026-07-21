@@ -79,6 +79,15 @@ def validate_worker_report(
         errors.append("changed_files must be a list")
     if not isinstance(report.get("verification"), list):
         errors.append("verification must be a list")
+    residual_risks = report.get("residual_risks")
+    if not isinstance(residual_risks, list):
+        errors.append("residual_risks must be a list")
+    else:
+        for index, risk in enumerate(residual_risks):
+            if not isinstance(risk, str) or not risk.strip():
+                errors.append(
+                    f"residual_risks[{index}] must be a non-empty string"
+                )
 
     status = report.get("status")
     if not isinstance(status, str) or not status:
