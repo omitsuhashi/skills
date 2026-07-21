@@ -2,7 +2,7 @@
 
 ## 状態
 
-POTASK-001 から POTASK-011 は既存 Issue Gate / Execution Plan Gate 承認済みで実装完了。2026-07-21 に、task-management write / preflight Interfaceとseparate GitHub Projects AdapterをPOTASK-012からPOTASK-019へ分解し、Issue Gate承認を得た。POTASK-012はworker実装、通常2 review cycle、人間承認済み例外fix / review cycle 1回を終えたが、quoted / root-relative `/graphql` guard漏れのImportant finding 1件が残り、2026-07-22時点で人間判断待ち。POTASK-013からPOTASK-019はblocker release待ち。GitHub issue mirror、push、PR、merge、live activationは行わない。
+POTASK-001 から POTASK-011 は既存 Issue Gate / Execution Plan Gate 承認済みで実装完了。2026-07-21 に、task-management write / preflight Interfaceとseparate GitHub Projects AdapterをPOTASK-012からPOTASK-019へ分解し、Issue Gate承認を得た。POTASK-012はworker実装、通常2 review cycle、人間承認済み例外fix / review cycle 1回を終え、残存したquoted / root-relative `/graphql` guard漏れだけを対象にする最終micro-fixと独立review 1回が2026-07-22に追加承認された。POTASK-013からPOTASK-019はPOTASK-012の最終review approvalまでblocker release待ち。GitHub issue mirror、push、PR、merge、live activationは行わない。
 
 ## Epic ID
 
@@ -38,7 +38,7 @@ POTASK-001 から POTASK-011 は既存 Issue Gate / Execution Plan Gate 承認�
 | `portfolio-os-task-backend-plugin-skill` | POTASK-009 | docs / examples / verification / handoff boundary を統合する | 承認済み | 完了 | `PR_READY` `214349fff56bd55ff3e7e68612a499096096803f` | POTASK-006, POTASK-007, POTASK-008 | なし | 未作成 | approved: `06f9b6fc7801271f345a8c2772a6d64e7c64f310..214349fff56bd55ff3e7e68612a499096096803f` | 未作成 |
 | `portfolio-os-task-backend-plugin-skill` | POTASK-010 | backend-neutral task read capability を実装する | 承認済み | 完了 | local verified / PR delivery対象 | POTASK-002, POTASK-007, POTASK-008 | POTASK-011 | 未作成 | PRで追跡 | [#29](https://github.com/omitsuhashi/skills/pull/29) |
 | `portfolio-os-task-backend-plugin-skill` | POTASK-011 | pluggable provider adapter と Hermes end-to-end call path を実装する | 承認済み | 完了 | `PR_READY` `458f712` | POTASK-004, POTASK-010 | POTASK-012 | 未作成 | approved: `feb8908..458f712` / 2 cycles | [#29](https://github.com/omitsuhashi/skills/pull/29) |
-| `portfolio-os-task-backend-plugin-skill` | POTASK-012 | shared Adapter contract v2 と安全なwrite契約を実装する | 承認済み | 人間判断待ち | local commits `bb66aff`, `5f4c0dc`, `c47a9c7` / verification passed | POTASK-011 | POTASK-013, POTASK-014, POTASK-016 | 未作成 | changes requested: `cc1d428..c47a9c7` / 通常2 cycles + 例外1 cycle | 未作成 |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-012 | shared Adapter contract v2 と安全なwrite契約を実装する | 承認済み | 最終micro-fix実行中 | local commits `bb66aff`, `5f4c0dc`, `c47a9c7` / verification passed | POTASK-011 | POTASK-013, POTASK-014, POTASK-016 | 未作成 | changes requested: `cc1d428..c47a9c7` / 通常2 cycles + 例外1 cycle / 最終micro-review承認済み | 未作成 |
 | `portfolio-os-task-backend-plugin-skill` | POTASK-013 | unified route v2へ移行しread Interfaceを回帰維持する | 承認済み | ブロック中 | 未着手 | POTASK-012 | POTASK-015 | 未作成 | 未実施 | 未作成 |
 | `portfolio-os-task-backend-plugin-skill` | POTASK-014 | approval digestとconfidence-aware approval policyを実装する | 承認済み | ブロック中 | 未着手 | POTASK-012 | POTASK-015 | 未作成 | 未実施 | 未作成 |
 | `portfolio-os-task-backend-plugin-skill` | POTASK-015 | executable `task_preflight` / `task_apply` facadeを実装する | 承認済み | ブロック中 | 未着手 | POTASK-013, POTASK-014 | POTASK-019 | 未作成 | 未実施 | 未作成 |
@@ -504,8 +504,8 @@ git diff --check
 - cycle 2 / 2は、scheme-relative / colon-form URL bypassと、root plugin entrypoint / direct provider SDK / separate-adapter importのscan漏れをImportant `intent_gap`として検出した。blockerはreleaseしていない。
 - human request `hr-potask-012-review-exception-001` により、上記残存2件だけをTDD修正し独立reviewする例外cycle 1回を2026-07-22に承認し、`c47a9c7`でURL-shaped bypassとroot / provider import scan漏れを修正した。
 - exception reviewは、両guardの`r"\b(?:api\.github\.com|/graphql)\b"`がquote後またはstring先頭の`/graphql`をword-boundary条件で見逃すImportant `intent_gap`を1件検出した。他のscope内findingはない。
-- human request `hr-potask-012-post-exception-decision-001` をopenし、micro-fix + independent review 1回、明示的risk acceptance、実行停止のいずれかを人間判断するまで全blockerを維持する。
-- next trigger: 上記人間判断。review approvalまたは明示的risk acceptance後だけPOTASK-013、POTASK-014、POTASK-016をreleaseする。
+- human request `hr-potask-012-post-exception-decision-001` に対し、ユーザーは両guard testの無効な先頭word-boundary修正と代表的`endpoint = "/graphql"` probe追加だけを対象にする最終micro-fix + independent review 1回を承認した。既存のclient / API / GraphQL / `gh` / provider禁止は維持し、他scopeへ広げない。
+- next trigger: 最終micro-review approval。Critical / Important findingが残れば再停止し、approvedの場合だけPOTASK-013、POTASK-014、POTASK-016をreleaseする。
 - remote / live evidence: GitHub Issue、push、PR、merge、Hermes profile / MCP registration、credential、GitHub Project / Issue mutationは未実施。
 
 ### POTASK-013: unified route v2へ移行しread Interfaceを回帰維持する

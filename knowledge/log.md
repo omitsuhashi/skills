@@ -1218,3 +1218,10 @@ append-only で使います。すべての entry は予測しやすい header �
 - 承認済みexception後にImportantが残ったためPOTASK-012を`WAITING_HUMAN`へ戻し、POTASK-013、POTASK-014、POTASK-016をreleaseしなかった
 - human request `hr-potask-012-post-exception-decision-001` は、regex boundaryと代表probeだけのmicro-fix + independent review 1回、既知riskの明示accept、実行停止のいずれかを要求する
 - remote policyは`local_only`のまま。追加fix、GitHub Issue、push、PR、merge、live Hermes / MCP / credential / Project / Issue変更は未実施
+
+## [2026-07-22] human-decision | POTASK-012 final micro-fix review
+
+- ユーザーはhuman request `hr-potask-012-post-exception-decision-001`に対し、残存したquoted / string-start `/graphql` guard漏れだけを対象にする最終micro-fixと独立review 1回を承認した
+- write scopeは`plugins/task-management/tests/test_adapter_dispatch.py`と`plugins/task-management/tests/test_github_mcp_route.py`の2ファイルに限定し、無効な先頭word-boundaryの修正と代表的`endpoint = "/graphql"` failing probe追加だけを許可する
+- 既存のclient / API / GraphQL / `gh` / provider禁止を維持し、最終review後もCritical / Important findingが残る場合は自動fixやrisk acceptanceを行わず再停止する
+- POTASK-012のblockerは最終review approvalまで維持する。remote policyは`local_only`のままで、GitHub Issue、push、PR、merge、live Hermes / MCP / credential / Project / Issue変更は未実施
