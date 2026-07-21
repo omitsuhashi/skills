@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import importlib.util
+from io import StringIO
 import json
 import os
 from pathlib import Path
@@ -22,6 +24,21 @@ def binding_module():
     from issue_implementation_loop import approved_spec_binding
 
     return approved_spec_binding
+
+
+def capability_script_module():
+    spec = importlib.util.spec_from_file_location(
+        "issue_loop_check_capabilities_under_test",
+        SCRIPTS_DIR / "check_capabilities.py",
+    )
+    assert spec and spec.loader
+    sys.path.insert(0, str(SCRIPTS_DIR))
+    try:
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+    finally:
+        sys.path.pop(0)
+    return module
 
 
 class ApprovedSpecBindingTests(unittest.TestCase):
@@ -487,6 +504,33 @@ class ApprovedSpecBindingTests(unittest.TestCase):
         self.assertTrue(payload["input_packet"]["ok"])
         self.assertTrue(payload["approved_spec_seal"]["supported"])
         self.assertEqual(payload["approved_spec_seal"]["missing"], [])
+
+    def test_unsupported_seal_capability_allows_read_only_diagnostics(self) -> None:
+        binding = binding_module()
+        script = capability_script_module()
+        unsupported = binding.SealCapabilities(
+            supported=False,
+            missing=("dir_fd:open",),
+        )
+        stdout = StringIO()
+        with mock.patch.object(
+            script, "probe_seal_capabilities", return_value=unsupported
+        ), mock.patch.object(
+            sys,
+            "argv",
+            ["check_capabilities.py", "--repo", str(self.repo), "--json"],
+        ), mock.patch("sys.stdout", stdout):
+            returncode = script.main()
+
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(returncode, 0)
+        self.assertTrue(payload["ok"])
+        self.assertFalse(payload["approved_spec_seal"]["supported"])
+        self.assertFalse(payload["approved_spec_seal"]["blocking"])
+        self.assertEqual(
+            payload["approved_spec_seal"]["required_for"],
+            ["seal", "state_change"],
+        )
 
     def test_asb_24_contract_surface_has_no_consumer_specific_vocabulary(self) -> None:
         binding_module()

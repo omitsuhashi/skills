@@ -24,6 +24,7 @@ def main() -> int:
     repo_result = git_output(["rev-parse", "--show-toplevel"], cwd=args.repo) if git_path else None
     common_dir_result = git_output(["rev-parse", "--git-common-dir"], cwd=args.repo) if git_path else None
     seal_capabilities = probe_seal_capabilities()
+    seal_blocking = bool(args.input) and not seal_capabilities.supported
     packet_errors: list[str] = []
     if args.input:
         try:
@@ -43,7 +44,7 @@ def main() -> int:
     result = {
         "ok": bool(git_path)
         and bool(repo_result and repo_result.returncode == 0)
-        and seal_capabilities.supported
+        and not seal_blocking
         and not packet_errors,
         "git": {
             "path": git_path,
@@ -59,7 +60,11 @@ def main() -> int:
             "ok": not packet_errors,
             "errors": packet_errors,
         },
-        "approved_spec_seal": seal_capabilities.to_dict(),
+        "approved_spec_seal": {
+            **seal_capabilities.to_dict(),
+            "blocking": seal_blocking,
+            "required_for": ["seal", "state_change"],
+        },
         "skills": {
             "tdd": find_skill("tdd"),
             "requesting-code-review": find_skill("requesting-code-review"),
@@ -83,7 +88,7 @@ def main() -> int:
         if packet_errors:
             for error in packet_errors:
                 print(error, file=sys.stderr)
-        if not seal_capabilities.supported:
+        if seal_blocking:
             print("PLATFORM_UNSUPPORTED", file=sys.stderr)
     return 0 if result["ok"] else 1
 
