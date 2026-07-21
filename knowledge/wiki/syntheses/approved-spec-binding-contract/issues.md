@@ -371,7 +371,7 @@ artifact lifecycleがfuture agentへ伝わることをfresh contextで確認し�
 
 ### ASBC-009
 
-- Local verification range: `a15e7dc04a7c830ac09773268a820479ff25cea2..HEAD`。本closeout commitでlocal `PR_READY` evidenceを固定する。
+- Local verification range: `a15e7dc04a7c830ac09773268a820479ff25cea2..806917123a78d1b614861c3106c961f813ba5813`。closeout commitでlocal `PR_READY` evidenceを固定した。
 - Fresh evaluator evidence: `cross-host-release-attestation`、`epic-runtime-boundary-audit`、`portable-approval-evidence-refresh`の3 read-only scenarioを、approved spec/desired answerを渡さずcurrent loop skill entrypointだけから評価した。3/3が`knowledge/wiki/syntheses/<epic-id>/{spec.md,issues.md,implementation-plan.md,input-packet.json}`をtracked durable tree、`$(git rev-parse --git-common-dir)/agent-runs/issue-implementation-loop/<epic-id>/`配下のEnvelope/runtime treeをuntrackedと判断した。raw transcriptはcommitしていない。
 - Full verification: issue-loop 247 tests、grill 26 tests、llm-wiki 6 tests、scripts 59 tests、architecture/context/strict context/dual-host/両creator validators、`git diff --check`が成功した。strict contextはissue-loop operation count `8 == 8`、top-level `warnings=[]`。initial briefのunsupported `--strict`はcurrent CLI/CI/test契約どおり`--require-baseline --fail-on-warning`へplan correctionした。
 - Local risk review: `origin/main...HEAD`をspec/implementation alignment、host-specific tracked path、stale flat current link、historical migration、schema/version drift、remote-scope expansionの6観点で確認し、local Critical / Important findingは0。initial plan内のflat pathはhistorical archive、test helperのflat basenameはlegacy drift fixture用test-only hard-link shimでありcurrent guidance/runtime pathではない。
