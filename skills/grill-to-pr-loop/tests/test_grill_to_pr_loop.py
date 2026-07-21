@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import os
 from pathlib import Path
 import tempfile
@@ -36,6 +37,72 @@ def extract_default_prompt(path: Path) -> str:
 
 
 class GrillToPrLoopTests(unittest.TestCase):
+    def test_skill_description_is_trigger_only(self) -> None:
+        text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+        description = next(
+            line.removeprefix("description: ")
+            for line in text.splitlines()
+            if line.startswith("description: ")
+        )
+
+        self.assertEqual(
+            description,
+            "Use when a repository change requires approved durable design, issue decomposition, and worker-only implementation.",
+        )
+
+    def test_planning_contract_seals_the_exact_approved_spec_revision(self) -> None:
+        planning_text = PLANNING_CONTRACT.read_text(encoding="utf-8")
+        handoff_text = (SKILL_DIR / "references" / "execution-handoff.md").read_text(
+            encoding="utf-8"
+        )
+        combined = f"{planning_text}\n{handoff_text}"
+
+        for required in (
+            "one Spec Gate approval",
+            "repo-relative spec path",
+            "exact raw-byte SHA-256",
+            "accepted_decisions",
+            "non_goals",
+            "acceptance_criteria",
+            "verification",
+            "remote_policy",
+            "stop_conditions",
+            "approved_spec_binding.py identify",
+            "approved_spec_binding.py seal",
+            "validate_input_packet.py",
+            "Any spec byte change requires re-approval and a new seal",
+            "Input Packet v2",
+            "Execution Envelope v4",
+        ):
+            self.assertIn(required, combined)
+
+        self.assertNotIn("when available", combined)
+        self.assertNotIn("schema version `3` Execution Envelope", combined)
+
+    def test_historical_packets_and_envelopes_are_indexed_as_non_executable(self) -> None:
+        index_text = (REPO_ROOT / "knowledge" / "index.md").read_text(encoding="utf-8")
+        synthesis_root = REPO_ROOT / "knowledge" / "wiki" / "syntheses"
+        historical_paths: list[Path] = []
+        for pattern, current_version in (
+            ("*input-packet.json", 2),
+            ("*execution-envelope.json", 4),
+        ):
+            for path in synthesis_root.glob(pattern):
+                payload = json.loads(path.read_text(encoding="utf-8"))
+                if payload.get("schema_version") != current_version:
+                    historical_paths.append(path)
+
+        self.assertTrue(historical_paths)
+        for path in historical_paths:
+            entry = next(
+                (line for line in index_text.splitlines() if path.name in line),
+                None,
+            )
+            self.assertIsNotNone(entry, f"historical artifact is not indexed: {path.name}")
+            assert entry is not None
+            self.assertIn("historical", entry, path.name)
+            self.assertIn("non-executable", entry, path.name)
+
     def test_core_reference_owns_global_workflow_context(self) -> None:
         text = CORE_REFERENCE.read_text(encoding="utf-8")
         self.assertLessEqual(len(text.split()), 600)
@@ -193,7 +260,7 @@ class GrillToPrLoopTests(unittest.TestCase):
         self.assertIn("Issue Gate approval", planning_text)
         self.assertIn("Execution Plan Gate approval", handoff_text)
         self.assertIn("current planning branch", handoff_text)
-        self.assertIn("schema version `3` Execution Envelope", handoff_text)
+        self.assertIn("Execution Envelope v4", handoff_text)
         self.assertIn("Moving to the next phase without committing an approved gate", mistakes_text)
 
     def test_gate_taxonomy_separates_human_preflight_and_remote_boundaries(self) -> None:

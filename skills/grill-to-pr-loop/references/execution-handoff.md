@@ -8,7 +8,7 @@ Do not model the run as a mutable development main branch. Use an optional plann
 
 Use branch names like `codex/<epic-id>/<local-id>-<slug>`. Blocked issues may reserve names/paths, but physical worktrees stay absent until release.
 
-Codex phase branch policy: keep planning artifacts on the current planning branch through gate commits; keep docs, ledgers, packets, and approval evidence off issue branches; create a schema version `3` Execution Envelope with `phase_branch_policy`; hand execution to a fresh or compacted coordinator context; let `issue-implementation-loop` own `epic_base.ref`, reservations, and integration work items.
+Codex phase branch policy: keep planning artifacts on the current planning branch through gate commits; issue workers inherit but do not author them; create an Execution Envelope v4 with `approved_spec_binding` and `phase_branch_policy`; hand execution to a fresh or compacted coordinator context; let `issue-implementation-loop` own `epic_base.ref`, reservations, and integration work items.
 
 Base policies: `epic_base` branches from `codex/<epic-id>/epic-base`, `blocker_head` from exactly one prerequisite issue head, and `integration_head` from an approved integration work item. Do not let a downstream worker merge multiple blocker heads; add an integration work item.
 
@@ -18,16 +18,17 @@ Run targeted and fresh final verification. Create or update a scoped local commi
 
 ## Normalized Execution Packet
 
-Build a normalized input packet file for `issue-implementation-loop`; use a file instead of prompt paste. Include:
+Build an Input Packet v2 file for `issue-implementation-loop`; use a file instead of prompt paste. The unsealed draft contains:
 
-- `schema_version`, `repo_root`, `epic_id`, optional `artifact_root`
-- `spec.path`, plus approved revision/hash when available
+- `schema_version: 2`, `epic_id`, and repo-relative `artifact_root`
 - `work_items[]` with ID, title, source, acceptance criteria, non-goals, verification, write scope, and dependencies
 - `delivery_intent`
 
 `work_items[].title`、`acceptance_criteria`、`non_goals` などの user-facing packet string は日本語をベースにする。schema key、path、command、ID、外部参照は維持する。
 
-Use the input-packet template/schema and validate through `issue-implementation-loop/scripts/validate_input_packet.py`.
+Seal the draft with `approved_spec_binding.py seal`, passing the approved repo-relative path, exact raw-byte SHA-256, actor expression/time, and all six `--approve-scope` values. Seal re-reads the spec, atomically writes required `spec_binding` and `approval_evidence`, and does not edit the spec. Then run `validate_input_packet.py`; never hand off an unsealed or invalid packet.
+
+Commit the sealed packet and exact spec, then create an Execution Envelope v4 whose `approved_spec_binding` pins the packet digest and full gate commit. Any spec or packet byte drift requires human re-approval and a new seal/envelope/runtime epoch; old reviews and results do not carry forward.
 
 ## Implementation Context Handoff
 

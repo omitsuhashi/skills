@@ -72,6 +72,45 @@ class EntrypointTests(unittest.TestCase):
             text,
         )
 
+    def test_entrypoint_exposes_fresh_binding_guards_and_reapproval(self) -> None:
+        text = SKILL_FILE.read_text(encoding="utf-8")
+        core = (SKILL_DIR / "references/core.md").read_text(encoding="utf-8")
+        combined = f"{text}\n{core}"
+
+        for required in (
+            "Prepare",
+            "dispatch and fix redispatch",
+            "review dispatch and approval intake",
+            "resume and rebuild",
+            "completion",
+            "delivery",
+            "freshly verify",
+            "same active `approved_spec_binding`",
+            "Read-only status",
+            "state advance remains blocked",
+            "human re-approval and a new seal",
+        ):
+            self.assertIn(required, combined)
+
+    def test_active_contract_has_no_legacy_success_surface(self) -> None:
+        active_text = "\n".join(
+            path.read_text(encoding="utf-8")
+            for path in (SKILL_DIR / "references").glob("*.md")
+        )
+        active_text = f"{SKILL_FILE.read_text(encoding='utf-8')}\n{active_text}"
+
+        for forbidden in (
+            "when available",
+            "schema version `3` Execution Envelope",
+            "legacy remains readable",
+            "legacy remains resumable",
+            "--schema-version",
+        ):
+            self.assertNotIn(forbidden, active_text)
+        self.assertFalse(
+            (SKILL_DIR / "assets/schemas/worker-packet-v1.schema.json").exists()
+        )
+
     def test_skill_entrypoint_routes_through_context_contract(self) -> None:
         text = SKILL_FILE.read_text(encoding="utf-8")
 

@@ -27,9 +27,9 @@ _現在なし。_
   検索語: loop review governance, issue intent, hardening candidate, future-only hardening, safety escalation, final PR, human decision, requesting-code-review, context budget, 実装レビュー, 堅牢化, 人間判断
 - [Loop Review Governance Issue 台帳](wiki/syntheses/loop-review-governance-issues.md) — `loop-review-governance` の Issue Gate 承認済み local issue ledger。LRG-001 から LRG-005 の blocker graph、acceptance criteria、remote policy を定義する。
   検索語: loop review governance, local issue, Issue Gate, LRG, blocker graph, hardening candidate, requesting-code-review, context budget, ローカルIssue, 堅牢化
-- [Loop Review Governance Input Packet](wiki/syntheses/loop-review-governance-input-packet.json) — `loop-review-governance` の Execution Plan Gate 用 normalized input packet。承認済み LRG-001 から LRG-005 の source、acceptance criteria、write scope、dependencies、local-only delivery intent を正規化する。
+- [Loop Review Governance Input Packet](wiki/syntheses/loop-review-governance-input-packet.json) — historical / non-executable な Input Packet v1。過去の LRG 実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
   検索語: loop review governance, input packet, Execution Plan Gate, issue-implementation-loop, LRG, write scope, dependencies, local_only, 実行計画
-- [Loop Review Governance Execution Envelope](wiki/syntheses/loop-review-governance-execution-envelope.json) — `loop-review-governance` の Execution Envelope。worker-only policy、review governance policy、branch/worktree reservation、draft PR 作成後の hardening decision gate、draft final PR approved actions を固定する。
+- [Loop Review Governance Execution Envelope](wiki/syntheses/loop-review-governance-execution-envelope.json) — historical / non-executable な Execution Envelope v2。過去の LRG 実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
   検索語: loop review governance, execution envelope, worker_context_required, batch_issue_prs, requesting-code-review, hardening candidate, pending_decision, draft PR, worktree reservation
 - [Loop Review Governance Final Delivery Plan](wiki/syntheses/loop-review-governance-final-delivery-plan.json) — `loop-review-governance` の draft final PR 作成用 delivery plan。head は `codex/loop-review-governance/epic-base`、base は `main`、draft only。
   検索語: loop review governance, delivery plan, draft PR, final PR, epic-base, hardening decision
@@ -41,33 +41,43 @@ _現在なし。_
   検索語: grill-to-pr-loop, issue-implementation-loop, execution envelope, worktree reservation, scheduler, human wait, runtime state, skill split, implementation plan
 - [Grill To PR Loop Skill Split V2 Issues](wiki/syntheses/grill-to-pr-loop-skill-split-v2-issues.md) — skill split 実装のローカルIssue ledger。
   検索語: grill-to-pr-loop, issue-implementation-loop, local issue, blocker graph, ローカルIssue, ブロッカー
+- [Grill To PR Loop Skill Split V2 Input Packet](wiki/syntheses/grill-to-pr-loop-skill-split-v2-input-packet.json) — historical / non-executable な Input Packet v1。過去の実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
+- [Grill To PR Loop Skill Split V2 Execution Envelope](wiki/syntheses/grill-to-pr-loop-skill-split-v2-execution-envelope.json) — historical / non-executable な Execution Envelope v1。過去の実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
 - [Grill To PR Loop Branch Policy Spec](wiki/syntheses/grill-to-pr-loop-branch-policy-spec.md) — `grill-to-pr-loop` / `issue-implementation-loop` の branch、worktree、commit、integration branch 推奨運用を実装契約化する spec。
   検索語: grill-to-pr-loop, issue-implementation-loop, branch policy, worktree reservation, epic_base, scoped commit, integration branch, PR_READY, ブランチ, コミット
 - [Grill To PR Loop Branch Policy Issues](wiki/syntheses/grill-to-pr-loop-branch-policy-issues.md) — branch policy 実装のローカルIssue ledger。
   検索語: grill-to-pr-loop, branch policy, local issue, blocker graph, ローカルIssue, ブランチ運用
+- [Grill To PR Loop Branch Policy Input Packet](wiki/syntheses/grill-to-pr-loop-branch-policy-input-packet.json) — historical / non-executable な Input Packet v1。過去の実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
+- [Grill To PR Loop Branch Policy Execution Envelope](wiki/syntheses/grill-to-pr-loop-branch-policy-execution-envelope.json) — historical / non-executable な Execution Envelope v1。過去の実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
 - [Issue Implementation Loop Context Policy Spec](wiki/syntheses/issue-implementation-loop-context-policy-spec.md) — `issue-implementation-loop` の context/session policy と entrypoint budget を契約化する spec。
   検索語: issue-implementation-loop, context policy, session semantics, worker packet, Execution Envelope, コンテキスト, セッション
 - [Issue Implementation Loop Context Policy Issues](wiki/syntheses/issue-implementation-loop-context-policy-issues.md) — context/session policy 実装のローカルIssue ledger。
   検索語: issue-implementation-loop, context policy, local issue, blocker graph, ローカルIssue, コンテキスト
+- [Issue Implementation Loop Context Policy Input Packet](wiki/syntheses/issue-implementation-loop-context-policy-input-packet.json) — historical / non-executable な Input Packet v1。過去の実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
 - [Loop Skill Context Optimization Spec](wiki/syntheses/loop-skill-context-optimization-spec.md) — `grill-to-pr-loop` と `issue-implementation-loop` の context 最適化、reference 分割、repo-local skill root 優先 hardening の実装契約。
   検索語: grill-to-pr-loop, issue-implementation-loop, context optimization, reference split, skill root, repo-local, コンテキスト最適化
 - [Loop Skill Context Optimization Issues](wiki/syntheses/loop-skill-context-optimization-issues.md) — loop skill context optimization 実装のローカルIssue ledger。
   検索語: grill-to-pr-loop, issue-implementation-loop, local issue, blocker graph, reference routing, skill root, ローカルIssue
+- [Loop Skill Context Optimization Input Packet](wiki/syntheses/loop-skill-context-optimization-input-packet.json) — historical / non-executable な Input Packet v1。過去の実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
 - [Loop Skill Codex 最適化仕様](wiki/syntheses/loop-skill-codex-optimization-spec.md) — Codex の planning / execution context と phase branch policy に合わせ、Execution Envelope v3、branch ownership、fresh / compacted coordinator handoff を固定する仕様。
   検索語: Codex, phase_branch_policy, schema version 3, execution envelope, planning branch, epic_base, issue branch, worktree, grill-to-pr-loop, issue-implementation-loop
 - [Issue Implementation Loop Common Lib Split Spec](wiki/syntheses/issue-implementation-loop-common-lib-split-spec.md) — `issue-implementation-loop` の `_common.py` と単一巨大 test file を internal common lib / behavior-domain tests へ分割する後続実装契約。
   検索語: issue-implementation-loop, common lib, _common.py, scripts/lib, test split, context optimization, skill split, コンテキスト最適化
 - [Issue Implementation Loop Common Lib Split Issues](wiki/syntheses/issue-implementation-loop-common-lib-split-issues.md) — common lib split 実装のローカルIssue ledger。
   検索語: issue-implementation-loop, local issue, blocker graph, common lib, _common.py, tests, ローカルIssue
+- [Issue Implementation Loop Common Lib Split Input Packet](wiki/syntheses/issue-implementation-loop-common-lib-split-input-packet.json) — historical / non-executable な Input Packet v1。過去の実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
 - [Loop Skill Architecture V3 Spec](wiki/syntheses/loop-skill-architecture-v3-spec.md) — `grill-to-pr-loop` / `issue-implementation-loop` の context contract、operation selection、worker packet、resume brief を実装契約化する Spec Gate draft。
   検索語: grill-to-pr-loop, issue-implementation-loop, context-contract, worker packet, resume brief, operation routing, コンテキスト最適化
 - [Loop Skill Architecture V3 Issues](wiki/syntheses/loop-skill-architecture-v3-issues.md) — loop skill architecture v3 実装の日本語 local-first issue ledger と統合 verification evidence。
   検索語: grill-to-pr-loop, issue-implementation-loop, local issue, blocker graph, context-contract, worker packet, resume brief, ローカルIssue
+- [Loop Skill Architecture V3 Input Packet](wiki/syntheses/loop-skill-architecture-v3-input-packet.json) — historical / non-executable な Input Packet v1。過去の実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
+- [Loop Skill Architecture V3 Execution Envelope](wiki/syntheses/loop-skill-architecture-v3-execution-envelope.json) — historical / non-executable な Execution Envelope v1。過去の実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
 - [Skill Repository Optimization V4 Spec](wiki/syntheses/skill-repository-optimization-v4-spec.md) — PR #19 後の read-set 正本化、推定 token budget、Worker Packet V2、Resume Brief V2、`llm-wiki` contract、CI 固定の Spec / Issue / Execution Plan Gate 承認済み契約。
   検索語: skill repository optimization, grill-to-pr-loop, issue-implementation-loop, llm-wiki, context-contract, token budget, worker packet v2, resume brief v2, CI, コンテキスト最適化
 - [Skill Repository Optimization V4 Issues](wiki/syntheses/skill-repository-optimization-v4-issues.md) — Skill Repository Optimization V4 の local-first integration ledger。SRO4-001 から SRO4-006 の実装状態、review range、full verification、canonical context CLI、wrapper / workflow shim 削除、remote policy、residual risks を集約する。
   検索語: skill repository optimization, local issue, blocker graph, SRO4, context-contract, Worker Packet V2, Resume Brief V2, llm-wiki, final integration, canonical CLI, wrapper removal, residual risks, local_only, ローカルIssue, 統合検証, 残リスク
-- [Skill Repository Optimization V4 Execution Envelope](wiki/syntheses/skill-repository-optimization-v4-execution-envelope.json) — V4 実装ループの local-only Execution Envelope、worker-only policy、branch/worktree reservation、prepare 検証済み実行契約。
+- [Skill Repository Optimization V4 Input Packet](wiki/syntheses/skill-repository-optimization-v4-input-packet.json) — historical / non-executable な Input Packet v1。過去の実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
+- [Skill Repository Optimization V4 Execution Envelope](wiki/syntheses/skill-repository-optimization-v4-execution-envelope.json) — historical / non-executable な Execution Envelope v1。過去の実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
   検索語: skill repository optimization, execution envelope, worker_context_required, local_only, SRO4, worktree reservation, 実行計画
 - [Skill Repository Optimization V4 Context Baseline](wiki/syntheses/skill-repository-optimization-v4-context-baseline.json) — SRO4-001 で固定した loop skill operation context metrics baseline。
   検索語: skill repository optimization, SRO4-001, context baseline, operation metrics, word count, grill-to-pr-loop, issue-implementation-loop
@@ -75,17 +85,17 @@ _現在なし。_
   検索語: 適用基準, 役割境界モデル, 複雑性, grill-to-pr-loop, issue-implementation-loop, operational simplicity, workflow complexity, mental model, コンテキスト最適化
 - [Loop Skill 運用単純化 Issue 台帳](wiki/syntheses/loop-skill-operational-simplicity-issues.md) — loop 系 skill 運用単純化の日本語 local-first 最終台帳。LSOS-001 から LSOS-004 の実装証跡、レビュー結果、全体検証、remote boundary、draft PR #22 を集約する。
   検索語: ローカルIssue, 実装証跡, レビュー結果, 最終台帳, 運用単純化, draft PR #22, grill-to-pr-loop, issue-implementation-loop, local issue, blocker graph, workflow complexity, role boundary
-- [Loop Skill 運用単純化 Input Packet](wiki/syntheses/loop-skill-operational-simplicity-input-packet.json) — LSOS-001 から LSOS-004 を local-only で実行する承認済み normalized input packet。
+- [Loop Skill 運用単純化 Input Packet](wiki/syntheses/loop-skill-operational-simplicity-input-packet.json) — historical / non-executable な Input Packet v1。過去の LSOS 実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
   検索語: 実行計画, 承認済み packet, loop skill operational simplicity, execution packet, input packet, LSOS, local_only
-- [Loop Skill 運用単純化 Execution Envelope](wiki/syntheses/loop-skill-operational-simplicity-execution-envelope.json) — LSOS 実装ループの local-only Execution Envelope、worker-only policy、branch/worktree reservation、prepare 検証済み実行契約。
+- [Loop Skill 運用単純化 Execution Envelope](wiki/syntheses/loop-skill-operational-simplicity-execution-envelope.json) — historical / non-executable な Execution Envelope v1。過去の LSOS 実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
   検索語: 実行計画, 実行 envelope, worker_context_required, local_only, LSOS, worktree reservation, loop skill operational simplicity
 - [Loop Skill Context Compaction Spec](wiki/syntheses/loop-skill-context-compaction-spec.md) — loop 系 skill の session context pressure 65% 圧縮 trigger、保持/圧縮分類、phase 別 compaction policy を定義する Spec Gate 承認済み仕様。
   検索語: grill-to-pr-loop, issue-implementation-loop, context compaction, session pressure, 65%, 圧縮, 忘れてはいけないこと, handoff brief, resume brief, worker packet
 - [Loop Skill Context Compaction Issues](wiki/syntheses/loop-skill-context-compaction-issues.md) — context compaction 実装の日本語 local-first ledger。LSCC-001 から LSCC-005 の implementation evidence、review result、verification result、remote policy を集約する。
   検索語: LSCC, Issue Gate, local issue ledger, context compaction, carry-forward capsule, phase transition GC, conditional overlay, local_only, implementation evidence, review result, verification result
-- [Loop Skill Context Compaction Input Packet](wiki/syntheses/loop-skill-context-compaction-input-packet.json) — LSCC-001 から LSCC-005 を local-only / worker-only で実行する normalized input packet。
+- [Loop Skill Context Compaction Input Packet](wiki/syntheses/loop-skill-context-compaction-input-packet.json) — historical / non-executable な Input Packet v1。過去の LSCC 実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
   検索語: LSCC, input packet, Execution Plan Gate, issue-implementation-loop, worker-only, local_only, write scope, dependency graph
-- [Loop Skill Context Compaction Execution Envelope](wiki/syntheses/loop-skill-context-compaction-execution-envelope.json) — LSCC 実装ループの local-only Execution Envelope。worker-only policy、reserved branch/worktree、session compaction policy を含む。
+- [Loop Skill Context Compaction Execution Envelope](wiki/syntheses/loop-skill-context-compaction-execution-envelope.json) — historical / non-executable な Execution Envelope v2。過去の LSCC 実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
   検索語: LSCC, execution envelope, worker_context_required, coordinator_may_implement, local_only, session_compaction, hard_stop_percent, worktree reservation
 - [Loop Skill Context Compaction Handoff Brief](wiki/syntheses/loop-skill-context-compaction-handoff-brief.md) — Execution Plan Gate 後に raw transcript へ依存せず再開するための bounded handoff brief。
   検索語: LSCC, handoff brief, carry-forward capsule, resume, runtime root, worker packet, context compaction
@@ -93,9 +103,9 @@ _現在なし。_
   検索語: Execution Plan Gate, Live Root Gate, Adapter Availability Gate, final PR, draft PR, approved_actions, auto-continue, grill-to-pr-loop, issue-implementation-loop, remote policy, human-only merge
 - [Loop Skill 自動継続 Gate Issue 台帳](wiki/syntheses/loop-skill-autonomous-gates-issues.md) — `loop-skill-autonomous-gates` の Issue Gate 承認済み日本語 local-first 最終台帳。LSAG-001 から LSAG-006 の implementation evidence、review result、verification result、delivery evidence、remote 未実行境界を集約する。
   検索語: LSAG, Loop Skill 自動継続, local issue, Issue Gate, final ledger, 最終台帳, implementation evidence, review result, verification result, delivery evidence, blocker graph, Execution Plan Gate, Live Root Gate, Adapter Availability Gate, final PR, approved_actions
-- [Loop Skill 自動継続 Gate Input Packet](wiki/syntheses/loop-skill-autonomous-gates-input-packet.json) — `loop-skill-autonomous-gates` の Execution Plan Gate 自動通過用 normalized input packet。LSAG-001 から LSAG-005 の write scope、dependencies、`batch_issue_prs` delivery intent を正規化する execution packet。
+- [Loop Skill 自動継続 Gate Input Packet](wiki/syntheses/loop-skill-autonomous-gates-input-packet.json) — historical / non-executable な Input Packet v1。過去の LSAG 実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
   検索語: LSAG, input packet, execution packet, Execution Plan Gate, auto-continue, issue-implementation-loop, batch_issue_prs, final PR, approved_actions, delivery evidence
-- [Loop Skill 自動継続 Gate Execution Envelope](wiki/syntheses/loop-skill-autonomous-gates-execution-envelope.json) — `loop-skill-autonomous-gates` 実装ループの Execution Envelope。worker-only policy、branch/worktree reservation、`batch_issue_prs`、`final_pr_push_head` / `final_pr_create_draft` approved actions を固定する。
+- [Loop Skill 自動継続 Gate Execution Envelope](wiki/syntheses/loop-skill-autonomous-gates-execution-envelope.json) — historical / non-executable な Execution Envelope v1。過去の LSAG 実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
   検索語: LSAG, execution envelope, worker_context_required, batch_issue_prs, final_pr_push_head, final_pr_create_draft, worktree reservation, auto-continue
 - [Grill To PR Loop Epic Base Delivery Policy Spec](wiki/syntheses/grill-to-pr-loop-epic-base-delivery-policy-spec.md) — issue PR を `codex/<epic-id>/epic-base` に集約し、issue PR は guarded agent merge、final PR merge は human-only とする delivery policy。
   検索語: grill-to-pr-loop, issue-implementation-loop, epic_base, epic-base, batch_issue_prs, issue PR, final PR, merge policy, review cycles, PR配送
@@ -124,13 +134,13 @@ _現在なし。_
   検索語: Portfolio OS, task backend, task-management, plugin package, primary skill, local JSON, MCP, provider plugin, no gh, Hermes Agent, TaskDraft, TaskRef, TaskQuery, TaskSnapshot, TaskSnapshotResult, task_query, task-management-read, TaskBackendRoute, TaskBackendDestination, adapter dispatch, operation envelope, connection_ref, destination_ref, work_unit_id, work_unit_name, inbox, routing, preview, approval gate
 - [Portfolio OS Task Backend Plugin Skill Issues](wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md) — `portfolio-os-task-backend-plugin-skill` の Issue Gate 承認済み local-first ledger。POTASK-001からPOTASK-011、blocker graph、acceptance criteria、POTASK-010/POTASK-011 local verified、PR #29を定義する。
   検索語: Portfolio OS, task backend, task-management, local issue, Issue Gate, POTASK-010, POTASK-011, provider adapter, local JSON, MCP, provider plugin, no gh, Hermes end-to-end, blocker graph, task-management-read, task_query, TaskSnapshotResult, adapter dispatch, TaskDraft, TaskBackendRoute, TaskBackendDestination
-- [Portfolio OS Task Backend Plugin Skill Input Packet](wiki/syntheses/portfolio-os-task-backend-plugin-skill-input-packet.json) — `portfolio-os-task-backend-plugin-skill` の Execution Plan Gate 承認済み input packet。承認済み POTASK-001 から POTASK-009 の source、acceptance criteria、write scope、dependencies、local-only delivery intent を正規化する。
+- [Portfolio OS Task Backend Plugin Skill Input Packet](wiki/syntheses/portfolio-os-task-backend-plugin-skill-input-packet.json) — historical / non-executable な Input Packet v1。過去の POTASK 実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
   検索語: Portfolio OS, task backend, task-management, input packet, Execution Plan Gate, issue-implementation-loop, POTASK, write scope, dependencies, local_only
 - [Task Management Provider Adapters 実装計画](wiki/syntheses/2026-07-16-task-management-provider-adapters-implementation-plan.md) — POTASK-011 の test-first 実装順序、adapter 境界、Hermes smoke、文書同期、PR delivery を固定する計画。
   検索語: POTASK-011, implementation plan, route config, local snapshot, provider adapter, Hermes smoke, TDD, PR #29
-- [Portfolio OS Task Backend Plugin Skill POTASK-011 Input Packet](wiki/syntheses/portfolio-os-task-backend-plugin-skill-potask-011-input-packet.json) — POTASK-011 だけを既存 draft PR branch 上で実装する normalized input packet。
+- [Portfolio OS Task Backend Plugin Skill POTASK-011 Input Packet](wiki/syntheses/portfolio-os-task-backend-plugin-skill-potask-011-input-packet.json) — historical / non-executable な Input Packet v1。過去の POTASK-011 実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
   検索語: POTASK-011, input packet, provider adapter, local JSON, MCP, provider plugin, per_action
-- [Portfolio OS Task Backend Plugin Skill POTASK-011 Execution Envelope](wiki/syntheses/portfolio-os-task-backend-plugin-skill-potask-011-execution-envelope.json) — worker-only 実装、専用 issue branch/worktree、最大 2 review cycle、既存 draft PR branch push を固定する Execution Envelope v3。
+- [Portfolio OS Task Backend Plugin Skill POTASK-011 Execution Envelope](wiki/syntheses/portfolio-os-task-backend-plugin-skill-potask-011-execution-envelope.json) — historical / non-executable な Execution Envelope v3。過去の POTASK-011 実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
   検索語: POTASK-011, execution envelope, worker context, issue branch, worktree, review cycle, draft PR #29
 
 ## クエリ起点成果物

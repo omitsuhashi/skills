@@ -7,9 +7,9 @@ description: Use when implementing approved repository issues after spec, accept
 
 ## Overview
 
-Run approved repository work items from a normalized input packet to local `PR_READY`. Keep one execution coordinator context responsible for global state, blocker release, review decisions, and final reporting. The planning/grill session must not implement issue work. Dispatch workers/reviewers only for isolated tasks.
+Run approved repository work items to local `PR_READY`. Keep one execution coordinator context for global state, blocker release, review decisions, and reporting; the planning/grill session must not implement issue work. Workers/reviewers receive isolated tasks.
 
-Do not create user-owned Codex threads. If worker contexts are unavailable, stop before implementation. If parallel workers are unavailable, continue through approved serial fallback only as bounded worker-context jobs.
+Do not create user-owned Codex threads. Without worker contexts, stop; without parallel workers, use approved serial fallback as bounded worker-context jobs.
 
 Use `grill-to-pr-loop` first for design, PRD/spec creation, and issue decomposition.
 
@@ -17,11 +17,11 @@ Read `references/mental-model.md` for the first role-boundary page.
 
 ## Applicability
 
-Use this skill only when a normalized approved packet exists, the Execution Envelope requires worker-only execution, worker context is available, and the issue can stay inside its assigned write scope.
+Use this skill only when a normalized approved packet exists, worker-only execution is required, worker context is available, and assigned write scope is sufficient.
 
 Do not use this skill for small one-off edits, direct implementation without a packet, unapproved or changing scope, design interrogation, issue creation, or cases where the coordinator must implement to make progress.
 
-The coordinator must not implement issue work. It owns global state, scheduling, waits, review decisions, blocker release, and final reporting; workers own bounded issue changes and verification evidence.
+The coordinator must not implement; it coordinates state, scheduling, waits, review, and blocker release. Workers own bounded changes and evidence.
 
 ## Immediate Guard
 
@@ -40,22 +40,19 @@ At 65% session pressure or phase exit, read `references/context-compaction.md`.
 
 ## Required Rules
 
-- Treat the input packet as approved scope; do not redesign issues or acceptance criteria here.
+- Treat the packet as approved scope; do not redesign issues or criteria.
+- At prepare, dispatch/fix, review, resume/rebuild, completion, and delivery, freshly verify the same active `approved_spec_binding`. Drift blocks state advance and requires human re-approval and a new seal; read-only status may diagnose without advancing.
 - Require `execution_policy.worker_context_required=true`, `coordinator_may_implement=false`, and `serial_fallback_mode=worker_context_only`.
-- Keep coordinator runtime state out of tracked issue branches; default to `$(git rev-parse --git-common-dir)/agent-runs/issue-implementation-loop/<epic-id>/`.
-- Reserve branch/worktree paths for every approved issue before execution; create physical worktrees only when runnable.
-- Require `epic_base`, `base_policy`, and typed dependency edges; require `epic_base.branch_state` for `batch_issue_prs`.
-- Recompute runnable work after every event. A wave is a launch cohort, not a completion barrier.
-- Use `tdd` or an approved equivalent for behavior changes, bug fixes, behavior-bearing refactors, and tests.
-- Send workers bounded paths-first packets; do not paste full specs or ledgers when durable paths suffice.
+- Keep runtime state under `$(git rev-parse --git-common-dir)/agent-runs/issue-implementation-loop/<epic-id>/`, outside issue branches.
+- Reserve every issue branch/worktree before execution; require `epic_base`, `base_policy`, typed dependencies, and `epic_base.branch_state` for `batch_issue_prs`.
+- Recompute runnable work after every event; a wave is not a completion barrier.
+- Use `tdd` or an approved equivalent, fresh verification, and a scoped commit before review or success.
+- Send bounded paths-first packets. Keep workers in write scope; only the coordinator writes envelope/runtime/events/shared ledger unless assigned.
 - Keep ledger and human-facing report updates in Japanese; preserve stable IDs, paths, commands, schema keys, and external issue/PR references.
-- Keep workers inside write scope; only the coordinator writes envelope, runtime snapshot, event log, and shared ledger unless explicitly assigned.
-- Require a local scoped commit before review, blocker release, issue completion, or any success status.
-- Run issue-scoped implementation review before issue completion, blocker release, or PR readiness.
-- Run at most two issue implementation review cycles. Fix Critical and Important in-scope findings, or stop for explicit human risk acceptance after the second review still finds in-scope issues.
-- Scope human waits to the smallest affected set; use `epic` only for envelope/DAG/runtime corruption, shared-base safety, credential/security incidents, or external contract changes affecting every issue.
-- Never perform GitHub issue creation, push, PR creation, issue PR merge, force push, deployment, destructive action, billing, credential, or permission changes without approved remote policy. Never merge the final PR; final merge is human-only.
+- Review before completion/blocker release/`PR_READY`; fix in-scope Critical/Important findings within two cycles or seek human risk acceptance.
+- Scope human waits narrowly; reserve `epic` for shared corruption/safety/contract failures.
+- Remote writes require approved policy; final merge is human-only.
 
 ## Completion Report
 
-Report Epic ID, packet/envelope paths, runtime root, issue status table, blocker releases, branch/worktree map, verification, review ranges and verdicts, PR-ready branches, human requests, skipped/performed remote actions, and residual risks.
+Report Epic ID, packet/envelope/runtime paths, issue and branch status, verification/reviews, blockers, human requests, remote actions, and residual risks.
