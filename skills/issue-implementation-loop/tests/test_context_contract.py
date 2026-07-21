@@ -496,6 +496,17 @@ class ContextContractTests(unittest.TestCase):
         self.assertTrue(operations)
         self.assertTrue(all("estimated_token_count" in operation for operation in operations))
 
+    def test_current_context_baseline_covers_every_operation_without_warnings(self) -> None:
+        result = run_generic_context_report(
+            "--all",
+            "--json",
+            "--require-baseline",
+            "--fail-on-warning",
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout)["warnings"], [])
+
     def test_report_skill_context_can_fail_when_required_baseline_is_missing(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             baseline_path = Path(tmp) / "baseline.json"

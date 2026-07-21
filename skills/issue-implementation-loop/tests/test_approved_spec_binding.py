@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import importlib.util
 from io import StringIO
 import json
@@ -39,6 +40,124 @@ def capability_script_module():
     finally:
         sys.path.pop(0)
     return module
+
+
+ASB_PUBLIC_ACCEPTANCE_MATRIX = {
+    "ASB-01": (
+        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_01_02_identify_and_seal_preserve_spec_and_verify",
+    ),
+    "ASB-02": (
+        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_01_02_identify_and_seal_preserve_spec_and_verify",
+    ),
+    "ASB-03": (
+        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_03_changed_spec_prevents_seal_and_output_mutation",
+    ),
+    "ASB-04": (
+        "test_validation.ValidationTests.test_asb_04_execution_envelope_v4_verifies_valid_chain",
+        "test_worker_packet.WorkerPacketTests.test_build_worker_packet_outputs_valid_v3_bounded_packet",
+        "test_operation_selection.OperationSelectionTests.test_asb_04_valid_binding_allows_review_selection",
+        "test_review_gate.ReviewGateTests.test_asb_04_execution_result_v2_accepts_active_binding_and_review_range",
+    ),
+    "ASB-05": (
+        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_05_missing_spec_has_stable_error",
+    ),
+    "ASB-06": (
+        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_06_approval_failures_have_stable_errors",
+    ),
+    "ASB-07": (
+        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_07_missing_and_malformed_digests_have_stable_errors",
+    ),
+    "ASB-08": (
+        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_08_current_spec_drift_invalidates_sealed_packet",
+    ),
+    "ASB-09": (
+        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_09_packet_drift_invalidates_pinned_ref",
+    ),
+    "ASB-10": (
+        "test_worker_packet.WorkerPacketTests.test_asb_10_11_worker_projection_missing_and_drift_fail_closed",
+    ),
+    "ASB-11": (
+        "test_worker_packet.WorkerPacketTests.test_asb_10_11_worker_projection_missing_and_drift_fail_closed",
+    ),
+    "ASB-12": (
+        "test_worker_packet.WorkerPacketTests.test_asb_12_worker_packet_rejects_runtime_binding_mismatch",
+    ),
+    "ASB-13": (
+        "test_validation.ValidationTests.test_asb_13_worker_report_intake_rejects_resealed_runtime_binding",
+    ),
+    "ASB-14": (
+        "test_review_gate.ReviewGateTests.test_asb_14_completion_rechecks_current_spec_before_terminal_result",
+        "test_operation_selection.OperationSelectionTests.test_asb_14_to_16_stale_spec_blocks_review_and_delivery_but_not_status",
+    ),
+    "ASB-15": (
+        "test_delivery.DeliveryTests.test_asb_15_delivery_rechecks_spec_after_terminal_runtime",
+    ),
+    "ASB-16": (
+        "test_operation_selection.OperationSelectionTests.test_asb_14_to_16_stale_spec_blocks_review_and_delivery_but_not_status",
+    ),
+    "ASB-17": (
+        "test_resume_brief.ResumeBriefTests.test_resume_rejects_stale_packet_even_when_runtime_envelope_and_events_are_unchanged",
+        "test_resume_brief.ResumeBriefTests.test_validate_resume_brief_rejects_stale_meta_sources",
+    ),
+    "ASB-18": (
+        "test_runtime_state.RuntimeStateTests.test_rebuild_runtime_state_rejects_mixed_binding_events",
+    ),
+    "ASB-19": (
+        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_19_reapproval_reseals_new_epoch_and_invalidates_old_ref",
+        "test_validation.ValidationTests.test_asb_04_execution_envelope_v4_verifies_valid_chain",
+        "test_runtime_state.RuntimeStateTests.test_rebuild_runtime_state_binds_same_epoch_events_to_runtime_v2",
+        "test_validation.ValidationTests.test_asb_13_worker_report_intake_rejects_resealed_runtime_binding",
+        "test_review_gate.ReviewGateTests.test_asb_22_completion_rejects_result_binding_or_review_range_mismatch",
+    ),
+    "ASB-20": (
+        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_20_rejects_unsafe_and_non_regular_spec_paths",
+        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_20_embedded_nul_is_stable_in_python_and_cli",
+    ),
+    "ASB-21": (
+        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_21_detects_file_replacement_during_validation",
+        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_21_detects_parent_symlink_replacement_during_validation",
+        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_21_seal_rejects_output_parent_swap_without_external_write",
+    ),
+    "ASB-22": (
+        "test_review_gate.ReviewGateTests.test_asb_22_completion_rejects_result_binding_or_review_range_mismatch",
+        "test_validation.ValidationTests.test_asb_22_reviewer_report_rejects_final_alignment_binding_mismatch",
+        "test_delivery.DeliveryTests.test_asb_22_delivery_rejects_stale_execution_result_binding",
+    ),
+    "ASB-23": (
+        "test_validation.ValidationTests.test_validate_input_packet_v2_rejects_closed_shape_and_binding_errors",
+        "test_validation.ValidationTests.test_execution_envelope_v1_through_v3_are_unsupported",
+        "test_worker_packet.WorkerPacketTests.test_worker_packet_v1_and_v2_are_unsupported_and_v1_schema_is_removed",
+        "test_runtime_state.RuntimeStateTests.test_rebuild_runtime_state_rejects_event_v1_and_missing_binding",
+        "test_runtime_state.RuntimeStateTests.test_validate_runtime_state_rejects_v1_and_old_epoch_human_request",
+        "test_validation.ValidationTests.test_worker_report_v1_is_unsupported",
+        "test_candidate_registry.CandidateRegistryTests.test_registry_v1_is_schema_unsupported",
+        "test_resume_brief.ResumeBriefTests.test_resume_metadata_v3_binds_current_epoch_and_rejects_v2_or_meta_less",
+        "test_review_gate.ReviewGateTests.test_execution_result_v1_is_unsupported",
+        "test_delivery.DeliveryTests.test_delivery_plan_v1_is_unsupported",
+    ),
+    "ASB-24": (
+        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_24_contract_surface_has_no_consumer_specific_vocabulary",
+    ),
+    "ASB-25": (
+        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_25_python_and_cli_identify_return_same_binding",
+        "test_entrypoint.EntrypointTests.test_skill_entrypoint_documents_seal_host_capability_boundary",
+    ),
+    "ASB-26": (
+        "test_validation.ValidationTests.test_asb_26_execution_envelope_requires_gate_commit",
+    ),
+    "ASB-27": (
+        "test_validation.ValidationTests.test_asb_27_execution_envelope_rejects_non_ancestor_gate",
+    ),
+    "ASB-28": (
+        "test_validation.ValidationTests.test_asb_28_execution_envelope_rejects_gate_tree_blob_mismatch",
+    ),
+    "ASB-29": (
+        "test_candidate_registry.CandidateRegistryTests.test_delivery_rejects_registry_from_old_binding_epoch",
+    ),
+    "ASB-30": (
+        "test_runtime_state.RuntimeStateTests.test_validate_runtime_state_rejects_v1_and_old_epoch_human_request",
+    ),
+}
 
 
 class ApprovedSpecBindingTests(unittest.TestCase):
@@ -115,6 +234,51 @@ class ApprovedSpecBindingTests(unittest.TestCase):
         with self.assertRaises(module.BindingError) as raised:
             operation()
         self.assertEqual(raised.exception.code, expected)
+
+    def test_asb_public_acceptance_matrix_is_complete_and_public(self) -> None:
+        expected_ids = [f"ASB-{number:02d}" for number in range(1, 31)]
+        module_tree = ast.parse(
+            Path(__file__).read_text(encoding="utf-8"), filename=__file__
+        )
+        matrix_assignment = next(
+            node
+            for node in module_tree.body
+            if isinstance(node, ast.Assign)
+            and any(
+                isinstance(target, ast.Name)
+                and target.id == "ASB_PUBLIC_ACCEPTANCE_MATRIX"
+                for target in node.targets
+            )
+        )
+        self.assertIsInstance(matrix_assignment.value, ast.Dict)
+        source_ids = [ast.literal_eval(key) for key in matrix_assignment.value.keys]
+        self.assertEqual(source_ids, expected_ids)
+        self.assertEqual(len(source_ids), len(set(source_ids)))
+
+        matrix_ids = list(ASB_PUBLIC_ACCEPTANCE_MATRIX)
+        self.assertEqual(matrix_ids, expected_ids)
+
+        public_tests: set[str] = set()
+        for test_path in sorted(Path(__file__).parent.glob("test_*.py")):
+            tree = ast.parse(
+                test_path.read_text(encoding="utf-8"), filename=str(test_path)
+            )
+            for node in tree.body:
+                if not isinstance(node, ast.ClassDef) or not any(
+                    isinstance(base, ast.Attribute) and base.attr == "TestCase"
+                    for base in node.bases
+                ):
+                    continue
+                for child in node.body:
+                    if isinstance(
+                        child, (ast.FunctionDef, ast.AsyncFunctionDef)
+                    ) and child.name.startswith("test_"):
+                        public_tests.add(f"{test_path.stem}.{node.name}.{child.name}")
+
+        for acceptance_id, test_names in ASB_PUBLIC_ACCEPTANCE_MATRIX.items():
+            with self.subTest(acceptance_id=acceptance_id):
+                self.assertTrue(test_names)
+                self.assertTrue(all(name in public_tests for name in test_names))
 
     def test_asb_01_02_identify_and_seal_preserve_spec_and_verify(self) -> None:
         before = (self.repo / self.spec_path).read_bytes()
@@ -224,6 +388,30 @@ class ApprovedSpecBindingTests(unittest.TestCase):
         self.assert_code(
             "INPUT_PACKET_DIGEST_MISMATCH",
             lambda: module.verify_chain(self.repo, {"input_packet": ref.to_dict()}),
+        )
+
+    def test_asb_19_reapproval_reseals_new_epoch_and_invalidates_old_ref(self) -> None:
+        module, revision_a, ref_a = self.seal()
+        old_ref = ref_a.to_dict()
+
+        (self.repo / self.spec_path).write_bytes("再承認された仕様\n".encode())
+        revision_b = module.identify_spec(self.repo, self.spec_path)
+        ref_b = module.seal_input_packet(
+            self.repo,
+            self.draft_path.relative_to(self.repo).as_posix(),
+            self.output_path.relative_to(self.repo).as_posix(),
+            revision_b,
+            self.approval(),
+        )
+
+        self.assertNotEqual(revision_a, revision_b)
+        self.assertNotEqual(ref_a, ref_b)
+        self.assertTrue(
+            module.verify_chain(self.repo, {"input_packet": ref_b.to_dict()}).valid
+        )
+        self.assert_code(
+            "INPUT_PACKET_DIGEST_MISMATCH",
+            lambda: module.verify_chain(self.repo, {"input_packet": old_ref}),
         )
 
     def test_asb_20_rejects_unsafe_and_non_regular_spec_paths(self) -> None:

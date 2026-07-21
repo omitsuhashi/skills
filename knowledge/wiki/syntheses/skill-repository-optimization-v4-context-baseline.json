@@ -291,7 +291,7 @@
     },
     {
       "modes": [],
-      "operation_count": 8,
+      "operation_count": 9,
       "operations": [
         {
           "budget": {
@@ -490,6 +490,33 @@
           "skill": "issue-implementation-loop",
           "word_budget": null,
           "word_count": 1482
+        },
+        {
+          "budget": {
+            "character_budget": 18000,
+            "estimated_token_budget": 8000,
+            "max_file_count": 6,
+            "min_headroom_percent": 20,
+            "non_whitespace_character_budget": null,
+            "word_budget": null
+          },
+          "budget_headroom": null,
+          "character_count": 12605,
+          "estimated_token_count": 4773,
+          "file_count": 3,
+          "files": [
+            "skills/issue-implementation-loop/SKILL.md",
+            "skills/issue-implementation-loop/references/core.md",
+            "skills/issue-implementation-loop/references/execution-envelope.md"
+          ],
+          "headroom_percent": 40,
+          "max_file_count": 6,
+          "non_whitespace_character_count": 10982,
+          "operation": "blocked.reapproval",
+          "schema_version": 2,
+          "skill": "issue-implementation-loop",
+          "word_budget": null,
+          "word_count": 1564
         },
         {
           "budget": {
