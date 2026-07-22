@@ -485,3 +485,12 @@ git diff --check
 - Fresh local verification: issue-implementation-loop 249 tests、grill-to-pr-loop 28 tests、llm-wiki 6 tests、scripts 59 testsが成功した。skill architecture/context、strict context report、dual-host、両loop skillのskill-creator validator、packet validation、binding verification、`py_compile`、`git diff --check`も成功し、strict reportは`warnings=[]`、各contractのminimum headroomは20%以上だった。
 - Immutable artifact proof: approved spec SHA-256 `2bd4fcdbed9828c988a9d5c24cdd02242434f0e44e802cceb34fc4a0e7b86193`、sealed Input Packet SHA-256 `e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c`。両bytesは変更していない。
 - Gate state: ASBC-007/ASBC-008は`COMPLETE`、ASBC-009はlocal `PR_READY`のまま。mandatory controller whole-branch re-review/final reviewはpushとDraft PR #32更新前のpending gateであり、本waveではremote/live actionを行わない。
+
+## ASB-34 Repository-Wide Tracked Envelope Re-review Correction
+
+- Follow-up re-reviewでImportant 1を受領した。前waveのASB-34はcurrent nested Epic rootだけを`git ls-files`で確認していたため、`knowledge/wiki/syntheses/approved-spec-binding-contract-execution-envelope.json`のようなformer flat pathや別Epic pathにtracked current Execution Envelope v4が再出現しても検出できなかった。
+- TDD RED: Git indexへflat v4 Envelope、historical v3 Envelope、malformed JSON、skill-assets配下のv4 product templateを同時に追加するfocused regressionを先に作成し、未実装scanner seamの`NameError`で1 testが失敗することを確認した。
+- GREEN contract: ASB-34は`knowledge/wiki/syntheses`配下の全tracked JSONをrepository-wideに列挙し、working-tree bytesではなくGit index blobをparseする。JSONでないtracked contentは安全にskipし、`schema_version == 4`のcurrent instantiated Envelopeをpath layoutに依存せず拒否する。historical v1〜v3 evidenceは許容し、scope外のskill product templateをwiki artifactとして扱わない。
+- Public acceptance mappingはcurrent repository ownership checkとdeterministic flat-v4 detection testの2 behaviorへASB-34をmappingした。focused ASB-34は2 tests、matrix resolutionは1 test、grill-to-pr-loopは29 testsが成功した。
+- Full local suitesはissue-implementation-loop 249 tests、grill-to-pr-loop 29 tests、llm-wiki 6 tests、scripts 59 testsが成功した。approved spec/Input Packet bytesと全schema versionは変更していない。
+- Gate stateは変更しない。ASBC-009はlocal `PR_READY`、mandatory controller whole-branch re-review/final reviewはpendingのままで、本correctionでもpush、PR #32 mutation、ready、merge、release、live installを行わない。

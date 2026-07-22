@@ -172,6 +172,7 @@ ASB_PUBLIC_ACCEPTANCE_MATRIX = {
     ),
     "ASB-34": (
         "test_grill_to_pr_loop.GrillToPrLoopTests.test_asb_34_current_epic_tracks_only_durable_planning_artifacts",
+        "test_grill_to_pr_loop.GrillToPrLoopTests.test_asb_34_detects_tracked_flat_v4_execution_envelope",
     ),
     "ASB-35": (
         "test_worker_packet.WorkerPacketTests.test_asb_35_linked_coordinator_uses_exact_git_common_runtime_root",

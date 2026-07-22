@@ -1264,3 +1264,10 @@ append-only で使います。すべての entry は予測しやすい header �
 - test-only hard-link compatibility shimとflat fixture aliasesを削除した。以前のresidual risk記録は本entryでsupersedeされ、current fixtureはexplicit nested durable pathsを使用する
 - fresh local verificationはissue-implementation-loop 249 tests、grill-to-pr-loop 28 tests、llm-wiki 6 tests、scripts 59 testsと全repository validatorが成功し、strict context reportは`warnings=[]`、minimum headroom 20%以上だった。spec/packet SHA-256は`2bd4fcdbed9828c988a9d5c24cdd02242434f0e44e802cceb34fc4a0e7b86193` / `e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c`のまま不変
 - ASBC-007/ASBC-008は`COMPLETE`、ASBC-009はlocal `PR_READY`を維持する。mandatory controller whole-branch re-review/final review後のpushとDraft PR #32更新がpendingであり、本waveではremote/live actionを行っていない
+
+## [2026-07-22] asb-34-repository-wide-envelope-guard | Approved Spec Binding Artifact Lifecycle
+
+- follow-up re-reviewのImportant 1を受け、ASB-34をcurrent nested Epic rootのbasename checkから`knowledge/wiki/syntheses`全域のGit-index JSON scanへ拡張した。former flat pathを含む任意layoutのtracked `schema_version == 4` instantiated Execution Envelopeを拒否する
+- TDD fixtureはflat v4、historical v3、malformed syntheses JSON、skill-assets v4 templateを同時にtrackし、RED 1 errorからGREEN 2 focused testsへ進めた。historical v1〜v3 evidenceとtracked product templateは保持し、public ASB-34 mappingはcurrent ownershipとdeterministic flat-v4 detectionの2 behaviorを解決する
+- local suitesはissue-implementation-loop 249 tests、grill-to-pr-loop 29 tests、llm-wiki 6 tests、scripts 59 testsが成功した。spec/Input Packet bytesとschema versionsは不変
+- ASBC-009はlocal `PR_READY`、mandatory controller whole-branch re-review/final reviewはpendingを維持する。push、Draft PR #32 mutation、ready、merge、release、live installは実行していない

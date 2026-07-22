@@ -39,6 +39,39 @@ def extract_default_prompt(path: Path) -> str:
     raise AssertionError(f"default_prompt not found in {path}")
 
 
+def tracked_current_execution_envelope_v4_paths(repo_root: Path) -> list[str]:
+    tracked = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(repo_root),
+            "ls-files",
+            "-z",
+            "--",
+            "knowledge/wiki/syntheses",
+        ],
+        check=True,
+        capture_output=True,
+    ).stdout
+    detected: list[str] = []
+    for encoded_path in tracked.split(b"\0"):
+        if not encoded_path or not encoded_path.endswith(b".json"):
+            continue
+        path = os.fsdecode(encoded_path)
+        blob = subprocess.run(
+            ["git", "-C", str(repo_root), "show", f":{path}"],
+            check=True,
+            capture_output=True,
+        ).stdout
+        try:
+            payload = json.loads(blob)
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            continue
+        if isinstance(payload, dict) and payload.get("schema_version") == 4:
+            detected.append(path)
+    return detected
+
+
 class GrillToPrLoopTests(unittest.TestCase):
     def test_asb_34_current_epic_tracks_only_durable_planning_artifacts(self) -> None:
         current_root = "knowledge/wiki/syntheses/approved-spec-binding-contract"
@@ -68,6 +101,77 @@ class GrillToPrLoopTests(unittest.TestCase):
         self.assertFalse(
             {path for path in tracked if Path(path).name in forbidden_names}
         )
+        self.assertEqual(
+            tracked_current_execution_envelope_v4_paths(REPO_ROOT), []
+        )
+
+    def test_asb_34_detects_tracked_flat_v4_execution_envelope(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            subprocess.run(
+                ["git", "init", "-q", str(repo)],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            synthesis_root = repo / "knowledge" / "wiki" / "syntheses"
+            synthesis_root.mkdir(parents=True)
+            current_flat = (
+                synthesis_root
+                / "approved-spec-binding-contract-execution-envelope.json"
+            )
+            historical = synthesis_root / "historical-execution-envelope.json"
+            malformed = synthesis_root / "not-an-artifact.json"
+            product_template = (
+                repo
+                / "skills"
+                / "issue-implementation-loop"
+                / "assets"
+                / "templates"
+                / "execution-envelope.json"
+            )
+            product_template.parent.mkdir(parents=True)
+            envelope_shape = {
+                "schema_version": 4,
+                "epic_id": "approved-spec-binding-contract",
+                "revision": 1,
+                "approved_spec_binding": {},
+                "work_items": {},
+            }
+            current_flat.write_text(
+                json.dumps(envelope_shape, sort_keys=True), encoding="utf-8"
+            )
+            historical.write_text(
+                json.dumps({**envelope_shape, "schema_version": 3}, sort_keys=True),
+                encoding="utf-8",
+            )
+            malformed.write_text("{not-json\n", encoding="utf-8")
+            product_template.write_text(
+                json.dumps(envelope_shape, sort_keys=True), encoding="utf-8"
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(repo),
+                    "add",
+                    "knowledge/wiki/syntheses",
+                    "skills/issue-implementation-loop/assets/templates",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            detected = tracked_current_execution_envelope_v4_paths(repo)
+
+            self.assertEqual(
+                detected,
+                [
+                    "knowledge/wiki/syntheses/"
+                    "approved-spec-binding-contract-execution-envelope.json"
+                ],
+            )
 
     def test_artifact_lifecycle_references_keep_current_ownership_seam(self) -> None:
         planning_text = PLANNING_CONTRACT.read_text(encoding="utf-8")
