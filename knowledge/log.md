@@ -1283,12 +1283,29 @@ append-only で使います。すべての entry は予測しやすい header �
 ## [2026-07-22] human-wait | POTASK-019 normative status scope
 
 - POTASK-019 integration commit `3c8ba06`はexact parents `cc61018` + `f5fc50e`、conflict 0件、両head ancestry PASS。fixture exact-copyとpublic fake end-to-end 6 / 6をTDDで進め、task-management 156 / 156、adapter 45 / 45、3 smokesをGREENにした
-- unique Companies Interface v2 canonical `task-management-write-preflight-interface-spec.md`とGitHub Adapter specのstatus/current boundaryが2026-07-21時点の未実装記述を残すが、Execution Envelope revision 4では両fileはread-onlyである
-- human request `hr-potask-019-normative-status-scope-001`は上記2 filesだけをwrite scopeへ追加し、実装完了 / local fake verification完了 / remote・live未実施のstatusへ同期する承認を求める。normative design、DAG、plugin scope、remote / live policyは変更しない
-- POTASK-019を`WAITING_HUMAN`へ移し、既許可scopeのworking changesを保持した。final commit / report / reviewはdecisionまで実施しない
+- unique Companies Interface v2 canonical `task-management-write-preflight-interface-spec.md`とGitHub Adapter specのstatus/current boundaryが2026-07-21時点の未実装記述を残すが、Execution Envelope revision 4では両fileはread-onlyだった
+- human request `hr-potask-019-normative-status-scope-001`は上記2 filesだけをwrite scopeへ追加し、実装完了 / local fake verification完了 / remote・live未実施のstatusへ同期する承認を求めた。normative design、DAG、plugin scope、remote / live policyは変更しない
+- POTASK-019を`WAITING_HUMAN`へ移し、既許可scopeのworking changesを保持した。final commit / report / reviewはdecisionまで実施しなかった
 
 ## [2026-07-22] gate-amendment | POTASK-019 normative status scope approved
 
 - ユーザーがhuman request `hr-potask-019-normative-status-scope-001`を承認し、Execution Envelope revision 5へ更新した
 - POTASK-019のwrite scopeへ`task-management-write-preflight-interface-spec.md`と`task-adapter-github-projects-spec.md`だけを追加し、実装完了 / local fake verification完了 / remote・live未実施のstatus/current-boundary同期だけを許可した
-- normative design、DAG、plugin scope、remote / live policyは変更しない。保持済みPOTASK-019 working changesをresetせず、同じworker contextで実装を再開する
+- normative design、DAG、plugin scope、remote / live policyは変更しない。保持済みPOTASK-019 working changesをresetせず、同じworker contextで実装を再開した
+
+## [2026-07-22] implementation | POTASK-019 local integration reviewable
+
+- knowledge syncはEpic Base `6c1c8ab`のexact blobs（spec `9dc32a052e45bad2f3f2905837ebad8db56fce75c850ef6752a1d256e3fb923d`、ledger `bfafb78a70b0fa82b84849385098b57e3ae825a0b41d85877d5d348550889b33`、index `e2f2a0eb45b906a660d3bc9a92a6fbc9067076527c710142d0e44f13f0e740c7`、log `d4f5a004940e69790064651b252368c6e4d4e5f86c9bcf20b23dd50a946d639b`）をstarting contentとしてからscoped editした。knowledgeにmerge / cherry-pick / resetは使っていない
+- integration commit `3c8ba068d648974ab1a31d500b965736da9e38c4`はreviewed `cc61018` + `f5fc50e`をexact parentsに持ち、conflict 0件、両heads ancestry PASS、first-parent 25 pathsすべてtask-management scope内だった
+- Adapter v2 fixture treesをexact一致させ、public task-management → GitHub Adapter fake dispatch 6 testsを追加した。preflight zero-write、approved create / attach / 9 field updates / read-back、human-required / mismatch zero-write、safe partial / explicit-no-write retryを実証した
+- task-management 156 / 156、GitHub Adapter 45 / 45、llm-wiki 6 / 6、3 smokes、2 plugin validators、skill validator、2 dual-host validators、architecture validator、fixture diff、working-tree diff check、cache scanはPASSした。legacy route v1 / placeholder assertionsだけをv2へ同期し、安全invariantは弱めていない
+- Companies public Interface v2は一意なnormative canonical `knowledge/wiki/syntheses/task-management-write-preflight-interface-spec.md`を参照する。revision 5 approvalに従って両normative specのstatus / current-boundaryだけを同期し、design本文は変更していない
+- POTASK-019はlocal `REVIEWABLE`であり、独立implementation review前に`PR_READY`を主張しない。GitHub Issue、push、PR、merge、live install / profile / MCP / credential / Project / Issue変更は未実施で、Live Activation Gateは別途必要である
+
+## [2026-07-22] integration | POTASK-019 reviewed headをEpic Baseへlocal統合
+
+- independent implementation review cycle 2はfull range `cc61018..cfcd1ab`とfix delta `6a85b41..cfcd1ab`を`approved`とし、Critical / Important findingは0件だった。review artifact SHA-256は`428d762a380f8fe1098aacf1d8f16ccb8ca81b6eb2a394f903952cc1e01ffd2e`
+- reviewed head `cfcd1abf46372ea19828da65c88aa879684af8d0`をEpic Base `d449b45c3344f5631bf3a048b3710a009f28c9bf`へ`--no-ff --no-commit`で統合した。このmerge commitは両SHAをこの順のexact parentsとして持ち、reviewed head ancestryを保持する
+- revision 5のhuman approval historyとreviewed implementation evidenceを統合し、tracked input packet / Execution EnvelopeはEpic Baseのexact bytesを保持した。両normative specはlocal implementation / fake verification / independent cycle-2 review完了へstatus / current-boundaryだけを同期した
+- fresh Epic Base integration verificationはtask-management 156 / 156、GitHub Adapter 45 / 45、llm-wiki 6 / 6、3 smokes、2 plugin validators、task-management skill validator、2 dual-host validators、architecture validator、fixture exact diff、production leakage guard、131-path scope check、diff check、cache scanをPASSした。`field_id`はtask-managementのfail-closed denylistにだけ存在し、provider orchestration / mappingでは使わない
+- GitHub Issue mirror、push、PR作成、shared `main`へのmerge、install / profile / MCP / credential / real GitHub Project・Issue操作、live smokeは未実施であり、remote deliveryとLive Activation Gateを別途必要とする

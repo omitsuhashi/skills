@@ -1,0 +1,26 @@
+{
+  "name": "task-adapter-github-projects",
+  "version": "0.1.0",
+  "description": "Dual-host executable GitHub Projects adapter for backend-neutral task query, preflight, and approval-bound apply.",
+  "author": {
+    "name": "Omitsuhashi"
+  },
+  "license": "UNLICENSED",
+  "keywords": [
+    "tasks",
+    "github-projects",
+    "portfolio-os"
+  ],
+  "interface": {
+    "displayName": "GitHub Projects Task Adapter",
+    "shortDescription": "Run the reviewed GitHub Projects task adapter.",
+    "longDescription": "Defines the credential-free GitHub Projects adapter contract and host configuration. Hermes registers executable query, preflight, and apply tools; host policy keeps raw MCP tools adapter-only and write tools task-management-only.",
+    "developerName": "Omitsuhashi",
+    "category": "Productivity",
+    "capabilities": [
+      "Tasks",
+      "Configuration"
+    ],
+    "defaultPrompt": "Check the GitHub Projects task-adapter configuration and runtime boundary."
+  }
+}

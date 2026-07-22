@@ -25,7 +25,7 @@ class DecisionSupportPolicyTests(unittest.TestCase):
         self.assertIn("references/decision-support-policy.md", self.skill_text)
         self.assertIn("Before composing a new TaskDraft", self.skill_text)
         self.assertIn(
-            "Do not use it for task reads, backend routing, or adapter previews.",
+            "Do not use it for task reads, backend routing, or adapter previews;",
             self.skill_text,
         )
         self.assertIn(
@@ -83,17 +83,17 @@ class DecisionSupportPolicyTests(unittest.TestCase):
         self.assertIsNone(complete_sequence.search(self.policy_text))
 
         for retained_clause in (
-            "For current backend state, call `task_query` with a backend-neutral `TaskQuery` and opaque destination reference; stop on any typed read-adapter error.",
-            "Produce a backend-neutral task draft with title, body, task type, work unit fields when known, and review notes.",
-            "Resolve backend routing from an optional internal override and then host `default_backend`.",
-            "Require a destination supplied by caller, profile, or host registration before any adapter-facing preview.",
-            "Present a human review summary before any state-changing adapter route is used.",
+            "call `task_query(destination_ref, query)`",
+            "backend-neutral TaskDraft and operation envelope",
+            "Call `task_preflight(interface_version=2, operation=...)`",
+            "Use `decision: approved` only after explicit human approval",
+            "Call `task_apply` with the exact preview and receipt",
         ):
             with self.subTest(retained_default_flow_clause=retained_clause):
                 self.assertIn(retained_clause, self.skill_text)
 
         self.assertIn("Adapter Dispatch Review remains required", self.policy_text)
-        self.assertIn("Stop before adapter dispatch", self.skill_text)
+        self.assertIn("requires human approval or a new preflight", self.skill_text)
 
 
 if __name__ == "__main__":

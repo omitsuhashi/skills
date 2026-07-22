@@ -1,0 +1,13 @@
+{
+  "result_type": "TaskWriteResult",
+  "ok": true,
+  "status": "created",
+  "operation_type": "task.create",
+  "backend_key": "remote_tasks",
+  "destination_ref": "tasks:default",
+  "task_ref": {"backend_key": "remote_tasks", "task_ref": "task:opaque", "task_url": "https://example.invalid/tasks/opaque", "title": "Implement write contracts"},
+  "retryable": false,
+  "human_action": null,
+  "error": null,
+  "provider_status": 201
+}

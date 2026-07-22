@@ -1,0 +1,14 @@
+{
+  "title": "Implement write contracts",
+  "body": "Add strict backend-neutral contract validation.",
+  "work_unit_id": "portfolio-os",
+  "work_unit_name": "Portfolio OS",
+  "task_type": "implementation",
+  "due_date": null,
+  "urgency": "normal",
+  "importance": "high",
+  "automation_mode": "assistive",
+  "approval_required": true,
+  "source_ref": {"kind": "conversation", "ref": "source:opaque", "label": "Approved planning discussion"},
+  "fields": {"review_notes": []}
+}

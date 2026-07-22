@@ -1,74 +1,39 @@
-# Hermes GitHub MCP Enablement Example
+# Hermes GitHub Adapter Activation Example
 
-This is an operator-facing example for making a GitHub MCP adapter available to
-the task-management skill. It is not executed by plugin install, tests, or
-normal task preview. It contains no credentials, owner names, repositories,
-project numbers, field IDs, node IDs, or tokens.
+This is a host-operator checklist, not an install script. Repository tests do not
+execute it.
 
-## Boundary
+## Required artifacts
 
-The task-management plugin install does not perform MCP server registration,
-credential setup, Hermes profile edits, GitHub adapter tool enablement, schema
-repair, or live GitHub checks.
+1. Install/enable `task-management` version `0.4.0`.
+2. Install/enable `task-adapter-github-projects` version `0.1.0`.
+3. Place a host-owned task route based on
+   `task-management/config/task-backends.example.toml` and set
+   `TASK_MANAGEMENT_ROUTES_FILE`.
+4. Place a host-owned adapter config based on
+   `task-adapter-github-projects/config/github-projects.example.toml` and set
+   `TASK_ADAPTER_GITHUB_PROJECTS_CONFIG_FILE`.
+5. Ensure both configs use the same opaque `destination_ref` and
+   `content_target_ref`.
 
-Hermes Agent, or another MCP host, owns those steps. The task-management skill
-only consumes host-provided availability evidence and stops before adapter
-dispatch when the evidence is missing.
+## MCP and exposure checks
 
-## Host-Side Runbook Shape
+- Register/authenticate the GitHub MCP connection outside plugin install.
+- Enable only the exact adapter-config allowlist.
+- Keep raw MCP exposure `adapter_only`.
+- Keep adapter write exposure `task_management_only`.
+- Block write readiness if child agents can inherit raw or adapter write tools.
+- Keep credentials out of both TOML files and all task values.
 
-Use this as a shape for a host operator runbook. Replace placeholders in the
-host-owned environment and do not embed the resolved values in the plugin repo.
+## Approval and live check
 
-```text
-# Illustrative host-side steps only. Do not run from plugin install.
-1. Confirm the GitHub MCP server is registered for the connection reference.
-2. Complete the host-owned authentication or authorization flow.
-3. Enable only the GitHub MCP adapter tools required by task-management.
-4. Confirm the destination reference resolves to the intended task project.
-5. Confirm required backend fields exist before any write operation.
-6. Record availability evidence for the Adapter Availability Gate.
-```
+Run `task_preflight` against the intended opaque destination. Readiness does not
+approve a write. Ask the human when the task intent or result is uncertain.
+`confidence_authorized` is valid only when the result is ready,
+confidence-eligible, and certain; otherwise require an exact human-approved
+preview/digest.
 
-Example availability evidence passed to task-management:
-
-```yaml
-adapter_availability:
-  backend_key: "github_projects_mcp"
-  connection_ref: "github-projects"
-  server_registered: true
-  credentials_ready: true
-  required_tools_enabled:
-    - "github-projects:task-create"
-  destination_ref: "github-projects:portfolio-os-task-board"
-  destination_resolved: true
-  required_fields_ready: true
-  child_agent_inheritance: "not_unconditional"
-```
-
-If any value is false or unknown, the skill should return setup guidance instead
-of dispatching an adapter envelope.
-
-## Delegation Guard
-
-If a Hermes profile has `delegation.inherit_mcp_toolsets: true`, state-changing
-MCP adapter tools can accidentally flow to child agents. GitHub MCP adapter
-tools must not be unconditionally inherited by child agents.
-
-Recommended host policy:
-
-- expose GitHub task write tools only to the commander or task-management flow
-  that performs Adapter Dispatch Review
-- do not expose those tools by default to review workers, work-unit subagents,
-  or generic implementation workers
-- pass previews and normalized results to child agents instead of the MCP
-  write-capable toolset
-- block write availability when the host cannot restrict child-agent
-  inheritance for state-changing tools
-
-## Dispatch Reminder
-
-Adapter availability is not approval. A state-changing operation still requires
-Adapter Dispatch Review for the exact operation type, adapter tool name,
-destination reference, task content, work unit fields, task reference when
-present, and expected adapter side effects.
+Only an independently approved live activation gate may call `task_apply` on a
+real destination. Record the exact preflight, receipt, normalized write result,
+and public `task_query` readback. A partial or unknown result stops for human
+inspection; retry only when the result explicitly confirms no write occurred.

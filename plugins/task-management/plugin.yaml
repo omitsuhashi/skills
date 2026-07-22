@@ -1,11 +1,14 @@
 manifest_version: 1
 name: task-management
-version: 0.3.0
-description: Backend-neutral task-management workflow package for reviewed intake and normalized reads.
+version: 0.4.0
+description: Backend-neutral task workflow package with normalized reads, preflight, and approval-bound apply.
 author: Omitsuhashi
 kind: standalone
 provides_tools:
   - task_query
+  - task_preflight
+  - task_apply
 exports:
   toolsets:
     - task-management-read
+    - task-management-write

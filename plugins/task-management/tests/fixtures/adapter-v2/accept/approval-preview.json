@@ -1,0 +1,32 @@
+{
+  "preview_version": 1,
+  "operation": {
+    "adapter_contract_version": 2,
+    "operation_type": "task.create",
+    "backend_key": "remote_tasks",
+    "destination_ref": "tasks:default",
+    "task_ref": null,
+    "payload": {
+      "task": {
+        "title": "Implement write contracts",
+        "body": "Add strict backend-neutral contract validation.",
+        "work_unit_id": "portfolio-os",
+        "work_unit_name": "Portfolio OS",
+        "task_type": "implementation",
+        "due_date": null,
+        "urgency": "normal",
+        "importance": "high",
+        "automation_mode": "assistive",
+        "approval_required": true,
+        "source_ref": {"kind": "conversation", "ref": "source:opaque", "label": "Approved planning discussion"},
+        "fields": {"review_notes": []}
+      }
+    }
+  },
+  "destination": {"backend_key": "remote_tasks", "destination_ref": "tasks:default", "destination_label": "Default tasks", "content_target_ref": "task-content:default"},
+  "route_binding": {"adapter_key": "github_projects", "binding_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
+  "expected_side_effects": [
+    {"effect_type": "content.create", "description": "Create a linked task."},
+    {"effect_type": "task.read_back", "description": "Read the resulting task state."}
+  ]
+}

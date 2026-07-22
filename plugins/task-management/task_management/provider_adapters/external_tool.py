@@ -10,9 +10,7 @@ from . import ADAPTER_CONTRACT_VERSION, AdapterError, AdapterTaskSnapshotResult
 from ..route_config import ResolvedTaskReadRequest
 
 
-_TOOL_RE = re.compile(
-    r"^(?:mcp__[a-z0-9_]+__task_query|task_adapter__[a-z0-9_]+__task_query)$"
-)
+_TOOL_RE = re.compile(r"^task_adapter__[a-z0-9_]+__task_query$")
 _PROVIDER_ERRORS = {
     "adapter_unavailable": "read_adapter_unavailable",
     "auth_missing": "read_adapter_auth_missing",
@@ -46,8 +44,8 @@ class ExternalToolAdapter:
     def query(self, request: ResolvedTaskReadRequest, **dispatch_kwargs: Any) -> AdapterTaskSnapshotResult:
         envelope = {
             "adapter_contract_version": ADAPTER_CONTRACT_VERSION,
-            "capability": "task_read",
-            "destination_ref": request.provider_destination_ref,
+            "backend_key": request.backend_key,
+            "destination_ref": request.destination_ref,
             "query": request.query,
         }
         try:

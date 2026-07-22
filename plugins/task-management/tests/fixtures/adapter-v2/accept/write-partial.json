@@ -1,0 +1,17 @@
+{
+  "result_type": "TaskWriteResult",
+  "ok": false,
+  "status": "partial",
+  "operation_type": "task.create",
+  "backend_key": "remote_tasks",
+  "destination_ref": "tasks:default",
+  "task_ref": {"backend_key": "remote_tasks", "task_ref": "task:opaque", "task_url": "https://example.invalid/tasks/opaque", "title": "Implement write contracts"},
+  "retryable": false,
+  "human_action": "Inspect the linked task before retrying field updates.",
+  "error": {
+    "error_type": "partial_failure",
+    "code": "partial_update_failure",
+    "message": "Task content was created but one or more fields were not updated.",
+    "stage": "fields_update"
+  }
+}

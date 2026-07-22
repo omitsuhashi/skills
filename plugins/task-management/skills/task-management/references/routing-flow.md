@@ -1,116 +1,70 @@
 # Task Management Routing Flow
 
-The public contract stays the same even when the host changes the task backend.
-The caller supplies only a logical destination and backend-neutral filters. The
-host route owns every provider-specific decision.
+The public contract is unchanged when the host swaps adapters. The consumer
+supplies only neutral task values and an opaque destination; the host route owns
+adapter selection.
 
-## Read Routing Overview
-
-```mermaid
-flowchart LR
-    caller["Consumer<br/>Schedule Secretary / workflow"]
-    hermes["Hermes<br/>task-management-read:task_query"]
-    facade["Task-management facade<br/>validate public query"]
-    route["Host-owned route<br/>resolve backend + destination"]
-    mcp["ExternalToolAdapter<br/>fixed MCP tool"]
-    plugin["ExternalToolAdapter<br/>fixed provider-plugin tool"]
-    normalize["Facade normalization<br/>allowlist + limit + safety guards"]
-    success["TaskSnapshotResult<br/>normalized snapshots"]
-    failure["TaskSnapshotResult<br/>typed error, no raw payload"]
-
-    caller -->|"destination_ref + TaskQuery"| hermes
-    hermes --> facade
-    facade -->|"valid"| route
-    facade -.->|"invalid query"| failure
-    route -->|"kind = mcp"| mcp
-    route -->|"kind = plugin"| plugin
-    route -.->|"missing / invalid route"| failure
-    mcp -->|"adapter result v1"| normalize
-    plugin -->|"adapter result v1"| normalize
-    mcp -.->|"unavailable / provider error"| failure
-    plugin -.->|"unavailable / provider error"| failure
-    normalize -->|"safe"| success
-    normalize -.->|"invalid / unsafe snapshot"| failure
-    success --> caller
-    failure --> caller
-```
-
-The two normal runtime backend branches rejoin before the response. Consumers
-therefore never parse MCP or provider-plugin payloads directly.
-
-## End-to-End Read Sequence
+## Public sequence
 
 ```mermaid
 sequenceDiagram
     autonumber
     participant C as Consumer
-    participant H as Hermes registry
-    participant F as task_query facade
-    participant R as Host route
-    participant A as Bound adapter
-    participant P as External provider tool
+    participant T as task-management public tools
+    participant R as Host route v2
+    participant A as Fixed provider adapter
+    participant P as Provider boundary
 
-    C->>H: task_query(destination_ref, query)
-    H->>F: invoke registered handler
-    F->>F: validate neutral query and credential boundary
-    F->>R: resolve(optional backend_key, destination_ref)
-    R-->>F: fixed kind, provider_ref, and tool
-    F->>A: query(ResolvedTaskReadRequest)
-    A->>H: dispatch exact configured read-only tool
-    H->>P: adapter contract v1 request
-    P-->>H: adapter contract v1 + items/error
-    H-->>A: result
-    A-->>F: AdapterTaskSnapshotResult or typed error
-    F->>F: apply limit, normalize, and fail closed
-    F-->>H: TaskSnapshotResult
-    H-->>C: same result shape for every backend
+    C->>T: task_query(destination_ref, query)
+    T->>R: resolve backend + destination
+    R-->>T: fixed query/preflight/apply trio
+    T->>A: adapter query v2
+    A->>P: provider reads
+    P-->>A: provider result
+    A-->>T: neutral snapshots
+    T-->>C: normalized TaskSnapshotResult
+
+    C->>T: task_preflight(interface v2, operation)
+    T->>R: resolve same route
+    T->>A: adapter preflight v2
+    A->>P: read-only readiness probes
+    P-->>A: readiness evidence
+    A-->>T: expected side effects + readiness
+    T-->>C: ApprovalPreview + digest + approval mode
+
+    C->>T: task_apply(exact preview, receipt)
+    T->>R: reload route
+    T->>A: re-preflight exact operation
+    T->>T: verify route, preview, side effects, digest, decision
+    T->>A: apply only when all bindings match
+    A->>P: provider mutation + adapter readback
+    P-->>A: result
+    A-->>T: adapter TaskWriteResult v2
+    T-->>C: normalized TaskWriteResult
 ```
 
-## Ownership at Each Hop
+Readiness is not approval. `confidence_authorized` is valid only when preflight
+is ready, confidence-eligible, and certain. Human-required, uncertain, blocked,
+or drifted operations stop before adapter apply.
 
-| Hop | Owner | May choose | Must not choose |
-| --- | --- | --- | --- |
-| Public request | Consumer | logical `destination_ref`, neutral filters, optional trusted `backend_key` | file path, provider tool, provider destination, credentials |
-| Route resolution | Host configuration | default backend, adapter kind, fixed tool, opaque provider ref | task content or provider credentials |
-| Adapter execution | External MCP/provider plugin | provider-specific read, internal pagination | public response shape |
-| Public response | Task-management facade | canonical fields, public limit, typed error | raw IDs, unknown metadata, credentials, provider cursor |
+## Ownership
 
-## Backend Switch
+| Layer | Owns | Must not accept/own |
+| --- | --- | --- |
+| Consumer | neutral query/operation, opaque destination, approval decision | tool name, config path, provider coordinate, credential |
+| task-management | validation, route resolution, preview/digest, re-preflight, approval binding, normalization | provider mapping, raw MCP calls, mutable task store |
+| Host route | fixed adapter trio and logical destination labels | task content, credentials |
+| Provider adapter | provider mapping, pagination, mutation order, readback, safe partial/retry result | human approval decision, public tool selection |
+| Provider/MCP host | auth, permissions, raw provider tools | public task contract |
 
-Changing the backend is a host configuration change, not a consumer flow
-change:
+## Test-only local seam
 
-```mermaid
-stateDiagram-v2
-    [*] --> SamePublicCall: destination_ref + TaskQuery
-    SamePublicCall --> MCPBackend: host route = mcp
-    SamePublicCall --> ProviderPlugin: host route = plugin
-    MCPBackend --> SamePublicResult: TaskSnapshotResult
-    ProviderPlugin --> SamePublicResult: TaskSnapshotResult
-    SamePublicResult --> [*]
-```
+The test-only `local_json` read adapter exercises normalization with temporary
+files. It is not an operator-facing runtime backend and never appears as a
+normal runtime branch. There is no local write adapter.
 
-## Test and Smoke Fixture
+## Retry boundary
 
-The test-only `local_json` adapter exercises the same facade and normalization
-contract with a temporary route and local JSON file. Only plugin-owned tests and
-the isolated Hermes smoke use this seam; it is not part of the normal runtime
-branches above, an operator bootstrap route, or a persistent task store.
-
-## State-Changing Boundary
-
-The diagrams above describe the implemented read path. A create, update,
-comment, or report flow remains separate:
-
-```mermaid
-flowchart LR
-    intent["Consumer intent"] --> draft["TaskDraft / operation preview"]
-    draft --> approval{"Explicit approval?"}
-    approval -->|"no"| stop["Stop without dispatch"]
-    approval -->|"yes"| external["MCP or provider plugin<br/>owns provider-specific write"]
-    external --> result["Normalized TaskWriteResult"]
-```
-
-There is no local write adapter. The task-management plugin prepares the
-backend-neutral review surface; the external backend owns authorization,
-provider mutations, retries, and canonical mutable task state.
+Partial or unknown provider outcomes are nonretryable until a human inspects the
+linked task. Only a typed result that explicitly confirms no write occurred may
+return `retryable: true`.

@@ -1,0 +1,8 @@
+{
+  "adapter_contract_version": 2,
+  "operation_type": "task.update",
+  "backend_key": "remote_tasks",
+  "destination_ref": "tasks:default",
+  "task_ref": {"backend_key": "remote_tasks", "task_ref": "task:opaque", "task_url": "https://example.invalid/tasks/opaque", "title": "Implement write contracts"},
+  "payload": {"changes": {"importance": "critical"}}
+}

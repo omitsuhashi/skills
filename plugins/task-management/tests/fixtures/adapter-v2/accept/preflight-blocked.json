@@ -1,0 +1,17 @@
+{
+  "result_type": "TaskPreflightResult",
+  "ok": false,
+  "status": "blocked",
+  "operation_type": "task.create",
+  "backend_key": "remote_tasks",
+  "destination_ref": "tasks:default",
+  "approval_mode": null,
+  "approval_preview": null,
+  "approval_digest": null,
+  "readiness": {"ok": false, "checks": []},
+  "error": {
+    "error_type": "setup_blocker",
+    "code": "auth_missing",
+    "message": "The configured adapter is unavailable."
+  }
+}

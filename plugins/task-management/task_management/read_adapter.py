@@ -21,10 +21,8 @@ from .route_config import (
 )
 
 
-ADAPTER_TOOL_ENV = "TASK_MANAGEMENT_READ_ADAPTER_TOOL"
 READ_TOOLSET = "task-management-read"
 PUBLIC_TOOL_NAME = "task_query"
-_ADAPTER_TOOL_RE = re.compile(r"^mcp__[a-z0-9_]+__task_query$")
 _UNSAFE_VALUE_RE = re.compile(
     r"\bauthorization\b|\bbearer\s+|\bghp_[a-z0-9_]+|"
     r"\bgithub_pat_[a-z0-9_]+|\btoken\s*[\"']?\s*[:=]|"
@@ -274,7 +272,6 @@ def query_tasks(
     arguments: Any,
     *,
     dispatch: Callable[..., Any],
-    adapter_tool_name: Optional[str] = None,
     routes_file: Optional[str] = None,
     **dispatch_kwargs: Any,
 ) -> Dict[str, Any]:
@@ -314,68 +311,47 @@ def query_tasks(
             "TaskQuery and destination_ref must not contain credential data.",
         )
 
+    if not routes_file:
+        return _error(
+            "read_route_missing",
+            "Task route configuration is unavailable.",
+            configuration=ROUTES_FILE_ENV,
+        )
+
     expected_backend_key = query.get("backend_key")
-    if routes_file:
-        try:
-            route = load_read_route(
-                Path(routes_file),
-                expected_backend_key,
-                destination_ref,
+    try:
+        route = load_read_route(
+            Path(routes_file),
+            expected_backend_key,
+            destination_ref,
+        )
+        expected_backend_key = route.backend_key
+        resolved_query = dict(query)
+        resolved_query["backend_key"] = route.backend_key
+        request = ResolvedTaskReadRequest(
+            backend_key=route.backend_key,
+            destination_ref=destination_ref,
+            query=resolved_query,
+        )
+        if route.kind == "local_json":
+            adapter = LocalJsonAdapter(
+                read_root=route.read_root,
+                source_path=route.source_path,
             )
-            expected_backend_key = route.backend_key
-            resolved_query = dict(query)
-            resolved_query["backend_key"] = route.backend_key
-            request = ResolvedTaskReadRequest(
-                backend_key=route.backend_key,
-                destination_ref=destination_ref,
-                provider_destination_ref=route.provider_destination_ref,
-                query=resolved_query,
+        else:
+            adapter = ExternalToolAdapter(
+                tool_name=route.query_tool,
+                dispatch=dispatch,
             )
-            if route.kind == "local_json":
-                adapter = LocalJsonAdapter(
-                    read_root=route.read_root,
-                    source_path=route.source_path,
-                )
-            else:
-                adapter = ExternalToolAdapter(
-                    tool_name=route.tool_name,
-                    dispatch=dispatch,
-                )
-            adapter_result = adapter.query(request, **dispatch_kwargs)
-            raw_result = {
-                "adapter_contract_version": adapter_result.adapter_contract_version,
-                "items": adapter_result.items,
-            }
-        except RouteConfigError as exc:
-            return _error(exc.code, str(exc), configuration=ROUTES_FILE_ENV)
-        except AdapterError as exc:
-            return _error(exc.code, str(exc))
-    else:
-        if not adapter_tool_name:
-            return _error(
-                "read_adapter_unavailable",
-                "No backend read adapter tool is configured.",
-                configuration=ADAPTER_TOOL_ENV,
-            )
-        if _ADAPTER_TOOL_RE.fullmatch(adapter_tool_name) is None:
-            return _error(
-                "invalid_read_adapter_tool",
-                "The configured adapter must be an MCP task_query read tool.",
-                configuration=ADAPTER_TOOL_ENV,
-            )
-        if not isinstance(expected_backend_key, str) or not expected_backend_key:
-            return _error(
-                "invalid_task_query",
-                "TaskQuery backend_key is required in legacy adapter mode.",
-            )
-        try:
-            raw_result = dispatch(
-                adapter_tool_name,
-                {"query": query, "destination_ref": destination_ref},
-                **dispatch_kwargs,
-            )
-        except Exception:
-            return _error("read_adapter_failed", "Backend read adapter failed.")
+        adapter_result = adapter.query(request, **dispatch_kwargs)
+        raw_result = {
+            "adapter_contract_version": adapter_result.adapter_contract_version,
+            "items": adapter_result.items,
+        }
+    except RouteConfigError as exc:
+        return _error(exc.code, str(exc), configuration=ROUTES_FILE_ENV)
+    except AdapterError as exc:
+        return _error(exc.code, str(exc))
     adapter_result = _parse_adapter_result(raw_result)
     if adapter_result is None:
         return _error("invalid_adapter_result", "Backend read adapter returned invalid JSON.")
@@ -427,14 +403,13 @@ def query_tasks(
     }
 
 
-def register_read_tool(ctx: Any, adapter_tool_name: Optional[str] = None) -> None:
+def register_read_tool(ctx: Any) -> None:
     """Register the read-only Hermes tool while keeping backend dispatch fixed."""
 
     def handler(arguments: Any, **kwargs: Any) -> str:
         result = query_tasks(
             arguments,
             dispatch=ctx.dispatch_tool,
-            adapter_tool_name=os.environ.get(ADAPTER_TOOL_ENV, adapter_tool_name),
             routes_file=os.environ.get(ROUTES_FILE_ENV),
             **kwargs,
         )

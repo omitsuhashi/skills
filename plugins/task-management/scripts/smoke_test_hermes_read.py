@@ -61,27 +61,31 @@ def main() -> int:
         hermes_home = temp_root / "hermes-profile"
         hermes_home.mkdir()
         source = temp_root / "tasks.json"
-        source.write_text(fixture.read_text(encoding="utf-8"), encoding="utf-8")
+        snapshot = json.loads(fixture.read_text(encoding="utf-8"))
+        snapshot["adapter_contract_version"] = 2
+        source.write_text(json.dumps(snapshot), encoding="utf-8")
         routes = temp_root / "routes.toml"
         routes.write_text(
-            f'''contract_version = 1
+            f'''contract_version = 2
 default_backend = "local_tasks"
 [backends.local_tasks]
-kind = "local_json"
-capability = "task_read"
+adapter_key = "local_json"
+query_tool = "task_adapter__local_json__task_query"
+preflight_tool = "task_adapter__local_json__task_preflight"
+apply_tool = "task_adapter__local_json__task_apply"
 read_root = "{temp_root}"
 source_path = "tasks.json"
 [backends.local_tasks.destinations.default]
 public_ref = "tasks:default"
-provider_ref = "tasks:default"
+destination_label = "Local smoke tasks"
 ''',
             encoding="utf-8",
         )
 
         old_home = os.environ.get("HERMES_HOME")
-        old_routes = os.environ.get("TASK_MANAGEMENT_READ_ROUTES_FILE")
+        old_routes = os.environ.get("TASK_MANAGEMENT_ROUTES_FILE")
         os.environ["HERMES_HOME"] = str(hermes_home)
-        os.environ["TASK_MANAGEMENT_READ_ROUTES_FILE"] = str(routes)
+        os.environ["TASK_MANAGEMENT_ROUTES_FILE"] = str(routes)
         try:
             from hermes_cli.plugins import PluginContext, PluginManager, PluginManifest
             from tools.registry import registry
@@ -104,7 +108,7 @@ provider_ref = "tasks:default"
                 {"query": {"status": "ready", "limit": 20}, "destination_ref": "tasks:default"},
             )
             result = json.loads(raw_result) if isinstance(raw_result, str) else raw_result
-            assert result["ok"] is True
+            assert result["ok"] is True, result
             assert result["backend_key"] == "local_tasks"
             assert [item["title"] for item in result["task_snapshots"]] == [
                 "Prepare quarterly plan"
@@ -118,9 +122,9 @@ provider_ref = "tasks:default"
             else:
                 os.environ["HERMES_HOME"] = old_home
             if old_routes is None:
-                os.environ.pop("TASK_MANAGEMENT_READ_ROUTES_FILE", None)
+                os.environ.pop("TASK_MANAGEMENT_ROUTES_FILE", None)
             else:
-                os.environ["TASK_MANAGEMENT_READ_ROUTES_FILE"] = old_routes
+                os.environ["TASK_MANAGEMENT_ROUTES_FILE"] = old_routes
 
     print("OK: Hermes task_query resolved local_tasks and returned 1 normalized snapshot")
     return 0

@@ -1,114 +1,115 @@
 # Task Management Plugin
 
-`task-management` keeps task consumers independent of the storage provider.
-Codex receives the bundled workflow skill. Hermes additionally loads the native
-read-only `task-management-read:task_query` runtime tool from `plugin.yaml` and
-`__init__.py`. This package does not bundle an MCP server, so the Codex manifest
-does not declare `mcpServers`.
+`task-management` is the backend-neutral consumer surface for task work. Codex
+receives the bundled workflow skill. Hermes additionally registers the native
+public tools below from `plugin.yaml` and `__init__.py`:
 
-## Hermes Install
+- `task-management-read:task_query`
+- `task-management-write:task_preflight`
+- `task-management-write:task_apply`
+
+Version `0.4.0` uses task interface v2 and adapter contract v2. It does not
+bundle an MCP server, provider client, credentials, or provider-specific field
+mapping.
+
+## Dual-host install
 
 ```bash
 hermes plugins install git@github.com:omitsuhashi/skills.git#plugins/task-management
 hermes plugins enable task-management
 ```
 
-The Hermes entrypoint registers `task-management:task-management` through
-`ctx.register_skill` and `task_query` through `ctx.register_tool`. The
-authoritative Hermes export is `plugin.yaml.exports.toolsets`, which exactly
-matches `task-management-read` at runtime.
-
-### Optional decision companion
-
-The plugin bundles `task-management`, but `$decide-in-order` remains a standalone
-skill and is not copied into this plugin. Install it separately when deep
-prioritization, continuation, or review support is required:
+Codex discovers `skills/task-management/SKILL.md` from
+`.codex-plugin/plugin.json`. Hermes registers that same skill with
+`ctx.register_skill`, so the shared `SKILL.md` is the workflow authority on both
+hosts. The optional `$decide-in-order` companion remains a separate install;
+mechanical reads and already-reviewed operations continue when it is absent,
+while unresolved material decisions stop for human review.
 
 ```bash
 hermes skills install omitsuhashi/skills/skills/decide-in-order
 hermes skills list
 ```
 
-Confirm that `decide-in-order` appears for the target profile. If it is absent,
-Mechanical task operations continue, but the plugin must not claim that deep
-decision support ran; severe irreversible decisions still stop for human review.
+Mechanical task operations continue if it is unavailable; do not claim that
+decision support ran.
 
-Repository compatibility does not prove the loaded plugin version. Before an
-approved live smoke, run:
+Repository compatibility is not live availability. An approved live check must
+confirm the enabled version with `hermes plugins list --plain --no-bundled`; it
+must match `plugin.yaml`.
+Ordinary repository validation does not install, enable, or update a live
+profile.
 
-```bash
-hermes plugins list --plain --no-bundled
-```
+## Host-owned route
 
-The enabled `task-management` version must match `plugin.yaml`. Refresh with the
-documented force-install flow when the loaded version is stale.
-
-## Read Routes
-
-The public tool accepts an opaque logical `destination_ref` and a neutral query.
-`query.backend_key` is optional; when omitted, the host route's
-`default_backend` is used. Callers never supply an adapter kind, tool name,
-provider destination, route path, or local file path.
-
-Set the host-owned route file:
+Set one credential-free unified route file:
 
 ```bash
-export TASK_MANAGEMENT_READ_ROUTES_FILE=/host-owned/task-read-routes.toml
+export TASK_MANAGEMENT_ROUTES_FILE=/host-owned/task-backends.toml
 ```
 
-Start from `config/task-backends.example.toml`. Its default `remote_tasks` route
-shows a credential-free MCP configuration with one exact read-only tool. A
-provider-plugin route uses the same contract with `kind = "plugin"` and an exact
-`task_adapter__<provider>__task_query` tool name.
+Start from `config/task-backends.example.toml`. Contract version 2 binds each
+backend to exactly one `query`, `preflight`, and `apply` adapter tool plus
+logical destinations. Callers provide only neutral task values and an opaque
+`destination_ref`; they do not select adapter tools, route files, GitHub owners,
+repositories, project numbers, field IDs, or credentials.
 
-The read-only `local_json` adapter is not a normal runtime backend. It is
-retained only as a plugin-owned test and smoke fixture seam. Plugin tests and
-`scripts/smoke_test_hermes_read.py` create temporary route and JSON files and
-discard them when the process exits. Operator config must use an external MCP
-or provider-plugin route, and mutable task state remains external-backend-owned.
+The example pairs with `task-adapter-github-projects` and therefore uses
+`tasks:portfolio-os` plus the opaque `task-content:portfolio-os`. Install and
+configure that adapter separately. The route file and adapter config must agree
+on those opaque references.
 
-External routes fix exactly one read-only tool in host config:
+`local_json` is retained only for plugin-owned tests and the isolated read
+smoke. It is not a normal runtime backend, an operator runtime backend, or a
+mutable task store.
 
-- `mcp__<server>__task_query`
-- `task_adapter__<provider>__task_query`
+## Public flow
 
-The adapter contract is version 1 and capability `task_read`. External adapters
-own provider authorization, pagination, destination mapping, and provider-side
-errors. They must page internally up to the requested `limit`; provider cursors
-are not exposed by the public result. Responses are limited to 5 MiB and 100
-items, and the public `limit` is applied before snapshot normalization. Route
-kind and tool namespace must match (`mcp` to `mcp__...`, `plugin` to
-`task_adapter__...`), and duplicate logical destination refs invalidate the
-route. The facade allowlist-normalizes every item
-and rejects raw provider IDs, unknown metadata, unsafe links, and credential-like
-values.
+1. `task_query` resolves the host route, dispatches its fixed adapter query
+   tool, and returns only normalized `TaskSnapshotResult` data.
+2. `task_preflight` validates one operation, resolves the same route, performs
+   read-only adapter preflight, and returns a reviewable `ApprovalPreview` plus
+   digest. Readiness never grants write approval.
+3. A human approves the exact preview, or a host policy uses
+   `confidence_authorized` only when the preflight explicitly permits it.
+4. `task_apply` reloads the route, re-runs preflight, verifies route, operation,
+   side-effect, and digest identity, then dispatches the fixed adapter apply
+   tool once.
+5. The facade returns a backend-neutral `TaskWriteResult`. Partial or unknown
+   outcomes require inspection; only an explicit provider response stating
+   that no write occurred may be retryable.
 
-See
-[`routing-flow.md`](skills/task-management/references/routing-flow.md) for the
-read routing overview, end-to-end sequence, backend switch, ownership table, and
-the separate state-changing boundary.
-
-`TASK_MANAGEMENT_READ_ADAPTER_TOOL=mcp__<server>__task_query` remains supported
-only as the POTASK-010 single-route compatibility mode. It requires
-`query.backend_key` because no host route is available to resolve a default.
-There is no implicit GitHub route and no direct provider API, GraphQL, or `gh`
-fallback.
+Approval mismatch, human-required confidence decisions, missing route/config,
+and blocked preflight all stop before adapter apply. The task-management package
+never calls raw GitHub MCP tools directly.
 
 ## Verification
 
-The isolated smoke test uses the installed Hermes `PluginContext` and registry,
-a temporary `HERMES_HOME`, and a plugin-owned local JSON fixture copied into a
-temporary directory. It does not edit a live profile or contact a provider:
+Hermetic tests and smokes use temporary config, a fake public adapter/MCP
+boundary, and temporary `HERMES_HOME` state. They make no network call and edit
+no live profile:
 
 ```bash
-python3 scripts/smoke_test_hermes_read.py
+python3 -m unittest discover -s plugins/task-management/tests
+python3 plugins/task-management/scripts/smoke_test_hermes_read.py
+python3 plugins/task-management/scripts/smoke_test_hermes_write.py
 ```
 
-## Update Caveat
+The full fake end-to-end test lives with the GitHub adapter so both plugin
+entrypoints and the adapter's provider boundary are exercised together.
+
+## Live activation boundary
+
+Repository completion proves only code, contract, manifest, docs, and hermetic
+runtime behavior. Installing the plugins, configuring the route and adapter,
+registering GitHub MCP tools, authenticating, enabling toolsets, or mutating a
+real GitHub Project/Issue requires a separate live activation gate.
+
+## Update caveat
 
 A subdirectory install usually does not retain `.git`, so
 `hermes plugins update task-management` may report that it is not a git
-checkout. Refresh with:
+checkout. Refresh only in an approved live workflow:
 
 ```bash
 hermes plugins install --force git@github.com:omitsuhashi/skills.git#plugins/task-management

@@ -2,9 +2,11 @@
 
 ## 状態
 
-Spec Gate / Issue Gate / Execution Plan Gate 承認済み。`issue-implementation-loop` は POTASK-001 から POTASK-009 まで local `PR_READY`。2026-07-15 に追加承認された POTASK-010 の backend-neutral read facade / Hermes read-only tool / export alignment は local 実装・検証済みで、PR delivery 対象とする。2026-07-16 に POTASK-011 として、consumer が backend を意識せず Hermes から実際に `task_query` を呼べる pluggable provider adapter / host-owned route / end-to-end smoke test を追加する方針を承認した。Current companies preflight は `.codex-plugin/plugin.json` だけを読むため、Hermes `plugin.yaml` をauthoritative export evidenceとして受け入れるcross-repo follow-upまでNPLM-006 end-to-end gateはblockedのままとする。GitHub issue mirror、mergeはまだ行わない。
+Spec Gate / Issue Gate / Execution Plan Gate 承認済み。2026-07-22時点でPOTASK-001からPOTASK-019はlocal `PR_READY`。POTASK-019はreviewed POTASK-018 `cc61018`とreviewed POTASK-015 `f5fc50e`の統合、TDD reconciliation、full verification、独立implementation review cycle 2 approvalを完了し、reviewed head `cfcd1ab`をEpic Baseへlocal統合した。task-management `0.4.0`とseparate GitHub Projects Adapter `0.1.0`はlocal repository上で接続済みだが、GitHub Issue mirror、push、PR作成、shared `main`へのmerge、live install / activationは未実施である。
 
-この版では、初期稼働backendをhost-owned local JSONにできる。外部backendはHermes Agentに登録されたMCPまたは別provider pluginのbackend-neutral `task_query` toolへ接続し、direct provider API adapter / `gh` command planner / GraphQL fallbackは作らない。
+Companiesへ渡すpublic Interface v2の唯一のnormative referenceは[Task Management Write / Preflight Interface 仕様](task-management-write-preflight-interface-spec.md)とする。このページは全体構成とPOTASK-019 implementation evidenceだけを記録し、公開Interfaceを重複定義しない。separate Adapterのnormative contractは[GitHub Projects Task Backend Adapter 仕様](task-adapter-github-projects-spec.md)に固定する。human request `hr-potask-019-normative-status-scope-001`の承認により、両canonicalのstatus / current-boundaryだけをlocal implementation状態へ同期した。normative design、DAG、plugin scope、remote / live policyは変更していない。
+
+current実装では、`local_json`はplugin-owned test / smoke fixtureだけに限定する。外部backendはhost-owned route v2が固定したAdapterの`query` / `preflight` / `apply`を通じて接続し、task-managementへGitHub field mapping、MCP method、credential、direct provider API、`gh` command、GraphQL fallbackを持ち込まない。
 
 ## 問題
 
@@ -30,6 +32,18 @@ task backend は初期稼働時にlocal fileでもよく、後からMCPまたは
 - `plugin.yaml.exports.toolsets` と runtime registration は正確に `task-management-read` で一致する。`.codex-plugin/plugin.json` は current `plugin-creator` schema に `exports` がないため Codex manifest として有効な field だけを維持する。
 - read adapter は `TaskQuery` と opaque `destination_ref` を受け、provider raw IDs、unknown backend metadata、credential-like values を含まない `TaskSnapshotResult` を返す。
 - consumerはlocal JSON、MCP、provider plugin backendの違いを意識せず、同じ`task_query` / `TaskSnapshotResult` contractを使う。
+- public Interface v2は`task_query`、`task_preflight`、`task_apply`の3 toolに限定し、Hermes export / runtime registrationを`task-management-read`と`task-management-write`へexact alignmentする。
+- writeはexact ApprovalPreview / digest / receiptを再検証し、human-requiredまたはapproval mismatchではAdapter writeを0回にする。partial / unknown outcomeはblind retryを許さず、明示的no-write failureだけをretryableにする。
+- GitHub Projects固有のMCP shape、field mapping、credential / permission前提はseparate Adapterだけが所有する。
+- repo-only implementation completionとLive Activation Gateを分離し、MCP registration、credential、Hermes live profile、GitHub Project / Issue mutationをnormal verificationで行わない。
+
+## POTASK-019 local integration evidence
+
+- Gate 1 integration commit `3c8ba068d648974ab1a31d500b965736da9e38c4`は、reviewed Adapter head `cc61018cb55172fcbd15e6ffa1b01f91e58b4357`とreviewed task-management head `f5fc50ecdb87345b7e9e434b59e22d07c5a6f82a`をこの順のexact parentsに持つ。conflictとscope外pathは0件だった。
+- normative Adapter v2 fixture treeを両pluginでexact一致させ、public task-management → GitHub Adapter fake dispatchを追加した。preflightのread-only性、explicit approval後のcreate / add / 9 field updates / read-back、human-requiredとapproval mismatchのzero-write、safe partial / retry結果を実証する。
+- fresh verificationはtask-management 156 / 156、GitHub Adapter 45 / 45、public end-to-end 6 / 6、llm-wiki 6 / 6、read / write / Adapter smokes、plugin / skill / dual-host / architecture validators、fixture diff、working-tree diff check、cache scanがPASSした。
+- invariant / safety testsは弱めていない。変更したlegacy assertionsはroute v1またはplaceholder runtimeを前提にしたものだけで、approval binding、fail-closed validation、zero-write、leakage guard、partial / retry safetyはv2 contractとして維持した。
+- independent implementation review cycle 2はfull range `cc61018cb55172fcbd15e6ffa1b01f91e58b4357..cfcd1abf46372ea19828da65c88aa879684af8d0`を`approved`とし、Critical / Important findingは0件だった。この証跡はlocal implementation / review / Epic Base integration完了を示すが、remote deliveryまたはlive activationを示さない。
 
 ## Epic ID
 
