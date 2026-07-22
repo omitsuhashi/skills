@@ -1232,3 +1232,30 @@ append-only で使います。すべての entry は予測しやすい header �
 - write contracts 26 / 26、task-management full suite 127 / 127、read adapter / routes各18 / 18、full / micro rangeの`git diff --check`を通過した
 - 独立reviewはfull range `cc1d428..d539ebd`とmicro range `c47a9c7..d539ebd`を`approved`とし、Critical / Important findingは0件だった
 - POTASK-012をlocal `PR_READY`へ移し、`artifact_ready`でPOTASK-013、POTASK-014、POTASK-016をreleaseした。remote / live writeは未実施
+
+## [2026-07-22] implementation-review | POTASK-014 and POTASK-016 local PR_READY
+
+- POTASK-014 `a5bcf11`はcanonical approval digest、confidence-aware approval policy、preflightとの状態分離を実装し、approval / preflight各5 / 5、task-management full 137 / 137を通過した。independent review cycle 1は`approved`
+- POTASK-016 `bc73c99`はseparate GitHub Projects Adapter scaffold、fixed MCP allowlist、opaque mapping、host attestation、dual-host manifestsを実装し、adapter tests 15 / 15、plugin / dual-host validatorsを通過した。independent review cycle 1は`approved`
+- 両issueをlocal `PR_READY` / `artifact_ready`へ移した。POTASK-014 fixtureのseparate Adapter copy同期はPOTASK-019 integration scopeが所有する
+- GitHub Issue、push、PR、merge、live install / MCP / credential / GitHub mutationは未実施
+
+## [2026-07-22] human-wait | POTASK-013 regression guard scope
+
+- POTASK-013 workerはapproved scope内でroute 21 / 21、read adapter 18 / 18、diff-checkを通過したが、route v2 config更新がscope外の既存`plugins/task-management/tests/test_backend_routing.py` route v1 exact assertionsを回帰させることを検出した
+- human request `hr-potask-013-regression-guard-scope-001`を開き、上記1 test fileだけをWrite Scope / read pathsへ追加する承認を求めた。機能scope、DAG、remote / live policyは変更しない
+- workerの未commit変更を保持し、POTASK-013を`WAITING_HUMAN`、POTASK-015をblockedに維持した
+
+## [2026-07-22] implementation-review | POTASK-017 local PR_READY
+
+- initial `eb570e4`のcycle 1 reviewは、official compact field typeのlowercase mismatchと、public Hermes dispatch JSON envelopeをtestsが迂回する2件をCritical `intent_gap`として検出した
+- fix `b2494e5`はpinned official GitHub MCP sourceとlive installed Hermes public seamを根拠にTDD修正し、preflight 7 / 7、query 5 / 5、full 27 / 27、plugin / dual-host validatorsを通過した
+- cycle 2 reviewは`approved`、finding 0件。POTASK-017をlocal `PR_READY` / `artifact_ready`へ移し、POTASK-018をreleaseした
+
+## [2026-07-22] implementation-review | POTASK-018 local PR_READY
+
+- implementation `d780f8c`はofficial MCP operation shapes/orderでlinked Issue create、Project add、ordered 9 field update、read-back、update / comment / report、safe partial resultを実装した
+- cycle 1 reviewはfirst-write explicit-no-write retryabilityがfield-only update / comment / reportで失われ、stable `rate_limited` spellingがno-write detectorから漏れるImportant `intent_gap`を1件検出した
+- fix `cc61018`は5 first-write probesだけをfailed / provider failure / retryableにし、later-write / unknown outcomeはpartial / nonretryableを維持した。partial 6 / 6、full 39 / 39、Hermes fake-MCP smoke、plugin / dual-host validatorsを通過した
+- cycle 2 reviewはfull range `b2494e5..cc61018`とfix delta `d780f8c..cc61018`を`approved`とし、finding 0件。POTASK-018をlocal `PR_READY` / `artifact_ready`へ移した
+- runtime next actionsはrunnable / reviewable / fixableなし。POTASK-013だけがhuman wait、POTASK-015はPOTASK-013、POTASK-019はPOTASK-015を待つ。remote / live writeは未実施
