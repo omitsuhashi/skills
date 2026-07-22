@@ -1,9 +1,22 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Issue Implementation Loop Worker Report",
+  "title": "Issue Implementation Loop Worker / Reviewer Report V2",
   "type": "object",
-  "required": ["epic_id", "issue_id", "branch", "worktree", "changed_files", "verification", "status"],
+  "additionalProperties": false,
+  "required": ["schema_version", "approved_spec_binding", "dispatch_id", "epic_id", "issue_id", "branch", "worktree", "changed_files", "verification", "status", "residual_risks"],
   "properties": {
+    "schema_version": {"const": 2},
+    "approved_spec_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "gate_commit"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "gate_commit": {"type": "string", "pattern": "^[0-9a-f]+$"}
+      }
+    },
+    "dispatch_id": {"type": "string", "minLength": 1},
     "epic_id": {"type": "string"},
     "issue_id": {"type": "string"},
     "branch": {"type": "string"},
@@ -14,7 +27,7 @@
     "head_sha": {"type": "string"},
     "implementation_review": {"type": "object"},
     "status": {"type": "string"},
-    "residual_risks": {"type": "array", "items": {"type": "string"}}
+    "residual_risks": {"type": "array", "items": {"type": "string", "pattern": ".*\\S.*"}}
   },
   "allOf": [
     {

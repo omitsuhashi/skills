@@ -61,10 +61,11 @@ from .resume_brief import (
     ResumeBriefInputError,
     build_resume_brief,
     build_resume_brief_meta,
-    rebuild_state_from_events,
+    resume_source_snapshot,
     validate_resume_brief_cache,
     word_count,
 )
+from .runtime_state import EventFoldError, rebuild_state_from_events, validate_event
 from .scheduler import (
     compute_next_actions,
     human_blocked_reason,
@@ -73,8 +74,9 @@ from .scheduler import (
 )
 from .skill_discovery import find_skill, skill_roots
 from .validation.execution_envelope import validate_execution_envelope
+from .validation.execution_result import validate_execution_result
 from .validation.input_packet import validate_input_packet
-from .validation.runtime_state import validate_runtime_state
+from .validation.runtime_state import validate_runtime_epoch, validate_runtime_state
 from .validation.worker_packet import validate_worker_packet
 from .validation.worker_report import validate_worker_report
 from .worker_packet import (
@@ -131,8 +133,10 @@ __all__ = [
     "ResumeBriefBudgetError",
     "ResumeBriefError",
     "ResumeBriefInputError",
+    "EventFoldError",
     "build_resume_brief",
     "build_resume_brief_meta",
+    "resume_source_snapshot",
     "build_worker_packet",
     "canonical_issue_branch",
     "commit_range_parts",
@@ -169,9 +173,12 @@ __all__ = [
     "skill_roots",
     "validate_delivery_plan",
     "validate_execution_envelope",
+    "validate_execution_result",
+    "validate_event",
     "validate_input_packet",
     "validate_resume_brief_cache",
     "validate_runtime_state",
+    "validate_runtime_epoch",
     "validate_worker_packet",
     "validate_worker_report",
     "word_count",

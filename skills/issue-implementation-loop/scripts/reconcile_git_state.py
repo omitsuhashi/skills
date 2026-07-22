@@ -34,7 +34,7 @@ def main() -> int:
     args = parser.parse_args()
 
     envelope = load_json(args.envelope)
-    errors = validate_execution_envelope(envelope)
+    errors = validate_execution_envelope(envelope, args.repo)
     if errors:
         for error in errors:
             print(error, file=sys.stderr)

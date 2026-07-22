@@ -1151,3 +1151,132 @@ append-only で使います。すべての entry は予測しやすい header �
 - task-management 専用 strict parser も unquoted integer `1` だけを Python `int` として返し、native manifest contract で exact type / value を固定した
 - RED は validator 25件中2 subtest failures と Hermes manifest 11件中3 failures、GREEN は Python 3.9.6 / 3.12 の両方で validator 25件、Hermes 11件、full task-management 94件、workflow 3件、decide-in-order 7件、llm-wiki 6件、architecture / context、repository `--all` が成功した
 - durable page は `knowledge/wiki/syntheses/hermes-dual-host-authoring-contract-design.md` と `knowledge/log.md` を更新した。`knowledge/index.md` の既存 summary は正確なため変更していない
+
+## [2026-07-21] spec-candidate | Loop Skill Approved Spec Binding Contract
+
+- ユーザーが選択した A 案を `knowledge/wiki/syntheses/loop-skill-approved-spec-binding-contract-spec.md` に書面化し、normalized input packet を machine-readable approval evidence と spec binding の唯一の正本にする設計を固定した
+- planning 側が final spec digest を human へ提示して一度だけ seal し、execution 側が prepare、dispatch、fix redispatch、report intake、review、resume、completion、delivery で同じ binding を fail closed に再検証する ownership seam を定義した
+- approval circularity、worktree projection、runtime/event/report identity、TOCTOU、explicit delivery/resume bypass を acceptance matrix と停止条件へ反映した
+- legacy packet、envelope、worker packet、metadataなしresumeの executable compatibility は維持しない clean break とし、historical wiki evidence は保持する一方で current validator/resume surface から外す方針にした
+- CTO / Companies 固有 schema、queue、dispatcher、result store は generic contract に含めず、Codex / Hermes 共通 CLI と repository validators を完成条件にした
+- `knowledge/index.md` に summary と検索語を登録した。A案の会話上の方向承認は済んでいるが、written spec review、Issue Gate、implementation plan、実装は未着手
+
+## [2026-07-21] spec-approval | Loop Skill Approved Spec Binding Contract
+
+- actor expression: `session-user`
+- approved at: `2026-07-21T17:55:36+09:00`
+- exact spec path: `knowledge/wiki/syntheses/loop-skill-approved-spec-binding-contract-spec.md`
+- raw-byte SHA-256: `6cedbba982f891d8ffceb9204bfc453b276df9e6021dca048cb0612d359a3dcc`
+- approval scope: `accepted_decisions=true`、`non_goals=true`、`acceptance_criteria=true`、`verification=true`、`remote_policy=true`、`stop_conditions=true`
+- ユーザーの「承認」と実装依頼により Written Spec Gate を通過した。spec bytes は変更せず、この entry を bootstrap approval evidence とする
+- Issue Gate、Execution Plan Gate、実装、remote write はこの entry だけでは完了扱いにしない。実装は `local_only` で進め、push、PR、merge、live install は別承認とする
+
+## [2026-07-21] issue-gate | Loop Skill Approved Spec Binding Contract
+
+- ユーザーの明示的な「承認」「skill 作成のベストプラクティスに則った実装」依頼を受け、承認済み spec の scope を変更せず ASBC-001 から ASBC-006 へ分解した
+- dependency は core/input packet -> envelope/worker と runtime/auxiliary と docs -> state-changing guards -> bootstrap seal/full verification とし、first runnable issue を ASBC-001 に固定した
+- production change 前の fresh-agent baseline で、保存 spec digest と current bytes が不一致でも validator / Required Immediate Guard が exit 0 / ok=true になる RED を確認した
+- Issue Gate は承認済み。Execution Plan Gate、worker 実装、implementation review は未完了であり、remote policy は `local_only` のまま維持する
+
+## [2026-07-21] execution-plan | Loop Skill Approved Spec Binding Contract
+
+- ASBC-001 から ASBC-006 を、各 issue の RED -> minimal GREEN -> targeted verification -> scoped commit として実行する詳細計画を固定した
+- bootstrap exception は ASBC-001 の core/Input Packet v2 実装だけに限定し、その commit で approved spec を v2 packet へ seal して以後の gate commit とする
+- Envelope/worker、runtime/auxiliary/resume、routing/review/completion/delivery、skill contract、fresh-agent forward test/full verification の依存順序と exact command set を記録した
+- scope は approved spec/issue ledger と同一、remote policy は `local_only`。worker 実装、review、push、PR、merge、live install はまだ実行していない
+
+## [2026-07-21] implementation-closeout | Loop Skill Approved Spec Binding Contract
+
+- ASBC-001〜ASBC-006 を dependency 順に TDD 実装し、全 issue を `LOCAL_COMPLETE` とした。implementation head は `b3bfa4b5a8cb1dd7788aa61398679ce6c5f995dd`、binding gate commit は `ad9adeab69bcafd761d8457e9c33d1b4c26096d5`
+- current executable contract は Input Packet v2 / Execution Envelope v4 / Event・Runtime・Human Request・Hardening Registry・Report・Result・Delivery v2 / Worker・Reviewer Packet v3 / Resume metadata v3。historical Input Packet v1 と Envelope v1〜v3 JSON は non-executable evidence として bytes を変更せず保持した
+- planning の exact identify/present/approve/seal と、prepare、dispatch、worker/reviewer start・report intake、resume/rebuild、review/completion、delivery の fresh fail-closed verificationをCodex/Hermes共通 skill contractへ同期した。invalid binding で許可するのは read-only diagnostic status だけとした
+- ASB-01〜ASB-30 を public operation / real entrypoint hookへ一意に mappingし、issue-implementation-loop 230 tests、grill-to-pr-loop 24 tests、llm-wiki 6 tests、architecture/context/strict context report/dual-host/creator validators、Packet v2 / Envelope v4 validators、`git diff --check` が成功した。strict context warnings は空、repository-wide 最小 headroom は 21%、affected issue-loop 最小 headroom は 26%
+- fresh-agent forward test 3件は planning one-byte drift、urgency下の execution mismatch、terminal後の stale delivery/resume をすべて停止し、read-only statusだけを許可した。scoped implementation reviewは全taskで完了し、open Critical / Important finding はない
+- immutable raw-byte SHA-256 は spec `6cedbba982f891d8ffceb9204bfc453b276df9e6021dca048cb0612d359a3dcc`、sealed packet `3779e815b4be7438b36e9fb53073fa1d3ab20f07cd5ad1c531fa075c11b457e7`、Envelope `ac7630bf404b1c3607eb504bc18377bc45aef2c3b128be04e38d6737ca351af4` のまま一致した
+- residual risk は raw-byte contract の保守性、validation後mutationの理論的可能性、actor expressionが暗号学的本人性を証明しないこと、clean breakで旧runをresumeできないこと、live host installを検証していないこと。各state-changing boundaryのfresh verification、new approval/new run、separate live authorizationを維持する
+- approved remote policy は `local_only`。push、GitHub Issue、PR、merge、live Codex/Hermes install/runtime changeは意図的に実行せず、別の明示承認が必要な境界として残した
+
+## [2026-07-22] implementation-recloseout | Loop Skill Approved Spec Binding Contract
+
+- 2026-07-21 の `implementation-closeout` entry と commit `6f0158c66710ee0dcce1f868d0fbe6c85bc72602` は当時の証跡として保持するが、その completion claim は後続whole-branch reviewで再オープンされた。本entryが最終状態をcorrectiveにsupersedeする
+- whole-branch review `cab8bd88351727f3495b657df447f7f64aa881d1..6f0158c66710ee0dcce1f868d0fbe6c85bc72602` は2 Critical / 6 Importantを検出した。Envelopeのsealed intent非対応、Worker/Reviewer caller semantics、closed/strict validation、runtime/resume fresh verification、remote-delivery signature、9番目のcontext operation、status exception、exact Epic-base blobsがblockerだった
+- `f8f69bb3b9396ee5daa49f0fb710a28e1086ee94` (`fix: bind approved intent end to end`) で上記を修正した後、hardening review `6f0158c66710ee0dcce1f868d0fbe6c85bc72602..f8f69bb3b9396ee5daa49f0fb710a28e1086ee94` が2 Critical / 1 Important / 1 Minorを検出した。dependency edge semantics、worker trust roots/active runtime、exact boolean types、schema-required fieldsが残blockerだった
+- `7e9515a7e74f632c3202ae2ab81dd65e7102b4ac` (`fix: verify worker trust boundaries`) でcanonical dependency edges、trusted repo/assigned worktree/active Envelope・Runtime boundary、exact primitive types、closed Worker Packet fieldsを修正した。final focused closure `f8f69bb3b9396ee5daa49f0fb710a28e1086ee94..7e9515a7e74f632c3202ae2ab81dd65e7102b4ac` はCritical / Important / Minorすべて0
+- final local verificationはissue-implementation-loop 244 tests、grill-to-pr-loop 25 tests、llm-wiki 6 tests、architecture/context/strict context/dual-host/両creator validators、current Envelope validator、`git diff --check`が成功した。strict contextは`warnings=[]`、issue-loop operation countはapproved contractどおり8
+- immutable raw-byte SHA-256はspec `6cedbba982f891d8ffceb9204bfc453b276df9e6021dca048cb0612d359a3dcc`、sealed Input Packet `3779e815b4be7438b36e9fb53073fa1d3ab20f07cd5ad1c531fa075c11b457e7`のまま。corrected Envelope v4は`c15a7e9f4dc18acf8899f8e660f8f6eff8753f39b9f72a5772e44daf22d89497`
+- 全ASBC issueは最終的に`LOCAL_COMPLETE`、remote policyは`local_only`。push、GitHub Issue、PR、merge、live Codex/Hermes install/runtime changeは実行していない
+
+## [2026-07-22] final-verification | Loop Skill Approved Spec Binding Contract
+
+- commit `18a7fc4e8439421b28499f9105bf7653888b22de` (`fix: close binding metadata parity`) で Worker Packet の Envelope / Runtime / binding metadata exact parityと、strict context baselineのoperation-count self-consistencyを固定した
+- final focused review `7e9515a7e74f632c3202ae2ab81dd65e7102b4ac..18a7fc4e8439421b28499f9105bf7653888b22de` は Approved。Critical / Important / Minorすべて0で、open findingはない
+- final local verificationはissue-implementation-loop 245 tests、grill-to-pr-loop 25 tests、llm-wiki 6 tests、scripts 59 testsが成功した。strict contextはcurrent / baseline operation count `8 == 8`、`warnings=[]`
+- immutable raw-byte SHA-256はspec `6cedbba982f891d8ffceb9204bfc453b276df9e6021dca048cb0612d359a3dcc`、sealed Input Packet `3779e815b4be7438b36e9fb53073fa1d3ab20f07cd5ad1c531fa075c11b457e7`、corrected Envelope v4 `c15a7e9f4dc18acf8899f8e660f8f6eff8753f39b9f72a5772e44daf22d89497`のまま変更していない
+- 全ASBC issueは`LOCAL_COMPLETE`、remote policyは`local_only`。push、GitHub Issue、PR、merge、live Codex/Hermes install/runtime changeは実行していない
+
+## [2026-07-22] spec-candidate | Approved Spec Binding Artifact Lifecycle
+
+- user feedbackを受け、同一Epicのdurable spec/ledger/plan/packetを`knowledge/wiki/syntheses/<epic-id>/`へ集約し、Envelope以後のinstantiated execution JSON/JSONLをGit common runtime rootへ分離するconsolidated revision candidateを作成した
+- current skillだけを使うfresh read-only baseline 3件では、planning artifactsは`syntheses/`直下へflat配置され、execution artifactsはGit common runtime rootへ非追跡配置された。planning layoutとruntime contractの不一致をproduction change前に再現した
+- Input Packet v2はexact approval/execution-intent lockかつgate commit blobなのでtrackedのまま維持し、Execution Envelope、runtime/events、worker/reviewer packets/reports、decisions、recovery、deliveryはGit非追跡とする。schema/template/test fixture JSONはproduct contractとしてtrackedを維持する
+- consolidated spec、follow-up ledger、initial plan archive、TDD implementation planを`knowledge/wiki/syntheses/approved-spec-binding-contract/`へ配置した。ASBC-007〜ASBC-009はexact spec path/raw-byte digestのWritten Spec Gate待ちで、production skill/code、sealed packet、remote PR stateは未変更
+- Written Spec Gate提示値はpath `knowledge/wiki/syntheses/approved-spec-binding-contract/spec.md`、raw-byte SHA-256 `2bd4fcdbed9828c988a9d5c24cdd02242434f0e44e802cceb34fc4a0e7b86193`。approval subjectは`spec_binding`、scopeはaccepted decisions / non-goals / acceptance criteria / verification / remote policy / stop conditionsの6項目で、decisionは未承認
+
+## [2026-07-22] spec-approval | Approved Spec Binding Artifact Lifecycle
+
+- actor expression: `session-user`
+- approved at: `2026-07-22T07:36:04+09:00`
+- exact spec path: `knowledge/wiki/syntheses/approved-spec-binding-contract/spec.md`
+- raw-byte SHA-256: `2bd4fcdbed9828c988a9d5c24cdd02242434f0e44e802cceb34fc4a0e7b86193`
+- approval subject: `spec_binding`
+- decision: `approved`
+- approval scope: `accepted_decisions=true`、`non_goals=true`、`acceptance_criteria=true`、`verification=true`、`remote_policy=true`、`stop_conditions=true`
+- ユーザーの「承認」により exact Written Spec Gate を通過した。承認後の `spec.md` bytes は変更せず、ASBC-007をfirst runnable issueとする
+- remote scopeはbranch `codex/approved-spec-binding-contract`へのpushと既存Draft PR #32の更新のみ。PR ready化、merge、release、live installは非承認
+
+## [2026-07-22] canonicalize-rehome | Approved Spec Binding Artifact Lifecycle
+
+- Written Spec Gateのexact path/raw-byte SHA-256、`session-user`、`approved`、`spec_binding`、six-part scopeをpublic `identify`で再確認し、ASBC-007のreviewed implementation commit `ce70e6c`をmigration前提として固定した
+- current durable spec、ledger、initial implementation plan、follow-up implementation plan、sealed Input Packet v2を`knowledge/wiki/syntheses/approved-spec-binding-contract/`へ集約し、current index linksをnested rootへ切り替えた
+- Input Packet v2をapproved spec SHA-256 `2bd4fcdbed9828c988a9d5c24cdd02242434f0e44e802cceb34fc4a0e7b86193`へresealした。packet SHA-256は`e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c`、public packet validatorとbinding verifyはいずれも成功した
+- superseded flat current spec、issues、implementation plan、Input Packet、Execution Envelopeの5 filesだけをcurrent treeから削除した。historical artifactは追加削除せず、current instantiated EnvelopeはGit indexから除外した
+- 本entryを含むartifact lifecycle gate commitのfull SHAは、commit作成後のappend-only follow-up entryに記録する。specとsealed packet bytesは以後変更しない
+
+## [2026-07-22] artifact-lifecycle-gate | Approved Spec Binding Artifact Lifecycle
+
+- gate commit: `bc1f32dd7a4ac01dd8651744ae7929402dfa9356` (`docs: group approved spec binding artifacts`)
+- gate commit内のspec raw-byte SHA-256は`2bd4fcdbed9828c988a9d5c24cdd02242434f0e44e802cceb34fc4a0e7b86193`、sealed Input Packet raw-byte SHA-256は`e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c`
+- `knowledge/wiki/syntheses/approved-spec-binding-contract/input-packet.json`はtracked、superseded current instantiated Envelope pathはGit indexに存在しない。spec/packet bytesはgate commit後に変更していない
+
+## [2026-07-22] local-pr-ready | Approved Spec Binding Artifact Lifecycle
+
+- ASBC-007 review range `10c0d0cffc5960c1a841b7fdacb0cd7a7b592e32..ce70e6cf8ddacc07948c72320443f306c32585b2`とASBC-008 review range `ce70e6cf8ddacc07948c72320443f306c32585b2..a15e7dc04a7c830ac09773268a820479ff25cea2`はApproved、open findingなし。ASBC-007/ASBC-008を`COMPLETE`、ASBC-009をlocal `PR_READY`とした
+- current loop skill entrypointだけを読むfresh read-only evaluator 3件は、hypothetical Epicごとに`knowledge/wiki/syntheses/<epic-id>/{spec.md,issues.md,implementation-plan.md,input-packet.json}`をtracked durable tree、`$(git rev-parse --git-common-dir)/agent-runs/issue-implementation-loop/<epic-id>/`配下のExecution Envelope/runtime artifactsをuntrackedと判断した。3/3 pass、raw transcriptはcommitしていない
+- final local verificationはissue-implementation-loop 247 tests、grill-to-pr-loop 26 tests、llm-wiki 6 tests、scripts 59 tests、skill architecture/context、strict context report、dual-host、両skill-creator validator、`git diff --check`が成功した。strict contextはissue-loop operation count `8 == 8`、top-level `warnings=[]`
+- initial briefの`report_skill_context.py --all --json --strict`はcurrent CLIに`--strict`がなくexit 2だった。CLI `--help`、CI workflow、strict report testsが定義するcanonical equivalent `--require-baseline --fail-on-warning`へimplementation planを訂正し、同commandのexit 0 / top-level `warnings=[]`を確認した。CLI/specは変更していない
+- `origin/main...HEAD` local risk reviewはspec/implementation alignment、host-specific tracked paths、stale flat current links、accidental historical migration、schema/version drift、remote-scope expansionを確認し、Critical / Important finding 0。historical initial planのflat pathとtest-only legacy drift fixture shimはcurrent runtime guidanceではない
+- immutable raw-byte SHA-256はspec `2bd4fcdbed9828c988a9d5c24cdd02242434f0e44e802cceb34fc4a0e7b86193`、sealed packet `e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c`。両bytesはgate commit後も不変
+- mandatory controller task review / broad whole-branch review、branch push、Draft PR #32 summary/check更新はnonblocking pending delivery。push/PR mutationは本taskで実行せず、PR ready化、merge、release、live installは引き続き非承認
+
+## [2026-07-22] final-review-corrective-wave | Approved Spec Binding Artifact Lifecycle
+
+- whole-branch final review range `cab8bd88351727f3495b657df447f7f64aa881d1..e2db6bfc6e9690f0b3e4bac9e791853ca04b6431`のCritical 1、Important 3、Minor 1をlocalでcloseした。actual Git common directoryを基準にしたlinked-worktree runtime trust root、descriptor-relative/no-follow load、post-install spec revalidationとrollback、nested tracked templates、ASB-34〜ASB-36のbehavior mappingを実装した
+- test-only hard-link compatibility shimとflat fixture aliasesを削除した。以前のresidual risk記録は本entryでsupersedeされ、current fixtureはexplicit nested durable pathsを使用する
+- fresh local verificationはissue-implementation-loop 249 tests、grill-to-pr-loop 28 tests、llm-wiki 6 tests、scripts 59 testsと全repository validatorが成功し、strict context reportは`warnings=[]`、minimum headroom 20%以上だった。spec/packet SHA-256は`2bd4fcdbed9828c988a9d5c24cdd02242434f0e44e802cceb34fc4a0e7b86193` / `e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c`のまま不変
+- ASBC-007/ASBC-008は`COMPLETE`、ASBC-009はlocal `PR_READY`を維持する。mandatory controller whole-branch re-review/final review後のpushとDraft PR #32更新がpendingであり、本waveではremote/live actionを行っていない
+
+## [2026-07-22] asb-34-repository-wide-envelope-guard | Approved Spec Binding Artifact Lifecycle
+
+- follow-up re-reviewのImportant 1を受け、ASB-34をcurrent nested Epic rootのbasename checkから`knowledge/wiki/syntheses`全域のGit-index JSON scanへ拡張した。former flat pathを含む任意layoutのtracked `schema_version == 4` instantiated Execution Envelopeを拒否する
+- TDD fixtureはflat v4、historical v3、malformed syntheses JSON、skill-assets v4 templateを同時にtrackし、RED 1 errorからGREEN 2 focused testsへ進めた。historical v1〜v3 evidenceとtracked product templateは保持し、public ASB-34 mappingはcurrent ownershipとdeterministic flat-v4 detectionの2 behaviorを解決する
+- local suitesはissue-implementation-loop 249 tests、grill-to-pr-loop 29 tests、llm-wiki 6 tests、scripts 59 testsが成功した。spec/Input Packet bytesとschema versionsは不変
+- ASBC-009はlocal `PR_READY`、mandatory controller whole-branch re-review/final reviewはpendingを維持する。push、Draft PR #32 mutation、ready、merge、release、live installは実行していない
+
+## [2026-07-22] remote-delivery | Approved Spec Binding Artifact Lifecycle
+
+- whole-branch final review `cab8bd88351727f3495b657df447f7f64aa881d1..c844a3085a53878352f42b8d87eaa6d8e888a49b` はCritical / Important / Minorすべて0、既存Draft PR #32へのpublish Approvedとなった
+- branch `codex/approved-spec-binding-contract`をhead `c844a3085a53878352f42b8d87eaa6d8e888a49b`へpushし、[Draft PR #32](https://github.com/omitsuhashi/skills/pull/32)のtitle/body/check summaryをper-Epic durable root、untracked Git-common runtime root、tracked Input Packet exception、final validation evidenceへ更新した
+- PR #32はOPEN / Draftを維持し、Skill Architecture Python 3.9 / 3.12の4 jobsはすべてPASSした
+- final controller verificationはissue-implementation-loop 249 tests、grill-to-pr-loop 29 tests、llm-wiki 6 tests、scripts 59 tests、全repository validator、strict `warnings=[]`、packet `ok=true`、binding `valid=true`、`git diff --check`に成功した
+- immutable raw-byte SHA-256はspec `2bd4fcdbed9828c988a9d5c24cdd02242434f0e44e802cceb34fc4a0e7b86193`、sealed Input Packet `e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c`のまま不変
+- ASBC-007〜ASBC-009を`COMPLETE`とする。PR ready化、merge、release、live Codex/Hermes installは非承認かつ未実行

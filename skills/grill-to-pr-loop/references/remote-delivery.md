@@ -28,7 +28,7 @@ For `batch_issue_prs`:
 - The agent may merge issue PRs when checks/review/mergeability pass and the approved policy says `agent_default_with_human_escalation`.
 - Escalate to the human for scope drift, spec ambiguity, failed checks, conflicts, unresolved review, missing permissions, or any uncertain judgment.
 - After every issue PR creation or merge, update the local ledger and runtime state before continuing.
-- Before every issue PR or final PR, validate the exact delivery plan with `issue-implementation-loop/scripts/validate_delivery_plan.py <execution-envelope.json> <runtime-state.json> <delivery-plan.json> --json`, then preserve/report the `ok: true` result before creating the PR.
+- Before every issue PR or final PR, validate the exact delivery plan with `issue-implementation-loop/scripts/validate_delivery_plan.py <execution-envelope.json> <runtime-state.json> <execution-result.json> <delivery-plan.json> --repo-root <trusted-worktree-root> --json`, then preserve/report the `ok: true` result before creating the PR.
 - For final PR plans, `issue_scope` is the delivery candidate set; omit it only when the entire envelope work item set is in scope.
 - After all issue PRs are merged and before creating the final PR, use `superpowers:requesting-code-review` for a final spec alignment review. Ask exactly: `スペックに対して過不足がないか、そしてスペックに対してずれた実装をしていないか、この2点の観点でレビューをしてください。`
 - Treat final PR creation and final PR ready-for-review as blocked until Critical/Important spec alignment findings are fixed or explicitly accepted by the human.

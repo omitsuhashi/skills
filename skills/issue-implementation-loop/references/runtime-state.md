@@ -1,18 +1,28 @@
 # Runtime State
 
-Keep mutable execution state outside tracked issue branches:
+Keep all instantiated execution artifacts outside Git and tracked issue branches:
 
 ```text
 $(git rev-parse --git-common-dir)/agent-runs/issue-implementation-loop/<epic-id>/
+├── execution-envelope.json
+├── runtime-state.json
+├── events.jsonl
+├── reports/
+├── reviews/
+├── decisions/
+├── locks/
+├── recovery/
+└── delivery/
 ```
 
-Runtime root contents: `runtime-state.json`, `events.jsonl`, `reports/`,
-`reviews/`, `decisions/`, `locks/`, `recovery/`.
+Do not commit instantiated execution artifacts. Schemas, templates, and test fixtures remain tracked product assets.
 
-Only the coordinator writes central state: validate report, append event, update
-snapshot. Worker branches must not include `runtime-state.json`,
-`events.jsonl`, or live decision artifacts unless approved scope owns
-coordinator-state tooling.
+Only the coordinator writes state. Worker branches exclude `runtime-state.json`,
+`events.jsonl`, and live decisions unless scope owns coordinator tooling.
+
+Event v2 and Runtime State v2 carry one top-level `approved_spec_binding`.
+Validate before dedupe and after fold; reject mixed/unknown epochs. Reseal starts
+empty state and never copies old events, reviews, requests, or decisions.
 
 `pr_created` sets `pr`/`pr_opened`; `pr_merged` also sets `pr_merged` and
 `merge_commit`. Delivery reads runtime state, not local `PR_READY` inference.
@@ -20,6 +30,10 @@ coordinator-state tooling.
 ## Hardening Candidate Registry
 
 Path: `<runtime-root>/decisions/hardening-candidates.json`.
+
+Registry v2 carries runtime `approved_spec_binding`; missing means empty. Reject
+v1 or another epoch before decision reads (`SCHEMA_UNSUPPORTED` /
+`AUXILIARY_ARTIFACT_BINDING_MISMATCH`).
 
 This coordinator-owned runtime artifact is not a worker branch artifact or
 ledger replacement. Track only the schema/template in `assets/`; do not commit
@@ -51,6 +65,18 @@ require scoped `human_request_opened`.
 
 Validate snapshots with `python3 <skill-dir>/scripts/validate_runtime_state.py <runtime-state.json>`.
 
+Rebuild only through the binding-aware interface:
+
+```bash
+python3 <skill-dir>/scripts/rebuild_runtime_state.py <events.jsonl> \
+  --repo-root <trusted-worktree-root> \
+  --envelope <execution-envelope.json>
+```
+
+The rebuild verifies the closed Envelope and exact packet/spec projection before
+and after event folding, then verifies the binding again before returning the
+snapshot. The unbound one-argument rebuild form is unsupported.
+
 For `PR_READY`, `COMPLETE`, or `DONE`, record matching `base_sha`, `head_sha`,
 and committed `BASE_SHA..HEAD_SHA` review range; never use `working-tree`.
 
@@ -59,10 +85,16 @@ and committed `BASE_SHA..HEAD_SHA` review range; never use `working-tree`.
 Build a regenerable cache:
 
 ```bash
-python3 <skill-dir>/scripts/build_resume_brief.py <runtime-root>
+python3 <skill-dir>/scripts/build_resume_brief.py <runtime-root> \
+  --repo-root <trusted-worktree-root> \
+  --envelope <execution-envelope.json>
 ```
 
-The brief reads runtime/events plus optional envelope and report/review paths,
-enforces 600 words, and writes `<runtime-root>/resume-brief.md` plus meta. Add
+The brief requires the current envelope and reads runtime/events plus
+report/review paths,
+enforces 600 words, and writes markdown plus required v3 metadata containing
+`sources.approved_spec_binding`. Verify current packet/spec before and after the
+fold and again immediately before publishing either cache file. Add
 `Pending hardening decisions: N` and the candidate registry path when needed; do
-not copy candidate full text. If stale, fix runtime/events and rebuild.
+not copy candidate full text. Meta-less and v2 caches are unsupported. If stale,
+fix runtime/events and rebuild.

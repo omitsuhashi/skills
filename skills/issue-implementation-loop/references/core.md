@@ -1,49 +1,27 @@
 # Core Contract
 
-Use this skill only after issues and acceptance criteria are approved. The execution coordinator owns:
-
-- input packet and approved Execution Envelope
-- append-only event log and mutable runtime snapshot
-- blocker release and human request routing
-- issue completion and PR-ready decisions
-- final report and remote-write approval boundary
-
-The original planning/grill session must not implement issue work. Workers own only their assigned issue worktree, branch, write scope, and verification evidence. Reviewers own only review findings for the issue packet they receive.
+After issue approval, the coordinator owns packet/envelope, runtime/events, blockers/waits, completion/`PR_READY`, reports, and remote boundaries. Planning does not implement; workers own assigned branch/worktree/scope/evidence, and reviewers own packet-scoped findings.
 
 ## Input Packet
 
-Normalize local or remote issues before execution:
+Input Packet v2 is the only executable packet:
 
-- `schema_version`, `repo_root`, `epic_id`, optional `artifact_root`
-- `spec.path`, plus approved revision/hash when available
-- `work_items[]` with ID, title, source, acceptance criteria, non-goals, verification, write scope, and dependencies
-- `delivery_intent`: use `batch_issue_prs` for issue PRs into `codex/<epic-id>/epic-base` and a final PR to `main`
+- `schema_version: 2`, `epic_id`, repo-relative `artifact_root`
+- required `spec_binding`, complete `approval_evidence` and `work_items[]` intent
+- `delivery_intent`: `batch_issue_prs` sends issue PRs to `codex/<epic-id>/epic-base`, then a final PR to `main`
 
-Use `assets/templates/input-packet.json` for the concrete shape and `assets/schemas/input-packet.schema.json` for the field contract.
-
-Validate with:
-
-```bash
-python3 <skill-dir>/scripts/validate_input_packet.py <packet.json>
-```
+Use the packet template/schema and `validate_input_packet.py`. Seal only if `check_capabilities.py --json` supports `approved_spec_seal`; otherwise `PLATFORM_UNSUPPORTED`.
 
 ## Output Contract
 
-Return a local execution result:
+Return Execution Result v2 with active binding, envelope/runtime identity, per-issue commit/review/verification, requests, delivery candidates, and residual risks. Start from its template and run `validate_execution_result.py` before completion; v1 is unsupported.
 
-- `schema_version`, `epic_id`, `status`, and `envelope_revision`
-- epic base branch status when delivery mode uses `batch_issue_prs`
-- per-issue status, branch, worktree, base/head SHA, verification, implementation review, and residual risks
-- `pending_human_requests`, `delivery_candidates`, and `runtime_state_root`
+Execution Envelope v4 pins Input Packet v2 through `approved_spec_binding`, including gate commit ancestry and exact packet/spec blobs.
 
-Use `assets/templates/execution-result.json` for the concrete shape.
+## Binding Gate Map
 
-New Execution Envelopes use schema version `3` with `phase_branch_policy`; legacy `1` / `2` remain resumable.
+Prepare; dispatch and fix redispatch; review dispatch and approval intake; resume and rebuild; completion; and delivery all freshly verify the same active `approved_spec_binding`. Read-only status may return `binding_valid=false`, but state advance remains blocked. Packet drift has three outcomes. Exact restoration of unintended packet byte drift plus fresh validation retains the existing approved binding, Envelope revision, and runtime epoch. An intended non-spec packet byte change goes through the Execution Plan Gate for reconciliation and revalidation, a new reseal, and a new Envelope revision and runtime epoch, without a new human Spec Gate approval. A change to spec bytes, `spec_binding`, or `approval_evidence` goes through the human Spec Gate for a new approval and seal, then a new Envelope revision and runtime epoch. This exhaustive non-spec route covers execution-intent-only packet drift and any other sealed packet byte drift while `spec_binding` and `approval_evidence` remain exact, including other packet fields and serialization or whitespace-only drift. On it, reseal only when the changed bytes are intended; exact restoration reuses the seal. Never reuse old reports/results across either new-seal epoch.
 
 ## Non-Goals
 
-- Do not create or redesign issues.
-- Do not let the coordinator become the implementation worker, even in serial fallback.
-- Do not create a generic workflow framework.
-- Do not route work through a separate LLM node scheduler.
-- Do not perform remote writes unless the envelope and the human both approve the exact action.
+- Do not redesign issues, implement from the coordinator, add a generic scheduler/framework, or write remotely without envelope and human authorization.

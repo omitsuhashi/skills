@@ -51,6 +51,109 @@ class EntrypointTests(unittest.TestCase):
         ):
             self.assertIn(required, text)
 
+    def test_skill_entrypoint_documents_seal_host_capability_boundary(self) -> None:
+        text = SKILL_FILE.read_text(encoding="utf-8")
+        core = (SKILL_DIR / "references/core.md").read_text(encoding="utf-8")
+        for required in (
+            "approved_spec_seal",
+            "PLATFORM_UNSUPPORTED",
+            "Codex and Hermes",
+            "no unsafe fallback",
+        ):
+            self.assertIn(required, text + core)
+
+    def test_skill_entrypoint_preserves_exact_status_capability_exception(self) -> None:
+        text = SKILL_FILE.read_text(encoding="utf-8")
+
+        self.assertIn("Any ok=false blocks state changes.", text)
+        self.assertIn(
+            "Read-only status remains available on any capability or binding failure, "
+            "reports `binding_valid=false`, and keeps state advance blocked.",
+            text,
+        )
+        self.assertNotIn("status/recovery ignores", text)
+
+    def test_entrypoint_exposes_fresh_binding_guards_and_reapproval(self) -> None:
+        text = SKILL_FILE.read_text(encoding="utf-8")
+        core = (SKILL_DIR / "references/core.md").read_text(encoding="utf-8")
+        combined = f"{text}\n{core}"
+
+        for required in (
+            "Prepare",
+            "dispatch and fix redispatch",
+            "review dispatch and approval intake",
+            "resume and rebuild",
+            "completion",
+            "delivery",
+            "freshly verify",
+            "same active `approved_spec_binding`",
+            "Read-only status",
+            "state advance remains blocked",
+            "new approval and seal",
+        ):
+            self.assertIn(required, combined)
+
+    def test_entrypoint_splits_spec_and_execution_intent_drift_routes(self) -> None:
+        text = SKILL_FILE.read_text(encoding="utf-8")
+        core = (SKILL_DIR / "references/core.md").read_text(encoding="utf-8")
+        combined = f"{text}\n{core}"
+
+        lifecycle_outcomes = (
+            "Exact restoration of unintended packet byte drift plus fresh validation "
+            "retains the existing approved binding, Envelope revision, and runtime epoch.",
+            "An intended non-spec packet byte change goes through the Execution Plan Gate "
+            "for reconciliation and revalidation, a new reseal, and a new Envelope revision "
+            "and runtime epoch, without a new human Spec Gate approval.",
+            "A change to spec bytes, `spec_binding`, or `approval_evidence` goes through the "
+            "human Spec Gate for a new approval and seal, then a new Envelope revision and "
+            "runtime epoch.",
+        )
+        for outcome in lifecycle_outcomes:
+            self.assertIn(outcome, combined)
+        self.assertNotIn("Both routes", combined)
+
+        for required in (
+            "spec bytes, `spec_binding`, or `approval_evidence`",
+            "human Spec Gate",
+            "new approval and seal",
+            "execution-intent-only packet drift",
+            "any other sealed packet byte drift",
+            "while `spec_binding` and `approval_evidence` remain exact",
+            "other packet fields",
+            "serialization or whitespace-only drift",
+            "Execution Plan Gate",
+            "reconciliation and revalidation",
+            "reseal only when the changed bytes are intended",
+            "without a new human Spec Gate approval",
+        ):
+            self.assertIn(required, combined)
+
+    def test_active_contract_has_no_legacy_success_surface(self) -> None:
+        active_text = "\n".join(
+            path.read_text(encoding="utf-8")
+            for path in (SKILL_DIR / "references").glob("*.md")
+        )
+        active_text = f"{SKILL_FILE.read_text(encoding='utf-8')}\n{active_text}"
+
+        for forbidden in (
+            "when available",
+            "schema version `3` Execution Envelope",
+            "legacy remains readable",
+            "legacy remains resumable",
+            "--schema-version",
+        ):
+            self.assertNotIn(forbidden, active_text)
+        self.assertFalse(
+            (SKILL_DIR / "assets/schemas/worker-packet-v1.schema.json").exists()
+        )
+
+        validation_tests = (SKILL_DIR / "tests/test_validation.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertNotIn("accepts_legacy", validation_tests)
+        self.assertNotIn('"legacy-envelope.json"', validation_tests)
+        self.assertIn("rejects_tracked_legacy_envelopes", validation_tests)
+
     def test_skill_entrypoint_routes_through_context_contract(self) -> None:
         text = SKILL_FILE.read_text(encoding="utf-8")
 

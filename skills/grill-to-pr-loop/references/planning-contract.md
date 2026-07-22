@@ -4,19 +4,17 @@ Use this reference for intake, Grill with Docs, spec/PRD synthesis, Spec Gate, I
 
 ## Artifact Contract
 
-Prefer repo-local conventions. In this repo:
+Track this tree for every current Epic:
 
-- long specs, ADRs, implementation plans, and Goal contracts: `knowledge/wiki/syntheses/`
-- raw source material: `knowledge/raw/sources/`
-- source summaries: `knowledge/wiki/sources/`
-- active catalog and timeline: `knowledge/index.md`, `knowledge/log.md`
+```text
+<durable-planning-root>/<epic-id>/
+├── spec.md
+├── issues.md
+├── implementation-plan.md
+└── input-packet.json
+```
 
-For repos without a knowledge wiki, fallback paths are:
-
-- Spec or PRD: `docs/grill-to-pr-loop/<topic>-spec.md`
-- Local issue ledger: `docs/grill-to-pr-loop/<topic>-issues.md`
-- Execution packet: `docs/grill-to-pr-loop/<topic>-input-packet.json`
-- Completion summary: `docs/grill-to-pr-loop/<topic>-completion.md`
+Here `<durable-planning-root>` is `knowledge/wiki/syntheses`; without a wiki use `docs/grill-to-pr-loop`. `artifact_root` is the exact Epic directory; spec, local issue sources, and sealed packet are direct children. Keep `knowledge/index.md` and `knowledge/log.md` current. Commit this tree; execution artifacts use the untracked lifecycle.
 
 ## Spec / PRD Minimum
 
@@ -41,7 +39,18 @@ Self-review the spec for placeholders, contradictions, ambiguous criteria, stale
 
 ### Spec Gate
 
-Present spec path, `Epic ID`, 採用した判断, 非目標, 受け入れ条件, 検証コマンド, remote policy, and stop conditions. Wait for approval before issue decomposition unless the user already provided an approved spec and requested direct implementation.
+Before any binding command, run `python3 <skill-dir>/scripts/check_prereqs.py --phase execution --json`. Derive `<issue-implementation-loop-skill-dir>` as the parent directory of the `SKILL.md` path in `required["issue-implementation-loop"]`; never assume the target repository contains a source checkout of the skill.
+
+Finalize the spec before approval. Identify its repo-relative spec path and exact raw-byte SHA-256 with:
+
+```bash
+python3 <issue-implementation-loop-skill-dir>/scripts/approved_spec_binding.py identify \
+  --repo-root <repo-root> --spec-path <repo-relative-spec-path>
+```
+
+Present that path and digest with `Epic ID`, 採用した判断, 非目標, 受け入れ条件, 検証コマンド, remote policy, and stop conditions. Record one Spec Gate approval whose scope contains all six fields: `accepted_decisions`, `non_goals`, `acceptance_criteria`, `verification`, `remote_policy`, and `stop_conditions`. Wait for approval before issue decomposition unless the user already supplied approval for that exact revision and scope.
+
+Any spec byte change requires re-approval and a new seal. Never infer approval, update the expected digest, or edit the spec while sealing.
 
 After Spec Gate approval, commit the approved spec and ledger/log updates before issue decomposition.
 

@@ -16,25 +16,15 @@ from issue_implementation_loop import build_worker_packet, dump_json, validate_w
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--epic-id", required=True)
     parser.add_argument("--issue-id", required=True)
-    parser.add_argument("--issue-title", required=True)
     parser.add_argument("--dispatch-id", required=True)
-    parser.add_argument("--branch", required=True)
-    parser.add_argument("--worktree", required=True)
-    parser.add_argument("--schema-version", type=int, choices=(1, 2), default=2)
+    parser.add_argument("--repo-root", required=True, help="Trusted coordinator repo root.")
+    parser.add_argument("--assigned-worktree", required=True)
+    parser.add_argument("--envelope", required=True, help="Trusted active Envelope path.")
+    parser.add_argument("--runtime-state", required=True, help="Trusted active Runtime State path.")
     parser.add_argument("--task-kind", choices=("implement", "fix", "review", "inspect"), default="implement")
-    parser.add_argument("--access-mode", choices=("read_write", "read_only"), default="read_write")
-    parser.add_argument("--write-scope", action="append", default=[])
     parser.add_argument("--read-path", action="append", required=True)
     parser.add_argument("--read-purpose", action="append")
-    parser.add_argument("--source-envelope")
-    parser.add_argument("--source-runtime")
-    parser.add_argument("--source-issue")
-    parser.add_argument("--summary", required=True)
-    parser.add_argument("--acceptance", action="append", required=True)
-    parser.add_argument("--verification", action="append", required=True)
-    parser.add_argument("--stop-condition", action="append", required=True)
     parser.add_argument("--inline-excerpt", action="append", default=[])
     parser.add_argument("--max-packet-words", type=int, default=450)
     parser.add_argument("--output")
@@ -42,33 +32,29 @@ def main() -> int:
 
     try:
         packet = build_worker_packet(
-            epic_id=args.epic_id,
             issue_id=args.issue_id,
-            issue_title=args.issue_title,
             dispatch_id=args.dispatch_id,
-            branch=args.branch,
-            worktree=args.worktree,
-            write_scope=args.write_scope,
+            repo_root=args.repo_root,
+            assigned_worktree=args.assigned_worktree,
+            envelope_path=args.envelope,
+            runtime_state_path=args.runtime_state,
             read_paths=args.read_path,
             read_purposes=args.read_purpose,
-            summary=args.summary,
-            acceptance=args.acceptance,
-            verification=args.verification,
-            stop_conditions=args.stop_condition,
             inline_excerpts=args.inline_excerpt,
             max_packet_words=args.max_packet_words,
-            schema_version=args.schema_version,
             task_kind=args.task_kind,
-            access_mode=args.access_mode,
-            source_envelope=args.source_envelope,
-            source_runtime=args.source_runtime,
-            source_issue=args.source_issue,
         )
     except ValueError as exc:
         print(str(exc), file=sys.stderr)
         return 1
 
-    errors = validate_worker_packet(packet)
+    errors = validate_worker_packet(
+        packet,
+        repo_root=args.repo_root,
+        assigned_worktree=args.assigned_worktree,
+        envelope_path=args.envelope,
+        runtime_state_path=args.runtime_state,
+    )
     if errors:
         for error in errors:
             print(error, file=sys.stderr)

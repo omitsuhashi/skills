@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import os
 from pathlib import Path
+import subprocess
 import tempfile
 import unittest
 from unittest import mock
@@ -13,6 +15,8 @@ REPO_ROOT = SKILL_DIR.parents[1]
 CHECK_PREREQS = SKILL_DIR / "scripts" / "check_prereqs.py"
 CORE_REFERENCE = SKILL_DIR / "references" / "core.md"
 PLANNING_CONTRACT = SKILL_DIR / "references" / "planning-contract.md"
+EXECUTION_HANDOFF = SKILL_DIR / "references" / "execution-handoff.md"
+ISSUE_LOOP_DIR = REPO_ROOT / "skills" / "issue-implementation-loop"
 GRILL_AGENT_YAML = SKILL_DIR / "agents" / "openai.yaml"
 ISSUE_AGENT_YAML = REPO_ROOT / "skills" / "issue-implementation-loop" / "agents" / "openai.yaml"
 
@@ -35,7 +39,385 @@ def extract_default_prompt(path: Path) -> str:
     raise AssertionError(f"default_prompt not found in {path}")
 
 
+def tracked_current_execution_envelope_v4_paths(repo_root: Path) -> list[str]:
+    tracked = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(repo_root),
+            "ls-files",
+            "-z",
+            "--",
+            "knowledge/wiki/syntheses",
+        ],
+        check=True,
+        capture_output=True,
+    ).stdout
+    detected: list[str] = []
+    for encoded_path in tracked.split(b"\0"):
+        if not encoded_path or not encoded_path.endswith(b".json"):
+            continue
+        path = os.fsdecode(encoded_path)
+        blob = subprocess.run(
+            ["git", "-C", str(repo_root), "show", f":{path}"],
+            check=True,
+            capture_output=True,
+        ).stdout
+        try:
+            payload = json.loads(blob)
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            continue
+        if isinstance(payload, dict) and payload.get("schema_version") == 4:
+            detected.append(path)
+    return detected
+
+
 class GrillToPrLoopTests(unittest.TestCase):
+    def test_asb_34_current_epic_tracks_only_durable_planning_artifacts(self) -> None:
+        current_root = "knowledge/wiki/syntheses/approved-spec-binding-contract"
+        tracked = set(
+            subprocess.run(
+                ["git", "-C", str(REPO_ROOT), "ls-files", current_root],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.splitlines()
+        )
+        required = {
+            f"{current_root}/spec.md",
+            f"{current_root}/issues.md",
+            f"{current_root}/implementation-plan.md",
+            f"{current_root}/input-packet.json",
+        }
+        forbidden_names = {
+            "execution-envelope.json",
+            "runtime-state.json",
+            "events.jsonl",
+            "execution-result.json",
+            "delivery-plan.json",
+        }
+
+        self.assertLessEqual(required, tracked)
+        self.assertFalse(
+            {path for path in tracked if Path(path).name in forbidden_names}
+        )
+        self.assertEqual(
+            tracked_current_execution_envelope_v4_paths(REPO_ROOT), []
+        )
+
+    def test_asb_34_detects_tracked_flat_v4_execution_envelope(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            subprocess.run(
+                ["git", "init", "-q", str(repo)],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            synthesis_root = repo / "knowledge" / "wiki" / "syntheses"
+            synthesis_root.mkdir(parents=True)
+            current_flat = (
+                synthesis_root
+                / "approved-spec-binding-contract-execution-envelope.json"
+            )
+            historical = synthesis_root / "historical-execution-envelope.json"
+            malformed = synthesis_root / "not-an-artifact.json"
+            product_template = (
+                repo
+                / "skills"
+                / "issue-implementation-loop"
+                / "assets"
+                / "templates"
+                / "execution-envelope.json"
+            )
+            product_template.parent.mkdir(parents=True)
+            envelope_shape = {
+                "schema_version": 4,
+                "epic_id": "approved-spec-binding-contract",
+                "revision": 1,
+                "approved_spec_binding": {},
+                "work_items": {},
+            }
+            current_flat.write_text(
+                json.dumps(envelope_shape, sort_keys=True), encoding="utf-8"
+            )
+            historical.write_text(
+                json.dumps({**envelope_shape, "schema_version": 3}, sort_keys=True),
+                encoding="utf-8",
+            )
+            malformed.write_text("{not-json\n", encoding="utf-8")
+            product_template.write_text(
+                json.dumps(envelope_shape, sort_keys=True), encoding="utf-8"
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(repo),
+                    "add",
+                    "knowledge/wiki/syntheses",
+                    "skills/issue-implementation-loop/assets/templates",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            detected = tracked_current_execution_envelope_v4_paths(repo)
+
+            self.assertEqual(
+                detected,
+                [
+                    "knowledge/wiki/syntheses/"
+                    "approved-spec-binding-contract-execution-envelope.json"
+                ],
+            )
+
+    def test_artifact_lifecycle_references_keep_current_ownership_seam(self) -> None:
+        planning_text = PLANNING_CONTRACT.read_text(encoding="utf-8")
+        handoff_text = EXECUTION_HANDOFF.read_text(encoding="utf-8")
+        issue_skill_text = (ISSUE_LOOP_DIR / "SKILL.md").read_text(encoding="utf-8")
+        envelope_text = (
+            ISSUE_LOOP_DIR / "references" / "execution-envelope.md"
+        ).read_text(encoding="utf-8")
+        runtime_text = (
+            ISSUE_LOOP_DIR / "references" / "runtime-state.md"
+        ).read_text(encoding="utf-8")
+        combined = "\n".join(
+            (planning_text, handoff_text, issue_skill_text, envelope_text, runtime_text)
+        )
+
+        required = (
+            "<durable-planning-root>/<epic-id>/",
+            "spec.md",
+            "issues.md",
+            "implementation-plan.md",
+            "input-packet.json",
+            "$(git rev-parse --git-common-dir)/agent-runs/issue-implementation-loop/<epic-id>/",
+            "execution-envelope.json",
+            "Do not commit instantiated execution artifacts",
+        )
+        for value in required:
+            self.assertIn(value, combined)
+
+        planning_guidance = f"{planning_text}\n{handoff_text}"
+        self.assertNotRegex(
+            planning_guidance,
+            r"(?i)commit(?: the)? (?:an? )?Execution Envelope",
+        )
+
+    def test_asb_36_tracked_json_templates_use_nested_epic_paths(self) -> None:
+        template_dir = ISSUE_LOOP_DIR / "assets" / "templates"
+        schema_dir = ISSUE_LOOP_DIR / "assets" / "schemas"
+        product_json = sorted(template_dir.glob("*.json")) + sorted(
+            schema_dir.glob("*.json")
+        )
+        tracked = set(
+            subprocess.run(
+                ["git", "-C", str(REPO_ROOT), "ls-files"],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.splitlines()
+        )
+        for path in product_json:
+            relative = path.relative_to(REPO_ROOT).as_posix()
+            with self.subTest(path=relative):
+                self.assertIn(relative, tracked)
+                json.loads(path.read_text(encoding="utf-8"))
+
+        expected_parameterized = (
+            "knowledge/wiki/syntheses/<epic-id>/input-packet.json"
+        )
+        expected_example = "knowledge/wiki/syntheses/example/input-packet.json"
+        envelope = json.loads(
+            (template_dir / "execution-envelope.json").read_text(encoding="utf-8")
+        )
+        worker = json.loads(
+            (template_dir / "worker-packet.json").read_text(encoding="utf-8")
+        )
+        hardening = json.loads(
+            (template_dir / "hardening-candidates.json").read_text(encoding="utf-8")
+        )
+        delivery = json.loads(
+            (template_dir / "delivery-plan.json").read_text(encoding="utf-8")
+        )
+        result = json.loads(
+            (template_dir / "execution-result.json").read_text(encoding="utf-8")
+        )
+
+        self.assertEqual(
+            envelope["approved_spec_binding"]["path"], expected_parameterized
+        )
+        self.assertEqual(
+            envelope["work_items"]["G2PR-001"]["source"]["path"],
+            "knowledge/wiki/syntheses/<epic-id>/issues.md",
+        )
+        self.assertEqual(
+            worker["source_revision"]["approved_spec_binding"]["path"],
+            expected_parameterized,
+        )
+        self.assertEqual(
+            worker["source_revision"]["issue_source"]["path"],
+            "knowledge/wiki/syntheses/<epic-id>/issues.md",
+        )
+        self.assertEqual(
+            [entry["path"] for entry in worker["read_paths"]],
+            [
+                "knowledge/wiki/syntheses/<epic-id>/spec.md",
+                "knowledge/wiki/syntheses/<epic-id>/issues.md",
+            ],
+        )
+        self.assertEqual(
+            worker["inline_context"][0]["path"],
+            "knowledge/wiki/syntheses/<epic-id>/issues.md",
+        )
+        self.assertEqual(
+            hardening["approved_spec_binding"]["path"], expected_parameterized
+        )
+        self.assertEqual(delivery["approved_spec_binding"]["path"], expected_example)
+        self.assertEqual(result["approved_spec_binding"]["path"], expected_example)
+
+    def test_remote_delivery_reference_uses_current_delivery_validator_signature(self) -> None:
+        text = (SKILL_DIR / "references" / "remote-delivery.md").read_text(
+            encoding="utf-8"
+        )
+        command = (
+            "validate_delivery_plan.py <execution-envelope.json> "
+            "<runtime-state.json> <execution-result.json> <delivery-plan.json> "
+            "--repo-root <trusted-worktree-root> --json"
+        )
+        self.assertIn(command, text)
+        self.assertNotIn(
+            "<runtime-state.json> <delivery-plan.json> --json", text
+        )
+
+    def test_skill_description_is_trigger_only(self) -> None:
+        text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+        description = next(
+            line.removeprefix("description: ")
+            for line in text.splitlines()
+            if line.startswith("description: ")
+        )
+
+        self.assertEqual(
+            description,
+            "Use when a repository change requires approved durable design, issue decomposition, and worker-only implementation.",
+        )
+
+    def test_planning_contract_seals_the_exact_approved_spec_revision(self) -> None:
+        planning_text = PLANNING_CONTRACT.read_text(encoding="utf-8")
+        handoff_text = (SKILL_DIR / "references" / "execution-handoff.md").read_text(
+            encoding="utf-8"
+        )
+        combined = f"{planning_text}\n{handoff_text}"
+
+        for required in (
+            "one Spec Gate approval",
+            "repo-relative spec path",
+            "exact raw-byte SHA-256",
+            "accepted_decisions",
+            "non_goals",
+            "acceptance_criteria",
+            "verification",
+            "remote_policy",
+            "stop_conditions",
+            "check_prereqs.py --phase execution --json",
+            'required["issue-implementation-loop"]',
+            "<issue-implementation-loop-skill-dir>/scripts/approved_spec_binding.py identify",
+            "<issue-implementation-loop-skill-dir>/scripts/approved_spec_binding.py seal",
+            "<issue-implementation-loop-skill-dir>/scripts/validate_input_packet.py",
+            "<issue-implementation-loop-skill-dir>/scripts/check_capabilities.py",
+            "--draft-packet",
+            "--output-packet",
+            "--spec-path",
+            "--spec-sha256",
+            "--decision approved",
+            "--subject spec_binding",
+            "--actor-expression",
+            "--approved-at",
+            "Any spec byte change requires re-approval and a new seal",
+            "Input Packet v2",
+            "Execution Envelope v4",
+        ):
+            self.assertIn(required, combined)
+
+        for scope_field in (
+            "accepted_decisions",
+            "non_goals",
+            "acceptance_criteria",
+            "verification",
+            "remote_policy",
+            "stop_conditions",
+        ):
+            self.assertIn(f"--approve-scope {scope_field}", combined)
+
+        self.assertNotIn("when available", combined)
+        self.assertNotIn("schema version `3` Execution Envelope", combined)
+        self.assertNotIn("skills/issue-implementation-loop/", combined)
+
+    def test_planning_contract_splits_spec_and_execution_intent_drift_routes(self) -> None:
+        skill_text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+        handoff_text = (SKILL_DIR / "references" / "execution-handoff.md").read_text(
+            encoding="utf-8"
+        )
+        combined = f"{skill_text}\n{handoff_text}"
+
+        lifecycle_outcomes = (
+            "Exact restoration of unintended packet byte drift plus fresh validation "
+            "retains the existing approved binding, Envelope revision, and runtime epoch.",
+            "An intended non-spec packet byte change goes through the Execution Plan Gate "
+            "for reconciliation and revalidation, a new reseal, and a new Envelope revision "
+            "and runtime epoch, without a new human Spec Gate approval.",
+            "A change to spec bytes, `spec_binding`, or `approval_evidence` goes through the "
+            "human Spec Gate for a new approval and seal, then a new Envelope revision and "
+            "runtime epoch.",
+        )
+        for outcome in lifecycle_outcomes:
+            self.assertIn(outcome, combined)
+        self.assertNotIn("Both routes", combined)
+
+        for required in (
+            "spec bytes, `spec_binding`, or `approval_evidence`",
+            "human Spec Gate",
+            "new approval and seal",
+            "execution-intent-only packet drift",
+            "issue scope, dependencies, write scope, or delivery intent",
+            "any other sealed packet byte drift",
+            "while `spec_binding` and `approval_evidence` remain exact",
+            "other packet fields",
+            "serialization or whitespace-only drift",
+            "Execution Plan Gate",
+            "reconciliation and revalidation",
+            "reseal only when the changed bytes are intended",
+            "without a new human Spec Gate approval",
+        ):
+            self.assertIn(required, combined)
+
+    def test_historical_packets_and_envelopes_are_indexed_as_non_executable(self) -> None:
+        index_text = (REPO_ROOT / "knowledge" / "index.md").read_text(encoding="utf-8")
+        synthesis_root = REPO_ROOT / "knowledge" / "wiki" / "syntheses"
+        historical_paths: list[Path] = []
+        for pattern, current_version in (
+            ("*input-packet.json", 2),
+            ("*execution-envelope.json", 4),
+        ):
+            for path in synthesis_root.glob(pattern):
+                payload = json.loads(path.read_text(encoding="utf-8"))
+                if payload.get("schema_version") != current_version:
+                    historical_paths.append(path)
+
+        self.assertTrue(historical_paths)
+        for path in historical_paths:
+            entry = next(
+                (line for line in index_text.splitlines() if path.name in line),
+                None,
+            )
+            self.assertIsNotNone(entry, f"historical artifact is not indexed: {path.name}")
+            assert entry is not None
+            self.assertIn("historical", entry, path.name)
+            self.assertIn("non-executable", entry, path.name)
+
     def test_core_reference_owns_global_workflow_context(self) -> None:
         text = CORE_REFERENCE.read_text(encoding="utf-8")
         self.assertLessEqual(len(text.split()), 600)
@@ -193,7 +575,7 @@ class GrillToPrLoopTests(unittest.TestCase):
         self.assertIn("Issue Gate approval", planning_text)
         self.assertIn("Execution Plan Gate approval", handoff_text)
         self.assertIn("current planning branch", handoff_text)
-        self.assertIn("schema version `3` Execution Envelope", handoff_text)
+        self.assertIn("Execution Envelope v4", handoff_text)
         self.assertIn("Moving to the next phase without committing an approved gate", mistakes_text)
 
     def test_gate_taxonomy_separates_human_preflight_and_remote_boundaries(self) -> None:

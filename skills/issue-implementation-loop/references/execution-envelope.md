@@ -1,20 +1,27 @@
 # Execution Envelope
 
-The Execution Envelope is the approved execution contract. It is more specific than the input packet and includes reservations, policies, retry budgets, and remote-write boundaries.
+The Execution Envelope is the approved execution contract. Instantiated `execution-envelope.json` lives in `runtime-state.md`'s untracked tree; schemas/templates remain Git tracked.
 
 ## Required Sections
 
-- `schema_version`: `3` for new envelopes. Legacy `1` / `2` envelopes remain valid when they predate newer context or phase branch policies.
+- `schema_version`: `4`; versions 1 through 3 are `SCHEMA_UNSUPPORTED`
 - `epic_id`: lower-kebab-case ASCII
 - `revision`: positive integer
+- `approved_spec_binding`: repo-relative sealed packet path, exact raw-byte SHA-256, and full `gate_commit`
 - `epic_base`: per-epic base branch ref, immutable initial full 40- or 64-character hex SHA, and `branch_state` for `batch_issue_prs`
 - `execution_policy`: parallel preference, serial fallback, slots, `wave_is_barrier`, and worker-context boundary
 - `review_policy`: primary reviewer, fallbacks, manual fallback, `max_review_cycles: 2`, fix-cycle limits, and `hardening_candidates` policy
 - `human_policy`: default scope and epic-scope reason requirement
 - `context_policy`: paths-first worker packet and report budgets
-- `phase_branch_policy`: Codex phase branch ownership and context handoff policy for schema version `3`
+- `phase_branch_policy`: Codex phase branch ownership and context handoff policy
 - `remote_write_policy`: `local_only`, `per_action`, `batch_draft_prs`, or `batch_issue_prs`
-- `work_items`: one entry per approved issue
+- `work_items`: exactly one entry per sealed Input Packet work item, with the same ID, title, source, acceptance criteria, non-goals, verification commands, write scope, and ordered dependency IDs
+
+Envelope v4 is closed at every object level: missing required fields, unknown
+fields, and booleans substituted for integer fields are invalid. Its
+`epic_id`, complete work-item set, and remote mode must exactly project the
+verified Input Packet; a valid packet digest never authorizes caller-supplied
+execution intent.
 
 ## Execution Context Boundary
 
@@ -32,7 +39,13 @@ Serial fallback means worker jobs run one at a time. It does not authorize coord
 
 ## Codex Phase Branch Policy
 
-Use schema version `3` for new envelopes. Keep schema version `1` / `2` envelopes resumable, but do not create new ones without `phase_branch_policy`. The fixed policy says: planning artifacts stay on the current planning branch through gate commits; phase transition requires a clean overlapping write scope; execution starts in a fresh or compacted coordinator context; `main_planning_session_may_implement=false`; `branch_prefix=codex`; `epic_base_owner=execution_coordinator`; `issue_branch_owner=worker`; integration branches require an approved integration work item.
+Envelope v4 always requires `phase_branch_policy`. The fixed policy says: planning artifacts stay on the current planning branch through gate commits; phase transition requires a clean overlapping write scope; execution starts in a fresh or compacted coordinator context; `main_planning_session_may_implement=false`; `branch_prefix=codex`; `epic_base_owner=execution_coordinator`; `issue_branch_owner=worker`; integration branches require an approved integration work item.
+
+Before prepare, verify the current packet/spec projection, require `gate_commit`
+to be an ancestor of `epic_base.sha`, and compare the exact packet and referenced
+spec blobs both in the gate tree and at the exact `epic_base.sha`. Fail with the
+stable binding code; do not convert these failures into general Git
+reconciliation advice.
 
 ## Review Governance Policy
 
@@ -60,6 +73,9 @@ Every work item declares how its branch is created:
 - `{"type": "blocker_head", "issue": "G2PR-001"}`: branch from exactly one prerequisite issue head whose dependency edge uses `base_effect: "branch_from_blocker_head"`.
 - `{"type": "integration_head", "integration_issue": "G2PR-010"}`: branch from exactly one approved integration work item whose dependency edge uses `base_effect: "branch_from_integration_head"`.
 
+Dependency objects are not caller-selected expansions of the sealed dependency IDs.
+They must equal the canonical typed-edge projection in `dependency-contract.md`.
+
 Do not branch from multiple blocker or integration heads. Add an integration work item or integration branch when downstream code needs more than one prerequisite head.
 
 ## Remote Delivery Policy
@@ -78,8 +94,8 @@ The approved envelope must keep worker/reviewer handoffs bounded:
 - `max_worker_packet_words`: maximum words in the dispatch packet.
 - `max_worker_report_words`: maximum words in normal worker reports.
 - `include_full_spec_text: false` and `include_full_ledger_text: false`: workers re-read durable paths instead of receiving pasted source documents.
-- `worker_packet_schema`, `worker_packet_template`, and `worker_packet_validator`: repo-root relative paths for the worker packet contract. Legacy envelopes may omit all three, but new envelopes should include all three.
-- `session_compaction`: required for schema version `2` / `3`; optional only for legacy schema version `1`. See `references/context-compaction.md`.
+- `worker_packet_schema`, `worker_packet_template`, and `worker_packet_validator`: repo-root relative paths for the Worker Packet v3 contract.
+- `session_compaction`: required. See `references/context-compaction.md`.
 
 Create a new envelope revision before increasing budgets or allowing pasted full source text.
 
@@ -100,3 +116,6 @@ Create a new envelope revision before changing:
 - context policy
 
 Routine state transitions within an approved envelope do not need another approval.
+Any change to packet-owned intent first requires the applicable Execution Plan
+or Spec Gate and a new sealed packet; the new Envelope revision must then be
+projected from that packet rather than independently editing those fields.

@@ -65,8 +65,10 @@ from issue_implementation_loop import (  # noqa: E402
     skill_roots,
     validate_delivery_plan,
     validate_execution_envelope,
+    validate_execution_result,
     validate_input_packet,
     validate_runtime_state,
+    validate_runtime_epoch,
     validate_worker_report,
 )
 
@@ -124,7 +126,9 @@ __all__ = [
     "skill_roots",
     "validate_delivery_plan",
     "validate_execution_envelope",
+    "validate_execution_result",
     "validate_input_packet",
     "validate_runtime_state",
+    "validate_runtime_epoch",
     "validate_worker_report",
 ]

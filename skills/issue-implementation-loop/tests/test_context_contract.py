@@ -496,6 +496,47 @@ class ContextContractTests(unittest.TestCase):
         self.assertTrue(operations)
         self.assertTrue(all("estimated_token_count" in operation for operation in operations))
 
+    def test_current_context_baseline_covers_every_operation_without_warnings(self) -> None:
+        result = run_generic_context_report(
+            "--all",
+            "--json",
+            "--require-baseline",
+            "--fail-on-warning",
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout)["warnings"], [])
+
+    def test_context_contract_keeps_exactly_eight_existing_operations(self) -> None:
+        contract_text = (SKILL_DIR / "context-contract.toml").read_text(
+            encoding="utf-8"
+        )
+        operation_headers = re.findall(
+            r'^\[operations\.(?:"([^"]+)"|([^\]]+))\]$',
+            contract_text,
+            re.MULTILINE,
+        )
+        operations = {quoted or plain for quoted, plain in operation_headers}
+        self.assertEqual(len(operations), 8)
+        self.assertNotIn("blocked.reapproval", operations)
+        baseline = json.loads(
+            (
+                REPO_ROOT
+                / "knowledge/wiki/syntheses/skill-repository-optimization-v4-context-baseline.json"
+            ).read_text(encoding="utf-8")
+        )
+        issue_rows = [
+            operation
+            for skill in baseline["skills"]
+            for operation in skill.get("operations", [])
+            if operation.get("skill") == "issue-implementation-loop"
+        ]
+        self.assertEqual(len(issue_rows), 8)
+        self.assertNotIn(
+            "blocked.reapproval",
+            {operation["operation"] for operation in issue_rows},
+        )
+
     def test_report_skill_context_can_fail_when_required_baseline_is_missing(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             baseline_path = Path(tmp) / "baseline.json"

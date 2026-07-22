@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate an issue-implementation-loop resume brief cache and V2 metadata."""
+"""Validate an issue-implementation-loop resume brief cache and V3 metadata."""
 
 from __future__ import annotations
 
@@ -18,10 +18,15 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("runtime_root", help="Runtime root containing resume-brief.md")
     parser.add_argument("--meta", help="Optional explicit resume-brief.meta.json path")
+    parser.add_argument("--repo-root", help="Trusted Git worktree root (defaults to cwd).")
     parser.add_argument("--json", action="store_true", help="Emit JSON result.")
     args = parser.parse_args()
 
-    errors, warnings = validate_resume_brief_cache(args.runtime_root, meta_path=args.meta)
+    errors, warnings = validate_resume_brief_cache(
+        args.runtime_root,
+        meta_path=args.meta,
+        repo_root=args.repo_root or Path.cwd(),
+    )
     if args.json:
         print(dump_json({"ok": not errors, "errors": errors, "warnings": warnings}), end="")
     elif errors:

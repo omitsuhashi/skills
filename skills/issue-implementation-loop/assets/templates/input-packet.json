@@ -1,27 +1,39 @@
 {
-  "schema_version": 1,
-  "repo_root": "/abs/path/to/repo",
-  "epic_id": "issue-implementation-loop",
-  "artifact_root": "knowledge/wiki/syntheses/issue-implementation-loop",
-  "spec": {
-    "path": "knowledge/wiki/syntheses/spec.md",
-    "approved_revision": 1,
-    "approved_hash": "sha256:..."
+  "approval_evidence": {
+    "actor_expression": "requesting-human",
+    "approved_at": "2026-07-21T17:00:00+09:00",
+    "decision": "approved",
+    "scope": {
+      "acceptance_criteria": true,
+      "accepted_decisions": true,
+      "non_goals": true,
+      "remote_policy": true,
+      "stop_conditions": true,
+      "verification": true
+    },
+    "subject": "spec_binding"
+  },
+  "artifact_root": "knowledge/wiki/syntheses/example",
+  "delivery_intent": "local_only",
+  "epic_id": "example",
+  "schema_version": 2,
+  "spec_binding": {
+    "path": "knowledge/wiki/syntheses/example/spec.md",
+    "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
   },
   "work_items": [
     {
-      "id": "G2PR-001",
-      "title": "短い日本語 issue タイトル",
-      "source": {
-        "type": "local",
-        "path": "knowledge/wiki/syntheses/issues.md"
-      },
       "acceptance_criteria": ["観測可能な受け入れ条件"],
+      "dependencies": [],
+      "id": "G2PR-001",
       "non_goals": ["対象外の挙動"],
+      "source": {
+        "path": "knowledge/wiki/syntheses/example/issues.md",
+        "type": "local"
+      },
+      "title": "短い日本語 issue タイトル",
       "verification": ["python3 -m unittest discover -s tests"],
-      "write_scope": ["path:skills/example"],
-      "dependencies": []
+      "write_scope": ["path:skills/example"]
     }
-  ],
-  "delivery_intent": "batch_issue_prs"
+  ]
 }

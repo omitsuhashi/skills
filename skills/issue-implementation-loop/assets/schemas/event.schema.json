@@ -2,11 +2,23 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Issue Implementation Loop Event",
   "type": "object",
-  "required": ["event_id", "type", "epic_id"],
+  "additionalProperties": false,
+  "required": ["schema_version", "event_id", "type", "epic_id", "envelope_revision", "approved_spec_binding"],
   "properties": {
+    "schema_version": {"const": 2},
     "event_id": {"type": "string"},
     "epic_id": {"type": "string"},
     "envelope_revision": {"type": "integer"},
+    "approved_spec_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "gate_commit"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "gate_commit": {"type": "string", "pattern": "^[0-9a-f]+$"}
+      }
+    },
     "type": {
       "enum": [
         "issue_status_changed",
@@ -32,6 +44,7 @@
     "id": {"type": "string"},
     "scope": {"enum": ["issue", "descendants", "resource", "epic"]},
     "resource": {"type": "string"},
-    "reason": {"type": "string"}
+    "reason": {"type": "string"},
+    "created_at": {"type": "string"}
   }
 }

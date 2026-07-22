@@ -1,5 +1,10 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
+  "approved_spec_binding": {
+    "path": "knowledge/wiki/syntheses/example/input-packet.json",
+    "sha256": "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+    "gate_commit": "0123456789abcdef0123456789abcdef01234567"
+  },
   "epic_id": "issue-implementation-loop",
   "status": "local_complete",
   "envelope_revision": 1,

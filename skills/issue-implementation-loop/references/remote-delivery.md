@@ -22,17 +22,32 @@ Required policy:
 - final PR merge: `human_only`
 - final PR creation default: draft
 
-Before creating any issue PR or draft final PR, write the exact action to a delivery plan file, validate it with `--json`, and record/report the `ok: true` output before creating the PR. Draft final PR auto-creation is allowed when delivery plan validation returns `ok: true`, `epic_base.ref` is active, every issue in the delivery candidate set is integrated, and the approved remote policy includes both `final_pr_push_head` and `final_pr_create_draft`. Use `assets/templates/delivery-plan.json` as the starting point for final PRs:
+Before creating any issue PR or draft final PR, validate the terminal Execution Result v2,
+write the exact action as Delivery Plan v2, validate it with `--json`, and record/report
+the `ok: true` output before creating the PR. Both v2 artifacts require the active
+top-level `approved_spec_binding`; v1 is unsupported. Delivery validation performs
+fresh envelope -> packet -> spec verification and compares the execution result, delivery plan, runtime state, reviews, and candidate registry before any remote write.
+Draft final PR auto-creation is allowed when delivery plan validation returns `ok: true`,
+`epic_base.ref` is active, every issue in the delivery candidate set is integrated, and
+the approved remote policy includes both `final_pr_push_head` and
+`final_pr_create_draft`. Use `assets/templates/delivery-plan.json` as the starting point
+for final PRs:
 
 ```bash
-python3 <skill-dir>/scripts/validate_delivery_plan.py <execution-envelope.json> <runtime-state.json> <delivery-plan.json>
-python3 <skill-dir>/scripts/validate_delivery_plan.py <execution-envelope.json> <runtime-state.json> <delivery-plan.json> --json
+python3 <skill-dir>/scripts/validate_execution_result.py <execution-envelope.json> <runtime-state.json> <execution-result.json> --repo-root <repo-root>
+python3 <skill-dir>/scripts/validate_delivery_plan.py <execution-envelope.json> <runtime-state.json> <execution-result.json> <delivery-plan.json> --repo-root <repo-root> --json
 ```
 
 Delivery plan shape:
 
 ```json
 {
+  "schema_version": 2,
+  "approved_spec_binding": {
+    "path": "knowledge/wiki/syntheses/example/input-packet.json",
+    "sha256": "<sealed-packet-sha256>",
+    "gate_commit": "<full-gate-commit>"
+  },
   "action": "final_pr",
   "head": "codex/<epic-id>/epic-base",
   "base": "main",
@@ -41,7 +56,7 @@ Delivery plan shape:
 }
 ```
 
-For issue PRs, use `"action": "issue_pr"` plus `"issue": "<local-id>"`; the head must be that issue's reserved branch and the base must be `epic_base.ref`. For final PRs, `issue_scope` is the delivery candidate set; omit it only when the entire envelope work item set is in scope.
+For issue PRs, use `"action": "issue_pr"` plus `"issue": "<local-id>"`; the head must be that issue's reserved branch and the base must be `epic_base.ref`. For final PRs, `issue_scope` must exactly equal the Execution Result v2 `delivery_candidates` set; omit it only as shorthand for that full set.
 
 Agent issue PR merge is allowed only when the PR is mergeable, required checks pass, issue implementation review is approved, scope is unchanged, and no unresolved review or permission ambiguity remains. Escalate to the human when judgment is needed.
 

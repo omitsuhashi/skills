@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate an approved remote delivery action before creating a PR."""
+"""Validate a terminal Execution Result against the active binding epoch."""
 
 from __future__ import annotations
 
@@ -9,10 +9,9 @@ import sys
 
 from _common import (
     dump_json,
-    hardening_candidate_report,
     load_hardening_candidate_registry,
     load_json,
-    validate_delivery_plan,
+    validate_execution_result,
 )
 
 
@@ -21,7 +20,6 @@ def main() -> int:
     parser.add_argument("envelope")
     parser.add_argument("runtime_state")
     parser.add_argument("execution_result")
-    parser.add_argument("delivery_plan")
     parser.add_argument("--repo-root", required=True, help="Trusted Git worktree root.")
     parser.add_argument("--json", action="store_true", help="Emit JSON result.")
     args = parser.parse_args()
@@ -30,7 +28,6 @@ def main() -> int:
         envelope = load_json(args.envelope)
         runtime = load_json(args.runtime_state)
         execution_result = load_json(args.execution_result)
-        plan = load_json(args.delivery_plan)
     except (OSError, json.JSONDecodeError, TypeError, ValueError):
         errors = ["SCHEMA_UNSUPPORTED"]
         if args.json:
@@ -39,41 +36,22 @@ def main() -> int:
             print(errors[0], file=sys.stderr)
         return 1
     registry, registry_path, registry_load_error = load_hardening_candidate_registry(args.runtime_state)
-    errors = validate_delivery_plan(
+    errors = validate_execution_result(
         envelope,
         runtime,
         execution_result,
-        plan,
         repo_root=args.repo_root,
         candidate_registry=registry,
         candidate_registry_path=registry_path,
         candidate_registry_load_error=registry_load_error,
     )
-    candidate_report = hardening_candidate_report(
-        runtime,
-        registry,
-        candidate_registry_path=registry_path,
-        candidate_registry_load_error=registry_load_error,
-    )
     if args.json:
-        print(
-            dump_json(
-                {
-                    "ok": not errors,
-                    "errors": errors,
-                    "pending_hardening_candidates": candidate_report["pending_hardening_candidates"],
-                    "residual_risks": candidate_report["residual_risks"],
-                    "decision_gate_blockers": candidate_report["decision_gate_blockers"],
-                    "candidate_registry": registry_path,
-                }
-            ),
-            end="",
-        )
+        print(dump_json({"ok": not errors, "errors": errors}), end="")
     elif errors:
         for error in errors:
             print(error, file=sys.stderr)
     else:
-        print("DELIVERY PLAN OK")
+        print("EXECUTION RESULT OK")
     return 1 if errors else 0
 
 
