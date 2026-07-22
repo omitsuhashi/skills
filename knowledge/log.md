@@ -1283,15 +1283,15 @@ append-only で使います。すべての entry は予測しやすい header �
 ## [2026-07-22] human-wait | POTASK-019 normative status scope
 
 - POTASK-019 integration commit `3c8ba06`はexact parents `cc61018` + `f5fc50e`、conflict 0件、両head ancestry PASS。fixture exact-copyとpublic fake end-to-end 6 / 6をTDDで進め、task-management 156 / 156、adapter 45 / 45、3 smokesをGREENにした
-- unique Companies Interface v2 canonical `task-management-write-preflight-interface-spec.md`とGitHub Adapter specのstatus/current boundaryが2026-07-21時点の未実装記述を残すが、Execution Envelope revision 4では両fileはread-onlyだった
-- human request `hr-potask-019-normative-status-scope-001`は上記2 filesだけをwrite scopeへ追加し、実装完了 / local fake verification完了 / remote・live未実施のstatusへ同期する承認を求めた。normative design、DAG、plugin scope、remote / live policyは変更しない
-- POTASK-019を`WAITING_HUMAN`へ移し、既許可scopeのworking changesを保持した。final commit / report / reviewはdecisionまで実施しなかった
+- unique Companies Interface v2 canonical `task-management-write-preflight-interface-spec.md`とGitHub Adapter specのstatus/current boundaryが2026-07-21時点の未実装記述を残すが、Execution Envelope revision 4では両fileはread-onlyである
+- human request `hr-potask-019-normative-status-scope-001`は上記2 filesだけをwrite scopeへ追加し、実装完了 / local fake verification完了 / remote・live未実施のstatusへ同期する承認を求める。normative design、DAG、plugin scope、remote / live policyは変更しない
+- POTASK-019を`WAITING_HUMAN`へ移し、既許可scopeのworking changesを保持した。final commit / report / reviewはdecisionまで実施しない
 
 ## [2026-07-22] gate-amendment | POTASK-019 normative status scope approved
 
 - ユーザーがhuman request `hr-potask-019-normative-status-scope-001`を承認し、Execution Envelope revision 5へ更新した
 - POTASK-019のwrite scopeへ`task-management-write-preflight-interface-spec.md`と`task-adapter-github-projects-spec.md`だけを追加し、実装完了 / local fake verification完了 / remote・live未実施のstatus/current-boundary同期だけを許可した
-- normative design、DAG、plugin scope、remote / live policyは変更しない。保持済みPOTASK-019 working changesをresetせず、同じworker contextで実装を再開した
+- normative design、DAG、plugin scope、remote / live policyは変更しない。保持済みPOTASK-019 working changesをresetせず、同じworker contextで実装を再開する
 
 ## [2026-07-22] implementation | POTASK-019 local integration reviewable
 
