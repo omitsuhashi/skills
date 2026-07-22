@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
   "epic_id": "portfolio-os-task-backend-plugin-skill",
-  "revision": 3,
+  "revision": 4,
   "epic_base": {
     "ref": "codex/portfolio-os-task-backend-plugin-skill/epic-base",
     "sha": "cab8bd88351727f3495b657df447f7f64aa881d1",
@@ -205,7 +205,11 @@
         "issue": "POTASK-012"
       },
       "write_scope": [
-        "path:plugins/task-adapter-github-projects"
+        "path:plugins/task-adapter-github-projects",
+        "path:knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-spec.md",
+        "path:knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md",
+        "path:knowledge/index.md",
+        "path:knowledge/log.md"
       ],
       "dependencies": [
         {

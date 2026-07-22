@@ -294,18 +294,22 @@
         "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 plugins/task-management/scripts/smoke_test_hermes_read.py",
         "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 plugins/task-management/scripts/smoke_test_hermes_write.py",
         "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 plugins/task-adapter-github-projects/scripts/smoke_test_hermes_adapter.py",
-        "python3 /Users/omitsuhashi/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/task-management",
-        "python3 /Users/omitsuhashi/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/task-adapter-github-projects",
-        "python3 /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_validate.py plugins/task-management/skills/task-management",
-        "python3 scripts/validate_dual_host_compatibility.py --plugin plugins/task-management",
-        "python3 scripts/validate_dual_host_compatibility.py --plugin plugins/task-adapter-github-projects",
-        "python3 scripts/validate_skill_architecture.py --all",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 /Users/omitsuhashi/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/task-management",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 /Users/omitsuhashi/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/task-adapter-github-projects",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_validate.py plugins/task-management/skills/task-management",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_dual_host_compatibility.py --plugin plugins/task-management",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_dual_host_compatibility.py --plugin plugins/task-adapter-github-projects",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_architecture.py --all",
         "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/llm-wiki/tests -v",
         "git diff --check"
       ],
       "write_scope": [
         "path:plugins/task-management",
-        "path:plugins/task-adapter-github-projects"
+        "path:plugins/task-adapter-github-projects",
+        "path:knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-spec.md",
+        "path:knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md",
+        "path:knowledge/index.md",
+        "path:knowledge/log.md"
       ],
       "dependencies": ["POTASK-015", "POTASK-018"]
     }

@@ -1266,3 +1266,16 @@ append-only で使います。すべての entry は予測しやすい header �
 - fix `cc61018`は5 first-write probesだけをfailed / provider failure / retryableにし、later-write / unknown outcomeはpartial / nonretryableを維持した。partial 6 / 6、full 39 / 39、Hermes fake-MCP smoke、plugin / dual-host validatorsを通過した
 - cycle 2 reviewはfull range `b2494e5..cc61018`とfix delta `d780f8c..cc61018`を`approved`とし、finding 0件。POTASK-018をlocal `PR_READY` / `artifact_ready`へ移した
 - runtime next actionsはrunnable / reviewable / fixableなし。POTASK-013だけがhuman wait、POTASK-015はPOTASK-013、POTASK-019はPOTASK-015を待つ。remote / live writeは未実施
+
+## [2026-07-22] implementation-review | POTASK-013 and POTASK-015 local PR_READY
+
+- POTASK-013 `badc466`はhuman-approved regression guard scopeを含むroute v2 clean breakを完了し、focused 21 / 18 / 8、full 130、smoke / validatorsを通過した。independent review cycle 1は`approved`
+- POTASK-015 integration commit `82b3246`はreviewed `badc466`と`a5bcf11`をexact parentsに持ち、implementation `f5fc50e`はapproval-bound preflight/apply facade、bounded normalization、v0.4.0 read/write toolsets、fake write smokeを実装した
+- facade 7、normalization 9、manifest 11、full 156、read / write smokes、plugin / dual-host validatorsを通過し、independent review cycle 1は`approved`、finding 0件
+- POTASK-013 / 015をlocal `PR_READY` / `artifact_ready`へ移し、POTASK-019の全blockerを解消した。remote / live writeは未実施
+
+## [2026-07-22] gate-amendment | POTASK-019 worker-owned completion evidence
+
+- ユーザー指示により、POTASK-019 final integration workerがplugin docs / manifests / SKILL / references / examples / testsに加え、canonical spec / ledger / index / logのcompletion evidenceも所有する
+- normalized input packetとschema v3 Execution Envelope revision 4へ4つのknowledge pathsを追加した。機能scope、DAG、base policy、local-only remote / live policyは変更しない
+- POTASK-019はreviewed POTASK-018 `cc61018`をbaseにし、reviewed POTASK-015 `f5fc50e`をexplicit integration commitで取り込んでからfinal TDD / docs / full verificationへ進む。coordinatorは実装しない
