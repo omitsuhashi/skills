@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
+import re
 from typing import Any, Dict, Mapping
 from urllib.parse import urlparse
 
@@ -12,6 +13,12 @@ from .safety import SafetyValidationError, validate_safe_url, validate_safe_valu
 
 class NormalizationError(ValueError):
     """Provider item could not be represented by the safe wire contract."""
+
+
+_LINKED_ISSUE_REF_RE = re.compile(
+    r"^github-issue:([A-Za-z0-9][A-Za-z0-9._-]{0,99})/"
+    r"([A-Za-z0-9][A-Za-z0-9._-]{0,99})#([1-9][0-9]*)$"
+)
 
 
 def _mapped_value(
@@ -158,6 +165,88 @@ def normalize_project_item(
     except SafetyValidationError:
         raise NormalizationError("Normalized task data is unsafe.")
     return snapshot
+
+
+def _normalize_linked_issue_task_ref(
+    value: Any,
+    *,
+    backend_key: str,
+    owner: str,
+    repository: str,
+    expected_number: Any = None,
+) -> Dict[str, Any]:
+    """Extract only the safe public identity of one configured linked Issue."""
+    if not isinstance(value, dict):
+        raise NormalizationError("GitHub Issue content is invalid.")
+    number = value.get("number")
+    title = value.get("title")
+    task_url = value.get("html_url")
+    if (
+        type(number) is not int
+        or number <= 0
+        or (expected_number is not None and number != expected_number)
+        or not isinstance(title, str)
+        or not title
+    ):
+        raise NormalizationError("GitHub Issue content is invalid.")
+    try:
+        validate_safe_url(task_url, path="$.task_url")
+        parsed_url = urlparse(task_url)
+    except SafetyValidationError:
+        raise NormalizationError("GitHub Issue URL is unsafe.")
+    expected_path = f"/{owner}/{repository}/issues/{number}"
+    if parsed_url.netloc.casefold() != "github.com" or parsed_url.path != expected_path:
+        raise NormalizationError("GitHub Issue URL does not identify the item.")
+    task_ref = {
+        "backend_key": backend_key,
+        "task_ref": f"github-issue:{owner}/{repository}#{number}",
+        "task_url": task_url,
+        "title": title,
+    }
+    try:
+        validate_safe_value(task_ref)
+    except SafetyValidationError:
+        raise NormalizationError("GitHub Issue identity is unsafe.")
+    return task_ref
+
+
+def _parse_linked_issue_task_ref(value: Any, *, backend_key: str) -> Dict[str, Any]:
+    """Validate an adapter-owned public task reference and recover safe coordinates."""
+    if not isinstance(value, dict) or set(value) != {
+        "backend_key",
+        "task_ref",
+        "task_url",
+        "title",
+    }:
+        raise NormalizationError("GitHub Issue task reference is invalid.")
+    match = (
+        _LINKED_ISSUE_REF_RE.fullmatch(value.get("task_ref", ""))
+        if isinstance(value.get("task_ref"), str)
+        else None
+    )
+    if match is None or value.get("backend_key") != backend_key:
+        raise NormalizationError("GitHub Issue task reference is invalid.")
+    owner, repository, raw_number = match.groups()
+    number = int(raw_number)
+    normalized = _normalize_linked_issue_task_ref(
+        {
+            "number": number,
+            "title": value.get("title"),
+            "html_url": value.get("task_url"),
+        },
+        backend_key=backend_key,
+        owner=owner,
+        repository=repository,
+        expected_number=number,
+    )
+    if normalized != value:
+        raise NormalizationError("GitHub Issue task reference is inconsistent.")
+    return {
+        "owner": owner,
+        "repository": repository,
+        "number": number,
+        "task_ref": normalized,
+    }
 
 
 def matches_query(snapshot: Mapping[str, Any], query: Mapping[str, Any]) -> bool:
