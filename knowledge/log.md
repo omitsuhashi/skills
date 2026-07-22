@@ -1271,3 +1271,12 @@ append-only で使います。すべての entry は予測しやすい header �
 - TDD fixtureはflat v4、historical v3、malformed syntheses JSON、skill-assets v4 templateを同時にtrackし、RED 1 errorからGREEN 2 focused testsへ進めた。historical v1〜v3 evidenceとtracked product templateは保持し、public ASB-34 mappingはcurrent ownershipとdeterministic flat-v4 detectionの2 behaviorを解決する
 - local suitesはissue-implementation-loop 249 tests、grill-to-pr-loop 29 tests、llm-wiki 6 tests、scripts 59 testsが成功した。spec/Input Packet bytesとschema versionsは不変
 - ASBC-009はlocal `PR_READY`、mandatory controller whole-branch re-review/final reviewはpendingを維持する。push、Draft PR #32 mutation、ready、merge、release、live installは実行していない
+
+## [2026-07-22] remote-delivery | Approved Spec Binding Artifact Lifecycle
+
+- whole-branch final review `cab8bd88351727f3495b657df447f7f64aa881d1..c844a3085a53878352f42b8d87eaa6d8e888a49b` はCritical / Important / Minorすべて0、既存Draft PR #32へのpublish Approvedとなった
+- branch `codex/approved-spec-binding-contract`をhead `c844a3085a53878352f42b8d87eaa6d8e888a49b`へpushし、[Draft PR #32](https://github.com/omitsuhashi/skills/pull/32)のtitle/body/check summaryをper-Epic durable root、untracked Git-common runtime root、tracked Input Packet exception、final validation evidenceへ更新した
+- PR #32はOPEN / Draftを維持し、Skill Architecture Python 3.9 / 3.12の4 jobsはすべてPASSした
+- final controller verificationはissue-implementation-loop 249 tests、grill-to-pr-loop 29 tests、llm-wiki 6 tests、scripts 59 tests、全repository validator、strict `warnings=[]`、packet `ok=true`、binding `valid=true`、`git diff --check`に成功した
+- immutable raw-byte SHA-256はspec `2bd4fcdbed9828c988a9d5c24cdd02242434f0e44e802cceb34fc4a0e7b86193`、sealed Input Packet `e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c`のまま不変
+- ASBC-007〜ASBC-009を`COMPLETE`とする。PR ready化、merge、release、live Codex/Hermes installは非承認かつ未実行
