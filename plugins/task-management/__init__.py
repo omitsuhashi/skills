@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from .task_management.read_adapter import register_read_tool
+from .task_management.write_adapter import register_write_tools
 
 
 def register(ctx):
@@ -12,3 +13,4 @@ def register(ctx):
         description="Backend-neutral task intake and task backend routing workflow.",
     )
     register_read_tool(ctx)
+    register_write_tools(ctx)

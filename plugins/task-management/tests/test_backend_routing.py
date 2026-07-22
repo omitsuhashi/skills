@@ -50,21 +50,27 @@ class BackendRoutingConfigTests(unittest.TestCase):
     def load_config(self):
         return parse_example_toml(CONFIG_PATH.read_text(encoding="utf-8"))
 
-    def test_operator_example_uses_external_default_read_route(self):
+    def test_operator_example_uses_external_default_unified_route(self):
         config = self.load_config()
 
-        self.assertEqual(config["contract_version"], "1")
+        self.assertEqual(config["contract_version"], "2")
         self.assertEqual(config["default_backend"], "remote_tasks")
         route = config["backends"]["remote_tasks"]
 
-        self.assertIn(route["kind"], {"mcp", "plugin"})
-        self.assertEqual(route["capability"], "task_read")
-        if route["kind"] == "mcp":
-            self.assertEqual(route["tool_name"], "mcp__task_backend__task_query")
-        else:
-            self.assertEqual(
-                route["tool_name"], "task_adapter__provider__task_query"
-            )
+        self.assertEqual(route["adapter_key"], "github_projects")
+        self.assertEqual(
+            route["query_tool"],
+            "task_adapter__github_projects__task_query",
+        )
+        self.assertEqual(
+            route["preflight_tool"],
+            "task_adapter__github_projects__task_preflight",
+        )
+        self.assertEqual(
+            route["apply_tool"],
+            "task_adapter__github_projects__task_apply",
+        )
+        self.assertTrue({"kind", "capability", "tool_name"}.isdisjoint(route))
 
         example_text = CONFIG_PATH.read_text(encoding="utf-8")
         self.assertNotIn('kind = "local_json"', example_text)
@@ -92,7 +98,8 @@ class BackendRoutingConfigTests(unittest.TestCase):
         destination = route["destinations"]["default"]
 
         self.assertEqual("tasks:default", destination["public_ref"])
-        self.assertEqual("tasks:default", destination["provider_ref"])
+        self.assertEqual("Default tasks", destination["destination_label"])
+        self.assertNotIn("provider_ref", destination)
 
         forbidden_destination_fragments = (
             "owner",

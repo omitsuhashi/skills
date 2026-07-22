@@ -13,7 +13,8 @@ CODEX_MANIFEST = ROOT / ".codex-plugin" / "plugin.json"
 ENTRYPOINT = ROOT / "__init__.py"
 README = ROOT / "README.md"
 SKILL = ROOT / "skills" / "task-management" / "SKILL.md"
-SMOKE = ROOT / "scripts" / "smoke_test_hermes_read.py"
+READ_SMOKE = ROOT / "scripts" / "smoke_test_hermes_read.py"
+WRITE_SMOKE = ROOT / "scripts" / "smoke_test_hermes_write.py"
 
 TOP_LEVEL_SCALARS = {
     "manifest_version",
@@ -203,7 +204,7 @@ class HermesPluginManifestTests(unittest.TestCase):
         self.assertIs(type(manifest.get("manifest_version")), int)
         self.assertEqual(1, manifest.get("manifest_version"))
         self.assertEqual("task-management", manifest.get("name"))
-        self.assertEqual("0.3.0", manifest.get("version"))
+        self.assertEqual("0.4.0", manifest.get("version"))
         self.assertEqual("Omitsuhashi", manifest.get("author"))
         self.assertEqual(
             "standalone",
@@ -227,19 +228,22 @@ class HermesPluginManifestTests(unittest.TestCase):
         self.assertIn("SKILL.md", text)
         self.assertTrue(SKILL.exists(), "registered skill target must exist")
 
-    def test_native_manifest_exports_exact_read_toolset(self):
+    def test_native_manifest_exports_exact_read_and_write_toolsets(self):
         manifest = parse_task_management_manifest(MANIFEST)
         codex_manifest = __import__("json").loads(CODEX_MANIFEST.read_text(encoding="utf-8"))
 
-        self.assertEqual("0.3.0", codex_manifest["version"])
+        self.assertEqual("0.4.0", codex_manifest["version"])
         self.assertEqual(codex_manifest["version"], manifest["version"])
-        self.assertEqual(["task_query"], manifest["provides_tools"])
         self.assertEqual(
-            {"toolsets": ["task-management-read"]},
+            ["task_query", "task_preflight", "task_apply"],
+            manifest["provides_tools"],
+        )
+        self.assertEqual(
+            {"toolsets": ["task-management-read", "task-management-write"]},
             manifest["exports"],
         )
 
-    def test_native_entrypoint_registers_read_only_task_query_tool(self):
+    def test_native_entrypoint_registers_exact_public_interface_v2_tools(self):
         spec = importlib.util.spec_from_file_location(
             "task_management_plugin",
             ENTRYPOINT,
@@ -278,13 +282,29 @@ class HermesPluginManifestTests(unittest.TestCase):
                 skill_kwargs["description"],
             )
             self.assertTrue(skill_kwargs["description"].strip())
-            self.assertEqual(1, len(ctx.tools))
-            registration = ctx.tools[0]
-            self.assertEqual("task_query", registration["name"])
-            self.assertEqual("task-management-read", registration["toolset"])
-            self.assertEqual("task_query", registration["schema"]["name"])
-            self.assertTrue(callable(registration["handler"]))
-            self.assertEqual([], registration["requires_env"])
+            self.assertEqual(3, len(ctx.tools))
+            registrations = {item["name"]: item for item in ctx.tools}
+            self.assertEqual(
+                {"task_query", "task_preflight", "task_apply"},
+                set(registrations),
+            )
+            self.assertEqual(
+                "task-management-read",
+                registrations["task_query"]["toolset"],
+            )
+            for name in ("task_preflight", "task_apply"):
+                registration = registrations[name]
+                self.assertEqual("task-management-write", registration["toolset"])
+                self.assertEqual(name, registration["schema"]["name"])
+                self.assertFalse(
+                    registration["schema"]["parameters"]["additionalProperties"]
+                )
+            for registration in registrations.values():
+                self.assertTrue(callable(registration["handler"]))
+                self.assertEqual([], registration["requires_env"])
+
+            runtime_package = sys.modules[f"{spec.name}.task_management"]
+            self.assertEqual("0.4.0", runtime_package.__version__)
         finally:
             sys.modules.pop(spec.name, None)
 
@@ -309,10 +329,12 @@ class HermesPluginManifestTests(unittest.TestCase):
         self.assertIn("Mechanical task operations continue", text)
 
     def test_smoke_uses_real_hermes_context_and_registry_dispatch(self):
-        self.assertTrue(SMOKE.is_file())
-        text = SMOKE.read_text(encoding="utf-8")
-        self.assertIn("PluginContext", text)
-        self.assertIn("registry.dispatch", text)
+        for smoke in (READ_SMOKE, WRITE_SMOKE):
+            with self.subTest(smoke=smoke.name):
+                self.assertTrue(smoke.is_file())
+                text = smoke.read_text(encoding="utf-8")
+                self.assertIn("PluginContext", text)
+                self.assertIn("registry.dispatch", text)
 
 
 if __name__ == "__main__":

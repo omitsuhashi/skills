@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict
 
-from . import LEGACY_READ_ADAPTER_CONTRACT_VERSION, AdapterError, AdapterTaskSnapshotResult
+from . import ADAPTER_CONTRACT_VERSION, AdapterError, AdapterTaskSnapshotResult
 from ..route_config import ResolvedTaskReadRequest
 
 
@@ -34,7 +34,7 @@ class LocalJsonAdapter:
             document = json.loads(self._source_path.read_text(encoding="utf-8"))
         except (OSError, RuntimeError, UnicodeDecodeError, json.JSONDecodeError):
             raise AdapterError("task_source_unreadable", "Local task snapshot is unavailable or invalid.")
-        if not isinstance(document, dict) or document.get("adapter_contract_version") != LEGACY_READ_ADAPTER_CONTRACT_VERSION:
+        if not isinstance(document, dict) or document.get("adapter_contract_version") != ADAPTER_CONTRACT_VERSION:
             raise AdapterError("adapter_contract_mismatch", "Local task snapshot contract version is unsupported.")
         items = document.get("items")
         if not isinstance(items, list):
@@ -42,7 +42,7 @@ class LocalJsonAdapter:
 
         filtered = [item for item in items if self._matches(item, request.query)]
         limit = request.query.get("limit", 100)
-        return AdapterTaskSnapshotResult(LEGACY_READ_ADAPTER_CONTRACT_VERSION, filtered[:limit])
+        return AdapterTaskSnapshotResult(ADAPTER_CONTRACT_VERSION, filtered[:limit])
 
     @staticmethod
     def _matches(item: Any, query: Dict[str, Any]) -> bool:

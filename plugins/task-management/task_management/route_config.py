@@ -13,11 +13,12 @@ except ImportError:  # pragma: no cover - exercised by the Python 3.9 test runti
     tomllib = None
 
 
-ROUTES_FILE_ENV = "TASK_MANAGEMENT_READ_ROUTES_FILE"
-ROUTE_CONTRACT_VERSION = 1
+ROUTES_FILE_ENV = "TASK_MANAGEMENT_ROUTES_FILE"
+ROUTE_CONTRACT_VERSION = 2
 _KEY_RE = re.compile(r"^[A-Za-z0-9_-]+$")
-_MCP_TOOL_RE = re.compile(r"^mcp__[a-z0-9_]+__task_query$")
-_PLUGIN_TOOL_RE = re.compile(r"^task_adapter__[a-z0-9_]+__task_query$")
+_ADAPTER_TOOL_RE = re.compile(
+    r"^task_adapter__([a-z0-9_]+)__task_(query|preflight|apply)$"
+)
 
 
 class RouteConfigError(Exception):
@@ -29,19 +30,22 @@ class RouteConfigError(Exception):
 @dataclass(frozen=True)
 class ResolvedTaskReadRoute:
     backend_key: str
+    adapter_key: str
     kind: str
     destination_ref: str
-    provider_destination_ref: str
+    destination_label: str
+    query_tool: str
+    preflight_tool: str
+    apply_tool: str
+    content_target_ref: Optional[str] = None
     read_root: Optional[Path] = None
     source_path: Optional[Path] = None
-    tool_name: Optional[str] = None
 
 
 @dataclass(frozen=True)
 class ResolvedTaskReadRequest:
     backend_key: str
     destination_ref: str
-    provider_destination_ref: str
     query: Dict[str, Any]
 
 
@@ -106,6 +110,16 @@ def _required_string(mapping: Mapping[str, Any], key: str) -> str:
     return value
 
 
+def _require_exact_fields(
+    mapping: Mapping[str, Any],
+    *,
+    required: set[str],
+    optional: set[str] = frozenset(),
+) -> None:
+    if set(mapping) - required - optional or required - set(mapping):
+        raise RouteConfigError("invalid_read_route", "Task route configuration fields are invalid.")
+
+
 def _within(path: Path, root: Path) -> bool:
     try:
         path.relative_to(root)
@@ -121,15 +135,35 @@ def _resolve_path(path: Path) -> Path:
         raise RouteConfigError("invalid_read_route", "Task read route path is invalid.")
 
 
-def load_read_route(
+def _validate_adapter_tool(
+    tool_name: str,
+    *,
+    adapter_key: str,
+    capability: str,
+) -> None:
+    match = _ADAPTER_TOOL_RE.fullmatch(tool_name)
+    if match is None or match.group(2) != capability:
+        raise RouteConfigError(
+            "invalid_read_route",
+            "Task route tool capability is invalid.",
+        )
+    if match.group(1) != adapter_key:
+        raise RouteConfigError(
+            "invalid_read_route",
+            "Task route tools must share the configured adapter namespace.",
+        )
+
+
+def _load_v2_route(
     path: Path,
+    document: Mapping[str, Any],
     backend_key: Optional[str],
     destination_ref: str,
 ) -> ResolvedTaskReadRoute:
-    document = _load_document(Path(path))
-    if document.get("contract_version") != ROUTE_CONTRACT_VERSION:
-        raise RouteConfigError("read_route_contract_mismatch", "Task read route contract version is unsupported.")
-
+    _require_exact_fields(
+        document,
+        required={"contract_version", "default_backend", "backends"},
+    )
     selected_backend = backend_key or document.get("default_backend")
     if not isinstance(selected_backend, str) or not selected_backend:
         raise RouteConfigError("read_route_not_found", "No task read route matches the request.")
@@ -137,12 +171,33 @@ def load_read_route(
     backend = backends.get(selected_backend) if isinstance(backends, dict) else None
     if not isinstance(backend, dict):
         raise RouteConfigError("read_route_not_found", "No task read route matches the request.")
-    if backend.get("capability") != "task_read":
-        raise RouteConfigError("invalid_read_route", "Task read route capability is invalid.")
+    _require_exact_fields(
+        backend,
+        required={
+            "adapter_key",
+            "query_tool",
+            "preflight_tool",
+            "apply_tool",
+            "destinations",
+        },
+        optional={"read_root", "source_path"},
+    )
 
     destinations = backend.get("destinations")
     if not isinstance(destinations, dict):
         raise RouteConfigError("invalid_read_route", "Task read route destinations are invalid.")
+    for destination in destinations.values():
+        if not isinstance(destination, dict):
+            raise RouteConfigError("invalid_read_route", "Task read route destinations are invalid.")
+        _require_exact_fields(
+            destination,
+            required={"public_ref", "destination_label"},
+            optional={"content_target_ref"},
+        )
+        _required_string(destination, "public_ref")
+        _required_string(destination, "destination_label")
+        if "content_target_ref" in destination:
+            _required_string(destination, "content_target_ref")
     public_refs = [
         item.get("public_ref")
         for item in destinations.values()
@@ -158,36 +213,57 @@ def load_read_route(
     if not matching_destinations:
         raise RouteConfigError("read_route_not_found", "No task read route matches the request.")
     destination = matching_destinations[0]
-    provider_ref = _required_string(destination, "provider_ref")
-    kind = _required_string(backend, "kind")
 
+    adapter_key = _required_string(backend, "adapter_key")
+    query_tool = _required_string(backend, "query_tool")
+    preflight_tool = _required_string(backend, "preflight_tool")
+    apply_tool = _required_string(backend, "apply_tool")
+    _validate_adapter_tool(
+        query_tool,
+        adapter_key=adapter_key,
+        capability="query",
+    )
+    _validate_adapter_tool(
+        preflight_tool,
+        adapter_key=adapter_key,
+        capability="preflight",
+    )
+    _validate_adapter_tool(
+        apply_tool,
+        adapter_key=adapter_key,
+        capability="apply",
+    )
+    kind = "local_json" if adapter_key == "local_json" else "external"
+    read_root = None
+    source_path = None
     if kind == "local_json":
-        config_dir = _resolve_path(Path(path)).parent
+        config_dir = _resolve_path(path).parent
         read_root = _resolve_path(config_dir / _required_string(backend, "read_root"))
         source_path = _resolve_path(read_root / _required_string(backend, "source_path"))
         if not _within(source_path, read_root):
             raise RouteConfigError("invalid_read_route", "Local snapshot source is outside its read root.")
-        return ResolvedTaskReadRoute(
-            selected_backend,
-            kind,
-            destination_ref,
-            provider_ref,
-            read_root=read_root,
-            source_path=source_path,
-        )
-    if kind not in {"mcp", "plugin"}:
-        raise RouteConfigError("invalid_read_route", "Task read route adapter kind is invalid.")
-    tool_name = _required_string(backend, "tool_name")
-    expected_tool_pattern = _MCP_TOOL_RE if kind == "mcp" else _PLUGIN_TOOL_RE
-    if expected_tool_pattern.fullmatch(tool_name) is None:
-        raise RouteConfigError(
-            "invalid_read_route",
-            "Task read route kind does not match its fixed tool namespace.",
-        )
     return ResolvedTaskReadRoute(
-        selected_backend,
-        kind,
-        destination_ref,
-        provider_ref,
-        tool_name=tool_name,
+        backend_key=selected_backend,
+        adapter_key=adapter_key,
+        kind=kind,
+        destination_ref=destination_ref,
+        destination_label=_required_string(destination, "destination_label"),
+        query_tool=query_tool,
+        preflight_tool=preflight_tool,
+        apply_tool=apply_tool,
+        content_target_ref=destination.get("content_target_ref"),
+        read_root=read_root,
+        source_path=source_path,
     )
+
+
+def load_read_route(
+    path: Path,
+    backend_key: Optional[str],
+    destination_ref: str,
+) -> ResolvedTaskReadRoute:
+    path = Path(path)
+    document = _load_document(path)
+    if document.get("contract_version") != ROUTE_CONTRACT_VERSION:
+        raise RouteConfigError("read_route_contract_mismatch", "Task read route contract version is unsupported.")
+    return _load_v2_route(path, document, backend_key, destination_ref)

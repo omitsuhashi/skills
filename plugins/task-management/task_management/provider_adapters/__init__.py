@@ -7,7 +7,6 @@ from typing import Any, Dict, List, Protocol
 
 
 ADAPTER_CONTRACT_VERSION = 2
-LEGACY_READ_ADAPTER_CONTRACT_VERSION = 1
 
 
 class AdapterError(Exception):
