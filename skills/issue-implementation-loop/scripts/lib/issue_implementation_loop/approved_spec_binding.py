@@ -11,7 +11,7 @@ import re
 import secrets
 import stat
 import subprocess
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 from .constants import DELIVERY_INTENTS
 from .identifiers import is_issue_id, is_lower_kebab
@@ -661,7 +661,13 @@ def _write_all(descriptor: int, raw: bytes) -> None:
         offset += written
 
 
-def _atomic_replace(root: Path, output_path: str, raw: bytes) -> None:
+def _atomic_replace(
+    root: Path,
+    output_path: str,
+    raw: bytes,
+    *,
+    post_install_check: Callable[[], None] | None = None,
+) -> None:
     descriptors, identities, leaf = _open_directory_chain(root, output_path)
     parent_fd = descriptors[-1]
     temporary = f".{leaf}.{secrets.token_hex(8)}.tmp"
@@ -711,6 +717,8 @@ def _atomic_replace(root: Path, output_path: str, raw: bytes) -> None:
         temporary_exists = False
         try:
             _verify_directory_chain(identities, output_path)
+            if post_install_check is not None:
+                post_install_check()
         except BindingError:
             if output_existed:
                 try:
@@ -732,7 +740,12 @@ def _atomic_replace(root: Path, output_path: str, raw: bytes) -> None:
                         recovery_path=recovery_path,
                     ) from None
             else:
-                os.unlink(leaf, dir_fd=parent_fd)
+                try:
+                    os.unlink(leaf, dir_fd=parent_fd)
+                except (OSError, TypeError, ValueError):
+                    raise BindingError(
+                        "FILE_CHANGED_DURING_VALIDATION", path=output_path
+                    ) from None
             raise
         if backup_exists:
             try:
@@ -822,7 +835,25 @@ def seal_input_packet(
     final_check = identify_spec(root, expected.path)
     if final_check != current:
         raise BindingError("FILE_CHANGED_DURING_VALIDATION", path=expected.path)
-    _atomic_replace(root, output_safe, serialized)
+
+    def verify_spec_after_install() -> None:
+        try:
+            installed_check = identify_spec(root, expected.path)
+        except BindingError:
+            raise BindingError(
+                "FILE_CHANGED_DURING_VALIDATION", path=expected.path
+            ) from None
+        if installed_check != current:
+            raise BindingError(
+                "FILE_CHANGED_DURING_VALIDATION", path=expected.path
+            )
+
+    _atomic_replace(
+        root,
+        output_safe,
+        serialized,
+        post_install_check=verify_spec_after_install,
+    )
     return InputPacketRef(output_safe, hashlib.sha256(serialized).hexdigest())
 
 

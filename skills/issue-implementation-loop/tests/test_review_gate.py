@@ -64,13 +64,12 @@ class ReviewGateTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             repo, binding, _ = create_binding_repo(Path(tmp))
             packet = current_worker_packet(repo, binding, task_kind="review")
+            envelope_path, runtime_path = runtime_artifact_paths(repo)
             packet_path = repo / "reviewer-packet.json"
             report_path = repo / "reviewer-report.json"
-            runtime_path = repo / "runtime-state.json"
-            envelope_path = repo / "execution-envelope.json"
             write_json(packet_path, packet)
             write_json(report_path, current_worker_report(repo, binding, packet))
-            (repo / "knowledge/wiki/syntheses/spec.md").write_text(
+            (repo / FIXTURE_SPEC_PATH).write_text(
                 "stale before review intake\n", encoding="utf-8"
             )
 
@@ -96,11 +95,10 @@ class ReviewGateTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             repo, binding, _ = create_binding_repo(Path(tmp))
             packet = current_worker_packet(repo, binding, task_kind="review")
+            envelope_path, runtime_path = runtime_artifact_paths(repo)
             packet["source_revision"]["execution_envelope"]["sha256"] = "a" * 64
             packet_path = repo / "reviewer-packet.json"
             report_path = repo / "reviewer-report.json"
-            runtime_path = repo / "runtime-state.json"
-            envelope_path = repo / "execution-envelope.json"
             write_json(packet_path, packet)
             write_json(report_path, current_worker_report(repo, binding, packet))
 
@@ -124,8 +122,7 @@ class ReviewGateTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             repo, binding, _ = create_binding_repo(Path(tmp))
             packet = current_worker_packet(repo, binding, task_kind="review")
-            envelope_path = repo / "execution-envelope.json"
-            runtime_path = repo / "runtime-state.json"
+            envelope_path, runtime_path = runtime_artifact_paths(repo)
             alternate_envelope_path = repo / "alternate-envelope.json"
             alternate_runtime_path = repo / "alternate-runtime.json"
             alternate_envelope = json.loads(envelope_path.read_text(encoding="utf-8"))
@@ -171,11 +168,12 @@ class ReviewGateTests(unittest.TestCase):
                 with self.subTest(artifact=artifact, failure=failure), tempfile.TemporaryDirectory() as tmp:
                     repo, binding, _ = create_binding_repo(Path(tmp))
                     packet = current_worker_packet(repo, binding, task_kind="review")
+                    envelope_path, runtime_path = runtime_artifact_paths(repo)
                     paths = {
                         "report": repo / "reviewer-report.json",
                         "packet": repo / "reviewer-packet.json",
-                        "runtime": repo / "runtime-state.json",
-                        "envelope": repo / "execution-envelope.json",
+                        "runtime": runtime_path,
+                        "envelope": envelope_path,
                     }
                     write_json(paths["report"], current_worker_report(repo, binding, packet))
                     write_json(paths["packet"], packet)
@@ -470,7 +468,7 @@ class ReviewGateTests(unittest.TestCase):
             write_json(envelope_path, envelope)
             write_json(runtime_path, runtime)
             write_json(result_path, current_execution_result(envelope, runtime))
-            (repo / "knowledge/wiki/syntheses/spec.md").write_text(
+            (repo / FIXTURE_SPEC_PATH).write_text(
                 "drift after review\n", encoding="utf-8"
             )
 

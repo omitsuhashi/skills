@@ -4,6 +4,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import subprocess
 import tempfile
 import unittest
 from unittest import mock
@@ -39,7 +40,36 @@ def extract_default_prompt(path: Path) -> str:
 
 
 class GrillToPrLoopTests(unittest.TestCase):
-    def test_asb_34_to_36_documents_artifact_ownership_seam(self) -> None:
+    def test_asb_34_current_epic_tracks_only_durable_planning_artifacts(self) -> None:
+        current_root = "knowledge/wiki/syntheses/approved-spec-binding-contract"
+        tracked = set(
+            subprocess.run(
+                ["git", "-C", str(REPO_ROOT), "ls-files", current_root],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.splitlines()
+        )
+        required = {
+            f"{current_root}/spec.md",
+            f"{current_root}/issues.md",
+            f"{current_root}/implementation-plan.md",
+            f"{current_root}/input-packet.json",
+        }
+        forbidden_names = {
+            "execution-envelope.json",
+            "runtime-state.json",
+            "events.jsonl",
+            "execution-result.json",
+            "delivery-plan.json",
+        }
+
+        self.assertLessEqual(required, tracked)
+        self.assertFalse(
+            {path for path in tracked if Path(path).name in forbidden_names}
+        )
+
+    def test_artifact_lifecycle_references_keep_current_ownership_seam(self) -> None:
         planning_text = PLANNING_CONTRACT.read_text(encoding="utf-8")
         handoff_text = EXECUTION_HANDOFF.read_text(encoding="utf-8")
         issue_skill_text = (ISSUE_LOOP_DIR / "SKILL.md").read_text(encoding="utf-8")
@@ -71,6 +101,78 @@ class GrillToPrLoopTests(unittest.TestCase):
             planning_guidance,
             r"(?i)commit(?: the)? (?:an? )?Execution Envelope",
         )
+
+    def test_asb_36_tracked_json_templates_use_nested_epic_paths(self) -> None:
+        template_dir = ISSUE_LOOP_DIR / "assets" / "templates"
+        schema_dir = ISSUE_LOOP_DIR / "assets" / "schemas"
+        product_json = sorted(template_dir.glob("*.json")) + sorted(
+            schema_dir.glob("*.json")
+        )
+        tracked = set(
+            subprocess.run(
+                ["git", "-C", str(REPO_ROOT), "ls-files"],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.splitlines()
+        )
+        for path in product_json:
+            relative = path.relative_to(REPO_ROOT).as_posix()
+            with self.subTest(path=relative):
+                self.assertIn(relative, tracked)
+                json.loads(path.read_text(encoding="utf-8"))
+
+        expected_parameterized = (
+            "knowledge/wiki/syntheses/<epic-id>/input-packet.json"
+        )
+        expected_example = "knowledge/wiki/syntheses/example/input-packet.json"
+        envelope = json.loads(
+            (template_dir / "execution-envelope.json").read_text(encoding="utf-8")
+        )
+        worker = json.loads(
+            (template_dir / "worker-packet.json").read_text(encoding="utf-8")
+        )
+        hardening = json.loads(
+            (template_dir / "hardening-candidates.json").read_text(encoding="utf-8")
+        )
+        delivery = json.loads(
+            (template_dir / "delivery-plan.json").read_text(encoding="utf-8")
+        )
+        result = json.loads(
+            (template_dir / "execution-result.json").read_text(encoding="utf-8")
+        )
+
+        self.assertEqual(
+            envelope["approved_spec_binding"]["path"], expected_parameterized
+        )
+        self.assertEqual(
+            envelope["work_items"]["G2PR-001"]["source"]["path"],
+            "knowledge/wiki/syntheses/<epic-id>/issues.md",
+        )
+        self.assertEqual(
+            worker["source_revision"]["approved_spec_binding"]["path"],
+            expected_parameterized,
+        )
+        self.assertEqual(
+            worker["source_revision"]["issue_source"]["path"],
+            "knowledge/wiki/syntheses/<epic-id>/issues.md",
+        )
+        self.assertEqual(
+            [entry["path"] for entry in worker["read_paths"]],
+            [
+                "knowledge/wiki/syntheses/<epic-id>/spec.md",
+                "knowledge/wiki/syntheses/<epic-id>/issues.md",
+            ],
+        )
+        self.assertEqual(
+            worker["inline_context"][0]["path"],
+            "knowledge/wiki/syntheses/<epic-id>/issues.md",
+        )
+        self.assertEqual(
+            hardening["approved_spec_binding"]["path"], expected_parameterized
+        )
+        self.assertEqual(delivery["approved_spec_binding"]["path"], expected_example)
+        self.assertEqual(result["approved_spec_binding"]["path"], expected_example)
 
     def test_remote_delivery_reference_uses_current_delivery_validator_signature(self) -> None:
         text = (SKILL_DIR / "references" / "remote-delivery.md").read_text(

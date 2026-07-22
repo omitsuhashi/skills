@@ -94,7 +94,7 @@ class RuntimeStateTests(unittest.TestCase):
             missing_contract = run_script("rebuild_runtime_state.py", str(events_path))
             self.assertNotEqual(missing_contract.returncode, 0)
 
-            (repo / "knowledge/wiki/syntheses/spec.md").write_text(
+            (repo / FIXTURE_SPEC_PATH).write_text(
                 "drift before rebuild\n", encoding="utf-8"
             )
             stale = run_script(
@@ -144,7 +144,7 @@ class RuntimeStateTests(unittest.TestCase):
                 calls += 1
                 result = original(*args, **kwargs)
                 if calls == 1:
-                    (repo / "knowledge/wiki/syntheses/spec.md").write_text(
+                    (repo / FIXTURE_SPEC_PATH).write_text(
                         "drift during fold\n", encoding="utf-8"
                     )
                 return result

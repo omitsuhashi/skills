@@ -4,6 +4,98 @@ from _helpers import *
 
 
 class WorkerPacketTests(unittest.TestCase):
+    def test_asb_35_linked_coordinator_uses_exact_git_common_runtime_root(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            primary, binding, _ = create_binding_repo(root)
+            coordinator = root / "linked-coordinator"
+            git(primary, "worktree", "add", "-q", "--detach", str(coordinator), "HEAD")
+            common_dir_value = git(coordinator, "rev-parse", "--git-common-dir")
+            common_dir = Path(common_dir_value)
+            if not common_dir.is_absolute():
+                common_dir = coordinator / common_dir
+            common_dir = common_dir.resolve()
+            runtime_root = (
+                common_dir
+                / "agent-runs"
+                / "issue-implementation-loop"
+                / "approved-spec-binding"
+            )
+            runtime_root.mkdir(parents=True)
+            envelope_path = runtime_root / "execution-envelope.json"
+            runtime_path = runtime_root / "runtime-state.json"
+            envelope = binding_envelope(coordinator, binding)
+            write_json(envelope_path, envelope)
+            write_json(
+                runtime_path,
+                {
+                    "schema_version": 2,
+                    "epic_id": envelope["epic_id"],
+                    "envelope_revision": envelope["revision"],
+                    "approved_spec_binding": copy.deepcopy(binding),
+                    "issues": {},
+                    "human_requests": [],
+                },
+            )
+            packet_path = coordinator / "worker-packet.json"
+
+            result = run_script(
+                "build_worker_packet.py",
+                "--issue-id",
+                "ASBC-002",
+                "--dispatch-id",
+                "dispatch-linked-worktree",
+                *worker_trust_args(
+                    coordinator,
+                    envelope=envelope_path,
+                    runtime_state=runtime_path,
+                ),
+                "--read-path",
+                "knowledge/wiki/syntheses/approved-spec-binding/issues.md",
+                "--output",
+                str(packet_path),
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue(packet_path.is_file())
+            self.assertNotEqual(envelope_path.parent, coordinator)
+
+            real_envelope = runtime_root / "real-execution-envelope.json"
+            envelope_path.rename(real_envelope)
+            envelope_path.symlink_to(real_envelope.name)
+            unsafe_link = run_worker_packet_validator(
+                coordinator,
+                packet_path,
+                "--json",
+                envelope=envelope_path,
+                runtime_state=runtime_path,
+            )
+            self.assertEqual(unsafe_link.returncode, 1)
+            self.assertEqual(
+                json.loads(unsafe_link.stdout)["errors"], ["BINDING_MISMATCH"]
+            )
+
+            arbitrary_root = common_dir / "agent-runs" / "arbitrary"
+            arbitrary_root.mkdir(parents=True)
+            arbitrary_envelope = arbitrary_root / "execution-envelope.json"
+            arbitrary_runtime = arbitrary_root / "runtime-state.json"
+            write_json(arbitrary_envelope, envelope)
+            write_json(
+                arbitrary_runtime,
+                json.loads(runtime_path.read_text(encoding="utf-8")),
+            )
+            unsafe_root = run_worker_packet_validator(
+                coordinator,
+                packet_path,
+                "--json",
+                envelope=arbitrary_envelope,
+                runtime_state=arbitrary_runtime,
+            )
+            self.assertEqual(unsafe_root.returncode, 1)
+            self.assertEqual(
+                json.loads(unsafe_root.stdout)["errors"], ["BINDING_MISMATCH"]
+            )
+
     def test_build_worker_packet_outputs_valid_v3_bounded_packet(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo, binding, _ = create_binding_repo(Path(tmp))
@@ -20,15 +112,15 @@ class WorkerPacketTests(unittest.TestCase):
                 "--task-kind",
                 "implement",
                 "--read-path",
-                "knowledge/wiki/syntheses/spec.md",
+                FIXTURE_SPEC_PATH,
                 "--read-purpose",
                 "spec",
                 "--read-path",
-                "knowledge/wiki/syntheses/issues.md",
+                FIXTURE_ISSUES_PATH,
                 "--read-purpose",
                 "issue-ledger",
                 "--inline-excerpt",
-                "knowledge/wiki/syntheses/issues.md::ASBC-002 requires binding propagation.",
+                f"{FIXTURE_ISSUES_PATH}::ASBC-002 requires binding propagation.",
                 "--output",
                 str(packet_path),
             )
@@ -124,7 +216,7 @@ class WorkerPacketTests(unittest.TestCase):
                 "dispatch-epoch-mismatch",
                 *worker_trust_args(repo),
                 "--read-path",
-                "knowledge/wiki/syntheses/issues.md",
+                FIXTURE_ISSUES_PATH,
             )
 
             self.assertNotEqual(result.returncode, 0)
@@ -192,13 +284,13 @@ class WorkerPacketTests(unittest.TestCase):
                         repo, binding, _ = create_binding_repo(case_root)
                         packet = current_worker_packet(repo, binding, task_kind=task_kind)
                         source_revision = packet["source_revision"]
-                        active_envelope = repo / "execution-envelope.json"
+                        active_envelope, active_runtime = runtime_artifact_paths(repo)
                         if name in {
                             "packet_external_envelope",
                             "trusted_external_envelope",
                             "substituted_branch",
                         }:
-                            active_path = repo / "execution-envelope.json"
+                            active_path = active_envelope
                             external_path = case_root / "external-envelope.json"
                             external = json.loads(active_path.read_text(encoding="utf-8"))
                             if name == "substituted_branch":
@@ -220,7 +312,7 @@ class WorkerPacketTests(unittest.TestCase):
                             substituted_worktree.mkdir()
                             packet["worktree"] = str(substituted_worktree)
                         else:
-                            runtime_path = repo / "runtime-state.json"
+                            runtime_path = active_runtime
                             runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
                             runtime["epic_id"] = "another-epic"
                             write_json(runtime_path, runtime)
@@ -290,7 +382,7 @@ class WorkerPacketTests(unittest.TestCase):
                 "dispatch-002",
                 *worker_trust_args(repo),
                 "--read-path",
-                "knowledge/wiki/syntheses/spec.md",
+                FIXTURE_SPEC_PATH,
                 "--output",
                 str(packet_path),
             )
@@ -378,7 +470,7 @@ class WorkerPacketTests(unittest.TestCase):
                         {
                             "inline_context": [
                                 {
-                                    "path": "knowledge/wiki/syntheses/issues.md",
+                                    "path": FIXTURE_ISSUES_PATH,
                                     "excerpt": " ".join(f"word{index}" for index in range(121)),
                                 }
                             ]
@@ -432,9 +524,10 @@ class WorkerPacketTests(unittest.TestCase):
                     case_root.mkdir()
                     repo, binding, _ = create_binding_repo(case_root)
                     packet = current_worker_packet(repo, binding)
+                    envelope_path, runtime_path = runtime_artifact_paths(repo)
                     packet["inline_context"] = [
                         {
-                            "path": "knowledge/wiki/syntheses/issues.md",
+                            "path": FIXTURE_ISSUES_PATH,
                             "excerpt": "bounded excerpt",
                             field: invalid_value,
                         }
@@ -447,8 +540,8 @@ class WorkerPacketTests(unittest.TestCase):
                         packet,
                         repo_root=repo,
                         assigned_worktree=repo,
-                        envelope_path=repo / "execution-envelope.json",
-                        runtime_state_path=repo / "runtime-state.json",
+                        envelope_path=envelope_path,
+                        runtime_state_path=runtime_path,
                     )
 
                     self.assertEqual(cli_result.returncode, 1)

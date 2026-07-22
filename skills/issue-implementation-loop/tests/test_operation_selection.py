@@ -208,7 +208,7 @@ class OperationSelectionTests(unittest.TestCase):
                 }
             }
             write_json(runtime_path, runtime)
-            (repo / "knowledge/wiki/syntheses/spec.md").write_text(
+            (repo / FIXTURE_SPEC_PATH).write_text(
                 "approved spec changed\n", encoding="utf-8"
             )
 

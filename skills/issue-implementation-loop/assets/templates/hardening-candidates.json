@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "approved_spec_binding": {
-    "path": "knowledge/wiki/syntheses/<epic-id>-input-packet.json",
+    "path": "knowledge/wiki/syntheses/<epic-id>/input-packet.json",
     "sha256": "<64-lowercase-hex>",
     "gate_commit": "<full-lowercase-git-object-id>"
   },

@@ -296,7 +296,7 @@ class DeliveryTests(unittest.TestCase):
             repo, _, runtime_path, _, result_path, _, plan_path, _ = (
                 self.binding_delivery_artifacts(Path(tmp))
             )
-            (repo / "knowledge/wiki/syntheses/spec.md").write_text(
+            (repo / FIXTURE_SPEC_PATH).write_text(
                 "drift before delivery\n", encoding="utf-8"
             )
 

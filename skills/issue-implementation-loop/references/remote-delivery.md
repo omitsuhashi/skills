@@ -44,7 +44,7 @@ Delivery plan shape:
 {
   "schema_version": 2,
   "approved_spec_binding": {
-    "path": "knowledge/wiki/syntheses/example-input-packet.json",
+    "path": "knowledge/wiki/syntheses/example/input-packet.json",
     "sha256": "<sealed-packet-sha256>",
     "gate_commit": "<full-gate-commit>"
   },

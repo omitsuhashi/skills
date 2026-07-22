@@ -179,7 +179,7 @@ class ResumeBriefTests(unittest.TestCase):
             self.assertEqual(built.returncode, 0, built.stderr)
             self.assertTrue((root / "resume-brief.meta.json").is_file())
 
-            (repo / "knowledge/wiki/syntheses/spec.md").write_text(
+            (repo / FIXTURE_SPEC_PATH).write_text(
                 "spec drift after metadata publication\n", encoding="utf-8"
             )
             result = run_script(
@@ -307,7 +307,7 @@ class ResumeBriefTests(unittest.TestCase):
 
             def drift_spec(*args: object, **kwargs: object) -> dict:
                 value = original_meta_builder(*args, **kwargs)
-                (repo / "knowledge/wiki/syntheses/spec.md").write_text(
+                (repo / FIXTURE_SPEC_PATH).write_text(
                     "drift before publication\n", encoding="utf-8"
                 )
                 return value
@@ -348,7 +348,7 @@ class ResumeBriefTests(unittest.TestCase):
                 "title": f"Example issue {issue_id}",
                 "source": {
                     "type": "local",
-                    "path": "knowledge/wiki/syntheses/issues.md",
+                    "path": "knowledge/wiki/syntheses/issue-implementation-loop/issues.md",
                 },
                 "acceptance_criteria": [f"{issue_id} is complete."],
                 "non_goals": ["Do not write outside the approved scope."],

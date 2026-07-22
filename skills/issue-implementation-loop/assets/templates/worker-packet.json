@@ -5,7 +5,7 @@
   "access_mode": "read_write",
   "source_revision": {
     "approved_spec_binding": {
-      "path": "knowledge/wiki/syntheses/<epic-id>-input-packet.json",
+      "path": "knowledge/wiki/syntheses/<epic-id>/input-packet.json",
       "sha256": "<raw-byte-sha256>",
       "gate_commit": "<full-gate-commit>"
     },
@@ -20,7 +20,7 @@
       "sha256": "<sha256>"
     },
     "issue_source": {
-      "path": "knowledge/wiki/syntheses/issues.md",
+      "path": "knowledge/wiki/syntheses/<epic-id>/issues.md",
       "sha256": "<sha256>"
     }
   },
@@ -45,17 +45,17 @@
   },
   "read_paths": [
     {
-      "path": "knowledge/wiki/syntheses/spec.md",
+      "path": "knowledge/wiki/syntheses/<epic-id>/spec.md",
       "purpose": "spec"
     },
     {
-      "path": "knowledge/wiki/syntheses/issues.md",
+      "path": "knowledge/wiki/syntheses/<epic-id>/issues.md",
       "purpose": "issue-ledger"
     }
   ],
   "inline_context": [
     {
-      "path": "knowledge/wiki/syntheses/issues.md",
+      "path": "knowledge/wiki/syntheses/<epic-id>/issues.md",
       "excerpt": "issue に必要な短い抜粋のみ。"
     }
   ],

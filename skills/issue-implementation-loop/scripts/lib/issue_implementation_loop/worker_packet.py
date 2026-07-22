@@ -4,6 +4,8 @@ import hashlib
 import json
 import os
 import re
+import stat
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -12,6 +14,7 @@ from .approved_spec_binding import (
     BindingError,
     load_verified_input_packet,
 )
+from .identifiers import is_lower_kebab
 
 
 DEFAULT_PACKET_WORDS = 450
@@ -120,7 +123,7 @@ def _canonical_existing_path(
         raise ValueError("BINDING_MISMATCH")
     try:
         canonical = candidate.resolve(strict=True)
-    except OSError:
+    except (OSError, RuntimeError, ValueError):
         raise ValueError("BINDING_MISMATCH") from None
     if directory and not canonical.is_dir():
         raise ValueError("BINDING_MISMATCH")
@@ -136,6 +139,122 @@ def _contains(root: Path, candidate: Path) -> bool:
         return False
 
 
+def _trusted_git_common_directory(repo_root: Path) -> Path:
+    environment = os.environ.copy()
+    for variable in (
+        "GIT_DIR",
+        "GIT_WORK_TREE",
+        "GIT_COMMON_DIR",
+        "GIT_INDEX_FILE",
+        "GIT_OBJECT_DIRECTORY",
+        "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+    ):
+        environment.pop(variable, None)
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repo_root), "rev-parse", "--git-common-dir"],
+            check=False,
+            capture_output=True,
+            text=True,
+            env=environment,
+        )
+    except (OSError, TypeError, ValueError):
+        raise ValueError("BINDING_MISMATCH") from None
+    lines = result.stdout.splitlines()
+    if result.returncode != 0 or len(lines) != 1 or not lines[0].strip():
+        raise ValueError("BINDING_MISMATCH")
+    common_directory = Path(lines[0].strip())
+    if not common_directory.is_absolute():
+        common_directory = repo_root / common_directory
+    try:
+        canonical = common_directory.resolve(strict=True)
+    except OSError:
+        raise ValueError("BINDING_MISMATCH") from None
+    if not canonical.is_dir():
+        raise ValueError("BINDING_MISMATCH")
+    return canonical
+
+
+def _runtime_file_location(
+    common_directory: Path,
+    raw_path: str | Path,
+    *,
+    expected_name: str,
+) -> tuple[Path, tuple[str, ...], str]:
+    try:
+        supplied = Path(raw_path)
+        if not supplied.is_absolute() or ".." in supplied.parts:
+            raise ValueError
+        candidate = Path(os.path.abspath(os.fspath(supplied)))
+        relative = candidate.relative_to(common_directory)
+    except (OSError, TypeError, ValueError):
+        raise ValueError("BINDING_MISMATCH") from None
+    parts = relative.parts
+    if (
+        len(parts) != 4
+        or parts[:2] != ("agent-runs", "issue-implementation-loop")
+        or not is_lower_kebab(parts[2])
+        or parts[3] != expected_name
+    ):
+        raise ValueError("BINDING_MISMATCH")
+    return candidate, parts, parts[2]
+
+
+def _load_trusted_runtime_json(
+    common_directory: Path,
+    raw_path: str | Path,
+    *,
+    expected_name: str,
+) -> tuple[Path, str, Any]:
+    candidate, parts, path_epic_id = _runtime_file_location(
+        common_directory,
+        raw_path,
+        expected_name=expected_name,
+    )
+    if not hasattr(os, "O_NOFOLLOW"):
+        raise ValueError("BINDING_MISMATCH")
+    directory_flags = os.O_RDONLY | os.O_NOFOLLOW
+    if hasattr(os, "O_DIRECTORY"):
+        directory_flags |= os.O_DIRECTORY
+    file_flags = os.O_RDONLY | os.O_NOFOLLOW
+    descriptors: list[int] = []
+    try:
+        descriptors.append(os.open(common_directory, directory_flags))
+        for part in parts[:-1]:
+            descriptors.append(
+                os.open(part, directory_flags, dir_fd=descriptors[-1])
+            )
+        file_descriptor = os.open(
+            parts[-1], file_flags, dir_fd=descriptors[-1]
+        )
+        descriptors.append(file_descriptor)
+        before = os.fstat(file_descriptor)
+        if not stat.S_ISREG(before.st_mode):
+            raise ValueError
+        chunks: list[bytes] = []
+        while True:
+            chunk = os.read(file_descriptor, 1024 * 1024)
+            if not chunk:
+                break
+            chunks.append(chunk)
+        after = os.fstat(file_descriptor)
+        if (
+            (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns)
+            != (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns)
+        ):
+            raise ValueError
+        value = json.loads(b"".join(chunks).decode("utf-8"))
+    except (OSError, TypeError, ValueError, UnicodeDecodeError, json.JSONDecodeError):
+        raise ValueError("BINDING_MISMATCH") from None
+    finally:
+        for descriptor in reversed(descriptors):
+            try:
+                os.close(descriptor)
+            except OSError:
+                pass
+    return candidate, path_epic_id, value
+
+
 def trusted_worker_context(
     *,
     repo_root: str | Path,
@@ -149,16 +268,24 @@ def trusted_worker_context(
 
     canonical_repo = _canonical_existing_path(repo_root, directory=True)
     canonical_worktree = _canonical_existing_path(assigned_worktree, directory=True)
-    canonical_envelope = _canonical_existing_path(envelope_path, directory=False)
-    canonical_runtime = _canonical_existing_path(runtime_state_path, directory=False)
-    if not _contains(canonical_repo, canonical_envelope):
-        raise ValueError("BINDING_MISMATCH")
-    try:
-        envelope = _load_json(canonical_envelope)
-        runtime = _load_json(canonical_runtime)
-    except (OSError, json.JSONDecodeError):
-        raise ValueError("BINDING_MISMATCH") from None
+    common_directory = _trusted_git_common_directory(canonical_repo)
+    canonical_envelope, envelope_path_epic, envelope = _load_trusted_runtime_json(
+        common_directory,
+        envelope_path,
+        expected_name="execution-envelope.json",
+    )
+    canonical_runtime, runtime_path_epic, runtime = _load_trusted_runtime_json(
+        common_directory,
+        runtime_state_path,
+        expected_name="runtime-state.json",
+    )
     if not isinstance(envelope, dict) or not isinstance(runtime, dict):
+        raise ValueError("BINDING_MISMATCH")
+    if (
+        envelope_path_epic != runtime_path_epic
+        or envelope.get("epic_id") != envelope_path_epic
+        or runtime.get("epic_id") != envelope_path_epic
+    ):
         raise ValueError("BINDING_MISMATCH")
     envelope_errors = validate_execution_envelope(envelope, canonical_repo)
     binding = envelope.get("approved_spec_binding")

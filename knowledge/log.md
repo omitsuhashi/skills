@@ -1257,3 +1257,10 @@ append-only で使います。すべての entry は予測しやすい header �
 - `origin/main...HEAD` local risk reviewはspec/implementation alignment、host-specific tracked paths、stale flat current links、accidental historical migration、schema/version drift、remote-scope expansionを確認し、Critical / Important finding 0。historical initial planのflat pathとtest-only legacy drift fixture shimはcurrent runtime guidanceではない
 - immutable raw-byte SHA-256はspec `2bd4fcdbed9828c988a9d5c24cdd02242434f0e44e802cceb34fc4a0e7b86193`、sealed packet `e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c`。両bytesはgate commit後も不変
 - mandatory controller task review / broad whole-branch review、branch push、Draft PR #32 summary/check更新はnonblocking pending delivery。push/PR mutationは本taskで実行せず、PR ready化、merge、release、live installは引き続き非承認
+
+## [2026-07-22] final-review-corrective-wave | Approved Spec Binding Artifact Lifecycle
+
+- whole-branch final review range `cab8bd88351727f3495b657df447f7f64aa881d1..e2db6bfc6e9690f0b3e4bac9e791853ca04b6431`のCritical 1、Important 3、Minor 1をlocalでcloseした。actual Git common directoryを基準にしたlinked-worktree runtime trust root、descriptor-relative/no-follow load、post-install spec revalidationとrollback、nested tracked templates、ASB-34〜ASB-36のbehavior mappingを実装した
+- test-only hard-link compatibility shimとflat fixture aliasesを削除した。以前のresidual risk記録は本entryでsupersedeされ、current fixtureはexplicit nested durable pathsを使用する
+- fresh local verificationはissue-implementation-loop 249 tests、grill-to-pr-loop 28 tests、llm-wiki 6 tests、scripts 59 testsと全repository validatorが成功し、strict context reportは`warnings=[]`、minimum headroom 20%以上だった。spec/packet SHA-256は`2bd4fcdbed9828c988a9d5c24cdd02242434f0e44e802cceb34fc4a0e7b86193` / `e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c`のまま不変
+- ASBC-007/ASBC-008は`COMPLETE`、ASBC-009はlocal `PR_READY`を維持する。mandatory controller whole-branch re-review/final review後のpushとDraft PR #32更新がpendingであり、本waveではremote/live actionを行っていない

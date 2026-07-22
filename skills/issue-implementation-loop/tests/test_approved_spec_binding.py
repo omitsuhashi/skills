@@ -46,9 +46,11 @@ def capability_script_module():
 ASB_PUBLIC_ACCEPTANCE_MATRIX = {
     "ASB-01": (
         "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_01_02_identify_and_seal_preserve_spec_and_verify",
+        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_01_02_seal_rolls_back_when_spec_changes_during_publication",
     ),
     "ASB-02": (
         "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_01_02_identify_and_seal_preserve_spec_and_verify",
+        "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_01_02_seal_rolls_back_when_spec_changes_during_publication",
     ),
     "ASB-03": (
         "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_03_changed_spec_prevents_seal_and_output_mutation",
@@ -169,13 +171,13 @@ ASB_PUBLIC_ACCEPTANCE_MATRIX = {
         "test_approved_spec_binding.ApprovedSpecBindingTests.test_asb_01_02_identify_and_seal_preserve_spec_and_verify",
     ),
     "ASB-34": (
-        "test_grill_to_pr_loop.GrillToPrLoopTests.test_asb_34_to_36_documents_artifact_ownership_seam",
+        "test_grill_to_pr_loop.GrillToPrLoopTests.test_asb_34_current_epic_tracks_only_durable_planning_artifacts",
     ),
     "ASB-35": (
-        "test_grill_to_pr_loop.GrillToPrLoopTests.test_asb_34_to_36_documents_artifact_ownership_seam",
+        "test_worker_packet.WorkerPacketTests.test_asb_35_linked_coordinator_uses_exact_git_common_runtime_root",
     ),
     "ASB-36": (
-        "test_grill_to_pr_loop.GrillToPrLoopTests.test_asb_34_to_36_documents_artifact_ownership_seam",
+        "test_grill_to_pr_loop.GrillToPrLoopTests.test_asb_36_tracked_json_templates_use_nested_epic_paths",
     ),
 }
 
@@ -394,6 +396,69 @@ class ApprovedSpecBindingTests(unittest.TestCase):
         self.assertEqual(repeated_revision, revision)
         self.assertEqual(repeated_ref, ref)
         self.assertEqual(self.output_path.read_bytes(), sealed)
+
+    def test_asb_01_02_seal_rolls_back_when_spec_changes_during_publication(self) -> None:
+        module = binding_module()
+        approved_spec = (self.repo / self.spec_path).read_bytes()
+        revision = module.identify_spec(self.repo, self.spec_path)
+        capabilities = module.probe_seal_capabilities()
+
+        for existing_output in (None, b"previous sealed packet\n"):
+            with self.subTest(existing_output=existing_output is not None):
+                (self.repo / self.spec_path).write_bytes(approved_spec)
+                if existing_output is None:
+                    self.output_path.unlink(missing_ok=True)
+                else:
+                    self.output_path.write_bytes(existing_output)
+                original_replace = module.os.replace
+                spec_mutated = False
+
+                def mutate_spec_after_install(
+                    source,
+                    destination,
+                    *,
+                    src_dir_fd=None,
+                    dst_dir_fd=None,
+                ):
+                    nonlocal spec_mutated
+                    result = original_replace(
+                        source,
+                        destination,
+                        src_dir_fd=src_dir_fd,
+                        dst_dir_fd=dst_dir_fd,
+                    )
+                    if (
+                        not spec_mutated
+                        and destination == self.output_path.name
+                    ):
+                        (self.repo / self.spec_path).write_bytes(
+                            b"spec mutated after packet install\n"
+                        )
+                        spec_mutated = True
+                    return result
+
+                with mock.patch.object(
+                    module, "probe_seal_capabilities", return_value=capabilities
+                ), mock.patch.object(
+                    module.os, "replace", side_effect=mutate_spec_after_install
+                ):
+                    with self.assertRaises(module.BindingError) as raised:
+                        module.seal_input_packet(
+                            self.repo,
+                            self.draft_path.relative_to(self.repo).as_posix(),
+                            self.output_path.relative_to(self.repo).as_posix(),
+                            revision,
+                            self.approval(),
+                        )
+
+                self.assertTrue(spec_mutated, raised.exception.to_dict())
+                self.assertEqual(
+                    raised.exception.code, "FILE_CHANGED_DURING_VALIDATION"
+                )
+                if existing_output is None:
+                    self.assertFalse(self.output_path.exists())
+                else:
+                    self.assertEqual(self.output_path.read_bytes(), existing_output)
 
     def test_asb_03_changed_spec_prevents_seal_and_output_mutation(self) -> None:
         module = binding_module()

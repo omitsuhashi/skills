@@ -164,7 +164,10 @@ class CandidateRegistryTests(unittest.TestCase):
         template = json.loads(template_path.read_text(encoding="utf-8"))
 
         self.assertEqual(template["schema_version"], 2)
-        self.assertEqual(template["approved_spec_binding"]["path"], "knowledge/wiki/syntheses/<epic-id>-input-packet.json")
+        self.assertEqual(
+            template["approved_spec_binding"]["path"],
+            "knowledge/wiki/syntheses/<epic-id>/input-packet.json",
+        )
         self.assertEqual(schema["properties"]["schema_version"]["const"], 2)
         self.assertIn("approved_spec_binding", schema["required"])
 

@@ -22,10 +22,12 @@ ENVELOPE_SCHEMA_FILE = SKILL_DIR / "assets" / "schemas" / "execution-envelope.sc
 REPO_ROOT = SKILL_DIR.parents[1]
 ASBC_GATE_COMMIT = "ad9adeab69bcafd761d8457e9c33d1b4c26096d5"
 ASBC_PACKET_PATH = (
-    "knowledge/wiki/syntheses/"
-    "loop-skill-approved-spec-binding-contract-input-packet.json"
+    "knowledge/wiki/syntheses/approved-spec-binding-contract/input-packet.json"
 )
 ASBC_PACKET_SHA256 = "3779e815b4be7438b36e9fb53073fa1d3ab20f07cd5ad1c531fa075c11b457e7"
+FIXTURE_ARTIFACT_ROOT = "knowledge/wiki/syntheses/approved-spec-binding"
+FIXTURE_SPEC_PATH = f"{FIXTURE_ARTIFACT_ROOT}/spec.md"
+FIXTURE_ISSUES_PATH = f"{FIXTURE_ARTIFACT_ROOT}/issues.md"
 BASE_SHA = "0123456789abcdef0123456789abcdef01234567"
 HEAD_SHA = "89abcdef0123456789abcdef0123456789abcdef"
 REVIEW_RANGE = f"{BASE_SHA}..{HEAD_SHA}"
@@ -47,15 +49,16 @@ def worker_trust_args(
     envelope: Path | None = None,
     runtime_state: Path | None = None,
 ) -> tuple[str, ...]:
+    default_envelope, default_runtime = runtime_artifact_paths(repo)
     return (
         "--repo-root",
         str(repo),
         "--assigned-worktree",
         str(assigned_worktree or repo),
         "--envelope",
-        str(envelope or repo / "execution-envelope.json"),
+        str(envelope or default_envelope),
         "--runtime-state",
-        str(runtime_state or repo / "runtime-state.json"),
+        str(runtime_state or default_runtime),
     )
 
 
@@ -103,16 +106,24 @@ def git(repo: Path, *args: str) -> str:
     return result.stdout.strip()
 
 
-def _ensure_flat_fixture_aliases(repo: Path, artifact_root: Path) -> None:
-    """Expose old test mutation paths without using them in the packet contract."""
+def git_common_directory(repo: Path) -> Path:
+    value = Path(git(repo, "rev-parse", "--git-common-dir"))
+    if not value.is_absolute():
+        value = repo / value
+    return value.resolve()
 
-    flat_root = repo / "knowledge/wiki/syntheses"
-    flat_root.mkdir(parents=True, exist_ok=True)
-    for name in ("spec.md", "issues.md"):
-        source = artifact_root / name
-        alias = flat_root / name
-        if source.exists() and not alias.exists():
-            os.link(source, alias)
+
+def runtime_artifact_paths(
+    repo: Path,
+    epic_id: str = "approved-spec-binding",
+) -> tuple[Path, Path]:
+    root = (
+        git_common_directory(repo)
+        / "agent-runs"
+        / "issue-implementation-loop"
+        / epic_id
+    )
+    return root / "execution-envelope.json", root / "runtime-state.json"
 
 
 def approved_spec_binding(
@@ -354,7 +365,6 @@ def create_binding_repo(
         "sha256": packet_digest,
         "gate_commit": gate_commit,
     }
-    _ensure_flat_fixture_aliases(repo, synthesis)
     return repo, binding, gate_commit
 
 
@@ -413,7 +423,6 @@ def bind_envelope_fixture_repo(
     if envelope["remote_write_policy"]["mode"] == "batch_issue_prs":
         if git(repo, "branch", "--show-current") != envelope["epic_base"]["ref"]:
             git(repo, "branch", "-f", envelope["epic_base"]["ref"], gate_commit)
-    _ensure_flat_fixture_aliases(repo, synthesis)
     return binding, gate_commit
 
 
@@ -520,9 +529,11 @@ def write_binding_sources(
     repo: Path,
     binding: dict[str, str],
 ) -> tuple[Path, Path, Path]:
-    envelope_path = repo / "execution-envelope.json"
-    runtime_path = repo / "runtime-state.json"
     envelope_value = binding_envelope(repo, binding)
+    envelope_path, runtime_path = runtime_artifact_paths(
+        repo, envelope_value["epic_id"]
+    )
+    envelope_path.parent.mkdir(parents=True, exist_ok=True)
     approved_item = next(iter(envelope_value["work_items"].values()))
     issue_source = repo / approved_item["source"]["path"]
     write_json(envelope_path, envelope_value)
@@ -639,7 +650,7 @@ def base_packet() -> dict:
         "schema_version": 1,
         "repo_root": "/tmp/repo",
         "epic_id": "issue-implementation-loop",
-        "spec": {"path": "knowledge/wiki/syntheses/spec.md"},
+        "spec": {"path": FIXTURE_SPEC_PATH},
         "work_items": [
             {
                 "id": "G2PR-001",
@@ -662,14 +673,6 @@ def current_input_packet(
 ) -> dict:
     artifact_root = f"knowledge/wiki/syntheses/{epic_id}"
     spec_path = f"{artifact_root}/spec.md"
-    nested_root = repo / artifact_root
-    flat_root = repo / "knowledge/wiki/syntheses"
-    nested_root.mkdir(parents=True, exist_ok=True)
-    for name in ("spec.md", "issues.md"):
-        nested = nested_root / name
-        flat = flat_root / name
-        if not nested.exists() and flat.exists():
-            os.link(flat, nested)
     digest = hashlib.sha256((repo / spec_path).read_bytes()).hexdigest()
     return {
         "schema_version": 2,

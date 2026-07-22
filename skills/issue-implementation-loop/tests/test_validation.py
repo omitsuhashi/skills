@@ -54,7 +54,7 @@ class ValidationTests(unittest.TestCase):
                 ),
                 "source": lambda value: value["work_items"]["ASBC-002"][
                     "source"
-                ].__setitem__("path", "knowledge/wiki/syntheses/spec.md"),
+                ].__setitem__("path", FIXTURE_SPEC_PATH),
                 "acceptance": lambda value: value["work_items"]["ASBC-002"].__setitem__(
                     "acceptance_criteria", ["Caller-selected acceptance"]
                 ),
@@ -1312,9 +1312,9 @@ class ValidationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             repo, binding, _ = create_binding_repo(Path(tmp))
             packet = current_worker_packet(repo, binding)
+            envelope_path, runtime_path = runtime_artifact_paths(repo)
             packet_path = repo / "worker-packet.json"
             report_path = repo / "worker-report.json"
-            runtime_path = repo / "runtime-state.json"
             write_json(packet_path, packet)
             report = current_worker_report(repo, binding, packet)
             del report["base_sha"]
@@ -1329,7 +1329,7 @@ class ValidationTests(unittest.TestCase):
                 "--runtime-state",
                 str(runtime_path),
                 "--envelope",
-                str(repo / "execution-envelope.json"),
+                str(envelope_path),
                 *worker_report_trust_args(repo),
             )
 
@@ -1341,9 +1341,9 @@ class ValidationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             repo, binding, _ = create_binding_repo(Path(tmp))
             packet = current_worker_packet(repo, binding)
+            envelope_path, runtime_path = runtime_artifact_paths(repo)
             packet_path = repo / "worker-packet.json"
             report_path = repo / "worker-report.json"
-            runtime_path = repo / "runtime-state.json"
             write_json(packet_path, packet)
             write_json(report_path, current_worker_report(repo, binding, packet))
 
@@ -1355,7 +1355,7 @@ class ValidationTests(unittest.TestCase):
                 "--runtime-state",
                 str(runtime_path),
                 "--envelope",
-                str(repo / "execution-envelope.json"),
+                str(envelope_path),
                 *worker_report_trust_args(repo),
             )
 
@@ -1365,9 +1365,9 @@ class ValidationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             repo, binding, _ = create_binding_repo(Path(tmp))
             packet = current_worker_packet(repo, binding)
+            envelope_path, runtime_path = runtime_artifact_paths(repo)
             packet_path = repo / "worker-packet.json"
             report_path = repo / "worker-report.json"
-            runtime_path = repo / "runtime-state.json"
             write_json(packet_path, packet)
             report = current_worker_report(repo, binding, packet)
             report["implementation_review"]["status"] = "changes_requested"
@@ -1381,7 +1381,7 @@ class ValidationTests(unittest.TestCase):
                 "--runtime-state",
                 str(runtime_path),
                 "--envelope",
-                str(repo / "execution-envelope.json"),
+                str(envelope_path),
                 *worker_report_trust_args(repo),
             )
 
@@ -1392,9 +1392,9 @@ class ValidationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             repo, binding, _ = create_binding_repo(Path(tmp))
             packet = current_worker_packet(repo, binding)
+            envelope_path, runtime_path = runtime_artifact_paths(repo)
             packet_path = repo / "worker-packet.json"
             report_path = repo / "worker-report.json"
-            runtime_path = repo / "runtime-state.json"
             write_json(packet_path, packet)
             report = current_worker_report(repo, binding, packet)
             report["schema_version"] = 1
@@ -1408,7 +1408,7 @@ class ValidationTests(unittest.TestCase):
                 "--runtime-state",
                 str(runtime_path),
                 "--envelope",
-                str(repo / "execution-envelope.json"),
+                str(envelope_path),
                 *worker_report_trust_args(repo),
                 "--json",
             )
@@ -1432,9 +1432,9 @@ class ValidationTests(unittest.TestCase):
                     case_root.mkdir()
                     repo, binding, _ = create_binding_repo(case_root)
                     packet = current_worker_packet(repo, binding)
+                    envelope_path, runtime_path = runtime_artifact_paths(repo)
                     packet_path = repo / "worker-packet.json"
                     report_path = repo / "worker-report.json"
-                    runtime_path = repo / "runtime-state.json"
                     write_json(packet_path, packet)
                     report = current_worker_report(repo, binding, packet)
                     mutate(report)
@@ -1448,7 +1448,7 @@ class ValidationTests(unittest.TestCase):
                         "--runtime-state",
                         str(runtime_path),
                         "--envelope",
-                        str(repo / "execution-envelope.json"),
+                        str(envelope_path),
                         *worker_report_trust_args(repo),
                     )
 
@@ -1471,9 +1471,9 @@ class ValidationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             repo, binding, _ = create_binding_repo(Path(tmp))
             packet = current_worker_packet(repo, binding)
+            envelope_path, runtime_path = runtime_artifact_paths(repo)
             packet_path = repo / "worker-packet.json"
             report_path = repo / "worker-report.json"
-            runtime_path = repo / "runtime-state.json"
             write_json(packet_path, packet)
             write_json(report_path, current_worker_report(repo, binding, packet))
             runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
@@ -1488,7 +1488,7 @@ class ValidationTests(unittest.TestCase):
                 "--runtime-state",
                 str(runtime_path),
                 "--envelope",
-                str(repo / "execution-envelope.json"),
+                str(envelope_path),
                 *worker_report_trust_args(repo),
                 "--json",
             )
@@ -1502,9 +1502,9 @@ class ValidationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             repo, binding, _ = create_binding_repo(Path(tmp))
             packet = current_worker_packet(repo, binding, task_kind="review")
+            envelope_path, runtime_path = runtime_artifact_paths(repo)
             packet_path = repo / "reviewer-packet.json"
             report_path = repo / "reviewer-report.json"
-            runtime_path = repo / "runtime-state.json"
             write_json(packet_path, packet)
             report = current_worker_report(repo, binding, packet)
             report["approved_spec_binding"]["sha256"] = "b" * 64
@@ -1518,7 +1518,7 @@ class ValidationTests(unittest.TestCase):
                 "--runtime-state",
                 str(runtime_path),
                 "--envelope",
-                str(repo / "execution-envelope.json"),
+                str(envelope_path),
                 *worker_report_trust_args(repo),
                 "--json",
             )

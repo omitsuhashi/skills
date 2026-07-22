@@ -475,3 +475,13 @@ python3 /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_val
 python3 /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_validate.py skills/issue-implementation-loop
 git diff --check
 ```
+
+## Whole-Branch Final Review Corrective Wave
+
+- Review range: `cab8bd88351727f3495b657df447f7f64aa881d1..e2db6bfc6e9690f0b3e4bac9e791853ca04b6431`。final reviewでCritical 1、Important 3、Minor 1を受領し、すべてlocal corrective waveでcloseした。
+- Critical close: Worker Packetのtrusted runtime rootをlinked worktree内の`.git`表現ではなく、sanitized Git discoveryから得たactual coordinator Git common directoryへ固定した。exact runtime tree、descriptor-relative/no-follow load、regular-file/identity checksを必須化し、linked worktreeのpublic builder成功、symlink/mismatched Epic/arbitrary `.git` path拒否をpublic validator testで固定した。
+- Important close: tracked JSON templatesとcurrent remote-delivery guidanceをnested durable artifact rootへ統一した。sealはatomic install後にもapproved spec identityを再確認し、concurrent spec mutation時は旧packetをrestore、旧packetがなければ新packetをremoveして`FILE_CHANGED_DURING_VALIDATION`で停止する。ASB-34〜ASB-36はそれぞれcurrent Git tracking、real linked-worktree runtime trust root、parsed tracked templatesを検証する一意のbehavior testへ置き換えた。
+- Minor close: test-only hard-link compatibility shimとflat fixture aliasesを削除し、fixtureはexplicit nested durable pathsを直接使用する。上記Residual Risks And Remote Boundaryに残る「hard-link compatibility shimを保持する」という過去記録は本項でsupersedeされ、current treeには該当shimが存在しない。
+- Fresh local verification: issue-implementation-loop 249 tests、grill-to-pr-loop 28 tests、llm-wiki 6 tests、scripts 59 testsが成功した。skill architecture/context、strict context report、dual-host、両loop skillのskill-creator validator、packet validation、binding verification、`py_compile`、`git diff --check`も成功し、strict reportは`warnings=[]`、各contractのminimum headroomは20%以上だった。
+- Immutable artifact proof: approved spec SHA-256 `2bd4fcdbed9828c988a9d5c24cdd02242434f0e44e802cceb34fc4a0e7b86193`、sealed Input Packet SHA-256 `e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c`。両bytesは変更していない。
+- Gate state: ASBC-007/ASBC-008は`COMPLETE`、ASBC-009はlocal `PR_READY`のまま。mandatory controller whole-branch re-review/final reviewはpushとDraft PR #32更新前のpending gateであり、本waveではremote/live actionを行わない。

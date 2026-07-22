@@ -3,7 +3,7 @@
   "epic_id": "<epic-id>",
   "revision": 1,
   "approved_spec_binding": {
-    "path": "knowledge/wiki/syntheses/<epic-id>-input-packet.json",
+    "path": "knowledge/wiki/syntheses/<epic-id>/input-packet.json",
     "sha256": "<raw-byte-sha256>",
     "gate_commit": "<full-gate-commit>"
   },
@@ -97,7 +97,7 @@
       "title": "<approved-work-item-title>",
       "source": {
         "type": "local",
-        "path": "knowledge/wiki/syntheses/<epic-id>-issues.md"
+        "path": "knowledge/wiki/syntheses/<epic-id>/issues.md"
       },
       "acceptance_criteria": [
         "<approved-acceptance-criterion>"
