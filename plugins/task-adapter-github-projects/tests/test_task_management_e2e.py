@@ -255,6 +255,46 @@ content_target_ref = "task-content:portfolio-os"
             )
         )
 
+        self.assertEqual(
+            [
+                "create",
+                "add_project_item",
+                "update_project_item",
+                "update_project_item",
+                "update_project_item",
+                "update_project_item",
+                "update_project_item",
+                "update_project_item",
+                "update_project_item",
+                "update_project_item",
+                "update_project_item",
+                "get_project_item",
+            ],
+            [
+                arguments["method"]
+                for _tool, arguments in self.provider.calls
+                if arguments["method"]
+                in self.provider.WRITE_METHODS | {"get_project_item"}
+            ],
+        )
+        self.assertEqual(
+            [
+                "Work Unit ID",
+                "Work Unit",
+                "Task Type",
+                "Due Date",
+                "Urgency",
+                "Importance",
+                "Automation Mode",
+                "Approval Required",
+                "Source",
+            ],
+            [
+                arguments["updated_field"]["name"]
+                for _tool, arguments in self.provider.calls
+                if arguments["method"] == "update_project_item"
+            ],
+        )
         self.assertTrue(applied["ok"])
         self.assertEqual("created", applied["status"])
         self.assertEqual(1, len(read_back["task_snapshots"]))
