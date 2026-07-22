@@ -6,13 +6,11 @@ import json
 import re
 from typing import Any, Callable, Dict
 
-from . import LEGACY_READ_ADAPTER_CONTRACT_VERSION, AdapterError, AdapterTaskSnapshotResult
+from . import ADAPTER_CONTRACT_VERSION, AdapterError, AdapterTaskSnapshotResult
 from ..route_config import ResolvedTaskReadRequest
 
 
-_TOOL_RE = re.compile(
-    r"^(?:mcp__[a-z0-9_]+__task_query|task_adapter__[a-z0-9_]+__task_query)$"
-)
+_TOOL_RE = re.compile(r"^task_adapter__[a-z0-9_]+__task_query$")
 _PROVIDER_ERRORS = {
     "adapter_unavailable": "read_adapter_unavailable",
     "auth_missing": "read_adapter_auth_missing",
@@ -45,9 +43,9 @@ class ExternalToolAdapter:
 
     def query(self, request: ResolvedTaskReadRequest, **dispatch_kwargs: Any) -> AdapterTaskSnapshotResult:
         envelope = {
-            "adapter_contract_version": LEGACY_READ_ADAPTER_CONTRACT_VERSION,
-            "capability": "task_read",
-            "destination_ref": request.provider_destination_ref,
+            "adapter_contract_version": ADAPTER_CONTRACT_VERSION,
+            "backend_key": request.backend_key,
+            "destination_ref": request.destination_ref,
             "query": request.query,
         }
         try:
@@ -63,7 +61,7 @@ class ExternalToolAdapter:
                 raise AdapterError("invalid_adapter_result", "External task read adapter returned invalid JSON.")
         if not isinstance(raw, dict):
             raise AdapterError("invalid_adapter_result", "External task read adapter returned an invalid result.")
-        if raw.get("adapter_contract_version") != LEGACY_READ_ADAPTER_CONTRACT_VERSION:
+        if raw.get("adapter_contract_version") != ADAPTER_CONTRACT_VERSION:
             raise AdapterError("adapter_contract_mismatch", "External task read adapter contract version is unsupported.")
         provider_error = raw.get("error")
         if provider_error:
@@ -75,4 +73,4 @@ class ExternalToolAdapter:
             raise AdapterError("invalid_adapter_result", "External task read adapter must return an items array.")
         if len(items) > MAX_EXTERNAL_ITEMS:
             raise AdapterError("invalid_adapter_result", "External task read adapter returned too many items.")
-        return AdapterTaskSnapshotResult(LEGACY_READ_ADAPTER_CONTRACT_VERSION, items)
+        return AdapterTaskSnapshotResult(ADAPTER_CONTRACT_VERSION, items)
