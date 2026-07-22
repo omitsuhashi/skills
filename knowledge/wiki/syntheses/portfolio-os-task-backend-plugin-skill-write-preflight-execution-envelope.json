@@ -205,11 +205,7 @@
         "issue": "POTASK-012"
       },
       "write_scope": [
-        "path:plugins/task-adapter-github-projects",
-        "path:knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-spec.md",
-        "path:knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md",
-        "path:knowledge/index.md",
-        "path:knowledge/log.md"
+        "path:plugins/task-adapter-github-projects"
       ],
       "dependencies": [
         {
@@ -281,7 +277,11 @@
       },
       "write_scope": [
         "path:plugins/task-management",
-        "path:plugins/task-adapter-github-projects"
+        "path:plugins/task-adapter-github-projects",
+        "path:knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-spec.md",
+        "path:knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md",
+        "path:knowledge/index.md",
+        "path:knowledge/log.md"
       ],
       "dependencies": [
         {
