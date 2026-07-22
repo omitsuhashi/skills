@@ -20,8 +20,10 @@ _現在なし。_
 
 ## シンセシス
 
-- [GitHub Projects 直接接続型 Task Management Skill 仕様](wiki/syntheses/direct-github-projects-task-management/spec.md) — 1個のcaller-selected Projectへ複数repositoryのIssueを集約し、standalone skillからGitHub MCPへ直接接続する、Written Spec Gate待ちのcurrent設計。
+- [GitHub Projects 直接接続型 Task Management Skill 仕様](wiki/syntheses/direct-github-projects-task-management/spec.md) — 1個のcaller-selected Projectへ複数repositoryのIssueを集約し、standalone skillからGitHub MCPへ直接接続するWritten Spec Gate承認済みのcurrent設計。
   検索語: task-management, GitHub Projects, GitHub MCP, Issue, standalone skill, project_url, inbox repository, repository work unit, Status, Priority, Due date, approval policy, fail closed, タスク管理, 直接接続, 承認, セットアップ
+- [GitHub Projects 直接接続型 Task Management Skill Issue 台帳](wiki/syntheses/direct-github-projects-task-management/issues.md) — DGPTM-001からDGPTM-004へstandalone skill、direct MCP contract、旧plugin削除、historical supersessionを依存順に分解したIssue Gate承認済み台帳。
+  検索語: task-management, GitHub Projects, GitHub MCP, DGPTM, local issue, Issue Gate, blocker graph, plugin removal, standalone skill, ローカルIssue, ブロッカー, 移行
 - [LLM Wiki Draft Review And Canonicalize Goal Spec](wiki/syntheses/llm-wiki-draft-review-and-canonicalize-goal-spec.md) — Goal command で `skills/llm-wiki` を更新するための詳細実装契約。
 - [Grill To PR Loop Issue Implementation Review Gate Plan](wiki/syntheses/grill-to-pr-loop-issue-implementation-review-gate-plan.md) — `skills/grill-to-pr-loop` に issue 単位の実装レビューゲートを追加するための実装計画。
   検索語: grill-to-pr-loop, requesting-code-review, 実装レビュー, issue review, PR review, review gate, implementation plan

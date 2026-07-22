@@ -1300,3 +1300,21 @@ append-only で使います。すべての entry は予測しやすい header �
 - approval scope: `accepted_decisions=true`、`non_goals=true`、`acceptance_criteria=true`、`verification=true`、`remote_policy=true`、`stop_conditions=true`
 - userの「Written Spec Gateを承認」によりexact revisionを承認した。承認後の`spec.md` bytesは変更せず、Issue分解を次のgateとする
 - remote policyは`local_only`。push、GitHub Issue / Project mutation、PR、merge、release、live installは非承認
+
+## [2026-07-23] issue-candidate | GitHub Projects Direct Task Management Skill
+
+- approved spec `knowledge/wiki/syntheses/direct-github-projects-task-management/spec.md`をbinding sourceとし、DGPTM-001〜DGPTM-004のlocal Issue ledgerを`knowledge/wiki/syntheses/direct-github-projects-task-management/issues.md`に作成した
+- dependency orderはstandalone contract、direct GitHub MCP workflow、旧plugin / CI migration、historical supersession / integration verificationの直列4段階とした
+- 全Issueは`未承認 / ブロック中`であり、Issue Gate承認前にimplementation plan、Input Packet seal、production change、GitHub mirrorを開始しない
+- remote policyは`local_only`。unrelated untracked `skills/llm-wiki/DESCRIPTION.md`は変更していない
+
+## [2026-07-23] issue-approval | GitHub Projects Direct Task Management Skill
+
+- actor expression: `session-user`
+- approved at: `2026-07-23T08:16:12+09:00`
+- approved ledger path: `knowledge/wiki/syntheses/direct-github-projects-task-management/issues.md`
+- pre-approval raw-byte SHA-256: `78c163ace72ec29f108fbf7e221454c1bed53c7556d4d5dceb731bb306fe3fc2`
+- decision: `approved`
+- approval scope: Issue ID、Outcome、blocker graph、dependency order、write scope、acceptance criteria、verification、non-goals
+- userの「Issue Gateを承認」によりDGPTM-001〜DGPTM-004を承認した。status-only更新後、DGPTM-001をfirst runnable candidate、DGPTM-002〜DGPTM-004をdependency blockedとする
+- Execution Plan Gateまではproduction implementationを開始せず、remote policyは`local_only`を維持する
