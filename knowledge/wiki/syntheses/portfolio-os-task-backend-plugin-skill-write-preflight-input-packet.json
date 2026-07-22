@@ -67,6 +67,7 @@
       "verification": [
         "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests -p 'test_task_read_routes.py'",
         "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests -p 'test_task_read_adapter.py'",
+        "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests -p 'test_backend_routing.py'",
         "PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 plugins/task-management/scripts/smoke_test_hermes_read.py",
         "git diff --check"
       ],
@@ -77,6 +78,7 @@
         "path:plugins/task-management/config/task-backends.example.toml",
         "path:plugins/task-management/tests/test_task_read_routes.py",
         "path:plugins/task-management/tests/test_task_read_adapter.py",
+        "path:plugins/task-management/tests/test_backend_routing.py",
         "path:plugins/task-management/scripts/smoke_test_hermes_read.py"
       ],
       "dependencies": ["POTASK-012"]
@@ -159,6 +161,7 @@
         "path:plugins/task-management/config/task-backends.example.toml",
         "path:plugins/task-management/tests/test_task_read_routes.py",
         "path:plugins/task-management/tests/test_task_read_adapter.py",
+        "path:plugins/task-management/tests/test_backend_routing.py",
         "path:plugins/task-management/tests/test_approval_binding.py",
         "path:plugins/task-management/tests/test_preflight.py",
         "path:plugins/task-management/tests/fixtures/adapter-v2",

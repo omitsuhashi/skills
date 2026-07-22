@@ -2,7 +2,7 @@
 
 ## 状態
 
-POTASK-001 から POTASK-011 は既存 Issue Gate / Execution Plan Gate 承認済みで実装完了。2026-07-21 に、task-management write / preflight Interfaceとseparate GitHub Projects AdapterをPOTASK-012からPOTASK-019へ分解し、Issue Gate承認を得た。2026-07-22時点でPOTASK-012、POTASK-014、POTASK-016、POTASK-017、POTASK-018は独立review approvedのlocal `PR_READY`。POTASK-013は既存regression guard 1 fileのscope追加についてhuman request `hr-potask-013-regression-guard-scope-001`を開き、`WAITING_HUMAN`で停止している。POTASK-015はPOTASK-013、POTASK-019はPOTASK-015を待つ。GitHub issue mirror、push、PR、merge、live activationは行わない。
+POTASK-001 から POTASK-011 は既存 Issue Gate / Execution Plan Gate 承認済みで実装完了。2026-07-21 に、task-management write / preflight Interfaceとseparate GitHub Projects AdapterをPOTASK-012からPOTASK-019へ分解し、Issue Gate承認を得た。2026-07-22時点でPOTASK-012、POTASK-014、POTASK-016、POTASK-017、POTASK-018は独立review approvedのlocal `PR_READY`。POTASK-013はhuman request `hr-potask-013-regression-guard-scope-001`で承認された既存regression guard 1 fileのscope追加をExecution Envelope revision 3へ反映し、保存済みworker diffから再開する。POTASK-015はPOTASK-013、POTASK-019はPOTASK-015を待つ。GitHub issue mirror、push、PR、merge、live activationは行わない。
 
 ## Epic ID
 
@@ -39,7 +39,7 @@ POTASK-001 から POTASK-011 は既存 Issue Gate / Execution Plan Gate 承認�
 | `portfolio-os-task-backend-plugin-skill` | POTASK-010 | backend-neutral task read capability を実装する | 承認済み | 完了 | local verified / PR delivery対象 | POTASK-002, POTASK-007, POTASK-008 | POTASK-011 | 未作成 | PRで追跡 | [#29](https://github.com/omitsuhashi/skills/pull/29) |
 | `portfolio-os-task-backend-plugin-skill` | POTASK-011 | pluggable provider adapter と Hermes end-to-end call path を実装する | 承認済み | 完了 | `PR_READY` `458f712` | POTASK-004, POTASK-010 | POTASK-012 | 未作成 | approved: `feb8908..458f712` / 2 cycles | [#29](https://github.com/omitsuhashi/skills/pull/29) |
 | `portfolio-os-task-backend-plugin-skill` | POTASK-012 | shared Adapter contract v2 と安全なwrite契約を実装する | 承認済み | 完了 | `PR_READY` `d539ebd` | POTASK-011 | POTASK-013, POTASK-014, POTASK-016 | 未作成 | approved: `cc1d428..d539ebd` / 通常2 cycles + 例外1 cycle + 最終micro-review | 未作成 |
-| `portfolio-os-task-backend-plugin-skill` | POTASK-013 | unified route v2へ移行しread Interfaceを回帰維持する | 承認済み | 人間判断待ち | scope内実装は未commit / regression guard scope追加待ち | POTASK-012 | POTASK-015 | 未作成 | 未実施 | 未作成 |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-013 | unified route v2へ移行しread Interfaceを回帰維持する | 承認済み | 実装再開 | 保存済みscope内diff + regression guard同期中 | POTASK-012 | POTASK-015 | 未作成 | 未実施 | 未作成 |
 | `portfolio-os-task-backend-plugin-skill` | POTASK-014 | approval digestとconfidence-aware approval policyを実装する | 承認済み | 完了 | `PR_READY` `a5bcf11` | POTASK-012 | POTASK-015 | 未作成 | approved: `d539ebd..a5bcf11` / 1 cycle | 未作成 |
 | `portfolio-os-task-backend-plugin-skill` | POTASK-015 | executable `task_preflight` / `task_apply` facadeを実装する | 承認済み | ブロック中 | 未着手 | POTASK-013, POTASK-014 | POTASK-019 | 未作成 | 未実施 | 未作成 |
 | `portfolio-os-task-backend-plugin-skill` | POTASK-016 | separate GitHub Projects Adapter pluginとhost configを作る | 承認済み | 完了 | `PR_READY` `bc73c99` | POTASK-012 | POTASK-017 | 未作成 | approved: `d539ebd..bc73c99` / 1 cycle | 未作成 |
@@ -84,7 +84,7 @@ POTASK-001
 
 循環依存はない。POTASK-001からPOTASK-011の`レビュー状態`は既存Issue Gate承認済み。POTASK-012からPOTASK-019も2026-07-21のIssue Gateで承認済みである。
 POTASK-010 は POTASK-002 の contract、POTASK-007 の typed adapter boundary、POTASK-008 の Hermes governance を再利用する follow-up であり、既存 issue を再開しない。POTASK-011 はPOTASK-010のpublic facadeを維持したまま、POTASK-004のroutingを実行可能なprovider adapterへ接続する。
-POTASK-012、POTASK-014、POTASK-016、POTASK-017、POTASK-018はlocal `PR_READY`。POTASK-013はapproved Write Scopeと既存regression guardの不一致を編集前に検出し、human request解決まで`WAITING_HUMAN`。POTASK-015はPOTASK-013、POTASK-019はPOTASK-015を待つため、現在のrunnable / reviewable / fixable issueはない。
+POTASK-012、POTASK-014、POTASK-016、POTASK-017、POTASK-018はlocal `PR_READY`。POTASK-013はapproved Write Scopeと既存regression guardの不一致を編集前に検出し、2026-07-22のhuman approvalで`plugins/task-management/tests/test_backend_routing.py`だけをscopeへ追加して再開した。POTASK-015はPOTASK-013、POTASK-019はPOTASK-015のreview approvalまで待つ。
 2026-07-21のIssue Gate amendmentにより、POTASK-015はPOTASK-013 headをbaseにreview approvedなPOTASK-014 headを統合するintegration work item、POTASK-019はPOTASK-018 headをbaseにreview approvedなPOTASK-015 headを統合するintegration work itemとする。複数blocker headを通常workerがad-hoc mergeしない。
 
 ## 依存順
@@ -524,6 +524,7 @@ read-only route v1を、query / preflight / applyのfixed Adapter trioを解決�
 - `plugins/task-management/config/task-backends.example.toml`
 - `plugins/task-management/tests/test_task_read_routes.py`
 - `plugins/task-management/tests/test_task_read_adapter.py`
+- `plugins/task-management/tests/test_backend_routing.py`
 - `plugins/task-management/scripts/smoke_test_hermes_read.py`
 
 #### Acceptance Criteria
@@ -545,6 +546,7 @@ read-only route v1を、query / preflight / applyのfixed Adapter trioを解決�
 ```bash
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests -p 'test_task_read_routes.py'
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests -p 'test_task_read_adapter.py'
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests -p 'test_backend_routing.py'
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 plugins/task-management/scripts/smoke_test_hermes_read.py
 git diff --check
 ```
@@ -555,6 +557,7 @@ git diff --check
 - approved scope内のroute/read変更は未commit。targeted route 21 / 21、read adapter 18 / 18、`git diff --check`はPASSした。
 - approved configをroute v2へ更新すると、既存`plugins/task-management/tests/test_backend_routing.py`がroute v1 shapeをexact assertして回帰する。しかし同testはPOTASK-013 Write Scope外である。
 - human request `hr-potask-013-regression-guard-scope-001` は、機能scope / DAG / remote policyを変えず、上記1 test fileだけをWrite Scope / read pathsへ追加する承認を求める。承認または別判断までworkerとdescendantを停止する。
+- 2026-07-22にユーザーが推奨amendmentを承認した。input packetとschema v3 Execution Envelope revision 3へ上記1 fileとtargeted verificationだけを追加し、保存済み7-file diffを破棄せず元workerで再開する。
 - remote / live evidence: GitHub Issue、push、PR、merge、Hermes profile / MCP registration、credential変更は未実施。
 
 ### POTASK-014: approval digestとconfidence-aware approval policyを実装する

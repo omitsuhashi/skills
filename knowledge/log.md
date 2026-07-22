@@ -1246,6 +1246,13 @@ append-only で使います。すべての entry は予測しやすい header �
 - human request `hr-potask-013-regression-guard-scope-001`を開き、上記1 test fileだけをWrite Scope / read pathsへ追加する承認を求めた。機能scope、DAG、remote / live policyは変更しない
 - workerの未commit変更を保持し、POTASK-013を`WAITING_HUMAN`、POTASK-015をblockedに維持した
 
+## [2026-07-22] gate-amendment | POTASK-013 regression guard scope approved
+
+- ユーザーがhuman request `hr-potask-013-regression-guard-scope-001`の推奨案を承認し、`plugins/task-management/tests/test_backend_routing.py`だけをPOTASK-013 Write Scope / read pathsへ追加した
+- assertionsをlegacy route v1からapproved route v2 exampleへ同期する。機能scope、Acceptance Criteria、DAG、remote / live policyは変更しない
+- normalized input packetとschema v3 Execution Envelope revision 3を同期し、POTASK-015 integration scopeはPOTASK-013のapproved scopeを継承する
+- 保存済み7-file uncommitted diffを破棄せず、source hashesを更新したbounded worker packetから元workerを再開する
+
 ## [2026-07-22] implementation-review | POTASK-017 local PR_READY
 
 - initial `eb570e4`のcycle 1 reviewは、official compact field typeのlowercase mismatchと、public Hermes dispatch JSON envelopeをtestsが迂回する2件をCritical `intent_gap`として検出した
