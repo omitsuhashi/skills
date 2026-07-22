@@ -72,6 +72,12 @@ class TaskManagementContractTests(unittest.TestCase):
 
     def test_target_resolution_is_ordered_and_ambiguity_stops(self) -> None:
         text = read(CORE)
+        project_section = text.split("## Project resolution order", 1)[1].split(
+            "## Repository resolution order", 1
+        )[0]
+        repository_section = text.split("## Repository resolution order", 1)[1].split(
+            "## Read and write identity", 1
+        )[0]
         project_steps = (
             "Invocation `project_url`",
             "Caller default `project_url`",
@@ -86,8 +92,11 @@ class TaskManagementContractTests(unittest.TestCase):
             "Configured inbox",
             "Ask the user",
         )
-        for steps in (project_steps, repository_steps):
-            positions = [text.index(step) for step in steps]
+        for section, steps in (
+            (project_section, project_steps),
+            (repository_section, repository_steps),
+        ):
+            positions = [section.index(step) for step in steps]
             self.assertEqual(sorted(positions), positions)
         self.assertIn("Never use inbox as an ambiguity fallback", text)
 

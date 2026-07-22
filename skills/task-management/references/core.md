@@ -13,6 +13,7 @@ The skill stores neither value. Caller-owned configuration, invocation context, 
 2. Caller default `project_url`.
 3. Session-established Project.
 4. Unique open Project discovery through a read-only GitHub MCP capability, only when no owner, visibility, closed-state, or template conflict exists.
+5. Ask the user when more than one candidate remains or the authenticated owner is unclear.
 
 Accept personal `/users/<owner>/projects/<number>` and organization `/orgs/<owner>/projects/<number>` URLs. Interpret the owner-scoped number only when an MCP operation requires it. Never select a state-changing target from title or recency alone, and never substitute another Project after an invalid URL or permission failure.
 
@@ -22,14 +23,9 @@ Accept personal `/users/<owner>/projects/<number>` and organization `/orgs/<owne
 2. Current repository when the task directly concerns that repository.
 3. Unique referenced repository derived from one Issue, PR, durable specification, or code target.
 4. Configured inbox when the task is repository-independent or deliberately unclassified.
+5. Ask the user when repositories conflict or attribution remains uncertain.
 
 Never use inbox as an ambiguity fallback. The repository is the work unit boundary. GitHub's repository metadata is the grouping key; do not duplicate it in a custom Project field.
-
-## Ambiguity stop
-
-5. Ask the user when more than one Project candidate remains, the authenticated owner is unclear, repositories conflict, or attribution remains uncertain.
-
-Do not write until this shared final step resolves both the Project and repository target.
 
 ## Read and write identity
 
