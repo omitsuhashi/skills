@@ -1280,3 +1280,23 @@ append-only で使います。すべての entry は予測しやすい header �
 - final controller verificationはissue-implementation-loop 249 tests、grill-to-pr-loop 29 tests、llm-wiki 6 tests、scripts 59 tests、全repository validator、strict `warnings=[]`、packet `ok=true`、binding `valid=true`、`git diff --check`に成功した
 - immutable raw-byte SHA-256はspec `2bd4fcdbed9828c988a9d5c24cdd02242434f0e44e802cceb34fc4a0e7b86193`、sealed Input Packet `e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c`のまま不変
 - ASBC-007〜ASBC-009を`COMPLETE`とする。PR ready化、merge、release、live Codex/Hermes installは非承認かつ未実行
+
+## [2026-07-23] spec-candidate | GitHub Projects Direct Task Management Skill
+
+- userとのone-decision-at-a-time設計で、1個のcaller-selected GitHub Project、Issue-backed task、repository-as-work-unit、Status / Priority / Due date、Issue template、high-confidence safe auto-execution、caller-owned target configを確定した
+- `plugins/task-management/` のbackend-neutral facade / adapter / host-specific registrationを廃止し、`skills/task-management/`のstandalone skillからGitHub MCPへ直接接続するcandidate specを`knowledge/wiki/syntheses/direct-github-projects-task-management/spec.md`に作成した
+- skill内へ特定owner / Project / repository / agent hostを埋め込まず、caller-supplied `project_url`とoptional `inbox_repository`を解決する。`work_unit_id` custom field、CLI / API fallback、Project draft item、通常操作中のschema作成は採用しない
+- current stateはexact path / raw-byte SHA-256のWritten Spec Gate待ち。Issue分解、implementation plan、production skill/plugin変更、live GitHub write、push、PR、installは未実施
+- unrelated untracked `skills/llm-wiki/DESCRIPTION.md`は変更していない
+
+## [2026-07-23] spec-approval | GitHub Projects Direct Task Management Skill
+
+- actor expression: `session-user`
+- approved at: `2026-07-23T08:10:21+09:00`
+- exact spec path: `knowledge/wiki/syntheses/direct-github-projects-task-management/spec.md`
+- raw-byte SHA-256: `9200996f2ed046ecb351fad96930c6e4e9a1580fdde14472ecc8b68b98f36c94`
+- approval subject: `spec_binding`
+- decision: `approved`
+- approval scope: `accepted_decisions=true`、`non_goals=true`、`acceptance_criteria=true`、`verification=true`、`remote_policy=true`、`stop_conditions=true`
+- userの「Written Spec Gateを承認」によりexact revisionを承認した。承認後の`spec.md` bytesは変更せず、Issue分解を次のgateとする
+- remote policyは`local_only`。push、GitHub Issue / Project mutation、PR、merge、release、live installは非承認
