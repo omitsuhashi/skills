@@ -1286,3 +1286,9 @@ append-only で使います。すべての entry は予測しやすい header �
 - unique Companies Interface v2 canonical `task-management-write-preflight-interface-spec.md`とGitHub Adapter specのstatus/current boundaryが2026-07-21時点の未実装記述を残すが、Execution Envelope revision 4では両fileはread-onlyである
 - human request `hr-potask-019-normative-status-scope-001`は上記2 filesだけをwrite scopeへ追加し、実装完了 / local fake verification完了 / remote・live未実施のstatusへ同期する承認を求める。normative design、DAG、plugin scope、remote / live policyは変更しない
 - POTASK-019を`WAITING_HUMAN`へ移し、既許可scopeのworking changesを保持した。final commit / report / reviewはdecisionまで実施しない
+
+## [2026-07-22] gate-amendment | POTASK-019 normative status scope approved
+
+- ユーザーがhuman request `hr-potask-019-normative-status-scope-001`を承認し、Execution Envelope revision 5へ更新した
+- POTASK-019のwrite scopeへ`task-management-write-preflight-interface-spec.md`と`task-adapter-github-projects-spec.md`だけを追加し、実装完了 / local fake verification完了 / remote・live未実施のstatus/current-boundary同期だけを許可した
+- normative design、DAG、plugin scope、remote / live policyは変更しない。保持済みPOTASK-019 working changesをresetせず、同じworker contextで実装を再開する

@@ -308,6 +308,8 @@
         "path:plugins/task-adapter-github-projects",
         "path:knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-spec.md",
         "path:knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md",
+        "path:knowledge/wiki/syntheses/task-management-write-preflight-interface-spec.md",
+        "path:knowledge/wiki/syntheses/task-adapter-github-projects-spec.md",
         "path:knowledge/index.md",
         "path:knowledge/log.md"
       ],
