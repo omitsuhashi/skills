@@ -1279,3 +1279,10 @@ append-only で使います。すべての entry は予測しやすい header �
 - ユーザー指示により、POTASK-019 final integration workerがplugin docs / manifests / SKILL / references / examples / testsに加え、canonical spec / ledger / index / logのcompletion evidenceも所有する
 - normalized input packetとschema v3 Execution Envelope revision 4へ4つのknowledge pathsを追加した。機能scope、DAG、base policy、local-only remote / live policyは変更しない
 - POTASK-019はreviewed POTASK-018 `cc61018`をbaseにし、reviewed POTASK-015 `f5fc50e`をexplicit integration commitで取り込んでからfinal TDD / docs / full verificationへ進む。coordinatorは実装しない
+
+## [2026-07-22] human-wait | POTASK-019 normative status scope
+
+- POTASK-019 integration commit `3c8ba06`はexact parents `cc61018` + `f5fc50e`、conflict 0件、両head ancestry PASS。fixture exact-copyとpublic fake end-to-end 6 / 6をTDDで進め、task-management 156 / 156、adapter 45 / 45、3 smokesをGREENにした
+- unique Companies Interface v2 canonical `task-management-write-preflight-interface-spec.md`とGitHub Adapter specのstatus/current boundaryが2026-07-21時点の未実装記述を残すが、Execution Envelope revision 4では両fileはread-onlyである
+- human request `hr-potask-019-normative-status-scope-001`は上記2 filesだけをwrite scopeへ追加し、実装完了 / local fake verification完了 / remote・live未実施のstatusへ同期する承認を求める。normative design、DAG、plugin scope、remote / live policyは変更しない
+- POTASK-019を`WAITING_HUMAN`へ移し、既許可scopeのworking changesを保持した。final commit / report / reviewはdecisionまで実施しない

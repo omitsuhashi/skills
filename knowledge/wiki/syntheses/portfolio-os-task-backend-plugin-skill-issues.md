@@ -2,7 +2,7 @@
 
 ## 状態
 
-POTASK-001 から POTASK-011 は既存 Issue Gate / Execution Plan Gate 承認済みで実装完了。2026-07-21 に、task-management write / preflight Interfaceとseparate GitHub Projects AdapterをPOTASK-012からPOTASK-019へ分解し、Issue Gate承認を得た。2026-07-22時点でPOTASK-012からPOTASK-018はすべて独立review approvedのlocal `PR_READY`。POTASK-019だけがrunnableで、reviewed POTASK-018 headをbaseにreviewed POTASK-015 headを統合し、dual-host docs / manifests / smokes / full verification / durable completion evidenceをworker contextで完了する。GitHub issue mirror、push、PR、merge、live activationは行わない。
+POTASK-001 から POTASK-011 は既存 Issue Gate / Execution Plan Gate 承認済みで実装完了。2026-07-21 に、task-management write / preflight Interfaceとseparate GitHub Projects AdapterをPOTASK-012からPOTASK-019へ分解し、Issue Gate承認を得た。2026-07-22時点でPOTASK-012からPOTASK-018はすべて独立review approvedのlocal `PR_READY`。POTASK-019はreviewed headsのintegrationとpublic fake end-to-endを進めたが、2つのnormative specに未実装statusが残りrevision 4ではread-onlyのため、human request `hr-potask-019-normative-status-scope-001`を開いて`WAITING_HUMAN`で停止した。GitHub issue mirror、push、PR、merge、live activationは行わない。
 
 ## Epic ID
 
@@ -45,7 +45,7 @@ POTASK-001 から POTASK-011 は既存 Issue Gate / Execution Plan Gate 承認�
 | `portfolio-os-task-backend-plugin-skill` | POTASK-016 | separate GitHub Projects Adapter pluginとhost configを作る | 承認済み | 完了 | `PR_READY` `bc73c99` | POTASK-012 | POTASK-017 | 未作成 | approved: `d539ebd..bc73c99` / 1 cycle | 未作成 |
 | `portfolio-os-task-backend-plugin-skill` | POTASK-017 | GitHub Adapterのexecutable preflight / queryを実装する | 承認済み | 完了 | `PR_READY` `b2494e5` | POTASK-016 | POTASK-018 | 未作成 | approved: `bc73c99..b2494e5` / 2 cycles | 未作成 |
 | `portfolio-os-task-backend-plugin-skill` | POTASK-018 | GitHub Adapterのcreate/update/comment/report applyを実装する | 承認済み | 完了 | `PR_READY` `cc61018` | POTASK-017 | POTASK-019 | 未作成 | approved: `b2494e5..cc61018` / 2 cycles | 未作成 |
-| `portfolio-os-task-backend-plugin-skill` | POTASK-019 | dual-host契約・文書・smoke・full verificationを統合する | 承認済み | 実行可能 | 未着手 | POTASK-015, POTASK-018 | なし | 未作成 | 未実施 | 未作成 |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-019 | dual-host契約・文書・smoke・full verificationを統合する | 承認済み | 人間判断待ち | integration `3c8ba06` + e2e 6 / 6 / normative status scope待ち | POTASK-015, POTASK-018 | なし | 未作成 | 未実施 | 未作成 |
 
 ## Blocker Graph
 
@@ -84,7 +84,7 @@ POTASK-001
 
 循環依存はない。POTASK-001からPOTASK-011の`レビュー状態`は既存Issue Gate承認済み。POTASK-012からPOTASK-019も2026-07-21のIssue Gateで承認済みである。
 POTASK-010 は POTASK-002 の contract、POTASK-007 の typed adapter boundary、POTASK-008 の Hermes governance を再利用する follow-up であり、既存 issue を再開しない。POTASK-011 はPOTASK-010のpublic facadeを維持したまま、POTASK-004のroutingを実行可能なprovider adapterへ接続する。
-POTASK-012からPOTASK-018はlocal `PR_READY`。POTASK-013のregression guard scope amendmentとPOTASK-015のreview approvalにより全blockerが解消し、POTASK-019だけがrunnableである。
+POTASK-012からPOTASK-018はlocal `PR_READY`。POTASK-019のdependency blockerは解消済みだが、exact docs alignmentに必要な2 normative specのstatus/current-boundary editがrevision 4 scope外のため、human decisionまで`WAITING_HUMAN`である。
 2026-07-21のIssue Gate amendmentにより、POTASK-015はPOTASK-013 headをbaseにreview approvedなPOTASK-014 headを統合するintegration work item、POTASK-019はPOTASK-018 headをbaseにreview approvedなPOTASK-015 headを統合するintegration work itemとする。複数blocker headを通常workerがad-hoc mergeしない。
 
 ## 依存順
@@ -827,6 +827,13 @@ task-management public Interface v2とGitHub Adapter v0.1をend-to-end fixture�
 - `knowledge/log.md`
 
 2026-07-22のExecution Envelope revision 4 amendmentにより、final integrationのdocs / completion evidenceもworker contextが所有する。coordinatorは実装せず、独立reviewとruntime遷移だけを行う。
+
+#### Execution Evidence
+
+- integration commit `3c8ba06`はreviewed POTASK-018 `cc61018`とreviewed POTASK-015 `f5fc50e`をexact parentsに持ち、conflict 0件、両head ancestryを実証した。
+- inherited baselineはtask-management 156 / 156、adapter fixture-copy RED 1件 / 他38件PASS、3 smokes PASS。fixture exact-copy同期後、public facade→Adapter fake end-to-end 6 / 6、task-management 156 / 156、adapter 45 / 45、3 smokesまでGREENになった。
+- normative canonical `task-management-write-preflight-interface-spec.md`とAdapter specは2026-07-21時点の未実装statusを残すが、revision 4ではread-onlyである。human request `hr-potask-019-normative-status-scope-001`はこの2 filesだけをstatus/current-boundary更新scopeへ追加する承認を求める。design / DAG / remote / live policyは変更しない。
+- final commit、worker report、implementation reviewはhuman decisionまで未実施。remote / live writeは未実施。
 
 #### Acceptance Criteria
 
