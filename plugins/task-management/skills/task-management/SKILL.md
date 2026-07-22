@@ -1,54 +1,84 @@
 ---
 name: task-management
-description: Use for backend-neutral task intake, normalized task reads, and task backend routing workflows, especially when converting capture/chat text into a reviewed task draft, querying current task snapshots, preparing human approval text, checking task backend boundaries, or preparing adapter dispatch previews without implementing GitHub clients, gh command planners, direct GraphQL clients, MCP servers, credentials, or external writes.
+description: Use for backend-neutral task intake, normalized task reads, reviewable task preflight, and approval-bound create/update/comment/report through a host-configured adapter. Keep provider tools, GitHub coordinates, credentials, raw payloads, and live activation outside the reusable workflow.
 ---
 
 # Task Management
 
-Use this skill to normalize task intent, prepare reviewable task drafts, and keep task backend routing separate from Portfolio OS state. Codex uses this workflow skill; Hermes additionally exposes the native read-only `task-management-read:task_query` runtime tool.
+Use this shared Codex/Hermes skill to turn intent into neutral task contracts and
+to use the public task interface without selecting provider tools. Hermes exposes
+`task-management-read:task_query` and
+`task-management-write:{task_preflight,task_apply}`. Codex follows the same
+workflow through this skill.
 
 ## References
 
-- Read `references/task-draft-contract.md` before composing TaskDraft title, body, taxonomy, inbox fallback, source-boundary content, or create/update preview text.
-- Read `references/decision-support-policy.md` before composing a new TaskDraft from ambiguous intent, prioritizing or daily planning, research framing, continue/stop/defer/delegate choices, or periodic review. Do not use it for task reads, backend routing, or adapter previews.
-- Read `references/task-contracts.md` when checking backend-neutral contract fields, normalized task refs, query/snapshot/write-result shapes, or raw provider ID/auth boundaries.
-- Read `references/task-read-adapter.md` before using the read-only `task_query` tool, configuring its host adapter route, or interpreting `TaskSnapshotResult` errors.
-- Read `references/routing-flow.md` when explaining the end-to-end actor sequence, backend switching, route ownership, or the boundary between read routing and approved state-changing dispatch.
-- Read `references/backend-routing.md` before selecting a backend key, resolving route registry entries, or requiring caller/profile/host destination input.
-- Read `references/adapter-dispatch.md` before preparing adapter operation envelopes or applying the Adapter Dispatch Review guard.
-- Read `references/github-mcp-projects.md` before representing GitHub Projects MCP route availability, typed route blocks, or adapter result normalization.
-- Read `references/hermes-mcp-governance.md` before giving setup guidance for MCP registration, credential/tool enablement boundaries, or Hermes delegation risk.
+- Read `references/task-draft-contract.md` before composing a TaskDraft.
+- Read `references/decision-support-policy.md` when intent, priority, routing,
+  or continue/stop/defer/delegate meaning is uncertain. Ask the human when the
+  uncertainty affects the task outcome or authorization; do not invent intent.
+  Before composing a new TaskDraft, use that policy for decision-sensitive
+  intake. Do not use it for task reads, backend routing, or adapter previews;
+  skip decision support for current-state reads, routing, and adapter previews.
+- Read `references/task-contracts.md` for the v2 neutral wire shapes and safety
+  boundary.
+- Read `references/task-read-adapter.md` before calling `task_query` or
+  interpreting read errors.
+- Read `references/backend-routing.md` for the unified host route.
+- Read `references/adapter-dispatch.md` before `task_preflight` or `task_apply`.
+- Read `references/routing-flow.md` for the full read/write sequence and
+  ownership at each hop.
+- Read `references/github-mcp-projects.md` for the separate GitHub Projects
+  adapter contract and partial/retry semantics.
+- Read `references/hermes-mcp-governance.md` before host setup or live
+  activation guidance.
 
-## Operating Boundaries
+## Operating boundaries
 
-- Portfolio OS must not own task route, task data, task result, or task-specific evidence. It may keep only generic plugin selection, native install, manifest identity / required-export verification, and generic profile enablement evidence.
-- Use only `task-management-read:task_query` for task reads. Its normal host-owned route selects `mcp__<server>__task_query` or `task_adapter__<provider>__task_query`, and it returns only normalized `TaskSnapshot` values. `local_json` is reserved for plugin-owned test and smoke fixtures and is not an operator-facing runtime backend.
-- Do not implement or call direct GitHub clients, `gh` command planners, direct GraphQL clients, MCP servers, credential setup, MCP registration, remote writes, issue/PR creation, push, or merge.
-- External read/write task state belongs to an MCP server or provider plugin. The task-management plugin owns no provider API client, CLI fallback, credential client, or local write surface.
-- Stop before adapter dispatch unless the caller has provided a reviewable operation envelope and explicit approval path.
-- Keep GitHub Projects details such as raw node IDs, field IDs, tokens, owner, project number, and repository out of reusable skill contracts unless an external adapter result has already returned an opaque reference.
+- The public request may carry only a neutral query/operation and opaque
+  `destination_ref`. Never accept a route path, adapter tool, MCP tool, GitHub
+  owner/repository/project/field identifier, credential, or raw provider payload
+  from the model.
+- The host-owned route fixes one adapter `query`, `preflight`, and `apply` trio.
+  Task-management owns resolution, normalization, re-preflight, and approval
+  identity. The provider adapter owns provider mapping and mutations.
+- `local_json` is a plugin-owned test/read-smoke fixture only. There is no local
+  write adapter or Portfolio OS task ledger.
+- Portfolio OS must not own task route, task data, task result, or task-specific
+  evidence. It may keep only generic plugin selection, native install, manifest
+  identity / required-export verification, and generic profile enablement
+  evidence.
+- Plugin install and repository tests do not configure a route, install an
+  adapter, register MCP, authenticate, edit a profile, or perform a live write.
 
-## Default Flow
+## Default flow
 
-1. Read the caller's task source and identify the intended task outcome.
-2. Before composing a new TaskDraft, follow `references/decision-support-policy.md`; keep clear execution lightweight and skip decision support for current-state reads, routing, and adapter previews.
-3. For current backend state, call `task_query` with a backend-neutral `TaskQuery` and opaque destination reference; stop on any typed read-adapter error.
-4. Produce a backend-neutral task draft with title, body, task type, work unit fields when known, and review notes.
-5. Resolve backend routing from an optional internal override and then host `default_backend`. Stop with a typed setup error when neither resolves; never fall back implicitly to GitHub.
-6. Require a destination supplied by caller, profile, or host registration before any adapter-facing preview.
-7. Present a human review summary before any state-changing adapter route is used.
+1. Normalize the requested outcome. If material intent or routing is uncertain,
+   ask the human before drafting or authorizing a task.
+2. For current state, call `task_query(destination_ref, query)` and stop on any
+   typed error.
+3. Build a backend-neutral TaskDraft and operation envelope. Use `task_ref` only
+   for update/comment/report; create requires `task_ref: null`.
+4. Call `task_preflight(interface_version=2, operation=...)`. Treat readiness as
+   evidence only, never as write approval.
+5. Present the exact `ApprovalPreview`, including destination, task content,
+   route binding, and ordered expected side effects.
+6. Use `decision: approved` only after explicit human approval of that exact
+   digest. Use `decision: confidence_authorized` only when preflight is all
+   three: ready, confidence-eligible, and certain. Any explicit approval flag,
+   review note, adapter uncertainty, blocked readiness, or changed preview
+   requires human approval or a new preflight.
+7. Call `task_apply` with the exact preview and receipt. It reloads the route,
+   re-preflights, rejects drift, and dispatches the fixed adapter apply tool.
+8. Read `TaskWriteResult`. Inspect partial or unknown outcomes before retrying.
+   Retry automatically only when the typed result explicitly says no write
+   occurred and `retryable: true`.
+9. Use `task_query` when a post-write public readback is needed.
 
-## Required Review Surface
+## Review surface
 
-When preparing a task create/update/comment/report preview, include:
-
-- backend key and connection reference
-- destination reference and label
-- operation type
-- opaque task reference for update/comment/report operations
-- task title, body, and fields
-- `work_unit_id` and `work_unit_name` when known
-- expected adapter side effects
-- adapter tool name or route surface, if supplied by the host
-
-If destination, capability, or tool availability is missing, stop with setup guidance instead of inventing a backend target.
+Show the human: operation type; backend and opaque destination; task title/body
+and neutral fields; `work_unit_id` and `work_unit_name`; existing opaque
+`task_ref` when required; ordered expected side effects; approval mode; and the
+approval digest. If any value changes, discard the prior receipt and preflight
+again.

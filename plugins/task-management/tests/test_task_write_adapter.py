@@ -105,6 +105,7 @@ class FakeDispatcher:
             }
         if tool_name.endswith("__task_apply"):
             return {
+                "result_type": "TaskWriteResult",
                 "adapter_contract_version": 2,
                 "ok": True,
                 "status": "created",

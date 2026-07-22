@@ -34,6 +34,7 @@ _PREFLIGHT_FIELDS = {
     "error",
 }
 _WRITE_FIELDS = {
+    "result_type",
     "adapter_contract_version",
     "ok",
     "status",
@@ -65,6 +66,7 @@ _ERROR_TYPES = {
     "timeout": "provider_failure",
     "rate_limited": "provider_failure",
     "partial_update_failure": "partial_failure",
+    "unknown_write_outcome": "provider_failure",
     "adapter_contract_mismatch": "contract_failure",
     "invalid_adapter_result": "contract_failure",
     "invalid_task_operation": "contract_failure",
@@ -89,6 +91,7 @@ _ERROR_MESSAGES = {
     "timeout": "The task adapter timed out before confirming the write.",
     "rate_limited": "The task adapter is temporarily rate limited.",
     "partial_update_failure": "Task content was created but one or more fields were not updated.",
+    "unknown_write_outcome": "The backend did not confirm whether the task write completed.",
     "adapter_contract_mismatch": "Task adapter contract version is unsupported.",
     "invalid_adapter_result": "The task adapter returned an invalid result.",
     "invalid_task_operation": "The task operation is invalid.",
@@ -96,7 +99,9 @@ _ERROR_MESSAGES = {
     "unsafe_delegation_exposure": "The task adapter exposed forbidden provider or credential data.",
 }
 _HUMAN_ACTIONS = {
+    "Duplicate detection is stateless; inspect the linked task before retrying create.",
     "Inspect the linked task before retrying field updates.",
+    "Confirm whether the linked task was created before retrying.",
     "Retry after the backend service becomes available.",
     "Review the new preflight preview before retrying.",
 }
@@ -365,6 +370,8 @@ def normalize_write_result(raw_result: Any, *, operation: Any) -> Dict[str, Any]
         raw = _parse_result(raw_result)
         validate_safe_value(raw)
         _require_exact_fields(raw, _WRITE_FIELDS)
+        if raw["result_type"] != "TaskWriteResult":
+            raise NormalizationError()
         if type(raw["adapter_contract_version"]) is not int or raw["adapter_contract_version"] != ADAPTER_CONTRACT_VERSION:
             raise NormalizationError("adapter_contract_mismatch")
         identity = _operation_identity(operation)
@@ -372,8 +379,11 @@ def normalize_write_result(raw_result: Any, *, operation: Any) -> Dict[str, Any]
             raise NormalizationError()
         if raw.get("human_action") not in _HUMAN_ACTIONS | {None}:
             raise NormalizationError()
-        public = {key: deepcopy(value) for key, value in raw.items() if key != "adapter_contract_version"}
-        public["result_type"] = "TaskWriteResult"
+        public = {
+            key: deepcopy(value)
+            for key, value in raw.items()
+            if key != "adapter_contract_version"
+        }
         if public.get("error") is not None:
             public["error"] = _normalize_error(public["error"])
         return validate_task_write_result(public)

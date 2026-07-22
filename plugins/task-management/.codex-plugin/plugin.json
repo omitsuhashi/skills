@@ -1,7 +1,7 @@
 {
   "name": "task-management",
   "version": "0.4.0",
-  "description": "Codex workflow skill for backend-neutral task management; Hermes also receives native read and approval-bound write tools.",
+  "description": "Backend-neutral task workflow skill with Hermes read, preflight, and approval-bound apply tools.",
   "author": {
     "name": "Omitsuhashi"
   },
@@ -15,7 +15,7 @@
   "interface": {
     "displayName": "Task Management",
     "shortDescription": "Review-gated task intake and routing.",
-    "longDescription": "Provides Codex with one workflow skill for backend-neutral task drafting, review preparation, and routing. The separate Hermes native manifest registers task_query plus approval-bound task_preflight and task_apply runtime tools. This Codex manifest does not claim an MCP server because the package does not bundle one.",
+    "longDescription": "Provides Codex with a workflow skill for backend-neutral task drafting and review. Hermes registers task_query, task_preflight, and approval-bound task_apply. Provider mapping and MCP calls remain in separately installed adapter plugins; this package does not bundle an MCP server.",
     "developerName": "Omitsuhashi",
     "category": "Productivity",
     "capabilities": [

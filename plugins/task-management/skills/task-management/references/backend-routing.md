@@ -1,65 +1,51 @@
 # Backend Routing
 
-The read route registry is host-owned. It lets every consumer use the same
-`task_query` contract while the host chooses an MCP tool or provider-plugin
-tool. There is no implicit GitHub fallback.
+The Route Registry is host-owned and credential-free. It binds the public
+task-management interface to a fixed adapter trio; there is no implicit GitHub
+fallback.
 
 ## Route Registry
 
 ```toml
-contract_version = 1
+contract_version = 2
 default_backend = "remote_tasks"
 
 [backends.remote_tasks]
-kind = "mcp"
-capability = "task_read"
-tool_name = "mcp__task_backend__task_query"
+adapter_key = "github_projects"
+query_tool = "task_adapter__github_projects__task_query"
+preflight_tool = "task_adapter__github_projects__task_preflight"
+apply_tool = "task_adapter__github_projects__task_apply"
 
-[backends.remote_tasks.destinations.default]
-public_ref = "tasks:default"
-provider_ref = "tasks:default"
+[backends.remote_tasks.destinations.portfolio_os]
+public_ref = "tasks:portfolio-os"
+destination_label = "Portfolio OS Tasks"
+content_target_ref = "task-content:portfolio-os"
 ```
 
-The host can replace this with `kind = "plugin"` and a fixed
-`task_adapter__<provider>__task_query` name. The config stores no credentials.
-The model cannot set `tool_name` or `provider_ref`.
+Tool names and `adapter_key` must be a coherent fixed trio. A public request
+cannot replace them. Route v1, duplicate destination refs, wrong namespaces, a
+missing capability, and unknown destinations fail closed.
 
 ## Destination Input
 
-The public `destination_ref` is an opaque logical reference. The route maps it
-to a provider-owned opaque reference without exposing that value in the public
-result. For state-changing workflows, `TaskBackendDestination` remains the
-review surface and may also carry a `destination_label` or
-`content_target_ref`.
+`TaskBackendDestination` contains backend key, opaque `destination_ref`, human
+label, and optional opaque `content_target_ref`. They are opaque references;
+task-management must not decompose or store GitHub owner, project number,
+repository, token, field ID, option ID, item identifier, or credential from
+them. The separate adapter config
+owns those mappings.
 
-These are opaque references. The task-management plugin must not decompose or
-store GitHub owner, project number, repository, token, node ID, field ID, or
-option ID in route config.
+## Resolution order
 
-## Resolution Order
-
-1. Optional internal `query.backend_key` when a trusted caller supplies it.
+1. An optional trusted internal `backend_key`.
 2. Host `default_backend`.
-3. Typed `read_route_not_found` error.
+3. Typed route failure.
 
-The plugin never invents a backend, destination, local path, or provider tool.
-Changing providers changes only host config and the adapter implementation;
-consumers keep the same public query/result contract.
+The same resolved route is used for read, preflight, re-preflight, and apply.
+Any route-binding drift invalidates the prior approval.
 
-## Test and Smoke Fixture
+## Test and smoke fixture
 
-The read-only `local_json` adapter is retained only as a plugin-owned test and
-smoke fixture seam. Tests use files under `tests/fixtures/`; the Hermes smoke
-copies that data into a temporary directory together with a temporary route and
-`HERMES_HOME`. These artifacts are discarded after the process exits.
-
-`local_json` is not a normal runtime backend, operator bootstrap route, or
-persistent task source of truth. Operator-facing route config uses an external
-MCP or provider-plugin tool.
-
-## Read and Write Ownership
-
-The plugin exposes no local write adapter. Mutable task state and all provider
-writes belong to an MCP server or another provider plugin and still require the
-existing Adapter Dispatch Review. The task-management plugin has no direct API,
-GraphQL, `gh`, or credential fallback.
+`local_json` is a test and smoke fixture only and not a normal runtime backend.
+Tests create temporary files and `HERMES_HOME`; they do not publish a local task
+store. Mutable state and provider writes remain external-adapter-owned.

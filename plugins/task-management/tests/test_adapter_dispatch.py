@@ -63,65 +63,58 @@ class AdapterDispatchContractTests(unittest.TestCase):
         text = self.reference_text
 
         for field_name in (
-            "backend_key",
-            "connection_ref",
-            "destination_ref",
-            "destination_label",
+            "adapter_contract_version: 2",
             "operation_type",
-            "task.title",
-            "task.body",
-            "task.fields",
-            "work_unit_id",
-            "work_unit_name",
+            "backend_key",
+            "destination_ref",
             "task_ref",
-            "adapter_tool_name",
-            "expected_adapter_side_effects",
+            "payload",
         ):
             self.assertIn(f"`{field_name}`", text)
+        for caller_forbidden in ("route/config paths", "adapter/MCP", "tool names"):
+            self.assertIn(caller_forbidden, text)
 
     def test_existing_task_operations_require_task_ref_and_review_match(self):
         text = self.reference_text
 
         for operation_type in ("task.update", "task.comment", "task.report"):
-            self.assertRegex(text, rf"\| `{operation_type}` \| [^\n]*`task_ref`")
+            self.assertRegex(
+                text,
+                rf"\| `{operation_type}` \| required opaque backend-owned task reference",
+            )
 
-        self.assertIn("required for `task.update`, `task.comment`, and `task.report`", text)
         self.assertIn("opaque backend-owned task reference", text)
-        self.assertIn("`approved_task_ref` matches `task_ref`", text)
+        self.assertIn("Any operation, destination", text)
 
     def test_adapter_dispatch_review_is_required_before_dispatch(self):
         text = self.reference_text
 
-        self.assertIn("## Adapter Dispatch Review Guard", text)
-        self.assertIn("Do not pass an envelope to an adapter until Adapter Dispatch Review is complete.", text)
-        self.assertIn("review_status: approved", text)
-        self.assertIn("approved_operation_type", text)
-        self.assertIn("approved_adapter_tool_name", text)
-        self.assertIn("approved_destination_ref", text)
-        self.assertIn("approved_task_ref", text)
+        self.assertIn("## Preflight and review guard", text)
+        self.assertIn("decision: approved", text)
+        self.assertIn("decision: confidence_authorized", text)
+        self.assertIn("ready,", text)
+        self.assertIn("confidence-eligible", text)
+        self.assertIn("certain", text)
 
     def test_dispatch_approval_is_separate_from_readiness_gate(self):
         text = self.reference_text
 
-        self.assertIn("Adapter Availability Gate", text)
         self.assertIn("readiness", text)
-        self.assertIn("not approval", text)
-        self.assertIn("Adapter Dispatch Review", text)
-        self.assertIn("readiness pass must not replace Adapter Dispatch Review", text)
+        self.assertIn("not\napproval", text)
+        self.assertIn("must not replace human review", text)
 
     def test_preview_example_contains_reviewable_envelope_and_guard(self):
         text = self.example_text
 
-        self.assertIn("## Adapter Operation Envelope Preview", text)
+        self.assertIn("## Public operation", text)
+        self.assertIn("interface_version: 2", text)
+        self.assertIn("adapter_contract_version: 2", text)
         self.assertIn('operation_type: "task.create"', text)
-        self.assertIn('backend_key: "github_projects_mcp"', text)
-        self.assertIn('connection_ref: "github-projects"', text)
-        self.assertIn('destination_ref: "github-projects:portfolio-os-task-board"', text)
-        self.assertIn('destination_label: "Portfolio OS Tasks"', text)
-        self.assertIn('adapter_tool_name: "github-projects:task-create"', text)
-        self.assertIn("expected_adapter_side_effects:", text)
-        self.assertIn("Adapter Dispatch Review: required", text)
-        self.assertIn("Do not dispatch until review_status is approved.", text)
+        self.assertIn('backend_key: "remote_tasks"', text)
+        self.assertIn('destination_ref: "tasks:portfolio-os"', text)
+        self.assertIn("approval_preview:", text)
+        self.assertIn('decision: "approved"', text)
+        self.assertIn("operation_digest:", text)
 
     def test_implementation_guard_scans_root_runtime_entrypoint(self):
         relative_paths = {

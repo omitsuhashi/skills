@@ -108,7 +108,7 @@ class GithubProjectsPreflightTests(unittest.TestCase):
             [arguments["method"] for _tool_name, arguments in calls],
         )
         self.assertTrue(result["ok"])
-        self.assertEqual("ready", result["status"])
+        self.assertNotIn("status", result)
         self.assertTrue(result["readiness"]["ok"])
         self.assertEqual(
             [
@@ -269,7 +269,8 @@ class GithubProjectsPreflightTests(unittest.TestCase):
                 )
 
                 self.assertFalse(result["ok"])
-                self.assertEqual("blocked", result["status"])
+                self.assertNotIn("status", result)
+                self.assertFalse(result["requires_human_confirmation"])
                 self.assertEqual(expected_code, result["error"]["code"])
                 self.assertFalse(result["readiness"]["ok"])
                 self.assertEqual([], result["expected_side_effects"])

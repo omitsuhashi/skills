@@ -1,7 +1,7 @@
 manifest_version: 1
 name: task-adapter-github-projects
 version: 0.1.0
-description: Dual-host GitHub Projects adapter contract with fail-closed task runtime registration.
+description: Executable dual-host GitHub Projects adapter with fail-closed query, preflight, and apply.
 author: Omitsuhashi
 kind: standalone
 provides_tools:

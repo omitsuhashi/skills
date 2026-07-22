@@ -2,17 +2,17 @@
 
 ## 状態
 
-2026-07-21 Spec Gate 承認済み。current audit と設計判断を承認済み仕様として固定した。Issue Gate、実装、push、PR、live activation は未実施。
+2026-07-21 Spec Gate承認済み。2026-07-22にtask-management `0.4.0`、separate GitHub Projects Adapter `0.1.0`、public fake end-to-endをlocal実装・検証し、POTASK-019は独立implementation review待ちである。GitHub Issue mirror、push、PR、merge、live install / MCP registration / credential setup / GitHub Project・Issue mutationは未実施で、Live Activation Gateとして別途扱う。
 
-この仕様は既存 Epic `portfolio-os-task-backend-plugin-skill` の follow-up であり、既存の read facade を backend-neutral な preflight / write Interface へ拡張する。既存 Issue Ledger への issue 追加は、この Spec Gate が承認された後に行う。
+この仕様はCompaniesへ渡すpublic Interface v2の唯一のnormative referenceである。承認済みInterface設計、DAG、plugin責務、remote / live policyは変更していない。current implementation / review状態は[Portfolio OS Task Backend Plugin Skill Issues](portfolio-os-task-backend-plugin-skill-issues.md)で追跡する。
 
 ## Epic ID
 
 `portfolio-os-task-backend-plugin-skill`
 
-## 問題設定
+## Spec Gate時点の問題設定
 
-current `plugins/task-management` v0.3.0 は、Hermes runtime で `task_query` だけを登録し、`task-management-read` だけを export する。`TaskDraft`、`TaskWriteResult`、Adapter Dispatch Review、GitHub readiness は文書と fixture に存在するが、`task_preflight`、`task_apply`、approval binding、write adapter dispatch は実行できない。
+2026-07-21 audit時点の`plugins/task-management` v0.3.0は、Hermes runtimeで`task_query`だけを登録し、`task-management-read`だけをexportしていた。`TaskDraft`、`TaskWriteResult`、Adapter Dispatch Review、GitHub readinessは文書とfixtureに存在したが、`task_preflight`、`task_apply`、approval binding、write adapter dispatchは実行できなかった。
 
 この差を埋める際、task-management を GitHub payload の pass-through や provider client にしてはならない。consumer が理解する Interface は少数に保ち、route selection、preflight、approval identity、adapter dispatch、result normalization、secret / raw provider data の遮断を深い Module の内側へ置く。
 
@@ -40,7 +40,7 @@ current `plugins/task-management` v0.3.0 は、Hermes runtime で `task_query` �
 - 初期 create は linked Issue only とし、Project-native draft item / `content_policy` を追加しない。
 - `task.report` は structured work report とし、Project-wide status update と分離する。
 
-## Current audit evidence
+## Spec Gate audit evidence
 
 2026-07-21 の current checkout で次を確認した。
 

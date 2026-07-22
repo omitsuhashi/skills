@@ -8,6 +8,7 @@ query_tool = "task_adapter__github_projects__task_query"
 preflight_tool = "task_adapter__github_projects__task_preflight"
 apply_tool = "task_adapter__github_projects__task_apply"
 
-[backends.remote_tasks.destinations.default]
-public_ref = "tasks:default"
-destination_label = "Default tasks"
+[backends.remote_tasks.destinations.portfolio_os]
+public_ref = "tasks:portfolio-os"
+destination_label = "Portfolio OS Tasks"
+content_target_ref = "task-content:portfolio-os"

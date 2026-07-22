@@ -95,10 +95,11 @@ class BackendRoutingConfigTests(unittest.TestCase):
     def test_route_config_maps_only_logical_destination_refs(self):
         config = self.load_config()
         route = config["backends"][config["default_backend"]]
-        destination = route["destinations"]["default"]
+        destination = route["destinations"]["portfolio_os"]
 
-        self.assertEqual("tasks:default", destination["public_ref"])
-        self.assertEqual("Default tasks", destination["destination_label"])
+        self.assertEqual("tasks:portfolio-os", destination["public_ref"])
+        self.assertEqual("Portfolio OS Tasks", destination["destination_label"])
+        self.assertEqual("task-content:portfolio-os", destination["content_target_ref"])
         self.assertNotIn("provider_ref", destination)
 
         forbidden_destination_fragments = (
@@ -178,10 +179,7 @@ class BackendRoutingReferenceTests(unittest.TestCase):
         self.assertIn("not a normal runtime backend", readme)
         self.assertNotIn("local-task-snapshot.example.json", readme)
         self.assertNotIn("local bootstrap read snapshot", skill)
-        self.assertIn(
-            "`local_json` is reserved for plugin-owned test and smoke fixtures",
-            normalized_skill,
-        )
+        self.assertIn("plugin-owned test/read-smoke fixture only", normalized_skill)
         self.assertIn("test and smoke fixture", normalized_routing)
         self.assertIn("test-only `local_json`", flow)
         self.assertNotIn('route -->|"kind = local_json"|', flow)

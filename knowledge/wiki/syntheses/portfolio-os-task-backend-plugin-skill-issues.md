@@ -2,7 +2,7 @@
 
 ## 状態
 
-POTASK-001 から POTASK-011 は既存 Issue Gate / Execution Plan Gate 承認済みで実装完了。2026-07-21 に、task-management write / preflight Interfaceとseparate GitHub Projects AdapterをPOTASK-012からPOTASK-019へ分解し、Issue Gate承認を得た。新規issueは未実装で、POTASK-012だけが実行可能、POTASK-013からPOTASK-019はblocker release待ち。GitHub issue mirror、push、PR、merge、live activationは行わない。
+POTASK-001 から POTASK-011 は既存 Issue Gate / Execution Plan Gate 承認済みで実装完了。2026-07-21 に、task-management write / preflight Interfaceとseparate GitHub Projects AdapterをPOTASK-012からPOTASK-019へ分解し、Issue Gate承認を得た。2026-07-22時点でPOTASK-012からPOTASK-018はすべて独立review approvedのlocal `PR_READY`。POTASK-019はreviewed headsのexact two-parent integration、TDD reconciliation、dual-host docs / manifests / smokes / full verification / durable completion evidenceまでworker contextで完了した。human request `hr-potask-019-normative-status-scope-001`承認後のExecution Envelope revision 5に従って2つのnormative specのstatus / current-boundaryも同期し、独立implementation review待ちである。GitHub issue mirror、push、PR、merge、live activationは行わない。
 
 ## Epic ID
 
@@ -38,14 +38,14 @@ POTASK-001 から POTASK-011 は既存 Issue Gate / Execution Plan Gate 承認�
 | `portfolio-os-task-backend-plugin-skill` | POTASK-009 | docs / examples / verification / handoff boundary を統合する | 承認済み | 完了 | `PR_READY` `214349fff56bd55ff3e7e68612a499096096803f` | POTASK-006, POTASK-007, POTASK-008 | なし | 未作成 | approved: `06f9b6fc7801271f345a8c2772a6d64e7c64f310..214349fff56bd55ff3e7e68612a499096096803f` | 未作成 |
 | `portfolio-os-task-backend-plugin-skill` | POTASK-010 | backend-neutral task read capability を実装する | 承認済み | 完了 | local verified / PR delivery対象 | POTASK-002, POTASK-007, POTASK-008 | POTASK-011 | 未作成 | PRで追跡 | [#29](https://github.com/omitsuhashi/skills/pull/29) |
 | `portfolio-os-task-backend-plugin-skill` | POTASK-011 | pluggable provider adapter と Hermes end-to-end call path を実装する | 承認済み | 完了 | `PR_READY` `458f712` | POTASK-004, POTASK-010 | POTASK-012 | 未作成 | approved: `feb8908..458f712` / 2 cycles | [#29](https://github.com/omitsuhashi/skills/pull/29) |
-| `portfolio-os-task-backend-plugin-skill` | POTASK-012 | shared Adapter contract v2 と安全なwrite契約を実装する | 承認済み | 実行可能 | 未着手 | POTASK-011 | POTASK-013, POTASK-014, POTASK-016 | 未作成 | 未実施 | 未作成 |
-| `portfolio-os-task-backend-plugin-skill` | POTASK-013 | unified route v2へ移行しread Interfaceを回帰維持する | 承認済み | ブロック中 | 未着手 | POTASK-012 | POTASK-015 | 未作成 | 未実施 | 未作成 |
-| `portfolio-os-task-backend-plugin-skill` | POTASK-014 | approval digestとconfidence-aware approval policyを実装する | 承認済み | ブロック中 | 未着手 | POTASK-012 | POTASK-015 | 未作成 | 未実施 | 未作成 |
-| `portfolio-os-task-backend-plugin-skill` | POTASK-015 | executable `task_preflight` / `task_apply` facadeを実装する | 承認済み | ブロック中 | 未着手 | POTASK-013, POTASK-014 | POTASK-019 | 未作成 | 未実施 | 未作成 |
-| `portfolio-os-task-backend-plugin-skill` | POTASK-016 | separate GitHub Projects Adapter pluginとhost configを作る | 承認済み | ブロック中 | 未着手 | POTASK-012 | POTASK-017 | 未作成 | 未実施 | 未作成 |
-| `portfolio-os-task-backend-plugin-skill` | POTASK-017 | GitHub Adapterのexecutable preflight / queryを実装する | 承認済み | ブロック中 | 未着手 | POTASK-016 | POTASK-018 | 未作成 | 未実施 | 未作成 |
-| `portfolio-os-task-backend-plugin-skill` | POTASK-018 | GitHub Adapterのcreate/update/comment/report applyを実装する | 承認済み | ブロック中 | 未着手 | POTASK-017 | POTASK-019 | 未作成 | 未実施 | 未作成 |
-| `portfolio-os-task-backend-plugin-skill` | POTASK-019 | dual-host契約・文書・smoke・full verificationを統合する | 承認済み | ブロック中 | 未着手 | POTASK-015, POTASK-018 | なし | 未作成 | 未実施 | 未作成 |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-012 | shared Adapter contract v2 と安全なwrite契約を実装する | 承認済み | 完了 | `PR_READY` `d539ebd` | POTASK-011 | POTASK-013, POTASK-014, POTASK-016 | 未作成 | approved: `cc1d428..d539ebd` / 通常2 cycles + 例外1 cycle + 最終micro-review | 未作成 |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-013 | unified route v2へ移行しread Interfaceを回帰維持する | 承認済み | 完了 | `PR_READY` `badc466` | POTASK-012 | POTASK-015 | 未作成 | approved: `d539ebd..badc466` / 1 cycle | 未作成 |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-014 | approval digestとconfidence-aware approval policyを実装する | 承認済み | 完了 | `PR_READY` `a5bcf11` | POTASK-012 | POTASK-015 | 未作成 | approved: `d539ebd..a5bcf11` / 1 cycle | 未作成 |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-015 | executable `task_preflight` / `task_apply` facadeを実装する | 承認済み | 完了 | `PR_READY` `f5fc50e` | POTASK-013, POTASK-014 | POTASK-019 | 未作成 | approved: `badc466..f5fc50e` / 1 cycle | 未作成 |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-016 | separate GitHub Projects Adapter pluginとhost configを作る | 承認済み | 完了 | `PR_READY` `bc73c99` | POTASK-012 | POTASK-017 | 未作成 | approved: `d539ebd..bc73c99` / 1 cycle | 未作成 |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-017 | GitHub Adapterのexecutable preflight / queryを実装する | 承認済み | 完了 | `PR_READY` `b2494e5` | POTASK-016 | POTASK-018 | 未作成 | approved: `bc73c99..b2494e5` / 2 cycles | 未作成 |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-018 | GitHub Adapterのcreate/update/comment/report applyを実装する | 承認済み | 完了 | `PR_READY` `cc61018` | POTASK-017 | POTASK-019 | 未作成 | approved: `b2494e5..cc61018` / 2 cycles | 未作成 |
+| `portfolio-os-task-backend-plugin-skill` | POTASK-019 | dual-host契約・文書・smoke・full verificationを統合する | 承認済み | 実装完了 / review待ち | `REVIEWABLE` | POTASK-015, POTASK-018 | なし | 未作成 | 未実施 | 未作成 |
 
 ## Blocker Graph
 
@@ -84,7 +84,7 @@ POTASK-001
 
 循環依存はない。POTASK-001からPOTASK-011の`レビュー状態`は既存Issue Gate承認済み。POTASK-012からPOTASK-019も2026-07-21のIssue Gateで承認済みである。
 POTASK-010 は POTASK-002 の contract、POTASK-007 の typed adapter boundary、POTASK-008 の Hermes governance を再利用する follow-up であり、既存 issue を再開しない。POTASK-011 はPOTASK-010のpublic facadeを維持したまま、POTASK-004のroutingを実行可能なprovider adapterへ接続する。
-POTASK-012は完了済みPOTASK-011をbaseにするため`実行可能`。POTASK-013からPOTASK-019は未完了の新規blockerを持つため`ブロック中`で、blocked issueのphysical worktreeは作成しない。
+POTASK-012からPOTASK-018はlocal `PR_READY`。POTASK-013のregression guard scope amendmentとPOTASK-015のreview approvalにより全blockerが解消し、POTASK-019だけがrunnableである。
 2026-07-21のIssue Gate amendmentにより、POTASK-015はPOTASK-013 headをbaseにreview approvedなPOTASK-014 headを統合するintegration work item、POTASK-019はPOTASK-018 headをbaseにreview approvedなPOTASK-015 headを統合するintegration work itemとする。複数blocker headを通常workerがad-hoc mergeしない。
 
 ## 依存順
@@ -494,6 +494,22 @@ PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s 
 git diff --check
 ```
 
+#### Implementation Evidence
+
+- worker branch: `codex/portfolio-os-task-backend-plugin-skill/POTASK-012-contract-v2`
+- base / current head: `cc1d42856ea46296fb1575c4533f913cbe675ba0..d539ebdec2660f99d87dd68d6a36eef0b5637d2c`
+- implementation commits: `bb66affd71a4c35b33210b37d10482bbbf1ab7df`、`5f4c0dcb59cd5356867acb2caa486bf0df95ec7a`、`c47a9c794f09d037655def5f4edc879903f5106f`、`d539ebdec2660f99d87dd68d6a36eef0b5637d2c`
+- fresh verification: write contracts 26 / 26、task-management full suite 127 / 127、read adapter 18 / 18、read routes 18 / 18、`git diff --check` PASS
+- implementation review cycle 1 / 2は、brittle exact-file guardとHTTP destination URL受理をImportant `intent_gap`として検出し、`5f4c0dc`で修正した。
+- cycle 2 / 2は、scheme-relative / colon-form URL bypassと、root plugin entrypoint / direct provider SDK / separate-adapter importのscan漏れをImportant `intent_gap`として検出した。blockerはreleaseしていない。
+- human request `hr-potask-012-review-exception-001` により、上記残存2件だけをTDD修正し独立reviewする例外cycle 1回を2026-07-22に承認し、`c47a9c7`でURL-shaped bypassとroot / provider import scan漏れを修正した。
+- exception reviewは、両guardの`r"\b(?:api\.github\.com|/graphql)\b"`がquote後またはstring先頭の`/graphql`をword-boundary条件で見逃すImportant `intent_gap`を1件検出した。他のscope内findingはない。
+- human request `hr-potask-012-post-exception-decision-001` に対し、ユーザーは両guard testの無効な先頭word-boundary修正と代表的`endpoint = "/graphql"` probe追加だけを対象にする最終micro-fix + independent review 1回を承認した。既存のclient / API / GraphQL / `gh` / provider禁止は維持し、他scopeへ広げない。
+- final micro-fix `d539ebd`は2 test fileだけを4 insertions / 2 deletionsで変更し、TDD RED 23 tests / 2 expected failuresからGREEN 23 / 23、write contracts 26 / 26、full 127 / 127、read regression各18 / 18、diff-checkを通過した。
+- final independent reviewは`cc1d428..d539ebd`と`c47a9c7..d539ebd`を`approved`とし、Critical / Important findingは0件。POTASK-013、POTASK-014、POTASK-016をreleaseした。
+- next trigger: runnable 3 issueのworker dispatch。POTASK-015、POTASK-017からPOTASK-019は各typed dependencyのreview approval待ち。
+- remote / live evidence: GitHub Issue、push、PR、merge、Hermes profile / MCP registration、credential、GitHub Project / Issue mutationは未実施。
+
 ### POTASK-013: unified route v2へ移行しread Interfaceを回帰維持する
 
 #### 目的
@@ -508,6 +524,7 @@ read-only route v1を、query / preflight / applyのfixed Adapter trioを解決�
 - `plugins/task-management/config/task-backends.example.toml`
 - `plugins/task-management/tests/test_task_read_routes.py`
 - `plugins/task-management/tests/test_task_read_adapter.py`
+- `plugins/task-management/tests/test_backend_routing.py`
 - `plugins/task-management/scripts/smoke_test_hermes_read.py`
 
 #### Acceptance Criteria
@@ -529,9 +546,20 @@ read-only route v1を、query / preflight / applyのfixed Adapter trioを解決�
 ```bash
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests -p 'test_task_read_routes.py'
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests -p 'test_task_read_adapter.py'
+PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests -p 'test_backend_routing.py'
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 plugins/task-management/scripts/smoke_test_hermes_read.py
 git diff --check
 ```
+
+#### Execution Evidence
+
+- worker branch / base: `codex/portfolio-os-task-backend-plugin-skill/POTASK-013-route-v2` / `d539ebdec2660f99d87dd68d6a36eef0b5637d2c`
+- approved scope内のroute/read変更は未commit。targeted route 21 / 21、read adapter 18 / 18、`git diff --check`はPASSした。
+- approved configをroute v2へ更新すると、既存`plugins/task-management/tests/test_backend_routing.py`がroute v1 shapeをexact assertして回帰する。しかし同testはPOTASK-013 Write Scope外である。
+- human request `hr-potask-013-regression-guard-scope-001` は、機能scope / DAG / remote policyを変えず、上記1 test fileだけをWrite Scope / read pathsへ追加する承認を求める。承認または別判断までworkerとdescendantを停止する。
+- 2026-07-22にユーザーが推奨amendmentを承認した。input packetとschema v3 Execution Envelope revision 3へ上記1 fileとtargeted verificationだけを追加し、保存済み7-file diffを破棄せず元workerで再開する。
+- commit `badc466`は保存済み7-file diffを維持したままconfig / smoke / approved regression guardをroute v2へ同期した。route 21 / 21、read 18 / 18、backend 8 / 8、full 130 / 130、smoke / validatorsを通過し、independent review cycle 1は`approved`。local `PR_READY` / `artifact_ready`。
+- remote / live evidence: GitHub Issue、push、PR、merge、Hermes profile / MCP registration、credential変更は未実施。
 
 ### POTASK-014: approval digestとconfidence-aware approval policyを実装する
 
@@ -568,6 +596,14 @@ PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s 
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-management/tests -p 'test_preflight.py'
 git diff --check
 ```
+
+#### Implementation Evidence
+
+- worker branch / range: `codex/portfolio-os-task-backend-plugin-skill/POTASK-014-approval-binding` / `d539ebdec2660f99d87dd68d6a36eef0b5637d2c..a5bcf118ae263cc3db33c56eb24401a5bfdcc9d4`
+- fresh verification: approval binding 5 / 5、preflight 5 / 5、task-management full suite 137 / 137、`git diff --check` PASS。
+- independent review cycle 1は`approved`。canonical digest、confidence / human-required policy、adapter dispatch 0回のfail-closed boundaryにCritical / Important findingはない。
+- separate Adapter側のfrozen fixture copy同期はPOTASK-019 integration scopeが所有する。POTASK-014のfindingではない。
+- local `PR_READY` / `artifact_ready`。remote / live writeは未実施。
 
 ### POTASK-015: executable `task_preflight` / `task_apply` facadeを実装する
 
@@ -616,6 +652,14 @@ python3 scripts/validate_dual_host_compatibility.py --plugin plugins/task-manage
 git diff --check
 ```
 
+#### Implementation Evidence
+
+- worker branch / range: `codex/portfolio-os-task-backend-plugin-skill/POTASK-015-write-facade-integration` / `badc466320ca6ab59a0a6a03e9a50426428ad089..f5fc50ecdb87345b7e9e434b59e22d07c5a6f82a`
+- integration commit `82b3246`はparentsをreviewed POTASK-013 `badc466`とreviewed POTASK-014 `a5bcf11`に固定し、conflict 0件、両head ancestryを実証した。
+- implementation `f5fc50e`は`task_preflight` / `task_apply`、route reload → re-preflight → approval binding → fixed apply dispatch、backend-neutral bounded normalization、v0.4.0 read/write toolsets、fake write smokeを実装した。
+- fresh verification: facade 7 / 7、normalization 9 / 9、manifest 11 / 11、approval 5 / 5、preflight 5 / 5、full 156 / 156、read / write smokes、plugin / dual-host validators、diff / cache scan PASS。
+- independent review cycle 1は`approved`、finding 0件。local `PR_READY` / `artifact_ready`、remote / live writeは未実施。
+
 ### POTASK-016: separate GitHub Projects Adapter pluginとhost configを作る
 
 #### 目的
@@ -658,6 +702,14 @@ python3 scripts/validate_dual_host_compatibility.py --plugin plugins/task-adapte
 git diff --check
 ```
 
+#### Implementation Evidence
+
+- worker branch / range: `codex/portfolio-os-task-backend-plugin-skill/POTASK-016-github-adapter-scaffold` / `d539ebdec2660f99d87dd68d6a36eef0b5637d2c..bc73c99920afab392d5e20aa22a6a1859686f05e`
+- fixed MCP allowlist、opaque destination / content target、host attestation、dual-host manifests、local contract / frozen fixturesを43 approved pathsで実装した。
+- fresh verification: adapter tests 15 / 15、plugin validator、dual-host compatibility、`git diff --check` PASS。
+- independent review cycle 1は`approved`。task-managementからPython importせず、contract v2とexact fixture equalityでseparate distribution boundaryを維持した。
+- local `PR_READY` / `artifact_ready`。remote / live writeは未実施。
+
 ### POTASK-017: GitHub Adapterのexecutable preflight / queryを実装する
 
 #### 目的
@@ -693,6 +745,14 @@ PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s 
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s plugins/task-adapter-github-projects/tests
 git diff --check
 ```
+
+#### Implementation Evidence
+
+- worker branch / range: `codex/portfolio-os-task-backend-plugin-skill/POTASK-017-github-preflight-query` / `bc73c99920afab392d5e20aa22a6a1859686f05e..b2494e59d729f0f98031c3abab3b77642bf1d51f`
+- initial implementation `eb570e4`に対し、cycle 1 reviewはofficial compact field `data_type`のlowercase mismatchと、public Hermes `ctx.dispatch_tool()` JSON envelopeをtestsが迂回している2件をCritical `intent_gap`として検出した。
+- fix `b2494e5`はofficial pinned GitHub MCP source `9d130049e9074772c2afbbd5e904725d240443ad`とlive installed Hermes public dispatch seamを根拠に、lowercase typesとouter result / error envelopeのstrict safe decodeをTDD修正した。
+- fresh verification: preflight 7 / 7、query 5 / 5、adapter full suite 27 / 27、plugin validator、dual-host compatibility、`git diff --check` PASS。
+- independent review cycle 2は`approved`、残存finding 0件。local `PR_READY` / `artifact_ready`、remote / live writeは未実施。
 
 ### POTASK-018: GitHub Adapterのcreate/update/comment/report applyを実装する
 
@@ -734,6 +794,15 @@ PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 plugins/task-adapter-git
 git diff --check
 ```
 
+#### Implementation Evidence
+
+- worker branch / range: `codex/portfolio-os-task-backend-plugin-skill/POTASK-018-github-apply` / `b2494e59d729f0f98031c3abab3b77642bf1d51f..cc61018cb55172fcbd15e6ffa1b01f91e58b4357`
+- implementation `d780f8c`はofficial MCP shapesでIssue create → Project add → ordered 9 field updates → read-back、distinct update / comment / report、safe partial resultを実装した。public Interfaceは`preflight` / `query` / `apply`だけを維持した。
+- cycle 1 reviewは、field-only update / comment / reportのfirst writeでexplicit no-write rate limitの`retryable`が失われ、stable `rate_limited` spellingをno-write detectorが認識しないImportant `intent_gap`を1件検出した。
+- fix `cc61018`はoperation-local prior-write invariantを追加し、Issue-content update、field-only update、comment、report、underscore spellingの5 probesだけをsafe retryableにした。later-write / unknown outcomeはpartial / nonretryableを維持する。
+- fresh verification: partial failure 6 / 6、adapter full suite 39 / 39、Hermes `PluginContext` fake-MCP smoke、plugin validator、dual-host compatibility、full / fix rangeの`git diff --check` PASS。
+- independent review cycle 2は`approved`、Critical / Important / nonblocking finding 0件。local `PR_READY` / `artifact_ready`、remote / live writeは未実施。
+
 ### POTASK-019: dual-host契約・文書・smoke・full verificationを統合する
 
 #### 目的
@@ -752,8 +821,21 @@ task-management public Interface v2とGitHub Adapter v0.1をend-to-end fixture�
 - `plugins/task-adapter-github-projects/{plugin.yaml,.codex-plugin/plugin.json,README.md}`
 - `plugins/task-adapter-github-projects/config/`
 - `plugins/task-adapter-github-projects/tests/`
+- `knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-spec.md`
+- `knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md`
+- `knowledge/wiki/syntheses/task-management-write-preflight-interface-spec.md`（status/current-boundaryのみ）
+- `knowledge/wiki/syntheses/task-adapter-github-projects-spec.md`（status/current-boundaryのみ）
+- `knowledge/index.md`
+- `knowledge/log.md`
 
-`knowledge/wiki/syntheses/portfolio-os-task-backend-plugin-skill-{spec,issues}.md`、`knowledge/index.md`、`knowledge/log.md`はworker write scopeに含めない。integration resultを受けたcoordinatorがledger update invariantに従って同期する。
+2026-07-22のExecution Envelope revision 5 amendmentにより、final integrationのdocs / completion evidenceに加え、上記2 normative specのstatus/current-boundary更新だけもworker contextが所有する。coordinatorは実装せず、独立reviewとruntime遷移だけを行う。
+
+#### Execution Evidence
+
+- integration commit `3c8ba06`はreviewed POTASK-018 `cc61018`とreviewed POTASK-015 `f5fc50e`をexact parentsに持ち、conflict 0件、両head ancestryを実証した。
+- inherited baselineはtask-management 156 / 156、adapter fixture-copy RED 1件 / 他38件PASS、3 smokes PASS。fixture exact-copy同期後、public facade → Adapter fake end-to-end 6 / 6、task-management 156 / 156、adapter 45 / 45、3 smokesまでGREENになった。
+- human request `hr-potask-019-normative-status-scope-001`は承認済み。revision 5はnormative canonical `task-management-write-preflight-interface-spec.md`とAdapter specの2 filesだけをstatus/current-boundary更新scopeへ追加した。design / DAG / remote / live policyは変更しない。
+- 保存済みworker差分からfinal commit、worker report、implementation reviewへ再開した。remote / live writeは未実施。
 
 #### Acceptance Criteria
 
@@ -788,6 +870,15 @@ python3 scripts/validate_skill_architecture.py --all
 PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/llm-wiki/tests -v
 git diff --check
 ```
+
+#### Implementation Evidence
+
+- Gate 1 integration commit `3c8ba068d648974ab1a31d500b965736da9e38c4`はexact parents `cc61018cb55172fcbd15e6ffa1b01f91e58b4357` + `f5fc50ecdb87345b7e9e434b59e22d07c5a6f82a`をこの順に持ち、両reviewed headsのancestry、conflict 0件、first-parent 25 pathsすべてtask-management scope内を確認した。
+- TDDでstale approval-binding fixture mismatchとpublic end-to-end不足をRED再現し、両Adapter v2 fixture treesをexact一致させた。fake public dispatch 6 testsはpreflight read-only、approved create / attach / ordered 9 field updates / read-back、human-required / approval mismatch zero-write、partial nonretryable、explicit no-write retryableを実証する。
+- task-management `0.4.0`とGitHub Adapter `0.1.0`のCodex / Hermes manifests、runtime tool trio / toolsets、README、primary SKILL / references / examples / configを同期した。legacy route v1 / placeholder expectationsだけをapproved v2へ更新し、approval / zero-write / leakage / partial-retry invariantsは維持した。
+- fresh verification: task-management 156 / 156、GitHub Adapter 45 / 45、public end-to-end 6 / 6、llm-wiki 6 / 6、3 smokes、2 plugin validators、task-management skill validator、2 dual-host validators、architecture validator、fixture diff、working-tree diff check、cache scan PASS。
+- Companies public Interface v2の唯一のnormative referenceは[Task Management Write / Preflight Interface 仕様](task-management-write-preflight-interface-spec.md)である。revision 5 approvalによりstatus / current-boundaryだけを同期し、contract本文を重複させない。
+- Live Activation Gateは別途必要である。MCP registration、credential / permission、Hermes live profile、GitHub Project / Issue mutation、GitHub Issue mirror、push、PR、mergeは未実施。local implementationは独立implementation review待ちで、`PR_READY`またはreview approvalをまだ主張しない。
 
 ## Issue Gate で承認する事項
 

@@ -129,13 +129,12 @@ class GitHubMcpRouteContractTests(unittest.TestCase):
     def test_reference_defines_external_mcp_route_without_owning_github_writes(self):
         text = self.reference_text
 
-        self.assertIn("# GitHub MCP Projects Route", text)
-        self.assertIn("external adapter route", text)
-        self.assertIn("GitHub MCP Server owns GitHub Projects read/write", text)
-        self.assertIn("normalizes route availability", text)
-        self.assertIn("adapter results into the backend-neutral `TaskWriteResult` boundary", text)
-        self.assertIn("plugin install must not register MCP servers", text)
-        self.assertIn("No live smoke test is required", text)
+        self.assertIn("# GitHub Projects Adapter Route", text)
+        self.assertIn("separate external adapter route", text)
+        self.assertIn("GitHub MCP Server owns authenticated provider operations", text)
+        self.assertIn("task-management owns the backend-neutral public", text)
+        self.assertIn("Plugin install must not register MCP servers", text)
+        self.assertIn("Repository completion is not live", text)
 
     def test_live_root_and_adapter_availability_are_readiness_not_write_approval(self):
         text = self.reference_text
@@ -144,17 +143,18 @@ class GitHubMcpRouteContractTests(unittest.TestCase):
         self.assertIn("Adapter Availability Gate", text)
         self.assertIn("readiness check", text)
         self.assertIn("write approval", text)
-        self.assertIn("approved operation is executable", text)
-        self.assertIn("does not permit unapproved remote writes", text)
+        self.assertIn("already approved operation is executable", text)
+        self.assertIn("does not permit", text)
+        self.assertIn("unapproved remote writes", text)
 
     def test_readiness_failures_are_setup_blockers(self):
         text = self.reference_text
 
         for blocker in (
-            "root mismatch",
-            "auth missing",
-            "destination unresolved",
-            "unsafe delegation boundary",
+            "Root mismatch",
+            "`auth_missing`",
+            "`destination_unresolved`",
+            "unsafe delegation",
         ):
             self.assertIn(blocker, text)
 
@@ -166,7 +166,7 @@ class GitHubMcpRouteContractTests(unittest.TestCase):
         for field_name in CANONICAL_TASK_REF_KEYS:
             self.assertIn(field_name, text)
 
-        self.assertIn("`task_ref.task_ref` value is an opaque backend-owned reference", text)
+        self.assertIn("opaque `task_ref.task_ref`", text)
         self.assertIn("`task_ref.task_url`", text)
         self.assertNotIn("`task_ref.ref`", text)
         self.assertNotIn("`task_ref.url`", text)

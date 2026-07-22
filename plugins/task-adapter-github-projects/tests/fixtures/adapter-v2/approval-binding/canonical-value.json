@@ -1,0 +1,9 @@
+{
+  "value": {
+    "z": [null, true, false, 7],
+    "é": "Café",
+    "a": {"b": "x"}
+  },
+  "canonical": "{\"a\":{\"b\":\"x\"},\"z\":[null,true,false,7],\"é\":\"Café\"}",
+  "digest": "sha256:bfe5059427e6823c91494dee7418355a7d7220af67ee858d12ff87b21cac8f33"
+}

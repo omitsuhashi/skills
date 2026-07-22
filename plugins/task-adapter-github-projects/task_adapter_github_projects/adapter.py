@@ -238,7 +238,6 @@ class GithubProjectsAdapter:
         return {
             "adapter_contract_version": ADAPTER_CONTRACT_VERSION,
             "ok": True,
-            "status": "ready",
             "operation_type": operation["operation_type"],
             "backend_key": operation["backend_key"],
             "destination_ref": operation["destination_ref"],
@@ -1124,13 +1123,12 @@ class GithubProjectsAdapter:
         return {
             "adapter_contract_version": ADAPTER_CONTRACT_VERSION,
             "ok": False,
-            "status": "blocked",
             "operation_type": operation["operation_type"],
             "backend_key": operation["backend_key"],
             "destination_ref": operation["destination_ref"],
             "readiness": {"ok": False, "checks": []},
             "expected_side_effects": [],
-            "requires_human_confirmation": True,
+            "requires_human_confirmation": False,
             "error": {
                 "error_type": "setup_blocker",
                 "code": code,

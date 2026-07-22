@@ -165,6 +165,7 @@ content_target_ref = "task-content:default"
                 operation = arguments["operation"]
                 return json.dumps(
                     {
+                        "result_type": "TaskWriteResult",
                         "adapter_contract_version": 2,
                         "ok": True,
                         "status": "created",

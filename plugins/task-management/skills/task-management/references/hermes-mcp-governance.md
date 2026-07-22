@@ -1,111 +1,45 @@
 # Hermes MCP Governance
 
-This reference defines the governance boundary for using host-provided MCP
-adapter tools from the task-management skill. Hermes Agent, or another MCP host,
-owns MCP server registration, credentials, profile edits, tool enablement, and
-adapter availability. The task-management plugin owns only the reviewed task
-draft, backend route selection, adapter operation envelope, and normalized
-adapter result boundary.
+Hermes/the MCP host owns plugin installation, route/config placement, MCP server
+registration, credentials, permissions, profile edits, tool enablement, and
+delegation. Repository validation owns none of those live changes.
 
-## Install Boundary
+## Exposure boundary
 
-Installing or updating the task-management plugin must not:
+For the GitHub adapter, host attestation must state:
 
-- register MCP servers
-- configure credentials or tokens
-- edit live Hermes profiles
-- enable GitHub adapter tools
-- change permissions or delegation settings
-- call live GitHub, Hermes, MCP, browser, credential, or network surfaces
+- raw GitHub MCP tools are `adapter_only`;
+- adapter write tools are `task_management_only`;
+- required Project, Issue-write, and comment-write toolsets are enabled.
 
-The plugin may ship references, configuration templates, examples, static
-fixtures, and tests. It must not turn those artifacts into live host
-configuration during install.
+The model/child agent receives only task-management public tools. It must never
+receive raw MCP tool names or adapter apply directly. If the host cannot prevent
+state-changing tool inheritance, write readiness is blocked.
 
-For reads, the host-owned route may fix either
-`mcp__<server>__task_query` or `task_adapter__<provider>__task_query`. The
-task-management plugin dispatches only that exact read-only name. Installing the
-plugin never registers or enables it. The local bootstrap snapshot route needs
-no provider credential and is used for the isolated Hermes smoke test only.
+## Approval boundary
 
-## Adapter Availability Gate
+Tool availability and successful preflight are readiness evidence, not write
+approval. The exact preview/digest still requires human approval unless
+preflight is simultaneously ready, confidence-eligible, and certain. Any
+uncertainty, explicit approval policy, review note, route drift, destination
+drift, or side-effect drift returns to the human.
 
-The Adapter Availability Gate is a host / adapter-side readiness check. It is
-not a plugin implementation side effect, task write approval, or remote write
-approval. When a workflow calls this a Live Root Gate, it is still the same
-readiness class: the host confirms that the selected live root, MCP adapter,
-credential state, destination reference, tool enablement, and delegation
-boundary can execute an operation that has already been approved elsewhere.
+## Credential boundary
 
-Before a state-changing GitHub MCP adapter tool can receive an approved
-operation envelope, the host or adapter must confirm:
+Credentials stay in the host-managed MCP connection. Do not put them in plugin
+config, route files, task drafts, operation envelopes, examples, results, logs,
+or knowledge docs. Use only opaque public destination/content/task references.
 
-- the MCP server for the route is registered outside plugin install
-- the required credential or authorization is ready in the host-owned adapter
-  flow
-- the required adapter tool is explicitly enabled for the task-management flow
-- the connection reference and destination reference resolve on the adapter side
-- the adapter can report missing server, disabled tool, missing auth,
-  permission failure, destination not found, and field missing as availability
-  states
+## Live activation gate
 
-The task-management plugin may consume this host-provided availability data and
-map it to the typed GitHub MCP route results described in
-`github-mcp-projects.md`. If any required condition is absent, the plugin stops
-before adapter dispatch and returns setup guidance. It does not self-register,
-self-authenticate, self-enable, repair schema, or fall back to a direct GitHub
-client.
+An approved live activation workflow must separately verify:
 
-A readiness pass means only that an approved operation is executable. It does
-not permit unapproved remote writes, approve a changed destination or tool, or
-replace Adapter Dispatch Review. A readiness failure is a setup blocker when it
-reports root mismatch, auth missing, destination unresolved, or an unsafe
-delegation boundary.
+1. both plugin versions and enabled state;
+2. host route/config location and matching opaque refs;
+3. GitHub MCP registration, auth, permission, and exact tool availability;
+4. delegation exposure policy;
+5. preflight against the intended destination;
+6. explicit approval before any real mutation;
+7. post-write public readback and audit evidence.
 
-## Credential Boundary
-
-Credentials belong to the host-owned MCP adapter flow. They must not be stored
-in task-management config, examples, task drafts, adapter envelopes, normalized
-task refs, logs, or knowledge docs.
-
-Use opaque references such as `connection_ref`, `destination_ref`, and
-`task_ref`. Do not expose tokens, authorization headers, GitHub node IDs, field
-IDs, project IDs, owner names, repository IDs, or project numbers as reusable
-task-management contract values.
-
-## Delegation Boundary
-
-Hermes profiles may set `delegation.inherit_mcp_toolsets: true`. That setting is
-risky for state-changing MCP adapter tools because a child agent can inherit the
-same create, update, comment, or report capability that was intended only for a
-commander or task-management flow.
-
-GitHub MCP adapter tools must not be unconditionally inherited by child agents.
-When state-changing tools are enabled for task-management, use a narrow
-host-side policy such as:
-
-- enable the tools only for the commander or task-management profile that owns
-  Adapter Dispatch Review
-- do not expose the tools to review workers, work-unit subagents, or generic
-  implementation workers by default
-- pass reviewed task drafts, operation previews, or normalized results to child
-  agents instead of passing the toolset itself
-- require a fresh Adapter Dispatch Review after any destination, tool name,
-  operation type, task reference, or expected side effect changes
-- keep manual approval and MCP reload confirmation enabled when the host
-  supports those controls
-
-If the host cannot prevent unconditional inheritance of state-changing GitHub
-MCP tools, treat the Adapter Availability Gate as blocked for write operations.
-The skill may still produce previews and setup guidance, but it must not hand an
-operation envelope to the adapter.
-
-## Approval Boundary
-
-Adapter availability does not approve a task write. It only proves that the host
-can route the approved operation to an external adapter.
-
-Every state-changing operation still needs Adapter Dispatch Review for the
-exact envelope values: backend key, connection reference, destination reference,
-destination label, operation type, adapter tool name, task content, work unit
-fields, task reference when present, and expected adapter side effects.
+Installing or testing this repository does not perform any of these actions.

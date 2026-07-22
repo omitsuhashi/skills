@@ -80,6 +80,7 @@ def preflight_response():
 
 def created_response():
     return {
+        "result_type": "TaskWriteResult",
         "adapter_contract_version": 2,
         "ok": True,
         "status": "created",

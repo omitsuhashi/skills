@@ -2,7 +2,9 @@
 
 ## 状態
 
-2026-07-21 Spec Gate 承認済み。separate plugin distribution と official GitHub MCP mapping を承認済み仕様として固定した。実装、Issue Gate、MCP registration、credential setup、GitHub Project / Issue 操作、live smoke は未実施。
+2026-07-21 Spec Gate承認済み。2026-07-22にseparate plugin `task-adapter-github-projects` `0.1.0`とpublic fake-MCP end-to-endをlocal実装・検証し、POTASK-019は独立implementation review待ちである。GitHub Issue mirror、push、PR、merge、MCP registration、credential setup、Hermes live profile、GitHub Project / Issue操作、live smokeは未実施で、Live Activation Gateとして別途扱う。
+
+承認済みAdapter設計、DAG、plugin責務、remote / live policyは変更していない。current implementation / review状態は[Portfolio OS Task Backend Plugin Skill Issues](portfolio-os-task-backend-plugin-skill-issues.md)で追跡する。
 
 ## Epic ID
 
@@ -23,7 +25,7 @@ Task Manager / Schedule Secretary
 
 task-management と adapter は Python package import で結合しない。JSON-compatible `adapter_contract_version: 2` と normative fixtures が seam である。
 
-## Current official capability
+## Spec Gate時点のofficial capability
 
 2026-07-21 に official repository main `9d130049e9074772c2afbbd5e904725d240443ad` を監査した。
 

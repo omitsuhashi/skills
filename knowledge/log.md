@@ -1202,3 +1202,102 @@ append-only で使います。すべての entry は予測しやすい header �
 - 初回worker dispatchは、承認済み`contracts.py` / `safety.py`追加と、既存exact implementation-file guard 2件のPOTASK-012 Write Scope外編集が両立しないことを編集前に検知してfail closedした
 - ユーザー承認により`plugins/task-management/tests/test_adapter_dispatch.py`と`plugins/task-management/tests/test_github_mcp_route.py`だけをPOTASK-012 Write Scopeへ追加した
 - input packetとExecution Envelope revision 2を同期した。機能scope、acceptance behavior、DAG、remote / live policyは変更していない
+
+## [2026-07-22] human-decision | POTASK-012 exceptional review cycle
+
+- POTASK-012 workerは`bb66aff`とreview fix `5f4c0dc`を作成し、write contracts 26 / 26、task-management full suite 123 / 123、read regression各18 / 18、`git diff --check`を通過した
+- 独立review cycle 2 / 2で、scheme-relative / colon-form URL-shaped `destination_ref` bypassと、root plugin entrypoint / direct provider SDK / separate-adapter importのguard scan漏れがImportant `intent_gap`として残った
+- max review cycle到達後、runtime human request `hr-potask-012-review-exception-001`でPOTASK-012と全descendantを停止し、blockerをreleaseしなかった
+- ユーザーは残存2件だけをTDD修正して独立reviewする例外cycle 1回を承認した。新規または残存Critical / Important findingがあれば再停止し、risk acceptanceを自動推論しない
+- remote policyは`local_only`のまま。GitHub Issue、push、PR、merge、live Hermes / MCP / credential / Project / Issue変更は未実施
+
+## [2026-07-22] review-stop | POTASK-012 exceptional review
+
+- 人間承認済み例外fix `c47a9c7`はURL-shaped destination bypassとroot / provider import scan漏れをTDD修正し、write contracts 26 / 26、task-management full suite 127 / 127、read regression各18 / 18、`git diff --check`を通過した
+- 独立exception reviewは、両guardの`r"\b(?:api\.github\.com|/graphql)\b"`がquoted / string-start `/graphql`を検出できないImportant `intent_gap`を1件再現した。他のscope内findingは検出されなかった
+- 承認済みexception後にImportantが残ったためPOTASK-012を`WAITING_HUMAN`へ戻し、POTASK-013、POTASK-014、POTASK-016をreleaseしなかった
+- human request `hr-potask-012-post-exception-decision-001` は、regex boundaryと代表probeだけのmicro-fix + independent review 1回、既知riskの明示accept、実行停止のいずれかを要求する
+- remote policyは`local_only`のまま。追加fix、GitHub Issue、push、PR、merge、live Hermes / MCP / credential / Project / Issue変更は未実施
+
+## [2026-07-22] human-decision | POTASK-012 final micro-fix review
+
+- ユーザーはhuman request `hr-potask-012-post-exception-decision-001`に対し、残存したquoted / string-start `/graphql` guard漏れだけを対象にする最終micro-fixと独立review 1回を承認した
+- write scopeは`plugins/task-management/tests/test_adapter_dispatch.py`と`plugins/task-management/tests/test_github_mcp_route.py`の2ファイルに限定し、無効な先頭word-boundaryの修正と代表的`endpoint = "/graphql"` failing probe追加だけを許可する
+- 既存のclient / API / GraphQL / `gh` / provider禁止を維持し、最終review後もCritical / Important findingが残る場合は自動fixやrisk acceptanceを行わず再停止する
+- POTASK-012のblockerは最終review approvalまで維持する。remote policyは`local_only`のままで、GitHub Issue、push、PR、merge、live Hermes / MCP / credential / Project / Issue変更は未実施
+
+## [2026-07-22] implementation-review | POTASK-012 local PR_READY
+
+- 最終micro-fix `d539ebd`は2つのguard testだけを変更し、`endpoint = "/graphql"` probeを各helperへ追加してTDD RED 23 tests / 2 expected failuresからGREEN 23 / 23へ進めた
+- write contracts 26 / 26、task-management full suite 127 / 127、read adapter / routes各18 / 18、full / micro rangeの`git diff --check`を通過した
+- 独立reviewはfull range `cc1d428..d539ebd`とmicro range `c47a9c7..d539ebd`を`approved`とし、Critical / Important findingは0件だった
+- POTASK-012をlocal `PR_READY`へ移し、`artifact_ready`でPOTASK-013、POTASK-014、POTASK-016をreleaseした。remote / live writeは未実施
+
+## [2026-07-22] implementation-review | POTASK-014 and POTASK-016 local PR_READY
+
+- POTASK-014 `a5bcf11`はcanonical approval digest、confidence-aware approval policy、preflightとの状態分離を実装し、approval / preflight各5 / 5、task-management full 137 / 137を通過した。independent review cycle 1は`approved`
+- POTASK-016 `bc73c99`はseparate GitHub Projects Adapter scaffold、fixed MCP allowlist、opaque mapping、host attestation、dual-host manifestsを実装し、adapter tests 15 / 15、plugin / dual-host validatorsを通過した。independent review cycle 1は`approved`
+- 両issueをlocal `PR_READY` / `artifact_ready`へ移した。POTASK-014 fixtureのseparate Adapter copy同期はPOTASK-019 integration scopeが所有する
+- GitHub Issue、push、PR、merge、live install / MCP / credential / GitHub mutationは未実施
+
+## [2026-07-22] human-wait | POTASK-013 regression guard scope
+
+- POTASK-013 workerはapproved scope内でroute 21 / 21、read adapter 18 / 18、diff-checkを通過したが、route v2 config更新がscope外の既存`plugins/task-management/tests/test_backend_routing.py` route v1 exact assertionsを回帰させることを検出した
+- human request `hr-potask-013-regression-guard-scope-001`を開き、上記1 test fileだけをWrite Scope / read pathsへ追加する承認を求めた。機能scope、DAG、remote / live policyは変更しない
+- workerの未commit変更を保持し、POTASK-013を`WAITING_HUMAN`、POTASK-015をblockedに維持した
+
+## [2026-07-22] gate-amendment | POTASK-013 regression guard scope approved
+
+- ユーザーがhuman request `hr-potask-013-regression-guard-scope-001`の推奨案を承認し、`plugins/task-management/tests/test_backend_routing.py`だけをPOTASK-013 Write Scope / read pathsへ追加した
+- assertionsをlegacy route v1からapproved route v2 exampleへ同期する。機能scope、Acceptance Criteria、DAG、remote / live policyは変更しない
+- normalized input packetとschema v3 Execution Envelope revision 3を同期し、POTASK-015 integration scopeはPOTASK-013のapproved scopeを継承する
+- 保存済み7-file uncommitted diffを破棄せず、source hashesを更新したbounded worker packetから元workerを再開する
+
+## [2026-07-22] implementation-review | POTASK-017 local PR_READY
+
+- initial `eb570e4`のcycle 1 reviewは、official compact field typeのlowercase mismatchと、public Hermes dispatch JSON envelopeをtestsが迂回する2件をCritical `intent_gap`として検出した
+- fix `b2494e5`はpinned official GitHub MCP sourceとlive installed Hermes public seamを根拠にTDD修正し、preflight 7 / 7、query 5 / 5、full 27 / 27、plugin / dual-host validatorsを通過した
+- cycle 2 reviewは`approved`、finding 0件。POTASK-017をlocal `PR_READY` / `artifact_ready`へ移し、POTASK-018をreleaseした
+
+## [2026-07-22] implementation-review | POTASK-018 local PR_READY
+
+- implementation `d780f8c`はofficial MCP operation shapes/orderでlinked Issue create、Project add、ordered 9 field update、read-back、update / comment / report、safe partial resultを実装した
+- cycle 1 reviewはfirst-write explicit-no-write retryabilityがfield-only update / comment / reportで失われ、stable `rate_limited` spellingがno-write detectorから漏れるImportant `intent_gap`を1件検出した
+- fix `cc61018`は5 first-write probesだけをfailed / provider failure / retryableにし、later-write / unknown outcomeはpartial / nonretryableを維持した。partial 6 / 6、full 39 / 39、Hermes fake-MCP smoke、plugin / dual-host validatorsを通過した
+- cycle 2 reviewはfull range `b2494e5..cc61018`とfix delta `d780f8c..cc61018`を`approved`とし、finding 0件。POTASK-018をlocal `PR_READY` / `artifact_ready`へ移した
+- runtime next actionsはrunnable / reviewable / fixableなし。POTASK-013だけがhuman wait、POTASK-015はPOTASK-013、POTASK-019はPOTASK-015を待つ。remote / live writeは未実施
+
+## [2026-07-22] implementation-review | POTASK-013 and POTASK-015 local PR_READY
+
+- POTASK-013 `badc466`はhuman-approved regression guard scopeを含むroute v2 clean breakを完了し、focused 21 / 18 / 8、full 130、smoke / validatorsを通過した。independent review cycle 1は`approved`
+- POTASK-015 integration commit `82b3246`はreviewed `badc466`と`a5bcf11`をexact parentsに持ち、implementation `f5fc50e`はapproval-bound preflight/apply facade、bounded normalization、v0.4.0 read/write toolsets、fake write smokeを実装した
+- facade 7、normalization 9、manifest 11、full 156、read / write smokes、plugin / dual-host validatorsを通過し、independent review cycle 1は`approved`、finding 0件
+- POTASK-013 / 015をlocal `PR_READY` / `artifact_ready`へ移し、POTASK-019の全blockerを解消した。remote / live writeは未実施
+
+## [2026-07-22] gate-amendment | POTASK-019 worker-owned completion evidence
+
+- ユーザー指示により、POTASK-019 final integration workerがplugin docs / manifests / SKILL / references / examples / testsに加え、canonical spec / ledger / index / logのcompletion evidenceも所有する
+- normalized input packetとschema v3 Execution Envelope revision 4へ4つのknowledge pathsを追加した。機能scope、DAG、base policy、local-only remote / live policyは変更しない
+- POTASK-019はreviewed POTASK-018 `cc61018`をbaseにし、reviewed POTASK-015 `f5fc50e`をexplicit integration commitで取り込んでからfinal TDD / docs / full verificationへ進む。coordinatorは実装しない
+
+## [2026-07-22] human-wait | POTASK-019 normative status scope
+
+- POTASK-019 integration commit `3c8ba06`はexact parents `cc61018` + `f5fc50e`、conflict 0件、両head ancestry PASS。fixture exact-copyとpublic fake end-to-end 6 / 6をTDDで進め、task-management 156 / 156、adapter 45 / 45、3 smokesをGREENにした
+- unique Companies Interface v2 canonical `task-management-write-preflight-interface-spec.md`とGitHub Adapter specのstatus/current boundaryが2026-07-21時点の未実装記述を残すが、Execution Envelope revision 4では両fileはread-onlyだった
+- human request `hr-potask-019-normative-status-scope-001`は上記2 filesだけをwrite scopeへ追加し、実装完了 / local fake verification完了 / remote・live未実施のstatusへ同期する承認を求めた。normative design、DAG、plugin scope、remote / live policyは変更しない
+- POTASK-019を`WAITING_HUMAN`へ移し、既許可scopeのworking changesを保持した。final commit / report / reviewはdecisionまで実施しなかった
+
+## [2026-07-22] gate-amendment | POTASK-019 normative status scope approved
+
+- ユーザーがhuman request `hr-potask-019-normative-status-scope-001`を承認し、Execution Envelope revision 5へ更新した
+- POTASK-019のwrite scopeへ`task-management-write-preflight-interface-spec.md`と`task-adapter-github-projects-spec.md`だけを追加し、実装完了 / local fake verification完了 / remote・live未実施のstatus/current-boundary同期だけを許可した
+- normative design、DAG、plugin scope、remote / live policyは変更しない。保持済みPOTASK-019 working changesをresetせず、同じworker contextで実装を再開した
+
+## [2026-07-22] implementation | POTASK-019 local integration reviewable
+
+- knowledge syncはEpic Base `6c1c8ab`のexact blobs（spec `9dc32a052e45bad2f3f2905837ebad8db56fce75c850ef6752a1d256e3fb923d`、ledger `bfafb78a70b0fa82b84849385098b57e3ae825a0b41d85877d5d348550889b33`、index `e2f2a0eb45b906a660d3bc9a92a6fbc9067076527c710142d0e44f13f0e740c7`、log `d4f5a004940e69790064651b252368c6e4d4e5f86c9bcf20b23dd50a946d639b`）をstarting contentとしてからscoped editした。knowledgeにmerge / cherry-pick / resetは使っていない
+- integration commit `3c8ba068d648974ab1a31d500b965736da9e38c4`はreviewed `cc61018` + `f5fc50e`をexact parentsに持ち、conflict 0件、両heads ancestry PASS、first-parent 25 pathsすべてtask-management scope内だった
+- Adapter v2 fixture treesをexact一致させ、public task-management → GitHub Adapter fake dispatch 6 testsを追加した。preflight zero-write、approved create / attach / 9 field updates / read-back、human-required / mismatch zero-write、safe partial / explicit-no-write retryを実証した
+- task-management 156 / 156、GitHub Adapter 45 / 45、llm-wiki 6 / 6、3 smokes、2 plugin validators、skill validator、2 dual-host validators、architecture validator、fixture diff、working-tree diff check、cache scanはPASSした。legacy route v1 / placeholder assertionsだけをv2へ同期し、安全invariantは弱めていない
+- Companies public Interface v2は一意なnormative canonical `knowledge/wiki/syntheses/task-management-write-preflight-interface-spec.md`を参照する。revision 5 approvalに従って両normative specのstatus / current-boundaryだけを同期し、design本文は変更していない
+- POTASK-019はlocal `REVIEWABLE`であり、独立implementation review前に`PR_READY`を主張しない。GitHub Issue、push、PR、merge、live install / profile / MCP / credential / Project / Issue変更は未実施で、Live Activation Gateは別途必要である

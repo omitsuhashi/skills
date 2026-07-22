@@ -83,18 +83,18 @@ class HermesPluginTests(unittest.TestCase):
         finally:
             sys.modules.pop(module_name, None)
 
-    def test_placeholder_handlers_fail_closed_and_reject_tool_selection(self):
+    def test_runtime_handlers_fail_closed_without_config_and_reject_tool_selection(self):
         module_name, module = _load_entrypoint()
         try:
             context = FakeContext()
             module.register(context)
 
             for tool in context.tools:
-                with self.subTest(tool=tool["name"], case="not_implemented"):
+                with self.subTest(tool=tool["name"], case="config_missing"):
                     result = json.loads(tool["handler"]({}))
                     self.assertFalse(result["ok"])
                     self.assertEqual("blocked", result["status"])
-                    self.assertEqual("adapter_not_implemented", result["error"]["code"])
+                    self.assertEqual("config_missing", result["error"]["code"])
                 with self.subTest(tool=tool["name"], case="caller_tool"):
                     result = json.loads(
                         tool["handler"](
