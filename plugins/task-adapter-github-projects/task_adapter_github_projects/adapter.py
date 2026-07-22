@@ -530,6 +530,7 @@ class GithubProjectsAdapter:
     def _apply_update(self, operation, destination, linked_issue):
         changes = operation["payload"]["changes"]
         task_ref = linked_issue["task_ref"]
+        write_succeeded = False
         issue_changes = {
             key: changes[key]
             for key in ("title", "body")
@@ -555,15 +556,20 @@ class GithubProjectsAdapter:
                     repository=linked_issue["repository"],
                     expected_number=linked_issue["number"],
                 )
+                write_succeeded = True
             except (_AdapterBlocker, NormalizationError) as error:
                 code = error.code if isinstance(error, _AdapterBlocker) else "adapter_unavailable"
+                safe_retry = isinstance(error, _AdapterBlocker) and error.retryable
                 return self._write_failure(
                     operation,
                     code=code,
                     stage="issue_update",
-                    status="partial",
-                    error_type="partial_failure",
+                    status="failed" if safe_retry else "partial",
+                    error_type=(
+                        "provider_failure" if safe_retry else "partial_failure"
+                    ),
                     task_ref=task_ref,
+                    retryable=safe_retry,
                 )
 
         try:
@@ -585,14 +591,19 @@ class GithubProjectsAdapter:
                     },
                     stage="project_fields_update",
                 )
+                write_succeeded = True
         except _AdapterBlocker as error:
+            safe_retry = error.retryable and not write_succeeded
             return self._write_failure(
                 operation,
                 code=error.code,
                 stage="project_fields_update",
-                status="partial",
-                error_type="partial_failure",
+                status="failed" if safe_retry else "partial",
+                error_type=(
+                    "provider_failure" if safe_retry else "partial_failure"
+                ),
                 task_ref=task_ref,
+                retryable=safe_retry,
             )
 
         try:
@@ -636,13 +647,17 @@ class GithubProjectsAdapter:
                 stage=stage,
             )
         except _AdapterBlocker as error:
+            safe_retry = error.retryable
             return self._write_failure(
                 operation,
                 code=error.code,
                 stage=stage,
-                status="partial",
-                error_type="partial_failure",
+                status="failed" if safe_retry else "partial",
+                error_type=(
+                    "provider_failure" if safe_retry else "partial_failure"
+                ),
                 task_ref=task_ref,
+                retryable=safe_retry,
             )
         try:
             task_ref = self._read_back_linked_issue(
@@ -1070,7 +1085,9 @@ class GithubProjectsAdapter:
         if not isinstance(error, str):
             return False
         normalized = error.casefold()
-        return "rate limit" in normalized and (
+        return (
+            "rate limit" in normalized or "rate_limited" in normalized
+        ) and (
             "write not executed" in normalized
             or "no write occurred" in normalized
         )

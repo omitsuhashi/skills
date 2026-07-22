@@ -129,6 +129,10 @@ class GithubProjectsPartialFailureTests(unittest.TestCase):
             "create",
             "rate limit exceeded; write not executed",
         )
+        stable_spelling = self._create_with_failure(
+            "create",
+            "rate_limited; write not executed",
+        )
         unknown = self._create_with_failure(
             "create",
             "rate limit exceeded after unknown outcome",
@@ -140,9 +144,72 @@ class GithubProjectsPartialFailureTests(unittest.TestCase):
 
         self.assertEqual("rate_limited", retryable["error"]["code"])
         self.assertTrue(retryable["retryable"])
+        self.assertEqual("rate_limited", stable_spelling["error"]["code"])
+        self.assertTrue(stable_spelling["retryable"])
         self.assertFalse(unknown["retryable"])
         self.assertFalse(already_partial["retryable"])
         self.assertEqual("partial", already_partial["status"])
+
+    def test_explicit_no_write_rate_limit_is_retryable_for_each_first_write(self):
+        cases = (
+            ("update", {"title": "Renamed task"}, "issue_update"),
+            ("update", {"importance": "critical"}, "project_fields_update"),
+            ("comment", None, "comment_create"),
+            ("report", None, "report_create"),
+        )
+        for operation_name, changes, expected_stage in cases:
+            with self.subTest(operation_name=operation_name, changes=changes):
+                request = request_for(operation_name)
+                if changes is not None:
+                    request["operation"]["payload"]["changes"] = changes
+                result = GithubProjectsAdapter(
+                    config=load_config(EXAMPLE_CONFIG),
+                    dispatch=lambda *_args: public_error(
+                        "rate_limited; write not executed"
+                    ),
+                ).apply(request)
+
+                self.assertEqual("failed", result["status"])
+                self.assertEqual("provider_failure", result["error"]["error_type"])
+                self.assertEqual("rate_limited", result["error"]["code"])
+                self.assertEqual(expected_stage, result["error"]["stage"])
+                self.assertTrue(result["retryable"])
+                self.assertIsNotNone(result["task_ref"])
+                self.assertEqual(result, validate_task_write_result(result))
+
+    def test_later_write_and_first_write_unknown_outcomes_are_not_retryable(self):
+        later_request = request_for("update")
+        later_request["operation"]["payload"]["changes"] = {
+            "title": "Renamed task",
+            "importance": "critical",
+        }
+
+        def later_dispatch(_tool_name, arguments):
+            if arguments["method"] == "update":
+                return public_success(issue_result("Renamed task"))
+            return public_error("rate_limited; write not executed")
+
+        later = GithubProjectsAdapter(
+            config=load_config(EXAMPLE_CONFIG),
+            dispatch=later_dispatch,
+        ).apply(later_request)
+        unknown_request = request_for("update")
+        unknown_request["operation"]["payload"]["changes"] = {
+            "importance": "critical"
+        }
+        unknown = GithubProjectsAdapter(
+            config=load_config(EXAMPLE_CONFIG),
+            dispatch=lambda *_args: public_error(
+                "rate limit exceeded after unknown outcome"
+            ),
+        ).apply(unknown_request)
+
+        self.assertEqual("partial", later["status"])
+        self.assertEqual("project_fields_update", later["error"]["stage"])
+        self.assertFalse(later["retryable"])
+        self.assertEqual("partial", unknown["status"])
+        self.assertEqual("project_fields_update", unknown["error"]["stage"])
+        self.assertFalse(unknown["retryable"])
 
     def test_comment_and_report_unknown_write_outcomes_preserve_safe_task_identity(self):
         for operation_name, expected_stage in (
