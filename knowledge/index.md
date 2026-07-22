@@ -24,6 +24,10 @@ _現在なし。_
   検索語: task-management, GitHub Projects, GitHub MCP, Issue, standalone skill, project_url, inbox repository, repository work unit, Status, Priority, Due date, approval policy, fail closed, タスク管理, 直接接続, 承認, セットアップ
 - [GitHub Projects 直接接続型 Task Management Skill Issue 台帳](wiki/syntheses/direct-github-projects-task-management/issues.md) — DGPTM-001からDGPTM-004へstandalone skill、direct MCP contract、旧plugin削除、historical supersessionを依存順に分解したIssue Gate承認済み台帳。
   検索語: task-management, GitHub Projects, GitHub MCP, DGPTM, local issue, Issue Gate, blocker graph, plugin removal, standalone skill, ローカルIssue, ブロッカー, 移行
+- [GitHub Projects Direct Task Management Skill Implementation Plan](wiki/syntheses/direct-github-projects-task-management/implementation-plan.md) — DGPTM-001からDGPTM-004をscaffold、RED/GREEN、旧plugin削除、fresh evaluation、local closeoutの順で実装するExecution Plan Gate candidate。
+  検索語: task-management, GitHub Projects, implementation plan, writing-plans, TDD, RED GREEN, plugin removal, forward test, 実装計画, テスト駆動, 検証
+- [GitHub Projects Direct Task Management Skill Input Packet](wiki/syntheses/direct-github-projects-task-management/input-packet.json) — approved spec bindingとIssue Gate承認済みDGPTM-001〜DGPTM-004を`local_only`で固定したsealed Input Packet v2。
+  検索語: task-management, GitHub Projects, Input Packet v2, approved spec binding, execution intent, DGPTM, local_only, 実行契約, 承認済み仕様
 - [LLM Wiki Draft Review And Canonicalize Goal Spec](wiki/syntheses/llm-wiki-draft-review-and-canonicalize-goal-spec.md) — Goal command で `skills/llm-wiki` を更新するための詳細実装契約。
 - [Grill To PR Loop Issue Implementation Review Gate Plan](wiki/syntheses/grill-to-pr-loop-issue-implementation-review-gate-plan.md) — `skills/grill-to-pr-loop` に issue 単位の実装レビューゲートを追加するための実装計画。
   検索語: grill-to-pr-loop, requesting-code-review, 実装レビュー, issue review, PR review, review gate, implementation plan

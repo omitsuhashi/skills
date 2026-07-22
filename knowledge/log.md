@@ -1318,3 +1318,29 @@ append-only で使います。すべての entry は予測しやすい header �
 - approval scope: Issue ID、Outcome、blocker graph、dependency order、write scope、acceptance criteria、verification、non-goals
 - userの「Issue Gateを承認」によりDGPTM-001〜DGPTM-004を承認した。status-only更新後、DGPTM-001をfirst runnable candidate、DGPTM-002〜DGPTM-004をdependency blockedとする
 - Execution Plan Gateまではproduction implementationを開始せず、remote policyは`local_only`を維持する
+
+## [2026-07-23] execution-plan-candidate | GitHub Projects Direct Task Management Skill
+
+- `superpowers:writing-plans`を使い、DGPTM-001〜DGPTM-004のexact file responsibility、test-first step、RED/GREEN command、scoped commit、fresh evaluation、local closeoutを`knowledge/wiki/syntheses/direct-github-projects-task-management/implementation-plan.md`に作成した
+- approved spec `9200996f2ed046ecb351fad96930c6e4e9a1580fdde14472ecc8b68b98f36c94`と2026-07-23T08:10:21+09:00のsix-part approval evidenceを使い、Input Packet v2を`knowledge/wiki/syntheses/direct-github-projects-task-management/input-packet.json`へsealした
+- sealed packet raw-byte SHA-256は`14b011499e4113ea2c496592228e5f2e7d37962592bec92073b8dd699f68266f`、delivery intentは`local_only`、Issue dependencyはDGPTM-001→002→003→004の直列とした
+- current stateはExecution Plan Gate validation / capability preflight待ち。production implementation、live GitHub write、push、PR、installは未実施
+
+## [2026-07-23] execution-plan-validation | GitHub Projects Direct Task Management Skill
+
+- implementation plan raw-byte SHA-256は`a912f624a44102df663408c9a6334a0791cbe6f41dd6fa98d6378398502dbac5`、sealed Input Packet raw-byte SHA-256は`14b011499e4113ea2c496592228e5f2e7d37962592bec92073b8dd699f68266f`
+- Input Packet validatorは`ok=true / errors=[]`、approved spec seal capabilityは`blocking=false / supported=true`、Git repository preflightとrequired review / TDD skill discoveryは成功した
+- executionはDGPTM-001→002→003→004のserial worker-context job、`max_parallel=1`、`coordinator_may_implement=false`、review cycle上限2、remote policy`local_only`とした
+- writing-plans self-reviewでspec coverage、placeholder、test名 / field名 / dependency整合を確認し、open gapはない。実行方式のuser選択とExecution Plan Gate commitまではproduction implementationを開始しない
+
+## [2026-07-23] execution-plan-approval | GitHub Projects Direct Task Management Skill
+
+- actor expression: `session-user`
+- approved at: `2026-07-23T08:28:19+09:00`
+- exact plan path: `knowledge/wiki/syntheses/direct-github-projects-task-management/implementation-plan.md`
+- plan raw-byte SHA-256: `a912f624a44102df663408c9a6334a0791cbe6f41dd6fa98d6378398502dbac5`
+- exact packet path: `knowledge/wiki/syntheses/direct-github-projects-task-management/input-packet.json`
+- packet raw-byte SHA-256: `14b011499e4113ea2c496592228e5f2e7d37962592bec92073b8dd699f68266f`
+- decision: `approved`
+- approval scope: DGPTM-001→DGPTM-004のdependency chain、各Issueのwrite scope、serial worker context、task単位review、review cycle上限2、remote policy `local_only`
+- userの「はい」によりExecution Plan GateとSubagent-Driven executionを承認した。production implementationはgate commit後に開始し、live GitHub write、push、PR、install、release、mergeは引き続き非承認とする
