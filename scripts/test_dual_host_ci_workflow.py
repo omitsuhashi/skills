@@ -4,46 +4,33 @@ import unittest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = REPO_ROOT / ".github" / "workflows" / "skill-architecture.yml"
-HERMES_MANIFEST_TEST = (
-    REPO_ROOT / "plugins" / "task-management" / "tests" / "test_hermes_plugin_manifest.py"
+TASK_MANAGEMENT_TEST = (
+    REPO_ROOT
+    / "skills"
+    / "task-management"
+    / "tests"
+    / "test_task_management_contract.py"
 )
 
 
 class DualHostCiWorkflowTests(unittest.TestCase):
-    def test_python_matrix_runs_focused_decision_and_hermes_contracts(self):
+    def test_python_matrix_runs_standalone_skill_contracts(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
-
-        self.assertIn("python-version:\n          - \"3.9\"\n          - \"3.12\"", text)
+        self.assertIn('python-version:\n          - "3.9"\n          - "3.12"', text)
         self.assertIn("Run decide-in-order tests", text)
         self.assertIn(
             "python3 -m unittest discover -s skills/decide-in-order/tests", text
         )
-        self.assertIn("Run task-management decision-support tests", text)
+        self.assertIn("Run task-management tests", text)
         self.assertIn(
-            "python3 plugins/task-management/tests/test_decision_support_policy.py",
-            text,
+            "python3 -m unittest discover -s skills/task-management/tests", text
         )
-        self.assertIn("Run task-management Hermes registration tests", text)
-        self.assertIn(
-            "python3 plugins/task-management/tests/test_hermes_plugin_manifest.py",
-            text,
-        )
+        self.assertNotIn("plugins/task-management", text)
 
-    def test_hermes_manifest_contract_has_no_pyyaml_dependency(self):
-        text = HERMES_MANIFEST_TEST.read_text(encoding="utf-8")
-
-        self.assertNotIn("import yaml", text)
-        self.assertNotIn("yaml.safe_load", text)
-
-    def test_hermes_registration_contract_checks_exact_bundled_skill(self):
-        text = HERMES_MANIFEST_TEST.read_text(encoding="utf-8")
-
-        self.assertIn("self.assertEqual(1, len(ctx.skills))", text)
-        self.assertIn(
-            "self.assertEqual(SKILL.resolve(), Path(skill_args[1]).resolve())",
-            text,
-        )
-        self.assertIn("skill_kwargs[\"description\"]", text)
+    def test_task_management_contract_is_host_neutral(self) -> None:
+        text = TASK_MANAGEMENT_TEST.read_text(encoding="utf-8")
+        self.assertIn("test_skill_has_no_host_specific_or_runtime_surface", text)
+        self.assertIn("test_capability_and_partial_failures_are_fail_closed", text)
 
 
 if __name__ == "__main__":
