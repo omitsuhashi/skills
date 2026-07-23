@@ -1384,3 +1384,9 @@ append-only で使います。すべての entry は予測しやすい header �
 - TDDではfull write preflightとselective phrase禁止をtest-firstで追加し、current head `c45d45926a67d23fc49d198d19cdcb630701071a`に対して11 tests中2 expected failuresを確認した。`SKILL.md`と`references/github-projects.md`を揃えた後は11/11 GREENとなった。
 - read / search / listはzero-writeのため必要なIssue / Project read capabilityだけを要求する。create / register、edit、comment、non-terminal update、terminal updateは、mutation前にIssue read / search / create / update / comment、Project read / item add / field update、resolved target permissionのcomplete setをすべて確認し、operation別にpreflightを狭めない。
 - Gate policyはoriginal approved spec / sealed executionの`local_only`と、後続session-user authorizationによるfeature-branch push + draft PR作成だけのdelivery exceptionを区別した。merge、release、live install、live GitHub Issue / Project mutation、その他のlive changeは非承認のままである。本fix commitではpush / PR作成を行わない。
+
+## [2026-07-23] lint | Historical POTASK artifact index repair
+
+- GitHub Actions run `29970825450` のPython 3.9 / 3.12双方で、`grill-to-pr-loop`のhistorical artifact index invariantが失敗した。旧POTASK active catalog削除時に、保持対象のInput Packet v1 2件とExecution Envelope v3 1件まで`knowledge/index.md`から外したことが原因だった。
+- `knowledge/index.md`へ3件だけをhistorical / non-executable evidenceとして再登録した。旧plugin spec、Issue ledger、provider-adapter planはactive catalogへ戻さず、current task-management contractはGitHub Projects直接接続型standalone skillのままとした。
+- historical JSONのbytes、approved spec、sealed current Input Packetは変更していない。focused regression、grill-to-pr-loop 29 tests、issue-implementation-loop 249 tests、llm-wiki 6 tests、decide-in-order 7 tests、task-management 11 tests、architecture / context / dual-host checks、context report、`git diff --check`はすべてpassした。

@@ -27,6 +27,12 @@ _現在なし。_
   検索語: task-management, GitHub Projects, implementation plan, writing-plans, TDD, RED GREEN, plugin removal, forward test, 実装計画, テスト駆動, 検証
 - [GitHub Projects Direct Task Management Skill Input Packet](wiki/syntheses/direct-github-projects-task-management/input-packet.json) — approved spec bindingとIssue Gate承認済みDGPTM-001〜DGPTM-004を`local_only`で固定したsealed Input Packet v2。
   検索語: task-management, GitHub Projects, Input Packet v2, approved spec binding, execution intent, DGPTM, local_only, 実行契約, 承認済み仕様
+- [Portfolio OS Task Backend Plugin Skill Input Packet](wiki/syntheses/portfolio-os-task-backend-plugin-skill-input-packet.json) — historical / non-executable な Input Packet v1。旧POTASK実行証跡としてbytesを保持し、current validatorでは再利用しない。
+  検索語: historical POTASK, Input Packet v1, non-executable, 旧タスク管理, 履歴証跡
+- [Portfolio OS Task Backend Plugin Skill POTASK-011 Input Packet](wiki/syntheses/portfolio-os-task-backend-plugin-skill-potask-011-input-packet.json) — historical / non-executable な Input Packet v1。旧provider adapter実行証跡としてbytesを保持し、current validatorでは再利用しない。
+  検索語: historical POTASK-011, Input Packet v1, provider adapter, non-executable, 履歴証跡
+- [Portfolio OS Task Backend Plugin Skill POTASK-011 Execution Envelope](wiki/syntheses/portfolio-os-task-backend-plugin-skill-potask-011-execution-envelope.json) — historical / non-executable な Execution Envelope v3。旧runの証跡としてbytesを保持し、resumeせずnew approval / new runを作る。
+  検索語: historical POTASK-011, Execution Envelope v3, non-executable, resume不可, 履歴証跡
 - [LLM Wiki Draft Review And Canonicalize Goal Spec](wiki/syntheses/llm-wiki-draft-review-and-canonicalize-goal-spec.md) — Goal command で `skills/llm-wiki` を更新するための詳細実装契約。
 - [Grill To PR Loop Issue Implementation Review Gate Plan](wiki/syntheses/grill-to-pr-loop-issue-implementation-review-gate-plan.md) — `skills/grill-to-pr-loop` に issue 単位の実装レビューゲートを追加するための実装計画。
   検索語: grill-to-pr-loop, requesting-code-review, 実装レビュー, issue review, PR review, review gate, implementation plan
