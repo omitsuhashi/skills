@@ -1,6 +1,17 @@
 from __future__ import annotations
 
-from _helpers import *
+try:
+    from _helpers import *
+except ModuleNotFoundError:
+    from ._helpers import *
+
+LIB_DIR = SCRIPTS_DIR / "lib"
+if str(LIB_DIR) not in sys.path:
+    sys.path.insert(0, str(LIB_DIR))
+
+from issue_implementation_loop.validation.execution_envelope import (
+    validate_execution_envelope,
+)
 
 
 class ExecutionEnvelopeReferenceTests(unittest.TestCase):
@@ -19,6 +30,293 @@ class ExecutionEnvelopeReferenceTests(unittest.TestCase):
 
 
 class ValidationTests(unittest.TestCase):
+    @staticmethod
+    def planning_guard_fixture(
+        root: Path,
+        *,
+        preexisting_dirt: bool = False,
+    ) -> tuple[Path, Path, dict, dict, str]:
+        repo = root / "repo"
+        repo.mkdir()
+        git(repo, "init", "-q")
+        git(repo, "config", "user.email", "test@example.com")
+        git(repo, "config", "user.name", "Test User")
+        git(repo, "branch", "-M", "main")
+        (repo / "README.md").write_text("base\n", encoding="utf-8")
+        git(repo, "add", "README.md")
+        git(repo, "commit", "-q", "-m", "base")
+        planning_base = git(repo, "rev-parse", "HEAD")
+        if preexisting_dirt:
+            (repo / "preexisting.txt").write_text("leave me alone\n", encoding="utf-8")
+        default_status = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(repo),
+                "status",
+                "--porcelain=v1",
+                "--untracked-files=all",
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+
+        planning = root / "planning"
+        planning_branch = "codex/approved-spec-binding/planning"
+        git(
+            repo,
+            "worktree",
+            "add",
+            "-q",
+            "-b",
+            planning_branch,
+            str(planning),
+            planning_base,
+        )
+        synthesis = planning / FIXTURE_ARTIFACT_ROOT
+        synthesis.mkdir(parents=True)
+        (synthesis / "spec.md").write_text("approved spec\n", encoding="utf-8")
+        (synthesis / "issues.md").write_text("# Issues\n", encoding="utf-8")
+        packet_path = synthesis / "input-packet.json"
+        packet = current_input_packet(planning)
+        packet.update(
+            {
+                "planning_branch": planning_branch,
+                "planning_base_sha": planning_base,
+            }
+        )
+        write_json(packet_path, packet)
+        git(planning, "add", "knowledge")
+        git(planning, "commit", "-q", "-m", "planning gate")
+        gate_commit = git(planning, "rev-parse", "HEAD")
+        binding = {
+            "path": packet_path.relative_to(planning).as_posix(),
+            "sha256": hashlib.sha256(packet_path.read_bytes()).hexdigest(),
+            "gate_commit": gate_commit,
+        }
+        envelope = binding_envelope(planning, binding)
+        envelope["repository_guard"] = {
+            "planning_worktree_path": str(planning.resolve()),
+            "planning_branch": planning_branch,
+            "planning_base_sha": planning_base,
+            "default_checkout": {
+                "path": str(repo.resolve()),
+                "branch": "main",
+                "head": planning_base,
+                "status_porcelain_v1": default_status,
+            },
+        }
+        return repo, planning, packet, envelope, planning_base
+
+    def test_repository_guard_rejects_packet_branch_or_base_mismatch(self) -> None:
+        from issue_implementation_loop.repository_integrity import (
+            validate_repository_guard,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            _, planning, packet, valid, _ = self.planning_guard_fixture(
+                Path(tmp)
+            )
+            cases = {
+                "branch": ("planning_branch", "codex/another-epic/planning"),
+                "base": ("planning_base_sha", git(planning, "rev-parse", "HEAD")),
+            }
+            for name, (field, value) in cases.items():
+                with self.subTest(name=name):
+                    envelope = copy.deepcopy(valid)
+                    envelope["repository_guard"][field] = value
+                    self.assertEqual(
+                        validate_repository_guard(envelope, packet, planning),
+                        ["REPOSITORY_GUARD_MISMATCH"],
+                    )
+
+    def test_repository_guard_is_required_only_for_packets_with_planning_identity(
+        self,
+    ) -> None:
+        from issue_implementation_loop.repository_integrity import (
+            validate_repository_guard,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            _, planning, packet, envelope, _ = self.planning_guard_fixture(Path(tmp))
+            envelope.pop("repository_guard")
+            self.assertEqual(
+                validate_repository_guard(envelope, packet, planning),
+                ["REPOSITORY_GUARD_MISSING"],
+            )
+
+            legacy_packet = copy.deepcopy(packet)
+            legacy_packet.pop("planning_branch")
+            legacy_packet.pop("planning_base_sha")
+            self.assertEqual(
+                validate_repository_guard(envelope, legacy_packet, planning),
+                [],
+            )
+
+    def test_repository_guard_rejects_unregistered_planning_path(self) -> None:
+        from issue_implementation_loop.repository_integrity import (
+            validate_repository_guard,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _, planning, packet, envelope, _ = self.planning_guard_fixture(root)
+            unregistered = root / "unregistered"
+            unregistered.mkdir()
+            envelope["repository_guard"]["planning_worktree_path"] = str(
+                unregistered.resolve()
+            )
+
+            self.assertEqual(
+                validate_repository_guard(envelope, packet, planning),
+                ["REPOSITORY_GUARD_WORKTREE_INVALID"],
+            )
+
+    def test_repository_guard_rejects_default_checkout_head_or_status_drift(self) -> None:
+        from issue_implementation_loop.repository_integrity import (
+            validate_repository_guard,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            repo, planning, packet, envelope, _ = self.planning_guard_fixture(root)
+            (repo / "README.md").write_text("drifted\n", encoding="utf-8")
+            git(repo, "add", "README.md")
+            git(repo, "commit", "-q", "-m", "default head drift")
+            self.assertEqual(
+                validate_repository_guard(envelope, packet, planning),
+                ["DEFAULT_CHECKOUT_DRIFT"],
+            )
+
+            status_root = root / "status-case"
+            status_root.mkdir()
+            status_repo, status_planning, status_packet, status_envelope, _ = (
+                self.planning_guard_fixture(status_root)
+            )
+            (status_repo / "new-untracked.txt").write_text(
+                "status drift\n", encoding="utf-8"
+            )
+            self.assertEqual(
+                validate_repository_guard(
+                    status_envelope,
+                    status_packet,
+                    status_planning,
+                ),
+                ["DEFAULT_CHECKOUT_DRIFT"],
+            )
+
+    def test_repository_guard_allows_unchanged_preexisting_dirt(self) -> None:
+        from issue_implementation_loop.repository_integrity import (
+            validate_repository_guard,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            _, planning, packet, envelope, _ = self.planning_guard_fixture(
+                Path(tmp), preexisting_dirt=True
+            )
+
+            self.assertEqual(
+                validate_repository_guard(envelope, packet, planning),
+                [],
+            )
+            self.assertEqual(validate_execution_envelope(envelope, planning), [])
+
+    def test_execution_envelope_reports_gate_commit_not_ancestor_with_repository_guard(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            repo = root / "repo"
+            repo.mkdir()
+            git(repo, "init", "-q")
+            git(repo, "config", "user.email", "test@example.com")
+            git(repo, "config", "user.name", "Test User")
+            git(repo, "branch", "-M", "main")
+            (repo / "README.md").write_text("base\n", encoding="utf-8")
+            git(repo, "add", "README.md")
+            git(repo, "commit", "-q", "-m", "base")
+            planning_base = git(repo, "rev-parse", "HEAD")
+            planning = root / "planning"
+            planning_branch = "codex/approved-spec-binding/planning"
+            git(
+                repo,
+                "worktree",
+                "add",
+                "-q",
+                "-b",
+                planning_branch,
+                str(planning),
+                planning_base,
+            )
+
+            synthesis = repo / FIXTURE_ARTIFACT_ROOT
+            synthesis.mkdir(parents=True)
+            (synthesis / "spec.md").write_text("approved spec\n", encoding="utf-8")
+            (synthesis / "issues.md").write_text("# Issues\n", encoding="utf-8")
+            packet_path = synthesis / "input-packet.json"
+            packet = current_input_packet(repo)
+            packet.update(
+                {
+                    "planning_branch": planning_branch,
+                    "planning_base_sha": planning_base,
+                }
+            )
+            write_json(packet_path, packet)
+            git(repo, "add", "knowledge")
+            git(repo, "commit", "-q", "-m", "gate only on main")
+            gate_commit = git(repo, "rev-parse", "HEAD")
+            binding = {
+                "path": packet_path.relative_to(repo).as_posix(),
+                "sha256": hashlib.sha256(packet_path.read_bytes()).hexdigest(),
+                "gate_commit": gate_commit,
+            }
+            envelope = binding_envelope(repo, binding, planning_base)
+            envelope["repository_guard"] = {
+                "planning_worktree_path": str(planning.resolve()),
+                "planning_branch": planning_branch,
+                "planning_base_sha": planning_base,
+                "default_checkout": {
+                    "path": str(repo.resolve()),
+                    "branch": "main",
+                    "head": gate_commit,
+                    "status_porcelain_v1": "",
+                },
+            }
+
+            self.assertEqual(
+                validate_execution_envelope(envelope, repo),
+                ["GATE_COMMIT_NOT_ANCESTOR"],
+            )
+
+    def test_execution_envelope_schema_and_template_define_repository_guard(self) -> None:
+        schema = json.loads(ENVELOPE_SCHEMA_FILE.read_text(encoding="utf-8"))
+        guard_schema = schema["properties"]["repository_guard"]
+        default_schema = guard_schema["properties"]["default_checkout"]
+        template = json.loads(
+            (
+                SKILL_DIR / "assets/templates/execution-envelope.json"
+            ).read_text(encoding="utf-8")
+        )
+
+        self.assertNotIn("repository_guard", schema["required"])
+        self.assertEqual(
+            set(guard_schema["required"]),
+            {
+                "planning_worktree_path",
+                "planning_branch",
+                "planning_base_sha",
+                "default_checkout",
+            },
+        )
+        self.assertFalse(guard_schema["additionalProperties"])
+        self.assertEqual(
+            set(default_schema["required"]),
+            {"path", "branch", "head", "status_porcelain_v1"},
+        )
+        self.assertFalse(default_schema["additionalProperties"])
+        self.assertIn("repository_guard", template)
+
     def test_execution_envelope_rejects_every_approved_intent_projection_substitution(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo, binding, _ = create_binding_repo(Path(tmp))

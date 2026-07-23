@@ -14,6 +14,7 @@ The Execution Envelope is the approved execution contract. Instantiated `executi
 - `human_policy`: default scope and epic-scope reason requirement
 - `context_policy`: paths-first worker packet and report budgets
 - `phase_branch_policy`: Codex phase branch ownership and context handoff policy
+- `repository_guard`: new-packet planning/default checkout identity
 - `remote_write_policy`: `local_only`, `per_action`, `batch_draft_prs`, or `batch_issue_prs`
 - `work_items`: exactly one entry per sealed Input Packet work item, with the same ID, title, source, acceptance criteria, non-goals, verification commands, write scope, and ordered dependency IDs
 
@@ -45,7 +46,7 @@ Before prepare, verify the current packet/spec projection, require `gate_commit`
 to be an ancestor of `epic_base.sha`, and compare the exact packet and referenced
 spec blobs both in the gate tree and at the exact `epic_base.sha`. Fail with the
 stable binding code; do not convert these failures into general Git
-reconciliation advice.
+reconciliation advice. Run the repository guard after packet load.
 
 ## Review Governance Policy
 

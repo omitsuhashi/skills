@@ -7,6 +7,17 @@
     "sha256": "<raw-byte-sha256>",
     "gate_commit": "<full-gate-commit>"
   },
+  "repository_guard": {
+    "planning_worktree_path": "/host/path/to/planning-worktree",
+    "planning_branch": "codex/<epic-id>/planning",
+    "planning_base_sha": "<initial-full-sha>",
+    "default_checkout": {
+      "path": "/host/path/to/default-checkout",
+      "branch": "main",
+      "head": "<initial-full-sha>",
+      "status_porcelain_v1": ""
+    }
+  },
   "epic_base": {
     "ref": "codex/<epic-id>/epic-base",
     "sha": "<initial-full-sha>",

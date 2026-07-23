@@ -27,6 +27,7 @@ from ..identifiers import (
     is_issue_id,
     is_lower_kebab,
 )
+from ..repository_integrity import validate_repository_guard
 
 
 TOP_LEVEL_FIELDS = {
@@ -40,6 +41,7 @@ TOP_LEVEL_FIELDS = {
     "human_policy",
     "context_policy",
     "phase_branch_policy",
+    "repository_guard",
     "remote_write_policy",
     "work_items",
 }
@@ -107,6 +109,18 @@ WORK_ITEM_FIELDS = {
 SOURCE_FIELDS = {"type", "path"}
 BASE_POLICY_FIELDS = {"type", "issue", "integration_issue"}
 DEPENDENCY_FIELDS = {"issue", "strength", "release_on", "base_effect"}
+REPOSITORY_GUARD_FIELDS = {
+    "planning_worktree_path",
+    "planning_branch",
+    "planning_base_sha",
+    "default_checkout",
+}
+DEFAULT_CHECKOUT_FIELDS = {
+    "path",
+    "branch",
+    "head",
+    "status_porcelain_v1",
+}
 
 SESSION_COMPACTION_REQUIRED_VALUES = {
     "soft_trigger_percent": 65,
@@ -299,7 +313,7 @@ def validate_execution_envelope(
     _closed(
         envelope,
         allowed=TOP_LEVEL_FIELDS,
-        required=TOP_LEVEL_FIELDS,
+        required=TOP_LEVEL_FIELDS - {"repository_guard"},
         prefix="",
         errors=errors,
     )
@@ -309,6 +323,60 @@ def validate_execution_envelope(
         errors.append("epic_id must be lower-kebab-case ASCII")
     if not _positive_int(envelope.get("revision")):
         errors.append("revision must be a positive integer")
+
+    repository_guard = envelope.get("repository_guard")
+    if repository_guard is not None and _closed(
+        repository_guard,
+        allowed=REPOSITORY_GUARD_FIELDS,
+        required=REPOSITORY_GUARD_FIELDS,
+        prefix="repository_guard",
+        errors=errors,
+    ):
+        planning_path = repository_guard.get("planning_worktree_path")
+        if not isinstance(planning_path, str) or not Path(planning_path).is_absolute():
+            errors.append("repository_guard.planning_worktree_path must be absolute")
+        if repository_guard.get("planning_branch") != f"codex/{epic_id}/planning":
+            errors.append(
+                "repository_guard.planning_branch must match codex/<epic-id>/planning"
+            )
+        planning_base = repository_guard.get("planning_base_sha")
+        if (
+            not isinstance(planning_base, str)
+            or planning_base != planning_base.lower()
+            or not is_full_commit_sha(planning_base)
+        ):
+            errors.append("repository_guard.planning_base_sha must be a full SHA")
+        default_checkout = repository_guard.get("default_checkout")
+        if _closed(
+            default_checkout,
+            allowed=DEFAULT_CHECKOUT_FIELDS,
+            required=DEFAULT_CHECKOUT_FIELDS,
+            prefix="repository_guard.default_checkout",
+            errors=errors,
+        ):
+            default_path = default_checkout.get("path")
+            if not isinstance(default_path, str) or not Path(default_path).is_absolute():
+                errors.append("repository_guard.default_checkout.path must be absolute")
+            if (
+                not isinstance(default_checkout.get("branch"), str)
+                or not default_checkout["branch"]
+            ):
+                errors.append(
+                    "repository_guard.default_checkout.branch must be a non-empty string"
+                )
+            default_head = default_checkout.get("head")
+            if (
+                not isinstance(default_head, str)
+                or default_head != default_head.lower()
+                or not is_full_commit_sha(default_head)
+            ):
+                errors.append(
+                    "repository_guard.default_checkout.head must be a full SHA"
+                )
+            if not isinstance(default_checkout.get("status_porcelain_v1"), str):
+                errors.append(
+                    "repository_guard.default_checkout.status_porcelain_v1 must be a string"
+                )
 
     epic_base = envelope.get("epic_base")
     if _closed(
@@ -612,4 +680,8 @@ def validate_execution_envelope(
         return [error.code]
     if not _validate_approved_intent(envelope, packet):
         return ["BINDING_MISMATCH"]
-    return []
+    return validate_repository_guard(
+        envelope,
+        packet,
+        Path.cwd() if repo_root is None else repo_root,
+    )

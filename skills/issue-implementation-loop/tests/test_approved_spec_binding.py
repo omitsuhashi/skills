@@ -18,6 +18,9 @@ from unittest import mock
 SKILL_DIR = Path(__file__).resolve().parents[1]
 SCRIPTS_DIR = SKILL_DIR / "scripts"
 LIB_DIR = SCRIPTS_DIR / "lib"
+TESTS_DIR = Path(__file__).resolve().parent
+if str(TESTS_DIR) not in sys.path:
+    sys.path.insert(0, str(TESTS_DIR))
 if str(LIB_DIR) not in sys.path:
     sys.path.insert(0, str(LIB_DIR))
 
@@ -325,6 +328,99 @@ class ApprovedSpecBindingTests(unittest.TestCase):
         with self.assertRaises(module.BindingError) as raised:
             operation()
         self.assertEqual(raised.exception.code, expected)
+
+    def write_draft(self, **fields: object) -> None:
+        draft = self.draft()
+        draft.update(fields)
+        self.draft_path.write_text(
+            json.dumps(draft, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+
+    def test_planning_identity_fields_are_accepted_together(self) -> None:
+        self.write_draft(
+            planning_branch="codex/example/planning",
+            planning_base_sha="0123456789abcdef0123456789abcdef01234567",
+        )
+
+        _, _, ref = self.seal()
+
+        packet = json.loads((self.repo / ref.path).read_text(encoding="utf-8"))
+        self.assertEqual(packet["planning_branch"], "codex/example/planning")
+        self.assertEqual(
+            packet["planning_base_sha"],
+            "0123456789abcdef0123456789abcdef01234567",
+        )
+
+    def test_planning_identity_fields_require_the_complete_pair(self) -> None:
+        for field, value in (
+            ("planning_branch", "codex/example/planning"),
+            (
+                "planning_base_sha",
+                "0123456789abcdef0123456789abcdef01234567",
+            ),
+        ):
+            with self.subTest(field=field):
+                self.write_draft(**{field: value})
+                self.assert_code("SCHEMA_UNSUPPORTED", self.seal)
+
+    def test_planning_identity_rejects_noncanonical_branch(self) -> None:
+        self.write_draft(
+            planning_branch="codex/another-epic/planning",
+            planning_base_sha="0123456789abcdef0123456789abcdef01234567",
+        )
+
+        self.assert_code("SCHEMA_UNSUPPORTED", self.seal)
+
+    def test_planning_identity_rejects_short_or_nonhex_base_sha(self) -> None:
+        for value in ("0123456", "g" * 40):
+            with self.subTest(value=value):
+                self.write_draft(
+                    planning_branch="codex/example/planning",
+                    planning_base_sha=value,
+                )
+                self.assert_code("SCHEMA_UNSUPPORTED", self.seal)
+
+    def test_input_packet_schema_defines_backward_compatible_planning_pair(self) -> None:
+        schema = json.loads(
+            (
+                SKILL_DIR / "assets/schemas/input-packet.schema.json"
+            ).read_text(encoding="utf-8")
+        )
+
+        self.assertEqual(
+            schema["properties"]["planning_branch"]["pattern"],
+            "^codex/[a-z0-9]+(?:-[a-z0-9]+)*/planning$",
+        )
+        self.assertEqual(
+            schema["properties"]["planning_base_sha"]["pattern"],
+            "^(?:[0-9a-f]{40}|[0-9a-f]{64})$",
+        )
+        self.assertEqual(
+            schema["dependentRequired"],
+            {
+                "planning_branch": ["planning_base_sha"],
+                "planning_base_sha": ["planning_branch"],
+            },
+        )
+        self.assertNotIn("planning_branch", schema["required"])
+        self.assertNotIn("planning_base_sha", schema["required"])
+
+    def test_current_tracked_sealed_v2_packet_bytes_remain_valid(self) -> None:
+        repo_root = SKILL_DIR.parents[1]
+        packet_path = (
+            "knowledge/wiki/syntheses/approved-spec-binding-contract/input-packet.json"
+        )
+        tracked = subprocess.run(
+            ["git", "-C", str(repo_root), "show", f"HEAD:{packet_path}"],
+            check=True,
+            capture_output=True,
+        ).stdout
+        current = (repo_root / packet_path).read_bytes()
+
+        self.assertEqual(current, tracked)
+        packet = json.loads(current.decode("utf-8"))
+        self.assertEqual(binding_module().validate_input_packet(packet, repo_root), [])
 
     def test_asb_public_acceptance_matrix_is_complete_and_public(self) -> None:
         expected_ids = [f"ASB-{number:02d}" for number in range(1, 37)]
