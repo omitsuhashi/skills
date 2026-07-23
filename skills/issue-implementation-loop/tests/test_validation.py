@@ -30,6 +30,20 @@ class ExecutionEnvelopeReferenceTests(unittest.TestCase):
 
 
 class ValidationTests(unittest.TestCase):
+    def test_repository_guard_git_disables_optional_locks(self) -> None:
+        from issue_implementation_loop import repository_integrity
+
+        completed = subprocess.CompletedProcess([], 0, "", "")
+        with mock.patch.dict(os.environ, {"GIT_OPTIONAL_LOCKS": "1"}):
+            with mock.patch.object(
+                repository_integrity.subprocess,
+                "run",
+                return_value=completed,
+            ) as run:
+                repository_integrity._git(Path("/trusted/repository"), "status")
+
+        self.assertEqual(run.call_args.kwargs["env"]["GIT_OPTIONAL_LOCKS"], "0")
+
     @staticmethod
     def planning_guard_fixture(
         root: Path,

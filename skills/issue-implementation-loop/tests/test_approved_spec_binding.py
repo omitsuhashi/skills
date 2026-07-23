@@ -411,14 +411,13 @@ class ApprovedSpecBindingTests(unittest.TestCase):
         packet_path = (
             "knowledge/wiki/syntheses/approved-spec-binding-contract/input-packet.json"
         )
-        tracked = subprocess.run(
-            ["git", "-C", str(repo_root), "show", f"HEAD:{packet_path}"],
-            check=True,
-            capture_output=True,
-        ).stdout
         current = (repo_root / packet_path).read_bytes()
 
-        self.assertEqual(current, tracked)
+        self.assertEqual(len(current), 3388)
+        self.assertEqual(
+            hashlib.sha256(current).hexdigest(),
+            "e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c",
+        )
         packet = json.loads(current.decode("utf-8"))
         self.assertEqual(binding_module().validate_input_packet(packet, repo_root), [])
 

@@ -24,11 +24,14 @@ DEFAULT_CHECKOUT_FIELDS = {
 
 def _git(path: Path, *args: str) -> subprocess.CompletedProcess[str]:
     try:
+        environment = os.environ.copy()
+        environment["GIT_OPTIONAL_LOCKS"] = "0"
         return subprocess.run(
             ["git", "-C", str(path), *args],
             check=False,
             capture_output=True,
             text=True,
+            env=environment,
         )
     except (OSError, TypeError, ValueError):
         return subprocess.CompletedProcess([], 1, "", "")
