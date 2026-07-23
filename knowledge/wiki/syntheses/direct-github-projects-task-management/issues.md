@@ -2,7 +2,7 @@
 
 ## 状態
 
-2026-07-23にIssue GateとExecution Plan Gateを承認済み。DGPTM-001〜DGPTM-004のlocal implementationはdependency順に完了し、DGPTM-004の外部task reviewだけがpendingである。
+2026-07-23にIssue GateとExecution Plan Gateを承認済み。DGPTM-001〜DGPTM-004のlocal implementationとDGPTM-004の独立task reviewはdependency順に完了している。
 
 ## Epic ID
 
@@ -218,7 +218,7 @@ git diff --check
 - DGPTM-001: reviewed local commit `6e48aadf117d7d433460f07bc4f98a68546f108d` (`feat: add standalone task management skill contract`)。review resultはclean、open findingなし。
 - DGPTM-002: reviewed local commit `edb600fb3578319f17b5e2f931b847882397559a` (`fix: preserve independent target resolution stops`)。1回のfix cycle後にreview clean、focused tests 8件成功。
 - DGPTM-003: reviewed local commit `91a4dcdf39ea37a874d728d9c2059fb184f3581d` (`refactor: replace task management plugin with skill`)。review clean、旧plugin 47 filesを削除しCIをmigration済み。
-- DGPTM-004: このlocal closeout commit（`docs: close direct GitHub task management migration`）でactive knowledge切替と統合検証を記録する。commit SHAとexternal task review resultはこのcommit時点では未来の値のため記録せず、独立review後のfollow-up commitで追記する。
+- DGPTM-004: reviewed local commit `60314a31ec609f1ac702792a23e488f15a9645b3` (`docs: close direct GitHub task management migration`)。approved spec compliance / task qualityともにApproved、Critical・Important・Minor findingはすべて0件のclean verdict。commit自身のSHA/reviewをfollow-upで記録する先行entryは、独立reviewerが正確なinterim recordとして受理した。
 
 ### Fresh forward evaluation
 
@@ -243,7 +243,7 @@ git diff --check
 ### Preservation and delivery boundary
 
 - stale discovery REDで旧Portfolio OS task backend source summary、plugin spec / ledger / Input Packet、provider-adapter plan、POTASK-011 Input Packet / Execution Envelopeがactive indexに残ることを確認した後、catalog entryだけを削除した。historical filesのraw bytesは変更していない。
-- remote stateは`local_only`。push、PR、GitHub Issue / Project mutation、live MCP、install、release、mergeは実行していない。remaining riskはexternal task reviewがDGPTM-004 commit後に必要であることだけである。
+- remote stateは`local_only`。push、PR、GitHub Issue / Project mutation、live MCP、install、release、mergeは実行していない。local implementation、forward evaluation、local verification、独立task reviewはいずれも完了し、remaining local implementation riskはない。
 
 ## Gate policy
 
