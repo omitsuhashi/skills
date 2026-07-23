@@ -8,7 +8,6 @@ wiki の最初の navigation surface として使います。durable page はす
 - [Grill To PR Loop スキル分割・非停止実行 詳細設計 v2](wiki/sources/2026-06-21-grill-to-pr-loop-skill-split-design-v2.md) — `grill-to-pr-loop` を composition skill と `issue-implementation-loop` execution skill に分割する添付設計の source summary。
 - [2026-06-25 Loop Skill Architecture V3 Design](wiki/sources/2026-06-25-loop-skill-architecture-v3-design.md) — loop skill の context contract、worker packet、resume brief、operation routing を整理する添付設計の source summary。
 - [Skill Repository Optimization V4 Design](wiki/sources/2026-06-26-skill-repository-optimization-v4-design.md) — PR #19 後の loop skill / llm-wiki context contract、artifact freshness、CI regression 固定の source summary。
-- [2026-06-28 Portfolio OS Task Backend Plugin / Skill Handoff](wiki/sources/2026-06-28-portfolio-os-task-backend-plugin-skill-handoff.md) — Portfolio OS の task state-free 方針を保った task-management skill と GitHub MCP Server first routing の handoff source summary。
 
 ## エンティティ
 
@@ -132,26 +131,14 @@ _現在なし。_
 - [Portfolio OS Install Review And Procedure](wiki/syntheses/portfolio-os-install-review-and-procedure.md) — `skills` repo に Portfolio OS 固有 runtime を混ぜないためのレビュー結果と導入手順。
 - [Decide In Order Skill 原案](wiki/sources/2026-07-17-decide-in-order-source-brief.md) — 目的、守るもの、許容損失、核心の問いから始める実行支援型 skill の一次資料と設計時の解釈。
   検索語: decide in order, decision ordering, task management, purpose, must protect, acceptable loss, core question, sunk cost, risk, review, 決める順番, 意思決定, 優先順位, サンクコスト, 見直し
-- [Decide In Order Skill 設計](wiki/syntheses/decide-in-order-skill-design.md) — 実装済みの独立state-free skill、厳密な判断順序、疎な内部状態、適応的表示、DecisionRecord、task-management利用ポリシーと検証証跡。
-  検索語: decide-in-order, decision support, DecisionFrame, DecisionRecord, light, deep, review, task-management integration, skill-creator, plugin-creator, 決める順番, 意思決定支援, 日次計画, 継続判断, 調査方針, 許容損失
-- [Decide In Order Skill 実装計画](wiki/syntheses/2026-07-17-decide-in-order-implementation-plan.md) — skill-creator scaffold、contract tests、fresh-agent forward test、task-management integration、plugin回帰、wiki証跡同期を固定するtest-first実装計画。
-  検索語: decide-in-order, implementation plan, skill-creator, plugin-creator, forward test, task-management integration, contract test, TDD, 実装計画, 意思決定支援, 回帰検証
+- [Decide In Order Skill 設計](wiki/syntheses/decide-in-order-skill-design.md) — 独立state-free skillの判断順序、適応的表示、DecisionRecordを記録する設計。旧task-management plugin integrationはhistoricalであり、current skillはtask storageを所有しない。
+  検索語: decide-in-order, decision support, DecisionFrame, DecisionRecord, light, deep, review, standalone skill, 決める順番, 意思決定支援, 日次計画, 継続判断, 調査方針, 許容損失
+- [Decide In Order Skill 実装計画](wiki/syntheses/2026-07-17-decide-in-order-implementation-plan.md) — standalone decision skillのtest-first実装とforward testを記録するhistorical plan。旧task-management plugin integrationはcurrent task contractではない。
+  検索語: decide-in-order, implementation plan, skill-creator, forward test, contract test, TDD, standalone skill, 実装計画, 意思決定支援, 回帰検証
 - [Codex / Hermes Dual-host Authoring Contract 設計](wiki/syntheses/hermes-dual-host-authoring-contract-design.md) — skill / plugin のリポジトリ互換、Hermes discovery、live load を分離し、薄い作成指示、共通検証、Python 3.9 / 3.12 CI enforcementを実装・ローカル検証済みの設計。
   検索語: Hermes Agent, Codex, dual-host, SKILL.md, description.md, plugin.yaml, register(ctx), external_dirs, install, discovery, live load, skill creator, plugin creator, 作成指示, 互換性, インストール, 検証
 - [Codex / Hermes Dual-host Authoring Contract 実装計画](wiki/syntheses/2026-07-17-hermes-dual-host-authoring-contract-implementation-plan.md) — 薄いauthoring guidance、標準ライブラリvalidator、既存skill/plugin導入契約、CIを4つのTDD単位で実装する計画。
   検索語: Hermes Agent, Codex, dual-host, implementation plan, AGENTS.md, validator, unittest, CI, TDD, SKILL.md, plugin.yaml, register(ctx), 実装計画, 作成ルール, 検証
-- [Portfolio OS Task Backend Plugin Skill Spec](wiki/syntheses/portfolio-os-task-backend-plugin-skill-spec.md) — Portfolio OS task state-free 方針を保つtask-management pluginの承認済み仕様。POTASK-010のbackend-neutral read facadeに加え、POTASK-011でconsumerからbackend差を隠すhost-owned route、initial local JSON backend、external MCP / provider plugin adapter、Hermes end-to-end call pathを定義する。
-  検索語: Portfolio OS, task backend, task-management, plugin package, primary skill, local JSON, MCP, provider plugin, no gh, Hermes Agent, TaskDraft, TaskRef, TaskQuery, TaskSnapshot, TaskSnapshotResult, task_query, task-management-read, TaskBackendRoute, TaskBackendDestination, adapter dispatch, operation envelope, connection_ref, destination_ref, work_unit_id, work_unit_name, inbox, routing, preview, approval gate
-- [Portfolio OS Task Backend Plugin Skill Issues](wiki/syntheses/portfolio-os-task-backend-plugin-skill-issues.md) — `portfolio-os-task-backend-plugin-skill` の Issue Gate 承認済み local-first ledger。POTASK-001からPOTASK-011、blocker graph、acceptance criteria、POTASK-010/POTASK-011 local verified、PR #29を定義する。
-  検索語: Portfolio OS, task backend, task-management, local issue, Issue Gate, POTASK-010, POTASK-011, provider adapter, local JSON, MCP, provider plugin, no gh, Hermes end-to-end, blocker graph, task-management-read, task_query, TaskSnapshotResult, adapter dispatch, TaskDraft, TaskBackendRoute, TaskBackendDestination
-- [Portfolio OS Task Backend Plugin Skill Input Packet](wiki/syntheses/portfolio-os-task-backend-plugin-skill-input-packet.json) — historical / non-executable な Input Packet v1。過去の POTASK 実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
-  検索語: Portfolio OS, task backend, task-management, input packet, Execution Plan Gate, issue-implementation-loop, POTASK, write scope, dependencies, local_only
-- [Task Management Provider Adapters 実装計画](wiki/syntheses/2026-07-16-task-management-provider-adapters-implementation-plan.md) — POTASK-011 の test-first 実装順序、adapter 境界、Hermes smoke、文書同期、PR delivery を固定する計画。
-  検索語: POTASK-011, implementation plan, route config, local snapshot, provider adapter, Hermes smoke, TDD, PR #29
-- [Portfolio OS Task Backend Plugin Skill POTASK-011 Input Packet](wiki/syntheses/portfolio-os-task-backend-plugin-skill-potask-011-input-packet.json) — historical / non-executable な Input Packet v1。過去の POTASK-011 実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
-  検索語: POTASK-011, input packet, provider adapter, local JSON, MCP, provider plugin, per_action
-- [Portfolio OS Task Backend Plugin Skill POTASK-011 Execution Envelope](wiki/syntheses/portfolio-os-task-backend-plugin-skill-potask-011-execution-envelope.json) — historical / non-executable な Execution Envelope v3。過去の POTASK-011 実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
-  検索語: POTASK-011, execution envelope, worker context, issue branch, worktree, review cycle, draft PR #29
 
 ## クエリ起点成果物
 

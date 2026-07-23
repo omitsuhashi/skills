@@ -2,7 +2,7 @@
 
 ## 状態
 
-2026-07-23にIssue Gate承認済み。DGPTM-001をfirst runnable candidateとし、Execution Plan Gate承認まではproduction実装を開始しない。
+2026-07-23にIssue GateとExecution Plan Gateを承認済み。DGPTM-001〜DGPTM-004のlocal implementationはdependency順に完了し、DGPTM-004の外部task reviewだけがpendingである。
 
 ## Epic ID
 
@@ -20,10 +20,10 @@
 
 | Epic | Issue | タイトル | Gate | 実行状態 | Dependencies | Write scope |
 |---|---|---|---|---|---|---|
-| `direct-github-projects-task-management` | DGPTM-001 | standalone skill の executable contract を test-first で固定する | 承認済み | 実行可能 | なし | `skills/task-management/` |
-| `direct-github-projects-task-management` | DGPTM-002 | direct GitHub MCP の task workflow と安全境界を実装する | 承認済み | ブロック中 | DGPTM-001 | `skills/task-management/` |
-| `direct-github-projects-task-management` | DGPTM-003 | 旧 task-management plugin を削除して CI と回帰契約を移行する | 承認済み | ブロック中 | DGPTM-002 | `plugins/task-management/`, `.github/workflows/skill-architecture.yml`, `scripts/test_dual_host_ci_workflow.py`, `scripts/test_loop_autonomous_gates_ledger.py`, `skills/task-management/tests/` |
-| `direct-github-projects-task-management` | DGPTM-004 | historical supersession と統合検証を完了する | 承認済み | ブロック中 | DGPTM-003 | `knowledge/index.md`, `knowledge/log.md`, `knowledge/wiki/syntheses/direct-github-projects-task-management/issues.md` |
+| `direct-github-projects-task-management` | DGPTM-001 | standalone skill の executable contract を test-first で固定する | 承認済み | 完了 | なし | `skills/task-management/` |
+| `direct-github-projects-task-management` | DGPTM-002 | direct GitHub MCP の task workflow と安全境界を実装する | 承認済み | 完了 | DGPTM-001 | `skills/task-management/` |
+| `direct-github-projects-task-management` | DGPTM-003 | 旧 task-management plugin を削除して CI と回帰契約を移行する | 承認済み | 完了 | DGPTM-002 | `plugins/task-management/`, `.github/workflows/skill-architecture.yml`, `scripts/test_dual_host_ci_workflow.py`, `scripts/test_loop_autonomous_gates_ledger.py`, `skills/task-management/tests/` |
+| `direct-github-projects-task-management` | DGPTM-004 | historical supersession と統合検証を完了する | 承認済み | 完了 | DGPTM-003 | `knowledge/index.md`, `knowledge/log.md`, `knowledge/wiki/syntheses/direct-github-projects-task-management/issues.md` |
 
 ## Blocker graph
 
@@ -213,10 +213,42 @@ git diff --check
 - historical completion evidenceを新architectureの実装証拠として再利用しない。
 - remote deliveryを暗黙に開始しない。
 
+## 最終実装証跡
+
+- DGPTM-001: reviewed local commit `6e48aadf117d7d433460f07bc4f98a68546f108d` (`feat: add standalone task management skill contract`)。review resultはclean、open findingなし。
+- DGPTM-002: reviewed local commit `edb600fb3578319f17b5e2f931b847882397559a` (`fix: preserve independent target resolution stops`)。1回のfix cycle後にreview clean、focused tests 8件成功。
+- DGPTM-003: reviewed local commit `91a4dcdf39ea37a874d728d9c2059fb184f3581d` (`refactor: replace task management plugin with skill`)。review clean、旧plugin 47 filesを削除しCIをmigration済み。
+- DGPTM-004: このlocal closeout commit（`docs: close direct GitHub task management migration`）でactive knowledge切替と統合検証を記録する。commit SHAとexternal task review resultはこのcommit時点では未来の値のため記録せず、独立review後のfollow-up commitで追記する。
+
+### Fresh forward evaluation
+
+- fresh read-only evaluator A/Bがcurrent `skills/task-management/SKILL.md`と直接参照Markdownだけを読み、live MCP/tool call・file write・Git mutationなしで各4 scenarioを評価した。controller判定は8/8 pass、named failureなし。
+- A: 既定Project + current repositoryは不足するOutcome/acceptance criteriaだけを確認してsafe writeへ進む、explicit Project overrideはcaller defaultを変えない、複数Projectは1回のURL確認で停止、Issue作成後のProject追加失敗はexisting Issueから未完了stepだけをresumeした。
+- B: 複数repositoryの根拠不足ではinboxへfallbackせずrepository確認で停止、repository-independent事務taskだけconfigured inboxを使用、explicit Doneは二重確認せずIssue `completed` / Project `Done`へ遷移、checklistだけの推定Doneはconfirmationで停止した。
+
+### Local verification
+
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/task-management/tests` — pass。
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/decide-in-order/tests` — pass。
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/llm-wiki/tests` — pass。
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s scripts -p 'test_*.py'` — pass。
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_architecture.py --all` — pass。
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_dual_host_compatibility.py --skill skills/task-management` — pass。repository-wide compatibility validatorのunrelated `skills/llm-wiki/DESCRIPTION.md` findingは既存のままとし、変更していない。
+- `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_validate.py skills/task-management` — pass。
+- `test ! -e plugins/task-management` — pass。
+- `rg -n --glob '!**/tests/**' "Hermes|Codex|task-management-read|task_adapter__|mcp__<server>__task_query|work_unit_id" skills/task-management` — no findings / pass。
+- `rg -n "Portfolio OS Task Backend Plugin Skill|Task Management Provider Adapters|POTASK-011" knowledge/index.md` — no findings / pass。
+- `git diff --check` — pass。
+
+### Preservation and delivery boundary
+
+- stale discovery REDで旧Portfolio OS task backend source summary、plugin spec / ledger / Input Packet、provider-adapter plan、POTASK-011 Input Packet / Execution Envelopeがactive indexに残ることを確認した後、catalog entryだけを削除した。historical filesのraw bytesは変更していない。
+- remote stateは`local_only`。push、PR、GitHub Issue / Project mutation、live MCP、install、release、mergeは実行していない。remaining riskはexternal task reviewがDGPTM-004 commit後に必要であることだけである。
+
 ## Gate policy
 
-- Issue Gateは2026-07-23に承認済み。DGPTM-001だけを`実行可能`、dependency未充足の後続Issueを`ブロック中`とする。
-- implementation planとsealed Input PacketがExecution Plan Gateで承認されるまではproduction implementationを開始しない。
+- Issue Gateは2026-07-23に承認済みであり、execution開始時点ではDGPTM-001だけを`実行可能`、dependency未充足の後続Issueを`ブロック中`とした。現在は全Issueがdependency順に完了している。
+- implementation planとsealed Input PacketはExecution Plan Gateで承認済みであり、その後にproduction implementationを開始した。
 - approval対象は本ledgerのIssue ID、Outcome、blocker graph、dependency order、write scope、acceptance criteria、verification、non-goalsとする。
 - ledgerの意味を変える修正後はIssue Gateを再取得する。
 - remote policyはapproved specどおり`local_only`とする。
