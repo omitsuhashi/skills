@@ -1405,3 +1405,12 @@ append-only で使います。すべての entry は予測しやすい header �
 - PWTG-001からPWTG-004へPlanning Worktree Gate CLI、packet/runtime repository guard、PR_READY / delivery integrity、wiki / full verificationをserial dependencyで分解した。
 - user提示のAcceptance Tests 1〜8とNon-goalsをIssue Gate approval evidenceとし、各issueのwrite scope、criteria、non-goals、verificationを`knowledge/wiki/syntheses/planning-worktree-gate/issues.md`に固定した。
 - local ledgerはcanonical、GitHub Issueは`未作成`、remote policyは`local_only`。Gateごとのworktreeは作成せず、Spec Gateと同じplanning worktreeを継続利用する。
+
+## [2026-07-24] execution-plan | Planning Worktree Gate
+
+- PWTG-001からPWTG-004のfile ownership、RED/GREEN command、interface、stop conditionを`knowledge/wiki/syntheses/planning-worktree-gate/implementation-plan.md`へ固定した。
+- planning CLI、packet/runtime repository guard、PR_READY / final delivery integrity、wiki / full verificationをserial worker-context executionとし、`coordinator_may_implement=false`、remote policy `local_only`、final merge human-onlyを維持する。
+- self-hosting bootstrap packetはPlanning Worktree Gate実装前の現行Input Packet v2 validatorでsealし、target implementation後の新規packet contractと区別する。既存sealed packetのbytesは変更しない。
+- Spec Gate、Issue Gate、Execution Plan Gate、index/log同期は同じ`codex/planning-worktree-gate/planning` branchで行い、Gateごとのworktree再作成はしていない。
+- exact packet pathは`knowledge/wiki/syntheses/planning-worktree-gate/input-packet.json`、raw-byte SHA-256は`7b7ecc562d1ff2aa2066438099741dad9e70ccb889c9dada4620eebb2224e219`。`validate_input_packet.py --json`と`check_capabilities.py --json`はいずれも`ok: true`で、approved spec seal、`tdd`、`requesting-code-review`、worker-context execution prerequisitesを確認した。
+- Execution Plan Gateはapproved scope内、remote actionなし、dependency cycleなし、write scope明示済みとしてauto-continueする。packet / plan / index / logをphase approval commitに固定してからworker contextへ渡す。
