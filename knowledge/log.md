@@ -1280,3 +1280,113 @@ append-only で使います。すべての entry は予測しやすい header �
 - final controller verificationはissue-implementation-loop 249 tests、grill-to-pr-loop 29 tests、llm-wiki 6 tests、scripts 59 tests、全repository validator、strict `warnings=[]`、packet `ok=true`、binding `valid=true`、`git diff --check`に成功した
 - immutable raw-byte SHA-256はspec `2bd4fcdbed9828c988a9d5c24cdd02242434f0e44e802cceb34fc4a0e7b86193`、sealed Input Packet `e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c`のまま不変
 - ASBC-007〜ASBC-009を`COMPLETE`とする。PR ready化、merge、release、live Codex/Hermes installは非承認かつ未実行
+
+## [2026-07-23] spec-candidate | GitHub Projects Direct Task Management Skill
+
+- userとのone-decision-at-a-time設計で、1個のcaller-selected GitHub Project、Issue-backed task、repository-as-work-unit、Status / Priority / Due date、Issue template、high-confidence safe auto-execution、caller-owned target configを確定した
+- `plugins/task-management/` のbackend-neutral facade / adapter / host-specific registrationを廃止し、`skills/task-management/`のstandalone skillからGitHub MCPへ直接接続するcandidate specを`knowledge/wiki/syntheses/direct-github-projects-task-management/spec.md`に作成した
+- skill内へ特定owner / Project / repository / agent hostを埋め込まず、caller-supplied `project_url`とoptional `inbox_repository`を解決する。`work_unit_id` custom field、CLI / API fallback、Project draft item、通常操作中のschema作成は採用しない
+- current stateはexact path / raw-byte SHA-256のWritten Spec Gate待ち。Issue分解、implementation plan、production skill/plugin変更、live GitHub write、push、PR、installは未実施
+- unrelated untracked `skills/llm-wiki/DESCRIPTION.md`は変更していない
+
+## [2026-07-23] spec-approval | GitHub Projects Direct Task Management Skill
+
+- actor expression: `session-user`
+- approved at: `2026-07-23T08:10:21+09:00`
+- exact spec path: `knowledge/wiki/syntheses/direct-github-projects-task-management/spec.md`
+- raw-byte SHA-256: `9200996f2ed046ecb351fad96930c6e4e9a1580fdde14472ecc8b68b98f36c94`
+- approval subject: `spec_binding`
+- decision: `approved`
+- approval scope: `accepted_decisions=true`、`non_goals=true`、`acceptance_criteria=true`、`verification=true`、`remote_policy=true`、`stop_conditions=true`
+- userの「Written Spec Gateを承認」によりexact revisionを承認した。承認後の`spec.md` bytesは変更せず、Issue分解を次のgateとする
+- remote policyは`local_only`。push、GitHub Issue / Project mutation、PR、merge、release、live installは非承認
+
+## [2026-07-23] issue-candidate | GitHub Projects Direct Task Management Skill
+
+- approved spec `knowledge/wiki/syntheses/direct-github-projects-task-management/spec.md`をbinding sourceとし、DGPTM-001〜DGPTM-004のlocal Issue ledgerを`knowledge/wiki/syntheses/direct-github-projects-task-management/issues.md`に作成した
+- dependency orderはstandalone contract、direct GitHub MCP workflow、旧plugin / CI migration、historical supersession / integration verificationの直列4段階とした
+- 全Issueは`未承認 / ブロック中`であり、Issue Gate承認前にimplementation plan、Input Packet seal、production change、GitHub mirrorを開始しない
+- remote policyは`local_only`。unrelated untracked `skills/llm-wiki/DESCRIPTION.md`は変更していない
+
+## [2026-07-23] issue-approval | GitHub Projects Direct Task Management Skill
+
+- actor expression: `session-user`
+- approved at: `2026-07-23T08:16:12+09:00`
+- approved ledger path: `knowledge/wiki/syntheses/direct-github-projects-task-management/issues.md`
+- pre-approval raw-byte SHA-256: `78c163ace72ec29f108fbf7e221454c1bed53c7556d4d5dceb731bb306fe3fc2`
+- decision: `approved`
+- approval scope: Issue ID、Outcome、blocker graph、dependency order、write scope、acceptance criteria、verification、non-goals
+- userの「Issue Gateを承認」によりDGPTM-001〜DGPTM-004を承認した。status-only更新後、DGPTM-001をfirst runnable candidate、DGPTM-002〜DGPTM-004をdependency blockedとする
+- Execution Plan Gateまではproduction implementationを開始せず、remote policyは`local_only`を維持する
+
+## [2026-07-23] execution-plan-candidate | GitHub Projects Direct Task Management Skill
+
+- `superpowers:writing-plans`を使い、DGPTM-001〜DGPTM-004のexact file responsibility、test-first step、RED/GREEN command、scoped commit、fresh evaluation、local closeoutを`knowledge/wiki/syntheses/direct-github-projects-task-management/implementation-plan.md`に作成した
+- approved spec `9200996f2ed046ecb351fad96930c6e4e9a1580fdde14472ecc8b68b98f36c94`と2026-07-23T08:10:21+09:00のsix-part approval evidenceを使い、Input Packet v2を`knowledge/wiki/syntheses/direct-github-projects-task-management/input-packet.json`へsealした
+- sealed packet raw-byte SHA-256は`14b011499e4113ea2c496592228e5f2e7d37962592bec92073b8dd699f68266f`、delivery intentは`local_only`、Issue dependencyはDGPTM-001→002→003→004の直列とした
+- current stateはExecution Plan Gate validation / capability preflight待ち。production implementation、live GitHub write、push、PR、installは未実施
+
+## [2026-07-23] execution-plan-validation | GitHub Projects Direct Task Management Skill
+
+- implementation plan raw-byte SHA-256は`a912f624a44102df663408c9a6334a0791cbe6f41dd6fa98d6378398502dbac5`、sealed Input Packet raw-byte SHA-256は`14b011499e4113ea2c496592228e5f2e7d37962592bec92073b8dd699f68266f`
+- Input Packet validatorは`ok=true / errors=[]`、approved spec seal capabilityは`blocking=false / supported=true`、Git repository preflightとrequired review / TDD skill discoveryは成功した
+- executionはDGPTM-001→002→003→004のserial worker-context job、`max_parallel=1`、`coordinator_may_implement=false`、review cycle上限2、remote policy`local_only`とした
+- writing-plans self-reviewでspec coverage、placeholder、test名 / field名 / dependency整合を確認し、open gapはない。実行方式のuser選択とExecution Plan Gate commitまではproduction implementationを開始しない
+
+## [2026-07-23] execution-plan-approval | GitHub Projects Direct Task Management Skill
+
+- actor expression: `session-user`
+- approved at: `2026-07-23T08:28:19+09:00`
+- exact plan path: `knowledge/wiki/syntheses/direct-github-projects-task-management/implementation-plan.md`
+- plan raw-byte SHA-256: `a912f624a44102df663408c9a6334a0791cbe6f41dd6fa98d6378398502dbac5`
+- exact packet path: `knowledge/wiki/syntheses/direct-github-projects-task-management/input-packet.json`
+- packet raw-byte SHA-256: `14b011499e4113ea2c496592228e5f2e7d37962592bec92073b8dd699f68266f`
+- decision: `approved`
+- approval scope: DGPTM-001→DGPTM-004のdependency chain、各Issueのwrite scope、serial worker context、task単位review、review cycle上限2、remote policy `local_only`
+- userの「はい」によりExecution Plan GateとSubagent-Driven executionを承認した。production implementationはgate commit後に開始し、live GitHub write、push、PR、install、release、mergeは引き続き非承認とする
+
+## [2026-07-23] implementation-closeout | GitHub Projects Direct Task Management Skill
+
+- DGPTM-001〜DGPTM-003のreviewed local commitsは`6e48aadf117d7d433460f07bc4f98a68546f108d`（clean）、`edb600fb3578319f17b5e2f931b847882397559a`（1 fix cycle後clean、focused tests 8件）、`91a4dcdf39ea37a874d728d9c2059fb184f3581d`（clean、旧plugin 47 files削除 / CI migration）である。DGPTM-004は本local closeout commitであり、commit SHAとexternal task review resultは未来の値のため独立review後のfollow-up commitで追記する。
+- stale active discovery REDでは旧Portfolio OS task backend source summary、plugin spec / ledger / Input Packet、provider-adapter plan、POTASK-011 Input Packet / Execution Envelopeが`knowledge/index.md`に残っていた。historical artifactのbytesを変更せずactive catalog entriesだけを除去し、`decide-in-order`はstandalone / state-freeかつtask storage非所有のcurrent skillとして再記述した。
+- current `skills/task-management/SKILL.md`と直接参照Markdownだけを読むfresh read-only evaluator A/Bの8 scenarioをcontrollerが評価し、8/8 pass、named failureなしとした。target resolution、safe write、ambiguity / inferred terminal confirmation、explicit terminal no-double-confirm、repository-independent inbox、partial failure resume、no invented live result / non-MCP fallbackを確認した。raw transcriptはcommitしていない。
+- local verificationはtask-management、decide-in-order、llm-wiki、scripts unittest、`validate_skill_architecture.py --all`、scoped `validate_dual_host_compatibility.py --skill skills/task-management`、skill-creator quick validator、旧plugin absence、static negative checks、`git diff --check`がすべてpassした。repository-wide compatibility validatorのunrelated `skills/llm-wiki/DESCRIPTION.md` findingは既存のまま変更していない。
+- historical preservation auditはsource summary SHA-256 `5e5f87fdaf395813d3da7edfe54b49cabfe2c448c8ebe5661de8e2bdffc9bbd0`、plugin spec `9dc32a052e45bad2f3f2905837ebad8db56fce75c850ef6752a1d256e3fb923d`、ledger `c0db33d4c69f2177a7ea633dc60da6e7c6ad3281912f3a294b7d491124b5937d`、Input Packet `91b07cd047cc5dd7515dfde569c825cea751ff1f72a4b39ef40d8c7f47f1ee1d`、provider-adapter plan `9ed2090945938c4c5e7fc3e1239003006e4b5ea859950883c6f8d9ade33d7dd8`、POTASK-011 Input Packet `b7734592723b370d282f041301eec95d31608bf4e41431ca72b325d049216605`、Execution Envelope `85030ab103f99c50a3f5bb8afa1bafd759692b91989e93613d6fe59155eda02a`の不変を確認した。
+- delivery stateは`local_only`。push、PR、GitHub Issue / Project mutation、live MCP、install、release、mergeは実行していない。remaining riskはDGPTM-004のindependent external task review pendingのみである。
+
+## [2026-07-23] implementation-review-closeout | GitHub Projects Direct Task Management Skill
+
+- DGPTM-001〜DGPTM-004のlocal implementationとtask reviewをcloseした。DGPTM-004 reviewed commitは`60314a31ec609f1ac702792a23e488f15a9645b3`（`docs: close direct GitHub task management migration`）であり、approved spec compliance / task qualityともにApproved、Critical・Important・Minor findingはすべて0件のclean verdictである。
+- prior `implementation-closeout`のfresh read-only evaluator A/Bによる8 scenario 8/8 passと、task-management、decide-in-order、llm-wiki、scripts unittest、architecture / scoped dual-host / skill validator、negative checks、`git diff --check`のlocal verification passを本review evidenceへ継承する。historical artifact preservation auditも同entryのとおり維持する。
+- 先行entryがcommit自身のSHAと独立reviewをfollow-upへdeferした記録は、reviewerが正確なinterim recordとして受理した。approved spec SHA-256 `9200996f2ed046ecb351fad96930c6e4e9a1580fdde14472ecc8b68b98f36c94`とsealed Input Packet SHA-256 `14b011499e4113ea2c496592228e5f2e7d37962592bec92073b8dd699f68266f`は不変である。
+- remote stateは引き続き`local_only`。push、PR、GitHub Issue / Project mutation、live MCP、install、release、mergeは実行していない。
+
+## [2026-07-23] final-review-fix-pending-evaluation | GitHub Projects Direct Task Management Skill
+
+- whole-branch final reviewが、先行task review後にCritical 1件（read-only requestがgeneric create flowへ入り得る）とImportant 3件（permissive static tests、standalone discovery route欠落、active knowledge / completion evidence不整合）を検出した。userはcurrent skill / tests、2つのcurrent synthesis、index、ledger、logへのwrite scope expansionを明示承認した。
+- approved `implementation-plan.md`にもgeneric default flowとoperation-specific behavior test欠落があり、plan defectとして記録した。plan、approved `spec.md`、sealed `input-packet.json`は編集せず、historical artifact bytesも変更していない。
+- TDDではtest-firstでexact allowed tree、plugin absence、Status / Priority exact parse、read / search / list zero mutation、edit / comment / non-terminal scope、reuse / partial-failure preservationを固定した。test helperのformat前提を訂正後、untouched `de0b995` production Markdownで10 tests中2 expected failuresを観測し、operation routingとpreservation contract実装後は10/10 GREENとなった。
+- current `skills/task-management/`はread / search / listをzero-write、create / registerだけをnew-task flow、edit / comment / non-terminal updateをrequested propertiesだけ、terminal updateをexplicit no-double-confirm / inferred confirmationへrouteする。creation defaultsはnewly created Project itemだけに適用し、reuse / retryはexisting fieldとcompleted stepをresetしない。
+- dual-host synthesisはcurrent surfaceをstandalone `skills/task-management/SKILL.md`とし、`~/.hermes/config.yaml`の`skills.external_dirs: [${SKILLS_REPO}/skills]`をrepository-level discovery routeに選んだ。external dirsはwrite protectionではないこと、filesystem permissionまたは別profile / toolsetが必要なこと、repository compatibilityのみverifiedでlive config / `hermes skills list`は未実施であることを記録した。
+- decide-in-order synthesisはstandalone / state-free / task-storage非所有をcurrent境界とし、旧plugin integration、TaskDraft、adapter、validator、deleted pathをhistorical / supersededへ移した。indexはimplementation planをExecution Plan Gate承認済み・実行完了のhistorical planへ更新し、DGPTM-001〜004の満たしたacceptance criteriaをすべてcheckedにした。ledgerには旧source summary、plugin spec / ledger / packet、adapter plan、POTASK-011 packet / envelopeからcurrent standalone contractへのhistorical supersession mapを追加した。
+- local verificationはtask-management 10、decide-in-order 7、llm-wiki 6、scripts 58 tests、skill architecture、scoped dual-host、skill quick validator、plugin absence、host-neutral negative search、`git diff --check`がすべてpass。spec / packet SHA-256は`9200996f2ed046ecb351fad96930c6e4e9a1580fdde14472ecc8b68b98f36c94` / `14b011499e4113ea2c496592228e5f2e7d37962592bec92073b8dd699f68266f`のまま不変である。
+- fresh evaluator A/Bの起動はplatformの`agent thread limit reached`でpending。過去outputやcontaminated agent contextは再利用せず、6/6 behavior評価前にはcommitしない。remote stateは`local_only`で、push、PR、GitHub mutation、live config、install、release、mergeを実行していない。
+
+## [2026-07-23] evaluator-capacity-waiver-and-delivery-approval | GitHub Projects Direct Task Management Skill
+
+- platformがcompleted agentを保持した状態でfresh evaluator spawnを3回試行したが、すべてevaluator作成前に`agent thread limit reached`となった。session userはこのplatform capacity blockerに対するfresh-evaluation waiverを明示承認した。これはbehavioral test failureではなく、過去evaluator outputやcontaminated agent contextは再利用していない。
+- substitute acceptance gateはstrengthened task-management contract suite 10 tests、full repository verification、final independent reviewer re-reviewとする。fix implementerは前2条件の成功後にexact subjectでlocal commitを作成し、controllerがindependent re-reviewとfresh full verificationを完了してからpublication可否を判断する。
+- session userはdelivery authorizationを従来の`local_only`から、completed feature branchのpushとdraft PR作成に限って拡張した。merge、release、live install、live GitHub Project / Issue mutation、その他のlive changeは非承認のままである。本implementerはpush / PR作成を行わずcontrollerへ引き渡す。
+
+## [2026-07-23] final-re-review-capability-and-delivery-correction | GitHub Projects Direct Task Management Skill
+
+- independent final re-reviewはImportant 2件を検出した。write routeがoperation別のselective capability checkへ狭まってapproved specのcomplete Issue / Project capability and permission preflightと矛盾した点、およびIssue ledgerのactive Gate policyが後続delivery authorizationを反映せず`local_only`だけをcurrent表示していた点である。
+- TDDではfull write preflightとselective phrase禁止をtest-firstで追加し、current head `c45d45926a67d23fc49d198d19cdcb630701071a`に対して11 tests中2 expected failuresを確認した。`SKILL.md`と`references/github-projects.md`を揃えた後は11/11 GREENとなった。
+- read / search / listはzero-writeのため必要なIssue / Project read capabilityだけを要求する。create / register、edit、comment、non-terminal update、terminal updateは、mutation前にIssue read / search / create / update / comment、Project read / item add / field update、resolved target permissionのcomplete setをすべて確認し、operation別にpreflightを狭めない。
+- Gate policyはoriginal approved spec / sealed executionの`local_only`と、後続session-user authorizationによるfeature-branch push + draft PR作成だけのdelivery exceptionを区別した。merge、release、live install、live GitHub Issue / Project mutation、その他のlive changeは非承認のままである。本fix commitではpush / PR作成を行わない。
+
+## [2026-07-23] lint | Historical POTASK artifact index repair
+
+- GitHub Actions run `29970825450` のPython 3.9 / 3.12双方で、`grill-to-pr-loop`のhistorical artifact index invariantが失敗した。旧POTASK active catalog削除時に、保持対象のInput Packet v1 2件とExecution Envelope v3 1件まで`knowledge/index.md`から外したことが原因だった。
+- `knowledge/index.md`へ3件だけをhistorical / non-executable evidenceとして再登録した。旧plugin spec、Issue ledger、provider-adapter planはactive catalogへ戻さず、current task-management contractはGitHub Projects直接接続型standalone skillのままとした。
+- historical JSONのbytes、approved spec、sealed current Input Packetは変更していない。focused regression、grill-to-pr-loop 29 tests、issue-implementation-loop 249 tests、llm-wiki 6 tests、decide-in-order 7 tests、task-management 11 tests、architecture / context / dual-host checks、context report、`git diff --check`はすべてpassした。

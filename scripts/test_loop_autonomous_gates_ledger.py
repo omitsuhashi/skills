@@ -9,16 +9,20 @@ LEDGER = REPO_ROOT / "knowledge/wiki/syntheses/loop-skill-autonomous-gates-issue
 INDEX = REPO_ROOT / "knowledge/index.md"
 LOG = REPO_ROOT / "knowledge/log.md"
 GRILL_TESTS = REPO_ROOT / "skills/grill-to-pr-loop/tests/test_grill_to_pr_loop.py"
-TASK_GITHUB_TESTS = REPO_ROOT / "plugins/task-management/tests/test_github_mcp_route.py"
-TASK_DISPATCH_TESTS = REPO_ROOT / "plugins/task-management/tests/test_adapter_dispatch.py"
+TASK_CONTRACT_TESTS = (
+    REPO_ROOT
+    / "skills"
+    / "task-management"
+    / "tests"
+    / "test_task_management_contract.py"
+)
 DELIVERY_TESTS = REPO_ROOT / "skills/issue-implementation-loop/tests/test_delivery.py"
 
 
 class LoopAutonomousGatesLedgerTests(unittest.TestCase):
     def test_regression_tests_pin_all_autonomous_gate_contracts(self) -> None:
         grill_text = GRILL_TESTS.read_text(encoding="utf-8")
-        github_text = TASK_GITHUB_TESTS.read_text(encoding="utf-8")
-        dispatch_text = TASK_DISPATCH_TESTS.read_text(encoding="utf-8")
+        task_text = TASK_CONTRACT_TESTS.read_text(encoding="utf-8")
         delivery_text = DELIVERY_TESTS.read_text(encoding="utf-8")
 
         for required in (
@@ -27,12 +31,11 @@ class LoopAutonomousGatesLedgerTests(unittest.TestCase):
         ):
             self.assertIn(required, grill_text)
 
-        self.assertIn(
-            "test_live_root_and_adapter_availability_are_readiness_not_write_approval",
-            github_text,
-        )
-        self.assertIn("test_readiness_failures_are_setup_blockers", github_text)
-        self.assertIn("test_dispatch_approval_is_separate_from_readiness_gate", dispatch_text)
+        for required in (
+            "test_approval_policy_distinguishes_safe_uncertain_and_destructive",
+            "test_capability_and_partial_failures_are_fail_closed",
+        ):
+            self.assertIn(required, task_text)
         self.assertIn(
             "test_validate_delivery_plan_requires_approved_final_pr_actions",
             delivery_text,

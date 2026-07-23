@@ -1,7 +1,7 @@
 ---
 kind: synthesis
 created: 2026-07-17
-updated: 2026-07-17
+updated: 2026-07-23
 source_files:
   - ../../raw/sources/2026-07-17-decide-in-order-source-brief.md
 ---
@@ -10,7 +10,7 @@ source_files:
 
 ## 状態
 
-実装完了・local verification済み。`decide-in-order` standalone skill、standalone forward test、task-management integration policy、plugin regression verificationまで完了。marketplace、cachebuster、live install、外部writeは未実施。
+実装完了・local verification済み。`decide-in-order`はstandalone / state-freeで、task storage、task routing、外部writeを所有しない。2026-07-17のtask-management plugin integration、TaskDraft、adapter、plugin validator、deleted pathに関する記述はhistorical / supersededであり、current `skills/task-management/`から本skillへのdependencyはない。live installと外部writeは未実施。
 
 ## 目的
 
@@ -23,9 +23,9 @@ source_files:
 - 正本は独立した `skills/decide-in-order/` とする。
 - skill は state-free とし、保存先や外部書き込みを所有しない。
 - 判断プロセスは厳密、内部の作業状態は疎、ユーザー表示は適応的、永続化境界だけ型付きにする。
-- `task-management` は思想を複製せず、動作別に不使用、軽量、深い判断、review を使い分ける。
-- 初期実装で新しい plugin は作らない。既存 task-management plugin には integration policy だけを追加する。
-- skill が利用できない場合も task read、routing、明確な task 登録は壊さない。高影響な未解決判断は通常 task として暗黙に登録しない。
+- current task-management skillへdependencyやintegration policyを追加しない。必要な依頼でcallerが両skillを明示的に組み合わせる場合も、責務とstateは分離する。
+- 初期実装で新しいpluginを作らず、このstandalone境界を維持する。
+- 本skillが利用できないことはtask storageや機械的task operationのavailabilityを左右しない。
 
 ## Skill の配置と構成
 
@@ -65,7 +65,7 @@ skills/decide-in-order/
 - backend / destination routing。
 - 外部 system への書き込み。
 - schedule への配置。
-- TaskDraft の最終生成。
+- TaskDraftの最終生成（2026-07-17旧plugin contractのhistorical concept）。
 - human approval gate の代替。
 
 ## 判断順序
@@ -167,40 +167,22 @@ source_ref:
 - 重大で不可逆な損害がありうる場合は、人間承認、追加調査、停止を優先する。
 - 単純な実行依頼へ過剰な意思決定対話を挟まない。
 
-## Task-management Integration Policy
+## Current task-management boundary
 
-task-management 側には `plugins/task-management/skills/task-management/references/decision-support-policy.md` を追加し、既存 `SKILL.md` から条件付きで参照する。思想本文や `DecisionFrame` は複製しない。
+`decide-in-order`と`skills/task-management/`は独立したstandalone skillsである。current task-management skillは、本skillを参照せず、task create / read / updateのためのdependencyにもしていない。
 
-| Task-management の動作 | 利用強度 |
-| --- | --- |
-| task snapshot read / search | 不使用 |
-| backend / destination routing | 不使用 |
-| adapter preflight / dispatch preview | 不使用 |
-| 明確な実行 task の新規登録 | 軽量、通常は不可視 |
-| 目的が曖昧な task 化 | 深い判断 |
-| 調査 task | 問いと終了条件だけ軽量確認、必要時は深い判断 |
-| 優先順位 / 日次計画 | 深い判断 |
-| 継続 / 中止 / 延期 / 委任 | 深い判断 |
-| 定期見直し / 実行後 review | review 手順 |
-| 単純な status 更新 / maintenance | 原則不使用 |
+- `decide-in-order`は目的、判断順序、最小行動、見直し条件を導く。
+- `task-management`はGitHub Issue / Project上のtask operationだけを扱う。
+- どちらも相手のstateや保存先を所有しない。
+- callerが両方を明示的に使う場合も、判断結果の保存形式やhandoff schemaをこの設計から強制しない。
 
-新規 TaskDraft 前に確認するのは、実行準備済みか未解決の意思決定か、目的と条件が矛盾していないか、先に決める核心が残っていないかの 3 点とする。問題がなければ追加表示しない。
+## Historical task-management plugin integration（superseded）
 
-新しい handoff schema は作らない。判断結果は既存 TaskDraft へ必要部分だけ反映する。
-
-- 決まった方向: title / outcome。
-- 最小行動: body。
-- 完了の証拠: acceptance。
-- 仮定と未確認事項: review notes。
-- durable な判断記録: sanitized `source_ref`。
-
-`decide-in-order` が利用できない場合、read、routing、明確な task 登録は継続する。深い判断が必要な場合は companion skill が利用できないことを明示する。高影響で不可逆な判断は通常 TaskDraft へ押し込まず停止する。task-management 側に簡易版の思想を複製しない。
+2026-07-17実装では、旧`plugins/task-management/`にdecision-support policyを置き、TaskDraft、adapter preflight、dispatch preview、plugin validatorと組み合わせた。このintegration、TaskDraft mapping、companion fallback、plugin再導入手順、deleted pathは2026-07-23 standalone task-management migrationでsupersedeされたhistorical evidenceであり、current implementation instructionではない。
 
 ## Plugin 方針
 
-初期実装で `decide-in-order` 用の新規 plugin scaffold や marketplace entry は作らない。実行 tool、MCP、設定、credential を束ねる必要がなく、単一 skill に plugin 配布層を追加する利点がないためである。
-
-既存 task-management plugin を更新した後は `plugin-creator` validator を通す。repo 内変更だけでは marketplace、cachebuster、live install を変更しない。実際に既存 local plugin を再導入する場合だけ `update_plugin_cachebuster.py` と正式な reinstall flow を使い、marketplace を手編集しない。
+`decide-in-order`用のplugin scaffoldやmarketplace entryは作らない。実行tool、MCP、設定、credential、task storageを束ねる必要がなく、standalone skillにplugin配布層を追加する理由がない。旧task-management pluginのvalidator / cachebuster / reinstall記録はhistoricalであり、current task-management surfaceへ復元しない。
 
 ## 非目標
 
@@ -221,15 +203,15 @@ task-management 側には `plugins/task-management/skills/task-management/refere
 - 深い対話は一度に一問だけ確認する。
 - `DecisionFrame` は疎な内部語彙であり、通常出力 schema にならない。
 - `DecisionRecord` は大きな判断だけに生成され、保存は caller が所有する。
-- task-management は思想を複製せず、動作別 integration policy だけを持つ。
-- task read、routing、adapter approval gate、既存 TaskDraft contract が変わらない。
-- `decide-in-order` が利用できなくても機械的な task 操作は継続できる。
+- current task-management skillは本skillへのdependency、思想の複製、handoff schemaを持たない。
+- task storage、task routing、Project / Issue mutationは`decide-in-order`の責務外である。
+- `decide-in-order`が利用できなくても機械的なtask操作は継続できる。
 - 高影響な未解決判断を通常 task として暗黙に登録しない。
-- skill / plugin validators、既存 task-management tests、forward test が通る。
+- standalone skill validator、current task-management tests、forward testが通る。
 
 ## 検証方針
 
-静的検証は `skill-creator` の `quick_validate.py`、`plugin-creator` の `validate_plugin.py`、既存 task-management test suite、`git diff --check`、未確定記述 / 不要 resource 確認を行う。
+current静的検証は`skill-creator`の`quick_validate.py`、standalone task-management test suite、`git diff --check`、未確定記述 / 不要resource確認を行う。2026-07-17のplugin-creator validationはhistorical evidenceとしてのみ保持する。
 
 forward test は期待回答を渡さない新しい subagent へ skill と生の依頼だけを渡し、live backend や外部 write を使わずに行う。
 
@@ -249,35 +231,36 @@ forward test は期待回答を渡さない新しい subagent へ skill と生�
 - `decide-in-order` contract tests: 6 passed.
 - `decide-in-order` skill validation: passed.
 - Standalone forward tests: 8 scenarios passed using fresh agents and behavior-based evaluation.
-- task-management integration contract tests: 6 passed; full plugin suite: 89 passed.
-- Integration forward tests: final 2/2 passed, covering mechanical read exclusion and decision-sensitive intake. In the no-data read scenario, the first evaluator invented an empty result; a fresh evaluator rerun passed against the unchanged contract, recorded as evaluator variance without committing raw responses.
-- task-management skill validation and plugin validation: passed.
+- Historical 2026-07-17 task-management integration contract tests: 6 passed; old plugin suite: 89 passed。いずれもcurrent task-management verificationではない。
+- Historical integration forward tests: final 2/2 passed, covering mechanical read exclusion and decision-sensitive intake。旧plugin integrationの証跡であり、current dependencyを意味しない。
+- Historical task-management skill / plugin validation: passed。2026-07-23に旧pluginは削除済み。
 - llm-wiki tests: 6 passed.
 - repository skill architecture and 3 context contracts: validated.
 - Task 3 review fix `4475668` strengthened integration tests after independent review.
 - The baseline contained no existing `goals/**/*.json`; ignored, untracked, and tracked counts were all zero, so no goal JSON was created solely for tracking verification.
 - No new plugin, marketplace edit, cachebuster, live install, backend call, or external write was performed.
+- 2026-07-23 current boundary確認: `decide-in-order`はstandalone / state-free、current `skills/task-management/SKILL.md`は本skillを参照せず、task storageを所有しない。
 
 ## リスクと対策
 
 - 構造化しすぎて対話が重くなる: 内部状態を疎にし、通常表示を schema 化しない。
 - 構造を弱めすぎて思想が失われる: 9 段階の判断順序を処理契約として固定する。
-- task-management と責務が重複する: integration policy だけを置き、新しい handoff schema を作らない。
-- companion skill がない環境で挙動が曖昧になる: 機械操作は継続し、深い判断の欠落は明示する。
+- task-managementと責務が重複する: current skills間にdependencyやintegration policyを置かず、callerが明示した場合だけ独立に組み合わせる。
+- skill availabilityがtask operationへ波及する: task storage / mutationを所有しないことを固定し、機械操作から分離する。
 - exact-output test が表現を硬直化する: forward test は行動特性で評価する。
 - 大きな判断だけという閾値が曖昧になる: 影響期間、撤回コスト、関係者、説明責任、明示要求を判定基準にする。
 
 ## 関連ページ
 
 - [Decide In Order Skill 原案](../sources/2026-07-17-decide-in-order-source-brief.md) — 判断順序、利用場面、品質基準の一次資料。
-- [Portfolio OS Task Backend Plugin Skill Spec](portfolio-os-task-backend-plugin-skill-spec.md) — task-management 側の既存責務、TaskDraft、routing、adapter approval 境界。
+- [GitHub Projects 直接接続型 Task Management Skill 仕様](direct-github-projects-task-management/spec.md) — current standalone task-management contractと責務境界。
+- [Portfolio OS Task Backend Plugin Skill Spec](portfolio-os-task-backend-plugin-skill-spec.md) — TaskDraft / adapter / plugin integrationを記録するhistorical / superseded evidence。
 - [Loop Skill 運用単純化仕様](loop-skill-operational-simplicity-spec.md) — ユーザー向け skill 数と内部機構を分け、露出複雑性を抑える関連設計。
 
 ## 出典
 
 - [Decide In Order 原案](../../raw/sources/2026-07-17-decide-in-order-source-brief.md)
-- [task-management SKILL.md](../../../plugins/task-management/skills/task-management/SKILL.md)
-- [task draft contract](../../../plugins/task-management/skills/task-management/references/task-draft-contract.md)
-- [task contracts](../../../plugins/task-management/skills/task-management/references/task-contracts.md)
+- [current task-management SKILL.md](../../../skills/task-management/SKILL.md)
+- [current task-management spec](direct-github-projects-task-management/spec.md)
+- [historical Portfolio OS Task Backend Plugin Skill Spec](portfolio-os-task-backend-plugin-skill-spec.md)
 - `skill-creator:/Users/omitsuhashi/.codex/skills/.system/skill-creator/SKILL.md`
-- `plugin-creator:/Users/omitsuhashi/.codex/skills/.system/plugin-creator/SKILL.md`

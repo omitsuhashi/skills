@@ -67,11 +67,8 @@ jobs:
       - name: Run decide-in-order tests
         run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 -m unittest discover -s skills/decide-in-order/tests
 
-      - name: Run task-management decision-support tests
-        run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 plugins/task-management/tests/test_decision_support_policy.py
-
-      - name: Run task-management Hermes registration tests
-        run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 plugins/task-management/tests/test_hermes_plugin_manifest.py
+      - name: Run task-management tests
+        run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 -m unittest discover -s skills/task-management/tests
 
       - name: Check diff whitespace
         shell: bash
