@@ -58,6 +58,8 @@ _現在なし。_
 - [Grill To PR Loop Skill Split V2 Execution Envelope](wiki/syntheses/grill-to-pr-loop-skill-split-v2-execution-envelope.json) — historical / non-executable な Execution Envelope v1。過去の実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
 - [Grill To PR Loop Branch Policy Spec](wiki/syntheses/grill-to-pr-loop-branch-policy-spec.md) — `grill-to-pr-loop` / `issue-implementation-loop` の branch、worktree、commit、integration branch 推奨運用を実装契約化する spec。
   検索語: grill-to-pr-loop, issue-implementation-loop, branch policy, worktree reservation, epic_base, scoped commit, integration branch, PR_READY, ブランチ, コミット
+- [Planning Worktree Gate 仕様](wiki/syntheses/planning-worktree-gate/spec.md) — 最初のrepository write前のEpic単位planning worktree、default checkout保全、prepare / PR_READY / deliveryのcommit reachability guardを定義する仕様。
+  検索語: Planning Worktree Gate, planning branch, worktree reuse, default checkout, pre-existing dirt, prepare, PR_READY, delivery, commit reachability, 作業ツリー, main保全, 実行準備, 配送
 - [Grill To PR Loop Branch Policy Issues](wiki/syntheses/grill-to-pr-loop-branch-policy-issues.md) — branch policy 実装のローカルIssue ledger。
   検索語: grill-to-pr-loop, branch policy, local issue, blocker graph, ローカルIssue, ブランチ運用
 - [Grill To PR Loop Branch Policy Input Packet](wiki/syntheses/grill-to-pr-loop-branch-policy-input-packet.json) — historical / non-executable な Input Packet v1。過去の実行証跡として保持し、current validator では再利用せず new approval/new run を作る。

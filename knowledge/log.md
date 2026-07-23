@@ -1390,3 +1390,12 @@ append-only で使います。すべての entry は予測しやすい header �
 - GitHub Actions run `29970825450` のPython 3.9 / 3.12双方で、`grill-to-pr-loop`のhistorical artifact index invariantが失敗した。旧POTASK active catalog削除時に、保持対象のInput Packet v1 2件とExecution Envelope v3 1件まで`knowledge/index.md`から外したことが原因だった。
 - `knowledge/index.md`へ3件だけをhistorical / non-executable evidenceとして再登録した。旧plugin spec、Issue ledger、provider-adapter planはactive catalogへ戻さず、current task-management contractはGitHub Projects直接接続型standalone skillのままとした。
 - historical JSONのbytes、approved spec、sealed current Input Packetは変更していない。focused regression、grill-to-pr-loop 29 tests、issue-implementation-loop 249 tests、llm-wiki 6 tests、decide-in-order 7 tests、task-management 11 tests、architecture / context / dual-host checks、context report、`git diff --check`はすべてpassした。
+
+## [2026-07-24] spec | Planning Worktree Gate
+
+- Epic ID `planning-worktree-gate` として、Written Specを含む最初のrepository write前に`codex/<epic-id>/planning` branch/worktreeを作成または再利用し、Spec Gate、Issue Gate、Execution Plan Gate、index/log同期まで同じplanning worktreeを使う仕様を追加した。
+- durable packetは`planning_branch` / `planning_base_sha`を持ち、host固有pathとdefault checkout開始snapshotはGit common directory配下のuntracked runtime artifact / Execution Envelopeに分離する。
+- prepareはGate commit ancestry、PR_READY / deliveryはdefault checkout HEAD/status、final deliveryはplanning / implementation commitのactual final head reachabilityをfail closedで検証する。unrelated pre-existing dirtの移動、削除、stash、reset、PR混入は行わない。
+- planning branchは`codex/planning-worktree-gate/planning`、base SHAは`b3b869b60dfb785b325f754292dccf675e47313b`。host固有worktree pathはtracked wikiへ記録せず、runtime artifactにのみ保持した。
+- session userの依頼をSpec Gate approval evidenceとし、exact spec pathは`knowledge/wiki/syntheses/planning-worktree-gate/spec.md`、raw-byte SHA-256は`f4b8cebd19a832963aa5e4d022759b21ef73dc417ff6d2f1555b87419b578ec3`、six-part scopeは採用判断、非目標、受け入れ条件、検証、remote policy、停止条件をすべて承認済みとした。
+- remote policyは`local_only`。push、PR、merge、GitHub mutationは非承認である。
