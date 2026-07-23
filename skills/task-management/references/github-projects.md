@@ -33,10 +33,12 @@ Tool names may differ by host integration. Match semantic capabilities, but use 
 
 - `P0`: immediate.
 - `P1`: high.
-- `P2`: normal and the default when unspecified.
+- `P2`: normal and the default only for a newly created Project item in a create or register operation when unspecified.
 - `P3`: low.
 
 `Due date` is optional. Leave it empty when no reliable deadline exists. Use GitHub-native repository, assignee, label, milestone, Issue type, and parent/sub-issue information instead of duplicate custom fields.
+
+Creation defaults are `Status=Inbox`, `Priority=P2`, and no due date. Apply them only when create or register adds a newly created Project item. Never apply them to read, search, list, edit, comment, field-update, or terminal-update operations, and never reset an existing Project item's fields to these defaults.
 
 ## Terminal transitions
 

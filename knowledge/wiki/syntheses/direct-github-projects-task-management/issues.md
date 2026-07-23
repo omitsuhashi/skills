@@ -57,13 +57,13 @@ Issue Gate 承認後の first runnable issue は DGPTM-001。各 Issue は直前
 
 ### Acceptance criteria
 
-- [ ] 最初に failing contract test を追加し、旧plugin内のskillを新skillとしてcopyしただけでは失敗することを確認する。
-- [ ] `SKILL.md` frontmatterの`name`は`task-management`、descriptionはGitHub Projects direct task operationをtriggerできる内容である。
-- [ ] caller-supplied `project_url`、optional `inbox_repository`、1 caller / 1 canonical default Project、invocation overrideの存在をtestが要求する。
-- [ ] Issue-backed task、repository-as-work-unit、no Project draft item、no `work_unit_id` fieldをtestが要求する。
-- [ ] plugin manifest、production Python、backend adapter、task state file、credential fileを新skillへ追加しない。
-- [ ] user-facing skill proseに特定agent host名、専用runtime tool名、専用install commandがない。
-- [ ] `skill-creator` quick validatorとfocused unit testが成功する。
+- [x] 最初に failing contract test を追加し、旧plugin内のskillを新skillとしてcopyしただけでは失敗することを確認する。
+- [x] `SKILL.md` frontmatterの`name`は`task-management`、descriptionはGitHub Projects direct task operationをtriggerできる内容である。
+- [x] caller-supplied `project_url`、optional `inbox_repository`、1 caller / 1 canonical default Project、invocation overrideの存在をtestが要求する。
+- [x] Issue-backed task、repository-as-work-unit、no Project draft item、no `work_unit_id` fieldをtestが要求する。
+- [x] plugin manifest、production Python、backend adapter、task state file、credential fileを新skillへ追加しない。
+- [x] user-facing skill proseに特定agent host名、専用runtime tool名、専用install commandがない。
+- [x] `skill-creator` quick validatorとfocused unit testが成功する。
 
 ### Verification
 
@@ -97,18 +97,18 @@ git diff --check
 
 ### Acceptance criteria
 
-- [ ] target resolutionはinvocation value、caller default、session-established target、unique discovery、human confirmationの順である。
-- [ ] title-only / recency-onlyでstate-changing targetを選ばず、owner / URL / visibility / permission mismatchをfail closedにする。
-- [ ] repository resolutionはexplicit、current repository、unique referenced repository、configured inbox、human confirmationの順である。
-- [ ] inboxはambiguous fallbackではなくrepository-independent / unclassified taskだけに使う。
-- [ ] Issue templateはOutcome、Context、Acceptance criteria、Referencesを持ち、raw transcript、internal prompt、credential、agent名を保存しない。
-- [ ] Status 7 option、Priority 4 option、optional Due date、default Inbox / P2が固定される。
-- [ ] Done / CancelledとIssue close reasonのmapping、explicit terminal instructionのno-double-confirm、inferred terminal transitionのconfirmationが固定される。
-- [ ] high-confidence safe single mutationはauto、uncertain / destructive / bulk mutationはconfirmationという境界が具体化される。
-- [ ] GitHub MCP semantic capability checkを行い、CLI / REST / GraphQL / browser / local backendへfallbackしない。
-- [ ] Issue create後のProject write failureとterminal partial failureはdelete rollbackせず、残stepのidempotent continuationを返す。
-- [ ] 別skillを必須dependencyにしない。
-- [ ] focused testsとskill validatorが成功する。
+- [x] target resolutionはinvocation value、caller default、session-established target、unique discovery、human confirmationの順である。
+- [x] title-only / recency-onlyでstate-changing targetを選ばず、owner / URL / visibility / permission mismatchをfail closedにする。
+- [x] repository resolutionはexplicit、current repository、unique referenced repository、configured inbox、human confirmationの順である。
+- [x] inboxはambiguous fallbackではなくrepository-independent / unclassified taskだけに使う。
+- [x] Issue templateはOutcome、Context、Acceptance criteria、Referencesを持ち、raw transcript、internal prompt、credential、agent名を保存しない。
+- [x] Status 7 option、Priority 4 option、optional Due date、default Inbox / P2が固定される。
+- [x] Done / CancelledとIssue close reasonのmapping、explicit terminal instructionのno-double-confirm、inferred terminal transitionのconfirmationが固定される。
+- [x] high-confidence safe single mutationはauto、uncertain / destructive / bulk mutationはconfirmationという境界が具体化される。
+- [x] GitHub MCP semantic capability checkを行い、CLI / REST / GraphQL / browser / local backendへfallbackしない。
+- [x] Issue create後のProject write failureとterminal partial failureはdelete rollbackせず、残stepのidempotent continuationを返す。
+- [x] 別skillを必須dependencyにしない。
+- [x] focused testsとskill validatorが成功する。
 
 ### Verification
 
@@ -143,14 +143,14 @@ repositoryのexecutable task-management surfaceをstandalone skillだけにし�
 
 ### Acceptance criteria
 
-- [ ] `plugins/task-management/` directory全体が削除される。
-- [ ] plugin manifest、registration、Python facade、route config、provider adapters、fixtures、host-specific smokeが残らない。
-- [ ] CIはPython 3.9 / 3.12でstandalone task-management testsを実行し、削除済みtest fileを参照しない。
-- [ ] `scripts/test_dual_host_ci_workflow.py`は新CI stepとstandalone skill pathを検証する。
-- [ ] `scripts/test_loop_autonomous_gates_ledger.py`は旧adapter test sourceへの実行依存を持たず、現行approval / capability contractまたはhistorical ledger evidenceを検証する。
-- [ ] repository内のactive code / workflow / testから`task-management-read`、`plugins/task-management` dependencyが消える。
-- [ ] decide-in-order standalone testsはtask-management pluginがなくても成功する。
-- [ ] unrelated `skills/llm-wiki/DESCRIPTION.md`を変更、削除、stageしない。
+- [x] `plugins/task-management/` directory全体が削除される。
+- [x] plugin manifest、registration、Python facade、route config、provider adapters、fixtures、host-specific smokeが残らない。
+- [x] CIはPython 3.9 / 3.12でstandalone task-management testsを実行し、削除済みtest fileを参照しない。
+- [x] `scripts/test_dual_host_ci_workflow.py`は新CI stepとstandalone skill pathを検証する。
+- [x] `scripts/test_loop_autonomous_gates_ledger.py`は旧adapter test sourceへの実行依存を持たず、現行approval / capability contractまたはhistorical ledger evidenceを検証する。
+- [x] repository内のactive code / workflow / testから`task-management-read`、`plugins/task-management` dependencyが消える。
+- [x] decide-in-order standalone testsはtask-management pluginがなくても成功する。
+- [x] unrelated `skills/llm-wiki/DESCRIPTION.md`を変更、削除、stageしない。
 
 ### Verification
 
@@ -184,15 +184,15 @@ active knowledge surfaceが新skillをcurrent contractとして案内し、histo
 
 ### Acceptance criteria
 
-- [ ] `knowledge/index.md`は本spec、Issue ledger、implementation plan、Input Packetをnested Epic rootから発見できる。
-- [ ] 旧plugin spec / ledger / planをcurrent implementationとして案内せず、historical evidenceとして境界を明示する。
-- [ ] historical Input Packet / Execution Envelope JSONのbytesを変更しない。
-- [ ] approved `spec.md`、sealed `input-packet.json`、承認済み`implementation-plan.md`を実装Issueのwrite対象にしない。
-- [ ] `knowledge/log.md`にSpec Gate、Issue Gate、Execution Plan Gate、implementation / verification状態をappend-onlyに記録する。
-- [ ] fresh evaluationが明確なrepository task、Project override、Project / repository ambiguity、inbox、terminal transition、capability missing、partial failure retryを確認する。
-- [ ] task-management、decide-in-order、llm-wiki、repository scripts、architecture、compatibility validatorが成功する。
-- [ ] static negative checksと`git diff --check`が成功する。
-- [ ] local-only scopeを維持し、live GitHub write、push、PR、merge、installを実行しない。
+- [x] `knowledge/index.md`は本spec、Issue ledger、implementation plan、Input Packetをnested Epic rootから発見できる。
+- [x] 旧plugin spec / ledger / planをcurrent implementationとして案内せず、historical evidenceとして境界を明示する。
+- [x] historical Input Packet / Execution Envelope JSONのbytesを変更しない。
+- [x] approved `spec.md`、sealed `input-packet.json`、承認済み`implementation-plan.md`を実装Issueのwrite対象にしない。
+- [x] `knowledge/log.md`にSpec Gate、Issue Gate、Execution Plan Gate、implementation / verification状態をappend-onlyに記録する。
+- [x] fresh evaluationが明確なrepository task、Project override、Project / repository ambiguity、inbox、terminal transition、capability missing、partial failure retryを確認する。
+- [x] task-management、decide-in-order、llm-wiki、repository scripts、architecture、compatibility validatorが成功する。
+- [x] static negative checksと`git diff --check`が成功する。
+- [x] local-only scopeを維持し、live GitHub write、push、PR、merge、installを実行しない。
 
 ### Verification
 
@@ -244,6 +244,36 @@ git diff --check
 
 - stale discovery REDで旧Portfolio OS task backend source summary、plugin spec / ledger / Input Packet、provider-adapter plan、POTASK-011 Input Packet / Execution Envelopeがactive indexに残ることを確認した後、catalog entryだけを削除した。historical filesのraw bytesは変更していない。
 - remote stateは`local_only`。push、PR、GitHub Issue / Project mutation、live MCP、install、release、mergeは実行していない。local implementation、forward evaluation、local verification、独立task reviewはいずれも完了し、remaining local implementation riskはない。
+
+## Approved scope expansion / final-review fix
+
+2026-07-23のwhole-branch final reviewは、上記task単位clean verdictの後にCritical 1件とImportant 3件を検出したため、「remaining local implementation riskはない」という先行記録をsupersedeした。userはこれらを修正するwrite scope expansionを明示承認した。
+
+- Critical: generic default flowによりread / search / listがIssue作成・Project追加・default field設定へ入り得た。
+- Important: static testsがexact tree、plugin absence、exact field options、operation-specific non-mutationを固定していなかった。
+- Important: standalone skillのrepository-level discovery routeが欠け、dual-host synthesisが削除済みpluginをcurrentとしていた。
+- Important: active syntheses、index、acceptance checklist、historical mappingがcurrent / historical境界と一致していなかった。
+- approved plan defect: `implementation-plan.md`自身がgeneric default flowをfinal routerとして埋め込み、operation-specific read / edit / comment / non-terminal update behaviorをtestしていなかった。approved planはhistorical evidenceとしてbyte不変に保ち、本ledgerと`knowledge/log.md`で欠落を記録する。
+- expanded write scope: `skills/task-management/SKILL.md`、既存4 reference Markdown、contract test、`decide-in-order-skill-design.md`、`hermes-dual-host-authoring-contract-design.md`、`knowledge/index.md`、本ledger、`knowledge/log.md`。approved `spec.md`、sealed `input-packet.json`、approved `implementation-plan.md`、historical artifactはread-onlyのままとする。
+- TDD RED: contract testを先に強化し、untouched `de0b995` production Markdownに対して10 tests中2 failures（operation routing section欠落、reuse field preservation欠落）を確認した。
+- TDD GREEN: operation-specific routing、creation-only defaults、reuse / retry preservationを最小Markdownで実装し、10/10 tests成功。全local verification、seal、scope checkも成功した。
+- Fresh evaluation waiver: platformがcompleted agentを保持したため、3回のfresh spawn attemptはいずれも`agent thread limit reached`でevaluator作成前に失敗した。session userはこのcapacity blockerに対するprocess waiverを明示承認した。これはbehavioral test failureではなく、過去outputやcontaminated contextも再利用していない。
+- Substitute acceptance gate: strengthened 10-test task-management contract suite、full repository verification、final independent reviewer re-reviewを必須とする。local commitは前2条件の成功後に作成し、controllerはindependent re-reviewとfresh full verification後にだけpublishする。
+- Delivery authorization expansion: session userは従来の`local_only`から、completed feature branchのpushとdraft PR作成だけを追加承認した。merge、release、live install、live GitHub Project / Issue mutation、その他のlive changeは引き続き非承認である。
+
+### Historical supersession map
+
+以下はbytesを保持するhistorical / non-executable evidenceであり、current implementation instructionではない。
+
+| Historical artifact | Current replacement contract |
+| --- | --- |
+| [Former source summary](../../sources/2026-06-28-portfolio-os-task-backend-plugin-skill-handoff.md) | [Current standalone skill](../../../../skills/task-management/SKILL.md) |
+| [Former plugin spec](../portfolio-os-task-backend-plugin-skill-spec.md) | [Current standalone spec](spec.md) |
+| [Former plugin Issue ledger](../portfolio-os-task-backend-plugin-skill-issues.md) | [Current Issue ledger](issues.md) |
+| [Former plugin Input Packet](../portfolio-os-task-backend-plugin-skill-input-packet.json) | [Current sealed Input Packet](input-packet.json) |
+| [Provider-adapter implementation plan](../2026-07-16-task-management-provider-adapters-implementation-plan.md) | [Current approved historical implementation plan](implementation-plan.md) |
+| [POTASK-011 Input Packet](../portfolio-os-task-backend-plugin-skill-potask-011-input-packet.json) | [Current standalone spec](spec.md) |
+| [POTASK-011 Execution Envelope](../portfolio-os-task-backend-plugin-skill-potask-011-execution-envelope.json) | [Current Issue ledger](issues.md) |
 
 ## Gate policy
 

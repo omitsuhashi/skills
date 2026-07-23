@@ -23,7 +23,7 @@ _現在なし。_
   検索語: task-management, GitHub Projects, GitHub MCP, Issue, standalone skill, project_url, inbox repository, repository work unit, Status, Priority, Due date, approval policy, fail closed, タスク管理, 直接接続, 承認, セットアップ
 - [GitHub Projects 直接接続型 Task Management Skill Issue 台帳](wiki/syntheses/direct-github-projects-task-management/issues.md) — DGPTM-001からDGPTM-004へstandalone skill、direct MCP contract、旧plugin削除、historical supersessionを依存順に分解したIssue Gate承認済み台帳。
   検索語: task-management, GitHub Projects, GitHub MCP, DGPTM, local issue, Issue Gate, blocker graph, plugin removal, standalone skill, ローカルIssue, ブロッカー, 移行
-- [GitHub Projects Direct Task Management Skill Implementation Plan](wiki/syntheses/direct-github-projects-task-management/implementation-plan.md) — DGPTM-001からDGPTM-004をscaffold、RED/GREEN、旧plugin削除、fresh evaluation、local closeoutの順で実装するExecution Plan Gate candidate。
+- [GitHub Projects Direct Task Management Skill Implementation Plan](wiki/syntheses/direct-github-projects-task-management/implementation-plan.md) — DGPTM-001からDGPTM-004のstandalone migrationに使ったExecution Plan Gate承認済み・実行完了のhistorical plan。final reviewで判明したoperation routing等の欠落はcurrent Issue台帳とlogで補正済み。
   検索語: task-management, GitHub Projects, implementation plan, writing-plans, TDD, RED GREEN, plugin removal, forward test, 実装計画, テスト駆動, 検証
 - [GitHub Projects Direct Task Management Skill Input Packet](wiki/syntheses/direct-github-projects-task-management/input-packet.json) — approved spec bindingとIssue Gate承認済みDGPTM-001〜DGPTM-004を`local_only`で固定したsealed Input Packet v2。
   検索語: task-management, GitHub Projects, Input Packet v2, approved spec binding, execution intent, DGPTM, local_only, 実行契約, 承認済み仕様
@@ -135,7 +135,7 @@ _現在なし。_
   検索語: decide-in-order, decision support, DecisionFrame, DecisionRecord, light, deep, review, standalone skill, 決める順番, 意思決定支援, 日次計画, 継続判断, 調査方針, 許容損失
 - [Decide In Order Skill 実装計画](wiki/syntheses/2026-07-17-decide-in-order-implementation-plan.md) — standalone decision skillのtest-first実装とforward testを記録するhistorical plan。旧task-management plugin integrationはcurrent task contractではない。
   検索語: decide-in-order, implementation plan, skill-creator, forward test, contract test, TDD, standalone skill, 実装計画, 意思決定支援, 回帰検証
-- [Codex / Hermes Dual-host Authoring Contract 設計](wiki/syntheses/hermes-dual-host-authoring-contract-design.md) — skill / plugin のリポジトリ互換、Hermes discovery、live load を分離し、薄い作成指示、共通検証、Python 3.9 / 3.12 CI enforcementを実装・ローカル検証済みの設計。
+- [Codex / Hermes Dual-host Authoring Contract 設計](wiki/syntheses/hermes-dual-host-authoring-contract-design.md) — repository互換、discovery、live loadを分離し、current standalone task-managementの`skills.external_dirs` discovery routeと旧plugin evidenceのhistorical境界を記録した設計。
   検索語: Hermes Agent, Codex, dual-host, SKILL.md, description.md, plugin.yaml, register(ctx), external_dirs, install, discovery, live load, skill creator, plugin creator, 作成指示, 互換性, インストール, 検証
 - [Codex / Hermes Dual-host Authoring Contract 実装計画](wiki/syntheses/2026-07-17-hermes-dual-host-authoring-contract-implementation-plan.md) — 薄いauthoring guidance、標準ライブラリvalidator、既存skill/plugin導入契約、CIを4つのTDD単位で実装する計画。
   検索語: Hermes Agent, Codex, dual-host, implementation plan, AGENTS.md, validator, unittest, CI, TDD, SKILL.md, plugin.yaml, register(ctx), 実装計画, 作成ルール, 検証

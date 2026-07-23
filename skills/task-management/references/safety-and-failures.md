@@ -23,6 +23,6 @@ Do not fall back to a CLI, direct API client, browser automation, or local backe
 
 ## Partial success
 
-Do not delete the created Issue if Issue creation succeeds but Project add or field update fails. Return its URL, successful steps, unfinished steps, and the safe resume action. On retry, continue only the unfinished steps. Do not create a duplicate Issue.
+Do not delete the created Issue if Issue creation succeeds but Project add or field update fails. Return its URL, successful steps, unfinished steps, and the safe resume action. On retry, continue only the unfinished steps. Do not reset completed or current fields. Do not create a duplicate Issue.
 
 If Issue close and terminal Project Status diverge, do not roll back the successful side automatically. Report the mismatch and complete only the missing side after the applicable confirmation rule.

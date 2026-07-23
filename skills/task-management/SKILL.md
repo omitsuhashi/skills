@@ -23,15 +23,54 @@ Manage task content as GitHub Issues and portfolio state as Project items. Use a
 - Use GitHub MCP directly. Do not route through a facade, adapter, provider-neutral schema, CLI, direct API client, browser automation, or local backend.
 - Do not own credentials, MCP registration, Project creation, repository creation, or normal-operation schema repair.
 
-## Default flow
+## Operation routing
+
+1. Classify the requested operation before resolving mutation targets or selecting capabilities.
+2. Select only the semantic capabilities required by that operation.
+3. Resolve only the scope and targets required by that operation through `references/core.md`.
+4. Follow exactly one operation flow below. Combine flows only when the user explicitly requests each operation.
+
+### Read, search, and list
+
+- Resolve only the query scope needed to answer.
+- Perform no mutation: never create or edit an Issue, add a comment, close an Issue, add an Issue to a Project, or update a Project field.
+- Return only read results, resolved scope, and any ambiguity that prevented an answer. Do not claim completed writes.
+
+### Create and register
+
+Only this operation uses the new-task flow:
 
 1. Determine the requested outcome and observable acceptance criteria.
-2. Resolve the Project and Issue repository using `references/core.md`.
-3. Check the semantic GitHub MCP capabilities required for the operation.
-4. Search read-only for an obvious existing Issue before creating a task.
-5. Create or reuse the Issue according to `references/issue-contract.md`.
-6. Add the Issue to the selected Project and set the requested fields; otherwise use `Status=Inbox`, `Priority=P2`, and no due date.
-7. Apply `references/safety-and-failures.md` before mutation and after any partial success.
-8. Return the Issue URL, repository, Project URL, completed steps, and unfinished steps.
+2. Resolve the Project and Issue repository.
+3. Check the semantic read and search capabilities needed to inspect current state.
+4. Search read-only for an obvious existing Issue and Project item.
+5. Reuse a high-confidence match according to `references/issue-contract.md`. If no Issue matches, check Issue-create capability and create it.
+6. If the Issue is not yet in the selected Project, check item-add and required field-update capabilities, then add it. Apply `Status=Inbox`, `Priority=P2`, and no due date only to that newly created Project item when the user supplied no value.
+7. For an existing Project item, check only the capability needed for an explicitly requested field change or documented unfinished write. Preserve every other Issue and Project item field.
+8. Return the Issue URL, repository, Project URL, completed steps, preserved state, and unfinished steps.
+
+### Edit
+
+- Update only the explicitly requested Issue properties, such as title or body.
+- Do not add Project membership. Do not apply creation defaults unless the user separately requests a create or register operation.
+- Return the edited Issue properties and Issue URL; do not claim unrelated Project writes.
+
+### Comment
+
+- Add only the requested comment to the resolved Issue.
+- Do not add Project membership. Do not apply creation defaults unless the user separately requests a create or register operation.
+- Return the comment result and Issue URL; do not claim unrelated Issue or Project writes.
+
+### Non-terminal field update
+
+- Update only the explicitly requested field values for Status, Priority, or Due date.
+- Do not change any unrequested field, add Project membership, or apply creation defaults.
+- Return only the requested field results, target item, and any unfinished requested write.
+
+### Terminal update
+
+- Treat an explicit terminal instruction as approval for the Issue close and matching Project Status transition. Do not ask twice.
+- Obtain confirmation before an inferred terminal transition.
+- Apply the terminal and partial-failure contracts in `references/github-projects.md` and `references/safety-and-failures.md`, then return the result of each side and any unfinished step.
 
 Stop before writing when the Project, repository, task outcome, acceptance criteria, capability, authentication, permission, or schema is not reliable enough to proceed.

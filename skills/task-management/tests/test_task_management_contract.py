@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 import unittest
 
 
@@ -10,15 +11,56 @@ PROJECTS = SKILL_ROOT / "references" / "github-projects.md"
 ISSUES = SKILL_ROOT / "references" / "issue-contract.md"
 SAFETY = SKILL_ROOT / "references" / "safety-and-failures.md"
 
+EXPECTED_FILES = {
+    "SKILL.md",
+    "references/core.md",
+    "references/github-projects.md",
+    "references/issue-contract.md",
+    "references/safety-and-failures.md",
+    "tests/test_task_management_contract.py",
+}
+
 
 def read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def section(text: str, heading: str) -> str:
+    """Return one Markdown section, excluding peer and parent headings."""
+    match = re.search(
+        rf"(?ms)^{re.escape(heading)}\n(.*?)(?=^#{{1,{heading.count('#')}}} |\Z)",
+        text,
+    )
+    if match is None:
+        raise AssertionError(f"missing section: {heading}")
+    return match.group(1)
+
+
+def field_options(text: str, field: str) -> list[str]:
+    """Parse the backtick option names in one Project field subsection."""
+    next_field = {
+        "Status": r"^`Priority` options:",
+        "Priority": r"^`Due date`",
+    }[field]
+    match = re.search(
+        rf"(?ms)^`{re.escape(field)}` options:\n(.*?)(?={next_field})",
+        text,
+    )
+    if match is None:
+        raise AssertionError(f"missing field option block: {field}")
+    field_text = match.group(1)
+    return re.findall(r"(?m)^- `([^`]+)`: ", field_text)
+
+
 class TaskManagementContractTests(unittest.TestCase):
     def test_standalone_structure_and_frontmatter(self) -> None:
-        self.assertTrue(SKILL.is_file())
-        self.assertTrue(CORE.is_file())
+        actual_files = {
+            path.relative_to(SKILL_ROOT).as_posix()
+            for path in SKILL_ROOT.rglob("*")
+            if path.is_file()
+        }
+        self.assertEqual(EXPECTED_FILES, actual_files)
+        self.assertFalse((REPO_ROOT / "plugins" / "task-management").exists())
         text = read(SKILL)
         self.assertTrue(text.startswith("---\nname: task-management\n"))
         self.assertIn("description:", text.split("---", 2)[1])
@@ -103,19 +145,27 @@ class TaskManagementContractTests(unittest.TestCase):
     def test_issue_and_project_fields_are_exact(self) -> None:
         project_text = read(PROJECTS)
         issue_text = read(ISSUES)
-        for status in (
-            "Inbox",
-            "Backlog",
-            "Ready",
-            "In progress",
-            "Blocked",
-            "Done",
-            "Cancelled",
-        ):
-            self.assertIn(f"`{status}`", project_text)
-        for priority in ("P0", "P1", "P2", "P3"):
-            self.assertIn(f"`{priority}`", project_text)
-        self.assertIn("`Due date`", project_text)
+        self.assertEqual(
+            [
+                "Inbox",
+                "Backlog",
+                "Ready",
+                "In progress",
+                "Blocked",
+                "Done",
+                "Cancelled",
+            ],
+            field_options(project_text, "Status"),
+        )
+        self.assertEqual(
+            ["P0", "P1", "P2", "P3"],
+            field_options(project_text, "Priority"),
+        )
+        self.assertIn("`Due date` is optional.", project_text)
+        due_date = project_text.split("`Due date` is optional.", 1)[1].split(
+            "## Terminal transitions", 1
+        )[0]
+        self.assertIn("Leave it empty", due_date)
         self.assertIn("close reason `completed`", project_text)
         self.assertIn("close reason `not planned`", project_text)
         for heading in (
@@ -125,6 +175,65 @@ class TaskManagementContractTests(unittest.TestCase):
             "## References",
         ):
             self.assertIn(heading, issue_text)
+
+    def test_operation_routing_is_classified_before_capabilities(self) -> None:
+        text = read(SKILL)
+        routing = section(text, "## Operation routing")
+        self.assertLess(
+            routing.index("Classify the requested operation"),
+            routing.index("Select only the semantic capabilities"),
+        )
+
+        read_flow = section(text, "### Read, search, and list")
+        for prohibited_write in (
+            "create or edit an Issue",
+            "add a comment",
+            "close an Issue",
+            "add an Issue to a Project",
+            "update a Project field",
+        ):
+            self.assertIn(prohibited_write, read_flow)
+        self.assertIn("Resolve only the query scope needed to answer", read_flow)
+        self.assertIn("Return only read results", read_flow)
+
+        create_flow = section(text, "### Create and register")
+        self.assertIn("Only this operation uses the new-task flow", create_flow)
+        self.assertIn("newly created Project item", create_flow)
+        self.assertIn("Status=Inbox", create_flow)
+        self.assertIn("Priority=P2", create_flow)
+        self.assertIn("no due date", create_flow)
+
+        edit_flow = section(text, "### Edit")
+        self.assertIn("only the explicitly requested Issue properties", edit_flow)
+        self.assertIn("Do not add Project membership", edit_flow)
+        self.assertIn("Do not apply creation defaults", edit_flow)
+
+        comment_flow = section(text, "### Comment")
+        self.assertIn("only the requested comment", comment_flow)
+        self.assertIn("Do not add Project membership", comment_flow)
+        self.assertIn("Do not apply creation defaults", comment_flow)
+
+        field_flow = section(text, "### Non-terminal field update")
+        self.assertIn("only the explicitly requested field values", field_flow)
+        self.assertIn("Do not change any unrequested field", field_flow)
+
+        terminal_flow = section(text, "### Terminal update")
+        self.assertIn("explicit terminal instruction", terminal_flow)
+        self.assertIn("Do not ask twice", terminal_flow)
+        self.assertIn("inferred terminal transition", terminal_flow)
+        self.assertIn("confirmation", terminal_flow)
+
+    def test_reuse_and_partial_failure_preserve_existing_state(self) -> None:
+        issue_text = section(read(ISSUES), "## Duplicate handling")
+        self.assertIn("never create a second Issue", issue_text)
+        self.assertIn("Preserve its current fields", issue_text)
+        self.assertIn("requested operation", issue_text)
+        self.assertIn("documented unfinished partial-failure step", issue_text)
+
+        partial_failure = section(read(SAFETY), "## Partial success")
+        self.assertIn("continue only the unfinished steps", partial_failure.lower())
+        self.assertIn("Do not reset completed or current fields", partial_failure)
+        self.assertIn("Do not create a duplicate Issue", partial_failure)
 
     def test_approval_policy_distinguishes_safe_uncertain_and_destructive(self) -> None:
         text = read(SAFETY)

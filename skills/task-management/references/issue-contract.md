@@ -29,3 +29,5 @@ Do not create the Issue when the outcome or acceptance criteria cannot support a
 ## Duplicate handling
 
 Search open Issues and current Project items read-only before creation. Reuse an Issue only when repository, outcome, and references make identity high-confidence. Similar titles alone are not sufficient. After a partial failure, resume from the returned Issue URL and never create a second Issue for the same operation.
+
+When reusing an Issue or Project item, never create a second Issue. Preserve its current fields unless the requested operation or a documented unfinished partial-failure step requires a particular missing write. Do not reapply creation defaults or repeat completed steps.
