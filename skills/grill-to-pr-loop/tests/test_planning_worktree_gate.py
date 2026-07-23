@@ -141,6 +141,33 @@ class PlanningWorktreeGateTests(unittest.TestCase):
                 1,
             )
 
+    def test_reuse_preserves_initial_runtime_identity_after_default_branch_advances(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repo = initialize_repository(Path(temporary_directory))
+            worktree_root = repo / ".worktrees"
+            first = run_prepare(repo, worktree_root)
+            self.assertEqual(first.returncode, 0, first.stderr)
+            first_payload = json.loads(first.stdout)
+            initial_state = json.loads(
+                Path(first_payload["runtime_state_path"]).read_text(encoding="utf-8")
+            )
+
+            (repo / "README.md").write_text("advanced default branch\n", encoding="utf-8")
+            git(repo, "add", "README.md")
+            git(repo, "commit", "-qm", "advance main")
+
+            second = run_prepare(repo, worktree_root)
+
+            self.assertEqual(second.returncode, 0, second.stderr)
+            second_payload = json.loads(second.stdout)
+            persisted_state = json.loads(
+                Path(second_payload["runtime_state_path"]).read_text(encoding="utf-8")
+            )
+            self.assertTrue(second_payload["reused"])
+            self.assertNotEqual(default_snapshot(repo)[0], initial_state["planning_base_sha"])
+            self.assertEqual(second_payload["planning_base_sha"], initial_state["planning_base_sha"])
+            self.assertEqual(persisted_state, initial_state)
+
     def test_repeated_gate_entry_returns_same_worktree(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             repo = initialize_repository(Path(temporary_directory))
@@ -179,6 +206,31 @@ class PlanningWorktreeGateTests(unittest.TestCase):
                 ).returncode
                 == 0
             )
+
+    def test_git_worktree_add_failure_preserves_default_checkout(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repo = initialize_repository(Path(temporary_directory))
+            before = default_snapshot(repo)
+            before_readme = (repo / "README.md").read_text(encoding="utf-8")
+            branch_lock = (
+                repo
+                / ".git"
+                / "refs"
+                / "heads"
+                / "codex"
+                / "planning-worktree-gate"
+                / "planning.lock"
+            )
+            branch_lock.parent.mkdir(parents=True)
+            branch_lock.write_text("held by test\n", encoding="utf-8")
+
+            result = run_prepare(repo, repo / ".worktrees")
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("git worktree add", json.loads(result.stdout)["error"])
+            self.assertEqual(default_snapshot(repo), before)
+            self.assertEqual((repo / "README.md").read_text(encoding="utf-8"), before_readme)
+            self.assertFalse((repo / ".worktrees" / "planning-worktree-gate").exists())
 
     def test_prepare_preserves_preexisting_dirt(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:

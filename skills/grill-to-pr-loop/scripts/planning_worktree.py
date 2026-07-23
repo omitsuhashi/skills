@@ -109,6 +109,46 @@ def write_json_atomically(path: Path, payload: dict[str, Any]) -> None:
         raise
 
 
+def load_runtime_identity(
+    state_path: Path,
+    *,
+    epic_id: str,
+    planning_branch: str,
+    default_checkout: Path,
+    planning_worktree: Path,
+) -> dict[str, Any]:
+    try:
+        payload = json.loads(state_path.read_text(encoding="utf-8"))
+    except FileNotFoundError as error:
+        raise GateError(
+            "registered planning worktree is missing its runtime identity artifact"
+        ) from error
+    except json.JSONDecodeError as error:
+        raise GateError("planning runtime identity artifact is invalid JSON") from error
+
+    if not isinstance(payload, dict):
+        raise GateError("planning runtime identity artifact must be an object")
+    expected = {
+        "schema_version": 1,
+        "epic_id": epic_id,
+        "planning_branch": planning_branch,
+        "default_checkout": str(default_checkout),
+        "planning_worktree": str(planning_worktree),
+    }
+    for field, value in expected.items():
+        if payload.get(field) != value:
+            raise GateError(f"planning runtime identity artifact has invalid {field}")
+    for field in ("planning_base_sha", "worktree_root"):
+        if not isinstance(payload.get(field), str) or not payload[field]:
+            raise GateError(f"planning runtime identity artifact is missing {field}")
+    start = payload.get("default_checkout_start")
+    if not isinstance(start, dict) or not all(
+        isinstance(start.get(field), str) for field in ("head", "status_porcelain")
+    ):
+        raise GateError("planning runtime identity artifact has invalid default snapshot")
+    return payload
+
+
 def prepare(args: argparse.Namespace) -> dict[str, Any]:
     if not EPIC_ID_PATTERN.fullmatch(args.epic_id):
         raise GateError("--epic-id must be lower-kebab")
@@ -124,10 +164,6 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
 
     worktrees = parse_worktree_list(git(repo_root, "worktree", "list", "--porcelain"))
     default_checkout = select_default_checkout(repo_root, worktrees, args.default_branch)
-    start_head = git(default_checkout, "rev-parse", "HEAD").strip()
-    start_status = git(
-        default_checkout, "status", "--porcelain=v1", "--untracked-files=all"
-    )
     planning_branch = f"codex/{args.epic_id}/planning"
     wanted_branch = f"refs/heads/{planning_branch}"
 
@@ -137,6 +173,34 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
             reused = True
             break
     else:
+        reused = False
+
+    common_dir = git_common_dir(default_checkout)
+    state_path = runtime_state_path(common_dir, args.epic_id)
+    if reused:
+        state_payload = load_runtime_identity(
+            state_path,
+            epic_id=args.epic_id,
+            planning_branch=planning_branch,
+            default_checkout=default_checkout,
+            planning_worktree=planning_worktree,
+        )
+        return {
+            "ok": True,
+            "epic_id": args.epic_id,
+            "planning_branch": planning_branch,
+            "planning_base_sha": state_payload["planning_base_sha"],
+            "reused": True,
+            "runtime_state_path": str(state_path),
+            "default_checkout": str(default_checkout),
+            "planning_worktree": str(planning_worktree),
+        }
+
+    start_head = git(default_checkout, "rev-parse", "HEAD").strip()
+    start_status = git(
+        default_checkout, "status", "--porcelain=v1", "--untracked-files=all"
+    )
+    if not reused:
         ignored = subprocess.run(
             [
                 "git",
@@ -180,10 +244,6 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
             worktree_add.extend(("-b", planning_branch, str(planning_worktree), start_head))
         git(repo_root, *worktree_add)
         planning_worktree = planning_worktree.resolve()
-        reused = False
-
-    common_dir = git_common_dir(default_checkout)
-    state_path = runtime_state_path(common_dir, args.epic_id)
     state_payload: dict[str, Any] = {
         "schema_version": 1,
         "epic_id": args.epic_id,
