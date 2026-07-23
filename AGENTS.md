@@ -10,3 +10,15 @@
 - Skills and plugins created or changed in this repository must target both Codex and Hermes Agent.
 - For skill requirements, follow `skills/AGENTS.md`.
 - For plugin requirements, follow `plugins/AGENTS.md`.
+
+## Task Worktree Policy
+
+- Default branch checkout is read-only for task work.
+- Before the first repository write after discovery or grilling, create or enter one Epic-scoped planning worktree.
+- Reuse that worktree through Written Spec, Spec Gate, Issue Gate, Execution Plan Gate, and planning documentation sync.
+- Do not create a new worktree for every Gate.
+- Additional issue worktrees are used only when execution isolation or parallel worker review requires them.
+- If required worktree creation fails, stop before writing; do not continue in the default checkout.
+- Before delivery, verify that the PR branch contains every task commit.
+- Before completion, verify that the default checkout matches its starting HEAD/status. Never alter pre-existing unrelated changes without explicit approval.
+
