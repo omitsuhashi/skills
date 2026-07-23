@@ -39,6 +39,10 @@ python3 <skill-dir>/scripts/check_prereqs.py --phase execution
 
 Stop if planning lacks `grill-with-docs` or execution lacks `issue-implementation-loop`. GitHub auth is optional until an approved remote write.
 
+## Planning Worktree Gate
+
+Before Written Spec, use the current planning-operation read set to prepare and reuse one Epic worktree. Existing preference needs no repeated consent; sandbox failure stops before writes and never falls back to the default checkout.
+
 ## Mode Router
 
 Load only the current operation files in `context-contract.toml`, the single read-set source.

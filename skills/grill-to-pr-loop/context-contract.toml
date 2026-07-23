@@ -3,9 +3,11 @@ skill = "grill-to-pr-loop"
 entrypoint = "SKILL.md"
 base_references = ["references/core.md"]
 character_budget = 24000
-estimated_token_budget = 10000
+estimated_token_budget = 11000
 max_file_count = 6
 min_headroom_percent = 20
+
+# Planning Worktree Gate ownership lives in planning-contract.md for every planning phase.
 
 [operations.intake]
 references = ["references/planning-contract.md"]

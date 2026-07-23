@@ -1,0 +1,202 @@
+from __future__ import annotations
+
+import json
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import unittest
+
+
+SKILL_DIR = Path(__file__).resolve().parents[1]
+PREPARE = SKILL_DIR / "scripts" / "planning_worktree.py"
+REPOSITORY_ROOT = SKILL_DIR.parents[1]
+
+
+def git(repo: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["git", "-C", str(repo), *args],
+        check=check,
+        capture_output=True,
+        text=True,
+    )
+
+
+def initialize_repository(root: Path) -> Path:
+    repo = root / "repo"
+    subprocess.run(["git", "init", "-q", "-b", "main", str(repo)], check=True)
+    git(repo, "config", "user.email", "tests@example.invalid")
+    git(repo, "config", "user.name", "Planning Worktree Gate tests")
+    (repo / ".gitignore").write_text(".worktrees/\n", encoding="utf-8")
+    (repo / "README.md").write_text("fixture\n", encoding="utf-8")
+    git(repo, "add", ".gitignore", "README.md")
+    git(repo, "commit", "-qm", "initial fixture")
+    return repo
+
+
+def default_snapshot(repo: Path) -> tuple[str, str]:
+    return (
+        git(repo, "rev-parse", "HEAD").stdout.strip(),
+        git(repo, "status", "--porcelain=v1", "--untracked-files=all").stdout,
+    )
+
+
+def run_prepare(
+    repo: Path,
+    worktree_root: Path,
+    *,
+    epic_id: str = "planning-worktree-gate",
+) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [
+            sys.executable,
+            str(PREPARE),
+            "prepare",
+            "--repo-root",
+            str(repo),
+            "--epic-id",
+            epic_id,
+            "--worktree-root",
+            str(worktree_root),
+            "--json",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+
+class PlanningWorktreeGateTests(unittest.TestCase):
+    def test_planning_worktree_gate_contract_routes_each_planning_operation(self) -> None:
+        skill_text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+        core_text = (SKILL_DIR / "references" / "core.md").read_text(encoding="utf-8")
+        planning_text = (SKILL_DIR / "references" / "planning-contract.md").read_text(
+            encoding="utf-8"
+        )
+        handoff_text = (SKILL_DIR / "references" / "execution-handoff.md").read_text(
+            encoding="utf-8"
+        )
+        mistakes_text = (SKILL_DIR / "references" / "common-mistakes.md").read_text(
+            encoding="utf-8"
+        )
+        contract_text = (SKILL_DIR / "context-contract.toml").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("Planning Worktree Gate", skill_text)
+        self.assertIn("Planning Worktree Gate", core_text)
+        self.assertIn("planning_worktree.py prepare", planning_text)
+        self.assertIn("one Epic-scoped planning worktree", planning_text)
+        self.assertIn("tracked/runtime identity boundary", handoff_text)
+        self.assertIn("Planning Worktree Gate", mistakes_text)
+        for operation in ('[operations.intake]', '[operations.spec]', '[operations."issue-gate"]', '[operations."execution-plan"]'):
+            start = contract_text.index(operation)
+            next_operation = contract_text.find("[operations.", start + len(operation))
+            operation_block = contract_text[start : next_operation if next_operation != -1 else None]
+            self.assertIn('"references/planning-contract.md"', operation_block)
+        self.assertTrue((REPOSITORY_ROOT / "AGENTS.md").is_file())
+
+    def test_prepare_creates_planning_worktree_before_first_write(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repo = initialize_repository(Path(temporary_directory))
+            before = default_snapshot(repo)
+
+            result = run_prepare(repo, repo / ".worktrees")
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertTrue(payload["ok"])
+            self.assertEqual(payload["epic_id"], "planning-worktree-gate")
+            self.assertEqual(
+                payload["planning_branch"],
+                "codex/planning-worktree-gate/planning",
+            )
+            self.assertEqual(payload["planning_base_sha"], before[0])
+            self.assertFalse(payload["reused"])
+            self.assertEqual(Path(payload["default_checkout"]), repo.resolve())
+            self.assertTrue(Path(payload["runtime_state_path"]).is_file())
+            self.assertTrue((repo / ".worktrees" / "planning-worktree-gate").is_dir())
+            self.assertEqual(default_snapshot(repo), before)
+
+    def test_prepare_reuses_existing_epic_worktree(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repo = initialize_repository(Path(temporary_directory))
+            worktree_root = repo / ".worktrees"
+            first = run_prepare(repo, worktree_root)
+            self.assertEqual(first.returncode, 0, first.stderr)
+
+            second = run_prepare(repo, worktree_root)
+
+            self.assertEqual(second.returncode, 0, second.stderr)
+            payload = json.loads(second.stdout)
+            self.assertTrue(payload["reused"])
+            self.assertEqual(
+                Path(payload["runtime_state_path"]),
+                Path(json.loads(first.stdout)["runtime_state_path"]),
+            )
+            self.assertEqual(
+                git(repo, "worktree", "list", "--porcelain").stdout.count(
+                    "branch refs/heads/codex/planning-worktree-gate/planning"
+                ),
+                1,
+            )
+
+    def test_repeated_gate_entry_returns_same_worktree(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repo = initialize_repository(Path(temporary_directory))
+            worktree_root = repo / ".worktrees"
+
+            first = run_prepare(repo, worktree_root)
+            second = run_prepare(repo, worktree_root)
+
+            self.assertEqual(first.returncode, 0, first.stderr)
+            self.assertEqual(second.returncode, 0, second.stderr)
+            self.assertEqual(
+                json.loads(first.stdout)["runtime_state_path"],
+                json.loads(second.stdout)["runtime_state_path"],
+            )
+            self.assertEqual(
+                (worktree_root / "planning-worktree-gate").resolve(),
+                Path(json.loads(second.stdout)["planning_worktree"]),
+            )
+
+    def test_worktree_creation_failure_does_not_write_default_checkout(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repo = initialize_repository(Path(temporary_directory))
+            before = default_snapshot(repo)
+
+            result = run_prepare(repo, repo / "unignored-worktrees")
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(default_snapshot(repo), before)
+            self.assertFalse(
+                git(
+                    repo,
+                    "show-ref",
+                    "--verify",
+                    "refs/heads/codex/planning-worktree-gate/planning",
+                    check=False,
+                ).returncode
+                == 0
+            )
+
+    def test_prepare_preserves_preexisting_dirt(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repo = initialize_repository(Path(temporary_directory))
+            (repo / "unrelated.txt").write_text("keep me\n", encoding="utf-8")
+            before = default_snapshot(repo)
+
+            result = run_prepare(repo, repo / ".worktrees")
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            runtime_state = json.loads(
+                Path(payload["runtime_state_path"]).read_text(encoding="utf-8")
+            )
+            self.assertEqual(runtime_state["default_checkout_start"]["head"], before[0])
+            self.assertEqual(runtime_state["default_checkout_start"]["status_porcelain"], before[1])
+            self.assertEqual(default_snapshot(repo), before)
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -6,6 +6,8 @@ Use this reference when preparing the normalized input packet, presenting the Ex
 
 Use an optional planning branch, immutable `epic_base.sha`, one reservation per issue, typed dependencies, and local `PR_READY`. Issue PRs target `epic_base.ref`; final PR targets `main` and merge is human-only.
 
+The tracked/runtime identity boundary is strict: planning artifacts/gate commits are tracked; Git-common-dir `planning-worktree.json` is host-specific and untracked. Keep `epic_base`, issues, reservations, and execution runtime separate.
+
 Issue branches use `codex/<epic-id>/<local-id>-<slug>`; blocked worktrees remain uncreated until release.
 
 Codex phase branch policy: gate planning artifacts on the current planning branch; workers inherit but do not author them. Envelope v4 carries `approved_spec_binding` and `phase_branch_policy`; a fresh/compacted coordinator owns execution resources.
