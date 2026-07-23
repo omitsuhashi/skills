@@ -1399,3 +1399,9 @@ append-only で使います。すべての entry は予測しやすい header �
 - planning branchは`codex/planning-worktree-gate/planning`、base SHAは`b3b869b60dfb785b325f754292dccf675e47313b`。host固有worktree pathはtracked wikiへ記録せず、runtime artifactにのみ保持した。
 - session userの依頼をSpec Gate approval evidenceとし、exact spec pathは`knowledge/wiki/syntheses/planning-worktree-gate/spec.md`、raw-byte SHA-256は`f4b8cebd19a832963aa5e4d022759b21ef73dc417ff6d2f1555b87419b578ec3`、six-part scopeは採用判断、非目標、受け入れ条件、検証、remote policy、停止条件をすべて承認済みとした。
 - remote policyは`local_only`。push、PR、merge、GitHub mutationは非承認である。
+
+## [2026-07-24] issue-gate | Planning Worktree Gate
+
+- PWTG-001からPWTG-004へPlanning Worktree Gate CLI、packet/runtime repository guard、PR_READY / delivery integrity、wiki / full verificationをserial dependencyで分解した。
+- user提示のAcceptance Tests 1〜8とNon-goalsをIssue Gate approval evidenceとし、各issueのwrite scope、criteria、non-goals、verificationを`knowledge/wiki/syntheses/planning-worktree-gate/issues.md`に固定した。
+- local ledgerはcanonical、GitHub Issueは`未作成`、remote policyは`local_only`。Gateごとのworktreeは作成せず、Spec Gateと同じplanning worktreeを継続利用する。
