@@ -179,9 +179,10 @@ class TaskManagementContractTests(unittest.TestCase):
     def test_operation_routing_is_classified_before_capabilities(self) -> None:
         text = read(SKILL)
         routing = section(text, "## Operation routing")
+        self.assertIn("For every write route", routing)
         self.assertLess(
             routing.index("Classify the requested operation"),
-            routing.index("Select only the semantic capabilities"),
+            routing.index("For every write route"),
         )
 
         read_flow = section(text, "### Read, search, and list")
@@ -222,6 +223,43 @@ class TaskManagementContractTests(unittest.TestCase):
         self.assertIn("Do not ask twice", terminal_flow)
         self.assertIn("inferred terminal transition", terminal_flow)
         self.assertIn("confirmation", terminal_flow)
+
+    def test_write_routes_share_complete_capability_preflight(self) -> None:
+        skill_text = read(SKILL)
+        project_text = section(read(PROJECTS), "## Semantic capability check")
+
+        for required in (
+            "Every write route requires this complete set before mutation",
+            "Issue read, search, create, update, and comment",
+            "Project read, item add, and field update",
+            "Access to the resolved owner, repository, Project, and relevant private content",
+            "Read, search, and list require only the read capabilities",
+        ):
+            self.assertIn(required, project_text)
+
+        write_preflight = (
+            "Complete the full write preflight in "
+            "`references/github-projects.md` before mutation"
+        )
+        for heading in (
+            "### Create and register",
+            "### Edit",
+            "### Comment",
+            "### Non-terminal field update",
+            "### Terminal update",
+        ):
+            self.assertIn(write_preflight, section(skill_text, heading))
+
+        read_flow = section(skill_text, "### Read, search, and list")
+        self.assertIn("Require only Issue read/search and Project read capabilities", read_flow)
+        for contradiction in (
+            "Select only the semantic capabilities required by that operation",
+            "check only the capability needed",
+            "Check the semantic read and search capabilities needed",
+            "check Issue-create capability",
+            "check item-add and required field-update capabilities",
+        ):
+            self.assertNotIn(contradiction, skill_text)
 
     def test_reuse_and_partial_failure_preserve_existing_state(self) -> None:
         issue_text = section(read(ISSUES), "## Duplicate handling")

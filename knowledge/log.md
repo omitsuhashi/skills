@@ -1377,3 +1377,10 @@ append-only で使います。すべての entry は予測しやすい header �
 - platformがcompleted agentを保持した状態でfresh evaluator spawnを3回試行したが、すべてevaluator作成前に`agent thread limit reached`となった。session userはこのplatform capacity blockerに対するfresh-evaluation waiverを明示承認した。これはbehavioral test failureではなく、過去evaluator outputやcontaminated agent contextは再利用していない。
 - substitute acceptance gateはstrengthened task-management contract suite 10 tests、full repository verification、final independent reviewer re-reviewとする。fix implementerは前2条件の成功後にexact subjectでlocal commitを作成し、controllerがindependent re-reviewとfresh full verificationを完了してからpublication可否を判断する。
 - session userはdelivery authorizationを従来の`local_only`から、completed feature branchのpushとdraft PR作成に限って拡張した。merge、release、live install、live GitHub Project / Issue mutation、その他のlive changeは非承認のままである。本implementerはpush / PR作成を行わずcontrollerへ引き渡す。
+
+## [2026-07-23] final-re-review-capability-and-delivery-correction | GitHub Projects Direct Task Management Skill
+
+- independent final re-reviewはImportant 2件を検出した。write routeがoperation別のselective capability checkへ狭まってapproved specのcomplete Issue / Project capability and permission preflightと矛盾した点、およびIssue ledgerのactive Gate policyが後続delivery authorizationを反映せず`local_only`だけをcurrent表示していた点である。
+- TDDではfull write preflightとselective phrase禁止をtest-firstで追加し、current head `c45d45926a67d23fc49d198d19cdcb630701071a`に対して11 tests中2 expected failuresを確認した。`SKILL.md`と`references/github-projects.md`を揃えた後は11/11 GREENとなった。
+- read / search / listはzero-writeのため必要なIssue / Project read capabilityだけを要求する。create / register、edit、comment、non-terminal update、terminal updateは、mutation前にIssue read / search / create / update / comment、Project read / item add / field update、resolved target permissionのcomplete setをすべて確認し、operation別にpreflightを狭めない。
+- Gate policyはoriginal approved spec / sealed executionの`local_only`と、後続session-user authorizationによるfeature-branch push + draft PR作成だけのdelivery exceptionを区別した。merge、release、live install、live GitHub Issue / Project mutation、その他のlive changeは非承認のままである。本fix commitではpush / PR作成を行わない。

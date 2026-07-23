@@ -281,7 +281,7 @@ git diff --check
 - implementation planとsealed Input PacketはExecution Plan Gateで承認済みであり、その後にproduction implementationを開始した。
 - approval対象は本ledgerのIssue ID、Outcome、blocker graph、dependency order、write scope、acceptance criteria、verification、non-goalsとする。
 - ledgerの意味を変える修正後はIssue Gateを再取得する。
-- remote policyはapproved specどおり`local_only`とする。
+- original approved spec / sealed execution policyは`local_only`だった。その後のsession-user authorizationにより、completed feature branchのpushとdraft PR作成だけをdelivery exceptionとして許可する。merge、release、live install、live GitHub Issue / Project mutation、その他のlive changeは引き続き非承認である。
 
 ## 関連ページ
 
