@@ -67,6 +67,8 @@ def git_environment(*, read_only: bool) -> dict[str, str]:
             or name.startswith("GIT_CONFIG_VALUE_")
         ):
             environment.pop(name)
+    environment["GIT_NO_REPLACE_OBJECTS"] = "1"
+    environment["GIT_GRAFT_FILE"] = os.devnull
     if read_only:
         environment["GIT_OPTIONAL_LOCKS"] = "0"
     else:
@@ -436,20 +438,36 @@ def runtime_payload(
 
 
 def revalidate_before_runtime_publication(
+    default_checkout: Path,
     planning_worktree: Path,
     *,
+    default_branch: str,
     planning_branch: str,
     expected_common_dir: Path,
     default_head: str,
+    default_status: str,
     created: bool,
 ) -> None:
     try:
+        verify_current_worktree_registration(
+            default_checkout,
+            planning_worktree,
+            default_branch=default_branch,
+            planning_branch=planning_branch,
+        )
         verify_registered_planning_worktree(
             planning_worktree,
             planning_branch=planning_branch,
             expected_common_dir=expected_common_dir,
             default_head=default_head,
         )
+        if default_checkout_snapshot(default_checkout) != (
+            default_head,
+            default_status,
+        ):
+            raise GateError(
+                "current default checkout does not match its captured start snapshot"
+            )
     except GateError as error:
         disposition = (
             "was created and left in place"
@@ -568,10 +586,13 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
                 start_status=start_status,
             )
             revalidate_before_runtime_publication(
+                default_checkout,
                 planning_worktree,
+                default_branch=args.default_branch,
                 planning_branch=planning_branch,
                 expected_common_dir=common_dir,
                 default_head=start_head,
+                default_status=start_status,
                 created=False,
             )
             create_json_atomically(state_path, state_payload)
@@ -636,10 +657,13 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
     git(repo_root, *worktree_add, read_only=False)
     planning_worktree = planning_worktree.resolve()
     revalidate_before_runtime_publication(
+        default_checkout,
         planning_worktree,
+        default_branch=args.default_branch,
         planning_branch=planning_branch,
         expected_common_dir=common_dir,
         default_head=start_head,
+        default_status=start_status,
         created=True,
     )
     state_payload = runtime_payload(

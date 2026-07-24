@@ -822,6 +822,53 @@ class PlanningWorktreeGateTests(unittest.TestCase):
                 incompatible_head,
             )
 
+    def test_prepare_revalidates_default_after_worktree_add_hook_creates_drift(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repo = initialize_repository(Path(temporary_directory))
+            preexisting = repo / "pre-existing.txt"
+            preexisting.write_text("preserve me\n", encoding="utf-8")
+            before = default_snapshot(repo)
+            drift = repo / "default-drift.txt"
+            quoted_drift = "'" + str(drift).replace("'", "'\"'\"'") + "'"
+            hook = repo / ".git" / "hooks" / "post-checkout"
+            hook.write_text(
+                "#!/bin/sh\n"
+                f"printf 'hook drift\\n' > {quoted_drift}\n",
+                encoding="utf-8",
+            )
+            hook.chmod(0o755)
+            state_path = runtime_state(repo)
+            planning_worktree = repo / ".worktrees" / "planning-worktree-gate"
+
+            result = run_prepare(repo, repo / ".worktrees")
+
+            self.assertNotEqual(result.returncode, 0)
+            error = json.loads(result.stdout)["error"]
+            self.assertIn(str(planning_worktree.resolve()), error)
+            self.assertIn(
+                "codex/planning-worktree-gate/planning",
+                error,
+            )
+            self.assertIn("was created and left in place", error)
+            self.assertIn("manual inspection", error)
+            self.assertIn("runtime identity was not published", error)
+            self.assertIn("default checkout", error)
+            self.assertTrue(planning_worktree.is_dir())
+            self.assertFalse(state_path.exists())
+            self.assertEqual(
+                preexisting.read_text(encoding="utf-8"),
+                "preserve me\n",
+            )
+            self.assertEqual(drift.read_text(encoding="utf-8"), "hook drift\n")
+            after = default_snapshot(repo)
+            self.assertEqual(after[0], before[0])
+            self.assertEqual(
+                set(after[1].splitlines()),
+                set(before[1].splitlines()) | {"?? default-drift.txt"},
+            )
+
     def test_prepare_revalidates_registered_worktree_immediately_before_publish(
         self,
     ) -> None:
@@ -926,7 +973,9 @@ class PlanningWorktreeGateTests(unittest.TestCase):
             )
             self.assertFalse(runtime_state(repo_b).exists())
 
-    def test_prepare_ignores_ambient_no_replace_objects_for_ancestry(self) -> None:
+    def test_prepare_rejects_replace_ref_that_rewrites_physical_branch_ancestry(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             repo = initialize_repository(Path(temporary_directory))
             replaced_head = git(repo, "rev-parse", "HEAD").stdout.strip()
@@ -983,13 +1032,85 @@ class PlanningWorktreeGateTests(unittest.TestCase):
             result = run_prepare(
                 repo,
                 repo / ".worktrees",
-                environment_overrides={"GIT_NO_REPLACE_OBJECTS": "1"},
+                environment_overrides={"GIT_NO_REPLACE_OBJECTS": "0"},
             )
 
-            self.assertEqual(result.returncode, 0, result.stderr)
-            payload = json.loads(result.stdout)
-            self.assertEqual(payload["planning_base_sha"], default_head)
-            self.assertTrue(Path(payload["runtime_state_path"]).is_file())
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn(
+                "current default HEAD is not an ancestor",
+                json.loads(result.stdout)["error"],
+            )
+            self.assertFalse(
+                (repo / ".worktrees" / "planning-worktree-gate").exists()
+            )
+            self.assertFalse(runtime_state(repo).exists())
+
+    def test_prepare_rejects_info_graft_that_rewrites_physical_worktree_ancestry(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repo = initialize_repository(Path(temporary_directory))
+            planning_branch = "codex/planning-worktree-gate/planning"
+            planning_worktree = repo / ".worktrees" / "planning-worktree-gate"
+            git(
+                repo,
+                "worktree",
+                "add",
+                "-b",
+                planning_branch,
+                str(planning_worktree),
+                "HEAD",
+            )
+            (planning_worktree / "planning.md").write_text(
+                "divergent planning\n", encoding="utf-8"
+            )
+            git(planning_worktree, "add", "planning.md")
+            git(planning_worktree, "commit", "-qm", "diverge planning")
+            planning_head = git(
+                planning_worktree, "rev-parse", "HEAD"
+            ).stdout.strip()
+            (repo / "README.md").write_text("advance default\n", encoding="utf-8")
+            git(repo, "add", "README.md")
+            git(repo, "commit", "-qm", "advance main")
+            default_head = git(repo, "rev-parse", "HEAD").stdout.strip()
+            graft_file = repo / ".git" / "info" / "grafts"
+            graft_file.write_text(
+                f"{planning_head} {default_head}\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(
+                git(
+                    repo,
+                    "merge-base",
+                    "--is-ancestor",
+                    default_head,
+                    planning_branch,
+                    check=False,
+                ).returncode,
+                0,
+            )
+            state_path = runtime_state(repo)
+
+            result = run_prepare(
+                repo,
+                repo / ".worktrees",
+                environment_overrides={
+                    "GIT_GRAFT_FILE": str(graft_file),
+                    "GIT_NO_REPLACE_OBJECTS": "0",
+                },
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn(
+                "current default HEAD is not an ancestor",
+                json.loads(result.stdout)["error"],
+            )
+            self.assertTrue(planning_worktree.is_dir())
+            self.assertFalse(state_path.exists())
+            self.assertEqual(
+                git(planning_worktree, "rev-parse", "HEAD").stdout.strip(),
+                planning_head,
+            )
 
     def test_sanitizer_covers_git_local_environment_variables(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -1003,6 +1124,50 @@ class PlanningWorktreeGateTests(unittest.TestCase):
                 local_environment - module.REPOSITORY_ROUTING_ENVIRONMENT,
                 set(),
             )
+            trusted_overrides = {
+                "GIT_NO_REPLACE_OBJECTS": "1",
+                "GIT_GRAFT_FILE": os.devnull,
+            }
+            hostile_local_environment = {
+                name: "hostile" for name in local_environment
+            }
+            hostile_local_environment.update(
+                {
+                    "GIT_CONFIG_KEY_0": "core.worktree",
+                    "GIT_CONFIG_VALUE_0": str(repo),
+                    "GIT_CONFIG_GLOBAL": "/trusted/global-config",
+                    "GIT_CONFIG_SYSTEM": "/trusted/system-config",
+                }
+            )
+            with mock.patch.dict(
+                os.environ,
+                hostile_local_environment,
+                clear=False,
+            ):
+                read_only_environment = module.git_environment(read_only=True)
+                write_environment = module.git_environment(read_only=False)
+            for environment in (read_only_environment, write_environment):
+                for name in local_environment - trusted_overrides.keys():
+                    self.assertNotIn(name, environment)
+                self.assertEqual(
+                    {
+                        name: environment.get(name)
+                        for name in trusted_overrides
+                    },
+                    trusted_overrides,
+                )
+                self.assertNotIn("GIT_CONFIG_KEY_0", environment)
+                self.assertNotIn("GIT_CONFIG_VALUE_0", environment)
+                self.assertEqual(
+                    environment["GIT_CONFIG_GLOBAL"],
+                    "/trusted/global-config",
+                )
+                self.assertEqual(
+                    environment["GIT_CONFIG_SYSTEM"],
+                    "/trusted/system-config",
+                )
+            self.assertEqual(read_only_environment["GIT_OPTIONAL_LOCKS"], "0")
+            self.assertNotIn("GIT_OPTIONAL_LOCKS", write_environment)
             for global_environment in (
                 "GIT_CONFIG_GLOBAL",
                 "GIT_CONFIG_SYSTEM",
