@@ -1414,3 +1414,14 @@ append-only で使います。すべての entry は予測しやすい header �
 - Spec Gate、Issue Gate、Execution Plan Gate、index/log同期は同じ`codex/planning-worktree-gate/planning` branchで行い、Gateごとのworktree再作成はしていない。
 - exact packet pathは`knowledge/wiki/syntheses/planning-worktree-gate/input-packet.json`、raw-byte SHA-256は`7b7ecc562d1ff2aa2066438099741dad9e70ccb889c9dada4620eebb2224e219`。`validate_input_packet.py --json`と`check_capabilities.py --json`はいずれも`ok: true`で、approved spec seal、`tdd`、`requesting-code-review`、worker-context execution prerequisitesを確認した。
 - Execution Plan Gateはapproved scope内、remote actionなし、dependency cycleなし、write scope明示済みとしてauto-continueする。packet / plan / index / logをphase approval commitに固定してからworker contextへ渡す。
+
+## [2026-07-24] implementation-closeout | Planning Worktree Gate
+
+- PWTG-001〜PWTG-004を完了へ同期した。pre-closeout chainはplanning base `b3b869b`、phase artifacts `6511899` / `e87a7e3` / `863711a`、PWTG-001の7 commits、PWTG-002の7 commits、PWTG-003 `c355b08`から成る19 commitsで、すべてcurrent planning HEAD `bc557bef95cabea39a2ac5220ce4ec09d59f980e`のancestorである。PWTG-004は本closeout documentation commitで完了する。
+- fresh verificationは`grill-to-pr-loop` 58件、`issue-implementation-loop` 284件、repository scripts 58件、`llm-wiki` 6件、Acceptance 1〜8 focused regressions 18件がすべてpassした。skill architecture、3 context contracts、変更対象2 skillのscoped dual-host compatibility、両skillのskill-creator quick validator、`git diff --check`もpassした。
+- approved specに残る`validate_dual_host_authoring.py`はhistorical plan defectであり、sealed specとInput Packetは編集していない。実行可能なIssue台帳 / Implementation Planは実在する`validate_dual_host_compatibility.py`のchanged-skill scoped commandsと、両skillのskill-creator quick-validator commandsへ訂正した。
+- repository-wide `validate_dual_host_compatibility.py --all`は未変更の`llm-wiki` DESCRIPTION discovery findingだけを返した。変更対象2 skillのscoped validationはpassしたが、repository-wide passとは記録しない。
+- Acceptance 1〜8はfirst-create、pre-existing exact worktree adoption/reuse、single planning chain、failure/default preservation、physical Gate ancestry、physical final-head containment、runtime-bound actual default checkout drift rejectionの実repo regressionsへ対応する。new packetはplanning identity pairをseal時に必須化し、historical sealed v2のread/verify compatibilityを維持した。
+- approved spec SHA-256 `f4b8cebd19a832963aa5e4d022759b21ef73dc417ff6d2f1555b87419b578ec3`とsealed Input Packet SHA-256 `7b7ecc562d1ff2aa2066438099741dad9e70ccb889c9dada4620eebb2224e219`は不変である。default checkoutのHEADとexact porcelain statusはruntime start snapshotと一致した。
+- prior production Important findingsはTDD fixと再reviewを経てすべてclosedし、最終fix reviewはCritical 0 / Important 0である。non-blocking MinorとしてGit environment policyのskill間重複、runtime load/validate stabilization sequenceの反復、planning/default identity parameter data clumpを残す。
+- delivery stateは`local_only`。push、PR作成、merge、GitHub mutation、default checkoutのreset / clean / stash、destructive recoveryは実行していない。

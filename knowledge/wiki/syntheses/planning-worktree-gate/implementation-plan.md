@@ -43,7 +43,7 @@
   - `agent-runs/grill-to-pr-loop/<epic-id>/planning-worktree.json`
   - contains host paths and exact starting HEAD/status; it is never tracked.
 
-- [ ] **Step 1: Write failing CLI tests**
+- [x] **Step 1: Write failing CLI tests**
 
 Create temp Git repositories and assert:
 
@@ -55,7 +55,7 @@ def test_worktree_creation_failure_does_not_write_default_checkout(): ...
 def test_prepare_preserves_preexisting_dirt(): ...
 ```
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run:
 
@@ -65,7 +65,7 @@ python3 -m unittest skills.grill-to-pr-loop.tests.test_planning_worktree_gate
 
 Expected: FAIL because `planning_worktree.py` does not exist or required behavior is absent.
 
-- [ ] **Step 3: Implement minimal CLI**
+- [x] **Step 3: Implement minimal CLI**
 
 Implementation requirements:
 
@@ -80,15 +80,15 @@ Implementation requirements:
 - atomically write only the untracked runtime artifact after successful create/reuse;
 - never run reset, clean, stash, checkout, add, commit, move, or delete.
 
-- [ ] **Step 4: Run GREEN and refactor**
+- [x] **Step 4: Run GREEN and refactor**
 
 Run the focused test and keep all five scenarios green.
 
-- [ ] **Step 5: Update skill contract**
+- [x] **Step 5: Update skill contract**
 
 Add `Planning Worktree Gate` before Written Spec, one-worktree reuse across all planning gates, no repeated consent when preference exists, fail-closed sandbox behavior, and tracked/runtime identity boundary. Route `intake`, `spec`, `issue-gate`, and `execution-plan` read sets through the planning contract that owns the Gate.
 
-- [ ] **Step 6: Run Task 1 suite**
+- [x] **Step 6: Run Task 1 suite**
 
 ```bash
 python3 -m unittest discover -s skills/grill-to-pr-loop/tests
@@ -139,7 +139,7 @@ Expected: all tests pass.
 
 - `validate_repository_guard(envelope, packet, repo_root) -> list[str]` performs read-only validation.
 
-- [ ] **Step 1: Write failing packet/schema tests**
+- [x] **Step 1: Write failing packet/schema tests**
 
 Add tests for:
 
@@ -149,15 +149,15 @@ Add tests for:
 - short/nonhex base rejected;
 - current tracked sealed v2 packet remains valid without byte edits.
 
-- [ ] **Step 2: Run packet RED**
+- [x] **Step 2: Run packet RED**
 
 Run focused `test_approved_spec_binding` cases; expect unknown-field/schema failures.
 
-- [ ] **Step 3: Add backward-compatible packet shape**
+- [x] **Step 3: Add backward-compatible packet shape**
 
 Allow the pair in Input Packet v2, require pair completeness and canonical values when either appears, and update the new-packet template. Do not rewrite existing sealed packets.
 
-- [ ] **Step 4: Write failing repository guard tests**
+- [x] **Step 4: Write failing repository guard tests**
 
 Create real temp Git worktrees and assert:
 
@@ -167,15 +167,15 @@ Create real temp Git worktrees and assert:
 - unchanged pre-existing dirt passes;
 - Gate commit on `main` but not reachable from `epic_base.sha` returns `GATE_COMMIT_NOT_ANCESTOR`.
 
-- [ ] **Step 5: Run repository guard RED**
+- [x] **Step 5: Run repository guard RED**
 
 Expected: missing `repository_integrity.py` or validator accepts invalid fixtures.
 
-- [ ] **Step 6: Implement repository guard**
+- [x] **Step 6: Implement repository guard**
 
 Validate all absolute host paths as registered worktrees sharing the trusted Git common directory. Compare exact branch/base/snapshot values without mutating Git or files. Call the guard from `validate_execution_envelope` after loading the active packet.
 
-- [ ] **Step 7: Run Task 2 GREEN**
+- [x] **Step 7: Run Task 2 GREEN**
 
 ```bash
 python3 -m unittest skills.issue-implementation-loop.tests.test_approved_spec_binding
@@ -203,19 +203,19 @@ python3 -m unittest skills.issue-implementation-loop.tests.test_validation
 - `validate_success_repository_integrity(envelope, runtime, repo_root) -> list[str]`
 - `validate_final_head_integrity(envelope, runtime, execution_result, head_ref, repo_root) -> list[str]`
 
-- [ ] **Step 1: Write failing PR_READY tests**
+- [x] **Step 1: Write failing PR_READY tests**
 
 Use real temp Git repositories. A runtime state with `PR_READY` must fail when default checkout HEAD or status differs from the guard snapshot and pass with unchanged pre-existing dirt.
 
-- [ ] **Step 2: Run PR_READY RED**
+- [x] **Step 2: Run PR_READY RED**
 
 Expected: completion validation currently ignores default checkout state.
 
-- [ ] **Step 3: Implement success-status guard**
+- [x] **Step 3: Implement success-status guard**
 
 When any issue is in `PR_READY`, `COMPLETE`, or `DONE`, execution-result validation must re-run repository guard. Do not attempt recovery mutations.
 
-- [ ] **Step 4: Write failing final-head tests**
+- [x] **Step 4: Write failing final-head tests**
 
 Create real commits for Gate, implementation A, implementation B, and final branch. Assert delivery fails separately when:
 
@@ -224,11 +224,11 @@ Create real commits for Gate, implementation A, implementation B, and final bran
 - runtime says `pr_merged: true` but the commit is unreachable;
 - actual final head includes every required commit.
 
-- [ ] **Step 5: Run delivery RED**
+- [x] **Step 5: Run delivery RED**
 
 Expected: omitted implementation commit is currently accepted.
 
-- [ ] **Step 6: Implement final-head guard**
+- [x] **Step 6: Implement final-head guard**
 
 Resolve the local final head ref and require ancestry for:
 
@@ -238,7 +238,7 @@ Resolve the local final head ref and require ancestry for:
 
 Return validation errors before remote mutation. Preserve existing draft-only/hardening checks.
 
-- [ ] **Step 7: Run Task 3 GREEN**
+- [x] **Step 7: Run Task 3 GREEN**
 
 ```bash
 python3 -m unittest skills.issue-implementation-loop.tests.test_delivery
@@ -257,23 +257,26 @@ python3 -m unittest discover -s skills/issue-implementation-loop/tests
 - Modify: `knowledge/log.md`
 - Modify only if required by validators: `skill-architecture.toml`, `context-contract.toml`
 
-- [ ] **Step 1: Synchronize durable evidence**
+- [x] **Step 1: Synchronize durable evidence**
 
 Record actual test counts, commits, review results, remaining risks, and `local_only` boundary. Do not track host-specific worktree paths.
 
-- [ ] **Step 2: Run full verification**
+- [x] **Step 2: Run full verification**
 
 ```bash
 python3 -m unittest discover -s skills/grill-to-pr-loop/tests
 python3 -m unittest discover -s skills/issue-implementation-loop/tests
 python3 scripts/validate_skill_architecture.py --all
 python3 scripts/validate_skill_context.py --all
-python3 scripts/validate_dual_host_authoring.py --all
+python3 scripts/validate_dual_host_compatibility.py --skill skills/grill-to-pr-loop
+python3 scripts/validate_dual_host_compatibility.py --skill skills/issue-implementation-loop
+python3 ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py skills/grill-to-pr-loop
+python3 ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py skills/issue-implementation-loop
 python3 -m unittest discover -s scripts
 git diff --check
 ```
 
-- [ ] **Step 3: Verify repository delivery invariants**
+- [x] **Step 3: Verify repository delivery invariants**
 
 ```bash
 git merge-base --is-ancestor <execution-plan-gate-commit> HEAD
@@ -284,9 +287,51 @@ git -C <default-checkout-runtime-path> status --porcelain=v1 --untracked-files=a
 
 The default checkout HEAD/status must equal the runtime start snapshot. Report pre-existing unrelated dirt unchanged; do not move or delete it.
 
-- [ ] **Step 4: Independent review**
+- [x] **Step 4: Independent review**
 
 Review the committed implementation range against `spec.md` and `issues.md`. Fix Critical/Important findings with test-first cycles, up to two review cycles.
+
+## Execution Evidence
+
+### Landed commits
+
+- PWTG-001: `5770a69`, `89cb0e3`, `0b5fe8c`, `94eaf0f`, `dfc04b5`, `971b178`, `22ebb42`
+- PWTG-002: `59c6a31`, `747227b`, `9253c6b`, `724bc31`, `a2dcd18`, `9f8eca6`, `bc557be`
+- PWTG-003: `c355b08`
+- phase artifacts: `6511899`, `e87a7e3`, `863711a`
+- planning base `b3b869b` を含む pre-closeout 19-commit chain はすべて current planning HEAD の ancestor である。
+- PWTG-004: 本 plan / Issue台帳 / index / log の同期commit。
+
+### Fresh results
+
+- `grill-to-pr-loop`: `58/58` pass。
+- `issue-implementation-loop`: `284/284` pass。
+- repository scripts: `58/58` pass。
+- `llm-wiki`: `6/6` pass。
+- Acceptance 1〜8 focused regressions: `18/18` pass。
+- skill architecture / 3 context contracts: pass。
+- changed-skill scoped dual-host compatibility: 2 skillsともpass。
+- skill-creator quick validation: 2 skillsとも`Skill is valid!`。
+- default checkoutのHEAD/statusはstart snapshotと一致し、approved spec / sealed Input Packet hashesは不変。
+- cumulative production reviewと最終fix reviewはCritical 0 / Important 0。
+
+approved specに残る`validate_dual_host_authoring.py`はhistorical plan defectである。sealed specとInput Packetは編集せず、実行可能な本plan / Issue台帳だけを実在する`validate_dual_host_compatibility.py`のchanged-skill scoped commandsへ訂正した。repository-wide `--all` は未変更の`llm-wiki` DESCRIPTION discovery findingだけを返し、passとは扱わない。
+
+### Acceptance coverage
+
+- Acceptance 1〜5: first-create、pre-existing exact worktree adoption/reuse、same planning chain、creation/post-add failure、pre-existing dirt/index preservationでcoverage。
+- Acceptance 6: new guarded packetとlegacy guardless packetのphysical Gate ancestryでcoverage。
+- Acceptance 7: physical planning base / Gate / all candidate final-head ancestryでcoverage。
+- Acceptance 8: runtime-bound actual default checkoutのHEAD/status、substitute worktree rejection、unchanged pre-existing dirtでcoverage。
+- Non-goals: generic manager、destructive recovery、default checkout自動復元、remote writeは導入していない。
+
+### Remaining Minor risks
+
+- Git environment policyのskill間重複。
+- runtime artifact load / validateのstabilization sequence反復。
+- planning/default identity parameter data clump。
+
+いずれも最終reviewでnon-blocking Minorとして分類し、Acceptance 1〜8またはdelivery safetyを阻害しない。remote policyは`local_only`で、push、PR、merge、GitHub mutationは実施していない。
 
 ## Execution Plan Gate
 

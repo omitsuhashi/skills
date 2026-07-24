@@ -58,12 +58,12 @@ _現在なし。_
 - [Grill To PR Loop Skill Split V2 Execution Envelope](wiki/syntheses/grill-to-pr-loop-skill-split-v2-execution-envelope.json) — historical / non-executable な Execution Envelope v1。過去の実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
 - [Grill To PR Loop Branch Policy Spec](wiki/syntheses/grill-to-pr-loop-branch-policy-spec.md) — `grill-to-pr-loop` / `issue-implementation-loop` の branch、worktree、commit、integration branch 推奨運用を実装契約化する spec。
   検索語: grill-to-pr-loop, issue-implementation-loop, branch policy, worktree reservation, epic_base, scoped commit, integration branch, PR_READY, ブランチ, コミット
-- [Planning Worktree Gate 仕様](wiki/syntheses/planning-worktree-gate/spec.md) — 最初のrepository write前のEpic単位planning worktree、default checkout保全、prepare / PR_READY / deliveryのcommit reachability guardを定義する仕様。
-  検索語: Planning Worktree Gate, planning branch, worktree reuse, default checkout, pre-existing dirt, prepare, PR_READY, delivery, commit reachability, 作業ツリー, main保全, 実行準備, 配送
-- [Planning Worktree Gate Issue 台帳](wiki/syntheses/planning-worktree-gate/issues.md) — PWTG-001〜PWTG-004へplanning CLI、packet/runtime guard、delivery integrity、全体verificationを依存順に分解したIssue Gate台帳。
-  検索語: Planning Worktree Gate, PWTG, Issue Gate, blocker graph, worktree reuse, repository guard, delivery integrity, ローカルIssue, ブロッカー, 配送検証
-- [Planning Worktree Gate Implementation Plan](wiki/syntheses/planning-worktree-gate/implementation-plan.md) — PWTG-001〜PWTG-004をTDDで実装し、planning identity、default checkout snapshot、final head reachabilityを検証するExecution Plan。
-  検索語: Planning Worktree Gate, implementation plan, TDD, RED GREEN, repository guard, final head, commit reachability, 実装計画, テスト駆動, 配送検証
+- [Planning Worktree Gate 仕様](wiki/syntheses/planning-worktree-gate/spec.md) — 最初のrepository write前のEpic単位planning worktree、default checkout保全、prepare / PR_READY / deliveryのphysical commit reachability guardを定義し、実装完了した承認済み仕様。
+  検索語: Planning Worktree Gate, planning branch, worktree reuse, default checkout, pre-existing dirt, prepare, PR_READY, delivery, physical commit reachability, 作業ツリー, main保全, 実行準備, 配送
+- [Planning Worktree Gate Issue 台帳](wiki/syntheses/planning-worktree-gate/issues.md) — PWTG-001〜PWTG-004の完了状態、全commit、Acceptance 1〜8、fresh verification、review、local_only境界を集約したcanonical closeout台帳。
+  検索語: Planning Worktree Gate, PWTG, Issue Gate, implementation closeout, worktree reuse, repository guard, runtime identity, delivery integrity, Acceptance 1-8, local_only, ローカルIssue, 完了, 配送検証
+- [Planning Worktree Gate Implementation Plan](wiki/syntheses/planning-worktree-gate/implementation-plan.md) — PWTG-001〜PWTG-004をTDDで実装完了し、planning identity、default checkout snapshot、physical final head reachabilityの実測evidenceを記録したExecution Plan。
+  検索語: Planning Worktree Gate, implementation plan, TDD, RED GREEN, repository guard, final head, physical commit reachability, fresh verification, 実装計画, テスト駆動, 配送検証, 完了
 - [Planning Worktree Gate Input Packet](wiki/syntheses/planning-worktree-gate/input-packet.json) — Planning Worktree Gate実装前の現行v2 validatorでsealしたself-hosting execution lock。target実装後の新規packet contractとは区別する。
   検索語: Planning Worktree Gate, Input Packet v2, self-hosting, approved spec binding, PWTG, local_only, 実行契約, 承認済み仕様
 - [Grill To PR Loop Branch Policy Issues](wiki/syntheses/grill-to-pr-loop-branch-policy-issues.md) — branch policy 実装のローカルIssue ledger。
