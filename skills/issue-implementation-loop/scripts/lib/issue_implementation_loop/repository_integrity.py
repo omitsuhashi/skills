@@ -5,6 +5,7 @@ from pathlib import Path
 import subprocess
 from typing import Any
 
+from .constants import SUCCESS_STATUSES
 from .identifiers import is_full_commit_sha
 
 
@@ -213,3 +214,112 @@ def validate_repository_guard(
     ):
         return ["DEFAULT_CHECKOUT_DRIFT"]
     return []
+
+
+def validate_success_repository_integrity(
+    envelope: dict[str, Any],
+    runtime: dict[str, Any],
+    repo_root: str | os.PathLike[str],
+) -> list[str]:
+    """Re-run the repository guard before accepting any successful issue state."""
+
+    issues = runtime.get("issues")
+    if (
+        not isinstance(issues, dict)
+        or not any(
+            isinstance(record, dict)
+            and record.get("status") in SUCCESS_STATUSES
+            for record in issues.values()
+        )
+        or envelope.get("repository_guard") is None
+    ):
+        return []
+    guard = envelope["repository_guard"]
+    packet = {
+        "epic_id": envelope.get("epic_id"),
+        "planning_branch": guard.get("planning_branch"),
+        "planning_base_sha": guard.get("planning_base_sha"),
+    }
+    return validate_repository_guard(envelope, packet, repo_root)
+
+
+def resolve_local_branch(
+    repo_root: str | os.PathLike[str],
+    head_ref: Any,
+) -> str | None:
+    if not isinstance(head_ref, str) or not head_ref:
+        return None
+    if head_ref.startswith("refs/") and not head_ref.startswith("refs/heads/"):
+        return None
+    trusted_root = _absolute_directory(os.fspath(repo_root))
+    if trusted_root is None:
+        return None
+    branch_ref = (
+        head_ref if head_ref.startswith("refs/heads/") else f"refs/heads/{head_ref}"
+    )
+    resolved = _git(trusted_root, "show-ref", "--verify", "--hash", branch_ref)
+    if resolved.returncode:
+        return None
+    sha = resolved.stdout.strip().lower()
+    return sha if is_full_commit_sha(sha) else None
+
+
+def _is_ancestor(repo_root: Path, required_sha: Any, head_sha: str) -> bool:
+    if (
+        not isinstance(required_sha, str)
+        or not is_full_commit_sha(required_sha)
+    ):
+        return False
+    return (
+        _git(
+            repo_root,
+            "merge-base",
+            "--is-ancestor",
+            required_sha,
+            head_sha,
+        ).returncode
+        == 0
+    )
+
+
+def validate_final_head_integrity(
+    envelope: dict[str, Any],
+    runtime: dict[str, Any],
+    execution_result: dict[str, Any],
+    head_ref: str,
+    repo_root: str | os.PathLike[str],
+) -> list[str]:
+    """Require the local final branch to contain planning and delivery commits."""
+
+    trusted_root = _absolute_directory(os.fspath(repo_root))
+    if trusted_root is None:
+        return ["FINAL_HEAD_REF_UNRESOLVED"]
+    head_sha = resolve_local_branch(trusted_root, head_ref)
+    if head_sha is None:
+        return ["FINAL_HEAD_REF_UNRESOLVED"]
+
+    errors: list[str] = []
+    guard = envelope.get("repository_guard")
+    if isinstance(guard, dict):
+        planning_base = guard.get("planning_base_sha")
+        if not _is_ancestor(trusted_root, planning_base, head_sha):
+            errors.append("FINAL_HEAD_MISSING_PLANNING_BASE")
+
+    binding = envelope.get("approved_spec_binding")
+    gate_commit = binding.get("gate_commit") if isinstance(binding, dict) else None
+    if not _is_ancestor(trusted_root, gate_commit, head_sha):
+        errors.append("FINAL_HEAD_MISSING_GATE_COMMIT")
+
+    result_issues = execution_result.get("issues")
+    candidates = execution_result.get("delivery_candidates")
+    if isinstance(result_issues, dict) and isinstance(candidates, list):
+        for issue_id in candidates:
+            record = result_issues.get(issue_id)
+            candidate_head = (
+                record.get("head_sha") if isinstance(record, dict) else None
+            )
+            if not _is_ancestor(trusted_root, candidate_head, head_sha):
+                errors.append(
+                    f"FINAL_HEAD_MISSING_DELIVERY_CANDIDATE:{issue_id}"
+                )
+    return errors

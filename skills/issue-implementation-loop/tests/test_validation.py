@@ -236,6 +236,68 @@ class ValidationTests(unittest.TestCase):
             )
             self.assertEqual(validate_execution_envelope(envelope, planning), [])
 
+    def test_success_repository_integrity_rejects_default_checkout_drift(
+        self,
+    ) -> None:
+        from issue_implementation_loop.repository_integrity import (
+            validate_success_repository_integrity,
+        )
+
+        for status in ("PR_READY", "COMPLETE", "DONE"):
+            with self.subTest(status=status), tempfile.TemporaryDirectory() as tmp:
+                repo, planning, _, envelope, _ = self.planning_guard_fixture(
+                    Path(tmp)
+                )
+                runtime = {
+                    "issues": {
+                        "ASBC-002": {
+                            "status": status,
+                        }
+                    }
+                }
+                (repo / "README.md").write_text(
+                    f"default checkout {status} drift\n",
+                    encoding="utf-8",
+                )
+
+                self.assertEqual(
+                    validate_success_repository_integrity(
+                        envelope,
+                        runtime,
+                        planning,
+                    ),
+                    ["DEFAULT_CHECKOUT_DRIFT"],
+                )
+
+    def test_success_repository_integrity_allows_unchanged_preexisting_dirt(
+        self,
+    ) -> None:
+        from issue_implementation_loop.repository_integrity import (
+            validate_success_repository_integrity,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            _, planning, _, envelope, _ = self.planning_guard_fixture(
+                Path(tmp),
+                preexisting_dirt=True,
+            )
+            runtime = {
+                "issues": {
+                    "ASBC-002": {
+                        "status": "PR_READY",
+                    }
+                }
+            }
+
+            self.assertEqual(
+                validate_success_repository_integrity(
+                    envelope,
+                    runtime,
+                    planning,
+                ),
+                [],
+            )
+
     def test_execution_envelope_reports_gate_commit_not_ancestor_with_repository_guard(
         self,
     ) -> None:

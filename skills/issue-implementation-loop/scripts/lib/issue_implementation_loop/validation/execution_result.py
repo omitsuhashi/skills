@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import os
-import subprocess
-from pathlib import Path
 from typing import Any
 
 from ..approved_spec_binding import BindingError, approved_spec_binding_ref
 from ..identifiers import commit_range_parts, is_full_commit_sha
+from ..repository_integrity import (
+    resolve_local_branch,
+    validate_success_repository_integrity,
+)
 from ..review import review_approved_or_accepted
 from .execution_envelope import validate_execution_envelope
 from .runtime_state import validate_runtime_epoch, validate_runtime_state
@@ -52,33 +54,6 @@ EPIC_BASE_FIELDS = {"branch", "initial_sha", "current_sha", "branch_exists"}
 OPTIONAL_PR_FIELDS = {"pr", "pr_opened", "pr_merged"}
 
 
-def _resolve_git_branch(repo_root: str | os.PathLike[str], branch: Any) -> str | None:
-    if not isinstance(branch, str) or not branch.strip():
-        return None
-    branch_ref = branch if branch.startswith("refs/heads/") else f"refs/heads/{branch}"
-    try:
-        resolved = subprocess.run(
-            [
-                "git",
-                "-C",
-                str(Path(repo_root).resolve(strict=False)),
-                "show-ref",
-                "--verify",
-                "--hash",
-                branch_ref,
-            ],
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-    except OSError:
-        return None
-    if resolved.returncode != 0:
-        return None
-    sha = resolved.stdout.strip().lower()
-    return sha if is_full_commit_sha(sha) else None
-
-
 def validate_execution_result(
     envelope: dict[str, Any],
     runtime: dict[str, Any],
@@ -109,6 +84,13 @@ def validate_execution_result(
     epoch_errors = validate_runtime_epoch(envelope, runtime)
     if epoch_errors:
         return epoch_errors
+    integrity_errors = validate_success_repository_integrity(
+        envelope,
+        runtime,
+        repo_root,
+    )
+    if integrity_errors:
+        return integrity_errors
     active_binding = envelope.get("approved_spec_binding")
     if result_binding != active_binding:
         return ["BINDING_MISMATCH"]
@@ -155,7 +137,7 @@ def validate_execution_result(
             errors.append("SCHEMA_UNSUPPORTED")
         remote_policy = envelope.get("remote_write_policy", {})
         if isinstance(remote_policy, dict) and remote_policy.get("mode") == "batch_issue_prs":
-            resolved_epic_sha = _resolve_git_branch(
+            resolved_epic_sha = resolve_local_branch(
                 repo_root, envelope_epic_base.get("ref")
             )
             if (

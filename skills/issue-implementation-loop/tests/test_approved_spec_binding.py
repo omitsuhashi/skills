@@ -241,6 +241,7 @@ ASB24_CURRENT_ARTIFACT_SURFACE = {
     ),
     "delivery_plan": (
         "assets/templates/delivery-plan.json",
+        "scripts/lib/issue_implementation_loop/repository_integrity.py",
         "scripts/lib/issue_implementation_loop/validation/delivery_plan.py",
         "scripts/validate_delivery_plan.py",
     ),

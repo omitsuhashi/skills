@@ -16,7 +16,7 @@ Use the packet template/schema and `validate_input_packet.py`. Seal only if `che
 
 Return Execution Result v2 with active binding, envelope/runtime identity, per-issue commit/review/verification, requests, delivery candidates, and residual risks. Start from its template and run `validate_execution_result.py` before completion; v1 is unsupported.
 
-Execution Envelope v4 pins Input Packet v2 through `approved_spec_binding`, including gate commit ancestry and exact packet/spec blobs.
+Execution Envelope v4 pins Input Packet v2 through `approved_spec_binding`, including repository/gate ancestry and exact packet/spec blobs.
 
 ## Binding Gate Map
 

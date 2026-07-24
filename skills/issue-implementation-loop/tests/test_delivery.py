@@ -1,9 +1,165 @@
 from __future__ import annotations
 
-from _helpers import *
+try:
+    from _helpers import *
+except ModuleNotFoundError:
+    from ._helpers import *
+
+LIB_DIR = SCRIPTS_DIR / "lib"
+if str(LIB_DIR) not in sys.path:
+    sys.path.insert(0, str(LIB_DIR))
+
+from issue_implementation_loop.delivery import validate_delivery_plan
 
 
 class DeliveryTests(unittest.TestCase):
+    @staticmethod
+    def final_head_integrity_fixture(
+        root: Path,
+    ) -> tuple[Path, dict, dict, dict, dict[str, str]]:
+        repo = root / "repo"
+        repo.mkdir()
+        git(repo, "init", "-q")
+        git(repo, "config", "user.email", "test@example.com")
+        git(repo, "config", "user.name", "Test User")
+        git(repo, "branch", "-M", "main")
+        (repo / "README.md").write_text("base\n", encoding="utf-8")
+        git(repo, "add", "README.md")
+        git(repo, "commit", "-q", "-m", "base")
+        planning_base = git(repo, "rev-parse", "HEAD")
+
+        planning = root / "planning"
+        planning_branch = "codex/approved-spec-binding/planning"
+        git(
+            repo,
+            "worktree",
+            "add",
+            "-q",
+            "-b",
+            planning_branch,
+            str(planning),
+            planning_base,
+        )
+        synthesis = planning / FIXTURE_ARTIFACT_ROOT
+        synthesis.mkdir(parents=True)
+        (synthesis / "spec.md").write_text("approved spec\n", encoding="utf-8")
+        (synthesis / "issues.md").write_text("# Issues\n", encoding="utf-8")
+        packet_path = synthesis / "input-packet.json"
+        packet = current_input_packet(
+            planning,
+            delivery_intent="batch_issue_prs",
+        )
+        packet.update(
+            {
+                "planning_branch": planning_branch,
+                "planning_base_sha": planning_base,
+            }
+        )
+        packet["work_items"].append(
+            {
+                **copy.deepcopy(packet["work_items"][0]),
+                "id": "ASBC-003",
+                "title": "Second implementation",
+            }
+        )
+        write_json(packet_path, packet)
+        git(planning, "add", "knowledge")
+        git(planning, "commit", "-q", "-m", "planning gate")
+        gate_commit = git(planning, "rev-parse", "HEAD")
+        binding = {
+            "path": packet_path.relative_to(planning).as_posix(),
+            "sha256": hashlib.sha256(packet_path.read_bytes()).hexdigest(),
+            "gate_commit": gate_commit,
+        }
+        envelope = binding_envelope(planning, binding)
+        envelope["repository_guard"] = {
+            "planning_worktree_path": str(planning.resolve()),
+            "planning_branch": planning_branch,
+            "planning_base_sha": planning_base,
+            "default_checkout": {
+                "path": str(repo.resolve()),
+                "branch": "main",
+                "head": planning_base,
+                "status_porcelain_v1": "",
+            },
+        }
+        envelope["remote_write_policy"]["approved_actions"] = [
+            "final_pr_push_head",
+            "final_pr_create_draft",
+        ]
+
+        implementation = root / "implementation"
+        git(
+            repo,
+            "worktree",
+            "add",
+            "-q",
+            "-b",
+            "codex/approved-spec-binding/implementation-chain",
+            str(implementation),
+            gate_commit,
+        )
+        (implementation / "implementation-a.txt").write_text(
+            "implementation A\n",
+            encoding="utf-8",
+        )
+        git(implementation, "add", "implementation-a.txt")
+        git(implementation, "commit", "-q", "-m", "implementation A")
+        implementation_a = git(implementation, "rev-parse", "HEAD")
+        (implementation / "implementation-b.txt").write_text(
+            "implementation B\n",
+            encoding="utf-8",
+        )
+        git(implementation, "add", "implementation-b.txt")
+        git(implementation, "commit", "-q", "-m", "implementation B")
+        implementation_b = git(implementation, "rev-parse", "HEAD")
+
+        refs = {
+            "missing_gate": "codex/approved-spec-binding/final-missing-gate",
+            "missing_candidate": "codex/approved-spec-binding/final-missing-candidate",
+            "complete": envelope["epic_base"]["ref"],
+        }
+        git(repo, "branch", refs["missing_gate"], planning_base)
+        git(repo, "branch", refs["missing_candidate"], implementation_a)
+        git(repo, "branch", refs["complete"], implementation_b)
+
+        runtime = {
+            "schema_version": 2,
+            "approved_spec_binding": copy.deepcopy(binding),
+            "epic_id": envelope["epic_id"],
+            "envelope_revision": envelope["revision"],
+            "issues": {
+                "ASBC-002": {
+                    "status": "COMPLETE",
+                    "base_sha": gate_commit,
+                    "head_sha": implementation_a,
+                    "review": {
+                        "status": "approved",
+                        "range": f"{gate_commit}..{implementation_a}",
+                    },
+                    "pr": "https://github.com/org/repo/pull/2",
+                    "pr_opened": True,
+                    "pr_merged": True,
+                },
+                "ASBC-003": {
+                    "status": "COMPLETE",
+                    "base_sha": implementation_a,
+                    "head_sha": implementation_b,
+                    "review": {
+                        "status": "approved",
+                        "range": f"{implementation_a}..{implementation_b}",
+                    },
+                    "pr": "https://github.com/org/repo/pull/3",
+                    "pr_opened": True,
+                    "pr_merged": True,
+                },
+            },
+            "human_requests": [],
+        }
+        result = current_execution_result(envelope, runtime)
+        result["epic_base"]["current_sha"] = implementation_b
+        return planning, envelope, runtime, result, refs
+
     def call_delivery(
         self,
         repo: Path,
@@ -21,6 +177,122 @@ class DeliveryTests(unittest.TestCase):
             str(repo),
             "--json",
         )
+
+    def test_final_head_integrity_requires_gate_and_every_candidate_commit(
+        self,
+    ) -> None:
+        from issue_implementation_loop.repository_integrity import (
+            validate_final_head_integrity,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, envelope, runtime, result, refs = self.final_head_integrity_fixture(
+                Path(tmp)
+            )
+
+            missing_gate = validate_final_head_integrity(
+                envelope,
+                runtime,
+                result,
+                refs["missing_gate"],
+                repo,
+            )
+            self.assertIn("FINAL_HEAD_MISSING_GATE_COMMIT", missing_gate)
+
+            missing_candidate = validate_final_head_integrity(
+                envelope,
+                runtime,
+                result,
+                refs["missing_candidate"],
+                repo,
+            )
+            self.assertIn(
+                "FINAL_HEAD_MISSING_DELIVERY_CANDIDATE:ASBC-003",
+                missing_candidate,
+            )
+            self.assertTrue(runtime["issues"]["ASBC-003"]["pr_merged"])
+
+            self.assertEqual(
+                validate_final_head_integrity(
+                    envelope,
+                    runtime,
+                    result,
+                    refs["complete"],
+                    repo,
+                ),
+                [],
+            )
+
+    def test_guardless_legacy_final_head_still_requires_gate_and_candidates(
+        self,
+    ) -> None:
+        from issue_implementation_loop.repository_integrity import (
+            validate_final_head_integrity,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, envelope, runtime, result, refs = self.final_head_integrity_fixture(
+                Path(tmp)
+            )
+            envelope.pop("repository_guard")
+
+            errors = validate_final_head_integrity(
+                envelope,
+                runtime,
+                result,
+                refs["missing_candidate"],
+                repo,
+            )
+
+            self.assertIn(
+                "FINAL_HEAD_MISSING_DELIVERY_CANDIDATE:ASBC-003",
+                errors,
+            )
+
+    def test_final_delivery_rejects_pr_merged_without_candidate_ancestry(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, envelope, runtime, result, refs = self.final_head_integrity_fixture(
+                Path(tmp)
+            )
+            missing_candidate_sha = git(
+                repo,
+                "rev-parse",
+                refs["missing_candidate"],
+            )
+            git(
+                repo,
+                "branch",
+                "-f",
+                envelope["epic_base"]["ref"],
+                missing_candidate_sha,
+            )
+            result["epic_base"]["current_sha"] = git(
+                repo,
+                "rev-parse",
+                envelope["epic_base"]["ref"],
+            )
+            plan = current_delivery_plan(
+                envelope,
+                head=envelope["epic_base"]["ref"],
+                base="main",
+                draft=True,
+                issue_scope=list(envelope["work_items"]),
+            )
+
+            errors = validate_delivery_plan(
+                envelope,
+                runtime,
+                result,
+                plan,
+                repo_root=repo,
+            )
+
+            self.assertIn(
+                "FINAL_HEAD_MISSING_DELIVERY_CANDIDATE:ASBC-003",
+                errors,
+            )
 
     def test_delivery_plan_v2_is_closed_per_action(self) -> None:
         final_cases = {
@@ -162,6 +434,22 @@ class DeliveryTests(unittest.TestCase):
         validation_repo = create_delivery_validation_repo(
             plan_path.parent, envelope, runtime
         )
+        integrated_head = envelope["approved_spec_binding"]["gate_commit"]
+        runtime_issues = runtime.get("issues", {})
+        for issue_id in envelope.get("work_items", {}):
+            record = (
+                runtime_issues.get(issue_id)
+                if isinstance(runtime_issues, dict)
+                else None
+            )
+            if not isinstance(record, dict):
+                continue
+            record["base_sha"] = integrated_head
+            record["head_sha"] = integrated_head
+            record["review"] = {
+                "status": "approved",
+                "range": f"{integrated_head}..{integrated_head}",
+            }
         write_json(envelope_path, envelope)
         write_json(runtime_path, runtime)
         plan = json.loads(plan_path.read_text(encoding="utf-8"))
@@ -225,6 +513,7 @@ class DeliveryTests(unittest.TestCase):
             },
         }
         binding, _ = bind_envelope_fixture_repo(repo, envelope)
+        integrated_head = binding["gate_commit"]
         runtime = {
             "schema_version": 2,
             "approved_spec_binding": copy.deepcopy(binding),
@@ -233,9 +522,12 @@ class DeliveryTests(unittest.TestCase):
             "issues": {
                 "ASBC-002": {
                     "status": "COMPLETE",
-                    "base_sha": BASE_SHA,
-                    "head_sha": HEAD_SHA,
-                    "review": {"status": "approved", "range": REVIEW_RANGE},
+                    "base_sha": integrated_head,
+                    "head_sha": integrated_head,
+                    "review": {
+                        "status": "approved",
+                        "range": f"{integrated_head}..{integrated_head}",
+                    },
                     "pr": "https://github.com/org/repo/pull/2",
                     "pr_opened": True,
                     "pr_merged": True,
