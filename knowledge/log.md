@@ -1417,7 +1417,7 @@ append-only で使います。すべての entry は予測しやすい header �
 
 ## [2026-07-24] implementation-closeout | Planning Worktree Gate
 
-- PWTG-001〜PWTG-004を完了へ同期した。pre-closeout chainはplanning base `b3b869b`、phase artifacts `6511899` / `e87a7e3` / `863711a`、PWTG-001の7 commits、PWTG-002の7 commits、PWTG-003 `c355b08`から成る19 commitsで、すべてcurrent planning HEAD `bc557bef95cabea39a2ac5220ce4ec09d59f980e`のancestorである。PWTG-004は本closeout documentation commitで完了する。
+- PWTG-001〜PWTG-004を完了へ同期した。pre-closeout chainはplanning base `b3b869b`、phase artifacts `6511899` / `e87a7e3` / `863711a`、PWTG-001の7 commits、PWTG-002の7 commits、PWTG-003 `c355b08`から成る19 commitsで、すべてpre-closeout production head `bc557bef95cabea39a2ac5220ce4ec09d59f980e`のancestorである。PWTG-004のcloseout documentationは`4d96bfd71b63c86727ad36b2d3d8fd0beb710a78`で完了し、post-commit独立reviewのstale status findingは後続のdocs-only review-fixで訂正した。
 - fresh verificationは`grill-to-pr-loop` 58件、`issue-implementation-loop` 284件、repository scripts 58件、`llm-wiki` 6件、Acceptance 1〜8 focused regressions 18件がすべてpassした。skill architecture、3 context contracts、変更対象2 skillのscoped dual-host compatibility、両skillのskill-creator quick validator、`git diff --check`もpassした。
 - approved specに残る`validate_dual_host_authoring.py`はhistorical plan defectであり、sealed specとInput Packetは編集していない。実行可能なIssue台帳 / Implementation Planは実在する`validate_dual_host_compatibility.py`のchanged-skill scoped commandsと、両skillのskill-creator quick-validator commandsへ訂正した。
 - repository-wide `validate_dual_host_compatibility.py --all`は未変更の`llm-wiki` DESCRIPTION discovery findingだけを返した。変更対象2 skillのscoped validationはpassしたが、repository-wide passとは記録しない。
