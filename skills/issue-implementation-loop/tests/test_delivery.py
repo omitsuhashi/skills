@@ -245,7 +245,7 @@ class DeliveryTests(unittest.TestCase):
                 errors,
             )
 
-    def test_final_head_integrity_preserves_repository_replace_semantics(
+    def test_final_head_integrity_rejects_replace_ref_that_fakes_physical_ancestry(
         self,
     ) -> None:
         from issue_implementation_loop.repository_integrity import (
@@ -321,12 +321,84 @@ class DeliveryTests(unittest.TestCase):
                 },
                 "delivery_candidates": ["ASBC-002"],
             }
-            hostile_environment = {
-                "GIT_NO_REPLACE_OBJECTS": "1",
-                "GIT_REPLACE_REF_BASE": "refs/hostile-replacements/",
-            }
+            errors = validate_final_head_integrity(
+                envelope,
+                result,
+                final_branch,
+                repo,
+            )
 
-            with mock.patch.dict(os.environ, hostile_environment):
+            self.assertEqual(
+                errors,
+                [
+                    "FINAL_HEAD_MISSING_PLANNING_BASE",
+                    "FINAL_HEAD_MISSING_GATE_COMMIT",
+                    "FINAL_HEAD_MISSING_DELIVERY_CANDIDATE:ASBC-002",
+                ],
+            )
+
+    def test_final_head_integrity_rejects_info_graft_that_fakes_all_ancestry(
+        self,
+    ) -> None:
+        from issue_implementation_loop.repository_integrity import (
+            validate_final_head_integrity,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, envelope, _, result, _ = self.final_head_integrity_fixture(
+                Path(tmp)
+            )
+            complete_chain = result["issues"]["ASBC-003"]["head_sha"]
+            tree = git(repo, "rev-parse", f"{complete_chain}^{{tree}}")
+            physical_final = subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(repo),
+                    "commit-tree",
+                    tree,
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                input="physical final without required history\n",
+            ).stdout.strip()
+            final_branch = "codex/approved-spec-binding/final-with-graft"
+            git(repo, "branch", final_branch, physical_final)
+            graft_file = git_common_directory(repo) / "info" / "grafts"
+            graft_file.parent.mkdir(parents=True, exist_ok=True)
+            graft_file.write_text(
+                f"{physical_final} {complete_chain}\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(
+                subprocess.run(
+                    [
+                        "git",
+                        "-C",
+                        str(repo),
+                        "merge-base",
+                        "--is-ancestor",
+                        complete_chain,
+                        final_branch,
+                    ],
+                    check=False,
+                    env={
+                        **os.environ,
+                        "GIT_GRAFT_FILE": str(graft_file),
+                        "GIT_NO_REPLACE_OBJECTS": "0",
+                    },
+                ).returncode,
+                0,
+            )
+
+            with mock.patch.dict(
+                os.environ,
+                {
+                    "GIT_GRAFT_FILE": str(graft_file),
+                    "GIT_NO_REPLACE_OBJECTS": "0",
+                },
+            ):
                 errors = validate_final_head_integrity(
                     envelope,
                     result,
@@ -334,7 +406,15 @@ class DeliveryTests(unittest.TestCase):
                     repo,
                 )
 
-            self.assertEqual(errors, [])
+            self.assertEqual(
+                errors,
+                [
+                    "FINAL_HEAD_MISSING_PLANNING_BASE",
+                    "FINAL_HEAD_MISSING_GATE_COMMIT",
+                    "FINAL_HEAD_MISSING_DELIVERY_CANDIDATE:ASBC-002",
+                    "FINAL_HEAD_MISSING_DELIVERY_CANDIDATE:ASBC-003",
+                ],
+            )
 
     def test_final_delivery_rejects_pr_merged_without_candidate_ancestry(
         self,

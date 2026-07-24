@@ -55,6 +55,8 @@ def _git_environment() -> dict[str, str]:
             or name.startswith("GIT_CONFIG_VALUE_")
         ):
             environment.pop(name)
+    environment["GIT_NO_REPLACE_OBJECTS"] = "1"
+    environment["GIT_GRAFT_FILE"] = os.devnull
     environment["GIT_OPTIONAL_LOCKS"] = "0"
     return environment
 
@@ -232,6 +234,14 @@ def validate_repository_guard(
     )
     if ancestor.returncode:
         return ["REPOSITORY_GUARD_WORKTREE_INVALID"]
+
+    binding = envelope.get("approved_spec_binding")
+    epic_base = envelope.get("epic_base")
+    if isinstance(binding, dict) and isinstance(epic_base, dict):
+        gate_commit = binding.get("gate_commit")
+        epic_base_sha = epic_base.get("sha")
+        if not _is_ancestor(trusted_root, gate_commit, epic_base_sha):
+            return ["GATE_COMMIT_NOT_ANCESTOR"]
 
     head = _git(default_checkout, "rev-parse", "HEAD")
     status = _git(

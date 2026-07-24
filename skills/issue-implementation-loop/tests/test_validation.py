@@ -61,8 +61,22 @@ class ValidationTests(unittest.TestCase):
 
         environment = run.call_args.kwargs["env"]
         self.assertEqual(environment["GIT_OPTIONAL_LOCKS"], "0")
-        for name in repository_integrity.REPOSITORY_LOCAL_GIT_ENVIRONMENT:
+        trusted_overrides = {
+            "GIT_NO_REPLACE_OBJECTS": "1",
+            "GIT_GRAFT_FILE": os.devnull,
+        }
+        for name in (
+            repository_integrity.REPOSITORY_LOCAL_GIT_ENVIRONMENT
+            - trusted_overrides.keys()
+        ):
             self.assertNotIn(name, environment)
+        self.assertEqual(
+            {
+                name: environment.get(name)
+                for name in trusted_overrides
+            },
+            trusted_overrides,
+        )
         self.assertNotIn("GIT_CONFIG_KEY_0", environment)
         self.assertNotIn("GIT_CONFIG_VALUE_0", environment)
         for name in (
@@ -85,10 +99,16 @@ class ValidationTests(unittest.TestCase):
                 git(repo, "rev-parse", "--local-env-vars").splitlines()
             )
 
+        self.assertEqual(len(local_environment), 15)
         self.assertEqual(
             local_environment
             - repository_integrity.REPOSITORY_LOCAL_GIT_ENVIRONMENT,
             set(),
+        )
+        self.assertEqual(
+            local_environment
+            & {"GIT_NO_REPLACE_OBJECTS", "GIT_GRAFT_FILE"},
+            {"GIT_NO_REPLACE_OBJECTS", "GIT_GRAFT_FILE"},
         )
         for global_environment in (
             "GIT_CONFIG_GLOBAL",
@@ -561,6 +581,136 @@ class ValidationTests(unittest.TestCase):
                 validate_execution_envelope(envelope, repo),
                 ["GATE_COMMIT_NOT_ANCESTOR"],
             )
+
+    def test_execution_envelope_rejects_replace_ref_that_fakes_gate_ancestry(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, planning, _, envelope, planning_base = (
+                self.planning_guard_fixture(Path(tmp))
+            )
+            gate_commit = envelope["approved_spec_binding"]["gate_commit"]
+            gate_tree = git(planning, "rev-parse", f"{gate_commit}^{{tree}}")
+            physical_epic_base = subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(planning),
+                    "commit-tree",
+                    gate_tree,
+                    "-p",
+                    planning_base,
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                input="physical epic base without Gate\n",
+            ).stdout.strip()
+            replacement = subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(planning),
+                    "commit-tree",
+                    gate_tree,
+                    "-p",
+                    gate_commit,
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                input="replacement-only Gate ancestry\n",
+            ).stdout.strip()
+            git(
+                planning,
+                "update-ref",
+                f"refs/replace/{physical_epic_base}",
+                replacement,
+            )
+            envelope["epic_base"]["sha"] = physical_epic_base
+            self.assertEqual(
+                subprocess.run(
+                    [
+                        "git",
+                        "-C",
+                        str(planning),
+                        "merge-base",
+                        "--is-ancestor",
+                        gate_commit,
+                        physical_epic_base,
+                    ],
+                    check=False,
+                ).returncode,
+                0,
+            )
+
+            errors = validate_execution_envelope(envelope, planning)
+
+            self.assertEqual(errors, ["GATE_COMMIT_NOT_ANCESTOR"])
+
+    def test_execution_envelope_rejects_info_graft_that_fakes_gate_ancestry(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, planning, _, envelope, planning_base = (
+                self.planning_guard_fixture(Path(tmp))
+            )
+            gate_commit = envelope["approved_spec_binding"]["gate_commit"]
+            gate_tree = git(planning, "rev-parse", f"{gate_commit}^{{tree}}")
+            physical_epic_base = subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(planning),
+                    "commit-tree",
+                    gate_tree,
+                    "-p",
+                    planning_base,
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                input="physical epic base without Gate\n",
+            ).stdout.strip()
+            common_dir = git_common_directory(planning)
+            graft_file = common_dir / "info" / "grafts"
+            graft_file.parent.mkdir(parents=True, exist_ok=True)
+            graft_file.write_text(
+                f"{physical_epic_base} {gate_commit}\n",
+                encoding="utf-8",
+            )
+            envelope["epic_base"]["sha"] = physical_epic_base
+            self.assertEqual(
+                subprocess.run(
+                    [
+                        "git",
+                        "-C",
+                        str(planning),
+                        "merge-base",
+                        "--is-ancestor",
+                        gate_commit,
+                        physical_epic_base,
+                    ],
+                    check=False,
+                    env={
+                        **os.environ,
+                        "GIT_GRAFT_FILE": str(graft_file),
+                        "GIT_NO_REPLACE_OBJECTS": "0",
+                    },
+                ).returncode,
+                0,
+            )
+
+            with mock.patch.dict(
+                os.environ,
+                {
+                    "GIT_GRAFT_FILE": str(graft_file),
+                    "GIT_NO_REPLACE_OBJECTS": "0",
+                },
+            ):
+                errors = validate_execution_envelope(envelope, planning)
+
+            self.assertEqual(errors, ["GATE_COMMIT_NOT_ANCESTOR"])
 
     def test_execution_envelope_schema_and_template_define_repository_guard(self) -> None:
         schema = json.loads(ENVELOPE_SCHEMA_FILE.read_text(encoding="utf-8"))
