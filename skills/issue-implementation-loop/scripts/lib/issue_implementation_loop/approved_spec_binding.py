@@ -14,6 +14,7 @@ import subprocess
 from typing import Any, Callable, Mapping
 
 from .constants import DELIVERY_INTENTS
+from .git_environment import repository_git_environment
 from .identifiers import is_full_commit_sha, is_issue_id, is_lower_kebab
 
 
@@ -202,6 +203,7 @@ def _trusted_repo_root(repo_root: str | os.PathLike[str]) -> Path:
             check=False,
             capture_output=True,
             text=True,
+            env=repository_git_environment(),
         )
     except (OSError, TypeError, ValueError):
         raise BindingError("PATH_OUTSIDE_REPO") from None
@@ -241,6 +243,7 @@ def discover_repo_root(start: str | os.PathLike[str]) -> Path:
             check=False,
             capture_output=True,
             text=True,
+            env=repository_git_environment(),
         )
     except (OSError, TypeError, ValueError):
         raise BindingError("PATH_OUTSIDE_REPO") from None
@@ -914,6 +917,7 @@ def _git_bytes(root: Path, *args: str) -> subprocess.CompletedProcess[bytes]:
             ["git", "-C", str(root), *args],
             check=False,
             capture_output=True,
+            env=repository_git_environment(),
         )
     except (OSError, TypeError, ValueError):
         raise BindingError("GATE_COMMIT_MISSING") from None

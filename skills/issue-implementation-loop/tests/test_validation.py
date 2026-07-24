@@ -30,14 +30,43 @@ class ExecutionEnvelopeReferenceTests(unittest.TestCase):
 
 
 class ValidationTests(unittest.TestCase):
-    def test_repository_guard_git_sanitizes_local_environment(self) -> None:
-        from issue_implementation_loop import repository_integrity
+    @staticmethod
+    def legacy_guardless_envelope_fixture(
+        root: Path,
+    ) -> tuple[Path, dict, str, str]:
+        repo, binding, gate_commit = create_binding_repo(root)
+        packet = json.loads((repo / binding["path"]).read_text(encoding="utf-8"))
+        if {"planning_branch", "planning_base_sha"} & set(packet):
+            raise AssertionError("fixture must remain a real legacy packet")
+        gate_parent = git(repo, "rev-parse", f"{gate_commit}^")
+        gate_tree = git(repo, "rev-parse", f"{gate_commit}^{{tree}}")
+        physical_epic_base = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(repo),
+                "commit-tree",
+                gate_tree,
+                "-p",
+                gate_parent,
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+            input="physical legacy epic base without Gate\n",
+        ).stdout.strip()
+        envelope = binding_envelope(repo, binding, physical_epic_base)
+        if "repository_guard" in envelope:
+            raise AssertionError("legacy fixture must be guardless")
+        return repo, envelope, gate_commit, physical_epic_base
 
-        completed = subprocess.CompletedProcess([], 0, "", "")
+    def test_repository_guard_git_sanitizes_local_environment(self) -> None:
+        from issue_implementation_loop import git_environment
+
         hostile_environment = {
             name: f"hostile-{index}"
             for index, name in enumerate(
-                repository_integrity.REPOSITORY_LOCAL_GIT_ENVIRONMENT
+                git_environment.REPOSITORY_LOCAL_GIT_ENVIRONMENT
             )
         }
         hostile_environment.update(
@@ -52,21 +81,15 @@ class ValidationTests(unittest.TestCase):
             }
         )
         with mock.patch.dict(os.environ, hostile_environment):
-            with mock.patch.object(
-                repository_integrity.subprocess,
-                "run",
-                return_value=completed,
-            ) as run:
-                repository_integrity._git(Path("/trusted/repository"), "status")
+            environment = git_environment.repository_git_environment()
 
-        environment = run.call_args.kwargs["env"]
         self.assertEqual(environment["GIT_OPTIONAL_LOCKS"], "0")
         trusted_overrides = {
             "GIT_NO_REPLACE_OBJECTS": "1",
             "GIT_GRAFT_FILE": os.devnull,
         }
         for name in (
-            repository_integrity.REPOSITORY_LOCAL_GIT_ENVIRONMENT
+            git_environment.REPOSITORY_LOCAL_GIT_ENVIRONMENT
             - trusted_overrides.keys()
         ):
             self.assertNotIn(name, environment)
@@ -90,7 +113,7 @@ class ValidationTests(unittest.TestCase):
     def test_repository_guard_sanitizer_covers_git_local_environment_variables(
         self,
     ) -> None:
-        from issue_implementation_loop import repository_integrity
+        from issue_implementation_loop import git_environment
 
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
@@ -102,7 +125,7 @@ class ValidationTests(unittest.TestCase):
         self.assertEqual(len(local_environment), 15)
         self.assertEqual(
             local_environment
-            - repository_integrity.REPOSITORY_LOCAL_GIT_ENVIRONMENT,
+            - git_environment.REPOSITORY_LOCAL_GIT_ENVIRONMENT,
             set(),
         )
         self.assertEqual(
@@ -118,7 +141,7 @@ class ValidationTests(unittest.TestCase):
         ):
             self.assertNotIn(
                 global_environment,
-                repository_integrity.REPOSITORY_LOCAL_GIT_ENVIRONMENT,
+                git_environment.REPOSITORY_LOCAL_GIT_ENVIRONMENT,
             )
 
     @staticmethod
@@ -711,6 +734,142 @@ class ValidationTests(unittest.TestCase):
                 errors = validate_execution_envelope(envelope, planning)
 
             self.assertEqual(errors, ["GATE_COMMIT_NOT_ANCESTOR"])
+
+    def test_legacy_guardless_envelope_rejects_replace_ref_semantic_ancestry(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, envelope, gate_commit, physical_epic_base = (
+                self.legacy_guardless_envelope_fixture(Path(tmp))
+            )
+            gate_tree = git(repo, "rev-parse", f"{gate_commit}^{{tree}}")
+            replacement = subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(repo),
+                    "commit-tree",
+                    gate_tree,
+                    "-p",
+                    gate_commit,
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                input="replacement-only legacy Gate ancestry\n",
+            ).stdout.strip()
+            git(
+                repo,
+                "update-ref",
+                f"refs/replace/{physical_epic_base}",
+                replacement,
+            )
+            self.assertEqual(
+                subprocess.run(
+                    [
+                        "git",
+                        "-C",
+                        str(repo),
+                        "merge-base",
+                        "--is-ancestor",
+                        gate_commit,
+                        physical_epic_base,
+                    ],
+                    check=False,
+                ).returncode,
+                0,
+            )
+            self.assertNotEqual(
+                subprocess.run(
+                    [
+                        "git",
+                        "-C",
+                        str(repo),
+                        "merge-base",
+                        "--is-ancestor",
+                        gate_commit,
+                        physical_epic_base,
+                    ],
+                    check=False,
+                    env={
+                        **os.environ,
+                        "GIT_NO_REPLACE_OBJECTS": "1",
+                        "GIT_GRAFT_FILE": os.devnull,
+                    },
+                ).returncode,
+                0,
+            )
+
+            self.assertEqual(
+                validate_execution_envelope(envelope, repo),
+                ["GATE_COMMIT_NOT_ANCESTOR"],
+            )
+
+    def test_legacy_guardless_envelope_rejects_common_dir_info_graft_ancestry(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, envelope, gate_commit, physical_epic_base = (
+                self.legacy_guardless_envelope_fixture(Path(tmp))
+            )
+            graft_file = git_common_directory(repo) / "info" / "grafts"
+            graft_file.parent.mkdir(parents=True, exist_ok=True)
+            graft_file.write_text(
+                f"{physical_epic_base} {gate_commit}\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(
+                subprocess.run(
+                    [
+                        "git",
+                        "-C",
+                        str(repo),
+                        "merge-base",
+                        "--is-ancestor",
+                        gate_commit,
+                        physical_epic_base,
+                    ],
+                    check=False,
+                ).returncode,
+                0,
+            )
+            self.assertNotEqual(
+                subprocess.run(
+                    [
+                        "git",
+                        "-C",
+                        str(repo),
+                        "merge-base",
+                        "--is-ancestor",
+                        gate_commit,
+                        physical_epic_base,
+                    ],
+                    check=False,
+                    env={
+                        **os.environ,
+                        "GIT_NO_REPLACE_OBJECTS": "1",
+                        "GIT_GRAFT_FILE": os.devnull,
+                    },
+                ).returncode,
+                0,
+            )
+
+            self.assertEqual(
+                validate_execution_envelope(envelope, repo),
+                ["GATE_COMMIT_NOT_ANCESTOR"],
+            )
+
+    def test_legacy_guardless_envelope_accepts_physical_gate_ancestry(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, binding, gate_commit = create_binding_repo(Path(tmp))
+            packet = json.loads((repo / binding["path"]).read_text(encoding="utf-8"))
+            self.assertFalse(
+                {"planning_branch", "planning_base_sha"} & set(packet)
+            )
+            envelope = binding_envelope(repo, binding, gate_commit)
+            self.assertNotIn("repository_guard", envelope)
+
+            self.assertEqual(validate_execution_envelope(envelope, repo), [])
 
     def test_execution_envelope_schema_and_template_define_repository_guard(self) -> None:
         schema = json.loads(ENVELOPE_SCHEMA_FILE.read_text(encoding="utf-8"))

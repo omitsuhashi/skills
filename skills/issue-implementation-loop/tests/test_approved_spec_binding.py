@@ -448,6 +448,71 @@ class ApprovedSpecBindingTests(unittest.TestCase):
             "e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c",
         )
 
+    def test_git_subprocesses_sanitize_actual_repository_local_environment(
+        self,
+    ) -> None:
+        module = binding_module()
+        real_run = subprocess.run
+        local_environment = set(
+            real_run(
+                ["git", "-C", str(self.repo), "rev-parse", "--local-env-vars"],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.splitlines()
+        )
+        self.assertEqual(len(local_environment), 15)
+        hostile_environment = {
+            name: f"/hostile/{index}"
+            for index, name in enumerate(sorted(local_environment))
+        }
+        hostile_environment.update(
+            {
+                "GIT_CONFIG_KEY_0": "core.worktree",
+                "GIT_CONFIG_VALUE_0": "/hostile/worktree",
+                "GIT_OPTIONAL_LOCKS": "1",
+                "HOME": "/preserved/home",
+                "XDG_CONFIG_HOME": "/preserved/xdg",
+                "GIT_CONFIG_GLOBAL": "/preserved/global-config",
+                "GIT_CONFIG_SYSTEM": "/preserved/system-config",
+            }
+        )
+
+        with mock.patch.dict(os.environ, hostile_environment), mock.patch.object(
+            module.subprocess,
+            "run",
+            wraps=real_run,
+        ) as run:
+            self.assertEqual(module._trusted_repo_root(self.repo), self.repo.resolve())
+            self.assertEqual(module.discover_repo_root(self.repo), self.repo.resolve())
+            result = module._git_bytes(self.repo, "rev-parse", "--show-toplevel")
+
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(
+            Path(result.stdout.decode().strip()).resolve(),
+            self.repo.resolve(),
+        )
+        self.assertGreaterEqual(len(run.call_args_list), 4)
+        for call in run.call_args_list:
+            environment = call.kwargs["env"]
+            self.assertEqual(environment["GIT_OPTIONAL_LOCKS"], "0")
+            self.assertEqual(environment["GIT_NO_REPLACE_OBJECTS"], "1")
+            self.assertEqual(environment["GIT_GRAFT_FILE"], os.devnull)
+            for name in local_environment - {
+                "GIT_NO_REPLACE_OBJECTS",
+                "GIT_GRAFT_FILE",
+            }:
+                self.assertNotIn(name, environment)
+            self.assertNotIn("GIT_CONFIG_KEY_0", environment)
+            self.assertNotIn("GIT_CONFIG_VALUE_0", environment)
+            for name in (
+                "HOME",
+                "XDG_CONFIG_HOME",
+                "GIT_CONFIG_GLOBAL",
+                "GIT_CONFIG_SYSTEM",
+            ):
+                self.assertEqual(environment[name], hostile_environment[name])
+
     def test_asb_public_acceptance_matrix_is_complete_and_public(self) -> None:
         expected_ids = [f"ASB-{number:02d}" for number in range(1, 37)]
         module_tree = ast.parse(
