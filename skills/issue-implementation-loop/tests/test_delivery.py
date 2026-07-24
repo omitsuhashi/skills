@@ -245,6 +245,97 @@ class DeliveryTests(unittest.TestCase):
                 errors,
             )
 
+    def test_final_head_integrity_preserves_repository_replace_semantics(
+        self,
+    ) -> None:
+        from issue_implementation_loop.repository_integrity import (
+            validate_final_head_integrity,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            repo.mkdir()
+            git(repo, "init", "-q")
+            git(repo, "config", "user.email", "test@example.com")
+            git(repo, "config", "user.name", "Test User")
+            (repo / "README.md").write_text("original\n", encoding="utf-8")
+            git(repo, "add", "README.md")
+            git(repo, "commit", "-q", "-m", "original final head")
+            replaced_head = git(repo, "rev-parse", "HEAD")
+            final_branch = "codex/approved-spec-binding/final-with-replacement"
+            git(repo, "branch", final_branch, replaced_head)
+
+            (repo / "README.md").write_text("required history\n", encoding="utf-8")
+            git(repo, "commit", "-q", "-am", "required history")
+            required_head = git(repo, "rev-parse", "HEAD")
+            tree = git(repo, "rev-parse", f"{replaced_head}^{{tree}}")
+            replacement = subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(repo),
+                    "commit-tree",
+                    tree,
+                    "-p",
+                    required_head,
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                input="replacement history\n",
+            ).stdout.strip()
+            git(
+                repo,
+                "update-ref",
+                f"refs/replace/{replaced_head}",
+                replacement,
+            )
+            self.assertEqual(
+                subprocess.run(
+                    [
+                        "git",
+                        "-C",
+                        str(repo),
+                        "merge-base",
+                        "--is-ancestor",
+                        required_head,
+                        final_branch,
+                    ],
+                    check=False,
+                ).returncode,
+                0,
+            )
+            envelope = {
+                "repository_guard": {
+                    "planning_base_sha": required_head,
+                },
+                "approved_spec_binding": {
+                    "gate_commit": required_head,
+                },
+            }
+            result = {
+                "issues": {
+                    "ASBC-002": {
+                        "head_sha": required_head,
+                    },
+                },
+                "delivery_candidates": ["ASBC-002"],
+            }
+            hostile_environment = {
+                "GIT_NO_REPLACE_OBJECTS": "1",
+                "GIT_REPLACE_REF_BASE": "refs/hostile-replacements/",
+            }
+
+            with mock.patch.dict(os.environ, hostile_environment):
+                errors = validate_final_head_integrity(
+                    envelope,
+                    result,
+                    final_branch,
+                    repo,
+                )
+
+            self.assertEqual(errors, [])
+
     def test_final_delivery_rejects_pr_merged_without_candidate_ancestry(
         self,
     ) -> None:

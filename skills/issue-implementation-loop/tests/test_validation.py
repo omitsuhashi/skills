@@ -30,11 +30,28 @@ class ExecutionEnvelopeReferenceTests(unittest.TestCase):
 
 
 class ValidationTests(unittest.TestCase):
-    def test_repository_guard_git_disables_optional_locks(self) -> None:
+    def test_repository_guard_git_sanitizes_local_environment(self) -> None:
         from issue_implementation_loop import repository_integrity
 
         completed = subprocess.CompletedProcess([], 0, "", "")
-        with mock.patch.dict(os.environ, {"GIT_OPTIONAL_LOCKS": "1"}):
+        hostile_environment = {
+            name: f"hostile-{index}"
+            for index, name in enumerate(
+                repository_integrity.REPOSITORY_LOCAL_GIT_ENVIRONMENT
+            )
+        }
+        hostile_environment.update(
+            {
+                "GIT_CONFIG_KEY_0": "core.worktree",
+                "GIT_CONFIG_VALUE_0": "/hostile/repository",
+                "GIT_OPTIONAL_LOCKS": "1",
+                "HOME": "/preserved/home",
+                "XDG_CONFIG_HOME": "/preserved/xdg",
+                "GIT_CONFIG_GLOBAL": "/preserved/global-config",
+                "GIT_CONFIG_SYSTEM": "/preserved/system-config",
+            }
+        )
+        with mock.patch.dict(os.environ, hostile_environment):
             with mock.patch.object(
                 repository_integrity.subprocess,
                 "run",
@@ -42,7 +59,47 @@ class ValidationTests(unittest.TestCase):
             ) as run:
                 repository_integrity._git(Path("/trusted/repository"), "status")
 
-        self.assertEqual(run.call_args.kwargs["env"]["GIT_OPTIONAL_LOCKS"], "0")
+        environment = run.call_args.kwargs["env"]
+        self.assertEqual(environment["GIT_OPTIONAL_LOCKS"], "0")
+        for name in repository_integrity.REPOSITORY_LOCAL_GIT_ENVIRONMENT:
+            self.assertNotIn(name, environment)
+        self.assertNotIn("GIT_CONFIG_KEY_0", environment)
+        self.assertNotIn("GIT_CONFIG_VALUE_0", environment)
+        for name in (
+            "HOME",
+            "XDG_CONFIG_HOME",
+            "GIT_CONFIG_GLOBAL",
+            "GIT_CONFIG_SYSTEM",
+        ):
+            self.assertEqual(environment[name], hostile_environment[name])
+
+    def test_repository_guard_sanitizer_covers_git_local_environment_variables(
+        self,
+    ) -> None:
+        from issue_implementation_loop import repository_integrity
+
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            git(repo, "init", "-q")
+            local_environment = set(
+                git(repo, "rev-parse", "--local-env-vars").splitlines()
+            )
+
+        self.assertEqual(
+            local_environment
+            - repository_integrity.REPOSITORY_LOCAL_GIT_ENVIRONMENT,
+            set(),
+        )
+        for global_environment in (
+            "GIT_CONFIG_GLOBAL",
+            "GIT_CONFIG_SYSTEM",
+            "HOME",
+            "XDG_CONFIG_HOME",
+        ):
+            self.assertNotIn(
+                global_environment,
+                repository_integrity.REPOSITORY_LOCAL_GIT_ENVIRONMENT,
+            )
 
     @staticmethod
     def planning_guard_fixture(
@@ -219,6 +276,146 @@ class ValidationTests(unittest.TestCase):
                 ),
                 ["DEFAULT_CHECKOUT_DRIFT"],
             )
+
+    def test_repository_guard_rejects_drift_under_hostile_git_routing_environment(
+        self,
+    ) -> None:
+        from issue_implementation_loop.repository_integrity import (
+            validate_repository_guard,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "a").mkdir()
+            repo, planning, packet, envelope, _ = self.planning_guard_fixture(
+                root / "a"
+            )
+            repo_b = root / "b"
+            repo_b.mkdir()
+            git(repo_b, "init", "-q")
+            git(repo_b, "config", "user.email", "test@example.com")
+            git(repo_b, "config", "user.name", "Test User")
+            (repo_b / "README.md").write_text("base\n", encoding="utf-8")
+            git(repo_b, "add", "README.md")
+            git(repo_b, "commit", "-q", "-m", "repo B base")
+            git(repo_b, "config", "core.worktree", str(repo_b.resolve()))
+
+            repo_b_git = repo_b / ".git"
+            before_b = {
+                "head": git(repo_b, "rev-parse", "HEAD"),
+                "status": subprocess.run(
+                    [
+                        "git",
+                        "-C",
+                        str(repo_b),
+                        "status",
+                        "--porcelain=v1",
+                        "--untracked-files=all",
+                    ],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                ).stdout,
+                "index": (repo_b_git / "index").read_bytes(),
+                "config": (repo_b_git / "config").read_bytes(),
+                "refs": git(repo_b, "show-ref"),
+                "worktrees": git(repo_b, "worktree", "list", "--porcelain"),
+            }
+            (repo / "drift.txt").write_text("real default drift\n", encoding="utf-8")
+            hostile_environment = {
+                "GIT_DIR": str(repo_b_git),
+                "GIT_WORK_TREE": str(repo_b.resolve()),
+                "GIT_COMMON_DIR": str(repo_b_git),
+                "GIT_INDEX_FILE": str(repo_b_git / "index"),
+                "GIT_OBJECT_DIRECTORY": str(repo_b_git / "objects"),
+                "GIT_ALTERNATE_OBJECT_DIRECTORIES": str(repo_b_git / "objects"),
+                "GIT_CONFIG": str(repo_b_git / "config"),
+                "GIT_CONFIG_COUNT": "1",
+                "GIT_CONFIG_KEY_0": "core.worktree",
+                "GIT_CONFIG_VALUE_0": str(repo_b.resolve()),
+            }
+
+            with mock.patch.dict(os.environ, hostile_environment):
+                errors = validate_repository_guard(
+                    envelope,
+                    packet,
+                    planning,
+                )
+
+            self.assertEqual(errors, ["DEFAULT_CHECKOUT_DRIFT"])
+            self.assertEqual(git(repo_b, "rev-parse", "HEAD"), before_b["head"])
+            self.assertEqual(
+                subprocess.run(
+                    [
+                        "git",
+                        "-C",
+                        str(repo_b),
+                        "status",
+                        "--porcelain=v1",
+                        "--untracked-files=all",
+                    ],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                ).stdout,
+                before_b["status"],
+            )
+            self.assertEqual((repo_b_git / "index").read_bytes(), before_b["index"])
+            self.assertEqual((repo_b_git / "config").read_bytes(), before_b["config"])
+            self.assertEqual(git(repo_b, "show-ref"), before_b["refs"])
+            self.assertEqual(
+                git(repo_b, "worktree", "list", "--porcelain"),
+                before_b["worktrees"],
+            )
+
+    def test_repository_guard_rejects_drift_hidden_by_hostile_work_tree(
+        self,
+    ) -> None:
+        from issue_implementation_loop.repository_integrity import (
+            validate_repository_guard,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            repo, planning, packet, envelope, _ = self.planning_guard_fixture(root)
+            clean_mirror = root / "clean-mirror"
+            clean_mirror.mkdir()
+            (clean_mirror / "README.md").write_text("base\n", encoding="utf-8")
+            (repo / "real-drift.txt").write_text(
+                "must remain visible to the guard\n",
+                encoding="utf-8",
+            )
+            hostile_status = subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(repo),
+                    "status",
+                    "--porcelain=v1",
+                    "--untracked-files=all",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                env={
+                    **os.environ,
+                    "GIT_WORK_TREE": str(clean_mirror.resolve()),
+                    "GIT_OPTIONAL_LOCKS": "0",
+                },
+            ).stdout
+            self.assertEqual(hostile_status, "")
+
+            with mock.patch.dict(
+                os.environ,
+                {"GIT_WORK_TREE": str(clean_mirror.resolve())},
+            ):
+                errors = validate_repository_guard(
+                    envelope,
+                    packet,
+                    planning,
+                )
+
+            self.assertEqual(errors, ["DEFAULT_CHECKOUT_DRIFT"])
 
     def test_repository_guard_allows_unchanged_preexisting_dirt(self) -> None:
         from issue_implementation_loop.repository_integrity import (

@@ -21,18 +21,52 @@ DEFAULT_CHECKOUT_FIELDS = {
     "head",
     "status_porcelain_v1",
 }
+REPOSITORY_LOCAL_GIT_ENVIRONMENT = frozenset(
+    {
+        "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+        "GIT_CEILING_DIRECTORIES",
+        "GIT_COMMON_DIR",
+        "GIT_CONFIG",
+        "GIT_CONFIG_COUNT",
+        "GIT_CONFIG_PARAMETERS",
+        "GIT_DIR",
+        "GIT_DISCOVERY_ACROSS_FILESYSTEM",
+        "GIT_GRAFT_FILE",
+        "GIT_IMPLICIT_WORK_TREE",
+        "GIT_INDEX_FILE",
+        "GIT_NAMESPACE",
+        "GIT_NO_REPLACE_OBJECTS",
+        "GIT_OBJECT_DIRECTORY",
+        "GIT_PREFIX",
+        "GIT_QUARANTINE_PATH",
+        "GIT_REPLACE_REF_BASE",
+        "GIT_SHALLOW_FILE",
+        "GIT_WORK_TREE",
+    }
+)
+
+
+def _git_environment() -> dict[str, str]:
+    environment = os.environ.copy()
+    for name in tuple(environment):
+        if (
+            name in REPOSITORY_LOCAL_GIT_ENVIRONMENT
+            or name.startswith("GIT_CONFIG_KEY_")
+            or name.startswith("GIT_CONFIG_VALUE_")
+        ):
+            environment.pop(name)
+    environment["GIT_OPTIONAL_LOCKS"] = "0"
+    return environment
 
 
 def _git(path: Path, *args: str) -> subprocess.CompletedProcess[str]:
     try:
-        environment = os.environ.copy()
-        environment["GIT_OPTIONAL_LOCKS"] = "0"
         return subprocess.run(
             ["git", "-C", str(path), *args],
             check=False,
             capture_output=True,
             text=True,
-            env=environment,
+            env=_git_environment(),
         )
     except (OSError, TypeError, ValueError):
         return subprocess.CompletedProcess([], 1, "", "")
