@@ -192,7 +192,6 @@ class DeliveryTests(unittest.TestCase):
 
             missing_gate = validate_final_head_integrity(
                 envelope,
-                runtime,
                 result,
                 refs["missing_gate"],
                 repo,
@@ -201,7 +200,6 @@ class DeliveryTests(unittest.TestCase):
 
             missing_candidate = validate_final_head_integrity(
                 envelope,
-                runtime,
                 result,
                 refs["missing_candidate"],
                 repo,
@@ -215,7 +213,6 @@ class DeliveryTests(unittest.TestCase):
             self.assertEqual(
                 validate_final_head_integrity(
                     envelope,
-                    runtime,
                     result,
                     refs["complete"],
                     repo,
@@ -238,7 +235,6 @@ class DeliveryTests(unittest.TestCase):
 
             errors = validate_final_head_integrity(
                 envelope,
-                runtime,
                 result,
                 refs["missing_candidate"],
                 repo,

@@ -837,6 +837,8 @@ def seal_input_packet(
         raise BindingError("SCHEMA_UNSUPPORTED") from None
     if not isinstance(draft, dict) or "spec_binding" in draft or "approval_evidence" in draft:
         raise BindingError("SCHEMA_UNSUPPORTED")
+    if not PLANNING_IDENTITY_FIELDS <= set(draft):
+        raise BindingError("SCHEMA_UNSUPPORTED")
     packet = dict(draft)
     packet["spec_binding"] = expected.to_dict()
     packet["approval_evidence"] = checked_approval

@@ -284,7 +284,6 @@ def _is_ancestor(repo_root: Path, required_sha: Any, head_sha: str) -> bool:
 
 def validate_final_head_integrity(
     envelope: dict[str, Any],
-    runtime: dict[str, Any],
     execution_result: dict[str, Any],
     head_ref: str,
     repo_root: str | os.PathLike[str],

@@ -452,7 +452,6 @@ def validate_delivery_plan(
         errors.extend(
             validate_final_head_integrity(
                 envelope,
-                runtime,
                 execution_result,
                 head,
                 repo_root,

@@ -280,6 +280,8 @@ class ApprovedSpecBindingTests(unittest.TestCase):
             "schema_version": 2,
             "epic_id": "example",
             "artifact_root": "knowledge/wiki/syntheses/example",
+            "planning_branch": "codex/example/planning",
+            "planning_base_sha": "0123456789abcdef0123456789abcdef01234567",
             "work_items": [
                 {
                     "id": "ASBC-001",
@@ -339,11 +341,6 @@ class ApprovedSpecBindingTests(unittest.TestCase):
         )
 
     def test_planning_identity_fields_are_accepted_together(self) -> None:
-        self.write_draft(
-            planning_branch="codex/example/planning",
-            planning_base_sha="0123456789abcdef0123456789abcdef01234567",
-        )
-
         _, _, ref = self.seal()
 
         packet = json.loads((self.repo / ref.path).read_text(encoding="utf-8"))
@@ -353,16 +350,26 @@ class ApprovedSpecBindingTests(unittest.TestCase):
             "0123456789abcdef0123456789abcdef01234567",
         )
 
+    def test_new_seal_rejects_draft_without_planning_identity(self) -> None:
+        draft = self.draft()
+        del draft["planning_branch"]
+        del draft["planning_base_sha"]
+        self.draft_path.write_text(
+            json.dumps(draft, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+
+        self.assert_code("SCHEMA_UNSUPPORTED", self.seal)
+
     def test_planning_identity_fields_require_the_complete_pair(self) -> None:
-        for field, value in (
-            ("planning_branch", "codex/example/planning"),
-            (
-                "planning_base_sha",
-                "0123456789abcdef0123456789abcdef01234567",
-            ),
-        ):
-            with self.subTest(field=field):
-                self.write_draft(**{field: value})
+        for missing_field in ("planning_branch", "planning_base_sha"):
+            with self.subTest(missing_field=missing_field):
+                draft = self.draft()
+                draft.pop(missing_field)
+                self.draft_path.write_text(
+                    json.dumps(draft, ensure_ascii=False, indent=2) + "\n",
+                    encoding="utf-8",
+                )
                 self.assert_code("SCHEMA_UNSUPPORTED", self.seal)
 
     def test_planning_identity_rejects_noncanonical_branch(self) -> None:
@@ -420,7 +427,26 @@ class ApprovedSpecBindingTests(unittest.TestCase):
             "e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c",
         )
         packet = json.loads(current.decode("utf-8"))
-        self.assertEqual(binding_module().validate_input_packet(packet, repo_root), [])
+        module = binding_module()
+        self.assertEqual(module.validate_input_packet(packet, repo_root), [])
+        verified = module.verify_chain(
+            repo_root,
+            {
+                "input_packet": {
+                    "path": packet_path,
+                    "sha256": (
+                        "e7fd341ce0953a6245058db6326e7e275"
+                        "e70061fd33a11aefd05048397e8693c"
+                    ),
+                }
+            },
+        )
+        self.assertTrue(verified.valid)
+        self.assertEqual(verified.input_packet.path, packet_path)
+        self.assertEqual(
+            verified.input_packet.sha256,
+            "e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c",
+        )
 
     def test_asb_public_acceptance_matrix_is_complete_and_public(self) -> None:
         expected_ids = [f"ASB-{number:02d}" for number in range(1, 37)]
@@ -799,6 +825,36 @@ class ApprovedSpecBindingTests(unittest.TestCase):
             )
             self.assertEqual(accepted_result_a.returncode, 0, accepted_result_a.stderr)
 
+            default_checkout = repo
+            planning_base_sha = fixtures.git(default_checkout, "rev-parse", "HEAD")
+            planning_branch = "codex/approved-spec-binding/planning"
+            planning_worktree = Path(tmp) / "planning"
+            fixtures.git(
+                default_checkout,
+                "worktree",
+                "add",
+                "-b",
+                planning_branch,
+                str(planning_worktree),
+                planning_base_sha,
+            )
+            status_environment = os.environ.copy()
+            status_environment["GIT_OPTIONAL_LOCKS"] = "0"
+            default_status = subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(default_checkout),
+                    "status",
+                    "--porcelain=v1",
+                    "--untracked-files=all",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                env=status_environment,
+            ).stdout
+            repo = planning_worktree
             packet_path = repo / binding_a["path"]
             packet_a = json.loads(packet_path.read_text(encoding="utf-8"))
             draft_b = {
@@ -806,6 +862,8 @@ class ApprovedSpecBindingTests(unittest.TestCase):
                 for key, value in packet_a.items()
                 if key not in {"spec_binding", "approval_evidence"}
             }
+            draft_b["planning_branch"] = planning_branch
+            draft_b["planning_base_sha"] = planning_base_sha
             draft_path = repo / "draft-b.json"
             fixtures.write_json(draft_path, draft_b)
             spec_path = repo / packet_a["spec_binding"]["path"]
@@ -839,6 +897,19 @@ class ApprovedSpecBindingTests(unittest.TestCase):
 
             envelope_b = fixtures.binding_envelope(repo, binding_b)
             envelope_b["revision"] = 2
+            envelope_b["repository_guard"] = {
+                "planning_worktree_path": str(repo.resolve()),
+                "planning_branch": planning_branch,
+                "planning_base_sha": planning_base_sha,
+                "default_checkout": {
+                    "path": str(default_checkout.resolve()),
+                    "branch": fixtures.git(
+                        default_checkout, "branch", "--show-current"
+                    ),
+                    "head": planning_base_sha,
+                    "status_porcelain_v1": default_status,
+                },
+            }
             envelope_path = repo / "execution-envelope.json"
             fixtures.write_json(envelope_path, envelope_b)
             checked_envelope = fixtures.run_script(
@@ -848,7 +919,11 @@ class ApprovedSpecBindingTests(unittest.TestCase):
                 str(repo),
                 "--json",
             )
-            self.assertEqual(checked_envelope.returncode, 0, checked_envelope.stderr)
+            self.assertEqual(
+                checked_envelope.returncode,
+                0,
+                checked_envelope.stderr + checked_envelope.stdout,
+            )
 
             events_path = repo / "events-b.jsonl"
             events_path.write_text(
