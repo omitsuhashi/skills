@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import argparse
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -8,6 +10,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 
 SKILL_DIR = Path(__file__).resolve().parents[1]
@@ -77,7 +80,10 @@ def run_prepare(
     worktree_root: Path,
     *,
     epic_id: str = "planning-worktree-gate",
+    environment_overrides: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
+    environment = os.environ.copy()
+    environment.update(environment_overrides or {})
     return subprocess.run(
         [
             sys.executable,
@@ -94,7 +100,18 @@ def run_prepare(
         check=False,
         capture_output=True,
         text=True,
+        env=environment,
     )
+
+
+def load_planning_worktree_module():
+    module_name = "planning_worktree_test_target"
+    spec = importlib.util.spec_from_file_location(module_name, PREPARE)
+    if spec is None or spec.loader is None:
+        raise AssertionError("could not load planning_worktree.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 class PlanningWorktreeGateTests(unittest.TestCase):
@@ -470,6 +487,141 @@ class PlanningWorktreeGateTests(unittest.TestCase):
                     )
                     self.assertFalse(destination.exists())
                     self.assertFalse(state_path.exists())
+
+    def test_prepare_revalidates_after_worktree_add_hook_mutates_branch(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repo = initialize_repository(Path(temporary_directory))
+            incompatible_head = git(repo, "rev-parse", "HEAD").stdout.strip()
+            (repo / "README.md").write_text("advance default\n", encoding="utf-8")
+            git(repo, "add", "README.md")
+            git(repo, "commit", "-qm", "advance main")
+            planning_branch = "codex/planning-worktree-gate/planning"
+            git(repo, "branch", planning_branch, "HEAD")
+            hook = repo / ".git" / "hooks" / "post-checkout"
+            hook.write_text(
+                "#!/bin/sh\n"
+                f"git update-ref refs/heads/{planning_branch} {incompatible_head}\n",
+                encoding="utf-8",
+            )
+            hook.chmod(0o755)
+            state_path = runtime_state(repo)
+            planning_worktree = repo / ".worktrees" / "planning-worktree-gate"
+
+            result = run_prepare(repo, repo / ".worktrees")
+
+            self.assertNotEqual(result.returncode, 0)
+            error = json.loads(result.stdout)["error"]
+            self.assertIn(str(planning_worktree.resolve()), error)
+            self.assertIn(planning_branch, error)
+            self.assertIn("runtime identity was not published", error)
+            self.assertTrue(planning_worktree.is_dir())
+            self.assertFalse(state_path.exists())
+            self.assertEqual(
+                git(planning_worktree, "rev-parse", "HEAD").stdout.strip(),
+                incompatible_head,
+            )
+
+    def test_prepare_revalidates_registered_worktree_immediately_before_publish(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repo = initialize_repository(Path(temporary_directory))
+            incompatible_head = git(repo, "rev-parse", "HEAD").stdout.strip()
+            (repo / "README.md").write_text("advance default\n", encoding="utf-8")
+            git(repo, "add", "README.md")
+            git(repo, "commit", "-qm", "advance main")
+            planning_branch = "codex/planning-worktree-gate/planning"
+            planning_worktree = repo / ".worktrees" / "planning-worktree-gate"
+            git(
+                repo,
+                "worktree",
+                "add",
+                "-b",
+                planning_branch,
+                str(planning_worktree),
+                "HEAD",
+            )
+            state_path = runtime_state(repo)
+            module = load_planning_worktree_module()
+            original_verify = module.verify_registered_planning_worktree
+            verification_count = 0
+
+            def verify_then_mutate(*args, **kwargs) -> None:
+                nonlocal verification_count
+                verification_count += 1
+                original_verify(*args, **kwargs)
+                if verification_count == 1:
+                    git(
+                        repo,
+                        "update-ref",
+                        f"refs/heads/{planning_branch}",
+                        incompatible_head,
+                    )
+
+            arguments = argparse.Namespace(
+                repo_root=str(repo),
+                epic_id="planning-worktree-gate",
+                default_branch="main",
+                worktree_root=str(repo / ".worktrees"),
+                json=True,
+            )
+
+            with mock.patch.object(
+                module,
+                "verify_registered_planning_worktree",
+                side_effect=verify_then_mutate,
+            ):
+                with self.assertRaises(module.GateError):
+                    module.prepare(arguments)
+
+            self.assertGreaterEqual(verification_count, 2)
+            self.assertFalse(state_path.exists())
+            self.assertEqual(
+                git(planning_worktree, "rev-parse", "HEAD").stdout.strip(),
+                incompatible_head,
+            )
+
+    def test_prepare_sanitizes_hostile_repository_routing_environment(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            temporary_root = Path(temporary_directory)
+            repo_a = initialize_repository(temporary_root / "a")
+            repo_b = initialize_repository(temporary_root / "b")
+            before_b = default_snapshot(repo_b)
+            before_b_index = (repo_b / ".git" / "index").read_bytes()
+            before_b_worktrees = git(repo_b, "worktree", "list", "--porcelain").stdout
+            hostile_environment = {
+                "GIT_DIR": str(repo_b / ".git"),
+                "GIT_WORK_TREE": str(repo_b),
+                "GIT_COMMON_DIR": str(repo_b / ".git"),
+                "GIT_INDEX_FILE": str(repo_b / ".git" / "index"),
+                "GIT_OBJECT_DIRECTORY": str(repo_b / ".git" / "objects"),
+                "GIT_ALTERNATE_OBJECT_DIRECTORIES": str(repo_b / ".git" / "objects"),
+                "GIT_NAMESPACE": "hostile",
+                "GIT_CONFIG_COUNT": "1",
+                "GIT_CONFIG_KEY_0": "core.worktree",
+                "GIT_CONFIG_VALUE_0": str(repo_b),
+            }
+
+            result = run_prepare(
+                repo_a,
+                repo_a / ".worktrees",
+                environment_overrides=hostile_environment,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(Path(payload["default_checkout"]), repo_a.resolve())
+            self.assertEqual(
+                Path(payload["planning_worktree"]),
+                (repo_a / ".worktrees" / "planning-worktree-gate").resolve(),
+            )
+            self.assertEqual(default_snapshot(repo_b), before_b)
+            self.assertEqual((repo_b / ".git" / "index").read_bytes(), before_b_index)
+            self.assertEqual(
+                git(repo_b, "worktree", "list", "--porcelain").stdout,
+                before_b_worktrees,
+            )
+            self.assertFalse(runtime_state(repo_b).exists())
 
 
 if __name__ == "__main__":

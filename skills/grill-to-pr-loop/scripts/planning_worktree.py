@@ -15,24 +15,56 @@ from typing import Any
 
 
 EPIC_ID_PATTERN = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\Z")
+REPOSITORY_ROUTING_ENVIRONMENT = frozenset(
+    {
+        "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+        "GIT_CEILING_DIRECTORIES",
+        "GIT_COMMON_DIR",
+        "GIT_CONFIG_COUNT",
+        "GIT_CONFIG_PARAMETERS",
+        "GIT_DIR",
+        "GIT_DISCOVERY_ACROSS_FILESYSTEM",
+        "GIT_GRAFT_FILE",
+        "GIT_IMPLICIT_WORK_TREE",
+        "GIT_INDEX_FILE",
+        "GIT_NAMESPACE",
+        "GIT_OBJECT_DIRECTORY",
+        "GIT_PREFIX",
+        "GIT_QUARANTINE_PATH",
+        "GIT_REPLACE_REF_BASE",
+        "GIT_SHALLOW_FILE",
+        "GIT_WORK_TREE",
+    }
+)
 
 
 class GateError(RuntimeError):
     """A planning worktree cannot be prepared safely."""
 
 
-def git(repo_root: Path, *args: str, read_only: bool = True) -> str:
+def git_environment(*, read_only: bool) -> dict[str, str]:
     environment = os.environ.copy()
+    for name in tuple(environment):
+        if (
+            name in REPOSITORY_ROUTING_ENVIRONMENT
+            or name.startswith("GIT_CONFIG_KEY_")
+            or name.startswith("GIT_CONFIG_VALUE_")
+        ):
+            environment.pop(name)
     if read_only:
         environment["GIT_OPTIONAL_LOCKS"] = "0"
     else:
         environment.pop("GIT_OPTIONAL_LOCKS", None)
+    return environment
+
+
+def git(repo_root: Path, *args: str, read_only: bool = True) -> str:
     result = subprocess.run(
         ["git", "-C", str(repo_root), *args],
         check=False,
         capture_output=True,
         text=True,
-        env=environment,
+        env=git_environment(read_only=read_only),
     )
     if result.returncode:
         detail = result.stderr.strip() or result.stdout.strip()
@@ -41,15 +73,13 @@ def git(repo_root: Path, *args: str, read_only: bool = True) -> str:
 
 
 def read_only_git_succeeds(repo_root: Path, *args: str) -> bool:
-    environment = os.environ.copy()
-    environment["GIT_OPTIONAL_LOCKS"] = "0"
     return (
         subprocess.run(
             ["git", "-C", str(repo_root), *args],
             check=False,
             capture_output=True,
             text=True,
-            env=environment,
+            env=git_environment(read_only=True),
         ).returncode
         == 0
     )
@@ -259,6 +289,34 @@ def runtime_payload(
     }
 
 
+def revalidate_before_runtime_publication(
+    planning_worktree: Path,
+    *,
+    planning_branch: str,
+    expected_common_dir: Path,
+    default_head: str,
+    created: bool,
+) -> None:
+    try:
+        verify_registered_planning_worktree(
+            planning_worktree,
+            planning_branch=planning_branch,
+            expected_common_dir=expected_common_dir,
+            default_head=default_head,
+        )
+    except GateError as error:
+        disposition = (
+            "was created and left in place"
+            if created
+            else "was already registered and left in place"
+        )
+        raise GateError(
+            f"planning worktree {planning_worktree} on branch {planning_branch} "
+            f"{disposition} for manual inspection; runtime identity was not "
+            f"published: {error}"
+        ) from error
+
+
 def prepare(args: argparse.Namespace) -> dict[str, Any]:
     if not EPIC_ID_PATTERN.fullmatch(args.epic_id):
         raise GateError("--epic-id must be lower-kebab")
@@ -312,6 +370,13 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
                 worktree_root=worktree_root,
                 planning_worktree=planning_worktree,
                 start_status=start_status,
+            )
+            revalidate_before_runtime_publication(
+                planning_worktree,
+                planning_branch=planning_branch,
+                expected_common_dir=common_dir,
+                default_head=start_head,
+                created=False,
             )
             create_json_atomically(state_path, state_payload)
         return {
@@ -374,6 +439,13 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
     worktree_root.mkdir(parents=True, exist_ok=True)
     git(repo_root, *worktree_add, read_only=False)
     planning_worktree = planning_worktree.resolve()
+    revalidate_before_runtime_publication(
+        planning_worktree,
+        planning_branch=planning_branch,
+        expected_common_dir=common_dir,
+        default_head=start_head,
+        created=True,
+    )
     state_payload = runtime_payload(
         epic_id=args.epic_id,
         planning_branch=planning_branch,
