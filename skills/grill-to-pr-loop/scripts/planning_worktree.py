@@ -15,6 +15,20 @@ from typing import Any
 
 
 EPIC_ID_PATTERN = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\Z")
+FULL_OBJECT_ID_PATTERN = re.compile(r"(?:[0-9a-f]{40}|[0-9a-f]{64})\Z")
+RUNTIME_V1_FIELDS = frozenset(
+    {
+        "schema_version",
+        "epic_id",
+        "planning_branch",
+        "planning_base_sha",
+        "default_checkout",
+        "worktree_root",
+        "planning_worktree",
+        "default_checkout_start",
+    }
+)
+DEFAULT_SNAPSHOT_FIELDS = frozenset({"head", "status_porcelain"})
 REPOSITORY_ROUTING_ENVIRONMENT = frozenset(
     {
         "GIT_ALTERNATE_OBJECT_DIRECTORIES",
@@ -170,16 +184,31 @@ def create_json_atomically(path: Path, payload: dict[str, Any]) -> None:
         raise
 
 
+def reject_duplicate_json_fields(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    payload: dict[str, Any] = {}
+    for field, value in pairs:
+        if field in payload:
+            raise GateError(
+                f"planning runtime identity artifact has duplicate field {field}"
+            )
+        payload[field] = value
+    return payload
+
+
 def load_runtime_identity(
     state_path: Path,
     *,
     epic_id: str,
     planning_branch: str,
     default_checkout: Path,
+    worktree_root: Path,
     planning_worktree: Path,
 ) -> dict[str, Any]:
     try:
-        payload = json.loads(state_path.read_text(encoding="utf-8"))
+        payload = json.loads(
+            state_path.read_text(encoding="utf-8"),
+            object_pairs_hook=reject_duplicate_json_fields,
+        )
     except FileNotFoundError as error:
         raise GateError(
             "registered planning worktree is missing its runtime identity artifact"
@@ -193,37 +222,91 @@ def load_runtime_identity(
 
     if not isinstance(payload, dict):
         raise GateError("planning runtime identity artifact must be an object")
+    if set(payload) != RUNTIME_V1_FIELDS:
+        raise GateError("planning runtime identity artifact has invalid v1 shape")
+    if type(payload.get("schema_version")) is not int:
+        raise GateError("planning runtime identity artifact has invalid schema_version")
     expected = {
         "schema_version": 1,
         "epic_id": epic_id,
         "planning_branch": planning_branch,
-        "default_checkout": str(default_checkout),
-        "planning_worktree": str(planning_worktree),
     }
     for field, value in expected.items():
         if payload.get(field) != value:
             raise GateError(f"planning runtime identity artifact has invalid {field}")
-    for field in ("planning_base_sha", "worktree_root"):
-        if not isinstance(payload.get(field), str) or not payload[field]:
-            raise GateError(f"planning runtime identity artifact is missing {field}")
+
+    for field, expected_path in (
+        ("default_checkout", default_checkout),
+        ("worktree_root", worktree_root),
+        ("planning_worktree", planning_worktree),
+    ):
+        value = payload.get(field)
+        if not isinstance(value, str):
+            raise GateError(
+                f"planning runtime identity artifact has invalid absolute {field}"
+            )
+        try:
+            stored_path = Path(value)
+            resolved_path = stored_path.resolve()
+            valid_directory = stored_path.is_dir()
+        except (OSError, RuntimeError, ValueError) as error:
+            raise GateError(
+                f"planning runtime identity artifact has invalid absolute {field}"
+            ) from error
+        if not stored_path.is_absolute():
+            raise GateError(
+                f"planning runtime identity artifact has invalid absolute {field}"
+            )
+        if value != str(resolved_path) or resolved_path != expected_path:
+            raise GateError(f"planning runtime identity artifact has invalid {field}")
+        if not valid_directory:
+            raise GateError(
+                f"planning runtime identity artifact {field} is not a directory"
+            )
+
+    planning_base_sha = payload.get("planning_base_sha")
+    if not isinstance(planning_base_sha, str) or not FULL_OBJECT_ID_PATTERN.fullmatch(
+        planning_base_sha
+    ):
+        raise GateError(
+            "planning runtime identity artifact has invalid planning_base_sha"
+        )
     start = payload.get("default_checkout_start")
-    if not isinstance(start, dict) or not all(
-        isinstance(start.get(field), str) for field in ("head", "status_porcelain")
+    if (
+        not isinstance(start, dict)
+        or set(start) != DEFAULT_SNAPSHOT_FIELDS
+        or not isinstance(start.get("head"), str)
+        or not isinstance(start.get("status_porcelain"), str)
     ):
         raise GateError("planning runtime identity artifact has invalid default snapshot")
+    if start["head"] != planning_base_sha:
+        raise GateError(
+            "planning runtime identity artifact snapshot head does not match "
+            "planning_base_sha"
+        )
     return payload
 
 
 def default_checkout_snapshot(default_checkout: Path) -> tuple[str, str]:
-    return (
-        git(default_checkout, "rev-parse", "HEAD").strip(),
-        git(
-            default_checkout,
-            "status",
-            "--porcelain=v1",
-            "--untracked-files=all",
-        ),
+    head_before = git(default_checkout, "rev-parse", "HEAD").strip()
+    status_before = git(
+        default_checkout,
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=all",
     )
+    head_after = git(default_checkout, "rev-parse", "HEAD").strip()
+    status_after = git(
+        default_checkout,
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=all",
+    )
+    if (head_before, status_before) != (head_after, status_after):
+        raise GateError(
+            "default checkout changed while its snapshot was collected"
+        )
+    return head_after, status_after
 
 
 def require_ancestor(
@@ -264,6 +347,67 @@ def verify_registered_planning_worktree(
             "planning worktree HEAD"
         ),
     )
+
+
+def verify_current_worktree_registration(
+    default_checkout: Path,
+    planning_worktree: Path,
+    *,
+    default_branch: str,
+    planning_branch: str,
+) -> None:
+    worktrees = parse_worktree_list(
+        git(default_checkout, "worktree", "list", "--porcelain")
+    )
+    expected = (
+        (default_checkout, f"refs/heads/{default_branch}", "default checkout"),
+        (planning_worktree, f"refs/heads/{planning_branch}", "planning worktree"),
+    )
+    for expected_path, expected_branch, label in expected:
+        branch_records = [
+            worktree
+            for worktree in worktrees
+            if worktree.get("branch") == expected_branch
+            and "worktree" in worktree
+        ]
+        if (
+            len(branch_records) != 1
+            or Path(branch_records[0]["worktree"]).resolve() != expected_path
+        ):
+            raise GateError(
+                f"current registered {label} does not match its exact path and branch"
+            )
+
+
+def validate_runtime_reuse(
+    state_payload: dict[str, Any],
+    *,
+    default_checkout: Path,
+    default_branch: str,
+    planning_worktree: Path,
+    planning_branch: str,
+    expected_common_dir: Path,
+) -> None:
+    planning_base_sha = state_payload["planning_base_sha"]
+    verify_current_worktree_registration(
+        default_checkout,
+        planning_worktree,
+        default_branch=default_branch,
+        planning_branch=planning_branch,
+    )
+    verify_registered_planning_worktree(
+        planning_worktree,
+        planning_branch=planning_branch,
+        expected_common_dir=expected_common_dir,
+        default_head=planning_base_sha,
+    )
+    current_snapshot = default_checkout_snapshot(default_checkout)
+    start = state_payload["default_checkout_start"]
+    stored_snapshot = (start["head"], start["status_porcelain"])
+    if current_snapshot != stored_snapshot:
+        raise GateError(
+            "current default checkout does not match its stored start snapshot"
+        )
 
 
 def runtime_payload(
@@ -354,8 +498,58 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
                 epic_id=args.epic_id,
                 planning_branch=planning_branch,
                 default_checkout=default_checkout,
+                worktree_root=worktree_root,
                 planning_worktree=planning_worktree,
             )
+            validate_runtime_reuse(
+                state_payload,
+                default_checkout=default_checkout,
+                default_branch=args.default_branch,
+                planning_worktree=planning_worktree,
+                planning_branch=planning_branch,
+                expected_common_dir=common_dir,
+            )
+            final_state_payload = load_runtime_identity(
+                state_path,
+                epic_id=args.epic_id,
+                planning_branch=planning_branch,
+                default_checkout=default_checkout,
+                worktree_root=worktree_root,
+                planning_worktree=planning_worktree,
+            )
+            if final_state_payload != state_payload:
+                raise GateError(
+                    "planning runtime identity artifact changed during reuse validation"
+                )
+            validate_runtime_reuse(
+                final_state_payload,
+                default_checkout=default_checkout,
+                default_branch=args.default_branch,
+                planning_worktree=planning_worktree,
+                planning_branch=planning_branch,
+                expected_common_dir=common_dir,
+            )
+            confirmed_state_payload = load_runtime_identity(
+                state_path,
+                epic_id=args.epic_id,
+                planning_branch=planning_branch,
+                default_checkout=default_checkout,
+                worktree_root=worktree_root,
+                planning_worktree=planning_worktree,
+            )
+            if confirmed_state_payload != final_state_payload:
+                raise GateError(
+                    "planning runtime identity artifact changed during reuse validation"
+                )
+            validate_runtime_reuse(
+                confirmed_state_payload,
+                default_checkout=default_checkout,
+                default_branch=args.default_branch,
+                planning_worktree=planning_worktree,
+                planning_branch=planning_branch,
+                expected_common_dir=common_dir,
+            )
+            state_payload = confirmed_state_payload
         else:
             start_head, start_status = default_checkout_snapshot(default_checkout)
             verify_registered_planning_worktree(

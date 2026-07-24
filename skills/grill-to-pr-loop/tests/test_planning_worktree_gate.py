@@ -305,32 +305,327 @@ class PlanningWorktreeGateTests(unittest.TestCase):
             self.assertTrue(planning_worktree.is_dir())
             self.assertFalse(state_path.exists())
 
-    def test_reuse_preserves_initial_runtime_identity_after_default_branch_advances(self) -> None:
+    def test_reuse_rejects_default_head_drift_without_mutation(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             repo = initialize_repository(Path(temporary_directory))
             worktree_root = repo / ".worktrees"
             first = run_prepare(repo, worktree_root)
             self.assertEqual(first.returncode, 0, first.stderr)
             first_payload = json.loads(first.stdout)
-            initial_state = json.loads(
-                Path(first_payload["runtime_state_path"]).read_text(encoding="utf-8")
-            )
+            state_path = Path(first_payload["runtime_state_path"])
+            initial_state_bytes = state_path.read_bytes()
 
             (repo / "README.md").write_text("advanced default branch\n", encoding="utf-8")
             git(repo, "add", "README.md")
             git(repo, "commit", "-qm", "advance main")
+            drifted_snapshot = default_snapshot(repo)
 
             second = run_prepare(repo, worktree_root)
 
-            self.assertEqual(second.returncode, 0, second.stderr)
-            second_payload = json.loads(second.stdout)
-            persisted_state = json.loads(
-                Path(second_payload["runtime_state_path"]).read_text(encoding="utf-8")
+            self.assertNotEqual(second.returncode, 0)
+            self.assertIn("default checkout", json.loads(second.stdout)["error"])
+            self.assertEqual(state_path.read_bytes(), initial_state_bytes)
+            self.assertEqual(default_snapshot(repo), drifted_snapshot)
+
+    def test_reuse_rejects_default_status_drift_without_mutation(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repo = initialize_repository(Path(temporary_directory))
+            (repo / "pre-existing.txt").write_text("preserve me\n", encoding="utf-8")
+            worktree_root = repo / ".worktrees"
+            first = run_prepare(repo, worktree_root)
+            self.assertEqual(first.returncode, 0, first.stderr)
+            state_path = Path(json.loads(first.stdout)["runtime_state_path"])
+            initial_state_bytes = state_path.read_bytes()
+
+            (repo / "task-drift.txt").write_text("do not remove me\n", encoding="utf-8")
+            drifted_snapshot = default_snapshot(repo)
+
+            second = run_prepare(repo, worktree_root)
+
+            self.assertNotEqual(second.returncode, 0)
+            self.assertIn("default checkout", json.loads(second.stdout)["error"])
+            self.assertEqual(state_path.read_bytes(), initial_state_bytes)
+            self.assertEqual(default_snapshot(repo), drifted_snapshot)
+            self.assertEqual(
+                (repo / "pre-existing.txt").read_text(encoding="utf-8"),
+                "preserve me\n",
             )
-            self.assertTrue(second_payload["reused"])
-            self.assertNotEqual(default_snapshot(repo)[0], initial_state["planning_base_sha"])
-            self.assertEqual(second_payload["planning_base_sha"], initial_state["planning_base_sha"])
-            self.assertEqual(persisted_state, initial_state)
+            self.assertEqual(
+                (repo / "task-drift.txt").read_text(encoding="utf-8"),
+                "do not remove me\n",
+            )
+
+    def test_reuse_rejects_planning_head_without_base_ancestry(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repo = initialize_repository(Path(temporary_directory))
+            worktree_root = repo / ".worktrees"
+            first = run_prepare(repo, worktree_root)
+            self.assertEqual(first.returncode, 0, first.stderr)
+            first_payload = json.loads(first.stdout)
+            state_path = Path(first_payload["runtime_state_path"])
+            initial_state_bytes = state_path.read_bytes()
+            tree = git(repo, "rev-parse", "HEAD^{tree}").stdout.strip()
+            unrelated_head = subprocess.run(
+                ["git", "-C", str(repo), "commit-tree", tree],
+                check=True,
+                capture_output=True,
+                text=True,
+                input="unrelated planning history\n",
+            ).stdout.strip()
+            planning_branch = first_payload["planning_branch"]
+            git(
+                repo,
+                "update-ref",
+                f"refs/heads/{planning_branch}",
+                unrelated_head,
+            )
+            before = default_snapshot(repo)
+
+            second = run_prepare(repo, worktree_root)
+
+            self.assertNotEqual(second.returncode, 0)
+            self.assertIn("planning worktree HEAD", json.loads(second.stdout)["error"])
+            self.assertEqual(state_path.read_bytes(), initial_state_bytes)
+            self.assertEqual(default_snapshot(repo), before)
+            self.assertEqual(
+                git(
+                    Path(first_payload["planning_worktree"]),
+                    "rev-parse",
+                    "HEAD",
+                ).stdout.strip(),
+                unrelated_head,
+            )
+
+    def test_reuse_rejects_corrupt_or_mismatched_runtime_identity(self) -> None:
+        cases = (
+            ("extra top-level field", lambda state, repo: state.update(extra=True)),
+            ("boolean schema version", lambda state, repo: state.update(schema_version=True)),
+            ("short base", lambda state, repo: state.update(planning_base_sha="abc123")),
+            ("nonhex base", lambda state, repo: state.update(planning_base_sha="g" * 40)),
+            ("uppercase base", lambda state, repo: state.update(planning_base_sha="A" * 40)),
+            (
+                "snapshot base mismatch",
+                lambda state, repo: state["default_checkout_start"].update(
+                    head="0" * 40
+                ),
+            ),
+            (
+                "snapshot extra field",
+                lambda state, repo: state["default_checkout_start"].update(extra=True),
+            ),
+            (
+                "branch mismatch",
+                lambda state, repo: state.update(
+                    planning_branch="codex/different-epic/planning"
+                ),
+            ),
+            (
+                "relative default path",
+                lambda state, repo: state.update(default_checkout="repo"),
+            ),
+            (
+                "invalid default path",
+                lambda state, repo: state.update(default_checkout="/\0"),
+            ),
+            (
+                "planning path mismatch",
+                lambda state, repo: state.update(planning_worktree=str(repo)),
+            ),
+            (
+                "relative worktree root",
+                lambda state, repo: state.update(worktree_root=".worktrees"),
+            ),
+            (
+                "worktree root mismatch",
+                lambda state, repo: state.update(
+                    worktree_root=str(repo / "other-worktrees")
+                ),
+            ),
+        )
+        for name, mutate in cases:
+            with self.subTest(name=name):
+                with tempfile.TemporaryDirectory() as temporary_directory:
+                    repo = initialize_repository(Path(temporary_directory))
+                    worktree_root = repo / ".worktrees"
+                    first = run_prepare(repo, worktree_root)
+                    self.assertEqual(first.returncode, 0, first.stderr)
+                    state_path = Path(json.loads(first.stdout)["runtime_state_path"])
+                    corrupt_state = json.loads(state_path.read_text(encoding="utf-8"))
+                    mutate(corrupt_state, repo)
+                    state_path.write_text(
+                        json.dumps(corrupt_state, sort_keys=True) + "\n",
+                        encoding="utf-8",
+                    )
+                    corrupt_bytes = state_path.read_bytes()
+                    before = default_snapshot(repo)
+
+                    second = run_prepare(repo, worktree_root)
+
+                    self.assertNotEqual(second.returncode, 0, second.stdout)
+                    self.assertFalse(json.loads(second.stdout)["ok"])
+                    self.assertEqual(state_path.read_bytes(), corrupt_bytes)
+                    self.assertEqual(default_snapshot(repo), before)
+
+    def test_reuse_revalidates_live_snapshot_immediately_before_return(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repo = initialize_repository(Path(temporary_directory))
+            worktree_root = repo / ".worktrees"
+            first = run_prepare(repo, worktree_root)
+            self.assertEqual(first.returncode, 0, first.stderr)
+            initial_snapshot = default_snapshot(repo)
+            module = load_planning_worktree_module()
+            arguments = argparse.Namespace(
+                repo_root=str(repo),
+                epic_id="planning-worktree-gate",
+                default_branch="main",
+                worktree_root=str(worktree_root),
+                json=True,
+            )
+
+            with mock.patch.object(
+                module,
+                "default_checkout_snapshot",
+                side_effect=(
+                    initial_snapshot,
+                    (initial_snapshot[0], initial_snapshot[1] + "?? drift\n"),
+                ),
+            ) as snapshot:
+                with self.assertRaisesRegex(
+                    module.GateError, "default checkout"
+                ):
+                    module.prepare(arguments)
+
+            self.assertEqual(snapshot.call_count, 2)
+
+    def test_default_snapshot_rejects_drift_during_collection(self) -> None:
+        module = load_planning_worktree_module()
+        for name, observations in (
+            (
+                "head drift",
+                ("a" * 40, "", "b" * 40, ""),
+            ),
+            (
+                "status drift",
+                ("a" * 40, "", "a" * 40, "?? drift\n"),
+            ),
+        ):
+            with self.subTest(name=name):
+                with mock.patch.object(
+                    module,
+                    "git",
+                    side_effect=observations,
+                ):
+                    with self.assertRaisesRegex(
+                        module.GateError, "changed while its snapshot was collected"
+                    ):
+                        module.default_checkout_snapshot(Path("/unused"))
+
+    def test_reuse_rechecks_artifact_after_final_live_validation(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repo = initialize_repository(Path(temporary_directory))
+            worktree_root = repo / ".worktrees"
+            first = run_prepare(repo, worktree_root)
+            self.assertEqual(first.returncode, 0, first.stderr)
+            state_path = Path(json.loads(first.stdout)["runtime_state_path"])
+            module = load_planning_worktree_module()
+            original_validate = module.validate_runtime_reuse
+            validation_count = 0
+
+            def validate_then_replace_artifact(*args, **kwargs) -> None:
+                nonlocal validation_count
+                validation_count += 1
+                original_validate(*args, **kwargs)
+                if validation_count == 2:
+                    corrupt_state = json.loads(
+                        state_path.read_text(encoding="utf-8")
+                    )
+                    corrupt_state["planning_base_sha"] = "abc123"
+                    state_path.write_text(
+                        json.dumps(corrupt_state), encoding="utf-8"
+                    )
+
+            arguments = argparse.Namespace(
+                repo_root=str(repo),
+                epic_id="planning-worktree-gate",
+                default_branch="main",
+                worktree_root=str(worktree_root),
+                json=True,
+            )
+
+            with mock.patch.object(
+                module,
+                "validate_runtime_reuse",
+                side_effect=validate_then_replace_artifact,
+            ):
+                with self.assertRaisesRegex(
+                    module.GateError, "planning_base_sha"
+                ):
+                    module.prepare(arguments)
+
+            self.assertEqual(validation_count, 2)
+            self.assertEqual(
+                json.loads(state_path.read_text(encoding="utf-8"))[
+                    "planning_base_sha"
+                ],
+                "abc123",
+            )
+
+    def test_reuse_rejects_duplicate_runtime_identity_field(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repo = initialize_repository(Path(temporary_directory))
+            worktree_root = repo / ".worktrees"
+            first = run_prepare(repo, worktree_root)
+            self.assertEqual(first.returncode, 0, first.stderr)
+            state_path = Path(json.loads(first.stdout)["runtime_state_path"])
+            valid_text = state_path.read_text(encoding="utf-8")
+            corrupt_text = valid_text.replace(
+                '"schema_version": 1,',
+                '"schema_version": 1, "schema_version": 1,',
+                1,
+            )
+            self.assertNotEqual(corrupt_text, valid_text)
+            state_path.write_text(corrupt_text, encoding="utf-8")
+            before = default_snapshot(repo)
+
+            second = run_prepare(repo, worktree_root)
+
+            self.assertNotEqual(second.returncode, 0, second.stdout)
+            self.assertFalse(json.loads(second.stdout)["ok"])
+            self.assertEqual(state_path.read_text(encoding="utf-8"), corrupt_text)
+            self.assertEqual(default_snapshot(repo), before)
+
+    def test_runtime_identity_accepts_canonical_sha256_base(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            default_checkout = root / "default"
+            worktree_root = root / "worktrees"
+            planning_worktree = worktree_root / "planning-worktree-gate"
+            default_checkout.mkdir()
+            planning_worktree.mkdir(parents=True)
+            state_path = root / "planning-worktree.json"
+            module = load_planning_worktree_module()
+            planning_base_sha = "a" * 64
+            payload = module.runtime_payload(
+                epic_id="planning-worktree-gate",
+                planning_branch="codex/planning-worktree-gate/planning",
+                planning_base_sha=planning_base_sha,
+                default_checkout=default_checkout.resolve(),
+                worktree_root=worktree_root.resolve(),
+                planning_worktree=planning_worktree.resolve(),
+                start_status="",
+            )
+            state_path.write_text(json.dumps(payload), encoding="utf-8")
+
+            loaded = module.load_runtime_identity(
+                state_path,
+                epic_id="planning-worktree-gate",
+                planning_branch="codex/planning-worktree-gate/planning",
+                default_checkout=default_checkout.resolve(),
+                worktree_root=worktree_root.resolve(),
+                planning_worktree=planning_worktree.resolve(),
+            )
+
+            self.assertEqual(loaded["planning_base_sha"], planning_base_sha)
 
     def test_repeated_gate_entry_returns_same_worktree(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -411,6 +706,12 @@ class PlanningWorktreeGateTests(unittest.TestCase):
             )
             self.assertEqual(runtime_state["default_checkout_start"]["head"], before[0])
             self.assertEqual(runtime_state["default_checkout_start"]["status_porcelain"], before[1])
+            self.assertEqual(default_snapshot(repo), before)
+
+            reused = run_prepare(repo, repo / ".worktrees")
+
+            self.assertEqual(reused.returncode, 0, reused.stderr)
+            self.assertTrue(json.loads(reused.stdout)["reused"])
             self.assertEqual(default_snapshot(repo), before)
 
     def test_prepare_preserves_default_index_bytes_with_stale_stat_metadata(
