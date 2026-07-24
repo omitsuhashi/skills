@@ -113,6 +113,43 @@ def git_common_directory(repo: Path) -> Path:
     return value.resolve()
 
 
+def write_planning_runtime_identity(
+    repo: Path,
+    *,
+    epic_id: str,
+    planning_branch: str,
+    planning_base_sha: str,
+    default_checkout: Path,
+    planning_worktree: Path,
+    default_status: str,
+) -> Path:
+    path = (
+        git_common_directory(repo)
+        / "agent-runs"
+        / "grill-to-pr-loop"
+        / epic_id
+        / "planning-worktree.json"
+    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    write_json(
+        path,
+        {
+            "schema_version": 1,
+            "epic_id": epic_id,
+            "planning_branch": planning_branch,
+            "planning_base_sha": planning_base_sha,
+            "default_checkout": str(default_checkout.resolve()),
+            "worktree_root": str(planning_worktree.resolve().parent),
+            "planning_worktree": str(planning_worktree.resolve()),
+            "default_checkout_start": {
+                "head": planning_base_sha,
+                "status_porcelain": default_status,
+            },
+        },
+    )
+    return path
+
+
 def runtime_artifact_paths(
     repo: Path,
     epic_id: str = "approved-spec-binding",

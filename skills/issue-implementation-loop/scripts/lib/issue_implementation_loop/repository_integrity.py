@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
+import stat
 import subprocess
 from typing import Any
 
@@ -10,7 +12,7 @@ from .git_environment import (
     REPOSITORY_LOCAL_GIT_ENVIRONMENT,
     repository_git_environment,
 )
-from .identifiers import is_full_commit_sha
+from .identifiers import is_full_commit_sha, is_lower_kebab
 
 
 GUARD_FIELDS = {
@@ -25,6 +27,28 @@ DEFAULT_CHECKOUT_FIELDS = {
     "head",
     "status_porcelain_v1",
 }
+RUNTIME_V1_FIELDS = {
+    "schema_version",
+    "epic_id",
+    "planning_branch",
+    "planning_base_sha",
+    "default_checkout",
+    "worktree_root",
+    "planning_worktree",
+    "default_checkout_start",
+}
+RUNTIME_DEFAULT_SNAPSHOT_FIELDS = {
+    "head",
+    "status_porcelain",
+}
+RUNTIME_IDENTITY_RELATIVE_PARENT = (
+    "agent-runs",
+    "grill-to-pr-loop",
+)
+RUNTIME_IDENTITY_FILE = "planning-worktree.json"
+MAX_RUNTIME_IDENTITY_BYTES = 1024 * 1024
+
+
 def _git(path: Path, *args: str) -> subprocess.CompletedProcess[str]:
     try:
         return subprocess.run(
@@ -62,6 +86,153 @@ def _git_common_directory(worktree: Path) -> Path | None:
         return common.resolve(strict=True)
     except (OSError, RuntimeError, ValueError):
         return None
+
+
+def _runtime_json_object(
+    pairs: list[tuple[str, Any]],
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {}
+    for field, value in pairs:
+        if field in payload:
+            raise ValueError(f"duplicate runtime field: {field}")
+        payload[field] = value
+    return payload
+
+
+def _read_no_follow_runtime_identity(
+    common_directory: Path,
+    epic_id: Any,
+) -> tuple[dict[str, Any], tuple[int, int, bytes]] | None:
+    if not isinstance(epic_id, str) or not is_lower_kebab(epic_id):
+        return None
+    directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+    file_flags = os.O_RDONLY | os.O_NOFOLLOW
+    directory_descriptor: int | None = None
+    try:
+        directory_descriptor = os.open(common_directory, directory_flags)
+        for component in (*RUNTIME_IDENTITY_RELATIVE_PARENT, epic_id):
+            child_descriptor = os.open(
+                component,
+                directory_flags,
+                dir_fd=directory_descriptor,
+            )
+            os.close(directory_descriptor)
+            directory_descriptor = child_descriptor
+        file_descriptor = os.open(
+            RUNTIME_IDENTITY_FILE,
+            file_flags,
+            dir_fd=directory_descriptor,
+        )
+        try:
+            before = os.fstat(file_descriptor)
+            if (
+                not stat.S_ISREG(before.st_mode)
+                or before.st_size > MAX_RUNTIME_IDENTITY_BYTES
+            ):
+                return None
+            chunks: list[bytes] = []
+            total = 0
+            while True:
+                chunk = os.read(file_descriptor, 65536)
+                if not chunk:
+                    break
+                total += len(chunk)
+                if total > MAX_RUNTIME_IDENTITY_BYTES:
+                    return None
+                chunks.append(chunk)
+            after = os.fstat(file_descriptor)
+            if (
+                before.st_dev,
+                before.st_ino,
+                before.st_size,
+                before.st_mtime_ns,
+            ) != (
+                after.st_dev,
+                after.st_ino,
+                after.st_size,
+                after.st_mtime_ns,
+            ):
+                return None
+            raw = b"".join(chunks)
+        finally:
+            os.close(file_descriptor)
+    except (OSError, TypeError, ValueError):
+        return None
+    finally:
+        if directory_descriptor is not None:
+            os.close(directory_descriptor)
+
+    try:
+        payload = json.loads(
+            raw.decode("utf-8"),
+            object_pairs_hook=_runtime_json_object,
+        )
+    except (UnicodeDecodeError, json.JSONDecodeError, ValueError):
+        return None
+    if not isinstance(payload, dict) or set(payload) != RUNTIME_V1_FIELDS:
+        return None
+    if type(payload.get("schema_version")) is not int or payload["schema_version"] != 1:
+        return None
+    if payload.get("epic_id") != epic_id:
+        return None
+    planning_branch = payload.get("planning_branch")
+    planning_base = payload.get("planning_base_sha")
+    if (
+        not isinstance(planning_branch, str)
+        or not planning_branch
+        or not isinstance(planning_base, str)
+        or planning_base != planning_base.lower()
+        or not is_full_commit_sha(planning_base)
+    ):
+        return None
+    runtime_paths: dict[str, Path] = {}
+    for field in ("default_checkout", "worktree_root", "planning_worktree"):
+        value = payload.get(field)
+        if not isinstance(value, str) or not value:
+            return None
+        candidate = Path(value)
+        if not candidate.is_absolute():
+            return None
+        try:
+            resolved = candidate.resolve(strict=True)
+        except (OSError, RuntimeError, ValueError):
+            return None
+        if value != str(resolved) or not resolved.is_dir():
+            return None
+        runtime_paths[field] = resolved
+    if runtime_paths["default_checkout"] == runtime_paths["planning_worktree"]:
+        return None
+    snapshot = payload.get("default_checkout_start")
+    if (
+        not isinstance(snapshot, dict)
+        or set(snapshot) != RUNTIME_DEFAULT_SNAPSHOT_FIELDS
+        or not isinstance(snapshot.get("head"), str)
+        or snapshot["head"] != snapshot["head"].lower()
+        or not is_full_commit_sha(snapshot["head"])
+        or snapshot["head"] != planning_base
+        or not isinstance(snapshot.get("status_porcelain"), str)
+    ):
+        return None
+    return payload, (before.st_dev, before.st_ino, raw)
+
+
+def _runtime_identity_matches_guard(
+    runtime: dict[str, Any],
+    guard: dict[str, Any],
+    packet: dict[str, Any],
+    envelope: dict[str, Any],
+) -> bool:
+    default = guard["default_checkout"]
+    snapshot = runtime["default_checkout_start"]
+    return (
+        runtime["epic_id"] == packet.get("epic_id") == envelope.get("epic_id")
+        and runtime["planning_branch"] == guard["planning_branch"]
+        and runtime["planning_base_sha"] == guard["planning_base_sha"]
+        and runtime["planning_worktree"] == guard["planning_worktree_path"]
+        and runtime["default_checkout"] == default["path"]
+        and snapshot["head"] == default["head"]
+        and snapshot["status_porcelain"] == default["status_porcelain_v1"]
+    )
 
 
 def _registered_worktrees(repo_root: Path) -> dict[Path, dict[str, str]] | None:
@@ -181,6 +352,21 @@ def validate_repository_guard(
     ):
         return ["REPOSITORY_GUARD_WORKTREE_INVALID"]
 
+    runtime_read = _read_no_follow_runtime_identity(
+        trusted_common,
+        packet.get("epic_id"),
+    )
+    if runtime_read is None:
+        return ["REPOSITORY_GUARD_RUNTIME_INVALID"]
+    runtime_identity, runtime_snapshot = runtime_read
+    if not _runtime_identity_matches_guard(
+        runtime_identity,
+        guard,
+        packet,
+        envelope,
+    ):
+        return ["REPOSITORY_GUARD_RUNTIME_MISMATCH"]
+
     planning_record = worktrees[planning_worktree]
     default_record = worktrees[default_checkout]
     if (
@@ -221,6 +407,12 @@ def validate_repository_guard(
         or status.stdout != default["status_porcelain_v1"]
     ):
         return ["DEFAULT_CHECKOUT_DRIFT"]
+    confirmed_runtime = _read_no_follow_runtime_identity(
+        trusted_common,
+        packet.get("epic_id"),
+    )
+    if confirmed_runtime is None or confirmed_runtime[1] != runtime_snapshot:
+        return ["REPOSITORY_GUARD_RUNTIME_INVALID"]
     return []
 
 

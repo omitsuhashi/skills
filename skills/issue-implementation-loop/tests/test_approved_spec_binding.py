@@ -975,6 +975,15 @@ class ApprovedSpecBindingTests(unittest.TestCase):
                     "status_porcelain_v1": default_status,
                 },
             }
+            fixtures.write_planning_runtime_identity(
+                repo,
+                epic_id=packet_b["epic_id"],
+                planning_branch=planning_branch,
+                planning_base_sha=planning_base_sha,
+                default_checkout=default_checkout,
+                planning_worktree=repo,
+                default_status=default_status,
+            )
             envelope_path = repo / "execution-envelope.json"
             fixtures.write_json(envelope_path, envelope_b)
             checked_envelope = fixtures.run_script(

@@ -221,6 +221,15 @@ class ValidationTests(unittest.TestCase):
                 "status_porcelain_v1": default_status,
             },
         }
+        write_planning_runtime_identity(
+            planning,
+            epic_id=packet["epic_id"],
+            planning_branch=planning_branch,
+            planning_base_sha=planning_base,
+            default_checkout=repo,
+            planning_worktree=planning,
+            default_status=default_status,
+        )
         return repo, planning, packet, envelope, planning_base
 
     def test_repository_guard_rejects_packet_branch_or_base_mismatch(self) -> None:
@@ -319,6 +328,201 @@ class ValidationTests(unittest.TestCase):
                 ),
                 ["DEFAULT_CHECKOUT_DRIFT"],
             )
+
+    def test_repository_guard_rejects_clean_registered_substitute_for_drifted_default(
+        self,
+    ) -> None:
+        from issue_implementation_loop.repository_integrity import (
+            validate_repository_guard,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            repo, planning, packet, envelope, planning_base = (
+                self.planning_guard_fixture(root)
+            )
+            substitute = root / "substitute"
+            git(
+                repo,
+                "worktree",
+                "add",
+                "-q",
+                "-b",
+                "not-main",
+                str(substitute),
+                planning_base,
+            )
+            (repo / "main-drift.txt").write_text(
+                "actual main drift\n",
+                encoding="utf-8",
+            )
+            envelope["repository_guard"]["default_checkout"] = {
+                "path": str(substitute.resolve()),
+                "branch": "not-main",
+                "head": planning_base,
+                "status_porcelain_v1": "",
+            }
+
+            self.assertEqual(
+                validate_repository_guard(envelope, packet, planning),
+                ["REPOSITORY_GUARD_RUNTIME_MISMATCH"],
+            )
+
+    def test_repository_guard_rejects_runtime_identity_mismatches(self) -> None:
+        from issue_implementation_loop.repository_integrity import (
+            validate_repository_guard,
+        )
+
+        def replace_snapshot_head(payload: dict, _: Path, __: str) -> None:
+            payload["planning_base_sha"] = "1" * 40
+            payload["default_checkout_start"]["head"] = "1" * 40
+
+        mutations = {
+            "planning path": lambda payload, root, base: payload.update(
+                planning_worktree=str(root.resolve())
+            ),
+            "default path": lambda payload, root, base: payload.update(
+                default_checkout=str(root.resolve())
+            ),
+            "snapshot head": replace_snapshot_head,
+            "snapshot status": lambda payload, root, base: payload[
+                "default_checkout_start"
+            ].update(status_porcelain="?? replaced.txt\n"),
+            "planning branch": lambda payload, root, base: payload.update(
+                planning_branch="codex/other/planning"
+            ),
+            "planning base": replace_snapshot_head,
+        }
+        for name, mutate in mutations.items():
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                _, planning, packet, envelope, planning_base = (
+                    self.planning_guard_fixture(root)
+                )
+                runtime_path = (
+                    git_common_directory(planning)
+                    / "agent-runs"
+                    / "grill-to-pr-loop"
+                    / packet["epic_id"]
+                    / "planning-worktree.json"
+                )
+                payload = json.loads(runtime_path.read_text(encoding="utf-8"))
+                mutate(payload, root, planning_base)
+                write_json(runtime_path, payload)
+
+                self.assertEqual(
+                    validate_repository_guard(envelope, packet, planning),
+                    ["REPOSITORY_GUARD_RUNTIME_MISMATCH"],
+                )
+
+    def test_repository_guard_rejects_missing_corrupt_and_symlink_runtime_identity(
+        self,
+    ) -> None:
+        from issue_implementation_loop.repository_integrity import (
+            validate_repository_guard,
+        )
+
+        for case in (
+            "missing",
+            "corrupt",
+            "wrong-version",
+            "unknown-field",
+            "duplicate-field",
+            "noncanonical-path",
+            "symlink",
+            "symlink-parent",
+        ):
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                _, planning, packet, envelope, _ = self.planning_guard_fixture(root)
+                runtime_path = (
+                    git_common_directory(planning)
+                    / "agent-runs"
+                    / "grill-to-pr-loop"
+                    / packet["epic_id"]
+                    / "planning-worktree.json"
+                )
+                if case == "missing":
+                    runtime_path.unlink()
+                elif case == "corrupt":
+                    runtime_path.write_text("{", encoding="utf-8")
+                elif case == "wrong-version":
+                    payload = json.loads(runtime_path.read_text(encoding="utf-8"))
+                    payload["schema_version"] = True
+                    write_json(runtime_path, payload)
+                elif case == "unknown-field":
+                    payload = json.loads(runtime_path.read_text(encoding="utf-8"))
+                    payload["unknown"] = "rejected"
+                    write_json(runtime_path, payload)
+                elif case == "duplicate-field":
+                    raw = runtime_path.read_text(encoding="utf-8")
+                    runtime_path.write_text(
+                        raw.replace(
+                            '"schema_version": 1',
+                            '"schema_version": 1, "schema_version": 1',
+                            1,
+                        ),
+                        encoding="utf-8",
+                    )
+                elif case == "noncanonical-path":
+                    payload = json.loads(runtime_path.read_text(encoding="utf-8"))
+                    payload["default_checkout"] = str(
+                        root / "repo" / ".." / "repo"
+                    )
+                    write_json(runtime_path, payload)
+                elif case == "symlink":
+                    target = root / "runtime-target.json"
+                    target.write_bytes(runtime_path.read_bytes())
+                    runtime_path.unlink()
+                    runtime_path.symlink_to(target)
+                else:
+                    real_parent = runtime_path.parent.with_name(
+                        f"{runtime_path.parent.name}-real"
+                    )
+                    runtime_path.parent.rename(real_parent)
+                    runtime_path.parent.symlink_to(real_parent, target_is_directory=True)
+
+                self.assertEqual(
+                    validate_repository_guard(envelope, packet, planning),
+                    ["REPOSITORY_GUARD_RUNTIME_INVALID"],
+                )
+
+    def test_repository_guard_rejects_runtime_artifact_replaced_during_validation(
+        self,
+    ) -> None:
+        from issue_implementation_loop import repository_integrity
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _, planning, packet, envelope, _ = self.planning_guard_fixture(root)
+            runtime_path = (
+                git_common_directory(planning)
+                / "agent-runs"
+                / "grill-to-pr-loop"
+                / packet["epic_id"]
+                / "planning-worktree.json"
+            )
+            original_match = repository_integrity._runtime_identity_matches_guard
+
+            def replace_after_match(*args: object, **kwargs: object) -> bool:
+                matched = original_match(*args, **kwargs)
+                replacement = runtime_path.with_suffix(".replacement")
+                replacement.write_bytes(runtime_path.read_bytes())
+                os.replace(replacement, runtime_path)
+                return matched
+
+            with mock.patch.object(
+                repository_integrity,
+                "_runtime_identity_matches_guard",
+                side_effect=replace_after_match,
+            ):
+                errors = repository_integrity.validate_repository_guard(
+                    envelope,
+                    packet,
+                    planning,
+                )
+
+            self.assertEqual(errors, ["REPOSITORY_GUARD_RUNTIME_INVALID"])
 
     def test_repository_guard_rejects_drift_under_hostile_git_routing_environment(
         self,

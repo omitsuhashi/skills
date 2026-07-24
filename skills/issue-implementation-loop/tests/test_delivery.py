@@ -83,6 +83,15 @@ class DeliveryTests(unittest.TestCase):
                 "status_porcelain_v1": "",
             },
         }
+        write_planning_runtime_identity(
+            planning,
+            epic_id=packet["epic_id"],
+            planning_branch=planning_branch,
+            planning_base_sha=planning_base,
+            default_checkout=repo,
+            planning_worktree=planning,
+            default_status="",
+        )
         envelope["remote_write_policy"]["approved_actions"] = [
             "final_pr_push_head",
             "final_pr_create_draft",
