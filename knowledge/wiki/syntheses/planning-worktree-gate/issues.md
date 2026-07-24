@@ -154,7 +154,7 @@ a2dcd18df54efc1f5877b23a7f84b97ee9aeebf5  PWTG-002 physical ancestry fix
 bc557bef95cabea39a2ac5220ce4ec09d59f980e  PWTG-002 runtime identity binding fix
 ```
 
-PWTG-004 はこの chain の後に作成する scoped documentation commit で close する。
+PWTG-004 の scoped closeout documentation commit は `4d96bfd71b63c86727ad36b2d3d8fd0beb710a78` であり、本 review-fix で post-commit 独立 review の stale status finding を訂正する。
 
 ### Fresh verification
 
