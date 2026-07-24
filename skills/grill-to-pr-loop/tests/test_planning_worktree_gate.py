@@ -586,6 +586,7 @@ class PlanningWorktreeGateTests(unittest.TestCase):
             temporary_root = Path(temporary_directory)
             repo_a = initialize_repository(temporary_root / "a")
             repo_b = initialize_repository(temporary_root / "b")
+            git(repo_b, "config", "core.worktree", str(repo_b))
             before_b = default_snapshot(repo_b)
             before_b_index = (repo_b / ".git" / "index").read_bytes()
             before_b_worktrees = git(repo_b, "worktree", "list", "--porcelain").stdout
@@ -593,6 +594,7 @@ class PlanningWorktreeGateTests(unittest.TestCase):
                 "GIT_DIR": str(repo_b / ".git"),
                 "GIT_WORK_TREE": str(repo_b),
                 "GIT_COMMON_DIR": str(repo_b / ".git"),
+                "GIT_CONFIG": str(repo_b / ".git" / "config"),
                 "GIT_INDEX_FILE": str(repo_b / ".git" / "index"),
                 "GIT_OBJECT_DIRECTORY": str(repo_b / ".git" / "objects"),
                 "GIT_ALTERNATE_OBJECT_DIRECTORIES": str(repo_b / ".git" / "objects"),
@@ -622,6 +624,94 @@ class PlanningWorktreeGateTests(unittest.TestCase):
                 before_b_worktrees,
             )
             self.assertFalse(runtime_state(repo_b).exists())
+
+    def test_prepare_ignores_ambient_no_replace_objects_for_ancestry(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repo = initialize_repository(Path(temporary_directory))
+            replaced_head = git(repo, "rev-parse", "HEAD").stdout.strip()
+            planning_branch = "codex/planning-worktree-gate/planning"
+            git(repo, "branch", planning_branch, replaced_head)
+            (repo / "README.md").write_text("advance default\n", encoding="utf-8")
+            git(repo, "add", "README.md")
+            git(repo, "commit", "-qm", "advance main")
+            default_head = git(repo, "rev-parse", "HEAD").stdout.strip()
+            tree = git(repo, "rev-parse", f"{replaced_head}^{{tree}}").stdout.strip()
+            replacement = subprocess.run(
+                ["git", "-C", str(repo), "commit-tree", tree, "-p", default_head],
+                check=True,
+                capture_output=True,
+                text=True,
+                input="replacement history\n",
+            ).stdout.strip()
+            git(
+                repo,
+                "update-ref",
+                f"refs/replace/{replaced_head}",
+                replacement,
+            )
+            self.assertEqual(
+                git(
+                    repo,
+                    "merge-base",
+                    "--is-ancestor",
+                    default_head,
+                    planning_branch,
+                    check=False,
+                ).returncode,
+                0,
+            )
+            no_replace_environment = os.environ.copy()
+            no_replace_environment["GIT_NO_REPLACE_OBJECTS"] = "1"
+            self.assertNotEqual(
+                subprocess.run(
+                    [
+                        "git",
+                        "-C",
+                        str(repo),
+                        "merge-base",
+                        "--is-ancestor",
+                        default_head,
+                        planning_branch,
+                    ],
+                    check=False,
+                    env=no_replace_environment,
+                ).returncode,
+                0,
+            )
+
+            result = run_prepare(
+                repo,
+                repo / ".worktrees",
+                environment_overrides={"GIT_NO_REPLACE_OBJECTS": "1"},
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["planning_base_sha"], default_head)
+            self.assertTrue(Path(payload["runtime_state_path"]).is_file())
+
+    def test_sanitizer_covers_git_local_environment_variables(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repo = initialize_repository(Path(temporary_directory))
+            module = load_planning_worktree_module()
+            local_environment = set(
+                git(repo, "rev-parse", "--local-env-vars").stdout.splitlines()
+            )
+
+            self.assertEqual(
+                local_environment - module.REPOSITORY_ROUTING_ENVIRONMENT,
+                set(),
+            )
+            for global_environment in (
+                "GIT_CONFIG_GLOBAL",
+                "GIT_CONFIG_SYSTEM",
+                "HOME",
+                "XDG_CONFIG_HOME",
+            ):
+                self.assertNotIn(
+                    global_environment,
+                    module.REPOSITORY_ROUTING_ENVIRONMENT,
+                )
 
 
 if __name__ == "__main__":
