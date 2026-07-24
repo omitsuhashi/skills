@@ -1,0 +1,134 @@
+{
+  "approval_evidence": {
+    "actor_expression": "session-user",
+    "approved_at": "2026-07-24T07:39:34+09:00",
+    "decision": "approved",
+    "scope": {
+      "acceptance_criteria": true,
+      "accepted_decisions": true,
+      "non_goals": true,
+      "remote_policy": true,
+      "stop_conditions": true,
+      "verification": true
+    },
+    "subject": "spec_binding"
+  },
+  "artifact_root": "knowledge/wiki/syntheses/planning-worktree-gate",
+  "delivery_intent": "local_only",
+  "epic_id": "planning-worktree-gate",
+  "schema_version": 2,
+  "spec_binding": {
+    "path": "knowledge/wiki/syntheses/planning-worktree-gate/spec.md",
+    "sha256": "f4b8cebd19a832963aa5e4d022759b21ef73dc417ff6d2f1555b87419b578ec3"
+  },
+  "work_items": [
+    {
+      "acceptance_criteria": [
+        "最初のrepository write前にEpic planning worktreeを作成し、既存worktreeを再利用する",
+        "Gate間で同じplanning worktreeを使い、作成失敗時にdefault checkoutへ書かない",
+        "pre-existing dirtを変更しない"
+      ],
+      "dependencies": [],
+      "id": "PWTG-001",
+      "non_goals": [
+        "generic worktree managerを作らない"
+      ],
+      "source": {
+        "path": "knowledge/wiki/syntheses/planning-worktree-gate/issues.md",
+        "type": "local"
+      },
+      "title": "Planning Worktree Gate CLI と skill contract を追加する",
+      "verification": [
+        "python3 -m unittest discover -s skills/grill-to-pr-loop/tests"
+      ],
+      "write_scope": [
+        "path:skills/grill-to-pr-loop"
+      ]
+    },
+    {
+      "acceptance_criteria": [
+        "new packetがplanning branch/baseを表現し、runtime guardがhost pathとdefault checkout snapshotを保持する",
+        "packet/runtime mismatchとGate commit非到達をprepareで拒否する",
+        "existing sealed packet bytesを変更しない"
+      ],
+      "dependencies": [
+        "PWTG-001"
+      ],
+      "id": "PWTG-002",
+      "non_goals": [
+        "host固有pathをtracked packetへ保存しない"
+      ],
+      "source": {
+        "path": "knowledge/wiki/syntheses/planning-worktree-gate/issues.md",
+        "type": "local"
+      },
+      "title": "packet と runtime repository guard を追加する",
+      "verification": [
+        "python3 -m unittest skills.issue-implementation-loop.tests.test_approved_spec_binding",
+        "python3 -m unittest skills.issue-implementation-loop.tests.test_validation"
+      ],
+      "write_scope": [
+        "path:skills/issue-implementation-loop"
+      ]
+    },
+    {
+      "acceptance_criteria": [
+        "default checkout driftをPR_READYとdeliveryで拒否する",
+        "final PR headがGate commitと全implementation headを含まなければ拒否する",
+        "pr_merged recordだけをintegration proofにしない"
+      ],
+      "dependencies": [
+        "PWTG-002"
+      ],
+      "id": "PWTG-003",
+      "non_goals": [
+        "default checkoutを自動復元しない"
+      ],
+      "source": {
+        "path": "knowledge/wiki/syntheses/planning-worktree-gate/issues.md",
+        "type": "local"
+      },
+      "title": "PR_READY と delivery integrity guard を追加する",
+      "verification": [
+        "python3 -m unittest skills.issue-implementation-loop.tests.test_delivery",
+        "python3 -m unittest discover -s skills/issue-implementation-loop/tests"
+      ],
+      "write_scope": [
+        "path:skills/issue-implementation-loop"
+      ]
+    },
+    {
+      "acceptance_criteria": [
+        "wikiとledgerが実装・verification evidenceに一致する",
+        "dual-host、architecture、context、両skill full suiteが通る",
+        "default checkout開始snapshotが維持される"
+      ],
+      "dependencies": [
+        "PWTG-001",
+        "PWTG-002",
+        "PWTG-003"
+      ],
+      "id": "PWTG-004",
+      "non_goals": [
+        "push、PR作成、mergeを行わない"
+      ],
+      "source": {
+        "path": "knowledge/wiki/syntheses/planning-worktree-gate/issues.md",
+        "type": "local"
+      },
+      "title": "wiki同期と全体verificationを完了する",
+      "verification": [
+        "python3 scripts/validate_skill_architecture.py --all",
+        "python3 scripts/validate_skill_context.py --all",
+        "python3 scripts/validate_dual_host_authoring.py --all",
+        "python3 -m unittest discover -s scripts",
+        "git diff --check"
+      ],
+      "write_scope": [
+        "path:knowledge/wiki/syntheses/planning-worktree-gate",
+        "path:knowledge/index.md",
+        "path:knowledge/log.md"
+      ]
+    }
+  ]
+}

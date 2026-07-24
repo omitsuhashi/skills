@@ -2,6 +2,16 @@
 
 Use this reference for intake, Grill with Docs, spec/PRD synthesis, Spec Gate, Issue Gate, and GitHub Mirror Gate preparation.
 
+## Planning Worktree Gate
+
+Before Written Spec or any planning write, run:
+
+```bash
+python3 <skill-dir>/scripts/planning_worktree.py prepare --repo-root <absolute> --epic-id <lower-kebab> --json
+```
+
+It canonicalizes the repo, reads the registered default checkout, and creates/reuses one Epic-scoped planning worktree, `codex/<epic-id>/planning`. Reuse it through Written Spec, Spec Gate, Issue Gate, Execution Plan Gate, and planning sync. The project-local root must be ignored; sandbox/preparation failure stops before writes, never using default checkout. No repeated consent follows an existing preference. Its untracked runtime identity is `$(git rev-parse --git-common-dir)/agent-runs/grill-to-pr-loop/<epic-id>/planning-worktree.json`, with host paths and exact starting HEAD/status.
+
 ## Artifact Contract
 
 Track this tree for every current Epic:

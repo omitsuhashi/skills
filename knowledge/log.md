@@ -1390,3 +1390,38 @@ append-only で使います。すべての entry は予測しやすい header �
 - GitHub Actions run `29970825450` のPython 3.9 / 3.12双方で、`grill-to-pr-loop`のhistorical artifact index invariantが失敗した。旧POTASK active catalog削除時に、保持対象のInput Packet v1 2件とExecution Envelope v3 1件まで`knowledge/index.md`から外したことが原因だった。
 - `knowledge/index.md`へ3件だけをhistorical / non-executable evidenceとして再登録した。旧plugin spec、Issue ledger、provider-adapter planはactive catalogへ戻さず、current task-management contractはGitHub Projects直接接続型standalone skillのままとした。
 - historical JSONのbytes、approved spec、sealed current Input Packetは変更していない。focused regression、grill-to-pr-loop 29 tests、issue-implementation-loop 249 tests、llm-wiki 6 tests、decide-in-order 7 tests、task-management 11 tests、architecture / context / dual-host checks、context report、`git diff --check`はすべてpassした。
+
+## [2026-07-24] spec | Planning Worktree Gate
+
+- Epic ID `planning-worktree-gate` として、Written Specを含む最初のrepository write前に`codex/<epic-id>/planning` branch/worktreeを作成または再利用し、Spec Gate、Issue Gate、Execution Plan Gate、index/log同期まで同じplanning worktreeを使う仕様を追加した。
+- durable packetは`planning_branch` / `planning_base_sha`を持ち、host固有pathとdefault checkout開始snapshotはGit common directory配下のuntracked runtime artifact / Execution Envelopeに分離する。
+- prepareはGate commit ancestry、PR_READY / deliveryはdefault checkout HEAD/status、final deliveryはplanning / implementation commitのactual final head reachabilityをfail closedで検証する。unrelated pre-existing dirtの移動、削除、stash、reset、PR混入は行わない。
+- planning branchは`codex/planning-worktree-gate/planning`、base SHAは`b3b869b60dfb785b325f754292dccf675e47313b`。host固有worktree pathはtracked wikiへ記録せず、runtime artifactにのみ保持した。
+- session userの依頼をSpec Gate approval evidenceとし、exact spec pathは`knowledge/wiki/syntheses/planning-worktree-gate/spec.md`、raw-byte SHA-256は`f4b8cebd19a832963aa5e4d022759b21ef73dc417ff6d2f1555b87419b578ec3`、six-part scopeは採用判断、非目標、受け入れ条件、検証、remote policy、停止条件をすべて承認済みとした。
+- remote policyは`local_only`。push、PR、merge、GitHub mutationは非承認である。
+
+## [2026-07-24] issue-gate | Planning Worktree Gate
+
+- PWTG-001からPWTG-004へPlanning Worktree Gate CLI、packet/runtime repository guard、PR_READY / delivery integrity、wiki / full verificationをserial dependencyで分解した。
+- user提示のAcceptance Tests 1〜8とNon-goalsをIssue Gate approval evidenceとし、各issueのwrite scope、criteria、non-goals、verificationを`knowledge/wiki/syntheses/planning-worktree-gate/issues.md`に固定した。
+- local ledgerはcanonical、GitHub Issueは`未作成`、remote policyは`local_only`。Gateごとのworktreeは作成せず、Spec Gateと同じplanning worktreeを継続利用する。
+
+## [2026-07-24] execution-plan | Planning Worktree Gate
+
+- PWTG-001からPWTG-004のfile ownership、RED/GREEN command、interface、stop conditionを`knowledge/wiki/syntheses/planning-worktree-gate/implementation-plan.md`へ固定した。
+- planning CLI、packet/runtime repository guard、PR_READY / final delivery integrity、wiki / full verificationをserial worker-context executionとし、`coordinator_may_implement=false`、remote policy `local_only`、final merge human-onlyを維持する。
+- self-hosting bootstrap packetはPlanning Worktree Gate実装前の現行Input Packet v2 validatorでsealし、target implementation後の新規packet contractと区別する。既存sealed packetのbytesは変更しない。
+- Spec Gate、Issue Gate、Execution Plan Gate、index/log同期は同じ`codex/planning-worktree-gate/planning` branchで行い、Gateごとのworktree再作成はしていない。
+- exact packet pathは`knowledge/wiki/syntheses/planning-worktree-gate/input-packet.json`、raw-byte SHA-256は`7b7ecc562d1ff2aa2066438099741dad9e70ccb889c9dada4620eebb2224e219`。`validate_input_packet.py --json`と`check_capabilities.py --json`はいずれも`ok: true`で、approved spec seal、`tdd`、`requesting-code-review`、worker-context execution prerequisitesを確認した。
+- Execution Plan Gateはapproved scope内、remote actionなし、dependency cycleなし、write scope明示済みとしてauto-continueする。packet / plan / index / logをphase approval commitに固定してからworker contextへ渡す。
+
+## [2026-07-24] implementation-closeout | Planning Worktree Gate
+
+- PWTG-001〜PWTG-004を完了へ同期した。pre-closeout chainはplanning base `b3b869b`、phase artifacts `6511899` / `e87a7e3` / `863711a`、PWTG-001の7 commits、PWTG-002の7 commits、PWTG-003 `c355b08`から成る19 commitsで、すべてpre-closeout production head `bc557bef95cabea39a2ac5220ce4ec09d59f980e`のancestorである。PWTG-004のcloseout documentationは`4d96bfd71b63c86727ad36b2d3d8fd0beb710a78`で完了し、post-commit独立reviewのstale status findingは後続のdocs-only review-fixで訂正した。
+- fresh verificationは`grill-to-pr-loop` 58件、`issue-implementation-loop` 284件、repository scripts 58件、`llm-wiki` 6件、Acceptance 1〜8 focused regressions 18件がすべてpassした。skill architecture、3 context contracts、変更対象2 skillのscoped dual-host compatibility、両skillのskill-creator quick validator、`git diff --check`もpassした。
+- approved specに残る`validate_dual_host_authoring.py`はhistorical plan defectであり、sealed specとInput Packetは編集していない。実行可能なIssue台帳 / Implementation Planは実在する`validate_dual_host_compatibility.py`のchanged-skill scoped commandsと、両skillのskill-creator quick-validator commandsへ訂正した。
+- repository-wide `validate_dual_host_compatibility.py --all`は未変更の`llm-wiki` DESCRIPTION discovery findingだけを返した。変更対象2 skillのscoped validationはpassしたが、repository-wide passとは記録しない。
+- Acceptance 1〜8はfirst-create、pre-existing exact worktree adoption/reuse、single planning chain、failure/default preservation、physical Gate ancestry、physical final-head containment、runtime-bound actual default checkout drift rejectionの実repo regressionsへ対応する。new packetはplanning identity pairをseal時に必須化し、historical sealed v2のread/verify compatibilityを維持した。
+- approved spec SHA-256 `f4b8cebd19a832963aa5e4d022759b21ef73dc417ff6d2f1555b87419b578ec3`とsealed Input Packet SHA-256 `7b7ecc562d1ff2aa2066438099741dad9e70ccb889c9dada4620eebb2224e219`は不変である。default checkoutのHEADとexact porcelain statusはruntime start snapshotと一致した。
+- prior production Important findingsはTDD fixと再reviewを経てすべてclosedし、最終fix reviewはCritical 0 / Important 0である。non-blocking MinorとしてGit environment policyのskill間重複、runtime load/validate stabilization sequenceの反復、planning/default identity parameter data clumpを残す。
+- delivery stateは`local_only`。push、PR作成、merge、GitHub mutation、default checkoutのreset / clean / stash、destructive recoveryは実行していない。

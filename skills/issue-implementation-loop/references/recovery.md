@@ -19,6 +19,12 @@ On resume, compare:
 - Ignore duplicate event IDs.
 - Ignore stale attempt reports.
 - Inspect dirty worktrees; do not reset or clean them.
+- On `DEFAULT_CHECKOUT_DRIFT`, stop completion and delivery, preserve the
+  checkout exactly as found, and report the expected and current HEAD/status
+  evidence. Do not reset, clean, stash, move, delete, or auto-restore content.
+- On final-head ancestry failure, report the resolved final ref and missing
+  planning base, Gate, or candidate commit. Do not rewrite refs or treat
+  `pr_merged: true` as recovery evidence.
 - If a valid commit/report exists, advance to the next safe state.
 - If incomplete, redispatch the same attempt or start a new attempt within retry policy.
 - Escalate only the affected issue unless state corruption affects the whole epic.

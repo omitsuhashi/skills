@@ -17,12 +17,13 @@ Planning artifacts stay on the planning branch. The execution coordinator owns `
 
 ## Procedure
 
-1. Validate envelope branch/path uniqueness.
-2. Reconcile existing branches, worktrees, and filesystem paths.
-3. Stop only the affected issue when its reservation collides.
-4. Create physical worktrees only for runnable issues.
-5. Never reuse one active worktree for multiple concurrent issues.
-6. Do not reset, clean, delete, or move worktrees without explicit approval.
+1. Validate new-packet repository guard read-only; keep host paths untracked.
+2. Validate envelope branch/path uniqueness.
+3. Reconcile existing branches, worktrees, and filesystem paths.
+4. Stop only the affected issue when its reservation collides.
+5. Create physical worktrees only for runnable issues.
+6. Never reuse one active worktree for multiple concurrent issues.
+7. Do not reset, clean, delete, or move worktrees without explicit approval.
 
 For `batch_issue_prs`, do not create the final PR until `epic_base.ref` exists and issue PR merge state has been recorded.
 

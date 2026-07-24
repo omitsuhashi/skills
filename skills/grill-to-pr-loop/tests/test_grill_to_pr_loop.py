@@ -394,6 +394,13 @@ class GrillToPrLoopTests(unittest.TestCase):
         ):
             self.assertIn(required, combined)
 
+    def test_execution_handoff_requires_planning_identity_for_new_drafts(self) -> None:
+        handoff_text = EXECUTION_HANDOFF.read_text(encoding="utf-8")
+
+        self.assertIn("Every new draft must include both", handoff_text)
+        self.assertIn('"planning_branch": "codex/<epic-id>/planning"', handoff_text)
+        self.assertIn('"planning_base_sha": "<full-40-or-64-character-sha>"', handoff_text)
+
     def test_historical_packets_and_envelopes_are_indexed_as_non_executable(self) -> None:
         index_text = (REPO_ROOT / "knowledge" / "index.md").read_text(encoding="utf-8")
         synthesis_root = REPO_ROOT / "knowledge" / "wiki" / "syntheses"

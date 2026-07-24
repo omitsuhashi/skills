@@ -7,6 +7,7 @@ from typing import Any
 from .approved_spec_binding import BindingError, approved_spec_binding_ref
 from .constants import FINAL_PR_REQUIRED_APPROVED_ACTIONS
 from .identifiers import is_issue_id
+from .repository_integrity import validate_final_head_integrity
 from .review import review_approved_or_accepted
 from .validation.execution_envelope import validate_execution_envelope
 from .validation.execution_result import validate_execution_result
@@ -447,6 +448,15 @@ def validate_delivery_plan(
     if plan.get("draft", True) is not True:
         errors.append("final_pr.draft must be true; ready-for-review is a separate human action")
 
+    if not errors:
+        errors.extend(
+            validate_final_head_integrity(
+                envelope,
+                execution_result,
+                head,
+                repo_root,
+            )
+        )
     delivery_issue_scope(envelope, execution_result, plan, errors)
     runtime_issues = runtime.get("issues", {})
     if isinstance(runtime_issues, dict):

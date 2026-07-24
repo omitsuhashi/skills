@@ -18,6 +18,9 @@ from unittest import mock
 SKILL_DIR = Path(__file__).resolve().parents[1]
 SCRIPTS_DIR = SKILL_DIR / "scripts"
 LIB_DIR = SCRIPTS_DIR / "lib"
+TESTS_DIR = Path(__file__).resolve().parent
+if str(TESTS_DIR) not in sys.path:
+    sys.path.insert(0, str(TESTS_DIR))
 if str(LIB_DIR) not in sys.path:
     sys.path.insert(0, str(LIB_DIR))
 
@@ -238,6 +241,7 @@ ASB24_CURRENT_ARTIFACT_SURFACE = {
     ),
     "delivery_plan": (
         "assets/templates/delivery-plan.json",
+        "scripts/lib/issue_implementation_loop/repository_integrity.py",
         "scripts/lib/issue_implementation_loop/validation/delivery_plan.py",
         "scripts/validate_delivery_plan.py",
     ),
@@ -276,6 +280,8 @@ class ApprovedSpecBindingTests(unittest.TestCase):
             "schema_version": 2,
             "epic_id": "example",
             "artifact_root": "knowledge/wiki/syntheses/example",
+            "planning_branch": "codex/example/planning",
+            "planning_base_sha": "0123456789abcdef0123456789abcdef01234567",
             "work_items": [
                 {
                     "id": "ASBC-001",
@@ -325,6 +331,187 @@ class ApprovedSpecBindingTests(unittest.TestCase):
         with self.assertRaises(module.BindingError) as raised:
             operation()
         self.assertEqual(raised.exception.code, expected)
+
+    def write_draft(self, **fields: object) -> None:
+        draft = self.draft()
+        draft.update(fields)
+        self.draft_path.write_text(
+            json.dumps(draft, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+
+    def test_planning_identity_fields_are_accepted_together(self) -> None:
+        _, _, ref = self.seal()
+
+        packet = json.loads((self.repo / ref.path).read_text(encoding="utf-8"))
+        self.assertEqual(packet["planning_branch"], "codex/example/planning")
+        self.assertEqual(
+            packet["planning_base_sha"],
+            "0123456789abcdef0123456789abcdef01234567",
+        )
+
+    def test_new_seal_rejects_draft_without_planning_identity(self) -> None:
+        draft = self.draft()
+        del draft["planning_branch"]
+        del draft["planning_base_sha"]
+        self.draft_path.write_text(
+            json.dumps(draft, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+
+        self.assert_code("SCHEMA_UNSUPPORTED", self.seal)
+
+    def test_planning_identity_fields_require_the_complete_pair(self) -> None:
+        for missing_field in ("planning_branch", "planning_base_sha"):
+            with self.subTest(missing_field=missing_field):
+                draft = self.draft()
+                draft.pop(missing_field)
+                self.draft_path.write_text(
+                    json.dumps(draft, ensure_ascii=False, indent=2) + "\n",
+                    encoding="utf-8",
+                )
+                self.assert_code("SCHEMA_UNSUPPORTED", self.seal)
+
+    def test_planning_identity_rejects_noncanonical_branch(self) -> None:
+        self.write_draft(
+            planning_branch="codex/another-epic/planning",
+            planning_base_sha="0123456789abcdef0123456789abcdef01234567",
+        )
+
+        self.assert_code("SCHEMA_UNSUPPORTED", self.seal)
+
+    def test_planning_identity_rejects_short_or_nonhex_base_sha(self) -> None:
+        for value in ("0123456", "g" * 40):
+            with self.subTest(value=value):
+                self.write_draft(
+                    planning_branch="codex/example/planning",
+                    planning_base_sha=value,
+                )
+                self.assert_code("SCHEMA_UNSUPPORTED", self.seal)
+
+    def test_input_packet_schema_defines_backward_compatible_planning_pair(self) -> None:
+        schema = json.loads(
+            (
+                SKILL_DIR / "assets/schemas/input-packet.schema.json"
+            ).read_text(encoding="utf-8")
+        )
+
+        self.assertEqual(
+            schema["properties"]["planning_branch"]["pattern"],
+            "^codex/[a-z0-9]+(?:-[a-z0-9]+)*/planning$",
+        )
+        self.assertEqual(
+            schema["properties"]["planning_base_sha"]["pattern"],
+            "^(?:[0-9a-f]{40}|[0-9a-f]{64})$",
+        )
+        self.assertEqual(
+            schema["dependentRequired"],
+            {
+                "planning_branch": ["planning_base_sha"],
+                "planning_base_sha": ["planning_branch"],
+            },
+        )
+        self.assertNotIn("planning_branch", schema["required"])
+        self.assertNotIn("planning_base_sha", schema["required"])
+
+    def test_current_tracked_sealed_v2_packet_bytes_remain_valid(self) -> None:
+        repo_root = SKILL_DIR.parents[1]
+        packet_path = (
+            "knowledge/wiki/syntheses/approved-spec-binding-contract/input-packet.json"
+        )
+        current = (repo_root / packet_path).read_bytes()
+
+        self.assertEqual(len(current), 3388)
+        self.assertEqual(
+            hashlib.sha256(current).hexdigest(),
+            "e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c",
+        )
+        packet = json.loads(current.decode("utf-8"))
+        module = binding_module()
+        self.assertEqual(module.validate_input_packet(packet, repo_root), [])
+        verified = module.verify_chain(
+            repo_root,
+            {
+                "input_packet": {
+                    "path": packet_path,
+                    "sha256": (
+                        "e7fd341ce0953a6245058db6326e7e275"
+                        "e70061fd33a11aefd05048397e8693c"
+                    ),
+                }
+            },
+        )
+        self.assertTrue(verified.valid)
+        self.assertEqual(verified.input_packet.path, packet_path)
+        self.assertEqual(
+            verified.input_packet.sha256,
+            "e7fd341ce0953a6245058db6326e7e275e70061fd33a11aefd05048397e8693c",
+        )
+
+    def test_git_subprocesses_sanitize_actual_repository_local_environment(
+        self,
+    ) -> None:
+        module = binding_module()
+        real_run = subprocess.run
+        local_environment = set(
+            real_run(
+                ["git", "-C", str(self.repo), "rev-parse", "--local-env-vars"],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.splitlines()
+        )
+        self.assertEqual(len(local_environment), 15)
+        hostile_environment = {
+            name: f"/hostile/{index}"
+            for index, name in enumerate(sorted(local_environment))
+        }
+        hostile_environment.update(
+            {
+                "GIT_CONFIG_KEY_0": "core.worktree",
+                "GIT_CONFIG_VALUE_0": "/hostile/worktree",
+                "GIT_OPTIONAL_LOCKS": "1",
+                "HOME": "/preserved/home",
+                "XDG_CONFIG_HOME": "/preserved/xdg",
+                "GIT_CONFIG_GLOBAL": "/preserved/global-config",
+                "GIT_CONFIG_SYSTEM": "/preserved/system-config",
+            }
+        )
+
+        with mock.patch.dict(os.environ, hostile_environment), mock.patch.object(
+            module.subprocess,
+            "run",
+            wraps=real_run,
+        ) as run:
+            self.assertEqual(module._trusted_repo_root(self.repo), self.repo.resolve())
+            self.assertEqual(module.discover_repo_root(self.repo), self.repo.resolve())
+            result = module._git_bytes(self.repo, "rev-parse", "--show-toplevel")
+
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(
+            Path(result.stdout.decode().strip()).resolve(),
+            self.repo.resolve(),
+        )
+        self.assertGreaterEqual(len(run.call_args_list), 4)
+        for call in run.call_args_list:
+            environment = call.kwargs["env"]
+            self.assertEqual(environment["GIT_OPTIONAL_LOCKS"], "0")
+            self.assertEqual(environment["GIT_NO_REPLACE_OBJECTS"], "1")
+            self.assertEqual(environment["GIT_GRAFT_FILE"], os.devnull)
+            for name in local_environment - {
+                "GIT_NO_REPLACE_OBJECTS",
+                "GIT_GRAFT_FILE",
+            }:
+                self.assertNotIn(name, environment)
+            self.assertNotIn("GIT_CONFIG_KEY_0", environment)
+            self.assertNotIn("GIT_CONFIG_VALUE_0", environment)
+            for name in (
+                "HOME",
+                "XDG_CONFIG_HOME",
+                "GIT_CONFIG_GLOBAL",
+                "GIT_CONFIG_SYSTEM",
+            ):
+                self.assertEqual(environment[name], hostile_environment[name])
 
     def test_asb_public_acceptance_matrix_is_complete_and_public(self) -> None:
         expected_ids = [f"ASB-{number:02d}" for number in range(1, 37)]
@@ -703,6 +890,36 @@ class ApprovedSpecBindingTests(unittest.TestCase):
             )
             self.assertEqual(accepted_result_a.returncode, 0, accepted_result_a.stderr)
 
+            default_checkout = repo
+            planning_base_sha = fixtures.git(default_checkout, "rev-parse", "HEAD")
+            planning_branch = "codex/approved-spec-binding/planning"
+            planning_worktree = Path(tmp) / "planning"
+            fixtures.git(
+                default_checkout,
+                "worktree",
+                "add",
+                "-b",
+                planning_branch,
+                str(planning_worktree),
+                planning_base_sha,
+            )
+            status_environment = os.environ.copy()
+            status_environment["GIT_OPTIONAL_LOCKS"] = "0"
+            default_status = subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(default_checkout),
+                    "status",
+                    "--porcelain=v1",
+                    "--untracked-files=all",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                env=status_environment,
+            ).stdout
+            repo = planning_worktree
             packet_path = repo / binding_a["path"]
             packet_a = json.loads(packet_path.read_text(encoding="utf-8"))
             draft_b = {
@@ -710,6 +927,8 @@ class ApprovedSpecBindingTests(unittest.TestCase):
                 for key, value in packet_a.items()
                 if key not in {"spec_binding", "approval_evidence"}
             }
+            draft_b["planning_branch"] = planning_branch
+            draft_b["planning_base_sha"] = planning_base_sha
             draft_path = repo / "draft-b.json"
             fixtures.write_json(draft_path, draft_b)
             spec_path = repo / packet_a["spec_binding"]["path"]
@@ -743,6 +962,28 @@ class ApprovedSpecBindingTests(unittest.TestCase):
 
             envelope_b = fixtures.binding_envelope(repo, binding_b)
             envelope_b["revision"] = 2
+            envelope_b["repository_guard"] = {
+                "planning_worktree_path": str(repo.resolve()),
+                "planning_branch": planning_branch,
+                "planning_base_sha": planning_base_sha,
+                "default_checkout": {
+                    "path": str(default_checkout.resolve()),
+                    "branch": fixtures.git(
+                        default_checkout, "branch", "--show-current"
+                    ),
+                    "head": planning_base_sha,
+                    "status_porcelain_v1": default_status,
+                },
+            }
+            fixtures.write_planning_runtime_identity(
+                repo,
+                epic_id=packet_b["epic_id"],
+                planning_branch=planning_branch,
+                planning_base_sha=planning_base_sha,
+                default_checkout=default_checkout,
+                planning_worktree=repo,
+                default_status=default_status,
+            )
             envelope_path = repo / "execution-envelope.json"
             fixtures.write_json(envelope_path, envelope_b)
             checked_envelope = fixtures.run_script(
@@ -752,7 +993,11 @@ class ApprovedSpecBindingTests(unittest.TestCase):
                 str(repo),
                 "--json",
             )
-            self.assertEqual(checked_envelope.returncode, 0, checked_envelope.stderr)
+            self.assertEqual(
+                checked_envelope.returncode,
+                0,
+                checked_envelope.stderr + checked_envelope.stdout,
+            )
 
             events_path = repo / "events-b.jsonl"
             events_path.write_text(

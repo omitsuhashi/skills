@@ -29,6 +29,8 @@
     "artifact_root": {"minLength": 1, "pattern": "^(?![/~])(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*\\\\)(?!.*\\x00)[^/]+(?:/[^/]+)*$", "type": "string"},
     "delivery_intent": {"enum": ["local_only", "per_action", "batch_draft_prs", "batch_issue_prs"]},
     "epic_id": {"pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "type": "string"},
+    "planning_base_sha": {"pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$", "type": "string"},
+    "planning_branch": {"pattern": "^codex/[a-z0-9]+(?:-[a-z0-9]+)*/planning$", "type": "string"},
     "schema_version": {"const": 2},
     "spec_binding": {
       "additionalProperties": false,
@@ -63,6 +65,10 @@
       "minItems": 1,
       "type": "array"
     }
+  },
+  "dependentRequired": {
+    "planning_base_sha": ["planning_branch"],
+    "planning_branch": ["planning_base_sha"]
   },
   "required": ["schema_version", "epic_id", "artifact_root", "spec_binding", "approval_evidence", "work_items", "delivery_intent"],
   "title": "Issue Implementation Loop Input Packet",

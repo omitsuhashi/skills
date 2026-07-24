@@ -4,13 +4,17 @@ Load this reference immediately after `grill-to-pr-loop/SKILL.md`. It owns the g
 
 ## Lifecycle
 
-Run the workflow as: intake, Grill with Docs, spec/PRD synthesis, Spec Gate, local issue decomposition, Issue Gate, execution packet, Execution Plan Gate, `issue-implementation-loop`, optional remote delivery, completion report. If the user provides an already-approved spec or issue ledger, verify the artifact and continue from the matching gate instead of restarting the lifecycle.
+Run the workflow as: intake, Grill with Docs, Planning Worktree Gate, spec/PRD synthesis, Spec Gate, local issue decomposition, Issue Gate, execution packet, Execution Plan Gate, `issue-implementation-loop`, optional remote delivery, completion report. If the user provides an already-approved spec or issue ledger, verify the artifact and continue from the matching gate instead of restarting the lifecycle.
 
 ## Responsibilities
 
 `grill-to-pr-loop` owns design interrogation, durable planning artifacts, spec synthesis, Japanese local issue ledger, stable `Epic ID`, normalized execution packet, and final coordination report. `issue-implementation-loop` owns execution envelope, branch/worktree reservation, scheduling, runtime state, worker dispatch, scoped waits, implementation review, recovery, and `PR_READY` results.
 
-Reference ownership is strict: `planning-contract.md` owns artifact and spec minimums, `local-issue-ledger.md` owns ledger format and update invariants, `execution-handoff.md` owns branch/base/packet handoff, `remote-delivery.md` owns GitHub mirror and PR delivery policy, and `common-mistakes.md` owns ambiguity corrections.
+Reference ownership is strict: `planning-contract.md` owns the Planning Worktree Gate, artifacts, and spec minimums; `local-issue-ledger.md` owns ledger format/update invariants; `execution-handoff.md` owns branch/base/packet handoff; `remote-delivery.md` owns GitHub policy; `common-mistakes.md` owns ambiguity corrections.
+
+## Planning Worktree Gate
+
+Before Written Spec, use that Gate once and reuse its worktree through planning gates; preparation failure stops before a default-checkout write.
 
 ## Gates
 

@@ -18,6 +18,27 @@
         "gate_commit": {"type": "string", "pattern": "^[0-9a-f]+$"}
       }
     },
+    "repository_guard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["planning_worktree_path", "planning_branch", "planning_base_sha", "default_checkout"],
+      "properties": {
+        "planning_worktree_path": {"type": "string", "pattern": "^/"},
+        "planning_branch": {"type": "string", "pattern": "^codex/[a-z0-9]+(?:-[a-z0-9]+)*/planning$"},
+        "planning_base_sha": {"type": "string", "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"},
+        "default_checkout": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "branch", "head", "status_porcelain_v1"],
+          "properties": {
+            "path": {"type": "string", "pattern": "^/"},
+            "branch": {"type": "string", "minLength": 1},
+            "head": {"type": "string", "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"},
+            "status_porcelain_v1": {"type": "string"}
+          }
+        }
+      }
+    },
     "epic_base": {
       "type": "object",
       "additionalProperties": false,

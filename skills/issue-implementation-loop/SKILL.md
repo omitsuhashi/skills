@@ -41,7 +41,7 @@ At 65% session pressure or phase exit, read `references/context-compaction.md`.
 ## Required Rules
 
 - Treat the packet as approved scope; do not redesign issues or criteria.
-- At prepare, dispatch/fix, review, resume/rebuild, completion, and delivery, freshly verify the same active `approved_spec_binding`; read-only status may diagnose without advancing.
+- At prepare, dispatch/fix, review, resume/rebuild, completion/default-snapshot, and delivery, freshly verify the same active `approved_spec_binding`; read-only status may diagnose without advancing.
 - Use core's three-outcome drift lifecycle: restoration, non-spec reseal, or human Spec Gate reseal.
 - Require `execution_policy.worker_context_required=true`, `coordinator_may_implement=false`, and `serial_fallback_mode=worker_context_only`.
 - Keep instantiated artifacts in the operation's untracked runtime tree, outside issue branches.

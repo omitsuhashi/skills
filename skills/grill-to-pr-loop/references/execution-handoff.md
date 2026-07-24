@@ -4,7 +4,9 @@ Use this reference when preparing the normalized input packet, presenting the Ex
 
 ## Branch / Base / Commit Policy
 
-Use an optional planning branch, immutable `epic_base.sha`, one reservation per issue, typed dependencies, and local `PR_READY`. Issue PRs target `epic_base.ref`; final PR targets `main` and merge is human-only.
+Use the Epic planning branch identity, immutable `epic_base.sha`, one reservation per issue, typed dependencies, and local `PR_READY`. Issue PRs target `epic_base.ref`; final PR targets `main` and merge is human-only.
+
+The tracked/runtime identity boundary is strict: planning artifacts/gate commits are tracked; Git-common-dir `planning-worktree.json` is host-specific and untracked. Keep `epic_base`, issues, reservations, and execution runtime separate.
 
 Issue branches use `codex/<epic-id>/<local-id>-<slug>`; blocked worktrees remain uncreated until release.
 
@@ -21,8 +23,20 @@ Run targeted and fresh final verification. Create or update a scoped local commi
 Build an Input Packet v2 file for `issue-implementation-loop`; use a file instead of prompt paste. The unsealed draft contains:
 
 - `schema_version: 2`, `epic_id`, and repo-relative `artifact_root`
+- `planning_branch` and `planning_base_sha`
 - `work_items[]` with ID, title, source, acceptance criteria, non-goals, verification, write scope, and dependencies
 - `delivery_intent`
+
+Every new draft must include both planning identity fields:
+
+```json
+{
+  "planning_branch": "codex/<epic-id>/planning",
+  "planning_base_sha": "<full-40-or-64-character-sha>"
+}
+```
+
+The generic read/verify path remains backward compatible with already-sealed legacy v2 packets that omit both fields. The seal operation is the producer boundary and rejects every new draft that omits either or both fields.
 
 `work_items[].title`、`acceptance_criteria`、`non_goals` などの user-facing packet string は日本語をベースにする。schema key、path、command、ID、外部参照は維持する。
 

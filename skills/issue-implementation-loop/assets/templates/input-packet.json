@@ -16,6 +16,8 @@
   "artifact_root": "knowledge/wiki/syntheses/example",
   "delivery_intent": "local_only",
   "epic_id": "example",
+  "planning_base_sha": "0123456789abcdef0123456789abcdef01234567",
+  "planning_branch": "codex/example/planning",
   "schema_version": 2,
   "spec_binding": {
     "path": "knowledge/wiki/syntheses/example/spec.md",

@@ -14,7 +14,8 @@ import subprocess
 from typing import Any, Callable, Mapping
 
 from .constants import DELIVERY_INTENTS
-from .identifiers import is_issue_id, is_lower_kebab
+from .git_environment import repository_git_environment
+from .identifiers import is_full_commit_sha, is_issue_id, is_lower_kebab
 
 
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
@@ -43,6 +44,7 @@ PACKET_FIELDS = frozenset(
         "delivery_intent",
     }
 )
+PLANNING_IDENTITY_FIELDS = frozenset({"planning_branch", "planning_base_sha"})
 WORK_ITEM_FIELDS = frozenset(
     {
         "id",
@@ -201,6 +203,7 @@ def _trusted_repo_root(repo_root: str | os.PathLike[str]) -> Path:
             check=False,
             capture_output=True,
             text=True,
+            env=repository_git_environment(),
         )
     except (OSError, TypeError, ValueError):
         raise BindingError("PATH_OUTSIDE_REPO") from None
@@ -240,6 +243,7 @@ def discover_repo_root(start: str | os.PathLike[str]) -> Path:
             check=False,
             capture_output=True,
             text=True,
+            env=repository_git_environment(),
         )
     except (OSError, TypeError, ValueError):
         raise BindingError("PATH_OUTSIDE_REPO") from None
@@ -445,10 +449,24 @@ def _validate_packet_shape(packet: Any) -> dict[str, Any]:
         raise BindingError("SCHEMA_UNSUPPORTED")
     _parse_repo_path(binding.get("path"))
     _digest(binding.get("sha256"))
-    if set(packet) != PACKET_FIELDS:
+    packet_fields = set(packet)
+    if packet_fields not in {
+        PACKET_FIELDS,
+        PACKET_FIELDS | PLANNING_IDENTITY_FIELDS,
+    }:
         raise BindingError("SCHEMA_UNSUPPORTED")
     if not isinstance(packet.get("epic_id"), str) or not is_lower_kebab(packet["epic_id"]):
         raise BindingError("SCHEMA_UNSUPPORTED")
+    if PLANNING_IDENTITY_FIELDS <= packet_fields:
+        if packet["planning_branch"] != f"codex/{packet['epic_id']}/planning":
+            raise BindingError("SCHEMA_UNSUPPORTED")
+        planning_base_sha = packet["planning_base_sha"]
+        if (
+            not isinstance(planning_base_sha, str)
+            or planning_base_sha != planning_base_sha.lower()
+            or not is_full_commit_sha(planning_base_sha)
+        ):
+            raise BindingError("SCHEMA_UNSUPPORTED")
     _parse_repo_path(packet.get("artifact_root"))
     if packet.get("delivery_intent") not in DELIVERY_INTENTS:
         raise BindingError("SCHEMA_UNSUPPORTED")
@@ -822,6 +840,8 @@ def seal_input_packet(
         raise BindingError("SCHEMA_UNSUPPORTED") from None
     if not isinstance(draft, dict) or "spec_binding" in draft or "approval_evidence" in draft:
         raise BindingError("SCHEMA_UNSUPPORTED")
+    if not PLANNING_IDENTITY_FIELDS <= set(draft):
+        raise BindingError("SCHEMA_UNSUPPORTED")
     packet = dict(draft)
     packet["spec_binding"] = expected.to_dict()
     packet["approval_evidence"] = checked_approval
@@ -897,6 +917,7 @@ def _git_bytes(root: Path, *args: str) -> subprocess.CompletedProcess[bytes]:
             ["git", "-C", str(root), *args],
             check=False,
             capture_output=True,
+            env=repository_git_environment(),
         )
     except (OSError, TypeError, ValueError):
         raise BindingError("GATE_COMMIT_MISSING") from None

@@ -4,6 +4,9 @@ Use this reference when behavior is ambiguous, an agent tries to skip a gate, or
 
 | Mistake | Correction |
 | --- | --- |
+| Writing a spec or ledger from the default checkout | Run the Planning Worktree Gate before Written Spec; write only in the one Epic-scoped planning worktree. |
+| Creating a new planning worktree at every gate | Reuse `codex/<epic-id>/planning` through Spec Gate, Issue Gate, Execution Plan Gate, and planning documentation sync. |
+| Falling back to the default checkout after a sandbox/worktree failure | Fail closed before a planning write; fix capability or the ignored project-local root first. |
 | Skipping Grill with Docs because the design seems obvious | Run it or stop if unavailable. |
 | Keeping execution mechanics in this skill | Move worktree/scheduler/runtime/recovery/review loop details to `issue-implementation-loop`. |
 | Implementing issue code in the planning/grill session | Stop and hand off to an execution coordinator with worker contexts. |
