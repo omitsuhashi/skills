@@ -21,17 +21,38 @@ class GateError(RuntimeError):
     """A planning worktree cannot be prepared safely."""
 
 
-def git(repo_root: Path, *args: str) -> str:
+def git(repo_root: Path, *args: str, read_only: bool = True) -> str:
+    environment = os.environ.copy()
+    if read_only:
+        environment["GIT_OPTIONAL_LOCKS"] = "0"
+    else:
+        environment.pop("GIT_OPTIONAL_LOCKS", None)
     result = subprocess.run(
         ["git", "-C", str(repo_root), *args],
         check=False,
         capture_output=True,
         text=True,
+        env=environment,
     )
     if result.returncode:
         detail = result.stderr.strip() or result.stdout.strip()
         raise GateError(f"git {' '.join(args)} failed: {detail}")
     return result.stdout
+
+
+def read_only_git_succeeds(repo_root: Path, *args: str) -> bool:
+    environment = os.environ.copy()
+    environment["GIT_OPTIONAL_LOCKS"] = "0"
+    return (
+        subprocess.run(
+            ["git", "-C", str(repo_root), *args],
+            check=False,
+            capture_output=True,
+            text=True,
+            env=environment,
+        ).returncode
+        == 0
+    )
 
 
 def absolute_path(value: str, flag: str) -> Path:
@@ -91,7 +112,7 @@ def runtime_state_path(common_dir: Path, epic_id: str) -> Path:
     )
 
 
-def write_json_atomically(path: Path, payload: dict[str, Any]) -> None:
+def create_json_atomically(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     descriptor, temporary_path = tempfile.mkstemp(
         prefix=f".{path.name}.", suffix=".tmp", dir=path.parent
@@ -100,7 +121,15 @@ def write_json_atomically(path: Path, payload: dict[str, Any]) -> None:
         with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
             json.dump(payload, stream, ensure_ascii=False, indent=2, sort_keys=True)
             stream.write("\n")
-        os.replace(temporary_path, path)
+            stream.flush()
+            os.fsync(stream.fileno())
+        try:
+            os.link(temporary_path, path)
+        except FileExistsError as error:
+            raise GateError(
+                "planning runtime identity artifact already exists"
+            ) from error
+        os.unlink(temporary_path)
     except BaseException:
         try:
             os.unlink(temporary_path)
@@ -122,6 +151,10 @@ def load_runtime_identity(
     except FileNotFoundError as error:
         raise GateError(
             "registered planning worktree is missing its runtime identity artifact"
+        ) from error
+    except UnicodeDecodeError as error:
+        raise GateError(
+            "planning runtime identity artifact is not valid UTF-8"
         ) from error
     except json.JSONDecodeError as error:
         raise GateError("planning runtime identity artifact is invalid JSON") from error
@@ -147,6 +180,83 @@ def load_runtime_identity(
     ):
         raise GateError("planning runtime identity artifact has invalid default snapshot")
     return payload
+
+
+def default_checkout_snapshot(default_checkout: Path) -> tuple[str, str]:
+    return (
+        git(default_checkout, "rev-parse", "HEAD").strip(),
+        git(
+            default_checkout,
+            "status",
+            "--porcelain=v1",
+            "--untracked-files=all",
+        ),
+    )
+
+
+def require_ancestor(
+    repo_root: Path, ancestor: str, descendant: str, *, message: str
+) -> None:
+    if not read_only_git_succeeds(
+        repo_root, "merge-base", "--is-ancestor", ancestor, descendant
+    ):
+        raise GateError(message)
+
+
+def verify_registered_planning_worktree(
+    planning_worktree: Path,
+    *,
+    planning_branch: str,
+    expected_common_dir: Path,
+    default_head: str,
+) -> None:
+    actual_branch = git(
+        planning_worktree, "symbolic-ref", "--quiet", "HEAD"
+    ).strip()
+    wanted_branch = f"refs/heads/{planning_branch}"
+    if actual_branch != wanted_branch:
+        raise GateError(
+            "registered planning worktree is not on the exact planning branch"
+        )
+    if git_common_dir(planning_worktree) != expected_common_dir:
+        raise GateError(
+            "registered planning worktree does not share the default repository"
+        )
+    planning_head = git(planning_worktree, "rev-parse", "HEAD").strip()
+    require_ancestor(
+        planning_worktree,
+        default_head,
+        planning_head,
+        message=(
+            "current default HEAD is not an ancestor of the registered "
+            "planning worktree HEAD"
+        ),
+    )
+
+
+def runtime_payload(
+    *,
+    epic_id: str,
+    planning_branch: str,
+    planning_base_sha: str,
+    default_checkout: Path,
+    worktree_root: Path,
+    planning_worktree: Path,
+    start_status: str,
+) -> dict[str, Any]:
+    return {
+        "schema_version": 1,
+        "epic_id": epic_id,
+        "planning_branch": planning_branch,
+        "planning_base_sha": planning_base_sha,
+        "default_checkout": str(default_checkout),
+        "worktree_root": str(worktree_root),
+        "planning_worktree": str(planning_worktree),
+        "default_checkout_start": {
+            "head": planning_base_sha,
+            "status_porcelain": start_status,
+        },
+    }
 
 
 def prepare(args: argparse.Namespace) -> dict[str, Any]:
@@ -178,13 +288,32 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
     common_dir = git_common_dir(default_checkout)
     state_path = runtime_state_path(common_dir, args.epic_id)
     if reused:
-        state_payload = load_runtime_identity(
-            state_path,
-            epic_id=args.epic_id,
-            planning_branch=planning_branch,
-            default_checkout=default_checkout,
-            planning_worktree=planning_worktree,
-        )
+        if state_path.exists():
+            state_payload = load_runtime_identity(
+                state_path,
+                epic_id=args.epic_id,
+                planning_branch=planning_branch,
+                default_checkout=default_checkout,
+                planning_worktree=planning_worktree,
+            )
+        else:
+            start_head, start_status = default_checkout_snapshot(default_checkout)
+            verify_registered_planning_worktree(
+                planning_worktree,
+                planning_branch=planning_branch,
+                expected_common_dir=common_dir,
+                default_head=start_head,
+            )
+            state_payload = runtime_payload(
+                epic_id=args.epic_id,
+                planning_branch=planning_branch,
+                planning_base_sha=start_head,
+                default_checkout=default_checkout,
+                worktree_root=worktree_root,
+                planning_worktree=planning_worktree,
+                start_status=start_status,
+            )
+            create_json_atomically(state_path, state_payload)
         return {
             "ok": True,
             "epic_id": args.epic_id,
@@ -196,68 +325,65 @@ def prepare(args: argparse.Namespace) -> dict[str, Any]:
             "planning_worktree": str(planning_worktree),
         }
 
-    start_head = git(default_checkout, "rev-parse", "HEAD").strip()
-    start_status = git(
-        default_checkout, "status", "--porcelain=v1", "--untracked-files=all"
-    )
-    if not reused:
-        ignored = subprocess.run(
-            [
-                "git",
-                "-C",
-                str(repo_root),
-                "check-ignore",
-                "--no-index",
-                "-q",
-                "--",
-                f"{ignored_relative_root.as_posix().rstrip('/')}/",
-            ],
-            check=False,
-            capture_output=True,
-            text=True,
-        ).returncode == 0
-        if not ignored:
-            raise GateError("--worktree-root must be ignored by the repository")
+    if state_path.exists():
+        raise GateError(
+            "planning runtime identity artifact exists without a registered worktree"
+        )
 
-        planning_worktree = worktree_root / args.epic_id
-        if planning_worktree.exists():
-            raise GateError(
-                "planning worktree destination already exists but is not registered"
-            )
-        worktree_root.mkdir(parents=True, exist_ok=True)
-        branch_exists = subprocess.run(
-            [
-                "git",
-                "-C",
-                str(repo_root),
-                "show-ref",
-                "--verify",
-                "--quiet",
-                f"refs/heads/{planning_branch}",
-            ],
-            check=False,
-        ).returncode == 0
-        worktree_add = ["worktree", "add"]
-        if branch_exists:
-            worktree_add.extend((str(planning_worktree), planning_branch))
-        else:
-            worktree_add.extend(("-b", planning_branch, str(planning_worktree), start_head))
-        git(repo_root, *worktree_add)
-        planning_worktree = planning_worktree.resolve()
-    state_payload: dict[str, Any] = {
-        "schema_version": 1,
-        "epic_id": args.epic_id,
-        "planning_branch": planning_branch,
-        "planning_base_sha": start_head,
-        "default_checkout": str(default_checkout),
-        "worktree_root": str(worktree_root),
-        "planning_worktree": str(planning_worktree),
-        "default_checkout_start": {
-            "head": start_head,
-            "status_porcelain": start_status,
-        },
-    }
-    write_json_atomically(state_path, state_payload)
+    start_head, start_status = default_checkout_snapshot(default_checkout)
+    ignored = read_only_git_succeeds(
+        repo_root,
+        "check-ignore",
+        "--no-index",
+        "-q",
+        "--",
+        f"{ignored_relative_root.as_posix().rstrip('/')}/",
+    )
+    if not ignored:
+        raise GateError("--worktree-root must be ignored by the repository")
+
+    planning_worktree = worktree_root / args.epic_id
+    if planning_worktree.exists():
+        raise GateError(
+            "planning worktree destination already exists but is not registered"
+        )
+    branch_exists = read_only_git_succeeds(
+        repo_root,
+        "show-ref",
+        "--verify",
+        "--quiet",
+        f"refs/heads/{planning_branch}",
+    )
+    worktree_add = ["worktree", "add"]
+    if branch_exists:
+        branch_head = git(
+            repo_root, "rev-parse", f"refs/heads/{planning_branch}"
+        ).strip()
+        require_ancestor(
+            repo_root,
+            start_head,
+            branch_head,
+            message=(
+                "current default HEAD is not an ancestor of the existing "
+                "planning branch HEAD"
+            ),
+        )
+        worktree_add.extend((str(planning_worktree), planning_branch))
+    else:
+        worktree_add.extend(("-b", planning_branch, str(planning_worktree), start_head))
+    worktree_root.mkdir(parents=True, exist_ok=True)
+    git(repo_root, *worktree_add, read_only=False)
+    planning_worktree = planning_worktree.resolve()
+    state_payload = runtime_payload(
+        epic_id=args.epic_id,
+        planning_branch=planning_branch,
+        planning_base_sha=start_head,
+        default_checkout=default_checkout,
+        worktree_root=worktree_root,
+        planning_worktree=planning_worktree,
+        start_status=start_status,
+    )
+    create_json_atomically(state_path, state_payload)
     return {
         "ok": True,
         "epic_id": args.epic_id,
