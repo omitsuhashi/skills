@@ -11,6 +11,13 @@ append-only で使います。すべての entry は予測しやすい header �
 - session userは`knowledge/wiki/syntheses/loop-review-simplicity-and-phase-skills/spec.md`、raw-byte SHA-256 `d3ac927b66e348ea39cb71a83cd13ab2139700f022a544872cb41ea708734794`を2026-07-27T07:40:32+09:00にSpec Gateとして再承認した。approval scopeは`accepted_decisions`、`non_goals`、`acceptance_criteria`、`verification`、`remote_policy`、`stop_conditions`の全六項目である。
 - Issue分解、Execution Packet、実装、remote writeはまだ行っていない。
 
+## [2026-07-27] issue-gate | Loop Review Simplicity And Phase Skills
+
+- approved specの「1 cohesive issue」判断に従い、`LRSP-001`だけを持つ日本語local-first Issue台帳を追加した。
+- blocker graphは単一nodeでcycleなし、`LRSP-001`は`実行可能`。session userは2026-07-27T07:59:52+09:00にIssue scope、write scope、acceptance criteria、実行順序、remote policyをIssue Gateとして承認した。
+- worker write scopeは両loop skill、shared context parser / inspector / report / tests、context baselineに限定した。台帳、implementation plan、sealed packet、index、logはplanning coordinator ownershipとしてworker scopeから除外した。
+- GitHub Issue mirrorとissue PRは作らず、remote policy `per_action`を維持する。
+
 ## [2026-06-08] bootstrap | Initialize skills repo knowledge root
 
 - repo root に thin router `AGENTS.md` を追加
