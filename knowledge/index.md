@@ -40,7 +40,7 @@ _現在なし。_
   検索語: loop review governance, issue intent, hardening candidate, future-only hardening, safety escalation, final PR, human decision, requesting-code-review, context budget, 実装レビュー, 堅牢化, 人間判断
 - [Loop Review Simplicity And Phase Skills 仕様](wiki/syntheses/loop-review-simplicity-and-phase-skills/spec.md) — material findingだけを報告するreview基準と、phase-owned workflow skillをoperation/dispatch別に分離しtask-triggered skillをcurrent phaseだけでon-demand読込するcontext contract schema v3のSpec Gate承認済み仕様。
   検索語: grill-to-pr-loop, issue-implementation-loop, material review, simplicity, phase skills, context contract schema v3, skills, dispatch_skills, Critical, Important, review, シンプルさ, フェーズ別読込, 実装レビュー
-- [Loop Review Simplicity And Phase Skills Issue 台帳](wiki/syntheses/loop-review-simplicity-and-phase-skills/issues.md) — `LRSP-001` でcontext schema v3、phase mapping、material review、TDD・検証を一体実装するIssue Gate承認済み台帳。
+- [Loop Review Simplicity And Phase Skills Issue 台帳](wiki/syntheses/loop-review-simplicity-and-phase-skills/issues.md) — `LRSP-001` でphase-owned context schema v3、task-triggered on-demand skill、material review、TDD・検証を一体実装するIssue Gate再承認済み台帳。
   検索語: LRSP-001, local issue, Issue Gate, context contract schema v3, phase mapping, material review, TDD, blocker graph, ローカルIssue, フェーズ別読込, 実装レビュー
 - [Loop Review Governance Issue 台帳](wiki/syntheses/loop-review-governance-issues.md) — `loop-review-governance` の Issue Gate 承認済み local issue ledger。LRG-001 から LRG-005 の blocker graph、acceptance criteria、remote policy を定義する。
   検索語: loop review governance, local issue, Issue Gate, LRG, blocker graph, hardening candidate, requesting-code-review, context budget, ローカルIssue, 堅牢化

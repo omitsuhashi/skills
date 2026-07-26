@@ -26,6 +26,13 @@ append-only で使います。すべての entry は予測しやすい header �
 - session userは`knowledge/wiki/syntheses/loop-review-simplicity-and-phase-skills/spec.md`、raw-byte SHA-256 `2e86698433cc4a95719bffc8a2f5a6e76aa3fea5b71f743ec8f71ef39edc4719`を2026-07-27T08:14:23+09:00にSpec Gateとして承認した。approval scopeは`accepted_decisions`、`non_goals`、`acceptance_criteria`、`verification`、`remote_policy`、`stop_conditions`の全六項目である。
 - 既存Issue Gate commitは旧spec digestを参照するため、Issue台帳をamended specへreconcileして再承認するまでimplementationへ進まない。
 
+## [2026-07-27] issue-reconciliation-gate | Loop Review Simplicity And Phase Skills
+
+- `LRSP-001`のapproved spec digest / commitを`2e86698433cc4a95719bffc8a2f5a6e76aa3fea5b71f743ec8f71ef39edc4719` / `9f6dba0`へ更新し、review状態を再承認前の`下書き`へ戻した。
+- worker scope、単一node blocker graph、material review、remote policyは変更していない。phase-owned workflow skillはcontractで固定し、task-triggered `writing-skills`は本skill-edit taskのimplementation phaseでon-demandに使うclarificationだけを追加した。
+- universal allowlist、worker packet field、generic loader、install inventory validatorは非目標のままである。
+- session userは2026-07-27T08:17:21+09:00にreconciled `LRSP-001`のIssue scope、write scope、acceptance criteria、実行順序、remote policyをIssue Gateとして再承認した。
+
 ## [2026-06-08] bootstrap | Initialize skills repo knowledge root
 
 - repo root に thin router `AGENTS.md` を追加

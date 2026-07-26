@@ -2,7 +2,7 @@
 
 ## 状態
 
-Issue Gate 承認済み。local ledger が canonical であり、GitHub Issue mirror は作成しない。
+Issue Gate 再承認済み。amended spec の phase-owned / task-triggered skill boundary に reconcile 済みであり、local ledger が canonical、GitHub Issue mirror は未作成である。
 
 ## Issue 一覧
 
@@ -25,14 +25,14 @@ LRSP-001
 
 ### 目的
 
-両 loop skill の review を material finding に限定し、operation ごとの current actor / dispatch actor が読む supplemental skill を schema v3 contract として固定する。新しい loader、review runtime、finding schema は作らず、既存 parser / inspector / validator / reference を最小更新する。
+両 loop skill の review を material finding に限定し、operation ごとの current actor / dispatch actor が常に読む phase-owned workflow skill を schema v3 contract として固定する。task-triggered skill は該当 phase で on-demand に読み、新しい loader、worker packet field、review runtime、finding schema は作らない。
 
 ### 仕様
 
 - [Loop Review Simplicity And Phase Skills 仕様](spec.md)
 - Epic ID: `loop-review-simplicity-and-phase-skills`
-- approved spec SHA-256: `d3ac927b66e348ea39cb71a83cd13ab2139700f022a544872cb41ea708734794`
-- Spec Gate commit: `9fffd8a`
+- approved spec SHA-256: `2e86698433cc4a95719bffc8a2f5a6e76aa3fea5b71f743ec8f71ef39edc4719`
+- Spec Gate commit: `9f6dba0`
 
 ### Write scope
 
@@ -51,13 +51,14 @@ planning coordinator は本台帳、`implementation-plan.md`、`input-packet.jso
 1. skill edit 前に、現行 review / context contract の baseline failure を pressure scenario で観測する。
 2. schema v3 の `skills` / `dispatch_skills` validation と phase mapping の failing test を先に追加し、expected RED を確認する。
 3. shared context parser と `issue-implementation-loop` runtime selector を同じ schema v3 semantics にする。
-4. 両 loop contract の全 operation に `skills` / `dispatch_skills` を明示し、`final-review` operation を追加する。
+4. 両 loop contract の全 operation に phase-owned `skills` / `dispatch_skills` を明示し、`final-review` operation を追加する。
 5. inspector / report は supplemental skill boundary を reference read-set と分けて表示する。
 6. spec self-review、Issue implementation review、final spec alignment review を「要件達成、material simplicity、material risk」の順に揃える。
 7. reviewer は `Critical` / `Important` だけを報告し、`Minor` / nit / 好み / 任意改善を finding にしない。
 8. material simplicity gap は具体的な simpler alternative がある場合だけ `intent_gap` / `Important` とする。
 9. existing schema v1 / v2、mechanical validation、hardening / safety / classification boundary を維持する。
-10. fresh full verification と同一 pressure scenario の GREEN evaluation を残す。
+10. task-triggered `writing-skills` は本 skill-edit task の implementation phase で on-demand に使用し、generic loop contractへ固定しない。
+11. fresh full verification と同一 pressure scenario の GREEN evaluation を残す。
 
 ### 受け入れ条件
 
@@ -67,7 +68,8 @@ planning coordinator は本台帳、`implementation-plan.md`、`input-packet.jso
 - [ ] report は supplemental skill 名を repo-local reference budget と分けて返す。
 - [ ] validator は schema v3 の field 欠落、不正型、空文字、同一 field 内重複を拒否する。
 - [ ] schema v1 / v2 と `llm-wiki` context contract の既存挙動は維持される。
-- [ ] planning / execution coordinator は future operation または dispatch 先の skill を自分の instruction context に読まない契約を持つ。
+- [ ] planning / execution coordinator は future operation または dispatch 先の phase-owned workflow skill を自分の instruction context に読まない契約を持つ。
+- [ ] task-triggered skill は該当 phase だけで on-demand に読み、universal allowlist、worker packet field、generic loaderを追加しない。
 - [ ] spec self-review、Issue implementation review、final spec alignment review は要件達成、material simplicity、material risk の 3 観点を持つ。
 - [ ] routine review は `Minor` / nit / 好み / 任意改善を finding として報告しない。
 - [ ] material simplicity finding は同じ要件を満たす具体的な simpler alternative を示し、`intent_gap` / `Important` として blocking になる。
@@ -77,6 +79,7 @@ planning coordinator は本台帳、`implementation-plan.md`、`input-packet.jso
 ### 非目標
 
 - 新しい standalone skill、generic skill loader、review runtime、finding schema。
+- task-triggered skill の universal allowlist、worker packet field、install inventory validator。
 - Gate、worker/runtime artifact、review/fix cycle の追加。
 - loop family 以外への schema v3 field 必須化。
 - future-only hardening の routine review への再導入。
@@ -120,6 +123,7 @@ git diff --check
 - write scope が別 worktree の変更と重なる。
 - shared parser と runtime selector の schema semantics が一致しない。
 - required phase skill が entry 時に見つからず、approved equivalent もない。
+- task-triggered skill を current phase より前に読む、または該当 task で必須なのに読まない。
 - baseline RED または post-change GREEN を fresh context で確認できない。
 - existing schema v1 / v2、context baseline、dual-host compatibility が壊れる。
 - concrete simpler alternative を示せない指摘を blocking finding にしようとする。
