@@ -18,6 +18,14 @@ append-only で使います。すべての entry は予測しやすい header �
 - worker write scopeは両loop skill、shared context parser / inspector / report / tests、context baselineに限定した。台帳、implementation plan、sealed packet、index、logはplanning coordinator ownershipとしてworker scopeから除外した。
 - GitHub Issue mirrorとissue PRは作らず、remote policy `per_action`を維持する。
 
+## [2026-07-27] spec-amendment-gate | Loop Review Simplicity And Phase Skills
+
+- implementation plan scope checkで、operation固定の`dispatch_skills`だけでは、今回のskill edit workerに必須な`writing-skills`のようなtask-triggered skillを表現できない矛盾を検出した。
+- session userは、`skills` / `dispatch_skills`をphase-owned workflow skillの宣言に限定し、task-triggered skillは該当phaseでon-demandに読み、future phaseでは先読みしないclarificationを承認した。
+- universal allowlist、task-specific worker packet field、generic loader、install inventory validatorは追加しない。
+- session userは`knowledge/wiki/syntheses/loop-review-simplicity-and-phase-skills/spec.md`、raw-byte SHA-256 `2e86698433cc4a95719bffc8a2f5a6e76aa3fea5b71f743ec8f71ef39edc4719`を2026-07-27T08:14:23+09:00にSpec Gateとして承認した。approval scopeは`accepted_decisions`、`non_goals`、`acceptance_criteria`、`verification`、`remote_policy`、`stop_conditions`の全六項目である。
+- 既存Issue Gate commitは旧spec digestを参照するため、Issue台帳をamended specへreconcileして再承認するまでimplementationへ進まない。
+
 ## [2026-06-08] bootstrap | Initialize skills repo knowledge root
 
 - repo root に thin router `AGENTS.md` を追加

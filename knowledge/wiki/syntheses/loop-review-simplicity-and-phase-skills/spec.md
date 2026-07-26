@@ -50,12 +50,14 @@ reviewer は判断または実装を変える `Critical` / `Important` finding �
 
 両 loop skill の `context-contract.toml` を schema v3 にする。schema v1 / v2 の既存 contract は読み取り可能なまま維持する。
 
-schema v3 の各 operation は、次の 2 field を必ず持つ。
+schema v3 の各 operation は、その operation が常に必要とする phase-owned workflow skill を次の 2 field で必ず持つ。
 
 - `skills`: 現在 operation の actor が読む supplemental skill。
 - `dispatch_skills`: 現在 operation が作る bounded worker/reviewer context だけが読む supplemental skill。
 
-両 field は string array とし、不要な operation でも空 array を明示する。current actor は current operation の `skills` だけを読み、`dispatch_skills` を自分の context に読まない。dispatch 先は packet が指定する `dispatch_skills` だけを読む。未来の operation の skill は先読みしない。
+両 field は string array とし、不要な operation でも空 array を明示する。current actor は current operation の phase-owned `skills` だけを読み、`dispatch_skills` を自分の context に読まない。dispatch 先だけが current operation の phase-owned `dispatch_skills` を読む。未来の operation の workflow skill は先読みしない。
+
+task 内容によって適用が決まる skill は universal allowlist にしない。たとえば skill edit worker の `writing-skills`、security task の security skill は、通常の skill trigger に従って該当 phase に入ってから on-demand で読む。task-triggered skill を future phase で先読みしてはならないが、すべての task-specific skill を context contract、worker packet schema、generic loader に列挙する機構は追加しない。
 
 availability check、path resolution、capability preflight は instruction loading と区別する。skill が存在するかを先に調べてもよいが、該当 operation に入るまで `SKILL.md` 本文を読まない。
 
@@ -102,6 +104,7 @@ availability check、path resolution、capability preflight は instruction load
 - `issue-implementation-loop` の runtime operation selector も同じ schema v3 field を保持して返す。
 - inspector の JSON / text output は operation の `skills` / `dispatch_skills` を表示する。
 - schema v3 では field 欠落、non-array、空文字、同一 field 内重複を validation error にする。
+- validator は phase-owned workflow skill の mapping を検証する。task-triggered skill の universal allowlist や install inventory validator にはしない。
 - static validator は host ごとに異なる install path や availability を要求しない。該当 operation の entry guard が availability を確認し、missing skill では既存の approved equivalent / stop rule に従う。
 - skill 本文の token 数は host install に依存するため、repo-local reference budget に混ぜない。report では宣言 skill 名を別 field として表示する。
 
@@ -133,7 +136,7 @@ GitHub Issue mirror と issue PR は作らない。
 2. `grill-with-docs`、`tdd`、`requesting-code-review` は採用した phase mapping 以外に宣言されない。
 3. inspector は current operation の reference read-set と supplemental skill boundary を同時に表示する。
 4. validator は schema v3 の field 欠落、不正型、空文字、重複を拒否し、既存 schema v1 / v2 contract を壊さない。
-5. planning / execution coordinator は future operation または dispatch 先の skill を自分の instruction context に読まない契約を持つ。
+5. planning / execution coordinator は future operation または dispatch 先の phase-owned workflow skill を自分の instruction context に読まない。task-triggered skill は該当 phase でだけ on-demand に読む。
 6. spec self-review、Issue implementation review、final spec alignment review は、要件達成、material simplicity、material risk の 3 観点を持つ。
 7. routine review は `Minor`、nit、好み、任意の改善を finding として報告しない。
 8. material simplicity finding は、同じ要件を満たす具体的な simpler alternative を必須とし、`intent_gap` / `Important` として blocking にする。
@@ -180,6 +183,7 @@ git diff --check
 ## 非目標
 
 - 新しい standalone skill、generic skill loader、review runtime、finding schema を作ること。
+- task-triggered skill を列挙する worker packet field、universal skill allowlist、install inventory validator を作ること。
 - Gate 数、worker/runtime artifact、review/fix cycle 数を増やすこと。
 - `hardening_candidate`、`safety_escalation`、`classification_needed` の既存責務を作り直すこと。
 - future-only hardening を routine review に戻すこと。
@@ -192,6 +196,7 @@ git diff --check
 - Planning Worktree Gate の identity、default checkout snapshot、planning branch が不一致になる。
 - schema v3 を shared parser と runtime selector の一方だけが解釈し、contract が二重化する。
 - phase mapping に必要な skill が entry 時に見つからず、approved equivalent もない。
+- task-triggered skill を current phase より前に読み込む、または該当 task で必須なのに読み込まない。
 - review wording が nit を別 taxonomy や residual risk として再導入する。
 - concrete simpler alternative の要件が曖昧で、単なる好みを `Important` に昇格させる。
 - existing schema v1 / v2、`llm-wiki` context contract、context baseline が壊れる。

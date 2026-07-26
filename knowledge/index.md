@@ -38,7 +38,7 @@ _現在なし。_
   検索語: grill-to-pr-loop, requesting-code-review, 実装レビュー, issue review, PR review, review gate, implementation plan
 - [Loop Review Governance Spec](wiki/syntheses/loop-review-governance-spec.md) — Issue 意図適合レビューを必須にし、future-only hardening は通常レビュー観点から外し、明示依頼または current PR delivery risk の candidate だけを制御する Spec Gate 承認済み仕様。
   検索語: loop review governance, issue intent, hardening candidate, future-only hardening, safety escalation, final PR, human decision, requesting-code-review, context budget, 実装レビュー, 堅牢化, 人間判断
-- [Loop Review Simplicity And Phase Skills 仕様](wiki/syntheses/loop-review-simplicity-and-phase-skills/spec.md) — material findingだけを報告するreview基準と、operation/dispatch別にsupplemental skill読込を分離するcontext contract schema v3のSpec Gate承認済み仕様。
+- [Loop Review Simplicity And Phase Skills 仕様](wiki/syntheses/loop-review-simplicity-and-phase-skills/spec.md) — material findingだけを報告するreview基準と、phase-owned workflow skillをoperation/dispatch別に分離しtask-triggered skillをcurrent phaseだけでon-demand読込するcontext contract schema v3のSpec Gate承認済み仕様。
   検索語: grill-to-pr-loop, issue-implementation-loop, material review, simplicity, phase skills, context contract schema v3, skills, dispatch_skills, Critical, Important, review, シンプルさ, フェーズ別読込, 実装レビュー
 - [Loop Review Simplicity And Phase Skills Issue 台帳](wiki/syntheses/loop-review-simplicity-and-phase-skills/issues.md) — `LRSP-001` でcontext schema v3、phase mapping、material review、TDD・検証を一体実装するIssue Gate承認済み台帳。
   検索語: LRSP-001, local issue, Issue Gate, context contract schema v3, phase mapping, material review, TDD, blocker graph, ローカルIssue, フェーズ別読込, 実装レビュー
