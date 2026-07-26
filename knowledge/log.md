@@ -2,6 +2,15 @@
 
 append-only で使います。すべての entry は予測しやすい header で始めます。
 
+## [2026-07-27] spec-gate | Loop Review Simplicity And Phase Skills
+
+- Epic ID `loop-review-simplicity-and-phase-skills` として、reviewを要件達成、material simplicity、material riskに絞り、`Minor` / nit / 好み / 任意改善をfindingとして報告しないSpec Gate候補を追加した。
+- 同じ要件をmaterially simplerな構造で満たせる場合は、具体的代案を必須とする`intent_gap` / `Important`として扱い、mechanical validationと既存hardening / safety境界は維持する。
+- 両loop skillのcontext contract schema v3に`skills` / `dispatch_skills`を追加し、planning、worker TDD、implementation review、final reviewのsupplemental skill読込をoperation/actor単位で分離する設計を固定した。
+- planning branchは`codex/loop-review-simplicity-and-phase-skills/planning`、planning base SHAは`f5d151e34de5089d75be68249e09da8a2d14f282`。remote policyは`per_action`で、local `PR_READY`後のbranch pushとdraft PR作成だけを後続Remote Gateの対象とし、GitHub Issue mirror、issue PR、ready-for-review、merge、release、live installは非承認とした。
+- session userは`knowledge/wiki/syntheses/loop-review-simplicity-and-phase-skills/spec.md`、raw-byte SHA-256 `d3ac927b66e348ea39cb71a83cd13ab2139700f022a544872cb41ea708734794`を2026-07-27T07:40:32+09:00にSpec Gateとして再承認した。approval scopeは`accepted_decisions`、`non_goals`、`acceptance_criteria`、`verification`、`remote_policy`、`stop_conditions`の全六項目である。
+- Issue分解、Execution Packet、実装、remote writeはまだ行っていない。
+
 ## [2026-06-08] bootstrap | Initialize skills repo knowledge root
 
 - repo root に thin router `AGENTS.md` を追加

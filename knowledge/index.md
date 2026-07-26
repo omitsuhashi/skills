@@ -38,6 +38,8 @@ _現在なし。_
   検索語: grill-to-pr-loop, requesting-code-review, 実装レビュー, issue review, PR review, review gate, implementation plan
 - [Loop Review Governance Spec](wiki/syntheses/loop-review-governance-spec.md) — Issue 意図適合レビューを必須にし、future-only hardening は通常レビュー観点から外し、明示依頼または current PR delivery risk の candidate だけを制御する Spec Gate 承認済み仕様。
   検索語: loop review governance, issue intent, hardening candidate, future-only hardening, safety escalation, final PR, human decision, requesting-code-review, context budget, 実装レビュー, 堅牢化, 人間判断
+- [Loop Review Simplicity And Phase Skills 仕様](wiki/syntheses/loop-review-simplicity-and-phase-skills/spec.md) — material findingだけを報告するreview基準と、operation/dispatch別にsupplemental skill読込を分離するcontext contract schema v3のSpec Gate候補。
+  検索語: grill-to-pr-loop, issue-implementation-loop, material review, simplicity, phase skills, context contract schema v3, skills, dispatch_skills, Critical, Important, review, シンプルさ, フェーズ別読込, 実装レビュー
 - [Loop Review Governance Issue 台帳](wiki/syntheses/loop-review-governance-issues.md) — `loop-review-governance` の Issue Gate 承認済み local issue ledger。LRG-001 から LRG-005 の blocker graph、acceptance criteria、remote policy を定義する。
   検索語: loop review governance, local issue, Issue Gate, LRG, blocker graph, hardening candidate, requesting-code-review, context budget, ローカルIssue, 堅牢化
 - [Loop Review Governance Input Packet](wiki/syntheses/loop-review-governance-input-packet.json) — historical / non-executable な Input Packet v1。過去の LRG 実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
