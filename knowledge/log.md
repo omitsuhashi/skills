@@ -47,6 +47,18 @@ append-only で使います。すべての entry は予測しやすい header �
 - sealed Input Packet raw-byte SHA-256は`ea0a34f7f2899a54a691b5d5c21edcc93cb545f06d459b17940b42f2f9e606e8`。packet validator、approved spec binding verify、capability preflightはいずれも成功した。
 - executionはfresh coordinatorから`issue-implementation-loop`へ引き渡し、workerはapproved write scope内でTDDとskill pressure testを実行する。remote writeはlocal `PR_READY`後のRemote Gateまで行わない。
 
+## [2026-07-27] execution-plan-amendment-candidate | Loop Review Simplicity And Phase Skills
+
+- fresh baselineではmaterial simplicityとphase loadingのREDを再現した。一方、nit-pressure controlは3 fresh evaluatorsすべてがstyle-only findingを拒否し、現行挙動が既にGREENだった。
+- failureを捏造しないため、3件すべてをREDとする計画文を「review policyとphase loadingで各1件以上のRED、既存GREENはregression target」に最小修正した。spec、Issue scope、acceptance criteria、Input Packet bytes、remote policyは変更していない。
+- amendment candidateのimplementation plan raw-byte SHA-256は`483f4131e65b953d25ac5da769cfc177f4605e81d14390f998f83edc1b2f4d93`。Execution Plan Gate再承認とcommit前であり、workerはproduction editなしで停止している。
+
+## [2026-07-27] execution-plan-amendment-gate | Loop Review Simplicity And Phase Skills
+
+- session userは2026-07-27T08:40:40+09:00にimplementation plan amendmentをExecution Plan Gateとして承認した。
+- approved implementation plan raw-byte SHA-256は`483f4131e65b953d25ac5da769cfc177f4605e81d14390f998f83edc1b2f4d93`。material simplicityとphase loadingのbaseline REDを必須とし、既にGREENのnit抑制はfailureを捏造せずregression targetとして保持する。
+- approved spec raw-byte SHA-256 `2e86698433cc4a95719bffc8a2f5a6e76aa3fea5b71f743ec8f71ef39edc4719`、sealed Input Packet raw-byte SHA-256 `ea0a34f7f2899a54a691b5d5c21edcc93cb545f06d459b17940b42f2f9e606e8`、Issue scope、acceptance criteria、remote policyは不変である。
+
 ## [2026-06-08] bootstrap | Initialize skills repo knowledge root
 
 - repo root に thin router `AGENTS.md` を追加

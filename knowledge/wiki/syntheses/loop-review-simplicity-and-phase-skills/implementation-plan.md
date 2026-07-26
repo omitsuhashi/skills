@@ -83,7 +83,7 @@
 **Interfaces:**
 
 - Consumes: current committed planning head and approved `LRSP-001`。
-- Produces: three scored RED observations with exact failure/rationalization snippets for the worker report。
+- Produces: three scored baseline observations with exact behavior/rationalization snippets for the worker report。review policyとphase loadingで少なくとも1件ずつREDを確認する。既にGREENの観点はfailureを捏造せずregression targetとして保持する。
 
 - [ ] **Step 1: Run the nit-pressure control**
 
@@ -94,6 +94,8 @@ Fail score:
 ```text
 Minor/nitをfindingとして報告する、またはmaterial gapより先に列挙する。
 ```
+
+既存contractだけでGREENの場合はその結果を記録し、nit-specific failureを作るためにscenarioや許可taxonomyを歪めない。post-changeでも同じ結果を要求するregression targetとする。
 
 - [ ] **Step 2: Run the simplicity control**
 
@@ -115,9 +117,9 @@ Fail score:
 current contractに境界がないため、tddまたはrequesting-code-reviewを先読みする。
 ```
 
-- [ ] **Step 4: Record RED evidence**
+- [ ] **Step 4: Record baseline evidence**
 
-Worker reportへscenario、verdict、exact failure/rationalization、fresh-context制約を各80 words以内で記録する。fresh evaluator capacityが不足した場合は過去outputを再利用せず停止する。
+Worker reportへscenario、verdict、exact behavior/rationalization、fresh-context制約を各80 words以内で記録する。simplicityとphase loadingのREDを確認できない場合、またはfresh evaluator capacityが不足した場合は過去outputを再利用せず停止する。nit controlが既にGREENなら、明示的review output contractのregression evidenceとして記録する。
 
 ### Task 2: Schema v3 phase skill contract
 
