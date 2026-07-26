@@ -33,6 +33,20 @@ append-only で使います。すべての entry は予測しやすい header �
 - universal allowlist、worker packet field、generic loader、install inventory validatorは非目標のままである。
 - session userは2026-07-27T08:17:21+09:00にreconciled `LRSP-001`のIssue scope、write scope、acceptance criteria、実行順序、remote policyをIssue Gateとして再承認した。
 
+## [2026-07-27] execution-plan-candidate | Loop Review Simplicity And Phase Skills
+
+- `LRSP-001`のimplementation planをbaseline pressure RED、schema v3 phase skill contract、material review contract、baseline refresh / full verificationの4 taskとして作成した。execution work itemは1件のままである。
+- shared parserとruntime selectorに同じ`skills` / `dispatch_skills` projectionを追加し、task-triggered `writing-skills`はcurrent implementation phaseだけでon-demandに使う。新しいloaderやpacket fieldは作らない。
+- approved IssueをInput Packet v2 draftへ正規化した。delivery intentは`per_action`、GitHub Issue mirrorとissue PRはなし、worker write scopeはreconciled ledgerと同一である。
+- final packet seal、capability preflight、Execution Plan Gate commit、worker dispatch、remote writeはまだ行っていない。
+
+## [2026-07-27] execution-plan-gate | Loop Review Simplicity And Phase Skills
+
+- session userは2026-07-27T08:23:49+09:00に`LRSP-001` implementation planをExecution Plan Gateとして承認した。
+- implementation plan raw-byte SHA-256は`4a4e4041425626bc59d97597b0c2836278575f8987c5900cc4176a7072f2499b`。承認済みspec raw-byte SHA-256 `2e86698433cc4a95719bffc8a2f5a6e76aa3fea5b71f743ec8f71ef39edc4719`へInput Packet v2をsealした。
+- sealed Input Packet raw-byte SHA-256は`ea0a34f7f2899a54a691b5d5c21edcc93cb545f06d459b17940b42f2f9e606e8`。packet validator、approved spec binding verify、capability preflightはいずれも成功した。
+- executionはfresh coordinatorから`issue-implementation-loop`へ引き渡し、workerはapproved write scope内でTDDとskill pressure testを実行する。remote writeはlocal `PR_READY`後のRemote Gateまで行わない。
+
 ## [2026-06-08] bootstrap | Initialize skills repo knowledge root
 
 - repo root に thin router `AGENTS.md` を追加

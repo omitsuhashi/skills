@@ -42,6 +42,10 @@ _現在なし。_
   検索語: grill-to-pr-loop, issue-implementation-loop, material review, simplicity, phase skills, context contract schema v3, skills, dispatch_skills, Critical, Important, review, シンプルさ, フェーズ別読込, 実装レビュー
 - [Loop Review Simplicity And Phase Skills Issue 台帳](wiki/syntheses/loop-review-simplicity-and-phase-skills/issues.md) — `LRSP-001` でphase-owned context schema v3、task-triggered on-demand skill、material review、TDD・検証を一体実装するIssue Gate再承認済み台帳。
   検索語: LRSP-001, local issue, Issue Gate, context contract schema v3, phase mapping, material review, TDD, blocker graph, ローカルIssue, フェーズ別読込, 実装レビュー
+- [Loop Review Simplicity And Phase Skills Implementation Plan](wiki/syntheses/loop-review-simplicity-and-phase-skills/implementation-plan.md) — `LRSP-001`をbaseline pressure RED、schema v3、material review、full verificationの順で実装するExecution Plan Gate承認済み計画。
+  検索語: LRSP-001, Execution Plan Gate, implementation plan, TDD, pressure scenario, schema v3, skills, dispatch_skills, material review, RED GREEN, 実装計画, テスト駆動, フェーズ別読込
+- [Loop Review Simplicity And Phase Skills Input Packet](wiki/syntheses/loop-review-simplicity-and-phase-skills/input-packet.json) — approved spec bindingと`per_action` remote policyを固定したcurrent executable Input Packet v2。
+  検索語: LRSP-001, Input Packet v2, approved spec binding, per_action, phase-scoped skill, material review
 - [Loop Review Governance Issue 台帳](wiki/syntheses/loop-review-governance-issues.md) — `loop-review-governance` の Issue Gate 承認済み local issue ledger。LRG-001 から LRG-005 の blocker graph、acceptance criteria、remote policy を定義する。
   検索語: loop review governance, local issue, Issue Gate, LRG, blocker graph, hardening candidate, requesting-code-review, context budget, ローカルIssue, 堅牢化
 - [Loop Review Governance Input Packet](wiki/syntheses/loop-review-governance-input-packet.json) — historical / non-executable な Input Packet v1。過去の LRG 実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
