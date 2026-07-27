@@ -208,6 +208,20 @@ class EntrypointTests(unittest.TestCase):
         ):
             self.assertIn(required, model_text)
 
+    def test_mental_model_limits_reviewer_output_and_residual_risks(self) -> None:
+        mental_model = SKILL_DIR / "references" / "mental-model.md"
+        model_text = mental_model.read_text(encoding="utf-8")
+
+        self.assertIn(
+            "reports only `Critical` / `Important` findings.",
+            model_text,
+        )
+        self.assertIn(
+            "Separately reported residual risks are limited to material unresolved "
+            "risks or risks explicitly accepted by a human.",
+            model_text,
+        )
+
     def test_mental_model_keeps_final_pr_merge_human_only(self) -> None:
         mental_model = SKILL_DIR / "references" / "mental-model.md"
         model_text = mental_model.read_text(encoding="utf-8")
