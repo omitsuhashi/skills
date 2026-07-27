@@ -25,6 +25,13 @@ EXPECTED_CONTEXT_COMPACTION_POLICY = {
     "hard_stop_percent": 75,
     "mandatory_handoff_compaction": 1,
 }
+EXPECTED_PLANNING_AUTHORITY_POLICY = {
+    "integration_owner": "main_planning_context",
+    "supporting_agent_authority": "advisory_only",
+    "decision_authority": "human",
+    "model_selection": "host_runtime",
+    "model_persistence": "forbidden",
+}
 
 
 class PolicyError(Exception):
@@ -219,6 +226,23 @@ def _validate_context_compaction_policy(family: Dict[str, object], errors: List[
         errors.append("context_compaction.mandatory_handoff_compaction must be integer flag 1")
 
 
+def _validate_planning_authority_policy(family: Dict[str, object], errors: List[str]) -> None:
+    policy = family.get("planning_authority")
+    if not isinstance(policy, dict):
+        errors.append("repository-change-loop.planning_authority must be a table")
+        return
+
+    missing_fields = sorted(set(EXPECTED_PLANNING_AUTHORITY_POLICY) - set(policy))
+    for field in missing_fields:
+        errors.append(f"planning_authority missing field: {field}")
+    unknown_fields = sorted(set(policy) - set(EXPECTED_PLANNING_AUTHORITY_POLICY))
+    for field in unknown_fields:
+        errors.append(f"planning_authority unknown field: {field}")
+    for field, expected in EXPECTED_PLANNING_AUTHORITY_POLICY.items():
+        if field in policy and policy[field] != expected:
+            errors.append(f"planning_authority.{field} must be {expected}")
+
+
 def _actual_skill_names() -> List[str]:
     if not SKILLS_ROOT.is_dir():
         return []
@@ -266,6 +290,7 @@ def validate_policy(policy: Dict[str, object]) -> List[str]:
         errors.append("forbidden_standalone_skill_names must not be empty")
     if not internal_components:
         errors.append("internal_components must not be empty")
+    _validate_planning_authority_policy(family, errors)
     _validate_context_compaction_policy(family, errors)
     return errors
 
