@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Status:** 2026-07-27にHumanがExecution Plan Gateとして承認し、Subagent-Driven executionを選択した。Task 1〜3の実装、review、fresh verificationの進行状態はplan固有のSDD ledgerと末尾のcloseout記録で追跡する。
+
 **Goal:** `sdd-implementation`を、Superpowersの標準lifecycleを主系とし、spec stageの`Grill with Docs`、durable knowledge lifecycleの`llm-wiki`、host固有のmodel resolutionとoptional reasoning effortだけを薄く統合するrepository change entrypointへ更新する。
 
 **Architecture:** 単一の共有`SKILL.md`が入力成熟度を判定し、`brainstorming -> writing-plans -> subagent-driven-development`を順に呼ぶ。Superpowersがspec、plan、TDD、dispatch、review、model tierを所有し、repo-local contractはGrill / LLM Wiki compositionとCodex / Hermes host adapterだけを追加する。既存のcontract tests、repository router、architecture policy、Codex UI metadataを同じpublic contractへ揃え、新しいscript、schema、runtime stateは作らない。
@@ -510,10 +512,10 @@ Do not edit `knowledge/raw/`.
 
 Update the design `## 状態` to say that the Superpowers-first revision implementation and task reviews are complete and that final whole-branch review is pending. Do not claim `LOCAL_COMPLETE` yet.
 
-Update this plan’s status immediately under its title:
+Keep this plan’s status immediately after the required sub-skill header:
 
 ```markdown
-> **Status:** Execution Plan Gate承認済み。Task 1〜3の実装、review、fresh verificationの進行状態は末尾のcloseout記録で追跡する。
+> **Status:** 2026-07-27にHumanがExecution Plan Gateとして承認し、Subagent-Driven executionを選択した。Task 1〜3の実装、review、fresh verificationの進行状態はplan固有のSDD ledgerと末尾のcloseout記録で追跡する。
 ```
 
 Append a `## Closeout Candidate` section containing:

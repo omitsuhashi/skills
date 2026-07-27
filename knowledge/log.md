@@ -2,6 +2,13 @@
 
 append-only で使います。すべての entry は予測しやすい header で始めます。
 
+## [2026-07-27] execution-plan-gate | SDD Implementation Superpowers-first Revision
+
+- Humanは`knowledge/wiki/syntheses/sdd-implementation-superpowers-first-implementation-plan.md`をExecution Plan Gateとして承認し、`superpowers:subagent-driven-development`による実行を選択した。
+- 実行順はTask 1のshared Skill lifecycle contract、Task 2のrepository router / architecture / Codex metadata、Task 3のLLM Wiki closeout / full verification / final reviewである。
+- fresh implementer、task-scoped independent reviewer、fix loop、final whole-branch reviewはSuperpowers SDDに従い、main sessionはcoordinationとartifact handoffだけを所有する。
+- remote policyはlocal-onlyであり、push、PR作成、merge、release、live installは未承認のままである。
+
 ## [2026-07-27] execution-plan-candidate | SDD Implementation Superpowers-first Revision
 
 - Humanは`knowledge/wiki/syntheses/sdd-implementation-skill-design.md`をSuperpowers-first revisionのWritten Specとして承認した。
