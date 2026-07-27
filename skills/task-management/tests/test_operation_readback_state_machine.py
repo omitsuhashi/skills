@@ -105,6 +105,55 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
         )
         self.assertIn("read:issue_read_exact", self.mcp.calls)
 
+    def test_create_issue_search_and_exact_readback_conditions_are_distinct(
+        self,
+    ) -> None:
+        create = next(
+            op for op in self.contract["operations"] if op["name"] == "task_create"
+        )
+        issue_step = next(
+            step for step in create["steps"] if step["id"] == "issue"
+        )
+        self.assertEqual(
+            "issue_search_match", issue_step["read_before_observed"]
+        )
+        self.assertEqual("exact_issue_readback", issue_step["observed"])
+        issue_final = next(
+            observation
+            for observation in create["final_observations"]
+            if observation["id"] == "issue"
+        )
+        self.assertEqual("exact_issue_readback", issue_final["observed"])
+
+    def test_create_rejects_issue_search_as_post_write_readback(self) -> None:
+        mutated = copy.deepcopy(self.contract)
+        create = next(
+            op for op in mutated["operations"] if op["name"] == "task_create"
+        )
+        issue_step = next(
+            step for step in create["steps"] if step["id"] == "issue"
+        )
+        issue_step["read_after"] = "issue_search_exact"
+
+        runner = ContractRunner(mutated, self.mcp)
+        self.assertEqual("partial", runner.run("task_create", context()))
+        self.assertEqual(1, self.mcp.writes.count("issue_create"))
+
+    def test_duplicate_search_skips_create_but_final_exact_read_succeeds(
+        self,
+    ) -> None:
+        self.mcp.issues["sha256:abc"] = {
+            "number": 1,
+            "title": "Ship exact readback",
+            "body": "Observable result",
+            "comments": [],
+            "close_reason": None,
+        }
+        self.assertEqual("success", self.runner.run("task_create", context()))
+        self.assertEqual(0, self.mcp.writes.count("issue_create"))
+        self.assertEqual("read:issue_search_exact", self.mcp.calls[0])
+        self.assertIn("read:issue_read_exact", self.mcp.calls)
+
     def test_partial_create_resumes_with_register_and_only_unfinished_steps(self) -> None:
         self.mcp.fail_next("project_priority_set_default", "before")
         self.assertEqual("partial", self.runner.run("task_create", context()))

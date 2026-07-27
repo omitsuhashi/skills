@@ -11,9 +11,10 @@ retry_only = false
 
 [operation.task_create.step.issue]
 read_before = "issue_search_exact"
+read_before_observed = "issue_search_match"
 write = "issue_create"
 read_after = "issue_read_exact"
-observed = "issue_exists"
+observed = "exact_issue_readback"
 retry_after_unknown = true
 
 [operation.task_create.step.project_item]
@@ -39,7 +40,7 @@ retry_after_unknown = true
 
 [operation.task_create.final.issue]
 read = "issue_read_exact"
-observed = "issue_exists"
+observed = "exact_issue_readback"
 
 [operation.task_create.final.project_item]
 read = "project_item_read_exact"
@@ -84,7 +85,7 @@ retry_after_unknown = true
 
 [operation.task_project_register.final.issue]
 read = "issue_read_exact"
-observed = "issue_exists"
+observed = "exact_issue_readback"
 
 [operation.task_project_register.final.project_item]
 read = "project_item_read_exact"

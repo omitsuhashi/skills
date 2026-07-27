@@ -118,7 +118,8 @@ class FakeGitHubMCP:
         context: dict[str, Any],
     ) -> bool:
         compatible_actions = {
-            "issue_exists": {"issue_search_exact", "issue_read_exact"},
+            "issue_search_match": {"issue_search_exact"},
+            "exact_issue_readback": {"issue_read_exact"},
             "project_item_exists": {"project_item_read_exact"},
             "default_status_observed": {"project_status_read"},
             "default_priority_observed": {"project_priority_read"},
@@ -135,7 +136,7 @@ class FakeGitHubMCP:
             return False
 
         payload = observation.payload
-        if condition == "issue_exists":
+        if condition in {"issue_search_match", "exact_issue_readback"}:
             return payload["issue"] is not None
         if condition == "project_item_exists":
             return payload["item"] is not None
@@ -376,7 +377,12 @@ class ContractRunner:
         for step in operation["steps"]:
             if not self._applies(step, remaining_sides):
                 continue
-            if self._read_observed(step["read_before"], step["observed"], context):
+            read_before_observed = step.get(
+                "read_before_observed", step["observed"]
+            )
+            if self._read_observed(
+                step["read_before"], read_before_observed, context
+            ):
                 continue
             preflighted_once = self._record_preflight(
                 operation,
