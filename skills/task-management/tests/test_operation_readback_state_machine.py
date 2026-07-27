@@ -1,3 +1,4 @@
+import copy
 from pathlib import Path
 import sys
 import unittest
@@ -110,7 +111,10 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
         self.assertEqual("Inbox", self.mcp.project_items["sha256:abc"]["fields"]["Status"])
 
         self.assertEqual(
-            "success", self.runner.run("task_project_register", context())
+            "success",
+            self.runner.run(
+                "task_project_register", context(partial_resume=True)
+            ),
         )
         self.assertEqual(1, self.mcp.writes.count("issue_create"))
         self.assertEqual(1, self.mcp.writes.count("project_item_add"))
@@ -128,7 +132,10 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
         self.mcp.fail_next("project_item_add", "after")
         self.mcp.fail_next("project_status_set_default", "after")
         self.assertEqual(
-            "success", self.runner.run("task_project_register", context())
+            "success",
+            self.runner.run(
+                "task_project_register", context(partial_resume=True)
+            ),
         )
         self.assertEqual(1, self.mcp.writes.count("project_item_add"))
         self.assertEqual(1, self.mcp.writes.count("project_status_set_default"))
@@ -143,7 +150,10 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
         }
         self.mcp.fail_next("project_item_add", "unknown_before")
         self.assertEqual(
-            "success", self.runner.run("task_project_register", context())
+            "success",
+            self.runner.run(
+                "task_project_register", context(partial_resume=True)
+            ),
         )
         calls = self.mcp.calls
         first_write = calls.index("write:project_item_add")
@@ -238,6 +248,287 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
             if "tests" not in path.parts
         ]
         self.assertEqual([], production_python)
+
+    def test_wrong_update_read_after_cannot_observe_global_state(self) -> None:
+        self.mcp.issues["sha256:abc"] = {
+            "number": 1,
+            "title": "Task",
+            "body": "",
+            "comments": [],
+            "close_reason": None,
+        }
+        mutated = copy.deepcopy(self.contract)
+        update = next(
+            op for op in mutated["operations"] if op["name"] == "task_update_issue"
+        )
+        update["steps"][0]["read_after"] = "project_status_read"
+
+        runner = ContractRunner(mutated, self.mcp)
+        self.assertEqual(
+            "partial",
+            runner.run(
+                "task_update_issue",
+                {
+                    "task_key": "sha256:abc",
+                    "requested_field": "title",
+                    "requested_value": "Updated title",
+                },
+            ),
+        )
+
+    def test_wrong_terminal_read_after_cannot_be_masked_by_final_read(self) -> None:
+        self.mcp.issues["sha256:abc"] = {
+            "number": 1,
+            "title": "Task",
+            "body": "",
+            "comments": [],
+            "close_reason": None,
+        }
+        mutated = copy.deepcopy(self.contract)
+        terminal = next(
+            op for op in mutated["operations"] if op["name"] == "task_complete"
+        )
+        issue_step = next(step for step in terminal["steps"] if step["id"] == "issue")
+        issue_step["read_after"] = "project_terminal_status_read"
+
+        runner = ContractRunner(mutated, self.mcp)
+        self.assertEqual(
+            "partial",
+            runner.run(
+                "task_complete",
+                {
+                    "task_key": "sha256:abc",
+                    "remaining_sides": {"issue"},
+                    "terminal_status": "Done",
+                    "close_reason": "completed",
+                },
+            ),
+        )
+
+    def test_unknown_read_action_fails_instead_of_inspecting_global_state(self) -> None:
+        self.mcp.issues["sha256:abc"] = {
+            "number": 1,
+            "title": "Task",
+            "body": "",
+            "comments": [],
+            "close_reason": None,
+        }
+        mutated = copy.deepcopy(self.contract)
+        update = next(
+            op for op in mutated["operations"] if op["name"] == "task_update_issue"
+        )
+        update["steps"][0]["read_after"] = "nonsense_read"
+
+        runner = ContractRunner(mutated, self.mcp)
+        with self.assertRaises(AssertionError):
+            runner.run(
+                "task_update_issue",
+                {
+                    "task_key": "sha256:abc",
+                    "requested_field": "title",
+                    "requested_value": "Updated title",
+                },
+            )
+
+    def test_register_requires_explicit_partial_resume_before_preflight_or_write(
+        self,
+    ) -> None:
+        self.mcp.issues["sha256:abc"] = {
+            "number": 1,
+            "title": "Task",
+            "body": "",
+            "comments": [],
+            "close_reason": None,
+        }
+        self.assertEqual(
+            "blocked",
+            self.runner.run(
+                "task_project_register", {"task_key": "sha256:abc"}
+            ),
+        )
+        self.assertEqual([], self.runner.local_preflights)
+        self.assertEqual([], self.mcp.writes)
+
+    def test_preflight_metadata_is_enforced_before_exact_writes(self) -> None:
+        self.assertEqual("success", self.runner.run("task_create", context()))
+        self.assertEqual(["task_create"], self.runner.local_preflights)
+        self.assertLess(
+            self.runner.events.index("preflight:task_create"),
+            self.runner.events.index("write:issue_create"),
+        )
+
+        terminal_mcp = FakeGitHubMCP(
+            issues={
+                "sha256:abc": {
+                    "number": 1,
+                    "title": "Task",
+                    "body": "",
+                    "comments": [],
+                    "close_reason": None,
+                }
+            },
+            project_items={
+                "sha256:abc": {
+                    "issue_number": 1,
+                    "fields": {
+                        "Status": "Inbox",
+                        "Priority": "P2",
+                        "Due date": None,
+                    },
+                }
+            },
+        )
+        terminal_runner = ContractRunner(self.contract, terminal_mcp)
+        self.assertEqual(
+            "success",
+            terminal_runner.run(
+                "task_complete",
+                {
+                    "task_key": "sha256:abc",
+                    "remaining_sides": {"issue", "project"},
+                    "terminal_status": "Done",
+                    "close_reason": "completed",
+                },
+            ),
+        )
+        self.assertEqual(
+            ["task_complete:issue", "task_complete:project"],
+            terminal_runner.local_preflights,
+        )
+        for side, write in (
+            ("issue", "issue_close_requested"),
+            ("project", "project_status_set_terminal"),
+        ):
+            self.assertLess(
+                terminal_runner.events.index(f"preflight:task_complete:{side}"),
+                terminal_runner.events.index(f"write:{write}"),
+            )
+
+    def test_unknown_preflight_and_retry_metadata_fail_closed(self) -> None:
+        for field, value in (
+            ("local_preflight", "unknown"),
+            ("retry_only", "unknown"),
+        ):
+            with self.subTest(field=field):
+                mutated = copy.deepcopy(self.contract)
+                create = next(
+                    op
+                    for op in mutated["operations"]
+                    if op["name"] == "task_create"
+                )
+                create[field] = value
+                mcp = FakeGitHubMCP()
+                with self.assertRaises(AssertionError):
+                    ContractRunner(mutated, mcp)
+                self.assertEqual([], mcp.writes)
+
+    def test_terminal_side_schema_mutations_are_rejected(self) -> None:
+        mutations = ("missing_step_side", "wrong_final_side")
+        for mutation in mutations:
+            with self.subTest(mutation=mutation):
+                mutated = copy.deepcopy(self.contract)
+                terminal = next(
+                    op
+                    for op in mutated["operations"]
+                    if op["name"] == "task_complete"
+                )
+                if mutation == "missing_step_side":
+                    issue_step = next(
+                        step for step in terminal["steps"] if step["id"] == "issue"
+                    )
+                    issue_step.pop("side")
+                else:
+                    project_final = next(
+                        observation
+                        for observation in terminal["final_observations"]
+                        if observation["id"] == "project"
+                    )
+                    project_final["side"] = "issue"
+                with self.assertRaises(AssertionError):
+                    ContractRunner(mutated, FakeGitHubMCP())
+
+    def test_terminal_remaining_sides_are_nonempty_known_and_exact(self) -> None:
+        for remaining_sides in (set(), {"unknown"}, {"issue", "unknown"}):
+            with self.subTest(remaining_sides=remaining_sides):
+                mcp = FakeGitHubMCP()
+                runner = ContractRunner(self.contract, mcp)
+                self.assertEqual(
+                    "blocked",
+                    runner.run(
+                        "task_complete",
+                        {
+                            "task_key": "sha256:abc",
+                            "remaining_sides": remaining_sides,
+                            "terminal_status": "Done",
+                            "close_reason": "completed",
+                        },
+                    ),
+                )
+                self.assertEqual([], mcp.writes)
+
+        mcp = FakeGitHubMCP(
+            issues={
+                "sha256:abc": {
+                    "number": 1,
+                    "title": "Task",
+                    "body": "",
+                    "comments": [],
+                    "close_reason": None,
+                }
+            },
+            project_items={
+                "sha256:abc": {
+                    "issue_number": 1,
+                    "fields": {
+                        "Status": "Done",
+                        "Priority": "P2",
+                        "Due date": None,
+                    },
+                }
+            },
+        )
+        runner = ContractRunner(self.contract, mcp)
+        self.assertEqual(
+            "success",
+            runner.run(
+                "task_complete",
+                {
+                    "task_key": "sha256:abc",
+                    "remaining_sides": {"issue"},
+                    "terminal_status": "Done",
+                    "close_reason": "completed",
+                },
+            ),
+        )
+        self.assertEqual(["issue_close_requested"], mcp.writes)
+        self.assertEqual(["task_complete:issue"], runner.local_preflights)
+
+    def test_register_and_update_accept_minimal_operation_contexts(self) -> None:
+        self.mcp.issues["sha256:abc"] = {
+            "number": 1,
+            "title": "Task",
+            "body": "",
+            "comments": [],
+            "close_reason": None,
+        }
+        self.assertEqual(
+            "success",
+            self.runner.run(
+                "task_project_register",
+                {"task_key": "sha256:abc", "partial_resume": True},
+            ),
+        )
+        self.assertEqual(
+            "success",
+            self.runner.run(
+                "task_update_issue",
+                {
+                    "task_key": "sha256:abc",
+                    "requested_field": "title",
+                    "requested_value": "Minimal update",
+                },
+            ),
+        )
 
 
 if __name__ == "__main__":

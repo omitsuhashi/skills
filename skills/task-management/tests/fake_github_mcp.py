@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import configparser
+import copy
 from dataclasses import dataclass, field
 import json
 from pathlib import Path
@@ -17,6 +18,12 @@ class WriteFailed(RuntimeError):
     """The remote write failed before it changed state."""
 
 
+@dataclass(frozen=True)
+class ReadObservation:
+    action: str
+    payload: dict[str, Any]
+
+
 @dataclass
 class FakeGitHubMCP:
     issues: dict[str, dict[str, Any]] = field(default_factory=dict)
@@ -29,36 +36,140 @@ class FakeGitHubMCP:
 
     @property
     def writes(self) -> list[str]:
-        return [call.removeprefix("write:") for call in self.calls if call.startswith("write:")]
+        return [
+            call.removeprefix("write:")
+            for call in self.calls
+            if call.startswith("write:")
+        ]
 
-    def read(self, action: str, context: dict[str, Any]) -> None:
+    def read(
+        self, action: str, context: dict[str, Any]
+    ) -> ReadObservation:
         self.calls.append(f"read:{action}")
+        task_key = context["task_key"]
+        if action in {"issue_search_exact", "issue_read_exact"}:
+            issue = copy.deepcopy(self.issues.get(task_key))
+            payload = {"issue": issue}
+        elif action == "project_item_read_exact":
+            item = copy.deepcopy(self.project_items.get(task_key))
+            payload = {"item": item}
+        elif action == "project_status_read":
+            item = copy.deepcopy(self.project_items.get(task_key))
+            payload = {
+                "exists": item is not None,
+                "value": None if item is None else item["fields"].get("Status"),
+            }
+        elif action == "project_priority_read":
+            item = copy.deepcopy(self.project_items.get(task_key))
+            payload = {
+                "exists": item is not None,
+                "value": None
+                if item is None
+                else item["fields"].get("Priority"),
+            }
+        elif action == "project_due_date_read":
+            item = copy.deepcopy(self.project_items.get(task_key))
+            payload = {
+                "exists": item is not None,
+                "value": None
+                if item is None
+                else item["fields"].get("Due date"),
+            }
+        elif action == "project_field_read":
+            item = copy.deepcopy(self.project_items.get(task_key))
+            field_name = context["requested_field"]
+            payload = {
+                "exists": item is not None,
+                "field": field_name,
+                "value": None
+                if item is None
+                else item["fields"].get(field_name),
+            }
+        elif action == "issue_comment_read":
+            issue = copy.deepcopy(self.issues.get(task_key))
+            payload = {
+                "exists": issue is not None,
+                "comments": [] if issue is None else issue["comments"],
+            }
+        elif action == "issue_terminal_read":
+            issue = copy.deepcopy(self.issues.get(task_key))
+            payload = {
+                "exists": issue is not None,
+                "close_reason": None
+                if issue is None
+                else issue["close_reason"],
+            }
+        elif action == "project_terminal_status_read":
+            item = copy.deepcopy(self.project_items.get(task_key))
+            payload = {
+                "exists": item is not None,
+                "status": None
+                if item is None
+                else item["fields"].get("Status"),
+            }
+        else:
+            raise AssertionError(f"unknown fake read: {action}")
+        return ReadObservation(action=action, payload=payload)
 
-    def observe(self, condition: str, context: dict[str, Any]) -> bool:
-        issue = self.issues.get(context["task_key"])
-        item = self.project_items.get(context["task_key"])
-        observations = {
-            "issue_exists": issue is not None,
-            "project_item_exists": item is not None,
-            "default_status_observed": item is not None
-            and item["fields"].get("Status") == "Inbox",
-            "default_priority_observed": item is not None
-            and item["fields"].get("Priority") == "P2",
-            "due_date_empty_observed": item is not None
-            and item["fields"].get("Due date") is None,
-            "requested_issue_property_observed": issue is not None
-            and issue.get(context["requested_field"]) == context["requested_value"],
-            "requested_project_field_observed": item is not None
-            and item["fields"].get(context["requested_field"])
-            == context["requested_value"],
-            "exact_comment_observed": issue is not None
-            and context["comment"] in issue["comments"],
-            "issue_terminal_observed": issue is not None
-            and issue["close_reason"] == context["close_reason"],
-            "project_terminal_observed": item is not None
-            and item["fields"].get("Status") == context["terminal_status"],
+    def observe(
+        self,
+        condition: str,
+        observation: ReadObservation,
+        context: dict[str, Any],
+    ) -> bool:
+        compatible_actions = {
+            "issue_exists": {"issue_search_exact", "issue_read_exact"},
+            "project_item_exists": {"project_item_read_exact"},
+            "default_status_observed": {"project_status_read"},
+            "default_priority_observed": {"project_priority_read"},
+            "due_date_empty_observed": {"project_due_date_read"},
+            "requested_issue_property_observed": {"issue_read_exact"},
+            "requested_project_field_observed": {"project_field_read"},
+            "exact_comment_observed": {"issue_comment_read"},
+            "issue_terminal_observed": {"issue_terminal_read"},
+            "project_terminal_observed": {"project_terminal_status_read"},
         }
-        return observations[condition]
+        if condition not in compatible_actions:
+            raise AssertionError(f"unknown observation condition: {condition}")
+        if observation.action not in compatible_actions[condition]:
+            return False
+
+        payload = observation.payload
+        if condition == "issue_exists":
+            return payload["issue"] is not None
+        if condition == "project_item_exists":
+            return payload["item"] is not None
+        if condition == "default_status_observed":
+            return payload["exists"] and payload["value"] == "Inbox"
+        if condition == "default_priority_observed":
+            return payload["exists"] and payload["value"] == "P2"
+        if condition == "due_date_empty_observed":
+            return payload["exists"] and payload["value"] is None
+        if condition == "requested_issue_property_observed":
+            issue = payload["issue"]
+            return issue is not None and issue.get(
+                context["requested_field"]
+            ) == context["requested_value"]
+        if condition == "requested_project_field_observed":
+            return (
+                payload["exists"]
+                and payload["field"] == context["requested_field"]
+                and payload["value"] == context["requested_value"]
+            )
+        if condition == "exact_comment_observed":
+            return (
+                payload["exists"]
+                and context["comment"] in payload["comments"]
+            )
+        if condition == "issue_terminal_observed":
+            return (
+                payload["exists"]
+                and payload["close_reason"] == context["close_reason"]
+            )
+        return (
+            payload["exists"]
+            and payload["status"] == context["terminal_status"]
+        )
 
     def write(self, action: str, context: dict[str, Any]) -> None:
         self.calls.append(f"write:{action}")
@@ -158,7 +269,21 @@ def load_contract(path: Path) -> dict[str, Any]:
     for operation in contract["operations"]:
         for step in operation.get("steps", []):
             step.setdefault("retry_after_unknown", False)
-    for operation in contract["operations"]:
+    validate_contract(contract)
+    return contract
+
+
+def validate_contract(contract: dict[str, Any]) -> None:
+    allowed_preflights = {"once", "per_remaining_side"}
+    for operation in contract.get("operations", []):
+        if operation.get("local_preflight") not in allowed_preflights:
+            raise AssertionError(
+                f"{operation.get('name', '<unnamed>')} has unknown local_preflight"
+            )
+        if not isinstance(operation.get("retry_only"), bool):
+            raise AssertionError(
+                f"{operation.get('name', '<unnamed>')} has invalid retry_only"
+            )
         for step in operation.get("steps", []):
             missing = {
                 "id",
@@ -176,16 +301,49 @@ def load_contract(path: Path) -> dict[str, Any]:
                 raise AssertionError(
                     f"{operation.get('name', '<unnamed>')} final observation is incomplete"
                 )
-    return contract
+
+    terminal = next(
+        (
+            operation
+            for operation in contract.get("operations", [])
+            if operation.get("name") == "task_complete"
+        ),
+        None,
+    )
+    if terminal is None:
+        raise AssertionError("missing task_complete operation")
+    terminal_steps = {step["id"]: step for step in terminal["steps"]}
+    terminal_finals = {
+        observation["id"]: observation
+        for observation in terminal["final_observations"]
+    }
+    expected_sides = {"issue", "project"}
+    if terminal_steps.keys() != expected_sides:
+        raise AssertionError("task_complete must have exact issue/project steps")
+    if terminal_finals.keys() != expected_sides:
+        raise AssertionError(
+            "task_complete must have exact issue/project final observations"
+        )
+    for side in expected_sides:
+        if terminal_steps[side].get("side") != side:
+            raise AssertionError(
+                f"task_complete {side} step has invalid side"
+            )
+        if terminal_finals[side].get("side") != side:
+            raise AssertionError(
+                f"task_complete {side} final observation has invalid side"
+            )
 
 
 class ContractRunner:
     """Interpret the reference contract against the test-only fake remote."""
 
     def __init__(self, contract: dict[str, Any], mcp: FakeGitHubMCP):
+        validate_contract(contract)
         self.contract = contract
         self.mcp = mcp
         self.local_preflights: list[str] = []
+        self.events: list[str] = []
 
     def run(self, operation_name: str, context: dict[str, Any]) -> str:
         guarded = set(self.contract["contract"]["zero_write_outcomes"])
@@ -197,19 +355,42 @@ class ContractRunner:
             for operation in self.contract["operations"]
             if operation["name"] == operation_name
         )
-        preflight = operation["local_preflight"]
-        if preflight == "once":
-            self.local_preflights.append(operation_name)
+        if operation["retry_only"] and context.get("partial_resume") is not True:
+            return "blocked"
+
+        remaining_sides: frozenset[str] | None = None
+        if operation_name == "task_complete":
+            supplied_sides = context.get("remaining_sides")
+            if not isinstance(supplied_sides, (set, frozenset, list, tuple)):
+                return "blocked"
+            remaining_sides = frozenset(supplied_sides)
+            if not remaining_sides or not remaining_sides <= {
+                "issue",
+                "project",
+            }:
+                return "blocked"
+
+        preflighted_once = False
+        preflighted_sides: set[str] = set()
 
         for step in operation["steps"]:
-            if not self._applies(step, context):
+            if not self._applies(step, remaining_sides):
                 continue
             if self._read_observed(step["read_before"], step["observed"], context):
                 continue
+            preflighted_once = self._record_preflight(
+                operation,
+                step,
+                remaining_sides,
+                preflighted_once,
+                preflighted_sides,
+            )
             if not self._write_then_observe(step, context):
                 return "partial"
 
         for observation in operation["final_observations"]:
+            if not self._applies(observation, remaining_sides):
+                continue
             if not self._read_observed(
                 observation["read"], observation["observed"], context
             ):
@@ -220,6 +401,7 @@ class ContractRunner:
         self, step: dict[str, Any], context: dict[str, Any]
     ) -> bool:
         outcome_unknown = False
+        self.events.append(f"write:{step['write']}")
         try:
             self.mcp.write(step["write"], context)
         except UnknownOutcome:
@@ -229,6 +411,7 @@ class ContractRunner:
         if self._read_observed(step["read_after"], step["observed"], context):
             return True
         if outcome_unknown and step.get("retry_after_unknown", False):
+            self.events.append(f"write:{step['write']}")
             try:
                 self.mcp.write(step["write"], context)
             except (UnknownOutcome, WriteFailed):
@@ -241,10 +424,45 @@ class ContractRunner:
     def _read_observed(
         self, read_action: str, condition: str, context: dict[str, Any]
     ) -> bool:
-        self.mcp.read(read_action, context)
-        return self.mcp.observe(condition, context)
+        observation = self.mcp.read(read_action, context)
+        return self.mcp.observe(condition, observation, context)
+
+    def _record_preflight(
+        self,
+        operation: dict[str, Any],
+        step: dict[str, Any],
+        remaining_sides: frozenset[str] | None,
+        preflighted_once: bool,
+        preflighted_sides: set[str],
+    ) -> bool:
+        mode = operation["local_preflight"]
+        if mode == "once":
+            if not preflighted_once:
+                entry = operation["name"]
+                self.local_preflights.append(entry)
+                self.events.append(f"preflight:{entry}")
+            return True
+
+        side = step.get("side")
+        if (
+            side is None
+            or remaining_sides is None
+            or side not in remaining_sides
+        ):
+            raise AssertionError("per-side preflight lacks declared side")
+        if side not in preflighted_sides:
+            entry = f"{operation['name']}:{side}"
+            self.local_preflights.append(entry)
+            self.events.append(f"preflight:{entry}")
+            preflighted_sides.add(side)
+        return preflighted_once
 
     @staticmethod
-    def _applies(step: dict[str, Any], context: dict[str, Any]) -> bool:
-        side = step.get("side")
-        return side is None or side in context.get("remaining_sides", {"issue", "project"})
+    def _applies(
+        transition: dict[str, Any],
+        remaining_sides: frozenset[str] | None,
+    ) -> bool:
+        side = transition.get("side")
+        return side is None or (
+            remaining_sides is not None and side in remaining_sides
+        )
