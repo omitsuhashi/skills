@@ -2,7 +2,7 @@
 
 ## 状態
 
-会話上の全体設計は合意済み。本文の written design review 待ちであり、production skill の実装、既存 loop skill の変更・削除、push、PR 作成、merge、live install は未実施。
+会話上の全体設計は合意済み。written design review feedbackを反映済みで、Humanの再review待ちである。production skill の実装、既存 loop skill の変更・削除、push、PR 作成、merge、live install は未実施。
 
 ## 問題設定
 
@@ -20,6 +20,44 @@
 承認済み implementation plan を入力として受け取り、main context を orchestration に限定したまま SDD を実行し、code、tests、review、wiki closeout を含む local completion まで進める新しい user-facing skill を作る。
 
 skill name は `sdd-implementation` とする。
+
+## 最優先原則
+
+### 1. シンプルさと要件実現を最優先する
+
+実装は、承認済み要件と acceptance criteria を満たす最も単純な形を優先する。将来の仮説、汎用化の可能性、既存workflowとの互換性だけを理由に、新しい abstraction、schema、state、adapter、fallback、設定項目を増やさない。
+
+- SDD と `llm-wiki` が所有する機構を再実装しない。
+- current requirement に不要な extension point を作らない。
+- caller が学ぶ interface と durable artifact の種類を増やさない。
+- 既存の明確なrepository patternを再利用し、同じ責務の第2実装を作らない。
+- correctness、明確性、必要なverificationを削ることは「単純化」に含めない。
+
+要件実現と単純性が衝突する場合は要件実現を優先し、その要件を満たす範囲で最小のimplementationを選ぶ。
+
+### 2. Reviewはmaterial findingだけを扱う
+
+task review と final review は、次の順で確認する。
+
+1. 承認済み要件を過不足なく実現しているか。
+2. 同じ要件をより小さいinterface、少ない機構、明確なownershipで実現できるmaterialな単純化余地があるか。
+3. current changeにcorrectness、regression、security、data loss、operability、maintainabilityのmaterial riskがあるか。
+
+fix loopを開始できるのは、requirement gap、scope excess、observable regression、またはcurrent changeのmaterial riskだけとする。reviewerはfindingごとに、違反するrequirementまたは具体的なcurrent riskとevidenceを示す。
+
+material simplicity findingには、同じ要件とrisk boundaryを満たす具体的なsimpler alternative、現行実装が増やす機構、変更によるmaterial impactを必須とする。具体案を示せない好みや数行の短縮はfindingにしない。
+
+次はblocking findingにしない。
+
+- 動作と理解に影響しないstyle、命名、formattingの好み
+- 具体的なfailure pathがない将来懸念
+- approved scope外のrefactor、hardening、汎用化提案
+- formatter / linterが扱う軽微な差
+- 同等に明確な複数実装のうち、reviewerが別案を好むという理由だけの指摘
+
+non-blocking observationは必要な場合だけ短く残し、fix loopやcompletionを妨げない。review件数を増やすことを品質とみなさず、重箱の隅をつつくことで要件、単純性、current riskから注意を逸らさない。
+
+このreporting thresholdはmechanical validator、formatter、linter、schema check、digest check、required test suiteの実行範囲を狭めない。機械的に検出できる失敗は従来どおり検証し、その失敗がblocking conditionなら修正する。
 
 ## Interface
 
@@ -113,6 +151,12 @@ knowledge root が存在しない repository では `not_applicable` として�
 
 wiki closeout 後に final reviewer を起動し、code、tests、durable docs、index、logを同じ branch range で確認する。これにより、codeだけreview済みでwiki変更が未reviewという状態を作らない。
 
+### Review packet は目的を狭く保つ
+
+task reviewerにはapproved task、binding global constraints、committed diff、verification reportだけを渡す。final reviewerにはwhole-branch diff、approved plan、task completion ledger、wiki closeout resultだけを渡す。
+
+review promptは「追加の改善案を広く探す」のではなく、要件適合、material simplicity、material current riskの3点だけを求める。out-of-scope future hardeningは、current PRをblockする具体的リスクがない限りreview resultへ混ぜない。
+
 ## End-to-End Flow
 
 ```mermaid
@@ -149,6 +193,7 @@ flowchart TD
 - implementerが`NEEDS_CONTEXT`なら不足pathだけを追加し、conversation historyを転送しない。
 - implementerが`BLOCKED`なら context不足、capability不足、task過大、plan defectを切り分ける。
 - reviewer findingとapproved planが衝突する場合、high-capability adjudicatorがevidenceを整理し、authority-bearing decisionはHumanへ戻す。
+- requirementまたはmaterial current riskへ紐づかないreview findingはfix loopへ入れず、必要ならnon-blocking observationとして扱う。
 - wiki write authority、canonical target、index/log sync、wiki validationのいずれかが解決しない場合、knowledge rootがあるrepositoryでは`LOCAL_COMPLETE`にしない。
 - remote write、push、PR、merge、release、live installはこのskillから実行しない。
 
@@ -195,6 +240,10 @@ Phase 1 と Phase 2 を同一PRにしない。新skillのforward testとfallback
 - parent conversation inheritanceを禁止するdispatch contractを持つ。
 - old loop skillをdefault dependencyまたはfallbackとして参照しない。
 - dual-host capability不足時にfail closedする。
+- review contractが要件適合、material simplicity、material current riskの3観点に限定されている。
+- material simplicity findingがconcrete simpler alternativeとmaterial impactを要求する。
+- style preference、speculative future concern、out-of-scope hardeningがblocking findingにならない。
+- mechanical validationとrequired test suiteの検出範囲を狭めない。
 
 ### Forward Scenarios
 
@@ -207,6 +256,8 @@ Phase 1 と Phase 2 を同一PRにしない。新skillのforward testとfallback
 7. knowledge rootなしのrepositoryでcloseoutが`not_applicable`になる。
 8. wiki validation failureが`LOCAL_COMPLETE`をblockする。
 9. model availability変化がspec / plan driftを起こさない。
+10. requirementとmaterial riskへ紐づかないreview observationがfix loopを開始しない。
+11. requirementを満たすために不要なschema、state、adapterを追加した実装がmaterial simplicity findingになる。
 
 ## Completion Contract
 
@@ -217,6 +268,8 @@ Phase 1 と Phase 2 を同一PRにしない。新skillのforward testとfallback
 - scoped commitsがcurrent branchに含まれる。
 - knowledge rootがある場合、wiki / index / log closeoutとvalidationが完了している。
 - wiki closeout後のwhole-branch final reviewがapprovedである。
+- blocking review findingがrequirement gap、scope excess、observable regression、material current riskのいずれかへevidence付きで分類されている。
+- style preference、speculative future concern、out-of-scope hardeningだけを理由にcompletionが止められていない。
 - blocker、residual risk、未実施remote actionが短く報告されている。
 
 ## 非目標

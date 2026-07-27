@@ -96,8 +96,8 @@ _現在なし。_
   検索語: planning authority, PAP, Issue Gate, local issue, blocker graph, family policy, advisory only, model persistence, ローカルIssue, ブロッカー
 - [Planning Authority Policy 実装計画](wiki/syntheses/planning-authority-policy/implementation-plan.md) / [sealed Input Packet v2](wiki/syntheses/planning-authority-policy/input-packet.json) — Execution Plan Gate、5-field coverage fix、final branch integration、worker-only境界と未実施のPAP-004 cycle 2 reviewsを区別するlocal-only handoff。
   検索語: planning authority, implementation plan, Input Packet v2, Execution Plan Gate, sealed packet, TDD, worker-only, local-only, 実装計画
-- [SDD Implementation Skill 設計](wiki/syntheses/sdd-implementation-skill-design.md) — 承認済みplanからSuperpowers SDDを実行し、runtime-only model/reasoning routingと日本語wiki・index・log closeoutだけをrepository固有責務として持つ新しい既定実装入口の設計。
-  検索語: sdd-implementation, Subagent-Driven Development, SDD, orchestrator, Scout, model routing, reasoning effort, llm-wiki, knowledge closeout, index.md, log.md, 実装スキル, オーケストレーター, モデル振り分け, 日本語wiki
+- [SDD Implementation Skill 設計](wiki/syntheses/sdd-implementation-skill-design.md) — 承認済みplanからSuperpowers SDDを実行し、runtime-only model/reasoning routing、日本語wiki closeout、要件実現とmaterial simplicityを優先するbounded reviewを持つ新しい既定実装入口の設計。
+  検索語: sdd-implementation, Subagent-Driven Development, SDD, orchestrator, Scout, model routing, reasoning effort, llm-wiki, knowledge closeout, material simplicity, material finding, requirements fit, index.md, log.md, 実装スキル, オーケストレーター, モデル振り分け, 日本語wiki, シンプルさ, 要件実現
 - [Issue Implementation Loop Common Lib Split Spec](wiki/syntheses/issue-implementation-loop-common-lib-split-spec.md) — `issue-implementation-loop` の `_common.py` と単一巨大 test file を internal common lib / behavior-domain tests へ分割する後続実装契約。
   検索語: issue-implementation-loop, common lib, _common.py, scripts/lib, test split, context optimization, skill split, コンテキスト最適化
 - [Issue Implementation Loop Common Lib Split Issues](wiki/syntheses/issue-implementation-loop-common-lib-split-issues.md) — common lib split 実装のローカルIssue ledger。

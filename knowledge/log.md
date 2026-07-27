@@ -1573,3 +1573,11 @@ append-only で使います。すべての entry は予測しやすい header �
 - wiki closeoutをwhole-branch final reviewの前に置き、knowledge rootがあるrepositoryでは日本語wiki、index、log同期とvalidationを`LOCAL_COMPLETE`の必須条件にした。
 - Phase 1は新`sdd-implementation` skillを既定入口として追加し、旧`grill-to-pr-loop` / `issue-implementation-loop`を明示指定時だけ残す。Phase 2の別PRで旧loop skill production filesを削除し、historical wikiはsuperseded evidenceとして保持する。
 - production implementation、旧skill変更・削除、push、PR作成、merge、release、live installは未実施。written design review後にimplementation planへ進む。
+
+## [2026-07-27] design-review-update | SDD Implementation Skill
+
+- Human feedbackにより、実装の第一優先を「承認済み要件の実現」と「その要件を満たす最も単純なimplementation」に固定した。将来仮説や互換性だけを理由にschema、state、adapter、fallback、設定を増やさない。
+- task review / final reviewをrequirements fit、material simplicity、material current riskの3観点へ限定した。style preference、具体的failure pathのない将来懸念、scope外refactor / hardening、軽微なformatting、同等案への好みはblocking findingにしない。
+- blocking findingはrequirement gap、scope excess、observable regression、material current riskのいずれかとevidenceを必要とする。material simplicity findingには同じ要件を満たすconcrete simpler alternativeとmaterial impactも要求し、それ以外のobservationはfix loopやcompletionを妨げない。
+- このreview thresholdはmechanical validator、schema check、required test suiteを弱めず、機械的に検出できるblocking failureは従来どおり修正対象とする。
+- production implementation、旧skill変更・削除、remote actionは引き続き未実施。更新後のwritten design reviewを経てからimplementation planへ進む。
