@@ -1565,3 +1565,11 @@ append-only で使います。すべての entry は予測しやすい header �
 - fix統合後のfresh full verificationはgrill-to-pr-loop 63件、issue-implementation-loop 284件、llm-wiki 6件、scripts 63件、skill architecture、3 context contracts、context report、scoped dual-host compatibility、grill-to-pr-loop quick validator、`git diff --check`がpassした。context reportはwarningsなし、execution-plan headroom 20%を維持した。
 - approved spec / sealed packetのSHA-256は`6f4a952f35dd44fb930af98403ddfe5f0760af1d398722b338a18ef4493f8c68` / `90b22e13c1a91abcee126fd05345941d91d0671c60cb6ec03774005c5c90b9d5`で不変。execution production diffはゼロ、default checkoutは開始時snapshotと一致、remote actionは0である。
 - PAP-004のfix同期commitを含むfinal rangeに対するimplementation review cycle 2とspec alignment review cycle 2は未実施であり、local `PR_READY`にはしていない。cycle 2 approvalを先取りしない。
+
+## [2026-07-27] query | SDD Implementation Skill 設計
+
+- 承認済みimplementation planからSuperpowers SDDを実行し、repository固有責務をruntime-only model / reasoning routingと`llm-wiki`による日本語wiki・`knowledge/index.md`・`knowledge/log.md` closeoutへ限定する設計を`knowledge/wiki/syntheses/sdd-implementation-skill-design.md`へ追加した。
+- main sessionはbalanced capabilityのorchestratorとしてstate、routing、path handoffだけを所有し、current-state investigation、implementation、task review、wiki authoring、final reviewをisolated subagentへ委譲する。run-specific model名、reasoning値、provider、agent IDはdurable artifactへ保存しない。
+- wiki closeoutをwhole-branch final reviewの前に置き、knowledge rootがあるrepositoryでは日本語wiki、index、log同期とvalidationを`LOCAL_COMPLETE`の必須条件にした。
+- Phase 1は新`sdd-implementation` skillを既定入口として追加し、旧`grill-to-pr-loop` / `issue-implementation-loop`を明示指定時だけ残す。Phase 2の別PRで旧loop skill production filesを削除し、historical wikiはsuperseded evidenceとして保持する。
+- production implementation、旧skill変更・削除、push、PR作成、merge、release、live installは未実施。written design review後にimplementation planへ進む。
