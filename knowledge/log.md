@@ -1466,3 +1466,18 @@ append-only で使います。すべての entry は予測しやすい header �
 - PAP-001だけを`実行可能`、PAP-002〜PAP-004をblocker releaseまで`ブロック中`とする。
 - local Issue台帳はcanonical、GitHub Issue / PRは`未作成`、remote policyは`local_only`。push、PR、merge、release、live installは非承認である。
 - Issue Gate commitを固定してからImplementation Plan、Input Packet、Execution Plan Gate evidenceを作成する。production implementationはExecution Plan Gate commit前に開始しない。
+
+## [2026-07-27] execution-plan-gate | Planning Authority Policy
+
+- decided at: `2026-07-27T09:50:50+09:00`
+- decision: `auto-continue`
+- implementation plan: `knowledge/wiki/syntheses/planning-authority-policy/implementation-plan.md`
+- normalized packet: `knowledge/wiki/syntheses/planning-authority-policy/input-packet.json`
+- packet SHA-256: `90b22e13c1a91abcee126fd05345941d91d0671c60cb6ec03774005c5c90b9d5`
+- `validate_input_packet.py`: `ok: true`、errorsなし。
+- capability preflight: `ok: true`。approved-spec seal、issue-implementation-loop、TDD、independent reviewが利用可能。parallel availabilityはplatform-dependentで、serial fallbackはworker contextに限定する。
+- fresh planning verification: grill-to-pr-loop 58 tests、llm-wiki 6 tests、`git diff --check`がpass。
+- default checkout: `HEAD=f5d151e34de5089d75be68249e09da8a2d14f282`、`## main...origin/main`でplanning開始時snapshotから不変。
+- approved write scopeと`PAP-001 -> PAP-002 -> PAP-003 -> PAP-004`はIssue Gateから不変。runnableはPAP-001だけ、後続worktreeはblocker releaseまで作らない。
+- phase policy: planning artifactをcurrent planning branchのGate commitで固定し、executionはfresh / compacted coordinatorへhandoffする。planning/grill sessionは実装しない。
+- remote policy: `local_only`。unapproved external / high-risk actionがないため、追加Human approvalなしでExecution Plan Gateをauto-continueした。

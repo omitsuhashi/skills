@@ -132,8 +132,23 @@ cycle はない。Issue Gate 承認時点で実行可能なのは `PAP-001` だ�
 - `scope`: PAP-001からPAP-004のdependency、write scope、acceptance criteria、non-goals、verification。
 - `remote action`: なし。
 
+## Execution Plan Gate
+
+- `decision`: `auto-continue`
+- `decided at`: `2026-07-27T09:50:50+09:00`
+- `implementation plan`: [Planning Authority Policy 実装計画](implementation-plan.md)
+- `normalized packet`: [Input Packet v2](input-packet.json)
+- `packet SHA-256`: `90b22e13c1a91abcee126fd05345941d91d0671c60cb6ec03774005c5c90b9d5`
+- `packet validation`: `ok: true`
+- `capability preflight`: `ok: true`
+- `scope / dependency`: Issue Gate承認内容から変更なし。`PAP-001 -> PAP-002 -> PAP-003 -> PAP-004`。
+- `execution boundary`: fresh / compacted coordinatorとworker contextが必須。planning/grill sessionは実装しない。
+- `remote policy`: `local_only`、remote actionなし。
+
 ## 関連ページ
 
 - [Planning Authority Policy 仕様](spec.md)
+- [Planning Authority Policy 実装計画](implementation-plan.md)
+- [Input Packet v2](input-packet.json)
 - [Loop Skill Codex 最適化仕様](../loop-skill-codex-optimization-spec.md)
 - [Loop Skill Context Optimization Spec](../loop-skill-context-optimization-spec.md)

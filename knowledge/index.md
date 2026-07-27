@@ -86,6 +86,8 @@ _現在なし。_
   検索語: planning authority, main planning context, supporting agent, advisory only, read only, human decision authority, host runtime, model selection, reasoning, Codex, Hermes, 計画統合, 人間承認
 - [Planning Authority Policy Issue 台帳](wiki/syntheses/planning-authority-policy/issues.md) — PAP-001〜PAP-004のfamily policy、planning運用契約、model非永続化回帰、wiki closeoutをserial dependencyで分解したIssue Gate承認済み台帳。
   検索語: planning authority, PAP, Issue Gate, local issue, blocker graph, family policy, advisory only, model persistence, ローカルIssue, ブロッカー
+- [Planning Authority Policy 実装計画](wiki/syntheses/planning-authority-policy/implementation-plan.md) / [sealed Input Packet v2](wiki/syntheses/planning-authority-policy/input-packet.json) — 承認済み4 IssueのTDD手順、worker-only実行境界、Execution Plan Gate auto-continue evidenceを固定したlocal-only handoff。
+  検索語: planning authority, implementation plan, Input Packet v2, Execution Plan Gate, sealed packet, TDD, worker-only, local-only, 実装計画
 - [Issue Implementation Loop Common Lib Split Spec](wiki/syntheses/issue-implementation-loop-common-lib-split-spec.md) — `issue-implementation-loop` の `_common.py` と単一巨大 test file を internal common lib / behavior-domain tests へ分割する後続実装契約。
   検索語: issue-implementation-loop, common lib, _common.py, scripts/lib, test split, context optimization, skill split, コンテキスト最適化
 - [Issue Implementation Loop Common Lib Split Issues](wiki/syntheses/issue-implementation-loop-common-lib-split-issues.md) — common lib split 実装のローカルIssue ledger。
