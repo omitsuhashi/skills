@@ -98,6 +98,32 @@ class SddImplementationSkillContractTests(unittest.TestCase):
         self.assertIn("Hermes Agent", self.skill_text)
         self.assertIn("skills.external_dirs", self.skill_text)
 
+    def test_review_is_bounded_to_material_findings(self) -> None:
+        for lens in ("requirements fit", "material simplicity", "material current risk"):
+            self.assertIn(lens, self.skill_text)
+        self.assertIn(
+            "A blocking finding needs evidence of a requirement gap,",
+            self.skill_text,
+        )
+        self.assertRegex(
+            self.skill_text,
+            re.compile(
+                r"Do not block on\s+style, formatting, future-only concerns, "
+                r"scope-external hardening, or equivalent\s+preferences\."
+            ),
+        )
+        self.assertIn(
+            "Do not reduce mechanical validation or required test coverage.",
+            self.skill_text,
+        )
+
+    def test_local_only_remote_boundary_is_explicit(self) -> None:
+        self.assertIn(
+            "Do not push, create a PR, merge, release, or install live without separate",
+            self.skill_text,
+        )
+        self.assertIn("explicit authorization.", self.skill_text)
+
     def test_knowledge_closeout_precedes_final_review(self) -> None:
         task_review = self.skill_text.index("All implementation tasks and task reviews")
         closeout = self.skill_text.index("## Implementation Closeout")
