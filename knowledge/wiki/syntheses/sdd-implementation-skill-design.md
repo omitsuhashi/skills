@@ -2,7 +2,7 @@
 
 ## 状態
 
-会話上の全体設計は合意済み。written design review feedbackを反映済みで、Humanの再review待ちである。production skill の実装、既存 loop skill の変更・削除、push、PR 作成、merge、live install は未実施。
+Humanがwritten designを承認し、`sdd-implementation-skill-implementation-plan.md`を実行候補として作成した。production skillの実装、既存loop skillの変更・削除、push、PR作成、merge、release、live installは未実施。
 
 ## 問題設定
 

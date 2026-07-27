@@ -1581,3 +1581,12 @@ append-only で使います。すべての entry は予測しやすい header �
 - blocking findingはrequirement gap、scope excess、observable regression、material current riskのいずれかとevidenceを必要とする。material simplicity findingには同じ要件を満たすconcrete simpler alternativeとmaterial impactも要求し、それ以外のobservationはfix loopやcompletionを妨げない。
 - このreview thresholdはmechanical validator、schema check、required test suiteを弱めず、機械的に検出できるblocking failureは従来どおり修正対象とする。
 - production implementation、旧skill変更・削除、remote actionは引き続き未実施。更新後のwritten design reviewを経てからimplementation planへ進む。
+
+## [2026-07-27] execution-plan-candidate | SDD Implementation Skill
+
+- Humanがwritten designを承認したため、`sdd-implementation-skill-implementation-plan.md`を作成した。
+- planは新Skill本体、既定repository route、integrated verificationと日本語wiki closeoutの3 taskに限定した。独自script、reference群、runtime state、packet schemaは追加しない。
+- Skill authoringはpressure scenarioのRED、static contract RED、最小SkillのGREEN、fresh evaluatorによるforward verificationの順で行う。
+- 旧`grill-to-pr-loop` / `issue-implementation-loop` directoryはPhase 1で変更せず、repository routerとarchitecture policyだけで新Skillを既定入口にする。
+- repository-wide dual-host validatorには変更前から`skills/llm-wiki/DESCRIPTION.md`の既知findingがある。scopeを広げず、新Skillのscoped dual-host validatorを完了条件にする。
+- production implementation、push、PR作成、merge、release、live installは未実施。
