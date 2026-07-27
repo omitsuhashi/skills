@@ -1,7 +1,7 @@
 schema_version = 1
 
 [families.repository-change-loop]
-description = "Repository change workflow skills that move approved work from design through local implementation."
+description = "Repository change workflow skills that move work from requirements through specification, planning, and local implementation."
 user_facing_skills = [
   "grill-to-pr-loop",
   "issue-implementation-loop",

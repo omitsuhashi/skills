@@ -139,12 +139,12 @@ class SddImplementationSkillContractTests(unittest.TestCase):
     def test_openai_metadata_matches_the_skill(self) -> None:
         self.assertIn('display_name: "SDD Implementation"', self.openai_text)
         self.assertIn(
-            'short_description: "Execute approved plans with isolated SDD workers."',
+            'short_description: "Develop changes with Superpowers, Grill, and LLM Wiki."',
             self.openai_text,
         )
         self.assertIn(
-            'default_prompt: "Use $sdd-implementation to execute this approved '
-            'implementation plan through local completion."',
+            'default_prompt: "Use $sdd-implementation to take this repository change '
+            'through specification, planning, implementation, and local completion."',
             self.openai_text,
         )
 

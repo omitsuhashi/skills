@@ -24,5 +24,5 @@
 
 ## Default implementation route
 
-- When a human-approved implementation plan is ready for local execution, use `sdd-implementation` by default.
+- For repository changes, use `sdd-implementation` by default. It composes the Superpowers lifecycle, `grill-with-docs`, and `llm-wiki`, and skips specification or planning stages that are already Human-approved and current.
 - Use `grill-to-pr-loop` or `issue-implementation-loop` only when the user explicitly names one; do not use either as an automatic fallback.

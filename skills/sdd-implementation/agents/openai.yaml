@@ -1,4 +1,4 @@
 interface:
   display_name: "SDD Implementation"
-  short_description: "Execute approved plans with isolated SDD workers."
-  default_prompt: "Use $sdd-implementation to execute this approved implementation plan through local completion."
+  short_description: "Develop changes with Superpowers, Grill, and LLM Wiki."
+  default_prompt: "Use $sdd-implementation to take this repository change through specification, planning, implementation, and local completion."
