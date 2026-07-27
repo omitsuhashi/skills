@@ -102,6 +102,8 @@ _現在なし。_
   検索語: sdd-implementation, Superpowers, brainstorming, writing-plans, Subagent-Driven Development, SDD, Grill with Docs, active runtime, capability boundary, agent-agnostic, portable skill, reasoning effort, llm-wiki, knowledge lifecycle, Written Spec, 仕様作成, 仕様精緻化
 - [SDD Agent-Agnostic Runtime Contract Implementation Plan](wiki/syntheses/sdd-agent-agnostic-runtime-implementation-plan.md) — active runtimeのcapability解決へ置き換えたportable skill contractのcurrent delta。final scoped re-reviewまで完了した`LOCAL_COMPLETE` plan。
   検索語: sdd-implementation, agent-agnostic, portable skill, active runtime, dependency discovery, capability boundary, implementation plan, TDD, pressure scenario, 実装計画, エージェント非依存
+- [SDD Compatibility Removal Follow-up Plan](wiki/syntheses/sdd-compatibility-removal-follow-up-plan.md) — agent-agnostic behaviorを維持し、非要件となったcross-runtime compatibility policy、validator、CI gateを削除するHuman-approved follow-up plan。
+  検索語: sdd-implementation, compatibility removal, cross-runtime, validator removal, CI gate removal, plugin target, follow-up plan, 互換性削除, 実装計画
 - [SDD Reasoning Effort Risk Precedence Implementation Plan](wiki/syntheses/sdd-effort-risk-precedence-implementation-plan.md) — high-risk task reviewをhighとして扱い、共有default effort vocabularyを増やさない変更は、Task 1、final review、bounded fix、scoped re-reviewを完了した`LOCAL_COMPLETE` plan。
   検索語: reasoning effort, risk precedence, task complexity, high-risk task review, low, medium, high, runtime override, final review, リスク優先, 実装計画
 - [Superpowers SDD のモデル選択・Reasoning・Host 境界調査](wiki/syntheses/sdd-superpowers-model-and-reasoning-research.md) — Superpowers v6.2.0のdispatch model選択、reasoning effort不在、Codex/Hermes adapter境界、brainstorming・planning・SDDの責任分割を一次情報で確認した調査。

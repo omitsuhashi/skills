@@ -1726,3 +1726,9 @@ append-only で使います。すべての entry は予測しやすい header �
 - spec / plan baselineは`c1f3791`、Task 1は`33fe86b`（review 0 findingsでApproved）、Task 2は`171d4f1`、Task 2 fixは`0501c45`（scoped re-review Approved）である。final reviewはCritical 0 / Important 3 / Minor 0を返した。
 - bounded final fix `44edcf0`が3件を解消し、final scoped re-reviewは全3件の解消、新規Critical / Important breakageなし、`APPROVED`を確認した。fresh pressure scenarioではsynchronous completed resultはwait / resumeなしで継続、asynchronous dispatchでwaitまたはresumeがなければ`BLOCKED`、optional effortがなければ`not_supported`として継続する。
 - canonical design、current plan、index、append-only logを同期し、fresh `skills/llm-wiki/tests` 5 testsと`git diff --check`が成功した。residual material riskはない。remote writeおよびlive mutationは実施していない。
+
+## [2026-07-28] spec-and-plan-gate | SDD Compatibility Removal Follow-up
+
+- HumanはPR作成を選択し、publish前条件としてcross-runtime compatibilityは不要と明示した。標準`SKILL.md`とactive-runtime capabilityによるagent-agnostic behaviorは維持する。
+- paired runtime packages、manifest整合、repository compatibility validator、compatibility CI gateはcurrent requirementから削除する。pluginは必要なruntimeを個別targetでき、互換性だけのために別runtime packageを追加しない。
+- focused planを`knowledge/wiki/syntheses/sdd-compatibility-removal-follow-up-plan.md`へ作成した。local completion後のbranch pushとPull Request作成は承認済みであり、merge、release、live mutationは未承認である。

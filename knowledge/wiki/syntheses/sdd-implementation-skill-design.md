@@ -6,6 +6,8 @@ Phase 1 の local implementation と verification は完了済みである。本
 
 2026-07-28にHumanは、skill contractをagent-agnosticにするrevisionを承認した。skillは実行環境の名称を判定材料にせず、入力、依存skill、必要capabilityだけで同じflowを選ぶ。依存確認はactive runtimeのdiscovery surfaceで一度行い、別runtimeを並行検査しない。isolated dispatch、model selection、optional effort、wait / resumeはruntime capabilityとして解決し、agent名による手順分岐、agent別dependency check、agent別fallbackをcurrent contractから削除する。
 
+同日のpublish前feedbackで、Humanはcross-runtime compatibility自体を非要件とした。標準`SKILL.md`によるagent-agnostic behaviorは維持するが、複数runtime向けpackageの併設、manifest整合、repository compatibility validator、compatibility CI gateはcurrent contractに含めない。pluginは必要なruntimeを個別にtargetでき、別runtime向けadapterを互換性だけのために追加しない。
+
 この agent-agnostic revision の spec / plan baseline は `c1f3791` である。Task 1 は `33fe86b240efcd03e8e9c6020f6620e87747da2d`（`Make skill runtime contracts agent agnostic`）で完了し、独立 task review は 0 findings で **Approved** となった。Task 2 は `171d4f1`、fix は `0501c45` であり、scoped re-review は **Approved** となった。baseline pressure scenario が検出した named dual-runtime preflight は、active runtime の一回だけの dependency / capability discovery に置換された。
 
 final review は Critical 0 / Important 3 / Minor 0 を返したが、bounded final fix `44edcf0` が3件を解消した。final scoped re-review は全3件の解消、新規Critical / Important breakageなし、**APPROVED** を確認した。fresh pressure scenarioでは、synchronous dispatchがcompleted resultを返す場合はwait / resumeなしで継続し、asynchronous dispatchがwaitまたはresumeを欠く場合は`BLOCKED`、optional effortがない場合は`not_supported`として継続する。したがってcurrent agent-agnostic designは `LOCAL_COMPLETE` であり、residual material riskはない。remote writeおよびlive mutationは実施していない。
@@ -301,6 +303,7 @@ knowledge root が存在するのに authority、canonical target、write bounda
 
 ## 関連ページ
 
+- [SDD Compatibility Removal Follow-up Plan](sdd-compatibility-removal-follow-up-plan.md) — publish前feedbackで非要件となったcross-runtime compatibility layerを削除するcurrent follow-up plan。
 - [Superpowers SDD のモデル選択・Reasoning・Host 境界調査](sdd-superpowers-model-and-reasoning-research.md) — upstream v6.2.0 の model、effort、host、spec / plan / SDD ownership の evidence。
 - [SDD Agent-Agnostic Runtime Contract Implementation Plan](sdd-agent-agnostic-runtime-implementation-plan.md) — current runtime behaviorのdelta / closeout candidate。
 - [SDD Implementation Superpowers-first Revision Implementation Plan](sdd-implementation-superpowers-first-implementation-plan.md) — runtime固有部分がsupersedeされた実装済みbaseline。
