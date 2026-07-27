@@ -1,10 +1,19 @@
 # Target Authorization
 
-The invocation supplies the exact source profile, declared task operation, and typed
-target identity. The local gate resolves a fresh resolver-issued profile inventory
-snapshot itself and derives the active profile set, runtime root, approved repository
-owner set, and Project owner policy from that installed instance. The caller cannot
-supply or override those authority facts.
+The invocation supplies only the declared task operation and typed target identity.
+The local gate derives the source identity from `HERMES_PROFILE` and the
+profile-shaped `HERMES_HOME`. It resolves the exact state, runtime, and profiles roots
+from the canonical Portfolio OS state config at the host home, using the default instance
+record. The resulting authority is host-derived: the public command accepts
+no profile, root, instance, or config override.
+
+`HERMES_PROFILE` is trusted only when it is bound to the exact `HERMES_HOME`,
+`HERMES_HOME` equals `<configured profiles root>/<HERMES_PROFILE>`, its parent equals
+the configured profiles root, and the profile is active in a fresh resolver-issued
+profile inventory snapshot whose materialized profile state and evidence digests
+validate. Missing, ambiguous, stale, or mismatched host context blocks the operation.
+Repeated scalar target flags are rejected even when their values are identical; the
+command never uses last-wins parsing.
 
 After duplicate and read resolution, run `portfolio-os task-preflight` immediately
 before the bounded operation's first direct GitHub MCP write. The local read-only gate must confirm that the
@@ -15,17 +24,19 @@ is valid, and the target has the exact operation-specific shape:
 - `task_create` requires one repository, exact Work Unit ID and Work Unit repository binding,
   one Project, and a deterministic pre-Issue idempotency identity. It authorizes the
   bounded Issue creation and initial Project registration in one invocation;
-- `task_project_register` requires one exact existing Issue identity, one Project,
+- `task_project_register` requires exactly one Issue identity (positive Issue number
+  XOR Issue node ID), one Project,
   and the explicit partial-resume state, and is reserved for retry or resume rather
   than the normal successful `task_create` flow;
-- `task_update` requires one exact Issue identity plus `mutation_kind=issue` and one
+- `task_update` requires exactly one Issue identity plus `mutation_kind=issue` and one
   exact Issue property, `title` or `body`, or
   that same Issue identity plus `mutation_kind=project_field`, exact Project URL,
   Project item ID, and one allowed field;
-- `task_comment` requires one exact Issue identity;
+- `task_comment` requires exactly one Issue identity;
 - `task_complete` requires the exact remaining Issue and/or Project item identity,
   `requested_field=Status` for the Project side, and `resume_state=normal`,
-  `issue_only`, or `project_only`.
+  `issue_only`, or `project_only`. When the Issue side is present, supply exactly one
+  Issue identity, never both its number and node ID.
 
 Validate `OWNER/REPOSITORY` syntax, exact equality with the Work Unit repository
 binding, membership of the owner in the approved repository owner set, and the Project

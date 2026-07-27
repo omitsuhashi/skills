@@ -250,12 +250,18 @@ class TaskManagementContractTests(unittest.TestCase):
                     flow.index("official GitHub MCP"),
                 )
 
-    def test_target_authorization_is_caller_supplied_and_operation_shaped(
+    def test_target_authorization_is_host_derived_and_operation_shaped(
         self,
     ) -> None:
         text = read(TARGET_AUTHORIZATION)
         for required in (
-            "source profile",
+            "HERMES_PROFILE",
+            "HERMES_HOME",
+            "canonical Portfolio OS state config",
+            "default instance",
+            "configured profiles root",
+            "host-derived",
+            "materialized profile",
             "fresh resolver-issued profile inventory snapshot",
             "declared task operation",
             "Work Unit ID",
@@ -274,6 +280,10 @@ class TaskManagementContractTests(unittest.TestCase):
             "zero writes",
         ):
             self.assertIn(required, text)
+        self.assertNotIn(
+            "The invocation supplies the exact source profile",
+            text,
+        )
         for prohibited in (
             "companies-local",
             "Python import",
@@ -287,6 +297,26 @@ class TaskManagementContractTests(unittest.TestCase):
             "facade, wrapper, executor, or transport adapter",
             text,
         )
+
+    def test_public_task_preflight_has_no_authority_injection_flags(self) -> None:
+        text = read(SKILL) + "\n" + read(TARGET_AUTHORIZATION)
+        for prohibited in (
+            "--source-profile",
+            "--state-root",
+            "--runtime-root",
+            "--profiles-root",
+            "--instance-id",
+            "--instance ",
+            "--config",
+        ):
+            with self.subTest(prohibited=prohibited):
+                self.assertNotIn(prohibited, text)
+        for required in (
+            "Repeated scalar target flags",
+            "exactly one Issue identity",
+            "`HERMES_PROFILE` is trusted only when",
+        ):
+            self.assertIn(required, text)
 
     def test_hermes_discovery_and_install_route_is_explicit_but_conditional(
         self,
