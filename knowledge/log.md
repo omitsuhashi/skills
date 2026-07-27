@@ -1677,3 +1677,10 @@ append-only で使います。すべての entry は予測しやすい header �
 - 共有default contractへ`xhigh`、`max`、`ultra`その他host-specific levelを追加せず、明示的runtime overrideとしてのみ扱う。user override、stuck-fix one-step escalation、effort `not_supported`時の継続条件は変更しない。
 - canonical designを更新し、実装計画を`knowledge/wiki/syntheses/sdd-effort-risk-precedence-implementation-plan.md`へ作成した。Execution Plan Gateは承認済みであり、fresh implementer、independent task review、knowledge closeout、final whole-branch reviewへ進む。
 - push、PR、merge、release、live installその他のremote writeはscope外である。
+
+## [2026-07-28] final-review-candidate | SDD Reasoning Effort Risk Precedence
+
+- spec / planは`c49fa714c917d4a0e7948ab92dfb828f2748b555`（`docs: define SDD effort risk precedence`）、Task 1 implementationは`2549892c07dc3f65c22094ca27b9208c831e65b0`（`Clarify SDD effort risk precedence`）である。Task 1の独立reviewは`APPROVED`、material findingなしである。
+- fresh verificationはSDD contract 18 tests、repository scripts 43 tests、LLM Wiki 5 testsが各`OK`であり、skill architecture validator、1 skill context contract validator、scoped dual-host compatibility、skill quick validation、`git diff --check`も成功した。
+- canonical design、focused plan、indexをTask 1実装済み・independent approval済みの状態へ同期した。spec、plan、Skill、tests、knowledge artifactsを同じbranch rangeで確認するfinal whole-branch reviewはpendingである。
+- `LOCAL_COMPLETE`と`local-complete` entryは記録していない。push、PR、merge、release、live installその他のremote writeは未実施である。

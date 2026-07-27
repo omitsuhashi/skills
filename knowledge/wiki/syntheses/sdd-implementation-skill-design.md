@@ -8,6 +8,8 @@ Phase 1 の local implementation と verification は完了済みである。本
 
 Phase 2 は fresh coordinator verification と final whole-branch review を含めて `LOCAL_COMPLETE` である。`sdd-implementation` が既定かつ唯一の user-facing 実装入口であり、`skills/grill-to-pr-loop/` と `skills/issue-implementation-loop/`、および専用 runtime / context surface は current tree から削除済みである。historical wiki と旧 baseline は非実行の証跡として保持する。本 branch は Superpowers-first revision を含む `main` のコミット `dec5647` を統合し、Draft PR #41 として公開済みである。PR merge、release、live install は未実施である。
 
+2026-07-28のreasoning effort risk precedence変更では、Task 1を`2549892c07dc3f65c22094ca27b9208c831e65b0`で実装し、独立task reviewはapproved（material findingなし）である。fresh verificationではSDD contract 18 tests、repository scripts 43 tests、LLM Wiki 5 tests、skill architecture / context validator、scoped dual-host compatibility、skill quick validation、`git diff --check`が成功した。この変更を含むfinal whole-branch reviewはまだ実施・承認されていないため、ここで`LOCAL_COMPLETE`を記録しない。remote writeも未実施である。
+
 ## 調査で確認した前提
 
 Superpowers v6.2.0 では、開発フローの責任が次のように分かれている。
