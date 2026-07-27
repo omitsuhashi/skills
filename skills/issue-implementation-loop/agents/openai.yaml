@@ -1,4 +1,0 @@
-interface:
-  display_name: "Issue Implementation Loop"
-  short_description: "依存関係対応の非停止型Issue実装ループ"
-  default_prompt: "Use $issue-implementation-loop to implement approved repository issues from a validated packet through local PR-ready output."

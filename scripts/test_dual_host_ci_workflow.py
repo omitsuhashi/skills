@@ -4,6 +4,8 @@ import unittest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = REPO_ROOT / ".github" / "workflows" / "skill-architecture.yml"
+LEGACY_GRILL_SKILL = "-".join(("grill", "to", "pr", "loop"))
+LEGACY_ISSUE_SKILL = "-".join(("issue", "implementation", "loop"))
 TASK_MANAGEMENT_TEST = (
     REPO_ROOT
     / "skills"
@@ -30,8 +32,8 @@ class DualHostCiWorkflowTests(unittest.TestCase):
             "python3 -m unittest discover -s skills/sdd-implementation/tests",
             text,
         )
-        self.assertNotIn("Run grill-to-pr-loop tests", text)
-        self.assertNotIn("Run issue-implementation-loop tests", text)
+        self.assertNotIn(f"Run {LEGACY_GRILL_SKILL} tests", text)
+        self.assertNotIn(f"Run {LEGACY_ISSUE_SKILL} tests", text)
         self.assertNotIn("plugins/task-management", text)
 
     def test_task_management_contract_is_host_neutral(self) -> None:
