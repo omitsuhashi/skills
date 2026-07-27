@@ -6,6 +6,7 @@ user_facing_skills = [
   "grill-to-pr-loop",
   "issue-implementation-loop",
 ]
+default_implementation_skill = "sdd-implementation"
 forbidden_standalone_skill_names = [
   "context-manager",
   "dependency-graph",

@@ -1565,3 +1565,38 @@ append-only で使います。すべての entry は予測しやすい header �
 - fix統合後のfresh full verificationはgrill-to-pr-loop 63件、issue-implementation-loop 284件、llm-wiki 6件、scripts 63件、skill architecture、3 context contracts、context report、scoped dual-host compatibility、grill-to-pr-loop quick validator、`git diff --check`がpassした。context reportはwarningsなし、execution-plan headroom 20%を維持した。
 - approved spec / sealed packetのSHA-256は`6f4a952f35dd44fb930af98403ddfe5f0760af1d398722b338a18ef4493f8c68` / `90b22e13c1a91abcee126fd05345941d91d0671c60cb6ec03774005c5c90b9d5`で不変。execution production diffはゼロ、default checkoutは開始時snapshotと一致、remote actionは0である。
 - PAP-004のfix同期commitを含むfinal rangeに対するimplementation review cycle 2とspec alignment review cycle 2は未実施であり、local `PR_READY`にはしていない。cycle 2 approvalを先取りしない。
+
+## [2026-07-27] query | SDD Implementation Skill 設計
+
+- 承認済みimplementation planからSuperpowers SDDを実行し、repository固有責務をruntime-only model / reasoning routingと`llm-wiki`による日本語wiki・`knowledge/index.md`・`knowledge/log.md` closeoutへ限定する設計を`knowledge/wiki/syntheses/sdd-implementation-skill-design.md`へ追加した。
+- main sessionはbalanced capabilityのorchestratorとしてstate、routing、path handoffだけを所有し、current-state investigation、implementation、task review、wiki authoring、final reviewをisolated subagentへ委譲する。run-specific model名、reasoning値、provider、agent IDはdurable artifactへ保存しない。
+- wiki closeoutをwhole-branch final reviewの前に置き、knowledge rootがあるrepositoryでは日本語wiki、index、log同期とvalidationを`LOCAL_COMPLETE`の必須条件にした。
+- Phase 1は新`sdd-implementation` skillを既定入口として追加し、旧`grill-to-pr-loop` / `issue-implementation-loop`を明示指定時だけ残す。Phase 2の別PRで旧loop skill production filesを削除し、historical wikiはsuperseded evidenceとして保持する。
+- production implementation、旧skill変更・削除、push、PR作成、merge、release、live installは未実施。written design review後にimplementation planへ進む。
+
+## [2026-07-27] design-review-update | SDD Implementation Skill
+
+- Human feedbackにより、実装の第一優先を「承認済み要件の実現」と「その要件を満たす最も単純なimplementation」に固定した。将来仮説や互換性だけを理由にschema、state、adapter、fallback、設定を増やさない。
+- task review / final reviewをrequirements fit、material simplicity、material current riskの3観点へ限定した。style preference、具体的failure pathのない将来懸念、scope外refactor / hardening、軽微なformatting、同等案への好みはblocking findingにしない。
+- blocking findingはrequirement gap、scope excess、observable regression、material current riskのいずれかとevidenceを必要とする。material simplicity findingには同じ要件を満たすconcrete simpler alternativeとmaterial impactも要求し、それ以外のobservationはfix loopやcompletionを妨げない。
+- このreview thresholdはmechanical validator、schema check、required test suiteを弱めず、機械的に検出できるblocking failureは従来どおり修正対象とする。
+- production implementation、旧skill変更・削除、remote actionは引き続き未実施。更新後のwritten design reviewを経てからimplementation planへ進む。
+
+## [2026-07-27] execution-plan-candidate | SDD Implementation Skill
+
+- Humanがwritten designを承認したため、`sdd-implementation-skill-implementation-plan.md`を作成した。
+- planは新Skill本体、既定repository route、integrated verificationと日本語wiki closeoutの3 taskに限定した。独自script、reference群、runtime state、packet schemaは追加しない。
+- Skill authoringはpressure scenarioのRED、static contract RED、最小SkillのGREEN、fresh evaluatorによるforward verificationの順で行う。
+- 旧`grill-to-pr-loop` / `issue-implementation-loop` directoryはPhase 1で変更せず、repository routerとarchitecture policyだけで新Skillを既定入口にする。
+- repository-wide dual-host validatorには変更前から`skills/llm-wiki/DESCRIPTION.md`の既知findingがある。scopeを広げず、新Skillのscoped dual-host validatorを完了条件にする。
+- production implementation、push、PR作成、merge、release、live installは未実施。
+
+## [2026-07-27] local-complete | SDD Implementation Skill Phase 1
+
+- `skills/sdd-implementation/`を追加し、Superpowers SDDをexecution engineとして再利用するmain-coordinator-only、isolated worker、runtime-only model / reasoning routingを実装した。
+- reviewはrequirements fit、material simplicity、material current riskに限定し、evidenceのないnit、style preference、future-only concern、scope外hardeningをblockingにしない。mechanical validationとrequired testsは維持する。
+- implementation task review後、final whole-branch review前に`llm-wiki`による日本語wiki、`knowledge/index.md`、`knowledge/log.md`同期を必須化した。knowledge rootなしは`not_applicable`、存在するrootの未解決closeoutは`BLOCKED`とする。
+- repository routerと`skill-architecture.toml`の`default_implementation_skill`は`sdd-implementation`を既定実装入口にした。context-contract-managedな旧`user_facing_skills` listと`grill-to-pr-loop` / `issue-implementation-loop`本体は変更せず、明示指定時だけ残した。
+- scoped skill tests、repository script tests、architecture / context validators、新Skillのdual-host / skill-creator validators、`llm-wiki` tests、Git diff checkがfreshに成功した。
+- repository-wide dual-host validationには変更前から`skills/llm-wiki/DESCRIPTION.md`の既知findingが残る。Phase 1ではscopeを広げず、新Skillのscoped dual-host validationを完了条件とした。
+- push、PR作成、merge、release、live install、Phase 2の旧skill削除は未実施。
