@@ -635,6 +635,14 @@ class ContractRunner:
                 observed_outcome = step.get("on_read_before_observed")
                 if observed_outcome is not None:
                     return observed_outcome
+                if (
+                    step["id"] == "project_item"
+                    and context.get("_receipt_state")
+                    == "project_item_unknown"
+                ):
+                    context[
+                        "_project_item_recovered_from_unknown_add"
+                    ] = True
                 continue
             preflighted_once = self._record_preflight(
                 operation,
@@ -824,6 +832,10 @@ class ContractRunner:
                 return True
             return (
                 context.get("_project_item_created_this_invocation")
+                is True
+                or context.get(
+                    "_project_item_recovered_from_unknown_add"
+                )
                 is True
             )
         condition = transition.get("applies_when")

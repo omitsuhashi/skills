@@ -480,6 +480,35 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
         )
         self.assertEqual([], self.mcp.writes)
 
+    def test_unknown_item_receipt_finishes_fields_on_unique_recovered_item(
+        self,
+    ) -> None:
+        self._seed_issue()
+        self._seed_item(fields={})
+        receipt = partial_receipt(state="project_item_unknown")
+
+        self.assertEqual(
+            "success",
+            self.runner.run(
+                "task_project_register",
+                context(partial_receipt=receipt),
+            ),
+        )
+        self.assertEqual(
+            [
+                "project_status_set_default",
+                "project_priority_set_default",
+            ],
+            self.mcp.writes,
+        )
+        self.assertEqual(
+            {
+                "Status": "Inbox",
+                "Priority": "P2",
+            },
+            only_project_item(self.mcp)["fields"],
+        )
+
     def test_unknown_item_add_multiple_readback_stops_before_retry(self) -> None:
         class DuplicateAfterUnknownAdd(FakeGitHubMCP):
             def write(self, action, operation_context):
