@@ -162,6 +162,8 @@ class OperationSelectionTests(unittest.TestCase):
             self.assertEqual(payload["target_issue"], "G2PR-001")
             self.assertEqual(payload["priority"], "reviewable")
             self.assertIn("skills/issue-implementation-loop/references/review-gate.md", payload["read_set"])
+            self.assertEqual(payload.get("skills"), ["requesting-code-review"])
+            self.assertEqual(payload.get("dispatch_skills"), [])
             self.assertTrue(payload["word_budget_result"]["within_budget"])
 
     def test_status_is_diagnostic_but_deliver_is_blocked_without_binding_state(self) -> None:
@@ -404,6 +406,8 @@ class OperationSelectionTests(unittest.TestCase):
 
             self.assertEqual(payload["operation"], "execute.dispatch")
             self.assertEqual(payload["priority"], "runnable")
+            self.assertEqual(payload.get("skills"), [])
+            self.assertEqual(payload.get("dispatch_skills"), ["tdd"])
             self.assertEqual(payload["target_issue"], "G2PR-001")
             self.assertNotIn("skills/issue-implementation-loop/references/human-wait.md", payload["read_set"])
 

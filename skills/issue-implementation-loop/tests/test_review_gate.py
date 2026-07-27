@@ -610,6 +610,25 @@ class ReviewGateTests(unittest.TestCase):
         self.assertIn("classification_needed stops the issue", text)
         self.assertIn("coordinator or human decision", text)
 
+    def test_review_gate_requires_material_findings_and_concrete_simplicity_fix(self) -> None:
+        review_text = REVIEW_GATE.read_text(encoding="utf-8")
+        mental_model_text = (
+            SKILL_DIR / "references" / "mental-model.md"
+        ).read_text(encoding="utf-8")
+        combined_text = f"{review_text}\n{mental_model_text}"
+
+        for required in (
+            "requirements",
+            "material simplicity",
+            "material risk",
+            "concrete simpler alternative",
+            "`Critical` / `Important`",
+            "`intent_gap`",
+            "Do not report `Minor`, nit",
+        ):
+            self.assertIn(required, combined_text)
+        self.assertNotIn("Critical, Important, Minor", mental_model_text)
+
     def test_review_packet_is_paths_first_committed_range_with_budget(self) -> None:
         text = REVIEW_GATE.read_text(encoding="utf-8")
 

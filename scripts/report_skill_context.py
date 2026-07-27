@@ -344,11 +344,22 @@ def _render_text_report(report: Mapping[str, object]) -> str:
             headroom = operation["budget_headroom"]
             if headroom is None:
                 headroom = f"{operation['headroom_percent']}%"
+            phase_boundaries = []
+            for field in ("skills", "dispatch_skills"):
+                values = operation.get(field)
+                if isinstance(values, list) and values:
+                    phase_boundaries.append(f"{field}={','.join(values)}")
+            boundary_suffix = (
+                f" [{'; '.join(phase_boundaries)}]"
+                if phase_boundaries
+                else ""
+            )
             lines.append(
                 f"- {operation['operation']}: "
                 f"{operation['word_count']} words, "
                 f"{operation['file_count']} files, "
                 f"headroom {headroom}"
+                f"{boundary_suffix}"
             )
     complexity = report.get("workflow_complexity")
     if isinstance(complexity, dict):
@@ -377,7 +388,7 @@ def collect_baseline(skill_dirs: Sequence[Path]) -> Dict[str, object]:
     report: Dict[str, object] = {
         "schema_version": 2,
         "report_type": "skill-context-baseline",
-        "metric_source": "context-contract.toml schema v1/v2 character and estimated-token metrics",
+        "metric_source": "context-contract.toml schema v1/v2/v3 character and estimated-token metrics",
         "captured_at": date.today().isoformat(),
         "growth_warning_threshold_percent": GROWTH_WARNING_THRESHOLD_PERCENT,
         "skills": [],
@@ -415,7 +426,7 @@ def collect_report(
     report: Dict[str, object] = {
         "schema_version": 2,
         "report_type": "skill-context-report",
-        "metric_source": "context-contract.toml schema v1/v2 character and estimated-token metrics",
+        "metric_source": "context-contract.toml schema v1/v2/v3 character and estimated-token metrics",
         "baseline_path": _relative(baseline_path),
         "baseline_required": require_baseline,
         "growth_warning_threshold_percent": GROWTH_WARNING_THRESHOLD_PERCENT,

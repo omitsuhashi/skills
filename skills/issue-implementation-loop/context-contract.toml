@@ -1,9 +1,9 @@
-schema_version = 2
+schema_version = 3
 skill = "issue-implementation-loop"
 entrypoint = "SKILL.md"
 base_references = ["references/core.md"]
 character_budget = 18000
-estimated_token_budget = 8000
+estimated_token_budget = 8200
 max_file_count = 6
 min_headroom_percent = 20
 
@@ -13,6 +13,8 @@ references = [
   "references/dependency-contract.md",
   "references/worktree-lifecycle.md",
 ]
+skills = []
+dispatch_skills = []
 
 [operations."execute.dispatch"]
 references = [
@@ -20,12 +22,16 @@ references = [
   "references/worker-contract.md",
   "references/runtime-state.md",
 ]
+skills = []
+dispatch_skills = ["tdd"]
 
 [operations."execute.wait"]
 references = [
   "references/human-wait.md",
   "references/runtime-state.md",
 ]
+skills = []
+dispatch_skills = []
 
 [operations."execute.review"]
 references = [
@@ -33,15 +39,27 @@ references = [
   "references/worker-contract.md",
   "references/runtime-state.md",
 ]
+character_budget = 19000
+estimated_token_budget = 9000
+skills = ["requesting-code-review"]
+dispatch_skills = []
 
 [operations.resume]
 references = ["references/runtime-state.md", "references/recovery.md"]
+skills = []
+dispatch_skills = []
 
 [operations.status]
 references = ["references/runtime-state.md", "references/scheduler.md"]
+skills = []
+dispatch_skills = []
 
 [operations.deliver]
 references = ["references/remote-delivery.md"]
+skills = []
+dispatch_skills = []
 
 [operations.context-compaction]
 references = ["references/context-compaction.md"]
+skills = []
+dispatch_skills = []

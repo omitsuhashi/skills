@@ -43,7 +43,13 @@ The spec must contain:
 - 人間レビューゲート。
 - 停止条件 / 既知のリスク。
 
-Self-review the spec for placeholders, contradictions, ambiguous criteria, stale paths, hidden implementation assumptions, and English prose that should be Japanese.
+Self-review in this order:
+
+1. **Requirements**: the approved problem, decisions, non-goals, acceptance criteria, verification, remote policy, and stop conditions are complete and consistent.
+2. **Material simplicity**: no concrete simpler alternative meets the same requirements and risk boundary with materially fewer mechanisms, branches, layers, duplication, or abstractions.
+3. **Material risk**: placeholders, contradictions, ambiguous criteria, stale paths, hidden implementation assumptions, and English prose that should be Japanese do not create material risk.
+
+Report only `Critical` / `Important` findings. Do not report `Minor`, nit, preference, or optional improvement. A material simplicity finding must include a concrete simpler alternative and is blocking as `intent_gap` / `Important`; otherwise approve without inventing a finding.
 
 ## Gates
 

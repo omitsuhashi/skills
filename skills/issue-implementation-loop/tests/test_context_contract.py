@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import shutil
+
 from _helpers import *
 
 
@@ -180,6 +182,171 @@ class ContextContractTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(json.loads(result.stdout)["skill"], "cwd-loop")
 
+    def test_generic_v3_requires_phase_skill_fields_for_every_operation(self) -> None:
+        cases = (
+            ("skills", 'dispatch_skills = []', "operations.test.skills must be an array"),
+            ("dispatch_skills", 'skills = []', "operations.test.dispatch_skills must be an array"),
+        )
+        for field, present_field, expected in cases:
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as tmp:
+                skill_dir = write_example_skill(
+                    Path(tmp),
+                    "example-loop",
+                    "\n".join(
+                        [
+                            "schema_version = 3",
+                            'skill = "example-loop"',
+                            'entrypoint = "SKILL.md"',
+                            'base_references = ["references/core.md"]',
+                            "character_budget = 5000",
+                            "estimated_token_budget = 1000",
+                            "max_file_count = 4",
+                            "min_headroom_percent = 0",
+                            "",
+                            "[operations.test]",
+                            'references = ["references/extra.md"]',
+                            present_field,
+                        ]
+                    ),
+                )
+
+                result = run_generic_context_validator("--skill", str(skill_dir))
+
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(expected, result.stderr)
+
+    def test_generic_v3_rejects_empty_or_duplicate_phase_skill_names(self) -> None:
+        cases = (
+            (
+                'skills = [""]',
+                "dispatch_skills = []",
+                "operations.test.skills must be an array of non-empty strings",
+            ),
+            (
+                "skills = []",
+                'dispatch_skills = ["tdd", "tdd"]',
+                "operations.test.dispatch_skills contains duplicate skill: tdd",
+            ),
+        )
+        for skills_field, dispatch_skills_field, expected in cases:
+            with self.subTest(expected=expected), tempfile.TemporaryDirectory() as tmp:
+                skill_dir = write_example_skill(
+                    Path(tmp),
+                    "example-loop",
+                    "\n".join(
+                        [
+                            "schema_version = 3",
+                            'skill = "example-loop"',
+                            'entrypoint = "SKILL.md"',
+                            'base_references = ["references/core.md"]',
+                            "character_budget = 5000",
+                            "estimated_token_budget = 1000",
+                            "max_file_count = 4",
+                            "min_headroom_percent = 0",
+                            "",
+                            "[operations.test]",
+                            'references = ["references/extra.md"]',
+                            skills_field,
+                            dispatch_skills_field,
+                        ]
+                    ),
+                )
+
+                result = run_generic_context_validator("--skill", str(skill_dir))
+
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(expected, result.stderr)
+
+    def test_generic_v3_inspector_returns_phase_skill_boundaries(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            skill_dir = write_example_skill(
+                Path(tmp),
+                "example-loop",
+                "\n".join(
+                    [
+                        "schema_version = 3",
+                        'skill = "example-loop"',
+                        'entrypoint = "SKILL.md"',
+                        'base_references = ["references/core.md"]',
+                        "character_budget = 5000",
+                        "estimated_token_budget = 1000",
+                        "max_file_count = 4",
+                        "min_headroom_percent = 0",
+                        "",
+                        "[operations.test]",
+                        'references = ["references/extra.md"]',
+                        'skills = ["requesting-code-review"]',
+                        "dispatch_skills = []",
+                    ]
+                ),
+            )
+
+            json_result = run_generic_context_inspector(
+                "--skill",
+                str(skill_dir),
+                "--operation",
+                "test",
+                "--json",
+            )
+            text_result = run_generic_context_inspector(
+                "--skill",
+                str(skill_dir),
+                "--operation",
+                "test",
+            )
+
+            self.assertEqual(json_result.returncode, 0, json_result.stderr)
+            payload = json.loads(json_result.stdout)
+            self.assertEqual(payload["skills"], ["requesting-code-review"])
+            self.assertEqual(payload["dispatch_skills"], [])
+            self.assertIn("skills: requesting-code-review", text_result.stdout)
+            self.assertIn("dispatch_skills: none", text_result.stdout)
+
+    def test_generic_validator_preserves_v1_v2_compatibility(self) -> None:
+        for schema in (1, 2):
+            with self.subTest(schema=schema), tempfile.TemporaryDirectory() as tmp:
+                budget_lines = (
+                    ["word_budget = 100"]
+                    if schema == 1
+                    else [
+                        "schema_version = 2",
+                        "character_budget = 5000",
+                        "estimated_token_budget = 1000",
+                        "min_headroom_percent = 0",
+                    ]
+                )
+                skill_dir = write_example_skill(
+                    Path(tmp),
+                    "example-loop",
+                    "\n".join(
+                        [
+                            'skill = "example-loop"',
+                            'entrypoint = "SKILL.md"',
+                            'base_references = ["references/core.md"]',
+                            *budget_lines,
+                            "max_file_count = 4",
+                            "",
+                            "[operations.test]",
+                            'references = ["references/extra.md"]',
+                        ]
+                    ),
+                )
+
+                result = run_generic_context_validator("--skill", str(skill_dir))
+                inspect_result = run_generic_context_inspector(
+                    "--skill",
+                    str(skill_dir),
+                    "--operation",
+                    "test",
+                    "--json",
+                )
+
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(inspect_result.returncode, 0, inspect_result.stderr)
+                payload = json.loads(inspect_result.stdout)
+                self.assertEqual(payload.get("skills"), [])
+                self.assertEqual(payload.get("dispatch_skills"), [])
+
     def test_validator_rejects_context_contract_failure_cases(self) -> None:
         cases = [
             (
@@ -357,14 +524,38 @@ class ContextContractTests(unittest.TestCase):
 
         self.assertEqual(inspect_result.returncode, 0, inspect_result.stderr)
         payload = json.loads(inspect_result.stdout)
-        self.assertEqual(payload["schema_version"], 2)
+        self.assertEqual(payload["schema_version"], 3)
         self.assertEqual(payload["skill"], "issue-implementation-loop")
+        self.assertEqual(payload["skills"], ["requesting-code-review"])
+        self.assertEqual(payload["dispatch_skills"], [])
         self.assertGreater(payload["character_count"], 0)
         self.assertGreater(payload["non_whitespace_character_count"], 0)
         self.assertGreater(payload["estimated_token_count"], 0)
         self.assertIn("headroom_percent", payload)
         self.assertIsNone(payload["word_budget"])
         self.assertGreater(payload["budget"]["estimated_token_budget"], 0)
+
+    def test_generic_validator_rejects_phase_skill_mapping_drift(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            skill_dir = Path(tmp) / "skills" / "issue-implementation-loop"
+            shutil.copytree(SKILL_DIR, skill_dir)
+            contract_path = skill_dir / "context-contract.toml"
+            contract_text = contract_path.read_text(encoding="utf-8")
+            contract_text = contract_text.replace(
+                'skills = ["requesting-code-review"]',
+                "skills = []",
+                1,
+            )
+            contract_path.write_text(contract_text, encoding="utf-8")
+
+            result = run_generic_context_validator("--skill", str(skill_dir))
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn(
+                "unexpected phase skill mapping: "
+                "issue-implementation-loop execute.review.skills",
+                result.stderr,
+            )
 
     def test_issue_loop_contract_defines_wait_operation_and_slim_dispatch(self) -> None:
         dispatch_result = run_generic_context_inspector(
@@ -386,6 +577,10 @@ class ContextContractTests(unittest.TestCase):
         self.assertEqual(wait_result.returncode, 0, wait_result.stderr)
         dispatch_payload = json.loads(dispatch_result.stdout)
         wait_payload = json.loads(wait_result.stdout)
+        self.assertEqual(dispatch_payload.get("skills"), [])
+        self.assertEqual(dispatch_payload.get("dispatch_skills"), ["tdd"])
+        self.assertEqual(wait_payload.get("skills"), [])
+        self.assertEqual(wait_payload.get("dispatch_skills"), [])
         self.assertNotIn(
             "skills/issue-implementation-loop/references/human-wait.md",
             dispatch_payload["files"],

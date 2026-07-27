@@ -36,6 +36,7 @@ Any ok=false blocks state changes. Read-only status remains available on any cap
 ## Mode Router
 
 Always read `references/core.md`; use `scripts/select_operation.py` and `context-contract.toml` for the operation read-set.
+Read only the current operation's `skills`. Only its bounded actor reads `dispatch_skills`; the coordinator does not load dispatch or future operation skills. Read task-triggered skills on demand only in the current phase.
 At 65% session pressure or phase exit, read `references/context-compaction.md`.
 
 ## Required Rules
@@ -47,10 +48,10 @@ At 65% session pressure or phase exit, read `references/context-compaction.md`.
 - Keep instantiated artifacts in the operation's untracked runtime tree, outside issue branches.
 - Reserve every issue branch/worktree before execution; require `epic_base`, `base_policy`, typed dependencies, and `epic_base.branch_state` for `batch_issue_prs`.
 - Recompute runnable work after every event; a wave is not a completion barrier.
-- Use `tdd` or an approved equivalent, fresh verification, and a scoped commit before review or success.
+- Dispatch implement/fix workers with the current operation's `dispatch_skills`; require `tdd` or an approved equivalent, fresh verification, and a scoped commit before review or success.
 - Send bounded paths-first packets. Keep workers in write scope; only the coordinator writes envelope/runtime/events/shared ledger unless assigned.
 - Keep ledger and human-facing report updates in Japanese; preserve stable IDs, paths, commands, schema keys, and external issue/PR references.
-- Review before completion/blocker release/`PR_READY`; fix in-scope Critical/Important findings within two cycles or seek human risk acceptance.
+- Review requirements, material simplicity, then material risk before completion/blocker release/`PR_READY`; fix in-scope `Critical` / `Important` findings within two cycles or seek human risk acceptance.
 - Scope human waits narrowly; reserve `epic` for shared corruption/safety/contract failures.
 - Remote writes require approved policy; final merge is human-only.
 

@@ -173,6 +173,21 @@ class EntrypointTests(unittest.TestCase):
         ):
             self.assertNotIn(operation_reference, text)
 
+    def test_skill_entrypoint_scopes_phase_skills_and_material_review(self) -> None:
+        text = SKILL_FILE.read_text(encoding="utf-8")
+
+        for required in (
+            "current operation",
+            "`skills`",
+            "`dispatch_skills`",
+            "task-triggered",
+            "on demand",
+            "future operation",
+            "material simplicity",
+            "`Critical` / `Important`",
+        ):
+            self.assertIn(required, text)
+
     def test_skill_entrypoint_discovers_role_boundary_mental_model(self) -> None:
         text = SKILL_FILE.read_text(encoding="utf-8")
         mental_model = SKILL_DIR / "references" / "mental-model.md"

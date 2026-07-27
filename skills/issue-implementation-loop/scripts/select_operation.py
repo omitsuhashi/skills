@@ -51,6 +51,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"operation: {result['operation']}")
         print(f"priority: {result['priority']}")
         print(f"reason: {result['reason']}")
+        print(f"skills: {', '.join(result['skills']) or 'none'}")
+        print(f"dispatch_skills: {', '.join(result['dispatch_skills']) or 'none'}")
         if result.get("target_issue"):
             print(f"target_issue: {result['target_issue']}")
         budget = result["word_budget_result"]
