@@ -44,16 +44,26 @@ def repository_change_loop_family(policy: dict[str, object] | None = None) -> di
 
 class SkillArchitecturePolicyTests(unittest.TestCase):
     def test_validator_rejects_planning_authority_value_drift(self) -> None:
-        policy = architecture_policy()
-        family = repository_change_loop_family(policy)
-        planning_authority = family["planning_authority"]
-        assert isinstance(planning_authority, dict)
-        planning_authority["supporting_agent_authority"] = "decision_maker"
-
-        self.assertIn(
-            "planning_authority.supporting_agent_authority must be advisory_only",
-            validate_policy(policy),
+        invalid_values = (
+            ("integration_owner", "supporting_planning_agent", "main_planning_context"),
+            ("supporting_agent_authority", "decision_maker", "advisory_only"),
+            ("decision_authority", "supporting_agent", "human"),
+            ("model_selection", "repository_policy", "host_runtime"),
+            ("model_persistence", "allowed", "forbidden"),
         )
+
+        for field, invalid, expected in invalid_values:
+            with self.subTest(field=field):
+                policy = architecture_policy()
+                family = repository_change_loop_family(policy)
+                planning_authority = family["planning_authority"]
+                assert isinstance(planning_authority, dict)
+                planning_authority[field] = invalid
+
+                self.assertIn(
+                    f"planning_authority.{field} must be {expected}",
+                    validate_policy(policy),
+                )
 
     def test_validator_rejects_unknown_planning_authority_field(self) -> None:
         policy = architecture_policy()
