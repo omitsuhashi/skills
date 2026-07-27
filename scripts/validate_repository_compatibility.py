@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate Codex/Hermes repository compatibility without live mutations."""
+"""Validate portable skills and paired plugin packages without live mutations."""
 
 from __future__ import annotations
 
@@ -284,7 +284,7 @@ def main(argv: list[str] | None = None) -> int:
         for error in errors:
             print(f"ERROR: {error}", file=sys.stderr)
     else:
-        print("OK: dual-host repository compatibility")
+        print("OK: repository compatibility")
     return 1 if errors else 0
 
 

@@ -7,17 +7,17 @@ SKILLS = REPO_ROOT / "skills" / "AGENTS.md"
 PLUGINS = REPO_ROOT / "plugins" / "AGENTS.md"
 
 
-class DualHostAuthoringGuidanceTests(unittest.TestCase):
+class SkillAuthoringGuidanceTests(unittest.TestCase):
     def test_root_routes_to_directory_contracts(self):
         text = ROOT.read_text(encoding="utf-8")
-        for value in ("Codex and Hermes Agent", "skills/AGENTS.md", "plugins/AGENTS.md"):
+        for value in ("portable", "skills/AGENTS.md", "plugins/AGENTS.md"):
             self.assertIn(value, text)
 
-    def test_skill_contract_names_entrypoint_and_discovery_boundary(self):
+    def test_skill_contract_names_portable_entrypoint_and_runtime_boundary(self):
         text = SKILLS.read_text(encoding="utf-8")
         for value in (
-            "SKILL.md", "name", "description", "description.md",
-            "agents/openai.yaml", "skills.external_dirs", "hermes skills list",
+            "SKILL.md", "name", "description", "inputs", "outputs",
+            "capabilities", "active runtime", "optional metadata",
         ):
             self.assertIn(value, text)
         self.assertIn("must not create `description.md`", text)

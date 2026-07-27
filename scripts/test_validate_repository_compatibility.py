@@ -5,14 +5,14 @@ import sys
 import tempfile
 import unittest
 
-from validate_dual_host_compatibility import (
+from validate_repository_compatibility import (
     validate_plugin,
     validate_repository,
     validate_skill,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-VALIDATOR = REPO_ROOT / "scripts" / "validate_dual_host_compatibility.py"
+VALIDATOR = REPO_ROOT / "scripts" / "validate_repository_compatibility.py"
 
 
 def write_skill(root, name, description="Shared workflow."):
@@ -55,7 +55,7 @@ def write_plugin(root, name="sample-plugin"):
     return plugin_dir
 
 
-class DualHostCompatibilityTests(unittest.TestCase):
+class RepositoryCompatibilityTests(unittest.TestCase):
     def test_valid_repository_passes(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

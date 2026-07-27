@@ -11,8 +11,7 @@ runtime snapshot, event log, or resume protocol.
 
 ## Dependency Preflight
 
-Before entering a selected route, verify its dependency discovery and required host capabilities on both Codex and Hermes Agent.
-Use Codex skill discovery and Hermes Agent installed skills or `skills.external_dirs`.
+Before entering a selected route, use the active runtime's skill discovery to verify applicable dependencies and required capabilities.
 Check the Superpowers lifecycle skills for every route.
 Check `grill-with-docs` when the Spec Stage requires it.
 Check `llm-wiki` when a knowledge root exists.
@@ -94,8 +93,8 @@ short verdicts. Never implement production code, perform task review, or author
 wiki content in the main session.
 
 Use fresh implementers and independent reviewers. Do not inherit the parent
-conversation. On Codex, use `fork_turns="none"`; on Hermes Agent, use the
-equivalent fresh context. Pass durable paths and missing task-local facts only.
+conversation. Use the runtime's isolated fresh-context dispatch mechanism.
+Pass durable paths and missing task-local facts only.
 
 Run SDD sequentially. Review only requirements fit, material simplicity, and
 material current risk. A blocking finding needs evidence of a requirement gap,
@@ -107,7 +106,7 @@ All implementation tasks and task reviews must be complete before closeout.
 
 ## Runtime Model And Effort
 
-Follow the current Superpowers SDD Model Selection contract. Every subagent dispatch must state its model. Let Superpowers choose the relative tier for the task and resolve that tier to a concrete model available in the current host.
+Follow the current Superpowers SDD Model Selection contract. Every subagent dispatch must state its model. Let Superpowers choose the relative tier for the task and resolve that tier to a concrete model available in the active runtime.
 Do not maintain a second role-to-model table.
 
 An explicit user runtime model override takes precedence over upstream model-tier resolution.
@@ -128,18 +127,18 @@ An explicit user runtime effort override takes precedence over the default effor
 For a stuck fix, raise effort one available step before following Superpowers
 model escalation.
 
-When a host has no independent effort control, record `not_supported` and continue with Superpowers model selection. Lack of independent effort control does not block the flow. Lack of isolated dispatch with an explicit model is `BLOCKED`.
+When the active runtime has no independent effort control, record `not_supported` and continue with Superpowers model selection. Lack of independent effort control does not block the flow. Lack of isolated dispatch with an explicit model is `BLOCKED`.
 
 Persist no concrete model, effort, provider, availability, agent ID, or
 run-specific resolution in the specification, plan, wiki, ledger, or schema.
 
-## Host Boundary
+## Runtime Capability Boundary
 
-Codex maps isolated dispatch, explicit model, optional effort, wait, and resume
-to current host capabilities. Hermes Agent is not assumed to have an upstream
-adapter; detect and map fresh worker/reviewer, model selector, optional effort,
-and resume capabilities. Keep `skills.external_dirs` as the documented Hermes
-discovery route.
+Map isolated dispatch, explicit model, optional effort, wait, and resume to the
+active runtime's capabilities. Detect the fresh worker/reviewer dispatch
+mechanism, model selector, optional effort control, and wait/resume mechanisms
+before entering SDD. Required isolated dispatch and explicit-model capabilities
+are `BLOCKED` when absent; optional effort is `not_supported` when absent.
 
 Do not hard-code host tool names or model catalogs. Do not silently fall back to
 main-session implementation or an old loop skill when required SDD capability

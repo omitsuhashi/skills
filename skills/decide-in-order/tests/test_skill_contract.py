@@ -34,7 +34,7 @@ class DecideInOrderSkillContractTests(unittest.TestCase):
         ):
             self.assertIn(trigger, frontmatter)
 
-    def test_hermes_uses_the_standard_skill_entrypoint(self) -> None:
+    def test_portable_skill_uses_the_standard_entrypoint(self) -> None:
         frontmatter = self.skill_text.split("---", 2)[1]
         self.assertIn("name: decide-in-order", frontmatter)
         self.assertIn("description:", frontmatter)

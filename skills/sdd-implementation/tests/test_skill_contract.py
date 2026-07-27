@@ -120,10 +120,10 @@ class SddImplementationSkillContractTests(unittest.TestCase):
             self.skill_text,
         )
 
-    def test_required_skill_families_are_preflighted_on_both_hosts(self) -> None:
+    def test_required_skill_families_are_preflighted_in_the_active_runtime(self) -> None:
         self.assertIn(
-            "Before entering a selected route, verify its dependency discovery and "
-            "required host capabilities on both Codex and Hermes Agent.",
+            "Before entering a selected route, use the active runtime's skill discovery "
+            "to verify applicable dependencies and required capabilities.",
             self.skill_text,
         )
         for dependency in (
@@ -132,11 +132,6 @@ class SddImplementationSkillContractTests(unittest.TestCase):
             "`llm-wiki`",
         ):
             self.assertIn(dependency, self.skill_text)
-        self.assertIn("Codex skill discovery", self.skill_text)
-        self.assertIn(
-            "Hermes Agent installed skills or `skills.external_dirs`",
-            self.skill_text,
-        )
         for blocker in (
             "`BLOCKED: missing Superpowers lifecycle dependency`",
             "`BLOCKED: missing grill-with-docs dependency`",
@@ -158,7 +153,16 @@ class SddImplementationSkillContractTests(unittest.TestCase):
             self.skill_text,
         )
 
-    def test_host_boundary_distinguishes_optional_effort_from_required_dispatch(self) -> None:
+    def test_runtime_capability_boundary_distinguishes_optional_effort_from_required_dispatch(self) -> None:
+        self.assertIn("## Runtime Capability Boundary", self.skill_text)
+        for capability in (
+            "isolated dispatch",
+            "explicit model",
+            "optional effort",
+            "wait",
+            "resume",
+        ):
+            self.assertIn(capability, self.skill_text)
         self.assertIn(
             "Lack of independent effort control does not block the flow.",
             self.skill_text,
@@ -167,9 +171,8 @@ class SddImplementationSkillContractTests(unittest.TestCase):
             "Lack of isolated dispatch with an explicit model is `BLOCKED`.",
             self.skill_text,
         )
-        self.assertIn("Codex", self.skill_text)
-        self.assertIn("Hermes Agent", self.skill_text)
-        self.assertIn("skills.external_dirs", self.skill_text)
+        self.assertNotIn("Codex", self.skill_text)
+        self.assertNotIn("Hermes Agent", self.skill_text)
 
     def test_review_is_bounded_to_material_findings(self) -> None:
         for lens in ("requirements fit", "material simplicity", "material current risk"):
