@@ -61,7 +61,7 @@ class TaskManagementContractTests(unittest.TestCase):
         actual_files = {
             path.relative_to(SKILL_ROOT).as_posix()
             for path in SKILL_ROOT.rglob("*")
-            if path.is_file()
+            if path.is_file() and "__pycache__" not in path.parts
         }
         self.assertEqual(EXPECTED_FILES, actual_files)
         self.assertFalse((REPO_ROOT / "plugins" / "task-management").exists())
@@ -81,18 +81,16 @@ class TaskManagementContractTests(unittest.TestCase):
         ):
             self.assertIn(required, text)
 
-    def test_skill_has_no_host_specific_or_runtime_surface(self) -> None:
+    def test_skill_has_no_runtime_implementation_surface(self) -> None:
         production = [
             SKILL,
             *sorted((SKILL_ROOT / "references").glob("*.md")),
         ]
         text = "\n".join(read(path) for path in production)
         for prohibited in (
-            "Hermes",
             "Codex",
             "task-management-read",
             "task_adapter__",
-            "work_unit_id",
         ):
             self.assertNotIn(prohibited, text)
         self.assertFalse((SKILL_ROOT / "agents").exists())
@@ -184,10 +182,10 @@ class TaskManagementContractTests(unittest.TestCase):
     def test_operation_routing_is_classified_before_capabilities(self) -> None:
         text = read(SKILL)
         routing = section(text, "## Operation routing")
-        self.assertIn("For every write route", routing)
+        self.assertIn("For every bounded write operation", routing)
         self.assertLess(
             routing.index("Classify the requested operation"),
-            routing.index("For every write route"),
+            routing.index("For every bounded write operation"),
         )
 
         read_flow = section(text, "### Read, search, and list")
@@ -240,11 +238,16 @@ class TaskManagementContractTests(unittest.TestCase):
         ):
             with self.subTest(heading=heading):
                 flow = section(text, heading)
-                self.assertIn("generic target guard", flow)
+                self.assertIn("portfolio-os task-preflight", flow)
+                self.assertIn("direct GitHub MCP capability and access check", flow)
                 self.assertIn("zero writes", flow)
                 self.assertLess(
-                    flow.index("generic target guard"),
-                    flow.index("GitHub MCP"),
+                    flow.index("portfolio-os task-preflight"),
+                    flow.index("direct GitHub MCP capability and access check"),
+                )
+                self.assertLess(
+                    flow.index("direct GitHub MCP capability and access check"),
+                    flow.index("official GitHub MCP"),
                 )
 
     def test_target_authorization_is_caller_supplied_and_operation_shaped(
@@ -253,16 +256,20 @@ class TaskManagementContractTests(unittest.TestCase):
         text = read(TARGET_AUTHORIZATION)
         for required in (
             "source profile",
-            "active profile snapshot",
+            "fresh resolver-issued profile inventory snapshot",
             "declared task operation",
             "Work Unit ID",
             "Work Unit repository binding",
             "approved repository owner",
             "Project owner policy",
-            "create / register",
+            "task_create",
+            "task_project_register",
+            "task_update",
             "comment",
-            "project-only field update",
-            "issue edit / complete",
+            "task_complete",
+            "mutation_kind",
+            "issue_only",
+            "project_only",
             "confirmation-needed",
             "zero writes",
         ):
@@ -270,11 +277,30 @@ class TaskManagementContractTests(unittest.TestCase):
         for prohibited in (
             "companies-local",
             "Python import",
-            "facade",
-            "wrapper",
-            "executor",
         ):
             self.assertNotIn(prohibited, text)
+        self.assertIn(
+            "never invokes MCP",
+            text,
+        )
+        self.assertIn(
+            "facade, wrapper, executor, or transport adapter",
+            text,
+        )
+
+    def test_hermes_discovery_and_install_route_is_explicit_but_conditional(
+        self,
+    ) -> None:
+        text = read(SKILL)
+        for required in (
+            "Hermes",
+            "skills.external_dirs",
+            "hermes skills list",
+            "compatibility does not prove live availability",
+        ):
+            self.assertIn(required, text)
+        self.assertIn("If Hermes is the host", text)
+        self.assertIn("do not install automatically", text)
 
     def test_target_guard_rejects_ambiguous_bulk_and_conflicting_targets(
         self,
@@ -310,6 +336,18 @@ class TaskManagementContractTests(unittest.TestCase):
         ):
             self.assertNotIn(unrelated, create_flow)
         self.assertIn("check only the create operation capabilities", create_flow)
+        self.assertIn(
+            "That one gate authorizes the bounded Issue-create plus initial-Project-registration plan",
+            create_flow,
+        )
+        self.assertIn(
+            "Do not run `task_project_register` during this normal successful create flow",
+            create_flow,
+        )
+        self.assertIn(
+            "Reserve `task_project_register` for retry or resume",
+            create_flow,
+        )
 
     def test_skill_uses_direct_mcp_and_has_structural_inferred_create_gate(self) -> None:
         text = "\n".join(
