@@ -8,6 +8,8 @@ Phase 1 の local implementation と verification は完了済みである。本
 
 Phase 2 は fresh coordinator verification と final whole-branch review を含めて `LOCAL_COMPLETE` である。`sdd-implementation` が既定かつ唯一の user-facing 実装入口であり、`skills/grill-to-pr-loop/` と `skills/issue-implementation-loop/`、および専用 runtime / context surface は current tree から削除済みである。historical wiki と旧 baseline は非実行の証跡として保持する。本 branch は Superpowers-first revision を含む `main` のコミット `dec5647` を統合し、Draft PR #41 として公開済みである。PR merge、release、live install は未実施である。
 
+2026-07-28のreasoning effort risk precedence変更は`LOCAL_COMPLETE`である。Task 1を`2549892c07dc3f65c22094ca27b9208c831e65b0`で実装し、独立task reviewはapproved（material findingなし）となった。closeout candidate `ffa8339df00a5a8dfec90f572e843509516f49fe`へのfinal whole-branch reviewはknowledge discoverability / provenanceのImportant 2件を返したが、bounded fix `a7d0d294a6ccdbeec84f44c0cd6f3060967de5d1`で両方を解消し、scoped re-reviewはresolved 2/2、新規Critical / Importantなしで`APPROVED`となった。fresh verificationはSDD contract 18 tests、repository scripts 43 tests、LLM Wiki 5 tests、skill architecture / context validator、scoped dual-host compatibility、skill quick validation、`git diff --check`が成功している。push、PR、merge、release、live installその他のremote writeは実施していない。
+
 ## 調査で確認した前提
 
 Superpowers v6.2.0 では、開発フローの責任が次のように分かれている。
@@ -163,9 +165,13 @@ reasoning effort は model tier と独立した optional runtime overlay とす�
 | multi-file integration、normal debugging、task review | medium |
 | architecture-sensitive / high-risk task、final whole-branch review | high |
 
+effort は worker role だけでなく、実際の task complexity / risk で分類する。複数行に該当する場合は、より高い complexity / risk の行を優先する。したがって、通常の task review は medium だが、architecture-sensitive または high-risk な task review は high とする。全 task を機械的に一段上げることはしない。
+
 fix loop が同じ failure で収束しない場合は、まず available な範囲で effort を一段上げる。それでも不足する場合は、Superpowers の model escalation に従う。user が runtime effort を明示した場合は、その指定を優先する。
 
 host が独立した effort control を提供しない場合は `not_supported` として扱い、Superpowers の model selection だけで継続する。reasoning effort がないことだけを理由に全 flow を block しない。model を明示して isolated dispatch する能力自体がない場合は `BLOCKED` とする。
+
+共有 contract の既定 vocabulary は low / medium / high に限定する。host がそれより高い effort level を提供していても、通常のtask classへ追加せず、明示的なruntime overrideとしてのみ扱う。
 
 concrete model、effort、provider、availability、agent ID、run-specific resolution は runtime-only とし、spec、plan、wiki、ledger、schemaへ永続化しない。
 
@@ -227,7 +233,9 @@ knowledge root が存在するのに authority、canonical target、write bounda
 - approved current spec では Grill が `not_needed` になり、plan stage へ進む。
 - Written Spec approval なしでは plan / implementation に進めない。
 - upstream model selection を参照し、重複する repo-local role-to-model table を持たない。
-- effort overlay が low / medium / high と user override / escalation を定義する。
+- effort overlay が low / medium / high、risk-over-role precedence、user override / escalation を定義する。
+- architecture-sensitive / high-risk task review が generic task-review default の medium ではなく high になる。
+- 共有 contract の既定 vocabulary に host-specific な higher effort level を追加しない。
 - effort unsupported は `not_supported`、isolated model dispatch unsupported は `BLOCKED` になる。
 - knowledge root の有無と write boundary に応じて query / ingest / closeout を選べる。
 - concrete runtime choice を durable artifact へ保存しない。
@@ -241,11 +249,12 @@ knowledge root が存在するのに authority、canonical target、write bounda
 3. approved spec を再 grilling せず plan 化する。
 4. current spec に binding された approved plan を直接 SDD へ渡す。
 5. mechanical / integration / high-risk dispatch で upstream model tier と local effort overlay が独立して解決される。
-6. effort unsupported host で upstream model selection により正常継続する。
-7. Hermes capability 不足を明示して fail closed する。
-8. knowledge root ありで approved spec / plan / closeout、index、log を同期してから final review する。
-9. knowledge root なしで wiki stage を `not_applicable` にする。
-10. wiki validation failure が `LOCAL_COMPLETE` を block する。
+6. architecture-sensitive / high-risk task review で role default より risk classification が優先され、high が選ばれる。
+7. effort unsupported host で upstream model selection により正常継続する。
+8. Hermes capability 不足を明示して fail closed する。
+9. knowledge root ありで approved spec / plan / closeout、index、log を同期してから final review する。
+10. knowledge root なしで wiki stage を `not_applicable` にする。
+11. wiki validation failure が `LOCAL_COMPLETE` を block する。
 
 ## Completion Contract
 

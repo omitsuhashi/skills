@@ -106,6 +106,20 @@ class SddImplementationSkillContractTests(unittest.TestCase):
             self.skill_text,
         )
 
+    def test_task_complexity_and_risk_override_role_effort_defaults(self) -> None:
+        self.assertIn(
+            "Task complexity and current risk take precedence over role defaults.",
+            self.skill_text,
+        )
+        self.assertIn(
+            "A high-risk task review uses `high`, regardless of its role default.",
+            self.skill_text,
+        )
+        self.assertIn(
+            "The shared default effort vocabulary is limited to `low`, `medium`, and `high`.",
+            self.skill_text,
+        )
+
     def test_required_skill_families_are_preflighted_on_both_hosts(self) -> None:
         self.assertIn(
             "Before entering a selected route, verify its dependency discovery and "

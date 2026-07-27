@@ -1670,3 +1670,32 @@ append-only で使います。すべての entry は予測しやすい header �
 - GitHub上の最新`main`である`dec5647`（PR #39、Superpowers-first revision）を`codex/sdd-implementation-phase2-removal`へ統合した。`AGENTS.md`、architecture policy / tests、SDD design、knowledge index / logの競合は、Superpowers-first lifecycleとSDD-only route / legacy removalの両方を保持して解消した。
 - fresh verificationはSDD 17 tests、LLM Wiki 5 tests、repository scripts 43 tests、skill architecture validator、1 skill context contract、warningsなしのcontext report、scoped dual-host validator、skill-creator quick validator、legacy directory absence、`git diff --check`のすべてが成功した。
 - branchはDraft PR #41として公開済みである。PR merge、release、live installは未実施である。
+
+## [2026-07-28] spec-and-plan-gate | SDD Reasoning Effort Risk Precedence
+
+- Humanは既存のlow / medium / high mappingを維持し、task complexity / riskをrole defaultより優先する方針を承認した。通常のtask reviewはmedium、architecture-sensitive / high-risk task reviewはhighとする。
+- 共有default contractへ`xhigh`、`max`、`ultra`その他host-specific levelを追加せず、明示的runtime overrideとしてのみ扱う。user override、stuck-fix one-step escalation、effort `not_supported`時の継続条件は変更しない。
+- canonical designを更新し、実装計画を`knowledge/wiki/syntheses/sdd-effort-risk-precedence-implementation-plan.md`へ作成した。Execution Plan Gateは承認済みであり、fresh implementer、independent task review、knowledge closeout、final whole-branch reviewへ進む。
+- push、PR、merge、release、live installその他のremote writeはscope外である。
+
+## [2026-07-28] final-review-candidate | SDD Reasoning Effort Risk Precedence
+
+- spec / planは`c49fa714c917d4a0e7948ab92dfb828f2748b555`（`docs: define SDD effort risk precedence`）、Task 1 implementationは`2549892c07dc3f65c22094ca27b9208c831e65b0`（`Clarify SDD effort risk precedence`）である。Task 1の独立reviewは`APPROVED`、material findingなしである。
+- fresh verificationはSDD contract 18 tests、repository scripts 43 tests、LLM Wiki 5 testsが各`OK`であり、skill architecture validator、1 skill context contract validator、scoped dual-host compatibility、skill quick validation、`git diff --check`も成功した。
+- canonical design、focused plan、indexをTask 1実装済み・independent approval済みの状態へ同期した。spec、plan、Skill、tests、knowledge artifactsを同じbranch rangeで確認するfinal whole-branch reviewはpendingである。
+- `LOCAL_COMPLETE`と`local-complete` entryは記録していない。push、PR、merge、release、live installその他のremote writeは未実施である。
+
+## [2026-07-28] final-review-fix-candidate | SDD Reasoning Effort Risk Precedence
+
+- closeout candidate `ffa8339df00a5a8dfec90f572e843509516f49fe`へのfinal whole-branch reviewはImportant 2件を返した。designとfocused planのindex entryが1つの検索語行を共有していたdiscoverability gap、およびfocused planにrelated-page linksとprovenance sectionがないcitation gapである。
+- bounded fixで各index entryへ直後の専用`検索語:`行を置き、focused planへcanonical designと既存Superpowers model / reasoning researchを辿る`関連ページ`と`出典`を追加した。
+- fresh LLM Wiki 5 testsと`git diff --check`は成功した。scoped re-reviewとfinal approvalはpendingであり、`LOCAL_COMPLETE`と`local-complete` entryは記録していない。
+- push、PR、merge、release、live installその他のremote writeは未実施である。
+
+## [2026-07-28] local-complete | SDD Reasoning Effort Risk Precedence
+
+- spec / plan commitは`c49fa714c917d4a0e7948ab92dfb828f2748b555`、Task 1 implementationは`2549892c07dc3f65c22094ca27b9208c831e65b0`、closeout candidateは`ffa8339df00a5a8dfec90f572e843509516f49fe`、final-review bounded fixは`a7d0d294a6ccdbeec84f44c0cd6f3060967de5d1`である。
+- final whole-branch reviewが返したImportant 2件は、index entryごとの検索語associationとfocused planのrelated-page / provenance不足であった。bounded fixは両方を解消し、scoped re-reviewはresolved 2/2、新規Critical / Importantなしで`APPROVED`となった。
+- fresh verificationはLLM Wiki 5 testsが`OK`、`git diff --check`が出力なしで成功した。先行closeout candidateのSDD contract 18 tests、repository scripts 43 tests、skill architecture / context validator、scoped dual-host compatibility、skill quick validationも成功済みである。
+- Task 1 implementation、independent task review、knowledge closeout、final whole-branch review、bounded fix、scoped re-review、fresh verificationが揃ったため`LOCAL_COMPLETE`とする。
+- push、PR作成、merge、release、live installその他のremote writeは実施していない。
