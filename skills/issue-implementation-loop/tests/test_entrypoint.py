@@ -173,6 +173,21 @@ class EntrypointTests(unittest.TestCase):
         ):
             self.assertNotIn(operation_reference, text)
 
+    def test_skill_entrypoint_scopes_phase_skills_and_material_review(self) -> None:
+        text = SKILL_FILE.read_text(encoding="utf-8")
+
+        for required in (
+            "current operation",
+            "`skills`",
+            "`dispatch_skills`",
+            "task-triggered",
+            "on demand",
+            "future operation",
+            "material simplicity",
+            "`Critical` / `Important`",
+        ):
+            self.assertIn(required, text)
+
     def test_skill_entrypoint_discovers_role_boundary_mental_model(self) -> None:
         text = SKILL_FILE.read_text(encoding="utf-8")
         mental_model = SKILL_DIR / "references" / "mental-model.md"
@@ -192,6 +207,20 @@ class EntrypointTests(unittest.TestCase):
             "Role Boundary",
         ):
             self.assertIn(required, model_text)
+
+    def test_mental_model_limits_reviewer_output_and_residual_risks(self) -> None:
+        mental_model = SKILL_DIR / "references" / "mental-model.md"
+        model_text = mental_model.read_text(encoding="utf-8")
+
+        self.assertIn(
+            "reports only `Critical` / `Important` findings.",
+            model_text,
+        )
+        self.assertIn(
+            "Separately reported residual risks are limited to material unresolved "
+            "risks or risks explicitly accepted by a human.",
+            model_text,
+        )
 
     def test_mental_model_keeps_final_pr_merge_human_only(self) -> None:
         mental_model = SKILL_DIR / "references" / "mental-model.md"

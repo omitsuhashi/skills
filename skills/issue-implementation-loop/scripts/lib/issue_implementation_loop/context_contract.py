@@ -222,6 +222,35 @@ def _require_non_negative(value: int | None, field: str) -> int:
     return value
 
 
+def _phase_skill_lists(
+    operation_config: dict[str, Any],
+    operation: str,
+    schema_version: int,
+) -> tuple[list[str], list[str]]:
+    if schema_version < 3:
+        return [], []
+
+    result: list[list[str]] = []
+    for field in ("skills", "dispatch_skills"):
+        display = f"operations.{operation}.{field}"
+        values = operation_config.get(field)
+        if not isinstance(values, list) or not all(
+            isinstance(value, str) and value for value in values
+        ):
+            raise ContextContractError(
+                f"{display} must be an array of non-empty strings"
+            )
+        duplicates = sorted(
+            {value for value in values if values.count(value) > 1}
+        )
+        if duplicates:
+            raise ContextContractError(
+                f"{display} contains duplicate skill: {duplicates[0]}"
+            )
+        result.append(list(values))
+    return result[0], result[1]
+
+
 def operation_read_set(skill_dir: Path, repo_root: Path, operation: str) -> dict[str, Any]:
     contract = load_context_contract(skill_dir)
     operations = contract.get("operations")
@@ -241,8 +270,13 @@ def operation_read_set(skill_dir: Path, repo_root: Path, operation: str) -> dict
     if not isinstance(operation_references, list):
         raise ContextContractError(f"operations.{operation}.references must be an array")
     schema_version = contract.get("schema_version", 1)
-    if schema_version not in (1, 2):
-        raise ContextContractError("schema_version must be 1 or 2")
+    if schema_version not in (1, 2, 3):
+        raise ContextContractError("schema_version must be 1, 2, or 3")
+    skills, dispatch_skills = _phase_skill_lists(
+        operation_config,
+        operation,
+        schema_version,
+    )
     budget = _budget(contract, operation_config)
     max_file_count = _require_positive(budget["max_file_count"], "max_file_count")
     if schema_version == 1:
@@ -290,6 +324,8 @@ def operation_read_set(skill_dir: Path, repo_root: Path, operation: str) -> dict
 
     return {
         "files": [path.relative_to(repo_root).as_posix() for path in absolute_files],
+        "skills": skills,
+        "dispatch_skills": dispatch_skills,
         "file_count": file_count,
         "max_file_count": max_file_count,
         "word_count": word_count,

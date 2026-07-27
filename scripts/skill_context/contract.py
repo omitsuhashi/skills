@@ -19,6 +19,17 @@ from skill_context.metrics import collect_file_metrics
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SKILLS_ROOT = REPO_ROOT / "skills"
 
+EXPECTED_PHASE_SKILL_MAPPINGS = {
+    "grill-to-pr-loop": {
+        "grill": (["grill-with-docs"], []),
+        "final-review": (["requesting-code-review"], []),
+    },
+    "issue-implementation-loop": {
+        "execute.dispatch": ([], ["tdd"]),
+        "execute.review": (["requesting-code-review"], []),
+    },
+}
+
 
 class ContractError(Exception):
     """Raised when a context contract cannot be parsed."""
@@ -246,8 +257,8 @@ def load_contract(skill_dir: Path) -> Dict[str, object]:
 
 def _schema_version(contract: Mapping[str, object], errors: List[str]) -> int:
     value = contract.get("schema_version", 1)
-    if value not in (1, 2):
-        errors.append("schema_version must be 1 or 2")
+    if value not in (1, 2, 3):
+        errors.append("schema_version must be 1, 2, or 3")
         return 1
     assert isinstance(value, int)
     return value
@@ -285,6 +296,29 @@ def _as_string_list(
         errors.append(f"{display or field} must be an array of non-empty strings")
         return None
     return list(value)
+
+
+def _operation_skills(
+    raw_config: Mapping[str, object],
+    operation: str,
+    schema: int,
+    errors: List[str],
+) -> Tuple[List[str], List[str]]:
+    if schema < 3:
+        return [], []
+
+    phase_skills: List[List[str]] = []
+    for field in ("skills", "dispatch_skills"):
+        display = f"operations.{operation}.{field}"
+        values = _as_string_list(raw_config, field, errors, display=display)
+        if values is None:
+            phase_skills.append([])
+            continue
+        duplicates = sorted({value for value in values if values.count(value) > 1})
+        for duplicate in duplicates:
+            errors.append(f"{display} contains duplicate skill: {duplicate}")
+        phase_skills.append(values)
+    return phase_skills[0], phase_skills[1]
 
 
 def _safe_relative_path(value: str) -> bool:
@@ -440,6 +474,14 @@ def inspect_operation(skill_dir: Path, operation: str) -> Dict[str, object]:
         raise ContractError(f"unknown operation: {operation}")
     schema = contract.get("schema_version", 1)
     assert isinstance(schema, int)
+    operation_config = operations[operation]
+    assert isinstance(operation_config, dict)
+    skills, dispatch_skills = _operation_skills(
+        operation_config,
+        operation,
+        schema,
+        [],
+    )
     files, budget = operation_read_set(skill_dir, contract, operation)
     metrics = collect_file_metrics(files, budget)
     word_budget = budget.get("word_budget")
@@ -451,6 +493,8 @@ def inspect_operation(skill_dir: Path, operation: str) -> Dict[str, object]:
         "skill": contract["skill"],
         "operation": operation,
         "files": [display_path(path) for path in files],
+        "skills": skills,
+        "dispatch_skills": dispatch_skills,
         "file_count": metrics["file_count"],
         "max_file_count": budget.get("max_file_count"),
         "word_count": metrics["word_count"],
@@ -545,6 +589,26 @@ def validate_contract(skill_dir: Path, contract: Dict[str, object]) -> List[str]
             errors,
             display=f"operations.{operation}.references",
         )
+        operation_skills = _operation_skills(
+            raw_config,
+            operation,
+            schema,
+            errors,
+        )
+        expected_mapping = EXPECTED_PHASE_SKILL_MAPPINGS.get(skill or "")
+        if schema == 3 and expected_mapping is not None:
+            expected = expected_mapping.get(operation, ([], []))
+            for field, actual, expected_values in zip(
+                ("skills", "dispatch_skills"),
+                operation_skills,
+                expected,
+            ):
+                if actual != expected_values:
+                    errors.append(
+                        "unexpected phase skill mapping: "
+                        f"{skill} {operation}.{field}; "
+                        f"expected {expected_values}, got {actual}"
+                    )
         _validate_operation_budget_fields(operation, raw_config, errors)
         combined = ([entrypoint] if entrypoint else []) + references + (operation_references or [])
         duplicates = sorted({item for item in combined if combined.count(item) > 1})

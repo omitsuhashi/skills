@@ -23,10 +23,10 @@ def run_script(script: Path, *args: str) -> subprocess.CompletedProcess[str]:
 
 
 class GrillContextContractTests(unittest.TestCase):
-    def test_context_contract_v2_loads_core_without_workflow_router(self) -> None:
+    def test_context_contract_v3_loads_core_without_workflow_router(self) -> None:
         contract_text = (SKILL_DIR / "context-contract.toml").read_text(encoding="utf-8")
 
-        self.assertIn("schema_version = 2", contract_text)
+        self.assertIn("schema_version = 3", contract_text)
         self.assertIn(
             'base_references = ["references/core.md"]',
             contract_text,
@@ -65,9 +65,36 @@ class GrillContextContractTests(unittest.TestCase):
                 "skills/grill-to-pr-loop/references/execution-handoff.md",
             ],
         )
-        self.assertEqual(payload["schema_version"], 2)
+        self.assertEqual(payload["schema_version"], 3)
+        self.assertEqual(payload["skills"], [])
+        self.assertEqual(payload["dispatch_skills"], [])
         self.assertGreater(payload["word_count"], 0)
         self.assertGreaterEqual(payload["headroom_percent"], 0)
+
+    def test_phase_owned_skills_are_declared_only_for_approved_operations(self) -> None:
+        cases = {
+            "intake": ([], []),
+            "grill": (["grill-with-docs"], []),
+            "delivery": ([], []),
+            "final-review": (["requesting-code-review"], []),
+        }
+        for operation, expected in cases.items():
+            with self.subTest(operation=operation):
+                result = run_script(
+                    INSPECT_CONTEXT,
+                    "--skill",
+                    "skills/grill-to-pr-loop",
+                    "--operation",
+                    operation,
+                    "--json",
+                )
+
+                self.assertEqual(result.returncode, 0, result.stderr)
+                payload = json.loads(result.stdout)
+                self.assertEqual(
+                    (payload.get("skills"), payload.get("dispatch_skills")),
+                    expected,
+                )
 
     def test_execution_handoff_requires_compressed_or_fresh_context_guard(self) -> None:
         skill_text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")

@@ -1,4 +1,4 @@
-schema_version = 2
+schema_version = 3
 skill = "grill-to-pr-loop"
 entrypoint = "SKILL.md"
 base_references = ["references/core.md"]
@@ -11,15 +11,23 @@ min_headroom_percent = 20
 
 [operations.intake]
 references = ["references/planning-contract.md"]
+skills = []
+dispatch_skills = []
 
 [operations.grill]
 references = ["references/planning-contract.md"]
+skills = ["grill-with-docs"]
+dispatch_skills = []
 
 [operations.spec]
 references = ["references/planning-contract.md"]
+skills = []
+dispatch_skills = []
 
 [operations."issue-gate"]
 references = ["references/planning-contract.md", "references/local-issue-ledger.md"]
+skills = []
+dispatch_skills = []
 
 [operations."execution-plan"]
 references = [
@@ -27,18 +35,36 @@ references = [
   "references/local-issue-ledger.md",
   "references/execution-handoff.md",
 ]
+estimated_token_budget = 11600
+skills = []
+dispatch_skills = []
 
 [operations.resume]
 references = ["references/local-issue-ledger.md", "references/execution-handoff.md"]
+skills = []
+dispatch_skills = []
 
 [operations."completion-report"]
 references = ["references/local-issue-ledger.md", "references/execution-handoff.md"]
+skills = []
+dispatch_skills = []
 
 [operations.delivery]
 references = ["references/remote-delivery.md"]
+skills = []
+dispatch_skills = []
+
+[operations."final-review"]
+references = ["references/remote-delivery.md"]
+skills = ["requesting-code-review"]
+dispatch_skills = []
 
 [operations."ambiguity-check"]
 references = ["references/common-mistakes.md"]
+skills = []
+dispatch_skills = []
 
 [operations."context-compaction"]
 references = ["references/context-compaction.md"]
+skills = []
+dispatch_skills = []

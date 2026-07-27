@@ -37,6 +37,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"skill: {result['skill']}")
         print(f"operation: {result['operation']}")
         print(f"schema_version: {result['schema_version']}")
+        print(f"skills: {', '.join(result['skills']) or 'none'}")
+        print(f"dispatch_skills: {', '.join(result['dispatch_skills']) or 'none'}")
         print(f"files: {result['file_count']} / {result['max_file_count']}")
         print(f"words: {result['word_count']} / {result['word_budget']}")
         print(f"characters: {result['character_count']}")

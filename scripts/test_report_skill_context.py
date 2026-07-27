@@ -34,6 +34,40 @@ def loop_skill_names() -> set[str]:
 
 
 class SkillContextReportTests(unittest.TestCase):
+    def test_report_separates_phase_skills_from_reference_metrics(self) -> None:
+        json_result = run_script(
+            REPORT_SKILL_CONTEXT,
+            "--skill",
+            "skills/issue-implementation-loop",
+            "--json",
+        )
+        text_result = run_script(
+            REPORT_SKILL_CONTEXT,
+            "--skill",
+            "skills/issue-implementation-loop",
+        )
+
+        self.assertEqual(json_result.returncode, 0, json_result.stderr)
+        self.assertEqual(text_result.returncode, 0, text_result.stderr)
+        payload = json.loads(json_result.stdout)
+        operations = {
+            operation["operation"]: operation
+            for operation in payload["skills"][0]["operations"]
+        }
+        self.assertEqual(operations["execute.dispatch"].get("skills"), [])
+        self.assertEqual(
+            operations["execute.dispatch"].get("dispatch_skills"),
+            ["tdd"],
+        )
+        self.assertEqual(
+            operations["execute.review"].get("skills"),
+            ["requesting-code-review"],
+        )
+        self.assertEqual(operations["execute.review"].get("dispatch_skills"), [])
+        self.assertIn("schema v1/v2/v3", payload["metric_source"])
+        self.assertIn("dispatch_skills=tdd", text_result.stdout)
+        self.assertIn("skills=requesting-code-review", text_result.stdout)
+
     def test_strict_report_rejects_inconsistent_baseline_operation_count(self) -> None:
         baseline_path = (
             REPO_ROOT

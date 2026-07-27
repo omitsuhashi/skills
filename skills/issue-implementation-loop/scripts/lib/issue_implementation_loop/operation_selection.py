@@ -247,6 +247,8 @@ def _result(
         "binding_valid": binding_valid,
         "state_advance_blocked": state_advance_blocked,
         "read_set": read_set["files"],
+        "skills": read_set["skills"],
+        "dispatch_skills": read_set["dispatch_skills"],
         "word_budget_result": {
             "file_count": read_set["file_count"],
             "max_file_count": read_set["max_file_count"],

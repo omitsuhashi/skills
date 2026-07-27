@@ -2,6 +2,72 @@
 
 append-only で使います。すべての entry は予測しやすい header で始めます。
 
+## [2026-07-27] spec-gate | Loop Review Simplicity And Phase Skills
+
+- Epic ID `loop-review-simplicity-and-phase-skills` として、reviewを要件達成、material simplicity、material riskに絞り、`Minor` / nit / 好み / 任意改善をfindingとして報告しないSpec Gate候補を追加した。
+- 同じ要件をmaterially simplerな構造で満たせる場合は、具体的代案を必須とする`intent_gap` / `Important`として扱い、mechanical validationと既存hardening / safety境界は維持する。
+- 両loop skillのcontext contract schema v3に`skills` / `dispatch_skills`を追加し、planning、worker TDD、implementation review、final reviewのsupplemental skill読込をoperation/actor単位で分離する設計を固定した。
+- planning branchは`codex/loop-review-simplicity-and-phase-skills/planning`、planning base SHAは`f5d151e34de5089d75be68249e09da8a2d14f282`。remote policyは`per_action`で、local `PR_READY`後のbranch pushとdraft PR作成だけを後続Remote Gateの対象とし、GitHub Issue mirror、issue PR、ready-for-review、merge、release、live installは非承認とした。
+- session userは`knowledge/wiki/syntheses/loop-review-simplicity-and-phase-skills/spec.md`、raw-byte SHA-256 `d3ac927b66e348ea39cb71a83cd13ab2139700f022a544872cb41ea708734794`を2026-07-27T07:40:32+09:00にSpec Gateとして再承認した。approval scopeは`accepted_decisions`、`non_goals`、`acceptance_criteria`、`verification`、`remote_policy`、`stop_conditions`の全六項目である。
+- Issue分解、Execution Packet、実装、remote writeはまだ行っていない。
+
+## [2026-07-27] issue-gate | Loop Review Simplicity And Phase Skills
+
+- approved specの「1 cohesive issue」判断に従い、`LRSP-001`だけを持つ日本語local-first Issue台帳を追加した。
+- blocker graphは単一nodeでcycleなし、`LRSP-001`は`実行可能`。session userは2026-07-27T07:59:52+09:00にIssue scope、write scope、acceptance criteria、実行順序、remote policyをIssue Gateとして承認した。
+- worker write scopeは両loop skill、shared context parser / inspector / report / tests、context baselineに限定した。台帳、implementation plan、sealed packet、index、logはplanning coordinator ownershipとしてworker scopeから除外した。
+- GitHub Issue mirrorとissue PRは作らず、remote policy `per_action`を維持する。
+
+## [2026-07-27] spec-amendment-gate | Loop Review Simplicity And Phase Skills
+
+- implementation plan scope checkで、operation固定の`dispatch_skills`だけでは、今回のskill edit workerに必須な`writing-skills`のようなtask-triggered skillを表現できない矛盾を検出した。
+- session userは、`skills` / `dispatch_skills`をphase-owned workflow skillの宣言に限定し、task-triggered skillは該当phaseでon-demandに読み、future phaseでは先読みしないclarificationを承認した。
+- universal allowlist、task-specific worker packet field、generic loader、install inventory validatorは追加しない。
+- session userは`knowledge/wiki/syntheses/loop-review-simplicity-and-phase-skills/spec.md`、raw-byte SHA-256 `2e86698433cc4a95719bffc8a2f5a6e76aa3fea5b71f743ec8f71ef39edc4719`を2026-07-27T08:14:23+09:00にSpec Gateとして承認した。approval scopeは`accepted_decisions`、`non_goals`、`acceptance_criteria`、`verification`、`remote_policy`、`stop_conditions`の全六項目である。
+- 既存Issue Gate commitは旧spec digestを参照するため、Issue台帳をamended specへreconcileして再承認するまでimplementationへ進まない。
+
+## [2026-07-27] issue-reconciliation-gate | Loop Review Simplicity And Phase Skills
+
+- `LRSP-001`のapproved spec digest / commitを`2e86698433cc4a95719bffc8a2f5a6e76aa3fea5b71f743ec8f71ef39edc4719` / `9f6dba0`へ更新し、review状態を再承認前の`下書き`へ戻した。
+- worker scope、単一node blocker graph、material review、remote policyは変更していない。phase-owned workflow skillはcontractで固定し、task-triggered `writing-skills`は本skill-edit taskのimplementation phaseでon-demandに使うclarificationだけを追加した。
+- universal allowlist、worker packet field、generic loader、install inventory validatorは非目標のままである。
+- session userは2026-07-27T08:17:21+09:00にreconciled `LRSP-001`のIssue scope、write scope、acceptance criteria、実行順序、remote policyをIssue Gateとして再承認した。
+
+## [2026-07-27] execution-plan-candidate | Loop Review Simplicity And Phase Skills
+
+- `LRSP-001`のimplementation planをbaseline pressure RED、schema v3 phase skill contract、material review contract、baseline refresh / full verificationの4 taskとして作成した。execution work itemは1件のままである。
+- shared parserとruntime selectorに同じ`skills` / `dispatch_skills` projectionを追加し、task-triggered `writing-skills`はcurrent implementation phaseだけでon-demandに使う。新しいloaderやpacket fieldは作らない。
+- approved IssueをInput Packet v2 draftへ正規化した。delivery intentは`per_action`、GitHub Issue mirrorとissue PRはなし、worker write scopeはreconciled ledgerと同一である。
+- final packet seal、capability preflight、Execution Plan Gate commit、worker dispatch、remote writeはまだ行っていない。
+
+## [2026-07-27] execution-plan-gate | Loop Review Simplicity And Phase Skills
+
+- session userは2026-07-27T08:23:49+09:00に`LRSP-001` implementation planをExecution Plan Gateとして承認した。
+- implementation plan raw-byte SHA-256は`4a4e4041425626bc59d97597b0c2836278575f8987c5900cc4176a7072f2499b`。承認済みspec raw-byte SHA-256 `2e86698433cc4a95719bffc8a2f5a6e76aa3fea5b71f743ec8f71ef39edc4719`へInput Packet v2をsealした。
+- sealed Input Packet raw-byte SHA-256は`ea0a34f7f2899a54a691b5d5c21edcc93cb545f06d459b17940b42f2f9e606e8`。packet validator、approved spec binding verify、capability preflightはいずれも成功した。
+- executionはfresh coordinatorから`issue-implementation-loop`へ引き渡し、workerはapproved write scope内でTDDとskill pressure testを実行する。remote writeはlocal `PR_READY`後のRemote Gateまで行わない。
+
+## [2026-07-27] execution-plan-amendment-candidate | Loop Review Simplicity And Phase Skills
+
+- fresh baselineではmaterial simplicityとphase loadingのREDを再現した。一方、nit-pressure controlは3 fresh evaluatorsすべてがstyle-only findingを拒否し、現行挙動が既にGREENだった。
+- failureを捏造しないため、3件すべてをREDとする計画文を「review policyとphase loadingで各1件以上のRED、既存GREENはregression target」に最小修正した。spec、Issue scope、acceptance criteria、Input Packet bytes、remote policyは変更していない。
+- amendment candidateのimplementation plan raw-byte SHA-256は`483f4131e65b953d25ac5da769cfc177f4605e81d14390f998f83edc1b2f4d93`。Execution Plan Gate再承認とcommit前であり、workerはproduction editなしで停止している。
+
+## [2026-07-27] execution-plan-amendment-gate | Loop Review Simplicity And Phase Skills
+
+- session userは2026-07-27T08:40:40+09:00にimplementation plan amendmentをExecution Plan Gateとして承認した。
+- approved implementation plan raw-byte SHA-256は`483f4131e65b953d25ac5da769cfc177f4605e81d14390f998f83edc1b2f4d93`。material simplicityとphase loadingのbaseline REDを必須とし、既にGREENのnit抑制はfailureを捏造せずregression targetとして保持する。
+- approved spec raw-byte SHA-256 `2e86698433cc4a95719bffc8a2f5a6e76aa3fea5b71f743ec8f71ef39edc4719`、sealed Input Packet raw-byte SHA-256 `ea0a34f7f2899a54a691b5d5c21edcc93cb545f06d459b17940b42f2f9e606e8`、Issue scope、acceptance criteria、remote policyは不変である。
+
+## [2026-07-27] local-pr-ready | Loop Review Simplicity And Phase Skills
+
+- `LRSP-001`はExecution Envelope revision 2で実装・検証・reviewを完了した。実装commitは`10c3cf49d846585cbd5a51ae18e1141ded113572`、review fix commitは`fbaaeeda0e1808d25ab4e029e12eaf0eac19fd1d`。
+- schema v3は両loopの全operationに`skills` / `dispatch_skills`を明示し、shared inspector/reportとruntime selectorが同じboundaryを返す。schema v1/v2と`llm-wiki` schema v2は維持した。
+- reviewは要件達成、material simplicity、material riskの順とし、`Critical` / `Important`だけをfindingにする。concrete materially simpler alternativeを示せるsimplicity gapは`intent_gap` / `Important`、residual riskはmaterial unresolvedまたはhuman-accepted riskだけに限定した。
+- fresh pressure evidenceはnit抑制、material simplicity、phase loadingのbaseline/postを既存worker report schema内に記録した。grill 60、issue loop 292、scripts 59、llm-wiki 6の計417 tests、architecture/context/strict report、dual-host、両quick validator、`git diff --check`がpassした。
+- implementation review cycle 1のImportant 2件をfix/report evidenceでcloseし、cycle 2は`Critical` / `Important`なしでapproved。material residual riskなし。
+- runtimeはlocal `PR_READY`。GitHub Issue mirror、push、draft PR、ready-for-review、merge、release、live installは未実施であり、pushとdraft PRはexact Remote Gate待ちである。
+
 ## [2026-06-08] bootstrap | Initialize skills repo knowledge root
 
 - repo root に thin router `AGENTS.md` を追加

@@ -6,13 +6,15 @@ Run after fresh final verification, before issue completion, blocker release, or
 
 **Automatic review checks**:
 
-1. **Issue intent fit**: approved issue/spec, acceptance, non-goals, write scope, and verification evidence.
-2. **Implementation regression**: caused behavior, contract, data-shape, or verification breakage.
-3. **Current PR delivery risk**: security, credential, permission, destructive, production, data-loss, or high-risk delivery concerns.
+1. **Requirements / Issue intent fit**: approved issue/spec, acceptance, non-goals, write scope, and verification evidence are satisfied without omission or excess.
+2. **Material simplicity**: no concrete simpler alternative meets the same requirements and risk boundary with materially fewer mechanisms, branches, layers, duplication, or abstractions.
+3. **Material risk**: no **Implementation regression** or **Current PR delivery risk** materially affects behavior, contracts, data shape, security, credentials, permissions, destructive actions, production, data loss, or high-risk delivery.
+
+Report only `Critical` / `Important` findings that would change a decision or implementation. Do not report `Minor`, nit, naming/formatting preference, optional refactor, or future-only improvement. If no reportable finding remains, approve without adding one. Mechanical validators, schema checks, digest checks, and test suites remain exhaustive and are not limited by this reporting threshold.
 
 ## Finding Taxonomy
 
-- `intent_gap`: approved artifact is unmet; blocking finding.
+- `intent_gap`: an approved artifact is unmet, or material simplicity has a concrete simpler alternative; blocking finding.
 - `implementation_regression`: this branch causes a regression; blocking finding when in scope.
 - `hardening_candidate`: explicitly requested hardening or current-PR risk decision; candidate only.
 - `safety_escalation`: security, permission, destructive, production, data-loss, or high-risk concern; human decision.
@@ -21,6 +23,8 @@ Run after fresh final verification, before issue completion, blocker release, or
 `intent_gap / implementation_regression` use the existing fix loop: fix in-scope Critical/Important findings, verify, refresh the commit, and re-review within two cycles.
 
 hardening_candidate is not a fix request. Do not spend a fix cycle or auto-fix unless approved scope expands.
+
+A material simplicity finding is `intent_gap` / `Important`. It must include evidence, material impact, required fix, and a concrete simpler alternative that meets the same requirements and risk boundary. A preference or small line-count reduction without that alternative is not a finding.
 
 ## Non-automatic handling
 
@@ -39,6 +43,8 @@ Before dispatch and approval intake, require fresh envelope -> packet -> spec ve
 Keep the packet paths-first: issue/spec/ledger, worker report, changed files, and verification evidence paths with short excerpts. Do not paste full spec. Do not paste full ledger, diff, or transcript. Use default 600 words, hard 900 words.
 
 Include `classification_needed` only for insufficient evidence or an explicit classification pass. Include `hardening_candidate` only for explicit human hardening or current-PR risk. Neither is an automatic fix request.
+
+Ask the reviewer to evaluate requirements, material simplicity, and material risk in that order, and to return only `Critical` / `Important` findings. Every finding includes evidence, material impact, and required fix; a material simplicity finding also includes its concrete simpler alternative.
 
 ## Procedure
 
