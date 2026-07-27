@@ -1691,3 +1691,11 @@ append-only で使います。すべての entry は予測しやすい header �
 - bounded fixで各index entryへ直後の専用`検索語:`行を置き、focused planへcanonical designと既存Superpowers model / reasoning researchを辿る`関連ページ`と`出典`を追加した。
 - fresh LLM Wiki 5 testsと`git diff --check`は成功した。scoped re-reviewとfinal approvalはpendingであり、`LOCAL_COMPLETE`と`local-complete` entryは記録していない。
 - push、PR、merge、release、live installその他のremote writeは未実施である。
+
+## [2026-07-28] local-complete | SDD Reasoning Effort Risk Precedence
+
+- spec / plan commitは`c49fa714c917d4a0e7948ab92dfb828f2748b555`、Task 1 implementationは`2549892c07dc3f65c22094ca27b9208c831e65b0`、closeout candidateは`ffa8339df00a5a8dfec90f572e843509516f49fe`、final-review bounded fixは`a7d0d294a6ccdbeec84f44c0cd6f3060967de5d1`である。
+- final whole-branch reviewが返したImportant 2件は、index entryごとの検索語associationとfocused planのrelated-page / provenance不足であった。bounded fixは両方を解消し、scoped re-reviewはresolved 2/2、新規Critical / Importantなしで`APPROVED`となった。
+- fresh verificationはLLM Wiki 5 testsが`OK`、`git diff --check`が出力なしで成功した。先行closeout candidateのSDD contract 18 tests、repository scripts 43 tests、skill architecture / context validator、scoped dual-host compatibility、skill quick validationも成功済みである。
+- Task 1 implementation、independent task review、knowledge closeout、final whole-branch review、bounded fix、scoped re-review、fresh verificationが揃ったため`LOCAL_COMPLETE`とする。
+- push、PR作成、merge、release、live installその他のremote writeは実施していない。

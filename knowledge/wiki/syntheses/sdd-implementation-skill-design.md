@@ -8,7 +8,7 @@ Phase 1 の local implementation と verification は完了済みである。本
 
 Phase 2 は fresh coordinator verification と final whole-branch review を含めて `LOCAL_COMPLETE` である。`sdd-implementation` が既定かつ唯一の user-facing 実装入口であり、`skills/grill-to-pr-loop/` と `skills/issue-implementation-loop/`、および専用 runtime / context surface は current tree から削除済みである。historical wiki と旧 baseline は非実行の証跡として保持する。本 branch は Superpowers-first revision を含む `main` のコミット `dec5647` を統合し、Draft PR #41 として公開済みである。PR merge、release、live install は未実施である。
 
-2026-07-28のreasoning effort risk precedence変更では、Task 1を`2549892c07dc3f65c22094ca27b9208c831e65b0`で実装し、独立task reviewはapproved（material findingなし）である。fresh verificationではSDD contract 18 tests、repository scripts 43 tests、LLM Wiki 5 tests、skill architecture / context validator、scoped dual-host compatibility、skill quick validation、`git diff --check`が成功した。この変更を含むfinal whole-branch reviewはまだ実施・承認されていないため、ここで`LOCAL_COMPLETE`を記録しない。remote writeも未実施である。
+2026-07-28のreasoning effort risk precedence変更は`LOCAL_COMPLETE`である。Task 1を`2549892c07dc3f65c22094ca27b9208c831e65b0`で実装し、独立task reviewはapproved（material findingなし）となった。closeout candidate `ffa8339df00a5a8dfec90f572e843509516f49fe`へのfinal whole-branch reviewはknowledge discoverability / provenanceのImportant 2件を返したが、bounded fix `a7d0d294a6ccdbeec84f44c0cd6f3060967de5d1`で両方を解消し、scoped re-reviewはresolved 2/2、新規Critical / Importantなしで`APPROVED`となった。fresh verificationはSDD contract 18 tests、repository scripts 43 tests、LLM Wiki 5 tests、skill architecture / context validator、scoped dual-host compatibility、skill quick validation、`git diff --check`が成功している。push、PR、merge、release、live installその他のremote writeは実施していない。
 
 ## 調査で確認した前提
 
