@@ -2,13 +2,13 @@
 
 ## 状態
 
-Issue Gate 再承認済み。amended spec の phase-owned / task-triggered skill boundary に reconcile 済みであり、local ledger が canonical、GitHub Issue mirror は未作成である。
+Issue Gate 再承認済み。`LRSP-001` は実装・検証・review cycle 2承認まで完了し、local `PR_READY`。local ledger が canonical、GitHub Issue mirror とPRは未作成である。
 
 ## Issue 一覧
 
 | Epic ID | ローカルID | タイトル | レビュー状態 | 実行状態 | ブロック元 | ブロック先 | GitHub Issue | 実装レビュー | PR |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| loop-review-simplicity-and-phase-skills | LRSP-001 | material review と phase-scoped skill contract を実装する | 承認済み | 実行可能 | なし | なし | 未作成 | 未実施 | 未作成 |
+| loop-review-simplicity-and-phase-skills | LRSP-001 | material review と phase-scoped skill contract を実装する | 承認済み | PR_READY | なし | なし | 未作成 | cycle 2 承認済み | local PR_READY / 未作成 |
 
 ## Blocker graph
 
@@ -17,9 +17,9 @@ LRSP-001
 ```
 
 - cycle: なし。
-- runnable: `LRSP-001`。
+- runnable: なし。
 - blocked: なし。
-- execution order: `LRSP-001` のみ。
+- completed: `LRSP-001`。
 
 ## LRSP-001: material review と phase-scoped skill contract を実装する
 
@@ -62,19 +62,19 @@ planning coordinator は本台帳、`implementation-plan.md`、`input-packet.jso
 
 ### 受け入れ条件
 
-- [ ] schema v3 の両 loop context contract は全 operation に `skills` / `dispatch_skills` を持つ。
-- [ ] `grill-with-docs`、`tdd`、`requesting-code-review` は approved phase mapping 以外に宣言されない。
-- [ ] inspector は current operation の reference read-set、`skills`、`dispatch_skills` を同時に表示する。
-- [ ] report は supplemental skill 名を repo-local reference budget と分けて返す。
-- [ ] validator は schema v3 の field 欠落、不正型、空文字、同一 field 内重複を拒否する。
-- [ ] schema v1 / v2 と `llm-wiki` context contract の既存挙動は維持される。
-- [ ] planning / execution coordinator は future operation または dispatch 先の phase-owned workflow skill を自分の instruction context に読まない契約を持つ。
-- [ ] task-triggered skill は該当 phase だけで on-demand に読み、universal allowlist、worker packet field、generic loaderを追加しない。
-- [ ] spec self-review、Issue implementation review、final spec alignment review は要件達成、material simplicity、material risk の 3 観点を持つ。
-- [ ] routine review は `Minor` / nit / 好み / 任意改善を finding として報告しない。
-- [ ] material simplicity finding は同じ要件を満たす具体的な simpler alternative を示し、`intent_gap` / `Important` として blocking になる。
-- [ ] future-only hardening、`safety_escalation`、`classification_needed` の既存 boundary は維持される。
-- [ ] skill authoring TDD の RED / GREEN evidence と fresh verification evidence が記録される。
+- [x] schema v3 の両 loop context contract は全 operation に `skills` / `dispatch_skills` を持つ。
+- [x] `grill-with-docs`、`tdd`、`requesting-code-review` は approved phase mapping 以外に宣言されない。
+- [x] inspector は current operation の reference read-set、`skills`、`dispatch_skills` を同時に表示する。
+- [x] report は supplemental skill 名を repo-local reference budget と分けて返す。
+- [x] validator は schema v3 の field 欠落、不正型、空文字、同一 field 内重複を拒否する。
+- [x] schema v1 / v2 と `llm-wiki` context contract の既存挙動は維持される。
+- [x] planning / execution coordinator は future operation または dispatch 先の phase-owned workflow skill を自分の instruction context に読まない契約を持つ。
+- [x] task-triggered skill は該当 phase だけで on-demand に読み、universal allowlist、worker packet field、generic loaderを追加しない。
+- [x] spec self-review、Issue implementation review、final spec alignment review は要件達成、material simplicity、material risk の 3 観点を持つ。
+- [x] routine review は `Minor` / nit / 好み / 任意改善を finding として報告しない。
+- [x] material simplicity finding は同じ要件を満たす具体的な simpler alternative を示し、`intent_gap` / `Important` として blocking になる。
+- [x] future-only hardening、`safety_escalation`、`classification_needed` の既存 boundary は維持される。
+- [x] skill authoring TDD の RED / GREEN evidence と fresh verification evidence が記録される。
 
 ### 非目標
 
@@ -112,6 +112,15 @@ git diff --check
 - `Critical` / `Important` がなければ、nit を補充せず approved とする。
 - current PR scope 外の future-only hardening を列挙しない。
 - review / fix は既存どおり最大 2 cycle。
+
+### 実装 evidence
+
+- Execution Envelope: revision 2。runtime rootは`$(git rev-parse --git-common-dir)/agent-runs/issue-implementation-loop/loop-review-simplicity-and-phase-skills/`。
+- 実装commit: `10c3cf49d846585cbd5a51ae18e1141ded113572`。fix commit: `fbaaeeda0e1808d25ab4e029e12eaf0eac19fd1d`。
+- reviewed range: `9653fe8441104e71d0380f0da2913d9a66f05913..fbaaeeda0e1808d25ab4e029e12eaf0eac19fd1d`。
+- pressure: nitはbaseline/postともstyle-only findingを省略。material simplicityはbaseline REDからconcrete alternative付き`intent_gap` / `Important`へGREEN。phase loadingはbaseline REDから`intake.skills=[]` / `dispatch_skills=[]`へGREEN。
+- fresh verification: grill 60、issue loop 292、scripts 59、llm-wiki 6の計417 tests、architecture/context/report/dual-host/両quick validator/`git diff --check`がpass。
+- implementation review: cycle 1のImportant 2件をfix/report evidenceでcloseし、cycle 2は`Critical` / `Important`なしでapproved。material residual riskなし。
 
 ### Remote policy
 

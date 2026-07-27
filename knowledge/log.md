@@ -59,6 +59,15 @@ append-only で使います。すべての entry は予測しやすい header �
 - approved implementation plan raw-byte SHA-256は`483f4131e65b953d25ac5da769cfc177f4605e81d14390f998f83edc1b2f4d93`。material simplicityとphase loadingのbaseline REDを必須とし、既にGREENのnit抑制はfailureを捏造せずregression targetとして保持する。
 - approved spec raw-byte SHA-256 `2e86698433cc4a95719bffc8a2f5a6e76aa3fea5b71f743ec8f71ef39edc4719`、sealed Input Packet raw-byte SHA-256 `ea0a34f7f2899a54a691b5d5c21edcc93cb545f06d459b17940b42f2f9e606e8`、Issue scope、acceptance criteria、remote policyは不変である。
 
+## [2026-07-27] local-pr-ready | Loop Review Simplicity And Phase Skills
+
+- `LRSP-001`はExecution Envelope revision 2で実装・検証・reviewを完了した。実装commitは`10c3cf49d846585cbd5a51ae18e1141ded113572`、review fix commitは`fbaaeeda0e1808d25ab4e029e12eaf0eac19fd1d`。
+- schema v3は両loopの全operationに`skills` / `dispatch_skills`を明示し、shared inspector/reportとruntime selectorが同じboundaryを返す。schema v1/v2と`llm-wiki` schema v2は維持した。
+- reviewは要件達成、material simplicity、material riskの順とし、`Critical` / `Important`だけをfindingにする。concrete materially simpler alternativeを示せるsimplicity gapは`intent_gap` / `Important`、residual riskはmaterial unresolvedまたはhuman-accepted riskだけに限定した。
+- fresh pressure evidenceはnit抑制、material simplicity、phase loadingのbaseline/postを既存worker report schema内に記録した。grill 60、issue loop 292、scripts 59、llm-wiki 6の計417 tests、architecture/context/strict report、dual-host、両quick validator、`git diff --check`がpassした。
+- implementation review cycle 1のImportant 2件をfix/report evidenceでcloseし、cycle 2は`Critical` / `Important`なしでapproved。material residual riskなし。
+- runtimeはlocal `PR_READY`。GitHub Issue mirror、push、draft PR、ready-for-review、merge、release、live installは未実施であり、pushとdraft PRはexact Remote Gate待ちである。
+
 ## [2026-06-08] bootstrap | Initialize skills repo knowledge root
 
 - repo root に thin router `AGENTS.md` を追加
