@@ -2,10 +2,7 @@ schema_version = 1
 
 [families.repository-change-loop]
 description = "Repository change workflow skills that move approved work from design through local implementation."
-user_facing_skills = [
-  "grill-to-pr-loop",
-  "issue-implementation-loop",
-]
+user_facing_skills = ["sdd-implementation"]
 default_implementation_skill = "sdd-implementation"
 forbidden_standalone_skill_names = [
   "context-manager",
@@ -39,8 +36,3 @@ supporting_agent_authority = "advisory_only"
 decision_authority = "human"
 model_selection = "host_runtime"
 model_persistence = "forbidden"
-
-[families.repository-change-loop.context_compaction]
-soft_trigger_percent = 65
-hard_stop_percent = 75
-mandatory_handoff_compaction = 1

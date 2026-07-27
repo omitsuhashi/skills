@@ -25,6 +25,13 @@ class DualHostCiWorkflowTests(unittest.TestCase):
         self.assertIn(
             "python3 -m unittest discover -s skills/task-management/tests", text
         )
+        self.assertIn("Run sdd-implementation tests", text)
+        self.assertIn(
+            "python3 -m unittest discover -s skills/sdd-implementation/tests",
+            text,
+        )
+        self.assertNotIn("Run grill-to-pr-loop tests", text)
+        self.assertNotIn("Run issue-implementation-loop tests", text)
         self.assertNotIn("plugins/task-management", text)
 
     def test_task_management_contract_is_host_neutral(self) -> None:

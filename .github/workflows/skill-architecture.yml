@@ -55,11 +55,8 @@ jobs:
           python3 -m json.tool .artifacts/skill-context-report.json > /tmp/skill-context-report.pretty.json
           mv /tmp/skill-context-report.pretty.json .artifacts/skill-context-report.json
 
-      - name: Run grill-to-pr-loop tests
-        run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 -m unittest discover -s skills/grill-to-pr-loop/tests
-
-      - name: Run issue-implementation-loop tests
-        run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 -m unittest discover -s skills/issue-implementation-loop/tests
+      - name: Run sdd-implementation tests
+        run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 -m unittest discover -s skills/sdd-implementation/tests
 
       - name: Run llm-wiki tests
         run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 -m unittest discover -s skills/llm-wiki/tests
