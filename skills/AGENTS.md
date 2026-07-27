@@ -1,6 +1,6 @@
 # Skill authoring contract
 
-- Skills in this directory are portable through their shared `<skill-name>/SKILL.md`.
+- Skills in this directory use the standard `<skill-name>/SKILL.md`.
   Its frontmatter must contain a non-empty `name` and `description`, and the
   directory name must equal `name`.
 - Define a skill's inputs, outputs, and required capabilities without naming a
@@ -13,5 +13,5 @@
   skill discovery or behavior.
 - Keep runtime-specific tool assumptions conditional and document a capability
   check, alternative, or `BLOCKED` boundary.
-- Repository compatibility is not live availability. Run the repository
-  compatibility validator and skill-creator validator before handoff.
+- Run `scripts/validate_skill_architecture.py --all` and the skill-creator
+  validator before handoff.

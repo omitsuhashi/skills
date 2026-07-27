@@ -41,16 +41,16 @@ class SkillCiWorkflowTests(unittest.TestCase):
         self.assertIn("test_skill_has_no_host_specific_or_runtime_surface", text)
         self.assertIn("test_capability_and_partial_failures_are_fail_closed", text)
 
-    def test_workflow_uses_repository_compatibility_entrypoints(self) -> None:
+    def test_workflow_omits_repository_compatibility_entrypoints(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("Test skill authoring guidance", text)
         self.assertIn("scripts/test_skill_authoring_guidance.py", text)
         self.assertIn("Test skill CI workflow contract", text)
         self.assertIn("scripts/test_skill_ci_workflow.py", text)
-        self.assertIn("Test repository compatibility validator", text)
-        self.assertIn("scripts/test_validate_repository_compatibility.py", text)
-        self.assertIn("Validate repository compatibility", text)
-        self.assertIn("scripts/validate_repository_compatibility.py --all", text)
+        self.assertNotIn("Test repository compatibility validator", text)
+        self.assertNotIn("scripts/test_validate_repository_compatibility.py", text)
+        self.assertNotIn("Validate repository compatibility", text)
+        self.assertNotIn("scripts/validate_repository_compatibility.py", text)
 
 
 if __name__ == "__main__":

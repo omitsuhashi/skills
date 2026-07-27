@@ -5,11 +5,11 @@
 - When another workflow creates durable planning or decision documents, including roadmap, ADR, spec, design doc, implementation plan, or Goal command preparation, save them under `knowledge/wiki/...` according to `knowledge/AGENTS.md` instead of using repo-root `docs/` defaults.
 - Keep repo-root guidance here short. Do not duplicate wiki-wide rules in this file.
 
-## Portable skill and plugin authoring
+## Skill and plugin authoring
 
-- Skills created or changed in this repository must use a portable shared
-  `SKILL.md` contract with declared inputs, outputs, and required capabilities.
-- For portable skill requirements, follow `skills/AGENTS.md`.
+- Skills created or changed in this repository must use a portable shared `SKILL.md`
+  contract with declared inputs, outputs, and required capabilities.
+- For skill requirements, follow `skills/AGENTS.md`.
 - For plugin requirements, follow `plugins/AGENTS.md`.
 
 ## Task Worktree Policy

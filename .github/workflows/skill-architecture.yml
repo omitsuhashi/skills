@@ -42,12 +42,6 @@ jobs:
       - name: Test skill CI workflow contract
         run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 scripts/test_skill_ci_workflow.py
 
-      - name: Test repository compatibility validator
-        run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 scripts/test_validate_repository_compatibility.py
-
-      - name: Validate repository compatibility
-        run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 scripts/validate_repository_compatibility.py --all
-
       - name: Write context report
         run: |
           mkdir -p .artifacts
