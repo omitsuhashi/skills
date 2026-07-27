@@ -10,6 +10,9 @@ CORE = SKILL_ROOT / "references" / "core.md"
 PROJECTS = SKILL_ROOT / "references" / "github-projects.md"
 ISSUES = SKILL_ROOT / "references" / "issue-contract.md"
 SAFETY = SKILL_ROOT / "references" / "safety-and-failures.md"
+TARGET_AUTHORIZATION = (
+    SKILL_ROOT / "references" / "target-authorization.md"
+)
 
 EXPECTED_FILES = {
     "SKILL.md",
@@ -17,6 +20,7 @@ EXPECTED_FILES = {
     "references/github-projects.md",
     "references/issue-contract.md",
     "references/safety-and-failures.md",
+    "references/target-authorization.md",
     "tests/test_task_management_contract.py",
 }
 
@@ -108,6 +112,7 @@ class TaskManagementContractTests(unittest.TestCase):
             "github-projects.md",
             "issue-contract.md",
             "safety-and-failures.md",
+            "target-authorization.md",
         ):
             self.assertIn(f"references/{name}", skill_text)
             self.assertTrue((SKILL_ROOT / "references" / name).is_file())
@@ -223,6 +228,69 @@ class TaskManagementContractTests(unittest.TestCase):
         self.assertIn("Do not ask twice", terminal_flow)
         self.assertIn("inferred terminal transition", terminal_flow)
         self.assertIn("confirmation", terminal_flow)
+
+    def test_every_write_flow_guards_exact_target_before_direct_mcp(self) -> None:
+        text = read(SKILL)
+        for heading in (
+            "### Create and register",
+            "### Edit",
+            "### Comment",
+            "### Non-terminal field update",
+            "### Terminal update",
+        ):
+            with self.subTest(heading=heading):
+                flow = section(text, heading)
+                self.assertIn("generic target guard", flow)
+                self.assertIn("zero writes", flow)
+                self.assertLess(
+                    flow.index("generic target guard"),
+                    flow.index("GitHub MCP"),
+                )
+
+    def test_target_authorization_is_caller_supplied_and_operation_shaped(
+        self,
+    ) -> None:
+        text = read(TARGET_AUTHORIZATION)
+        for required in (
+            "source profile",
+            "active profile snapshot",
+            "declared task operation",
+            "Work Unit ID",
+            "Work Unit repository binding",
+            "approved repository owner",
+            "Project owner policy",
+            "create / register",
+            "comment",
+            "project-only field update",
+            "issue edit / complete",
+            "confirmation-needed",
+            "zero writes",
+        ):
+            self.assertIn(required, text)
+        for prohibited in (
+            "companies-local",
+            "Python import",
+            "facade",
+            "wrapper",
+            "executor",
+        ):
+            self.assertNotIn(prohibited, text)
+
+    def test_target_guard_rejects_ambiguous_bulk_and_conflicting_targets(
+        self,
+    ) -> None:
+        text = read(TARGET_AUTHORIZATION) + "\n" + read(SAFETY)
+        for required in (
+            "multiple repositories",
+            "multiple Projects",
+            "repository binding mismatch",
+            "malformed Project URL",
+            "inactive source profile",
+            "ungranted operation",
+            "bulk",
+            "zero writes",
+        ):
+            self.assertIn(required, text)
 
     def test_create_preflight_requires_only_create_and_registration_capabilities(self) -> None:
         skill_text = read(SKILL)

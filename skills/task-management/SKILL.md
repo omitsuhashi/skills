@@ -13,6 +13,7 @@ Manage task content as GitHub Issues and portfolio state as Project items. Use a
 - Read `references/github-projects.md` before adding an Issue to the Project, changing fields, completing a task, or checking capabilities.
 - Read `references/issue-contract.md` before creating an Issue or deciding whether an existing Issue is the same task.
 - Read `references/safety-and-failures.md` before any write, destructive operation, bulk change, or recovery from a partial failure.
+- Read `references/target-authorization.md` before every write route.
 
 ## Boundaries
 
@@ -28,7 +29,7 @@ Manage task content as GitHub Issues and portfolio state as Project items. Use a
 1. Classify the requested operation before resolving targets or checking capabilities.
 2. Resolve only the scope and targets required by that operation through `references/core.md`.
 3. For read, search, and list, require only the read capabilities because these routes perform no write.
-4. For every write route, check only the operation capabilities and target access in `references/github-projects.md` before mutation.
+4. For every write route, check only the operation capabilities and run the generic target guard in `references/target-authorization.md` before mutation.
 5. Follow exactly one operation flow below. Combine flows only when the user explicitly requests each operation.
 
 ### Read, search, and list
@@ -46,35 +47,35 @@ Only this operation uses the new-task flow:
 2. Resolve the Project and Issue repository.
 3. Search read-only for an obvious existing Issue and Project item.
 4. Reuse a high-confidence match according to `references/issue-contract.md`.
-5. Before mutation, check only the create operation capabilities and target access in `references/github-projects.md`, then invoke available GitHub MCP tools directly.
+5. Immediately before the first mutation, check only the create operation capabilities and run the generic target guard. A blocked decision returns `confirmation-needed` or `blocked` with zero writes; an allowed decision invokes available GitHub MCP tools directly.
 6. If no Issue matches, create it. If the Issue is not yet in the selected Project, add it and apply `Status=Inbox`, `Priority=P2`, and no due date only to that newly created Project item when the user supplied no value.
 7. For an existing Project item, preserve every Issue and Project item field except an explicitly requested change or documented unfinished write.
 8. Return the Issue URL, repository, Project URL, completed steps, preserved state, and unfinished steps.
 
 ### Edit
 
-- Check only the edit operation capabilities and target access in `references/github-projects.md`, then invoke available GitHub MCP tools directly.
+- Immediately before the first mutation, check only the edit operation capabilities and run the generic target guard. A blocked decision returns `confirmation-needed` or `blocked` with zero writes; an allowed decision invokes available GitHub MCP tools directly.
 - Update only the explicitly requested Issue properties, such as title or body.
 - Do not add Project membership. Do not apply creation defaults unless the user separately requests a create or register operation.
 - Return the edited Issue properties and Issue URL; do not claim unrelated Project writes.
 
 ### Comment
 
-- Check only the comment operation capabilities and target access in `references/github-projects.md`, then invoke available GitHub MCP tools directly.
+- Immediately before the first mutation, check only the comment operation capabilities and run the generic target guard. A blocked decision returns `confirmation-needed` or `blocked` with zero writes; an allowed decision invokes available GitHub MCP tools directly.
 - Add only the requested comment to the resolved Issue.
 - Do not add Project membership. Do not apply creation defaults unless the user separately requests a create or register operation.
 - Return the comment result and Issue URL; do not claim unrelated Issue or Project writes.
 
 ### Non-terminal field update
 
-- Check only the non-terminal field update operation capabilities and target access in `references/github-projects.md`, then invoke available GitHub MCP tools directly.
+- Immediately before the first mutation, check only the non-terminal field update operation capabilities and run the generic target guard. A blocked decision returns `confirmation-needed` or `blocked` with zero writes; an allowed decision invokes available GitHub MCP tools directly.
 - Update only the explicitly requested field values for Status, Priority, or Due date.
 - Do not change any unrequested field, add Project membership, or apply creation defaults.
 - Return only the requested field results, target item, and any unfinished requested write.
 
 ### Terminal update
 
-- Check only the terminal update operation capabilities and target access in `references/github-projects.md`, then invoke available GitHub MCP tools directly.
+- Immediately before the first mutation, check only the terminal operation capabilities and run the generic target guard. A blocked decision returns `confirmation-needed` or `blocked` with zero writes; an allowed decision invokes available GitHub MCP tools directly.
 - Treat an explicit terminal instruction as approval for the Issue close and matching Project Status transition. Do not ask twice.
 - Obtain confirmation before an inferred terminal transition.
 - Apply the terminal and partial-failure contracts in `references/github-projects.md` and `references/safety-and-failures.md`, then return the result of each side and any unfinished step.
