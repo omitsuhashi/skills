@@ -2,6 +2,21 @@
 
 append-only で使います。すべての entry は予測しやすい header で始めます。
 
+## [2026-07-27] execution-plan-candidate | SDD Implementation Superpowers-first Revision
+
+- Humanは`knowledge/wiki/syntheses/sdd-implementation-skill-design.md`をSuperpowers-first revisionのWritten Specとして承認した。
+- `superpowers:writing-plans`を使い、後継implementation planを`knowledge/wiki/syntheses/sdd-implementation-superpowers-first-implementation-plan.md`へ作成した。
+- planはSkill lifecycle contract、repository router / architecture / Codex metadata、LLM Wiki closeoutとfull verificationの3 taskに限定した。新しいscript、schema、scheduler、runtime state、old loop fallbackは追加しない。
+- Task 1は`superpowers:writing-skills`と`superpowers:test-driven-development`を必須とし、contract testのREDから開始する。Task 2はdefault routeとUI copyを揃え、Task 3はsingle-root ingestとfinal whole-branch reviewを行う。
+- production skill変更、Execution Plan Gate、worker dispatch、remote actionは未実施である。
+
+## [2026-07-27] spec-gate | SDD Implementation Superpowers-first Revision
+
+- Humanは`knowledge/wiki/syntheses/sdd-implementation-skill-design.md`のSuperpowers-first revisionをWritten Specとして承認した。
+- Superpowersがbrainstorming、writing-plans、SDD、review、model tierを所有し、repo-local責務をGrill with Docs、LLM Wiki、host model resolution、optional reasoning effortへ限定するownershipは確定した。
+- spec未作成またはmaterial ambiguityありではGrill with Docsを必須とし、approved current spec / planがある場合は完了済みstageをskipする。
+- production skill変更、implementation plan、worker dispatch、remote actionはこのSpec Gate時点では未実施である。
+
 ## [2026-07-27] written-spec-candidate | SDD Implementation Superpowers-first Revision
 
 - Superpowers v6.2.0の一次情報を調査し、SDDにはdispatchごとのmodel選択が既にある一方、modelと独立したreasoning effort contractとHermes Agent公式adapterはないことを`knowledge/wiki/syntheses/sdd-superpowers-model-and-reasoning-research.md`へ保存した。

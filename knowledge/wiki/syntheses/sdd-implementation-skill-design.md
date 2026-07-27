@@ -2,9 +2,9 @@
 
 ## 状態
 
-Phase 1 の local implementation と verification は完了済みである。本書は、その後の調査と Human の方向性承認を反映した **Superpowers-first revision の Written Spec 候補**である。
+Phase 1 の local implementation と verification は完了済みである。本書は、その後の調査と Human の方向性承認を反映し、2026-07-27にHumanがWritten Specとして承認した **Superpowers-first revision** である。
 
-この revision は、`sdd-implementation` の入口を承認済み implementation plan だけに限定せず、spec 定義・精緻化から implementation、knowledge closeout までを一つの開発体験として構成する。production skill の変更、新しい implementation plan、push、PR、merge、release、live install はまだ行っていない。Human が本書を Written Spec として承認した後に、新しい implementation plan を作成する。
+この revision は、`sdd-implementation` の入口を承認済み implementation plan だけに限定せず、spec 定義・精緻化から implementation、knowledge closeout までを一つの開発体験として構成する。production skill の変更、push、PR、merge、release、live install はまだ行っていない。後継implementation planは[SDD Implementation Superpowers-first Revision Implementation Plan](sdd-implementation-superpowers-first-implementation-plan.md)である。
 
 ## 調査で確認した前提
 
