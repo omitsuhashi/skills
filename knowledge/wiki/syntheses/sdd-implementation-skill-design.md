@@ -2,7 +2,7 @@
 
 ## 状態
 
-Humanがwritten designを承認し、`sdd-implementation-skill-implementation-plan.md`を実行候補として作成した。production skillの実装、既存loop skillの変更・削除、push、PR作成、merge、release、live installは未実施。
+Human-approved Phase 1 designのlocal implementationとfresh verificationが完了した。`sdd-implementation`を既定実装入口とし、旧loop skillは明示指定時だけ残している。push、PR作成、merge、release、live install、およびPhase 2の旧skill削除は未実施。
 
 ## 問題設定
 
