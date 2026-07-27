@@ -82,10 +82,16 @@ class FakeGitHubMCP:
             payload = {"issue": copy.deepcopy(self._exact_issue(context))}
         elif action == "project_item_read_exact":
             matches = self._project_item_matches(context)
+            expected_item_id = context.get("project_item_id")
+            exact_item = matches[0] if len(matches) == 1 else None
+            if (
+                exact_item is not None
+                and expected_item_id is not None
+                and exact_item.get("item_id") != expected_item_id
+            ):
+                exact_item = None
             payload = {
-                "item": copy.deepcopy(matches[0])
-                if len(matches) == 1
-                else None,
+                "item": copy.deepcopy(exact_item),
                 "match_count": len(matches),
             }
         elif action in _PROJECT_FIELD_READS:
@@ -146,6 +152,7 @@ class FakeGitHubMCP:
             "multiple_issue_marker_matches": {"issue_search_exact"},
             "exact_issue_readback": {"issue_read_exact"},
             "project_item_exists": {"project_item_read_exact"},
+            "multiple_project_item_matches": {"project_item_read_exact"},
             "default_status_observed": {"project_status_read"},
             "requested_initial_status_observed": {"project_status_read"},
             "default_priority_observed": {"project_priority_read"},
@@ -176,6 +183,8 @@ class FakeGitHubMCP:
             return payload["issue"] is not None
         if condition == "project_item_exists":
             return payload["match_count"] == 1 and payload["item"] is not None
+        if condition == "multiple_project_item_matches":
+            return payload["match_count"] > 1
         if condition in _STATIC_FIELD_OBSERVATIONS:
             return (
                 payload["exists"]
@@ -370,21 +379,25 @@ class FakeGitHubMCP:
         issue = self._exact_issue(context)
         if issue is None:
             return []
-        item_id = context.get("project_item_id")
         return [
             item
             for item in self.project_items.values()
             if item.get("project_url") == context.get("project_url")
             and item.get("issue_number") == issue.get("number")
             and item.get("issue_node_id") == issue.get("node_id")
-            and (item_id is None or item.get("item_id") == item_id)
         ]
 
     def _exact_item(
         self, context: dict[str, Any]
     ) -> dict[str, Any] | None:
         matches = self._project_item_matches(context)
-        return matches[0] if len(matches) == 1 else None
+        if len(matches) != 1:
+            return None
+        item = matches[0]
+        item_id = context.get("project_item_id")
+        if item_id is not None and item.get("item_id") != item_id:
+            return None
+        return item
 
 
 def load_contract(path: Path) -> dict[str, Any]:
@@ -546,6 +559,9 @@ class ContractRunner:
         self.contract = contract
         self.mcp = mcp
         self.local_preflights: list[str] = []
+        self.capability_preflights: list[
+            tuple[str, tuple[str, ...]]
+        ] = []
         self.events: list[str] = []
 
     def run(self, operation_name: str, context: dict[str, Any]) -> str:
@@ -567,6 +583,22 @@ class ContractRunner:
             operation, context
         ):
             return "blocked"
+        if (
+            operation_name == "task_project_register"
+            and context.get("_receipt_state") == "fields_incomplete"
+        ):
+            receipt_item = self.mcp.read(
+                "project_item_read_exact", context
+            )
+            if self.mcp.observe(
+                "multiple_project_item_matches", receipt_item, context
+            ):
+                return "ambiguous"
+            if not self.mcp.observe(
+                "project_item_exists", receipt_item, context
+            ):
+                return "blocked"
+            self.mcp.bind_project_item_identity(receipt_item, context)
 
         remaining_sides: frozenset[str] | None = None
         if operation_name == "task_complete":
@@ -584,23 +616,22 @@ class ContractRunner:
         preflighted_sides: set[str] = set()
 
         for step in operation["steps"]:
-            if not self._applies(step, remaining_sides, context):
+            if not self._applies(
+                step, remaining_sides, context, phase="step"
+            ):
                 continue
             read_before_observed = step.get(
                 "read_before_observed", step["observed"]
             )
-            before = self.mcp.read(step["read_before"], context)
-            ambiguous_condition = step.get("read_before_ambiguous")
-            if (
-                ambiguous_condition is not None
-                and self.mcp.observe(
-                    ambiguous_condition, before, context
-                )
-            ):
+            before_state = self._observe_transition(
+                step["read_before"],
+                read_before_observed,
+                step.get("read_before_ambiguous"),
+                context,
+            )
+            if before_state == "ambiguous":
                 return "ambiguous"
-            if self.mcp.observe(read_before_observed, before, context):
-                if step["read_before"] == "project_item_read_exact":
-                    self.mcp.bind_project_item_identity(before, context)
+            if before_state == "observed":
                 observed_outcome = step.get("on_read_before_observed")
                 if observed_outcome is not None:
                     return observed_outcome
@@ -612,14 +643,19 @@ class ContractRunner:
                 preflighted_once,
                 preflighted_sides,
             )
-            if not self._write_then_observe(step, context):
-                return "partial"
+            self._record_capability_preflight(step)
+            write_state = self._write_then_observe(step, context)
+            if write_state != "observed":
+                return write_state
             if step["write"] == "project_item_add":
                 context["_project_item_created_this_invocation"] = True
 
         for observation in operation["final_observations"]:
             if not self._applies(
-                observation, remaining_sides, context
+                observation,
+                remaining_sides,
+                context,
+                phase="final",
             ):
                 continue
             if not self._read_observed(
@@ -630,7 +666,7 @@ class ContractRunner:
 
     def _write_then_observe(
         self, step: dict[str, Any], context: dict[str, Any]
-    ) -> bool:
+    ) -> str:
         outcome_unknown = False
         self.events.append(f"write:{step['write']}")
         try:
@@ -646,42 +682,87 @@ class ContractRunner:
                 resolution,
                 context,
             ):
-                return False
+                return "partial"
             if not self.mcp.observe(
                 step["unknown_resolver_observed"],
                 resolution,
                 context,
             ):
-                return False
+                return "partial"
             if not self.mcp.bind_unique_issue_identity(
                 resolution, context
             ):
-                return False
-            return self._read_observed(
-                step["read_after"], step["observed"], context
+                return "partial"
+            return self._observe_transition(
+                step["read_after"],
+                step["observed"],
+                step.get("read_after_ambiguous"),
+                context,
             )
 
-        if self._read_observed(step["read_after"], step["observed"], context):
-            return True
+        readback = self._observe_transition(
+            step["read_after"],
+            step["observed"],
+            step.get("read_after_ambiguous"),
+            context,
+        )
+        if readback != "missing":
+            return readback
         if outcome_unknown and step.get("retry_after_unknown", False):
             self.events.append(f"write:{step['write']}")
             try:
                 self.mcp.write(step["write"], context)
             except (UnknownOutcome, WriteFailed):
                 pass
-            return self._read_observed(
-                step["read_after"], step["observed"], context
+            retried = self._observe_transition(
+                step["read_after"],
+                step["observed"],
+                step.get("read_after_ambiguous"),
+                context,
             )
-        return False
+            return "partial" if retried == "missing" else retried
+        return "partial"
+
+    def _observe_transition(
+        self,
+        read_action: str,
+        condition: str,
+        ambiguous_condition: str | None,
+        context: dict[str, Any],
+    ) -> str:
+        observation = self.mcp.read(read_action, context)
+        if (
+            ambiguous_condition is not None
+            and self.mcp.observe(
+                ambiguous_condition, observation, context
+            )
+        ):
+            return "ambiguous"
+        if not self.mcp.observe(condition, observation, context):
+            return "missing"
+        if read_action == "project_item_read_exact":
+            self.mcp.bind_project_item_identity(observation, context)
+        return "observed"
 
     def _read_observed(
         self, read_action: str, condition: str, context: dict[str, Any]
     ) -> bool:
-        observation = self.mcp.read(read_action, context)
-        observed = self.mcp.observe(condition, observation, context)
-        if observed and read_action == "project_item_read_exact":
-            self.mcp.bind_project_item_identity(observation, context)
-        return observed
+        return (
+            self._observe_transition(
+                read_action, condition, None, context
+            )
+            == "observed"
+        )
+
+    def _record_capability_preflight(
+        self, step: dict[str, Any]
+    ) -> None:
+        capabilities = step.get("required_capabilities")
+        if capabilities is None:
+            return
+        self.capability_preflights.append(
+            (step["id"], tuple(capabilities))
+        )
 
     def _record_preflight(
         self,
@@ -718,6 +799,8 @@ class ContractRunner:
         transition: dict[str, Any],
         remaining_sides: frozenset[str] | None,
         context: dict[str, Any],
+        *,
+        phase: str,
     ) -> bool:
         side = transition.get("side")
         side_applies = side is None or (
@@ -725,6 +808,14 @@ class ContractRunner:
         )
         if not side_applies:
             return False
+        receipt_steps = context.get("_receipt_unfinished_transitions")
+        if receipt_steps is not None:
+            transition_id = transition["id"]
+            if phase == "step":
+                return transition_id in receipt_steps
+            return transition_id in {"issue", "project_item"} or (
+                transition_id in receipt_steps
+            )
         condition = transition.get("applies_when")
         if condition is None:
             return True
@@ -757,6 +848,8 @@ class ContractRunner:
         if (
             operation.get("partial_receipt")
             != "required_exact_prior_task_create_receipt"
+            or operation.get("partial_receipt_schema")
+            != "project_item_initial_field_plan_v1"
         ):
             return False
         receipt = context.get("partial_receipt")
@@ -767,12 +860,8 @@ class ContractRunner:
         for field in ("repository", "project_url", "task_key"):
             if receipt.get(field) != context.get(field):
                 return False
-        if receipt.get("state") not in {
-            "issue_observed",
-            "project_item_unknown",
-            "project_item_missing",
-            "fields_incomplete",
-        }:
+        state = receipt.get("state")
+        if state not in operation.get("partial_receipt_states", []):
             return False
         number = receipt.get("issue_number")
         node_id = receipt.get("issue_node_id")
@@ -792,6 +881,81 @@ class ContractRunner:
             return False
         if supplied_node not in {None, node_id}:
             return False
+
+        plan = receipt.get("initial_field_plan")
+        unfinished = receipt.get("unfinished_transitions")
+        if (
+            not isinstance(plan, dict)
+            or set(plan) != {"Status", "Priority", "Due date"}
+            or not isinstance(unfinished, list)
+            or not unfinished
+            or not all(isinstance(value, str) for value in unfinished)
+            or len(set(unfinished)) != len(unfinished)
+        ):
+            return False
+        expected_transitions: set[str] = set()
+        requested_fields: dict[str, Any] = {}
+        field_contract = {
+            "Status": ("Inbox", "default_status", "requested_status"),
+            "Priority": ("P2", "default_priority", "requested_priority"),
+            "Due date": (None, None, "requested_due_date"),
+        }
+        for field_name, (
+            default_value,
+            default_transition,
+            requested_transition,
+        ) in field_contract.items():
+            entry = plan.get(field_name)
+            if not isinstance(entry, dict) or set(entry) != {
+                "source",
+                "value",
+            }:
+                return False
+            source = entry["source"]
+            value = entry["value"]
+            if field_name == "Due date" and source == "omitted":
+                if value is not None:
+                    return False
+            elif source == "default":
+                if default_transition is None or value != default_value:
+                    return False
+                expected_transitions.add(default_transition)
+            elif source == "requested":
+                if value is None:
+                    return False
+                expected_transitions.add(requested_transition)
+                requested_fields[field_name] = value
+            else:
+                return False
+
+        unfinished_set = set(unfinished)
+        if not unfinished_set <= expected_transitions | {"project_item"}:
+            return False
+        receipt_item_id = receipt.get("project_item_id")
+        supplied_item_id = context.get("project_item_id")
+        if state == "fields_incomplete":
+            if (
+                not isinstance(receipt_item_id, str)
+                or not receipt_item_id
+                or "project_item" in unfinished_set
+            ):
+                return False
+        elif receipt_item_id is not None or "project_item" not in unfinished_set:
+            return False
+        if supplied_item_id not in {None, receipt_item_id}:
+            return False
+        if (
+            "initial_fields" in context
+            and context["initial_fields"] != requested_fields
+        ):
+            return False
+
         context["issue_number"] = number
         context["issue_node_id"] = node_id
+        context["project_item_id"] = receipt_item_id
+        context["initial_fields"] = requested_fields
+        context["_receipt_state"] = state
+        context["_receipt_unfinished_transitions"] = frozenset(
+            unfinished
+        )
         return True

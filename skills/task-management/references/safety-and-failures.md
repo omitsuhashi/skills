@@ -31,7 +31,9 @@ Do not fall back to a CLI, direct API client, browser automation, or local backe
 
 ## Partial success
 
-Do not delete the created Issue if Issue creation succeeds but Project add or field update fails. Return its URL, successful steps, unfinished steps, and the safe resume action. On retry, continue only the unfinished steps. Do not reset completed or current fields. Do not create a duplicate Issue.
+Do not delete the created Issue if Issue creation succeeds but Project add or field update fails. Return its URL, successful steps, original requested/default initial-field plan, exact unfinished transition IDs, receipt-bound Project item ID when membership exists, and the safe resume action. On retry, validate that exact receipt and continue only the unfinished steps. Do not reset completed or current fields. Do not create a duplicate Issue.
+
+If exact Project-item readback returns multiple items before a write or after an unknown item-add result, return `ambiguous`. Perform no further writes: never retry the add, create a third item, or apply initial fields.
 
 When Issue creation returns an unknown result, search the exact idempotency marker
 within the exact repository. One match may bind its positive Issue number or node

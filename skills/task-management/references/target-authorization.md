@@ -28,8 +28,11 @@ is valid, and the target has the exact operation-specific shape:
   registration in one invocation;
 - `task_project_register` requires exactly one Issue identity (positive Issue number
   XOR Issue node ID), one Project, and an exact prior `task_create` partial receipt
-  binding the repository, Project URL, idempotency marker, Issue identity, and
-  unfinished state. A boolean resume flag is never sufficient. The operation is
+  binding the repository, Project URL, idempotency marker, Issue identity, recovery
+  state, original requested/default initial-field plan, and exact unfinished
+  transition IDs. `fields_incomplete` also requires the exact Project item ID.
+  Missing or mismatched identity, plan, item ID, or unfinished transitions blocks
+  with zero writes. A boolean resume flag is never sufficient. The operation is
   reserved for retry or resume rather than the normal successful `task_create` flow;
 - `task_update` requires exactly one Issue identity plus `mutation_kind=issue` and one
   exact Issue property, `title` or `body`, or
@@ -58,7 +61,9 @@ readiness is not part of the local command.
 
 The allowed decision authorizes only the named operation and target for this invocation.
 Next perform a separate direct GitHub MCP capability and access check only for the
-declared operation. Then call the available official GitHub MCP capability directly
-and perform the operation's normal remote readback. The local gate never invokes MCP,
+declared operation. For `task_project_register`, derive that check from exact readback
+and the receipt: item add only when membership remains missing, and only the exact
+field-update capabilities for receipt-declared unfinished fields. Then call the
+available official GitHub MCP capability directly and perform the operation's normal remote readback. The local gate never invokes MCP,
 reads credentials or tokens, accesses the network, mutates local or remote state, or
 acts as a facade, wrapper, executor, or transport adapter.

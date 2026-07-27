@@ -8,7 +8,7 @@ Check only the semantic capabilities required by the requested operation before 
 |---|---|
 | read / search | Issue read / search; Project read only when requested |
 | `task_create` | Issue read / search / create; Project read / item add / initial Status and Priority update; Due date update only when supplied |
-| `task_project_register` | Exact Issue read; Project read / item add / initial field update |
+| `task_project_register` | Exact Issue and receipt-bound Project item read; item add only when the receipt-declared membership transition remains missing; only the exact receipt-declared unfinished initial-field reads / updates |
 | `task_update` with `mutation_kind=issue` | Exact Issue read / requested Issue update |
 | `task_update` with `mutation_kind=project_field` | Exact Issue and Project item read / requested Project field update |
 | `task_comment` | Exact Issue read / comment create |
@@ -16,7 +16,7 @@ Check only the semantic capabilities required by the requested operation before 
 | `task_complete` with `resume_state=issue_only` | Exact Issue read / Issue close |
 | `task_complete` with `resume_state=project_only` | Exact Project item read / terminal Project Status update |
 
-The GitHub MCP capability inventory is Issue read, search, create, update, and comment; and Project read, item add, and field update. `task_create` requires Issue read, search, and create; Project read, item add, and creation-default field update. Access to the resolved repository and Project is also required. `task_project_register` starts from its exact prior partial receipt and does not require Issue create. A terminal resume requires only the remaining side and does not inherit the other side's mutation capability. For every operation, stop before mutation and report the missing capability or target access.
+The GitHub MCP capability inventory is Issue read, search, create, update, and comment; and Project read, item add, and field update. `task_create` requires Issue read, search, and create; Project read, item add, and creation-default field update. Access to the resolved repository and Project is also required. `task_project_register` starts from its exact prior partial receipt and does not require Issue create. Derive its capability check after exact readback: require item-add capability only when membership is still missing, and require only the field-update capabilities named by receipt-declared unfinished transitions whose target values are not yet observed. Multiple linked Project items are `ambiguous`; do not add another item or apply defaults. A terminal resume requires only the remaining side and does not inherit the other side's mutation capability. For every operation, stop before mutation and report the missing capability or target access.
 
 Tool names may differ by host integration. Match semantic capabilities, but use only GitHub MCP. Do not fall back to a CLI, direct API client, browser automation, or local backend.
 

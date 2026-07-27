@@ -26,8 +26,10 @@ retry_after_unknown = false
 
 [operation.task_create.step.project_item]
 read_before = "project_item_read_exact"
+read_before_ambiguous = "multiple_project_item_matches"
 write = "project_item_add"
 read_after = "project_item_read_exact"
+read_after_ambiguous = "multiple_project_item_matches"
 observed = "project_item_exists"
 retry_after_unknown = true
 
@@ -113,12 +115,17 @@ observed = "requested_initial_due_date_observed"
 local_preflight = "once"
 retry_only = true
 partial_receipt = "required_exact_prior_task_create_receipt"
+partial_receipt_schema = "project_item_initial_field_plan_v1"
+partial_receipt_states = ["issue_observed", "project_item_unknown", "project_item_missing", "fields_incomplete"]
 
 [operation.task_project_register.step.project_item]
 read_before = "project_item_read_exact"
+read_before_ambiguous = "multiple_project_item_matches"
 write = "project_item_add"
 read_after = "project_item_read_exact"
+read_after_ambiguous = "multiple_project_item_matches"
 observed = "project_item_exists"
+required_capabilities = ["project_item_read", "project_item_add"]
 retry_after_unknown = true
 
 [operation.task_project_register.step.default_status]
@@ -127,6 +134,7 @@ read_before = "project_status_read"
 write = "project_status_set_default"
 read_after = "project_status_read"
 observed = "default_status_observed"
+required_capabilities = ["project_status_read", "project_status_update"]
 retry_after_unknown = true
 
 [operation.task_project_register.step.requested_status]
@@ -135,6 +143,7 @@ read_before = "project_status_read"
 write = "project_status_set_requested_initial"
 read_after = "project_status_read"
 observed = "requested_initial_status_observed"
+required_capabilities = ["project_status_read", "project_status_update"]
 retry_after_unknown = true
 
 [operation.task_project_register.step.default_priority]
@@ -143,6 +152,7 @@ read_before = "project_priority_read"
 write = "project_priority_set_default"
 read_after = "project_priority_read"
 observed = "default_priority_observed"
+required_capabilities = ["project_priority_read", "project_priority_update"]
 retry_after_unknown = true
 
 [operation.task_project_register.step.requested_priority]
@@ -151,6 +161,7 @@ read_before = "project_priority_read"
 write = "project_priority_set_requested_initial"
 read_after = "project_priority_read"
 observed = "requested_initial_priority_observed"
+required_capabilities = ["project_priority_read", "project_priority_update"]
 retry_after_unknown = true
 
 [operation.task_project_register.step.requested_due_date]
@@ -159,6 +170,7 @@ read_before = "project_due_date_read"
 write = "project_due_date_set_requested_initial"
 read_after = "project_due_date_read"
 observed = "requested_initial_due_date_observed"
+required_capabilities = ["project_due_date_read", "project_due_date_update"]
 retry_after_unknown = true
 
 [operation.task_project_register.final.issue]

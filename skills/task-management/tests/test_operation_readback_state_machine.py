@@ -52,7 +52,35 @@ def partial_receipt(**overrides):
         "issue_number": None,
         "issue_node_id": "I_1",
         "state": "issue_observed",
+        "project_item_id": None,
+        "initial_field_plan": initial_field_plan(),
+        "unfinished_transitions": [
+            "project_item",
+            "default_status",
+            "default_priority",
+        ],
     }
+    values.update(overrides)
+    return values
+
+
+def initial_field_plan(**overrides):
+    values = {
+        "Status": {"source": "default", "value": "Inbox"},
+        "Priority": {"source": "default", "value": "P2"},
+        "Due date": {"source": "omitted", "value": None},
+    }
+    values.update(overrides)
+    return values
+
+
+def recovery_receipt(**overrides):
+    values = partial_receipt(
+        state="fields_incomplete",
+        project_item_id="PVTI_1",
+        initial_field_plan=initial_field_plan(),
+        unfinished_transitions=["default_priority"],
+    )
     values.update(overrides)
     return values
 
@@ -293,15 +321,279 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
                 "task_project_register",
                 context(
                     partial_resume=True,
-                    partial_receipt=partial_receipt(state="fields_incomplete"),
+                    project_item_id="PVTI_1",
+                    partial_receipt=recovery_receipt(),
                 ),
             ),
         )
         self.assertEqual(1, self.mcp.writes.count("issue_create"))
         self.assertEqual(1, self.mcp.writes.count("project_item_add"))
         self.assertEqual(1, self.mcp.writes.count("project_status_set_default"))
-        self.assertEqual(1, self.mcp.writes.count("project_priority_set_default"))
-        self.assertNotIn("Priority", only_project_item(self.mcp)["fields"])
+        self.assertEqual(2, self.mcp.writes.count("project_priority_set_default"))
+        self.assertEqual(
+            "P2", only_project_item(self.mcp)["fields"]["Priority"]
+        )
+
+    def test_fields_incomplete_receipt_runs_only_declared_field_transition(
+        self,
+    ) -> None:
+        plan = initial_field_plan(
+            Status={"source": "requested", "value": "Ready"},
+            **{"Due date": {
+                "source": "requested",
+                "value": "2026-08-20",
+            }},
+        )
+        self._seed_issue()
+        self._seed_item(
+            fields={"Status": "Ready", "Due date": "2026-08-20"}
+        )
+
+        self.assertEqual(
+            "success",
+            self.runner.run(
+                "task_project_register",
+                context(
+                    project_item_id="PVTI_1",
+                    partial_receipt=recovery_receipt(
+                        initial_field_plan=plan,
+                    ),
+                ),
+            ),
+        )
+        self.assertEqual(
+            ["project_priority_set_default"],
+            self.mcp.writes,
+        )
+        self.assertEqual(
+            {
+                "Status": "Ready",
+                "Priority": "P2",
+                "Due date": "2026-08-20",
+            },
+            only_project_item(self.mcp)["fields"],
+        )
+        write_index = self.mcp.calls.index(
+            "write:project_priority_set_default"
+        )
+        self.assertEqual(
+            2,
+            self.mcp.calls[write_index + 1 :].count(
+                "read:project_priority_read"
+            ),
+        )
+        self.assertEqual("read:project_priority_read", self.mcp.calls[-1])
+
+    def test_fields_incomplete_receipt_mismatch_blocks_zero_write(self) -> None:
+        valid = recovery_receipt()
+        cases = {}
+        for name, mutate in (
+            ("missing_item", lambda value: value.pop("project_item_id")),
+            ("missing_plan", lambda value: value.pop("initial_field_plan")),
+            (
+                "missing_unfinished",
+                lambda value: value.pop("unfinished_transitions"),
+            ),
+            (
+                "plan_transition_mismatch",
+                lambda value: value["initial_field_plan"].__setitem__(
+                    "Priority",
+                    {"source": "requested", "value": "P1"},
+                ),
+            ),
+            (
+                "unknown_unfinished",
+                lambda value: value.__setitem__(
+                    "unfinished_transitions", ["default_due_date"]
+                ),
+            ),
+        ):
+            receipt = copy.deepcopy(valid)
+            mutate(receipt)
+            cases[name] = (receipt, "PVTI_1")
+        cases["item_identity_mismatch"] = (copy.deepcopy(valid), "PVTI_other")
+        cases["remote_item_identity_mismatch"] = (
+            recovery_receipt(project_item_id="PVTI_missing"),
+            "PVTI_missing",
+        )
+
+        for name, (receipt, item_id) in cases.items():
+            with self.subTest(name=name):
+                mcp = FakeGitHubMCP(
+                    issues={"issue": issue_record()},
+                    project_items={"item": project_item_record()},
+                )
+                runner = ContractRunner(self.contract, mcp)
+                self.assertEqual(
+                    "blocked",
+                    runner.run(
+                        "task_project_register",
+                        context(
+                            project_item_id=item_id,
+                            partial_receipt=receipt,
+                        ),
+                    ),
+                )
+                self.assertEqual([], mcp.writes)
+                self.assertEqual([], runner.local_preflights)
+
+    def test_preexisting_multiple_project_items_is_ambiguous_zero_write(
+        self,
+    ) -> None:
+        self._seed_issue()
+        self.mcp.project_items = {
+            "first": project_item_record(item_id="PVTI_1"),
+            "second": project_item_record(item_id="PVTI_2"),
+        }
+        receipt = recovery_receipt(
+            state="project_item_unknown",
+            project_item_id=None,
+            unfinished_transitions=["project_item"],
+        )
+
+        self.assertEqual(
+            "ambiguous",
+            self.runner.run(
+                "task_project_register",
+                context(
+                    project_item_id=None,
+                    partial_receipt=receipt,
+                ),
+            ),
+        )
+        self.assertEqual([], self.mcp.writes)
+
+    def test_unknown_item_add_multiple_readback_stops_before_retry(self) -> None:
+        class DuplicateAfterUnknownAdd(FakeGitHubMCP):
+            def write(self, action, operation_context):
+                try:
+                    return super().write(action, operation_context)
+                except UnknownOutcome:
+                    if action == "project_item_add":
+                        created = next(iter(self.project_items.values()))
+                        duplicate = copy.deepcopy(created)
+                        duplicate["item_id"] = "PVTI_duplicate"
+                        self.project_items["duplicate"] = duplicate
+                    raise
+
+        mcp = DuplicateAfterUnknownAdd(issues={"issue": issue_record()})
+        mcp.fail_next("project_item_add", "after")
+        runner = ContractRunner(self.contract, mcp)
+        receipt = recovery_receipt(
+            state="project_item_missing",
+            project_item_id=None,
+            unfinished_transitions=["project_item"],
+        )
+
+        self.assertEqual(
+            "ambiguous",
+            runner.run(
+                "task_project_register",
+                context(
+                    project_item_id=None,
+                    partial_receipt=receipt,
+                ),
+            ),
+        )
+        self.assertEqual(["project_item_add"], mcp.writes)
+
+    def test_register_capabilities_follow_only_unfinished_transitions(
+        self,
+    ) -> None:
+        self._seed_issue()
+        self._seed_item(fields={"Status": "Inbox", "Due date": None})
+        self.assertEqual(
+            "success",
+            self.runner.run(
+                "task_project_register",
+                context(
+                    project_item_id=None,
+                    partial_receipt=recovery_receipt(
+                        state="project_item_unknown",
+                        project_item_id=None,
+                        unfinished_transitions=[
+                            "project_item",
+                            "default_priority",
+                        ],
+                    ),
+                ),
+            ),
+        )
+        self.assertEqual(
+            [
+                (
+                    "default_priority",
+                    (
+                        "project_priority_read",
+                        "project_priority_update",
+                    ),
+                )
+            ],
+            getattr(self.runner, "capability_preflights", []),
+        )
+
+        observed_mcp = FakeGitHubMCP(
+            issues={"issue": issue_record()},
+            project_items={"item": project_item_record()},
+        )
+        observed_runner = ContractRunner(self.contract, observed_mcp)
+        self.assertEqual(
+            "success",
+            observed_runner.run(
+                "task_project_register",
+                context(
+                    project_item_id="PVTI_1",
+                    partial_receipt=recovery_receipt(),
+                ),
+            ),
+        )
+        self.assertEqual([], observed_runner.capability_preflights)
+        self.assertEqual([], observed_mcp.writes)
+
+        missing_mcp = FakeGitHubMCP(issues={"issue": issue_record()})
+        missing_runner = ContractRunner(self.contract, missing_mcp)
+        receipt = recovery_receipt(
+            state="project_item_missing",
+            project_item_id=None,
+            initial_field_plan=initial_field_plan(
+                Status={"source": "requested", "value": "Ready"}
+            ),
+            unfinished_transitions=[
+                "project_item",
+                "requested_status",
+                "default_priority",
+            ],
+        )
+        self.assertEqual(
+            "success",
+            missing_runner.run(
+                "task_project_register",
+                context(
+                    project_item_id=None,
+                    partial_receipt=receipt,
+                ),
+            ),
+        )
+        self.assertEqual(
+            [
+                (
+                    "project_item",
+                    ("project_item_read", "project_item_add"),
+                ),
+                (
+                    "requested_status",
+                    ("project_status_read", "project_status_update"),
+                ),
+                (
+                    "default_priority",
+                    (
+                        "project_priority_read",
+                        "project_priority_update",
+                    ),
+                ),
+            ],
+            getattr(missing_runner, "capability_preflights", []),
+        )
 
     def test_unknown_project_add_and_update_read_back_before_any_retry(self) -> None:
         self._seed_issue()
@@ -439,7 +731,9 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
                 "task_project_register",
                 context(
                     issue_node_id="I_1",
-                    partial_receipt=partial_receipt(),
+                    partial_receipt=partial_receipt(
+                        unfinished_transitions=["project_item"],
+                    ),
                 ),
             ),
         )
