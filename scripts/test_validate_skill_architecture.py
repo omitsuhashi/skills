@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 import json
 from pathlib import Path
 import subprocess
@@ -7,7 +8,12 @@ import sys
 import tempfile
 import unittest
 
-from validate_skill_architecture import DEFAULT_POLICY_PATH, REQUIRED_FAMILY_ID, load_policy
+from validate_skill_architecture import (
+    DEFAULT_POLICY_PATH,
+    REQUIRED_FAMILY_ID,
+    load_policy,
+    validate_policy,
+)
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -23,8 +29,12 @@ def run_validator(*args: str) -> subprocess.CompletedProcess[str]:
     )
 
 
-def repository_change_loop_family() -> dict[str, object]:
-    policy = load_policy(DEFAULT_POLICY_PATH)
+def architecture_policy() -> dict[str, object]:
+    return deepcopy(load_policy(DEFAULT_POLICY_PATH))
+
+
+def repository_change_loop_family(policy: dict[str, object] | None = None) -> dict[str, object]:
+    policy = architecture_policy() if policy is None else policy
     families = policy["families"]
     assert isinstance(families, dict)
     family = families[REQUIRED_FAMILY_ID]
@@ -33,6 +43,66 @@ def repository_change_loop_family() -> dict[str, object]:
 
 
 class SkillArchitecturePolicyTests(unittest.TestCase):
+    def test_validator_rejects_planning_authority_value_drift(self) -> None:
+        policy = architecture_policy()
+        family = repository_change_loop_family(policy)
+        planning_authority = family["planning_authority"]
+        assert isinstance(planning_authority, dict)
+        planning_authority["supporting_agent_authority"] = "decision_maker"
+
+        self.assertIn(
+            "planning_authority.supporting_agent_authority must be advisory_only",
+            validate_policy(policy),
+        )
+
+    def test_validator_rejects_unknown_planning_authority_field(self) -> None:
+        policy = architecture_policy()
+        family = repository_change_loop_family(policy)
+        planning_authority = family["planning_authority"]
+        assert isinstance(planning_authority, dict)
+        planning_authority["model_name"] = "host-specific"
+
+        self.assertIn(
+            "planning_authority unknown field: model_name",
+            validate_policy(policy),
+        )
+
+    def test_validator_rejects_missing_planning_authority_field(self) -> None:
+        policy = architecture_policy()
+        family = repository_change_loop_family(policy)
+        planning_authority = family["planning_authority"]
+        assert isinstance(planning_authority, dict)
+        del planning_authority["model_persistence"]
+
+        self.assertIn(
+            "planning_authority missing field: model_persistence",
+            validate_policy(policy),
+        )
+
+    def test_validator_rejects_missing_planning_authority_table(self) -> None:
+        policy = architecture_policy()
+        family = repository_change_loop_family(policy)
+        del family["planning_authority"]
+
+        self.assertIn(
+            "repository-change-loop.planning_authority must be a table",
+            validate_policy(policy),
+        )
+
+    def test_repository_change_loop_defines_planning_authority_policy(self) -> None:
+        family = repository_change_loop_family()
+
+        self.assertEqual(
+            family["planning_authority"],
+            {
+                "integration_owner": "main_planning_context",
+                "supporting_agent_authority": "advisory_only",
+                "decision_authority": "human",
+                "model_selection": "host_runtime",
+                "model_persistence": "forbidden",
+            },
+        )
+
     def test_repository_change_loop_defines_context_compaction_policy(self) -> None:
         family = repository_change_loop_family()
 
