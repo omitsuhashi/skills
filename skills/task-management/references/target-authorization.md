@@ -1,6 +1,7 @@
 # Target Authorization
 
-The invocation supplies only the declared task operation and typed target identity.
+The invocation supplies only the declared task operation, allowlisted guard outcome,
+and typed target identity.
 The local gate derives the source identity from `HERMES_PROFILE` and the
 profile-shaped `HERMES_HOME`. It resolves the exact state, runtime, and profiles roots
 from the canonical Portfolio OS state config at the host home, using the default instance
@@ -22,12 +23,14 @@ declared operation is granted to that profile, the entire canonical Work Unit re
 is valid, and the target has the exact operation-specific shape:
 
 - `task_create` requires one repository, exact Work Unit ID and Work Unit repository binding,
-  one Project, and a deterministic pre-Issue idempotency identity. It authorizes the
-  bounded Issue creation and initial Project registration in one invocation;
+  one Project, a deterministic pre-Issue idempotency identity, and any explicit
+  initial fields. It authorizes the bounded Issue creation and initial Project
+  registration in one invocation;
 - `task_project_register` requires exactly one Issue identity (positive Issue number
-  XOR Issue node ID), one Project,
-  and the explicit partial-resume state, and is reserved for retry or resume rather
-  than the normal successful `task_create` flow;
+  XOR Issue node ID), one Project, and an exact prior `task_create` partial receipt
+  binding the repository, Project URL, idempotency marker, Issue identity, and
+  unfinished state. A boolean resume flag is never sufficient. The operation is
+  reserved for retry or resume rather than the normal successful `task_create` flow;
 - `task_update` requires exactly one Issue identity plus `mutation_kind=issue` and one
   exact Issue property, `title` or `body`, or
   that same Issue identity plus `mutation_kind=project_field`, exact Project URL,
@@ -44,6 +47,8 @@ URL kind, owner, and positive number against the caller's Project owner policy. 
 infer authority from the current directory, a Git remote, Project title, recent use, or
 the authenticated account alone.
 
+Only `eligible`, `explicit`, or `inferred` may reach the local gate. A missing,
+empty, or unknown guard outcome and each declared zero-write outcome blocks first.
 An untrusted, stale, or cross-instance inventory, inactive source profile, ungranted operation,
 absent authority fact, malformed Project URL, repository binding mismatch,
 missing or conflicting identity, repository-wide or Project-wide authority, multiple repositories,

@@ -6,6 +6,7 @@ import unittest
 REPO_ROOT = Path(__file__).resolve().parents[3]
 SKILL_ROOT = REPO_ROOT / "skills" / "task-management"
 SKILL = SKILL_ROOT / "SKILL.md"
+DESCRIPTION = SKILL_ROOT / "DESCRIPTION.md"
 CORE = SKILL_ROOT / "references" / "core.md"
 PROJECTS = SKILL_ROOT / "references" / "github-projects.md"
 ISSUES = SKILL_ROOT / "references" / "issue-contract.md"
@@ -15,6 +16,7 @@ TARGET_AUTHORIZATION = (
 )
 
 EXPECTED_FILES = {
+    "DESCRIPTION.md",
     "SKILL.md",
     "references/core.md",
     "references/github-projects.md",
@@ -71,6 +73,16 @@ class TaskManagementContractTests(unittest.TestCase):
         text = read(SKILL)
         self.assertTrue(text.startswith("---\nname: task-management\n"))
         self.assertIn("description:", text.split("---", 2)[1])
+
+    def test_uppercase_description_is_nonempty_and_lowercase_alias_is_absent(
+        self,
+    ) -> None:
+        self.assertTrue(DESCRIPTION.is_file())
+        self.assertTrue(read(DESCRIPTION).strip())
+        self.assertNotIn(
+            "description.md",
+            {path.name for path in SKILL_ROOT.iterdir()},
+        )
 
     def test_core_is_caller_owned_and_issue_backed(self) -> None:
         text = read(SKILL) + "\n" + read(CORE)
@@ -385,6 +397,86 @@ class TaskManagementContractTests(unittest.TestCase):
             "Reserve `task_project_register` for retry or resume",
             create_flow,
         )
+
+    def test_recovery_capabilities_are_scoped_to_the_exact_remaining_write(
+        self,
+    ) -> None:
+        project_text = section(read(PROJECTS), "## Semantic capability check")
+        for required in (
+            "| `task_create` |",
+            "| `task_project_register` |",
+            "| `task_complete` with `resume_state=issue_only` |",
+            "| `task_complete` with `resume_state=project_only` |",
+            "does not require Issue create",
+            "requires only the remaining side",
+        ):
+            self.assertIn(required, project_text)
+
+        register_row = next(
+            line
+            for line in project_text.splitlines()
+            if line.startswith("| `task_project_register` |")
+        )
+        self.assertNotIn("Issue create", register_row)
+
+        issue_only_row = next(
+            line
+            for line in project_text.splitlines()
+            if line.startswith(
+                "| `task_complete` with `resume_state=issue_only` |"
+            )
+        )
+        self.assertNotIn("Project", issue_only_row.split("|", 3)[2])
+
+        project_only_row = next(
+            line
+            for line in project_text.splitlines()
+            if line.startswith(
+                "| `task_complete` with `resume_state=project_only` |"
+            )
+        )
+        self.assertNotIn("Issue close", project_only_row)
+
+    def test_idempotency_contract_defines_canonical_bytes_and_marker_format(
+        self,
+    ) -> None:
+        issue_text = section(read(ISSUES), "## Idempotency key")
+        for required in (
+            "UTF-8",
+            "JSON",
+            "repository",
+            "project_url",
+            "outcome",
+            "acceptance_criteria",
+            "references",
+            "Unicode NFC",
+            "CRLF",
+            "ASCII horizontal whitespace",
+            "fixed key order",
+            "no trailing newline",
+            "missing or null",
+            "deduplicate",
+            "UTF-8 byte order",
+            "SHA-256",
+            "64 lowercase hexadecimal",
+            "3f9fc3661920a8d3fefaa15a83789083a99521dd61994da2b396f5a03b6ed7f2",
+        ):
+            self.assertIn(required, issue_text)
+
+    def test_write_authorization_is_allowlisted_and_unknown_outcomes_fail_closed(
+        self,
+    ) -> None:
+        text = read(SKILL) + "\n" + read(SAFETY)
+        for required in (
+            "`eligible`",
+            "`explicit`",
+            "`inferred`",
+            "`destructive`",
+            "`confirmation-needed`",
+            "unknown guard outcome",
+            "zero writes",
+        ):
+            self.assertIn(required, text)
 
     def test_skill_uses_direct_mcp_and_has_structural_inferred_create_gate(self) -> None:
         text = "\n".join(

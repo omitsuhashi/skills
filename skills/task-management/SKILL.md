@@ -38,12 +38,13 @@ while following the task workflow.
 1. Classify the requested operation before resolving targets or checking capabilities.
 2. Resolve only the scope and targets required by that operation through `references/core.md`.
 3. For read, search, and list, require only the read capabilities because these routes perform no write.
-4. For every bounded write operation, run `portfolio-os task-preflight` for the exact typed target immediately before its first write. A blocked gate means zero writes.
-5. After an allowed local gate, perform a separate direct GitHub MCP capability and access check for only that operation, then invoke official GitHub MCP directly.
-6. For each mutation, call the named official GitHub MCP write directly, then perform its named `read_after` through official GitHub MCP and evaluate the named `observed` condition. A write acknowledgment alone is never success.
-7. On a timeout or unknown write result, perform the named `read_after` before any retry. Retry only when the observed remote state proves the write remains unfinished. Never repeat an observed write.
-8. Return success only from the operation's final observed remote state. On partial success, resume only unfinished transitions and preserve every already-observed Issue, Project item, and field.
-9. Follow exactly one operation flow below. Combine flows only when the user explicitly requests each operation.
+4. Before a write route, classify its guard outcome. Only the declared `eligible`, `explicit`, or `inferred` outcomes may continue. `blocked`, `ambiguous`, `duplicate`, `bulk`, `destructive`, `confirmation-needed`, a missing outcome, or any unknown guard outcome means zero writes.
+5. For every bounded write operation, run `portfolio-os task-preflight` for the exact typed target immediately before its first write. A blocked gate means zero writes.
+6. After an allowed local gate, perform a separate direct GitHub MCP capability and access check for only that operation and, for a partial terminal retry, only the remaining side. Then invoke official GitHub MCP directly.
+7. For each mutation, call the named official GitHub MCP write directly, then perform its named `read_after` through official GitHub MCP and evaluate the named `observed` condition. A write acknowledgment or search match alone is never success.
+8. On an unknown Issue-create result, search the exact idempotency marker. Continue only when one match resolves its Issue number or node ID, then read that exact Issue and validate repository, marker, and identity. Zero or multiple matches fail closed without a retry. For other unknown writes, read back the exact target before retrying and never repeat an observed write.
+9. Return success only from the operation's final observed remote state. On partial success, resume only unfinished transitions and preserve every already-observed Issue, Project item, and field.
+10. Follow exactly one operation flow below. Combine flows only when the user explicitly requests each operation.
 
 ### Read, search, and list
 
@@ -58,13 +59,13 @@ Only this operation uses the new-task flow:
 
 1. Determine the requested outcome and observable acceptance criteria.
 2. Resolve the Project and Issue repository.
-3. Search read-only for an obvious existing Issue and Project item.
-4. Reuse a high-confidence match according to `references/issue-contract.md`.
-5. If no Issue matches, immediately before Issue creation run `portfolio-os task-preflight --operation task_create` with the exact Work Unit, repository, Project, and deterministic idempotency identity. The command derives profile and instance authority from the Hermes host context; do not pass identity or root overrides. A blocked decision returns `confirmation-needed` or `blocked` with zero writes.
+3. Search the exact idempotency marker read-only before title similarity. Zero matches may continue; multiple matches are `ambiguous`.
+4. For normal `task_create`, one matching existing Issue is `duplicate` and returns that Issue with zero writes, whether or not it already belongs to the selected Project. Do not use normal create as an implicit registration route.
+5. When no Issue matches, immediately before Issue creation run `portfolio-os task-preflight --operation task_create` with the exact Work Unit, repository, Project, deterministic idempotency identity, and guard outcome. The command derives profile and instance authority from the Hermes host context; do not pass identity or root overrides. A blocked decision returns `confirmation-needed` or `blocked` with zero writes.
 6. After an allowed local gate, check only the create operation capabilities through a separate direct GitHub MCP capability and access check for `task_create`. That one gate authorizes the bounded Issue-create plus initial-Project-registration plan for this invocation.
-7. Invoke official GitHub MCP directly to create the Issue, read back its exact identity, then continue the initial Project registration under the same `task_create` invocation. Do not run `task_project_register` during this normal successful create flow. Apply `Status=Inbox`, `Priority=P2`, and no due date only to that newly created Project item when the user supplied no value.
-8. Reserve `task_project_register` for retry or resume after a previous partial or unknown result. In that recovery path, immediately before the remaining Project write run `portfolio-os task-preflight --operation task_project_register` with the exact existing Issue identity, Project, and explicit partial-resume state; then perform its separate direct GitHub MCP capability and access check and invoke official GitHub MCP directly.
-9. For an existing Project item, preserve every Issue and Project item field except an explicitly requested change or documented unfinished write.
+7. Invoke official GitHub MCP directly to create the Issue, establish its exact number or node ID, and validate an exact Issue read before continuing. Then add it to the Project under the same `task_create` invocation. Do not run `task_project_register` during this normal successful create flow.
+8. Apply initial Project fields only to a newly created Project item that was added in this invocation. Honor an explicit `Status`, `Priority`, or `Due date`; otherwise use `Status=Inbox`, `Priority=P2`, and no due date. If the item already exists, preserve all its fields.
+9. Reserve `task_project_register` for retry or resume backed by an exact prior partial receipt from `task_create`. The receipt must bind repository, Project URL, idempotency marker, existing Issue number or node ID, and unfinished state. A boolean resume flag is insufficient. Immediately before the remaining Project write, run its local gate and a separate direct GitHub MCP capability/access check that does not require Issue-create capability.
 10. Return the Issue URL, repository, Project URL, completed steps, preserved state, and unfinished steps.
 
 ### Edit

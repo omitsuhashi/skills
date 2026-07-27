@@ -1,4 +1,6 @@
 import copy
+import hashlib
+import json
 from pathlib import Path
 import sys
 import unittest
@@ -8,12 +10,27 @@ SKILL = SKILL_ROOT / "SKILL.md"
 CONTRACT = SKILL_ROOT / "references" / "operation-readback-state-machine.toml"
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from fake_github_mcp import ContractRunner, FakeGitHubMCP, load_contract
+from fake_github_mcp import (
+    ContractRunner,
+    FakeGitHubMCP,
+    UnknownOutcome,
+    load_contract,
+)
+
+
+REPOSITORY = "the3-inc/companies"
+PROJECT_URL = "https://github.com/orgs/the3-inc/projects/7"
 
 
 def context(**overrides):
     values = {
         "task_key": "sha256:abc",
+        "guard_outcome": "explicit",
+        "repository": REPOSITORY,
+        "project_url": PROJECT_URL,
+        "issue_node_id": "I_1",
+        "issue_number": None,
+        "project_item_id": None,
         "title": "Ship exact readback",
         "body": "Observable result",
         "requested_field": "title",
@@ -24,6 +41,55 @@ def context(**overrides):
     }
     values.update(overrides)
     return values
+
+
+def partial_receipt(**overrides):
+    values = {
+        "operation": "task_create",
+        "repository": REPOSITORY,
+        "project_url": PROJECT_URL,
+        "task_key": "sha256:abc",
+        "issue_number": None,
+        "issue_node_id": "I_1",
+        "state": "issue_observed",
+    }
+    values.update(overrides)
+    return values
+
+
+def issue_record(**overrides):
+    values = {
+        "number": 1,
+        "node_id": "I_1",
+        "repository": REPOSITORY,
+        "marker": "sha256:abc",
+        "title": "Task",
+        "body": "",
+        "comments": [],
+        "close_reason": None,
+    }
+    values.update(overrides)
+    return values
+
+
+def project_item_record(**overrides):
+    values = {
+        "item_id": "PVTI_1",
+        "project_url": PROJECT_URL,
+        "issue_number": 1,
+        "issue_node_id": "I_1",
+        "fields": {
+            "Status": "Inbox",
+            "Priority": "P2",
+            "Due date": None,
+        },
+    }
+    values.update(overrides)
+    return values
+
+
+def only_project_item(mcp):
+    return next(iter(mcp.project_items.values()))
 
 
 class OperationReadbackStateMachineTests(unittest.TestCase):
@@ -43,6 +109,18 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
         self.mcp = FakeGitHubMCP()
         self.runner = ContractRunner(self.contract, self.mcp)
 
+    def _seed_issue(self, **overrides) -> None:
+        self.mcp.issues["sha256:abc"] = issue_record(**overrides)
+
+    def _seed_item(self, **overrides) -> None:
+        self.mcp.project_items["sha256:abc"] = project_item_record(
+            **overrides
+        )
+
+    def _seed_task(self) -> None:
+        self._seed_issue()
+        self._seed_item()
+
     def test_contract_requires_semantic_read_after_and_observed_per_write(self) -> None:
         operations = {op["name"]: op for op in self.contract["operations"]}
         self.assertEqual(
@@ -59,6 +137,14 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
         self.assertEqual("once", operations["task_create"]["local_preflight"])
         self.assertFalse(operations["task_create"]["retry_only"])
         self.assertTrue(operations["task_project_register"]["retry_only"])
+        self.assertEqual(
+            {"eligible", "explicit", "inferred"},
+            set(
+                self.contract["contract"].get(
+                    "write_eligible_outcomes", []
+                )
+            ),
+        )
         self.assertNotIn(
             "issue_create",
             {
@@ -99,11 +185,18 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
         self.mcp.fail_next("issue_create", "after")
         self.assertEqual("success", self.runner.run("task_create", context()))
         self.assertEqual(1, self.mcp.writes.count("issue_create"))
-        self.assertLess(
-            self.mcp.calls.index("read:issue_search_exact"),
-            self.mcp.calls.index("write:issue_create"),
+        write_index = self.mcp.calls.index("write:issue_create")
+        after_write = self.mcp.calls[write_index + 1 :]
+        self.assertIn(
+            "read:issue_search_exact",
+            after_write,
+            "unknown create must resolve the marker after the write",
         )
-        self.assertIn("read:issue_read_exact", self.mcp.calls)
+        self.assertIn("read:issue_read_exact", after_write)
+        self.assertLess(
+            after_write.index("read:issue_search_exact"),
+            after_write.index("read:issue_read_exact"),
+        )
 
     def test_create_issue_search_and_exact_readback_conditions_are_distinct(
         self,
@@ -115,7 +208,8 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
             step for step in create["steps"] if step["id"] == "issue"
         )
         self.assertEqual(
-            "issue_search_match", issue_step["read_before_observed"]
+            "unique_issue_marker_match",
+            issue_step["read_before_observed"],
         )
         self.assertEqual("exact_issue_readback", issue_step["observed"])
         issue_final = next(
@@ -139,69 +233,98 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
         self.assertEqual("partial", runner.run("task_create", context()))
         self.assertEqual(1, self.mcp.writes.count("issue_create"))
 
-    def test_duplicate_search_skips_create_but_final_exact_read_succeeds(
+    def test_duplicate_search_is_zero_write_for_normal_create(
         self,
     ) -> None:
-        self.mcp.issues["sha256:abc"] = {
-            "number": 1,
-            "title": "Ship exact readback",
-            "body": "Observable result",
-            "comments": [],
-            "close_reason": None,
-        }
-        self.assertEqual("success", self.runner.run("task_create", context()))
-        self.assertEqual(0, self.mcp.writes.count("issue_create"))
+        self._seed_issue(
+            title="Ship exact readback",
+            body="Observable result",
+        )
+        self.assertEqual("duplicate", self.runner.run("task_create", context()))
+        self.assertEqual([], self.mcp.writes)
+        self.assertEqual([], self.runner.local_preflights)
         self.assertEqual("read:issue_search_exact", self.mcp.calls[0])
-        self.assertIn("read:issue_read_exact", self.mcp.calls)
+
+    def test_unknown_issue_create_with_zero_marker_matches_fails_closed(
+        self,
+    ) -> None:
+        self.mcp.fail_next("issue_create", "unknown_before")
+        self.assertEqual("partial", self.runner.run("task_create", context()))
+        self.assertEqual(1, self.mcp.writes.count("issue_create"))
+        self.assertEqual({}, self.mcp.issues)
+
+    def test_unknown_issue_create_with_multiple_marker_matches_fails_closed(
+        self,
+    ) -> None:
+        class MultipleMatchAfterCreate(FakeGitHubMCP):
+            def write(self, action, operation_context):
+                try:
+                    return super().write(action, operation_context)
+                except UnknownOutcome:
+                    if action == "issue_create":
+                        self.issues["second-match"] = {
+                            "number": 2,
+                            "node_id": "I_2",
+                            "repository": REPOSITORY,
+                            "marker": operation_context["task_key"],
+                            "title": "Second match",
+                            "body": "Same marker",
+                            "comments": [],
+                            "close_reason": None,
+                        }
+                    raise
+
+        mcp = MultipleMatchAfterCreate()
+        mcp.fail_next("issue_create", "after")
+        runner = ContractRunner(self.contract, mcp)
+        self.assertEqual("partial", runner.run("task_create", context()))
+        self.assertEqual(1, mcp.writes.count("issue_create"))
 
     def test_partial_create_resumes_with_register_and_only_unfinished_steps(self) -> None:
         self.mcp.fail_next("project_priority_set_default", "before")
         self.assertEqual("partial", self.runner.run("task_create", context()))
-        self.assertEqual("Inbox", self.mcp.project_items["sha256:abc"]["fields"]["Status"])
+        self.assertEqual(
+            "Inbox", only_project_item(self.mcp)["fields"]["Status"]
+        )
 
         self.assertEqual(
             "success",
             self.runner.run(
-                "task_project_register", context(partial_resume=True)
+                "task_project_register",
+                context(
+                    partial_resume=True,
+                    partial_receipt=partial_receipt(state="fields_incomplete"),
+                ),
             ),
         )
         self.assertEqual(1, self.mcp.writes.count("issue_create"))
         self.assertEqual(1, self.mcp.writes.count("project_item_add"))
         self.assertEqual(1, self.mcp.writes.count("project_status_set_default"))
-        self.assertEqual(2, self.mcp.writes.count("project_priority_set_default"))
+        self.assertEqual(1, self.mcp.writes.count("project_priority_set_default"))
+        self.assertNotIn("Priority", only_project_item(self.mcp)["fields"])
 
     def test_unknown_project_add_and_update_read_back_before_any_retry(self) -> None:
-        self.mcp.issues["sha256:abc"] = {
-            "number": 1,
-            "title": "Task",
-            "body": "",
-            "comments": [],
-            "close_reason": None,
-        }
+        self._seed_issue()
         self.mcp.fail_next("project_item_add", "after")
         self.mcp.fail_next("project_status_set_default", "after")
         self.assertEqual(
             "success",
             self.runner.run(
-                "task_project_register", context(partial_resume=True)
+                "task_project_register",
+                context(partial_receipt=partial_receipt()),
             ),
         )
         self.assertEqual(1, self.mcp.writes.count("project_item_add"))
         self.assertEqual(1, self.mcp.writes.count("project_status_set_default"))
 
     def test_unknown_before_project_add_reads_back_before_retrying_once(self) -> None:
-        self.mcp.issues["sha256:abc"] = {
-            "number": 1,
-            "title": "Task",
-            "body": "",
-            "comments": [],
-            "close_reason": None,
-        }
+        self._seed_issue()
         self.mcp.fail_next("project_item_add", "unknown_before")
         self.assertEqual(
             "success",
             self.runner.run(
-                "task_project_register", context(partial_resume=True)
+                "task_project_register",
+                context(partial_receipt=partial_receipt()),
             ),
         )
         calls = self.mcp.calls
@@ -213,17 +336,7 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
         self.assertEqual(2, self.mcp.writes.count("project_item_add"))
 
     def test_update_and_comment_each_require_post_write_readback(self) -> None:
-        self.mcp.issues["sha256:abc"] = {
-            "number": 1,
-            "title": "Task",
-            "body": "",
-            "comments": [],
-            "close_reason": None,
-        }
-        self.mcp.project_items["sha256:abc"] = {
-            "issue_number": 1,
-            "fields": {"Status": "Inbox", "Priority": "P2", "Due date": None},
-        }
+        self._seed_task()
         scenarios = (
             ("task_update_issue", context(), "issue_update_requested", "issue_read_exact"),
             (
@@ -244,17 +357,7 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
                 self.assertLess(calls.index(f"write:{write}"), calls.index(f"read:{readback}", calls.index(f"write:{write}")))
 
     def test_terminal_partial_resume_changes_only_remaining_side(self) -> None:
-        self.mcp.issues["sha256:abc"] = {
-            "number": 1,
-            "title": "Task",
-            "body": "",
-            "comments": [],
-            "close_reason": None,
-        }
-        self.mcp.project_items["sha256:abc"] = {
-            "issue_number": 1,
-            "fields": {"Status": "Inbox", "Priority": "P2", "Due date": None},
-        }
+        self._seed_task()
         self.mcp.fail_next("project_status_set_terminal", "before")
         self.assertEqual(
             "partial",
@@ -276,7 +379,14 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
         self.assertIn("read:project_terminal_status_read", self.mcp.calls)
 
     def test_blocked_ambiguous_duplicate_and_bulk_are_zero_write(self) -> None:
-        for outcome in ("blocked", "ambiguous", "duplicate", "bulk"):
+        for outcome in (
+            "blocked",
+            "ambiguous",
+            "duplicate",
+            "bulk",
+            "destructive",
+            "confirmation-needed",
+        ):
             with self.subTest(outcome=outcome):
                 mcp = FakeGitHubMCP()
                 runner = ContractRunner(self.contract, mcp)
@@ -285,6 +395,170 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
                     runner.run("task_create", context(guard_outcome=outcome)),
                 )
                 self.assertEqual([], mcp.writes)
+
+    def test_only_allowlisted_guard_outcomes_can_write(self) -> None:
+        for outcome in ("eligible", "explicit", "inferred"):
+            with self.subTest(outcome=outcome):
+                mcp = FakeGitHubMCP()
+                runner = ContractRunner(self.contract, mcp)
+                self.assertEqual(
+                    "success",
+                    runner.run(
+                        "task_create", context(guard_outcome=outcome)
+                    ),
+                )
+                self.assertIn("issue_create", mcp.writes)
+
+        for outcome in (None, "", "approved", "future-new-outcome"):
+            with self.subTest(outcome=outcome):
+                mcp = FakeGitHubMCP()
+                runner = ContractRunner(self.contract, mcp)
+                self.assertEqual(
+                    "blocked",
+                    runner.run(
+                        "task_create", context(guard_outcome=outcome)
+                    ),
+                )
+                self.assertEqual([], mcp.writes)
+
+    def test_existing_project_item_is_preserved_during_register_resume(self) -> None:
+        self._seed_issue()
+        self._seed_item(
+            item_id="PVTI_existing",
+            fields={
+                "Status": "Backlog",
+                "Priority": "P1",
+                "Due date": "2026-08-20",
+            },
+        )
+        before = copy.deepcopy(self.mcp.project_items)
+
+        self.assertEqual(
+            "success",
+            self.runner.run(
+                "task_project_register",
+                context(
+                    issue_node_id="I_1",
+                    partial_receipt=partial_receipt(),
+                ),
+            ),
+        )
+        self.assertEqual(before, self.mcp.project_items)
+        self.assertEqual([], self.mcp.writes)
+
+    def test_new_item_honors_explicit_initial_fields(self) -> None:
+        requested = {
+            "Status": "Ready",
+            "Priority": "P1",
+            "Due date": "2026-08-20",
+        }
+        self.assertEqual(
+            "success",
+            self.runner.run(
+                "task_create", context(initial_fields=requested)
+            ),
+        )
+        self.assertEqual(
+            requested,
+            only_project_item(self.mcp)["fields"],
+        )
+
+    def test_register_rejects_boolean_resume_without_exact_receipt(self) -> None:
+        self._seed_issue()
+        self.assertEqual(
+            "blocked",
+            self.runner.run(
+                "task_project_register",
+                context(partial_resume=True),
+            ),
+        )
+        self.assertEqual([], self.runner.local_preflights)
+        self.assertEqual([], self.mcp.writes)
+
+    def test_wrong_project_link_is_not_accepted_as_exact_readback(self) -> None:
+        self._seed_issue()
+        self.mcp.project_items["sha256:abc"] = {
+            "item_id": "PVTI_wrong",
+            "project_url": "https://github.com/orgs/other/projects/99",
+            "issue_number": 99,
+            "issue_node_id": "I_wrong",
+            "fields": {
+                "Status": "Inbox",
+                "Priority": "P2",
+                "Due date": None,
+            },
+        }
+        self.assertEqual(
+            "success",
+            self.runner.run(
+                "task_project_register",
+                context(
+                    issue_node_id="I_1",
+                    partial_receipt=partial_receipt(),
+                ),
+            ),
+        )
+        self.assertIn("project_item_add", self.mcp.writes)
+        linked_items = [
+            item
+            for item in self.mcp.project_items.values()
+            if item.get("project_url") == PROJECT_URL
+            and item.get("issue_node_id") == "I_1"
+        ]
+        self.assertEqual(1, len(linked_items))
+
+    def test_wrong_issue_identity_cannot_satisfy_exact_readback(self) -> None:
+        self._seed_issue()
+        self.assertEqual(
+            "partial",
+            self.runner.run(
+                "task_update_issue",
+                context(
+                    issue_number=99,
+                    issue_node_id=None,
+                    requested_field="title",
+                    requested_value="Wrong target",
+                ),
+            ),
+        )
+
+    def test_canonical_task_key_vectors_are_cross_host_stable(self) -> None:
+        canonical_bytes = (
+            '{"repository":"the3-inc/companies",'
+            '"project_url":"https://github.com/orgs/the3-inc/projects/7",'
+            '"outcome":"Café launch\\nnow",'
+            '"acceptance_criteria":["Ready for use","Docs\\npublished"],'
+            '"references":["https://example.com/a","specs/plan.md"]}'
+        ).encode("utf-8")
+        payload = json.loads(canonical_bytes)
+        self.assertEqual(
+            [
+                "repository",
+                "project_url",
+                "outcome",
+                "acceptance_criteria",
+                "references",
+            ],
+            list(payload),
+        )
+        self.assertEqual(
+            canonical_bytes,
+            json.dumps(
+                payload,
+                ensure_ascii=False,
+                separators=(",", ":"),
+            ).encode("utf-8"),
+        )
+        self.assertEqual(
+            "3f9fc3661920a8d3fefaa15a83789083a99521dd61994da2b396f5a03b6ed7f2",
+            hashlib.sha256(canonical_bytes).hexdigest(),
+        )
+        self.assertIn(
+            canonical_bytes.decode("utf-8"),
+            (SKILL_ROOT / "references" / "issue-contract.md").read_text(
+                encoding="utf-8"
+            ),
+        )
 
     def test_contract_keeps_direct_official_mcp_and_fake_out_of_production(self) -> None:
         meta = self.contract["contract"]
@@ -299,13 +573,7 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
         self.assertEqual([], production_python)
 
     def test_wrong_update_read_after_cannot_observe_global_state(self) -> None:
-        self.mcp.issues["sha256:abc"] = {
-            "number": 1,
-            "title": "Task",
-            "body": "",
-            "comments": [],
-            "close_reason": None,
-        }
+        self._seed_issue()
         mutated = copy.deepcopy(self.contract)
         update = next(
             op for op in mutated["operations"] if op["name"] == "task_update_issue"
@@ -317,22 +585,15 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
             "partial",
             runner.run(
                 "task_update_issue",
-                {
-                    "task_key": "sha256:abc",
-                    "requested_field": "title",
-                    "requested_value": "Updated title",
-                },
+                context(
+                    requested_field="title",
+                    requested_value="Updated title",
+                ),
             ),
         )
 
     def test_wrong_terminal_read_after_cannot_be_masked_by_final_read(self) -> None:
-        self.mcp.issues["sha256:abc"] = {
-            "number": 1,
-            "title": "Task",
-            "body": "",
-            "comments": [],
-            "close_reason": None,
-        }
+        self._seed_issue()
         mutated = copy.deepcopy(self.contract)
         terminal = next(
             op for op in mutated["operations"] if op["name"] == "task_complete"
@@ -345,23 +606,12 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
             "partial",
             runner.run(
                 "task_complete",
-                {
-                    "task_key": "sha256:abc",
-                    "remaining_sides": {"issue"},
-                    "terminal_status": "Done",
-                    "close_reason": "completed",
-                },
+                context(remaining_sides={"issue"}),
             ),
         )
 
     def test_unknown_read_action_fails_instead_of_inspecting_global_state(self) -> None:
-        self.mcp.issues["sha256:abc"] = {
-            "number": 1,
-            "title": "Task",
-            "body": "",
-            "comments": [],
-            "close_reason": None,
-        }
+        self._seed_issue()
         mutated = copy.deepcopy(self.contract)
         update = next(
             op for op in mutated["operations"] if op["name"] == "task_update_issue"
@@ -372,27 +622,20 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
         with self.assertRaises(AssertionError):
             runner.run(
                 "task_update_issue",
-                {
-                    "task_key": "sha256:abc",
-                    "requested_field": "title",
-                    "requested_value": "Updated title",
-                },
+                context(
+                    requested_field="title",
+                    requested_value="Updated title",
+                ),
             )
 
     def test_register_requires_explicit_partial_resume_before_preflight_or_write(
         self,
     ) -> None:
-        self.mcp.issues["sha256:abc"] = {
-            "number": 1,
-            "title": "Task",
-            "body": "",
-            "comments": [],
-            "close_reason": None,
-        }
+        self._seed_issue()
         self.assertEqual(
             "blocked",
             self.runner.run(
-                "task_project_register", {"task_key": "sha256:abc"}
+                "task_project_register", context()
             ),
         )
         self.assertEqual([], self.runner.local_preflights)
@@ -407,24 +650,9 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
         )
 
         terminal_mcp = FakeGitHubMCP(
-            issues={
-                "sha256:abc": {
-                    "number": 1,
-                    "title": "Task",
-                    "body": "",
-                    "comments": [],
-                    "close_reason": None,
-                }
-            },
+            issues={"sha256:abc": issue_record()},
             project_items={
-                "sha256:abc": {
-                    "issue_number": 1,
-                    "fields": {
-                        "Status": "Inbox",
-                        "Priority": "P2",
-                        "Due date": None,
-                    },
-                }
+                "sha256:abc": project_item_record()
             },
         )
         terminal_runner = ContractRunner(self.contract, terminal_mcp)
@@ -432,12 +660,7 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
             "success",
             terminal_runner.run(
                 "task_complete",
-                {
-                    "task_key": "sha256:abc",
-                    "remaining_sides": {"issue", "project"},
-                    "terminal_status": "Done",
-                    "close_reason": "completed",
-                },
+                context(remaining_sides={"issue", "project"}),
             ),
         )
         self.assertEqual(
@@ -505,35 +728,21 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
                     "blocked",
                     runner.run(
                         "task_complete",
-                        {
-                            "task_key": "sha256:abc",
-                            "remaining_sides": remaining_sides,
-                            "terminal_status": "Done",
-                            "close_reason": "completed",
-                        },
+                        context(remaining_sides=remaining_sides),
                     ),
                 )
                 self.assertEqual([], mcp.writes)
 
         mcp = FakeGitHubMCP(
-            issues={
-                "sha256:abc": {
-                    "number": 1,
-                    "title": "Task",
-                    "body": "",
-                    "comments": [],
-                    "close_reason": None,
-                }
-            },
+            issues={"sha256:abc": issue_record()},
             project_items={
-                "sha256:abc": {
-                    "issue_number": 1,
-                    "fields": {
+                "sha256:abc": project_item_record(
+                    fields={
                         "Status": "Done",
                         "Priority": "P2",
                         "Due date": None,
-                    },
-                }
+                    }
+                )
             },
         )
         runner = ContractRunner(self.contract, mcp)
@@ -541,41 +750,29 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
             "success",
             runner.run(
                 "task_complete",
-                {
-                    "task_key": "sha256:abc",
-                    "remaining_sides": {"issue"},
-                    "terminal_status": "Done",
-                    "close_reason": "completed",
-                },
+                context(remaining_sides={"issue"}),
             ),
         )
         self.assertEqual(["issue_close_requested"], mcp.writes)
         self.assertEqual(["task_complete:issue"], runner.local_preflights)
 
-    def test_register_and_update_accept_minimal_operation_contexts(self) -> None:
-        self.mcp.issues["sha256:abc"] = {
-            "number": 1,
-            "title": "Task",
-            "body": "",
-            "comments": [],
-            "close_reason": None,
-        }
+    def test_register_and_update_accept_exact_minimal_operation_contexts(self) -> None:
+        self._seed_issue()
         self.assertEqual(
             "success",
             self.runner.run(
                 "task_project_register",
-                {"task_key": "sha256:abc", "partial_resume": True},
+                context(partial_receipt=partial_receipt()),
             ),
         )
         self.assertEqual(
             "success",
             self.runner.run(
                 "task_update_issue",
-                {
-                    "task_key": "sha256:abc",
-                    "requested_field": "title",
-                    "requested_value": "Minimal update",
-                },
+                context(
+                    requested_field="title",
+                    requested_value="Minimal update",
+                ),
             ),
         )
 

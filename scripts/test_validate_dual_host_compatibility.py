@@ -4,6 +4,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 from validate_dual_host_compatibility import (
     validate_plugin,
@@ -118,6 +119,15 @@ class DualHostCompatibilityTests(unittest.TestCase):
                 "sample-skill: SKILL.md must not depend on description.md for discovery",
                 validate_skill(skill_dir),
             )
+
+    def test_uppercase_description_md_is_not_the_lowercase_discovery_file(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            skill_dir = write_skill(Path(tmpdir), "sample-skill")
+            (skill_dir / "DESCRIPTION.md").write_text(
+                "Hermes distribution description.", encoding="utf-8"
+            )
+            with mock.patch.object(Path, "exists", return_value=True):
+                self.assertEqual([], validate_skill(skill_dir))
 
     def test_plugin_version_mismatch_fails(self):
         with tempfile.TemporaryDirectory() as tmpdir:

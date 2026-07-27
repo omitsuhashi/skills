@@ -164,7 +164,7 @@ def validate_skill(skill_dir: Path) -> list[str]:
         errors.append(f"{skill_dir.name}: frontmatter name must equal directory name")
     if not _is_non_empty_yaml_scalar(fields.get("description")):
         errors.append(f"{skill_dir.name}: frontmatter description must be non-empty")
-    if (skill_dir / "description.md").exists():
+    if any(entry.name == "description.md" for entry in skill_dir.iterdir()):
         errors.append(
             f"{skill_dir.name}: SKILL.md must not depend on description.md for discovery"
         )

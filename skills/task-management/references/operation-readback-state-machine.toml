@@ -3,7 +3,9 @@
 version = 1
 instruction_path = "direct_official_github_mcp"
 success_source = "observed_remote_state"
-zero_write_outcomes = ["blocked", "ambiguous", "duplicate", "bulk"]
+write_eligible_outcomes = ["eligible", "explicit", "inferred"]
+zero_write_outcomes = ["blocked", "ambiguous", "duplicate", "bulk", "destructive", "confirmation-needed"]
+unknown_guard_outcome = "blocked"
 
 [operation.task_create]
 local_preflight = "once"
@@ -11,11 +13,16 @@ retry_only = false
 
 [operation.task_create.step.issue]
 read_before = "issue_search_exact"
-read_before_observed = "issue_search_match"
+read_before_observed = "unique_issue_marker_match"
+read_before_ambiguous = "multiple_issue_marker_matches"
+on_read_before_observed = "duplicate"
 write = "issue_create"
 read_after = "issue_read_exact"
 observed = "exact_issue_readback"
-retry_after_unknown = true
+unknown_resolver = "issue_search_exact"
+unknown_resolver_observed = "unique_issue_identity_resolved"
+unknown_resolver_ambiguous = "multiple_issue_marker_matches"
+retry_after_unknown = false
 
 [operation.task_create.step.project_item]
 read_before = "project_item_read_exact"
@@ -25,17 +32,43 @@ observed = "project_item_exists"
 retry_after_unknown = true
 
 [operation.task_create.step.default_status]
+applies_when = "project_item_created_this_invocation_and_status_omitted"
 read_before = "project_status_read"
 write = "project_status_set_default"
 read_after = "project_status_read"
 observed = "default_status_observed"
 retry_after_unknown = true
 
+[operation.task_create.step.requested_status]
+applies_when = "project_item_created_this_invocation_and_status_supplied"
+read_before = "project_status_read"
+write = "project_status_set_requested_initial"
+read_after = "project_status_read"
+observed = "requested_initial_status_observed"
+retry_after_unknown = true
+
 [operation.task_create.step.default_priority]
+applies_when = "project_item_created_this_invocation_and_priority_omitted"
 read_before = "project_priority_read"
 write = "project_priority_set_default"
 read_after = "project_priority_read"
 observed = "default_priority_observed"
+retry_after_unknown = true
+
+[operation.task_create.step.requested_priority]
+applies_when = "project_item_created_this_invocation_and_priority_supplied"
+read_before = "project_priority_read"
+write = "project_priority_set_requested_initial"
+read_after = "project_priority_read"
+observed = "requested_initial_priority_observed"
+retry_after_unknown = true
+
+[operation.task_create.step.requested_due_date]
+applies_when = "project_item_created_this_invocation_and_due_date_supplied"
+read_before = "project_due_date_read"
+write = "project_due_date_set_requested_initial"
+read_after = "project_due_date_read"
+observed = "requested_initial_due_date_observed"
 retry_after_unknown = true
 
 [operation.task_create.final.issue]
@@ -46,21 +79,40 @@ observed = "exact_issue_readback"
 read = "project_item_read_exact"
 observed = "project_item_exists"
 
-[operation.task_create.final.status]
+[operation.task_create.final.default_status]
+applies_when = "project_item_created_this_invocation_and_status_omitted"
 read = "project_status_read"
 observed = "default_status_observed"
 
-[operation.task_create.final.priority]
+[operation.task_create.final.requested_status]
+applies_when = "project_item_created_this_invocation_and_status_supplied"
+read = "project_status_read"
+observed = "requested_initial_status_observed"
+
+[operation.task_create.final.default_priority]
+applies_when = "project_item_created_this_invocation_and_priority_omitted"
 read = "project_priority_read"
 observed = "default_priority_observed"
 
-[operation.task_create.final.due_date]
+[operation.task_create.final.requested_priority]
+applies_when = "project_item_created_this_invocation_and_priority_supplied"
+read = "project_priority_read"
+observed = "requested_initial_priority_observed"
+
+[operation.task_create.final.default_due_date]
+applies_when = "project_item_created_this_invocation_and_due_date_omitted"
 read = "project_due_date_read"
 observed = "due_date_empty_observed"
+
+[operation.task_create.final.requested_due_date]
+applies_when = "project_item_created_this_invocation_and_due_date_supplied"
+read = "project_due_date_read"
+observed = "requested_initial_due_date_observed"
 
 [operation.task_project_register]
 local_preflight = "once"
 retry_only = true
+partial_receipt = "required_exact_prior_task_create_receipt"
 
 [operation.task_project_register.step.project_item]
 read_before = "project_item_read_exact"
@@ -70,17 +122,43 @@ observed = "project_item_exists"
 retry_after_unknown = true
 
 [operation.task_project_register.step.default_status]
+applies_when = "project_item_created_this_invocation_and_status_omitted"
 read_before = "project_status_read"
 write = "project_status_set_default"
 read_after = "project_status_read"
 observed = "default_status_observed"
 retry_after_unknown = true
 
+[operation.task_project_register.step.requested_status]
+applies_when = "project_item_created_this_invocation_and_status_supplied"
+read_before = "project_status_read"
+write = "project_status_set_requested_initial"
+read_after = "project_status_read"
+observed = "requested_initial_status_observed"
+retry_after_unknown = true
+
 [operation.task_project_register.step.default_priority]
+applies_when = "project_item_created_this_invocation_and_priority_omitted"
 read_before = "project_priority_read"
 write = "project_priority_set_default"
 read_after = "project_priority_read"
 observed = "default_priority_observed"
+retry_after_unknown = true
+
+[operation.task_project_register.step.requested_priority]
+applies_when = "project_item_created_this_invocation_and_priority_supplied"
+read_before = "project_priority_read"
+write = "project_priority_set_requested_initial"
+read_after = "project_priority_read"
+observed = "requested_initial_priority_observed"
+retry_after_unknown = true
+
+[operation.task_project_register.step.requested_due_date]
+applies_when = "project_item_created_this_invocation_and_due_date_supplied"
+read_before = "project_due_date_read"
+write = "project_due_date_set_requested_initial"
+read_after = "project_due_date_read"
+observed = "requested_initial_due_date_observed"
 retry_after_unknown = true
 
 [operation.task_project_register.final.issue]
@@ -91,17 +169,35 @@ observed = "exact_issue_readback"
 read = "project_item_read_exact"
 observed = "project_item_exists"
 
-[operation.task_project_register.final.status]
+[operation.task_project_register.final.default_status]
+applies_when = "project_item_created_this_invocation_and_status_omitted"
 read = "project_status_read"
 observed = "default_status_observed"
 
-[operation.task_project_register.final.priority]
+[operation.task_project_register.final.requested_status]
+applies_when = "project_item_created_this_invocation_and_status_supplied"
+read = "project_status_read"
+observed = "requested_initial_status_observed"
+
+[operation.task_project_register.final.default_priority]
+applies_when = "project_item_created_this_invocation_and_priority_omitted"
 read = "project_priority_read"
 observed = "default_priority_observed"
 
-[operation.task_project_register.final.due_date]
+[operation.task_project_register.final.requested_priority]
+applies_when = "project_item_created_this_invocation_and_priority_supplied"
+read = "project_priority_read"
+observed = "requested_initial_priority_observed"
+
+[operation.task_project_register.final.default_due_date]
+applies_when = "project_item_created_this_invocation_and_due_date_omitted"
 read = "project_due_date_read"
 observed = "due_date_empty_observed"
+
+[operation.task_project_register.final.requested_due_date]
+applies_when = "project_item_created_this_invocation_and_due_date_supplied"
+read = "project_due_date_read"
+observed = "requested_initial_due_date_observed"
 
 [operation.task_update_issue]
 local_preflight = "once"
