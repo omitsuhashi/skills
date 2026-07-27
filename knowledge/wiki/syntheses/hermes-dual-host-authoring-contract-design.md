@@ -14,7 +14,7 @@ updated: 2026-07-28
 
 ## 実装・ローカル検証証跡
 
-`.github/workflows/skill-architecture.yml` は Python 3.9 / 3.12 matrix でauthoring guidance、CI workflow contract、dual-host validator、repository-wide compatibility、standalone `decide-in-order`、standalone `task-management` のcontract testsを実行する。通常CIはlive home、profile、config、credential、skill / plugin installationを変更しない。
+`.github/workflows/skill-architecture.yml` は Python 3.9 / 3.12 matrix でauthoring guidance、CI workflow contract、repository compatibility validator、repository-wide compatibility、standalone `decide-in-order`、standalone `task-management` のcontract testsを実行する。通常CIはlive home、profile、config、credential、skill / plugin installationを変更しない。
 
 以下は2026-07-17時点の最終ローカル検証結果を保存したhistorical evidenceである。表中のtask-management plugin manifest、registration、plugin validator、plugin suite、smoke testはすべて2026-07-23 standalone migrationによりsupersededされ、current implementationやcurrent verification commandではない。
 
