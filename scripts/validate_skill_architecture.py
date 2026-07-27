@@ -241,8 +241,11 @@ def validate_policy(policy: Dict[str, object]) -> List[str]:
     forbidden = _as_string_list(family, "forbidden_standalone_skill_names", errors) or []
     internal_components = _as_string_list(family, "internal_components", errors) or []
 
-    if len(user_facing) != 1:
-        errors.append("repository-change-loop.user_facing_skills must contain exactly 1 skill")
+    if user_facing != [EXPECTED_DEFAULT_IMPLEMENTATION_SKILL]:
+        errors.append(
+            "repository-change-loop.user_facing_skills must be exactly "
+            f"[{EXPECTED_DEFAULT_IMPLEMENTATION_SKILL!r}]"
+        )
     for duplicate in _duplicates(user_facing):
         errors.append(f"duplicate user-facing skill: {duplicate}")
     for duplicate in _duplicates(forbidden):

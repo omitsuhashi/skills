@@ -118,6 +118,17 @@ class SddDefaultImplementationRouteTests(unittest.TestCase):
         self.assertEqual(["sdd-implementation"], family["user_facing_skills"])
         self.assertEqual("sdd-implementation", family["default_implementation_skill"])
 
+    def test_validator_rejects_user_facing_implementation_skill_drift(self) -> None:
+        policy = architecture_policy()
+        family = repository_change_loop_family(policy)
+        family["user_facing_skills"] = ["llm-wiki"]
+
+        self.assertIn(
+            "repository-change-loop.user_facing_skills must be exactly "
+            "['sdd-implementation']",
+            validate_policy(policy),
+        )
+
     def test_repository_router_uses_only_sdd_for_approved_plans(self) -> None:
         router = REPO_ROUTER.read_text(encoding="utf-8")
         self.assertIn("use `sdd-implementation` by default", router)
