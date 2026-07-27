@@ -10,7 +10,7 @@ Before Written Spec or any planning write, run:
 python3 <skill-dir>/scripts/planning_worktree.py prepare --repo-root <absolute> --epic-id <lower-kebab> --json
 ```
 
-It canonicalizes the repo, reads the registered default checkout, and creates/reuses one Epic-scoped planning worktree, `codex/<epic-id>/planning`. Reuse it through Written Spec, Spec Gate, Issue Gate, Execution Plan Gate, and planning sync. The project-local root must be ignored; sandbox/preparation failure stops before writes, never using default checkout. No repeated consent follows an existing preference. Its untracked runtime identity is `$(git rev-parse --git-common-dir)/agent-runs/grill-to-pr-loop/<epic-id>/planning-worktree.json`, with host paths and exact starting HEAD/status.
+From the registered default checkout, create/reuse one Epic-scoped planning worktree, `codex/<epic-id>/planning`, through planning sync. Reject project-local roots; failure stops before writes/default-checkout use. Reuse consent. Store host paths/start HEAD/status at untracked `$(git rev-parse --git-common-dir)/agent-runs/grill-to-pr-loop/<epic-id>/planning-worktree.json`.
 
 ## Artifact Contract
 
@@ -24,7 +24,17 @@ Track this tree for every current Epic:
 └── input-packet.json
 ```
 
-Here `<durable-planning-root>` is `knowledge/wiki/syntheses`; without a wiki use `docs/grill-to-pr-loop`. `artifact_root` is the exact Epic directory; spec, local issue sources, and sealed packet are direct children. Keep `knowledge/index.md` and `knowledge/log.md` current. Commit this tree; execution artifacts use the untracked lifecycle.
+`<durable-planning-root>` is `knowledge/wiki/syntheses` (`docs/grill-to-pr-loop` without a wiki); `artifact_root` is that Epic directory with shown direct children. Commit it, update `knowledge/index.md` / `knowledge/log.md`, and leave execution artifacts untracked.
+
+## Planning Authority / Supporting Agent Dispatch
+
+The main planning context is the integration owner. It integrates canonical content across the spec, issue ledger, execution plan, and sealed Input Packet and finalizes the approval candidate presented to the Human Gate. Human is the decision authority; Human decides the Gate; supporting agents are advisory-only and read-only. Dispatch one bounded question, minimum repo-relative read paths, and stop conditions; return source-linked evidence, critique, disagreements, uncertainty, and recommendation.
+
+Supporting agents must not write canonical planning artifacts, approve a spec or scope, or seal an Input Packet. The main context compares evidence when advice conflicts and never uses a vote or majority. Send authority-bearing ambiguity to a Human gate.
+
+After compaction, a fresh primary context inherits integration ownership only by explicit ownership transfer, not a supporting dispatch.
+
+A user-selected model change or host model unavailability is host runtime state, not spec or packet drift.
 
 ## Spec / PRD Minimum
 
@@ -55,29 +65,23 @@ Report only `Critical` / `Important` findings. Do not report `Minor`, nit, prefe
 
 ### Spec Gate
 
-Before any binding command, run `python3 <skill-dir>/scripts/check_prereqs.py --phase execution --json`. Derive `<issue-implementation-loop-skill-dir>` as the parent directory of the `SKILL.md` path in `required["issue-implementation-loop"]`; never assume the target repository contains a source checkout of the skill.
+Before binding, run `python3 <skill-dir>/scripts/check_prereqs.py --phase execution --json`. Set `<issue-implementation-loop-skill-dir>` to the parent of the `SKILL.md` path in `required["issue-implementation-loop"]`; do not assume a repo-local checkout.
 
-Finalize the spec before approval. Identify its repo-relative spec path and exact raw-byte SHA-256 with:
+Finalize the spec, then identify its repo-relative spec path and exact raw-byte SHA-256:
 
 ```bash
 python3 <issue-implementation-loop-skill-dir>/scripts/approved_spec_binding.py identify \
   --repo-root <repo-root> --spec-path <repo-relative-spec-path>
 ```
 
-Present that path and digest with `Epic ID`, 採用した判断, 非目標, 受け入れ条件, 検証コマンド, remote policy, and stop conditions. Record one Spec Gate approval whose scope contains all six fields: `accepted_decisions`, `non_goals`, `acceptance_criteria`, `verification`, `remote_policy`, and `stop_conditions`. Wait for approval before issue decomposition unless the user already supplied approval for that exact revision and scope.
+Present path/digest, `Epic ID`, and `accepted_decisions`, `non_goals`, `acceptance_criteria`, `verification`, `remote_policy`, `stop_conditions`. Record one Spec Gate approval; wait unless that exact revision/scope is approved.
 
-Any spec byte change requires re-approval and a new seal. Never infer approval, update the expected digest, or edit the spec while sealing.
-
-After Spec Gate approval, commit the approved spec and ledger/log updates before issue decomposition.
+Any spec byte change requires re-approval and a new seal. Never infer approval, alter its digest, or edit while sealing. After Spec Gate approval, commit the spec and ledger/log before issue decomposition.
 
 ### Issue Gate
 
-Present local issues with `Epic ID`, blocker graph, dependency order, `実行可能/ブロック中` status, and acceptance criteria. Wait for approval before GitHub mirroring or execution planning.
-
-After Issue Gate approval, commit the approved local issue ledger and ledger/log updates before GitHub mirroring or execution packet work.
+Present local issues with `Epic ID`, blockers, order, `実行可能/ブロック中`, and criteria. Wait for approval; after Issue Gate approval, commit the local ledger and ledger/log before mirroring or execution planning.
 
 ### GitHub Mirror Gate Preparation
 
-Optional. If the user wants GitHub issue mirroring after Issue Gate, stop planning work and load `remote-delivery.md`.
-
-Do not create GitHub issues from this planning reference alone. The remote reference owns the remote/auth checks, exact publication set, explicit approval, write action, and local ledger update invariant.
+After Issue Gate, optional GitHub mirroring requires `remote-delivery.md`; this reference never authorizes creation. It owns auth, publication, approval, writes, and ledger updates.

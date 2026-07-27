@@ -1491,3 +1491,77 @@ append-only で使います。すべての entry は予測しやすい header �
 - approved spec SHA-256 `f4b8cebd19a832963aa5e4d022759b21ef73dc417ff6d2f1555b87419b578ec3`とsealed Input Packet SHA-256 `7b7ecc562d1ff2aa2066438099741dad9e70ccb889c9dada4620eebb2224e219`は不変である。default checkoutのHEADとexact porcelain statusはruntime start snapshotと一致した。
 - prior production Important findingsはTDD fixと再reviewを経てすべてclosedし、最終fix reviewはCritical 0 / Important 0である。non-blocking MinorとしてGit environment policyのskill間重複、runtime load/validate stabilization sequenceの反復、planning/default identity parameter data clumpを残す。
 - delivery stateは`local_only`。push、PR作成、merge、GitHub mutation、default checkoutのreset / clean / stash、destructive recoveryは実行していない。
+
+## [2026-07-27] spec-candidate | Planning Authority Policy
+
+- Epic ID `planning-authority-policy` として、planning integrationを`main_planning_context`、supporting agentを`advisory_only` / `read_only`、Spec Gate / Issue Gateのdecision authorityをHumanへ固定する仕様候補を追加した。
+- model / reasoningはCodexの選択画面などhost runtimeが所有し、spec、Input Packet、Execution Envelope、Worker Packet、runtime stateへ永続化しない。supporting agent、execution coordinator、worker、reviewerのmodel routingはhostに委譲する。
+- `skill-architecture.toml`のclosed family policy、architecture validator、`grill-to-pr-loop` entrypoint / planning contract、focused testsだけを変更対象とし、`issue-implementation-loop`のschema、scheduler、worker lifecycleは変更しない。
+- planning branchは`codex/planning-authority-policy/planning`、planning baseは`f5d151e34de5089d75be68249e09da8a2d14f282`。remote policyは`local_only`であり、GitHub issue、push、PR、merge、release、live installは非承認である。
+- exact spec path / raw-byte SHA-256を確認し、Human Spec Gate approvalを得るまでIssue分解とproduction implementationへ進まない。
+
+## [2026-07-27] spec-gate-approval | Planning Authority Policy
+
+- actor expression: `session-user`
+- approved at: `2026-07-27T09:32:17+09:00`
+- decision: `approved`
+- Epic ID: `planning-authority-policy`
+- exact spec path: `knowledge/wiki/syntheses/planning-authority-policy/spec.md`
+- spec raw-byte SHA-256: `6f4a952f35dd44fb930af98403ddfe5f0760af1d398722b338a18ef4493f8c68`
+- approval scope: `accepted_decisions`, `non_goals`, `acceptance_criteria`, `verification`, `remote_policy`, `stop_conditions`
+- accepted decisions: planning integration ownerは`main_planning_context`、supporting agentは`advisory_only` / `read_only`、decision authorityはHuman、model selectionは`host_runtime`、具体的model / reasoning値のpersistenceは禁止する。
+- non-goals: model router、Codex設定、agent file、execution schema、scheduler、`issue-implementation-loop` production implementationは変更しない。
+- verification: architecture / loop / wiki tests、context validator、dual-host validator、skill validator、`git diff --check`を要求する。
+- remote policy: `local_only`。GitHub issue、push、PR、merge、release、live installは非承認である。
+- stop conditions: authorityを分離できない、具体的model値の保存が必要、execution側変更が必要、Human gateまたはworker-only契約が弱まる、context budget超過、planned scope競合、relevant validation失敗。
+
+## [2026-07-27] issue-gate-candidate | Planning Authority Policy
+
+- approved specをPAP-001からPAP-004のserial dependencyへ分解した。PAP-001はfamily policy / validator、PAP-002はmain planning / supporting agent運用契約、PAP-003はmodel非永続化 / execution non-regression、PAP-004はwiki / full verification closeoutを所有する。
+- Issue Gate候補では`PAP-001 -> PAP-002 -> PAP-003 -> PAP-004`をcycleなしのblocker graphとし、実行可能はPAP-001だけ、PAP-002〜004はblocker releaseまで`ブロック中`とした。
+- productionのInput Packet、Execution Envelope、Worker Packet、`issue-implementation-loop` scheduler / runtime / worker lifecycleはwrite scope外とした。
+- local Issue台帳をcanonicalとし、GitHub Issue / PRは`未作成`、remote policyは`local_only`を維持する。Human Issue Gate approval前にImplementation Plan / Input Packet作成やproduction implementationへ進まない。
+
+## [2026-07-27] issue-gate-approval | Planning Authority Policy
+
+- actor expression: `session-user`
+- approved at: `2026-07-27T09:43:11+09:00`
+- decision: `approved`
+- approved dependency: `PAP-001 -> PAP-002 -> PAP-003 -> PAP-004`
+- approved scope: 各Issueのwrite scope、acceptance criteria、non-goals、verification。
+- PAP-001だけを`実行可能`、PAP-002〜PAP-004をblocker releaseまで`ブロック中`とする。
+- local Issue台帳はcanonical、GitHub Issue / PRは`未作成`、remote policyは`local_only`。push、PR、merge、release、live installは非承認である。
+- Issue Gate commitを固定してからImplementation Plan、Input Packet、Execution Plan Gate evidenceを作成する。production implementationはExecution Plan Gate commit前に開始しない。
+
+## [2026-07-27] execution-plan-gate | Planning Authority Policy
+
+- decided at: `2026-07-27T09:50:50+09:00`
+- decision: `auto-continue`
+- implementation plan: `knowledge/wiki/syntheses/planning-authority-policy/implementation-plan.md`
+- normalized packet: `knowledge/wiki/syntheses/planning-authority-policy/input-packet.json`
+- packet SHA-256: `90b22e13c1a91abcee126fd05345941d91d0671c60cb6ec03774005c5c90b9d5`
+- `validate_input_packet.py`: `ok: true`、errorsなし。
+- capability preflight: `ok: true`。approved-spec seal、issue-implementation-loop、TDD、independent reviewが利用可能。parallel availabilityはplatform-dependentで、serial fallbackはworker contextに限定する。
+- fresh planning verification: grill-to-pr-loop 58 tests、llm-wiki 6 tests、`git diff --check`がpass。
+- default checkout: `HEAD=f5d151e34de5089d75be68249e09da8a2d14f282`、`## main...origin/main`でplanning開始時snapshotから不変。
+- approved write scopeと`PAP-001 -> PAP-002 -> PAP-003 -> PAP-004`はIssue Gateから不変。runnableはPAP-001だけ、後続worktreeはblocker releaseまで作らない。
+- phase policy: planning artifactをcurrent planning branchのGate commitで固定し、executionはfresh / compacted coordinatorへhandoffする。planning/grill sessionは実装しない。
+- remote policy: `local_only`。unapproved external / high-risk actionがないため、追加Human approvalなしでExecution Plan Gateをauto-continueした。
+
+## [2026-07-27] implementation-verification-handoff | Planning Authority Policy
+
+- serial releaseは `PAP-001 -> PAP-002 -> PAP-003 -> PAP-004`。PAP-001は`5dfe3ff38d7c46f46c61714e5ab154613517babc`でfamily policy / validatorを実装し、reviewはCritical 0 / Important 0 / Minor 0でapproved。PAP-002はinitial `9d79aa6ddf5f4344641d755b64d96a32d4dd8389`に対するcycle 1 Important `intent_gap` 1件を`bf04888b41a37d2dd6488a2258f8fda400e6dd33`で修正し、cycle 2はfindings 0でapproved。PAP-003は`681dfb723be171b81502540ded0458c186f6f036`でmodel非永続化 / execution non-regressionを固定し、findings 0でapprovedとなった。
+- PAP-004はIssue台帳、Implementation Plan、index、logをcurrent implementation evidenceへ同期した。specとsealed Input Packetはverify-onlyで、SHA-256は`6f4a952f35dd44fb930af98403ddfe5f0760af1d398722b338a18ef4493f8c68` / `90b22e13c1a91abcee126fd05345941d91d0671c60cb6ec03774005c5c90b9d5`のまま不変である。
+- fresh full verificationはgrill-to-pr-loop 63件、issue-implementation-loop 284件、llm-wiki 6件、scripts 63件がpassした。skill architecture、3 context contracts、scoped dual-host compatibility、grill-to-pr-loop quick validator、`git diff --check`もpassし、context reportはwarningsなし、execution-plan headroom 20%である。
+- approved PAP-004 write scope外のdiffはなく、execution schemas / validator / scheduler / runtimeのproduction diffはゼロ。default checkoutは`HEAD=f5d151e34de5089d75be68249e09da8a2d14f282`、`## main...origin/main`でplanning開始時snapshotと一致する。remote actionは0である。
+- PAP-004のcommitted rangeに対するimplementation reviewとspec alignment reviewは未実施であり、local `PR_READY`にはしていない。このentryはreview handoffまでを記録し、review approvalを先取りしない。
+
+## [2026-07-27] spec-alignment-fix-handoff | Planning Authority Policy
+
+- PAP-004 initial closeout range `681dfb723be171b81502540ded0458c186f6f036..4bc6fe52e4bdd062a10766b96446b325a57c540a`のimplementation review cycle 1はCritical 0 / Important 0 / Minor 0でapprovedとなった。
+- spec alignment review cycle 1はCritical 0 / Important 1 / Minor 0でchanges requestedとなった。production validatorはapproved 5 fieldすべての不正値を正しく拒否していたが、恒久的なinvalid-value regression coverageが`supporting_agent_authority` 1 fieldに限られていた。
+- PAP-001 fix `40a4459a8a5ab9b6f6afff0bd3e6505821d049bf`は`integration_owner`、`supporting_agent_authority`、`decision_authority`、`model_selection`、`model_persistence`の5 subcasesをparameterized regressionへ固定した。focused architecture suite 8件、scripts 63件、architecture validator、committed-range `git diff --check`がpassし、PAP-001 fix review cycle 2はfindings 0でapprovedとなった。
+- review-approved fixはmerge commit `11477585f1d0c77c842a1b654d3aaf0f182bda63`でPAP-004 final branchへ統合済みである。本docs fix workerはmerge、runtime mutation、remote actionを行わず、統合済みHEADをdurable docsへ同期した。
+- fix統合後のfresh full verificationはgrill-to-pr-loop 63件、issue-implementation-loop 284件、llm-wiki 6件、scripts 63件、skill architecture、3 context contracts、context report、scoped dual-host compatibility、grill-to-pr-loop quick validator、`git diff --check`がpassした。context reportはwarningsなし、execution-plan headroom 20%を維持した。
+- approved spec / sealed packetのSHA-256は`6f4a952f35dd44fb930af98403ddfe5f0760af1d398722b338a18ef4493f8c68` / `90b22e13c1a91abcee126fd05345941d91d0671c60cb6ec03774005c5c90b9d5`で不変。execution production diffはゼロ、default checkoutは開始時snapshotと一致、remote actionは0である。
+- PAP-004のfix同期commitを含むfinal rangeに対するimplementation review cycle 2とspec alignment review cycle 2は未実施であり、local `PR_READY`にはしていない。cycle 2 approvalを先取りしない。

@@ -32,6 +32,13 @@ internal_components = [
   "worktree lifecycle",
 ]
 
+[families.repository-change-loop.planning_authority]
+integration_owner = "main_planning_context"
+supporting_agent_authority = "advisory_only"
+decision_authority = "human"
+model_selection = "host_runtime"
+model_persistence = "forbidden"
+
 [families.repository-change-loop.context_compaction]
 soft_trigger_percent = 65
 hard_stop_percent = 75

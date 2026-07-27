@@ -35,7 +35,7 @@ references = [
   "references/local-issue-ledger.md",
   "references/execution-handoff.md",
 ]
-estimated_token_budget = 11500
+estimated_token_budget = 11600
 skills = []
 dispatch_skills = []
 

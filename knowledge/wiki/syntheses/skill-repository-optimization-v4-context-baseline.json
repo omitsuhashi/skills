@@ -19,24 +19,24 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 13780,
+          "character_count": 14135,
           "dispatch_skills": [],
-          "estimated_token_count": 5310,
+          "estimated_token_count": 5454,
           "file_count": 3,
           "files": [
             "skills/grill-to-pr-loop/SKILL.md",
             "skills/grill-to-pr-loop/references/core.md",
             "skills/grill-to-pr-loop/references/planning-contract.md"
           ],
-          "headroom_percent": 51,
+          "headroom_percent": 50,
           "max_file_count": 6,
-          "non_whitespace_character_count": 11918,
+          "non_whitespace_character_count": 12246,
           "operation": "intake",
           "schema_version": 3,
           "skill": "grill-to-pr-loop",
           "skills": [],
           "word_budget": null,
-          "word_count": 1818
+          "word_count": 1846
         },
         {
           "budget": {
@@ -48,18 +48,18 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 13780,
+          "character_count": 14135,
           "dispatch_skills": [],
-          "estimated_token_count": 5310,
+          "estimated_token_count": 5454,
           "file_count": 3,
           "files": [
             "skills/grill-to-pr-loop/SKILL.md",
             "skills/grill-to-pr-loop/references/core.md",
             "skills/grill-to-pr-loop/references/planning-contract.md"
           ],
-          "headroom_percent": 51,
+          "headroom_percent": 50,
           "max_file_count": 6,
-          "non_whitespace_character_count": 11918,
+          "non_whitespace_character_count": 12246,
           "operation": "grill",
           "schema_version": 3,
           "skill": "grill-to-pr-loop",
@@ -67,7 +67,7 @@
             "grill-with-docs"
           ],
           "word_budget": null,
-          "word_count": 1818
+          "word_count": 1846
         },
         {
           "budget": {
@@ -79,24 +79,24 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 13780,
+          "character_count": 14135,
           "dispatch_skills": [],
-          "estimated_token_count": 5310,
+          "estimated_token_count": 5454,
           "file_count": 3,
           "files": [
             "skills/grill-to-pr-loop/SKILL.md",
             "skills/grill-to-pr-loop/references/core.md",
             "skills/grill-to-pr-loop/references/planning-contract.md"
           ],
-          "headroom_percent": 51,
+          "headroom_percent": 50,
           "max_file_count": 6,
-          "non_whitespace_character_count": 11918,
+          "non_whitespace_character_count": 12246,
           "operation": "spec",
           "schema_version": 3,
           "skill": "grill-to-pr-loop",
           "skills": [],
           "word_budget": null,
-          "word_count": 1818
+          "word_count": 1846
         },
         {
           "budget": {
@@ -108,9 +108,9 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 15647,
+          "character_count": 16002,
           "dispatch_skills": [],
-          "estimated_token_count": 6131,
+          "estimated_token_count": 6275,
           "file_count": 4,
           "files": [
             "skills/grill-to-pr-loop/SKILL.md",
@@ -118,29 +118,29 @@
             "skills/grill-to-pr-loop/references/planning-contract.md",
             "skills/grill-to-pr-loop/references/local-issue-ledger.md"
           ],
-          "headroom_percent": 44,
+          "headroom_percent": 42,
           "max_file_count": 6,
-          "non_whitespace_character_count": 13460,
+          "non_whitespace_character_count": 13788,
           "operation": "issue-gate",
           "schema_version": 3,
           "skill": "grill-to-pr-loop",
           "skills": [],
           "word_budget": null,
-          "word_count": 2066
+          "word_count": 2094
         },
         {
           "budget": {
             "character_budget": 24000,
-            "estimated_token_budget": 11500,
+            "estimated_token_budget": 11600,
             "max_file_count": 6,
             "min_headroom_percent": 20,
             "non_whitespace_character_budget": null,
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 23308,
+          "character_count": 23663,
           "dispatch_skills": [],
-          "estimated_token_count": 9075,
+          "estimated_token_count": 9219,
           "file_count": 5,
           "files": [
             "skills/grill-to-pr-loop/SKILL.md",
@@ -149,15 +149,15 @@
             "skills/grill-to-pr-loop/references/local-issue-ledger.md",
             "skills/grill-to-pr-loop/references/execution-handoff.md"
           ],
-          "headroom_percent": 21,
+          "headroom_percent": 20,
           "max_file_count": 6,
-          "non_whitespace_character_count": 20150,
+          "non_whitespace_character_count": 20478,
           "operation": "execution-plan",
           "schema_version": 3,
           "skill": "grill-to-pr-loop",
           "skills": [],
           "word_budget": null,
-          "word_count": 2994
+          "word_count": 3022
         },
         {
           "budget": {
@@ -169,9 +169,9 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 18686,
+          "character_count": 18834,
           "dispatch_skills": [],
-          "estimated_token_count": 7197,
+          "estimated_token_count": 7260,
           "file_count": 4,
           "files": [
             "skills/grill-to-pr-loop/SKILL.md",
@@ -181,13 +181,13 @@
           ],
           "headroom_percent": 34,
           "max_file_count": 6,
-          "non_whitespace_character_count": 16146,
+          "non_whitespace_character_count": 16286,
           "operation": "resume",
           "schema_version": 3,
           "skill": "grill-to-pr-loop",
           "skills": [],
           "word_budget": null,
-          "word_count": 2398
+          "word_count": 2410
         },
         {
           "budget": {
@@ -199,9 +199,9 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 18686,
+          "character_count": 18834,
           "dispatch_skills": [],
-          "estimated_token_count": 7197,
+          "estimated_token_count": 7260,
           "file_count": 4,
           "files": [
             "skills/grill-to-pr-loop/SKILL.md",
@@ -211,13 +211,13 @@
           ],
           "headroom_percent": 34,
           "max_file_count": 6,
-          "non_whitespace_character_count": 16146,
+          "non_whitespace_character_count": 16286,
           "operation": "completion-report",
           "schema_version": 3,
           "skill": "grill-to-pr-loop",
           "skills": [],
           "word_budget": null,
-          "word_count": 2398
+          "word_count": 2410
         },
         {
           "budget": {
@@ -229,9 +229,9 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 12666,
+          "character_count": 12814,
           "dispatch_skills": [],
-          "estimated_token_count": 4758,
+          "estimated_token_count": 4821,
           "file_count": 3,
           "files": [
             "skills/grill-to-pr-loop/SKILL.md",
@@ -240,13 +240,13 @@
           ],
           "headroom_percent": 56,
           "max_file_count": 6,
-          "non_whitespace_character_count": 10915,
+          "non_whitespace_character_count": 11055,
           "operation": "delivery",
           "schema_version": 3,
           "skill": "grill-to-pr-loop",
           "skills": [],
           "word_budget": null,
-          "word_count": 1718
+          "word_count": 1730
         },
         {
           "budget": {
@@ -258,9 +258,9 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 12666,
+          "character_count": 12814,
           "dispatch_skills": [],
-          "estimated_token_count": 4758,
+          "estimated_token_count": 4821,
           "file_count": 3,
           "files": [
             "skills/grill-to-pr-loop/SKILL.md",
@@ -269,7 +269,7 @@
           ],
           "headroom_percent": 56,
           "max_file_count": 6,
-          "non_whitespace_character_count": 10915,
+          "non_whitespace_character_count": 11055,
           "operation": "final-review",
           "schema_version": 3,
           "skill": "grill-to-pr-loop",
@@ -277,7 +277,7 @@
             "requesting-code-review"
           ],
           "word_budget": null,
-          "word_count": 1718
+          "word_count": 1730
         },
         {
           "budget": {
@@ -289,24 +289,24 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 12103,
+          "character_count": 12251,
           "dispatch_skills": [],
-          "estimated_token_count": 4501,
+          "estimated_token_count": 4564,
           "file_count": 3,
           "files": [
             "skills/grill-to-pr-loop/SKILL.md",
             "skills/grill-to-pr-loop/references/core.md",
             "skills/grill-to-pr-loop/references/common-mistakes.md"
           ],
-          "headroom_percent": 59,
+          "headroom_percent": 58,
           "max_file_count": 6,
-          "non_whitespace_character_count": 10387,
+          "non_whitespace_character_count": 10527,
           "operation": "ambiguity-check",
           "schema_version": 3,
           "skill": "grill-to-pr-loop",
           "skills": [],
           "word_budget": null,
-          "word_count": 1640
+          "word_count": 1652
         },
         {
           "budget": {
@@ -318,24 +318,24 @@
             "word_budget": null
           },
           "budget_headroom": null,
-          "character_count": 14818,
+          "character_count": 14966,
           "dispatch_skills": [],
-          "estimated_token_count": 5585,
+          "estimated_token_count": 5648,
           "file_count": 3,
           "files": [
             "skills/grill-to-pr-loop/SKILL.md",
             "skills/grill-to-pr-loop/references/core.md",
             "skills/grill-to-pr-loop/references/context-compaction.md"
           ],
-          "headroom_percent": 49,
+          "headroom_percent": 48,
           "max_file_count": 6,
-          "non_whitespace_character_count": 12706,
+          "non_whitespace_character_count": 12846,
           "operation": "context-compaction",
           "schema_version": 3,
           "skill": "grill-to-pr-loop",
           "skills": [],
           "word_budget": null,
-          "word_count": 2000
+          "word_count": 2012
         }
       ],
       "path": "skills/grill-to-pr-loop",

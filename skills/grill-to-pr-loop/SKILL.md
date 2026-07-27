@@ -41,7 +41,7 @@ Stop if planning lacks `grill-with-docs` or execution lacks `issue-implementatio
 
 ## Planning Worktree Gate
 
-Before Written Spec, use the current planning-operation read set to prepare and reuse one Epic worktree. Existing preference needs no repeated consent; sandbox failure stops before writes and never falls back to the default checkout.
+Before Written Spec, prepare/reuse one Epic worktree with the current planning read set. Existing preference needs no repeated consent; sandbox failure stops before writes/default-checkout use.
 
 ## Mode Router
 
@@ -53,10 +53,12 @@ At `65%` context pressure, keep the current operation read-set loaded and add `r
 
 ## Required Rules
 
-- Keep each Epic's durable planning artifacts under its repo-local `<durable-planning-root>/<epic-id>/`. Use the current planning/execution read-set for the tracked/untracked lifecycle. Specs/PRDs/ledgers use Japanese; preserve IDs, paths, commands, schema keys, branches, errors, and external refs.
-- Planning owns spec/ledger/packet; the local issue ledger stays canonical and GitHub is an optional mirror/delivery record.
-- Planning owns final spec identification, one human approval of its exact path/raw-byte digest and six-part scope, and Input Packet v2 sealing. Changes to spec bytes, `spec_binding`, or `approval_evidence` return to the human Spec Gate for a new approval and seal.
-- Other packet drift follows the handoff's exhaustive restore-or-reseal Execution Plan Gate lifecycle.
+- Store each Epic's durable artifacts under repo-local `<durable-planning-root>/<epic-id>/` using the current planning/execution read-set lifecycle. Specs/PRDs/ledgers use Japanese; preserve IDs, paths, commands, schema keys, branches, errors, and external refs.
+- The local issue ledger is canonical; GitHub is an optional mirror/delivery record.
+- Authority: main planning context integrates canonical spec/issue ledger/execution plan/sealed packet and finalizes the Human Gate approval candidate as integration owner; supporting agents are advisory-only/read-only; Human decides the Gate.
+- Host runtime selects model/reasoning; durable artifacts omit concrete values.
+- Planning owns final spec identification, exact-path/digest six-part approval, and Input Packet v2 sealing; changes to spec bytes, `spec_binding`, or `approval_evidence` return to the human Spec Gate for new approval/seal.
+- Other packet drift uses the handoff's Execution Plan Gate restore/reseal lifecycle.
 - Each gate is a phase approval commit boundary: commit artifacts/ledger/log. Before handoff, context 圧縮 or use a fresh coordinator with the packet and bounded brief.
 - Execution Envelope v4 carries `approved_spec_binding` and `phase_branch_policy`; it and later instantiated artifacts are untracked runtime state. Planning commits, `epic_base`, issue branches, and worktrees remain separate.
 - `issue-implementation-loop` owns reservations, scheduling, runtime, workers, review, recovery, and `PR_READY`; planning never implements.
