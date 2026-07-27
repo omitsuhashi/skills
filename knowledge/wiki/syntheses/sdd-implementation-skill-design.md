@@ -2,7 +2,7 @@
 
 ## 状態
 
-Phase 1のlocal implementationとfresh verificationに続き、Phase 2のlocal implementationと各Task reviewが完了した。`sdd-implementation`が既定かつ唯一のuser-facing実装入口であり、`skills/grill-to-pr-loop/`と`skills/issue-implementation-loop/`、および専用runtime/context surfaceはcurrent treeから削除済みである。historical wikiと旧baselineは非実行の証跡として保持する。Phase 2のfresh final verificationとwhole-branch final review、push、PR作成、merge、release、live installは未実施である。
+Phase 1のlocal implementationとfresh verificationに続き、Phase 2はfresh coordinator verificationとfinal whole-branch reviewを含めて`LOCAL_COMPLETE`である。`sdd-implementation`が既定かつ唯一のuser-facing実装入口であり、`skills/grill-to-pr-loop/`と`skills/issue-implementation-loop/`、および専用runtime/context surfaceはcurrent treeから削除済みである。historical wikiと旧baselineは非実行の証跡として保持する。push、PR作成、merge、release、live installは未実施である。
 
 ## 問題設定
 
@@ -224,7 +224,7 @@ flowchart TD
 - historical wiki source / spec / ledgerは実行可能artifactとして再利用せず、superseded / historicalとして保持する。durable decision historyを無差別に削除しない。
 - new skillの実run evidenceとforward verificationが揃う前にPhase 2へ進まない。
 
-Phase 2 local outcome: Task 1は`ce87b65`とfix `4e4f532`でreview clean、Task 2は`1def312405a1c1046366be749d85d3a493e5f887`でfindings 0のreview cleanとなった。2つの旧skill directoryと専用runtime/context surfaceは削除済みで、historical wikiと`skill-repository-optimization-v4-context-baseline.json`は非実行証跡として保持する。fresh final verification、whole-branch final review、push、PR、merge、release、live installはこのlocal outcomeに含まれず未実施である。
+Phase 2 local outcome: Task 1は`ce87b65`とfix `4e4f532`でreview clean、Task 2は`1def312405a1c1046366be749d85d3a493e5f887`でfindings 0のreview cleanとなった。2つの旧skill directoryと専用runtime/context surfaceは削除済みで、historical wikiと`skill-repository-optimization-v4-context-baseline.json`は非実行証跡として保持する。fresh coordinator verification（SDD 9、llm-wiki 5、scripts 42 tests、architecture/context/dual-host/skill validator、legacy absence/link checks）と`8ff2bdc..804c2c7`のfinal review（Critical 0、Important 0、Minor 0、Ready to merge Yes）を完了し、Phase 2は`LOCAL_COMPLETE`である。push、PR、merge、release、live installは未実施である。
 
 Phase 1 と Phase 2 を同一PRにしない。新skillのforward testとfallback behaviorを確認してから削除scopeを確定する。
 

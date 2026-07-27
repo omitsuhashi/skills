@@ -102,7 +102,7 @@ _現在なし。_
   検索語: sdd-implementation, Subagent-Driven Development, SDD, orchestrator, Scout, model routing, reasoning effort, llm-wiki, knowledge closeout, material simplicity, material finding, requirements fit, index.md, log.md, 実装スキル, オーケストレーター, モデル振り分け, 日本語wiki, シンプルさ, 要件実現
 - [SDD Implementation Skill 実装計画](wiki/syntheses/sdd-implementation-skill-implementation-plan.md) — 新Skill本体、runtime-only routing、material review、既定repository route、日本語knowledge closeoutを3つのreview可能なtaskで実装・検証するPhase 1計画。
   検索語: sdd-implementation, implementation plan, Subagent-Driven Development, model routing, reasoning effort, material review, knowledge closeout, dual-host, 実装計画, 既定実装入口
-- [SDD Implementation Phase 2 旧実装スキル削除計画](wiki/syntheses/sdd-implementation-phase2-removal-plan.md) — SDD実runと独立task reviewを経て旧loop skill本体と専用runtime/context surfaceをlocal treeから除去したPhase 2計画。fresh final verificationとwhole-branch final reviewは未実施。
+- [SDD Implementation Phase 2 旧実装スキル削除計画](wiki/syntheses/sdd-implementation-phase2-removal-plan.md) — SDD実run、fresh coordinator verification、final whole-branch reviewを完了し、旧loop skill本体と専用runtime/context surfaceをlocal treeから除去した`LOCAL_COMPLETE` Phase 2計画。remote actionsは未実施。
   検索語: sdd-implementation, Phase 2, grill-to-pr-loop, issue-implementation-loop, removal, legacy implementation skill, historical evidence, context report, SDD実run, 旧実装スキル削除
 - [Issue Implementation Loop Common Lib Split Spec](wiki/syntheses/issue-implementation-loop-common-lib-split-spec.md) — `issue-implementation-loop` の `_common.py` と単一巨大 test file を internal common lib / behavior-domain tests へ分割する後続実装契約。
   検索語: issue-implementation-loop, common lib, _common.py, scripts/lib, test split, context optimization, skill split, コンテキスト最適化
