@@ -7,7 +7,9 @@
 - Destructive or bulk mutation requires confirmation.
 - An explicit user instruction is the approval for that exact operation. Do not ask twice.
 
-Safe automatic operations include reads, searches, capability checks, a high-confidence single Issue create/edit/comment, adding that Issue to the resolved Project, non-terminal field updates, and repair of Project Status after an already closed Issue with a reliable reason.
+Safe automatic operations include reads, searches, capability checks, an explicit single Issue create/edit/comment, adding that Issue to the resolved Project, non-terminal field updates, and repair of Project Status after an already closed Issue with a reliable reason.
+
+An inferred create is automatic only when the target, Outcome, observable acceptance criteria, single-item scope for one task, non-destructive scope, duplicate result, and idempotency key are all exact. Otherwise return `confirmation-needed` without creating a draft item.
 
 Confirmation is required for ambiguous Project or repository selection, unclear outcome or acceptance criteria, inferred close/transfer/delete, Project item removal/archive, destructive body replacement, Project schema or visibility change, private-content exposure, and multi-Issue mutation. If an explicit instruction reveals a different target, unexpected permission identity, or unexpectedly large item count, stop and reconfirm.
 

@@ -224,42 +224,47 @@ class TaskManagementContractTests(unittest.TestCase):
         self.assertIn("inferred terminal transition", terminal_flow)
         self.assertIn("confirmation", terminal_flow)
 
-    def test_write_routes_share_complete_capability_preflight(self) -> None:
+    def test_create_preflight_requires_only_create_and_registration_capabilities(self) -> None:
         skill_text = read(SKILL)
         project_text = section(read(PROJECTS), "## Semantic capability check")
+        create_flow = section(skill_text, "### Create and register")
 
         for required in (
-            "Every write route requires this complete set before mutation",
-            "Issue read, search, create, update, and comment",
-            "Project read, item add, and field update",
-            "Access to the resolved owner, repository, Project, and relevant private content",
-            "Read, search, and list require only the read capabilities",
+            "Issue read, search, and create",
+            "Project read, item add, and creation-default field update",
+            "Access to the resolved repository and Project",
         ):
             self.assertIn(required, project_text)
+        for unrelated in (
+            "Issue update and comment",
+            "Issue close",
+            "terminal Project Status update",
+        ):
+            self.assertNotIn(unrelated, create_flow)
+        self.assertIn("check only the create operation capabilities", create_flow)
 
-        write_preflight = (
-            "Complete the full write preflight in "
-            "`references/github-projects.md` before mutation"
+    def test_skill_uses_direct_mcp_and_has_structural_inferred_create_gate(self) -> None:
+        text = "\n".join(
+            read(path)
+            for path in [SKILL, CORE, PROJECTS, ISSUES, SAFETY]
         )
-        for heading in (
-            "### Create and register",
-            "### Edit",
-            "### Comment",
-            "### Non-terminal field update",
-            "### Terminal update",
+        for required in (
+            "Use available GitHub MCP capabilities directly",
+            "explicit",
+            "inferred",
+            "one task",
+            "idempotency key",
+            "observable acceptance criteria",
+            "Do not ask twice",
         ):
-            self.assertIn(write_preflight, section(skill_text, heading))
-
-        read_flow = section(skill_text, "### Read, search, and list")
-        self.assertIn("Require only Issue read/search and Project read capabilities", read_flow)
-        for contradiction in (
-            "Select only the semantic capabilities required by that operation",
-            "check only the capability needed",
-            "Check the semantic read and search capabilities needed",
-            "check Issue-create capability",
-            "check item-add and required field-update capabilities",
+            self.assertIn(required, text)
+        for prohibited in (
+            "GitHub MCP facade",
+            "execution wrapper",
+            "transport adapter",
+            "numeric confidence",
         ):
-            self.assertNotIn(contradiction, skill_text)
+            self.assertNotIn(prohibited, text)
 
     def test_reuse_and_partial_failure_preserve_existing_state(self) -> None:
         issue_text = section(read(ISSUES), "## Duplicate handling")

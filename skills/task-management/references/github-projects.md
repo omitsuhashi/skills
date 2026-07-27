@@ -2,15 +2,18 @@
 
 ## Semantic capability check
 
-Read, search, and list require only the read capabilities needed to answer: Issue read and search, Project read when Project data is requested, and access to the resolved target content. These operations perform no write.
+Check only the semantic capabilities required by the requested operation before mutation:
 
-Every write route requires this complete set before mutation, even when the requested operation will use only part of it:
+| operation | required capabilities |
+|---|---|
+| read / search | Issue read / search; Project read only when requested |
+| create / register | Issue read / search / create; Project read / item add / creation-default field update |
+| edit | Issue read / update |
+| comment | Issue read / comment create |
+| non-terminal field update | Issue / Project read; requested Project field update |
+| terminal update | Issue / Project read; Issue close; terminal Project Status update |
 
-- Issue read, search, create, update, and comment.
-- Project read, item add, and field update.
-- Access to the resolved owner, repository, Project, and relevant private content.
-
-If any operation or target permission in this complete write set is missing, stop before mutation and report the missing capability. Do not narrow the write preflight by operation type.
+The GitHub MCP capability inventory is Issue read, search, create, update, and comment; and Project read, item add, and field update. For create and register, require Issue read, search, and create; and Project read, item add, and creation-default field update. Access to the resolved repository and Project is also required. For every operation, stop before mutation and report the missing capability or target access.
 
 Tool names may differ by host integration. Match semantic capabilities, but use only GitHub MCP. Do not fall back to a CLI, direct API client, browser automation, or local backend.
 
