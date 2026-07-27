@@ -1670,3 +1670,10 @@ append-only で使います。すべての entry は予測しやすい header �
 - GitHub上の最新`main`である`dec5647`（PR #39、Superpowers-first revision）を`codex/sdd-implementation-phase2-removal`へ統合した。`AGENTS.md`、architecture policy / tests、SDD design、knowledge index / logの競合は、Superpowers-first lifecycleとSDD-only route / legacy removalの両方を保持して解消した。
 - fresh verificationはSDD 17 tests、LLM Wiki 5 tests、repository scripts 43 tests、skill architecture validator、1 skill context contract、warningsなしのcontext report、scoped dual-host validator、skill-creator quick validator、legacy directory absence、`git diff --check`のすべてが成功した。
 - branchはDraft PR #41として公開済みである。PR merge、release、live installは未実施である。
+
+## [2026-07-28] spec-and-plan-gate | SDD Reasoning Effort Risk Precedence
+
+- Humanは既存のlow / medium / high mappingを維持し、task complexity / riskをrole defaultより優先する方針を承認した。通常のtask reviewはmedium、architecture-sensitive / high-risk task reviewはhighとする。
+- 共有default contractへ`xhigh`、`max`、`ultra`その他host-specific levelを追加せず、明示的runtime overrideとしてのみ扱う。user override、stuck-fix one-step escalation、effort `not_supported`時の継続条件は変更しない。
+- canonical designを更新し、実装計画を`knowledge/wiki/syntheses/sdd-effort-risk-precedence-implementation-plan.md`へ作成した。Execution Plan Gateは承認済みであり、fresh implementer、independent task review、knowledge closeout、final whole-branch reviewへ進む。
+- push、PR、merge、release、live installその他のremote writeはscope外である。
