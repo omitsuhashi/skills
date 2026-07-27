@@ -32,6 +32,7 @@ EXPECTED_PLANNING_AUTHORITY_POLICY = {
     "model_selection": "host_runtime",
     "model_persistence": "forbidden",
 }
+EXPECTED_DEFAULT_IMPLEMENTATION_SKILL = "sdd-implementation"
 
 
 class PolicyError(Exception):
@@ -278,6 +279,17 @@ def validate_policy(policy: Dict[str, object]) -> List[str]:
             errors.append(f"invalid skill name: {skill_name}")
 
     actual_skills = set(_actual_skill_names())
+    default_implementation_skill = family.get("default_implementation_skill")
+    if default_implementation_skill != EXPECTED_DEFAULT_IMPLEMENTATION_SKILL:
+        errors.append(
+            "repository-change-loop.default_implementation_skill must be "
+            + EXPECTED_DEFAULT_IMPLEMENTATION_SKILL
+        )
+    elif default_implementation_skill not in actual_skills:
+        errors.append(
+            "missing default implementation skill directory: "
+            f"skills/{default_implementation_skill}/SKILL.md"
+        )
     for skill_name in user_facing:
         if skill_name not in actual_skills:
             errors.append(f"missing user-facing skill directory: skills/{skill_name}/SKILL.md")

@@ -22,3 +22,7 @@
 - Before delivery, verify that the PR branch contains every task commit.
 - Before completion, verify that the default checkout matches its starting HEAD/status. Never alter pre-existing unrelated changes without explicit approval.
 
+## Default implementation route
+
+- When a human-approved implementation plan is ready for local execution, use `sdd-implementation` by default.
+- Use `grill-to-pr-loop` or `issue-implementation-loop` only when the user explicitly names one; do not use either as an automatic fallback.

@@ -18,6 +18,7 @@ from validate_skill_architecture import (
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 VALIDATE_SKILL_ARCHITECTURE = REPO_ROOT / "scripts" / "validate_skill_architecture.py"
+REPO_ROUTER = REPO_ROOT / "AGENTS.md"
 
 
 def run_validator(*args: str) -> subprocess.CompletedProcess[str]:
@@ -141,6 +142,42 @@ class SkillArchitecturePolicyTests(unittest.TestCase):
 
     def test_context_compaction_is_not_a_standalone_skill(self) -> None:
         self.assertFalse((REPO_ROOT / "skills" / "context-compaction" / "SKILL.md").exists())
+
+
+class SddDefaultImplementationRouteTests(unittest.TestCase):
+    def test_sdd_is_the_default_implementation_skill(self) -> None:
+        family = repository_change_loop_family()
+        self.assertEqual(
+            ["grill-to-pr-loop", "issue-implementation-loop"],
+            family["user_facing_skills"],
+        )
+        self.assertEqual(
+            "sdd-implementation",
+            family["default_implementation_skill"],
+        )
+
+    def test_repository_router_uses_old_loops_only_when_explicit(self) -> None:
+        router = REPO_ROUTER.read_text(encoding="utf-8")
+        self.assertIn(
+            "use `sdd-implementation` by default",
+            router,
+        )
+        self.assertIn(
+            "Use `grill-to-pr-loop` or `issue-implementation-loop` only when "
+            "the user explicitly names one",
+            router,
+        )
+
+    def test_validator_rejects_default_implementation_skill_drift(self) -> None:
+        policy = architecture_policy()
+        family = repository_change_loop_family(policy)
+        family["default_implementation_skill"] = "issue-implementation-loop"
+
+        self.assertIn(
+            "repository-change-loop.default_implementation_skill must be "
+            "sdd-implementation",
+            validate_policy(policy),
+        )
 
 
 if __name__ == "__main__":
