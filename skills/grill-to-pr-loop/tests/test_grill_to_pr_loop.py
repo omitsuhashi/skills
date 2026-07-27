@@ -305,6 +305,34 @@ class GrillToPrLoopTests(unittest.TestCase):
             "Use when a repository change requires approved durable design, issue decomposition, and worker-only implementation.",
         )
 
+    def test_planning_authority_contract_separates_integration_advice_and_decision(
+        self,
+    ) -> None:
+        skill_text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+        planning_text = PLANNING_CONTRACT.read_text(encoding="utf-8")
+        combined = f"{skill_text}\n{planning_text}"
+
+        for required in (
+            "main planning context is the integration owner",
+            "supporting agents are advisory-only and read-only",
+            "Human is the decision authority",
+            "bounded question",
+            "repo-relative read paths",
+            "evidence",
+            "must not write canonical planning artifacts",
+            "approve a spec or scope",
+            "seal an Input Packet",
+            "compares evidence when advice conflicts",
+            "never uses a vote or majority",
+            "authority-bearing ambiguity",
+            "Human gate",
+            "fresh primary context",
+            "explicit ownership transfer",
+            "not a supporting dispatch",
+            "A user-selected model change or host model unavailability is host runtime state, not spec or packet drift.",
+        ):
+            self.assertIn(required, combined)
+
     def test_planning_contract_seals_the_exact_approved_spec_revision(self) -> None:
         planning_text = PLANNING_CONTRACT.read_text(encoding="utf-8")
         handoff_text = (SKILL_DIR / "references" / "execution-handoff.md").read_text(

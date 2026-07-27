@@ -53,6 +53,8 @@ At `65%` context pressure, keep the current operation read-set loaded and add `r
 
 - Keep each Epic's durable planning artifacts under its repo-local `<durable-planning-root>/<epic-id>/`. Use the current planning/execution read-set for the tracked/untracked lifecycle. Specs/PRDs/ledgers use Japanese; preserve IDs, paths, commands, schema keys, branches, errors, and external refs.
 - Planning owns spec/ledger/packet; the local issue ledger stays canonical and GitHub is an optional mirror/delivery record.
+- Authority: main planning context is the integration owner; supporting agents are advisory-only/read-only; Human is the decision authority.
+- Host runtime selects model/reasoning; durable artifacts omit concrete values.
 - Planning owns final spec identification, one human approval of its exact path/raw-byte digest and six-part scope, and Input Packet v2 sealing. Changes to spec bytes, `spec_binding`, or `approval_evidence` return to the human Spec Gate for a new approval and seal.
 - Other packet drift follows the handoff's exhaustive restore-or-reseal Execution Plan Gate lifecycle.
 - Each gate is a phase approval commit boundary: commit artifacts/ledger/log. Before handoff, context 圧縮 or use a fresh coordinator with the packet and bounded brief.
