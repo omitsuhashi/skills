@@ -1720,3 +1720,9 @@ append-only で使います。すべての entry は予測しやすい header �
 - TDDのexpected REDは、SDD contractが19 tests中1 failure（result-collection semantics欠落）、authoring guidanceが3 tests中1 failure（現行validator path欠落）であった。production変更後はSDD contract 19 tests、authoring guidance 3 tests、LLM Wiki 5 tests、repository scripts 44 testsが各`OK`、skill architecture validator、1 skill context contract validator、scoped repository compatibility、skill-creator quick validation、`git diff --check`がすべて成功した。
 - pressure scenarioでは、synchronous dispatchがcompleted resultを返す場合はwait / resumeなしでも有効、asynchronous dispatchでwait / resumeを満たせない場合は`BLOCKED`、independent effort controlだけがない場合は`not_supported`としてSuperpowers model selectionで継続となる。
 - scoped re-review、final approval、`LOCAL_COMPLETE`はpendingである。push、PR作成、merge、release、live install、issue、comment、project mutationその他のremote writeとlive mutationは実施していない。
+
+## [2026-07-28] local-complete | SDD Agent-Agnostic Runtime Contract
+
+- spec / plan baselineは`c1f3791`、Task 1は`33fe86b`（review 0 findingsでApproved）、Task 2は`171d4f1`、Task 2 fixは`0501c45`（scoped re-review Approved）である。final reviewはCritical 0 / Important 3 / Minor 0を返した。
+- bounded final fix `44edcf0`が3件を解消し、final scoped re-reviewは全3件の解消、新規Critical / Important breakageなし、`APPROVED`を確認した。fresh pressure scenarioではsynchronous completed resultはwait / resumeなしで継続、asynchronous dispatchでwaitまたはresumeがなければ`BLOCKED`、optional effortがなければ`not_supported`として継続する。
+- canonical design、current plan、index、append-only logを同期し、fresh `skills/llm-wiki/tests` 5 testsと`git diff --check`が成功した。residual material riskはない。remote writeおよびlive mutationは実施していない。
