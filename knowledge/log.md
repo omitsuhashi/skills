@@ -1600,3 +1600,47 @@ append-only で使います。すべての entry は予測しやすい header �
 - scoped skill tests、repository script tests、architecture / context validators、新Skillのdual-host / skill-creator validators、`llm-wiki` tests、Git diff checkがfreshに成功した。
 - repository-wide dual-host validationには変更前から`skills/llm-wiki/DESCRIPTION.md`の既知findingが残る。Phase 1ではscopeを広げず、新Skillのscoped dual-host validationを完了条件とした。
 - push、PR作成、merge、release、live install、Phase 2の旧skill削除は未実施。
+
+## [2026-07-27] written-spec-candidate | SDD Implementation Superpowers-first Revision
+
+- Superpowers v6.2.0の一次情報を調査し、SDDにはdispatchごとのmodel選択が既にある一方、modelと独立したreasoning effort contractとHermes Agent公式adapterはないことを`knowledge/wiki/syntheses/sdd-superpowers-model-and-reasoning-research.md`へ保存した。
+- `sdd-implementation`の後継設計を、Superpowers `brainstorming -> writing-plans -> subagent-driven-development`を主系とする構成へ更新した。repo-local skillはupstream lifecycle、TDD、review、model tierを再実装しない。
+- specが存在しない、未承認、またはmaterialに未確定な場合は`Grill with Docs`を必須とし、一問一答で仕様を詰める。Human-approved current specがある場合は再grillingせず、完了済みstageをskipする。
+- `llm-wiki`はrelevant knowledge queryと、Human-approved spec、repository-approved plan、implementation closeoutのdurable syncを所有する。Grill / Domain Modelingの既定出力を使った`CONTEXT.md`やrepo-root `docs/adr/`という並行正本は作らない。
+- dispatch model tierはSuperpowersを正本とし、repo-local責務をhostのconcrete model resolutionとoptionalなlow / medium / high reasoning effort overlayへ限定した。effort非対応hostは`not_supported`としてmodel selectionだけで継続し、isolated model dispatch自体が不可能な場合だけ`BLOCKED`とする。
+- 既存implementation planはPhase 1のhistorical evidenceへ状態変更した。production skill変更、successor implementation plan、remote actionは未実施であり、本Written SpecのHuman review待ちである。
+
+## [2026-07-27] spec-gate | SDD Implementation Superpowers-first Revision
+
+- Humanは`knowledge/wiki/syntheses/sdd-implementation-skill-design.md`のSuperpowers-first revisionをWritten Specとして承認した。
+- Superpowersがbrainstorming、writing-plans、SDD、review、model tierを所有し、repo-local責務をGrill with Docs、LLM Wiki、host model resolution、optional reasoning effortへ限定するownershipは確定した。
+- spec未作成またはmaterial ambiguityありではGrill with Docsを必須とし、approved current spec / planがある場合は完了済みstageをskipする。
+- production skill変更、implementation plan、worker dispatch、remote actionはこのSpec Gate時点では未実施である。
+
+## [2026-07-27] execution-plan-candidate | SDD Implementation Superpowers-first Revision
+
+- Humanは`knowledge/wiki/syntheses/sdd-implementation-skill-design.md`をSuperpowers-first revisionのWritten Specとして承認した。
+- `superpowers:writing-plans`を使い、後継implementation planを`knowledge/wiki/syntheses/sdd-implementation-superpowers-first-implementation-plan.md`へ作成した。
+- planはSkill lifecycle contract、repository router / architecture / Codex metadata、LLM Wiki closeoutとfull verificationの3 taskに限定した。新しいscript、schema、scheduler、runtime state、old loop fallbackは追加しない。
+- Task 1は`superpowers:writing-skills`と`superpowers:test-driven-development`を必須とし、contract testのREDから開始する。Task 2はdefault routeとUI copyを揃え、Task 3はsingle-root ingestとfinal whole-branch reviewを行う。
+- production skill変更、Execution Plan Gate、worker dispatch、remote actionは未実施である。
+
+## [2026-07-27] execution-plan-gate | SDD Implementation Superpowers-first Revision
+
+- Humanは`knowledge/wiki/syntheses/sdd-implementation-superpowers-first-implementation-plan.md`をExecution Plan Gateとして承認し、`superpowers:subagent-driven-development`による実行を選択した。
+- 実行順はTask 1のshared Skill lifecycle contract、Task 2のrepository router / architecture / Codex metadata、Task 3のLLM Wiki closeout / full verification / final reviewである。
+- fresh implementer、task-scoped independent reviewer、fix loop、final whole-branch reviewはSuperpowers SDDに従い、main sessionはcoordinationとartifact handoffだけを所有する。
+- remote policyはlocal-onlyであり、push、PR作成、merge、release、live installは未承認のままである。
+
+## [2026-07-27] final-review-candidate | SDD Implementation Superpowers-first Revision
+
+- Task 1は`65abafa` `feat: make SDD implementation Superpowers-first`とreview fix `6fa0f4f` `test: cover SDD review and remote boundaries`で完了し、Task 1 review fix round 1はapproved（open material findingなし）である。Task 2は`693e1aa` `docs: route repository changes through Superpowers`で完了し、task reviewはmaterial findingなしでapprovedである。SHAとsubjectは`git log --oneline --reverse 8c18ef0..HEAD`で確認した。
+- fresh verificationはLLM Wiki 6 tests、`sdd-implementation` 12 tests、repository scripts 68 testsがすべて`OK`である。skill architecture、3 skill context contracts、`sdd-implementation` scoped dual-host compatibility、skill-creator quick validator、Step 3 / Step 4の`git diff --check`も成功した。
+- design、current successor plan、indexをfinal whole-branch review待ちへ同期した。`LOCAL_COMPLETE`、final review approval、`local-complete` entryは記録していない。push、PR作成、merge、release、live installも未実施である。
+
+## [2026-07-27] local-complete | SDD Implementation Superpowers-first Revision
+
+- Task 1は`65abafa` `feat: make SDD implementation Superpowers-first`とreview fix `6fa0f4f` `test: cover SDD review and remote boundaries`、Task 2は`693e1aa` `docs: route repository changes through Superpowers`で完了し、各task reviewはapprovedである。Task 3 closeout candidateは`ec12012` `docs: prepare Superpowers-first SDD final review`で記録した。
+- `ec12012`に対するfinal whole-branch reviewはCritical 0、Important 5、Minor 1を検出した。`8b35113` `fix: address Superpowers-first SDD review findings`が6件すべてをbounded waveで解消し、scoped re-reviewはall findings addressed・new Critical/Important breakageなしでapprovedとなった。
+- fresh post-fix verificationはSDD 17/17、LLM Wiki 6/6、scoped dual-host compatibility、skill-creator quick validator、`git diff --check HEAD^ HEAD`のすべてが成功した。Task 2 full bundleとしてscripts 68/68、skill architecture validator、3 skill context contracts、scoped dual-host compatibility、skill-creator quick validator、`git diff --check`もcandidate closeoutで成功済みである。
+- knowledgeのdesign、current / implemented successor plan、index、append-only logをcloseoutへ同期した。residual material riskはない。push、PR作成、merge、release、live install、issue / comment / project変更を含むremote writeは実施していない。

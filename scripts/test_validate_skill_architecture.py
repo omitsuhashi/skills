@@ -156,16 +156,28 @@ class SddDefaultImplementationRouteTests(unittest.TestCase):
             family["default_implementation_skill"],
         )
 
-    def test_repository_router_uses_old_loops_only_when_explicit(self) -> None:
+    def test_repository_router_uses_sdd_for_the_full_change_lifecycle(self) -> None:
         router = REPO_ROUTER.read_text(encoding="utf-8")
         self.assertIn(
-            "use `sdd-implementation` by default",
+            "For repository changes, use `sdd-implementation` by default.",
+            router,
+        )
+        self.assertIn(
+            "Superpowers lifecycle, `grill-with-docs`, and `llm-wiki`",
             router,
         )
         self.assertIn(
             "Use `grill-to-pr-loop` or `issue-implementation-loop` only when "
             "the user explicitly names one",
             router,
+        )
+
+    def test_repository_change_family_describes_requirements_to_completion(self) -> None:
+        family = repository_change_loop_family()
+        self.assertEqual(
+            "Repository change workflow skills that move work from requirements "
+            "through specification, planning, and local implementation.",
+            family["description"],
         )
 
     def test_validator_rejects_default_implementation_skill_drift(self) -> None:
