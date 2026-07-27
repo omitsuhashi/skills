@@ -1601,6 +1601,26 @@ append-only で使います。すべての entry は予測しやすい header �
 - repository-wide dual-host validationには変更前から`skills/llm-wiki/DESCRIPTION.md`の既知findingが残る。Phase 1ではscopeを広げず、新Skillのscoped dual-host validationを完了条件とした。
 - push、PR作成、merge、release、live install、Phase 2の旧skill削除は未実施。
 
+## [2026-07-27] execution-plan-gate | SDD Implementation Skill Phase 2
+
+- session userが`sdd-implementation`を既定実装入口とした後の旧実装系skill削除を依頼し、既存designのPhase 2 scopeを実行承認した。
+- `knowledge/wiki/syntheses/sdd-implementation-phase2-removal-plan.md`を作成し、Task 1をSDD単独route化と削除前の実run / forward evidence、Task 2を`skills/grill-to-pr-loop/`、`skills/issue-implementation-loop/`、専用runtime/context surfaceの削除に限定した。
+- historical wiki、`knowledge/raw/**`、`skill-repository-optimization-v4-context-baseline.json`は削除せず、current executable surfaceからだけ切り離す。`planning_authority`とSDDのforbidden standalone component policyは保持する。
+- worktreeは`codex/sdd-implementation-phase2-removal`、開始HEADは`8ff2bdcb5e8e74e2de17ca742ff0e2ff6488c8bd`、default checkoutは同HEAD・差分なし。push、PR、merge、release、live installは非対象である。
+
+## [2026-07-27] implementation-closeout | SDD Implementation Skill Phase 2
+
+- Task 1は`ce87b65`とfix `4e4f532`でSDD-only route、architecture policy、CIを成立させ、fix round 1後のtask reviewはcleanとなった。reported GREEN evidenceはfocused architecture/CI 11 tests、`skills/sdd-implementation/tests` 9 tests、architecture validatorのpassである。
+- Task 2は`1def312405a1c1046366be749d85d3a493e5f887`で`skills/grill-to-pr-loop/`、`skills/issue-implementation-loop/`、3件の旧loop ledger test、専用runtime/context report surfaceをcurrent treeから削除し、task reviewはfindings 0でcleanとなった。reported GREEN evidenceはfocused architecture/context 12 tests、scripts 42 tests、`skills/llm-wiki/tests` 5 tests、context validator/report、architecture validator、dual-host CI workflowのpass、およびproduction surface grepのmatchなしである。
+- `knowledge/raw/**`、historical wiki、`skill-repository-optimization-v4-context-baseline.json`は削除せず、historical / non-executable evidenceとして保持した。indexの旧packet、handoff、baselineのcurrent / executable / restart表現を更新し、削除済みproduction filesへのMarkdown linkをhistorical inline codeへ置換した。
+- Phase 2のfresh final verificationとknowledge closeout後のwhole-branch final reviewは未実施であり、`LOCAL_COMPLETE`を先取りしない。push、PR作成、merge、release、live installも未実施で、remote stateは変更していない。
+
+## [2026-07-27] local-complete | SDD Implementation Skill Phase 2
+
+- fresh coordinator verificationはSDD 9 tests、llm-wiki 5 tests、scripts 42 tests、architecture validator、1 context contract、warnings空かつexit 0のgeneric context report、scoped dual-host validator、skill-creator `quick_validate`でpassした。両旧directoryはabsent、non-knowledge legacy literal grepとdeleted-production Markdown link grepはmatchなし、branch diff checkはcleanである。
+- `8ff2bdc..804c2c7`のfinal whole-branch reviewはCritical 0、Important 0、Minor 0、Ready to merge Yesである。Task 1/Task 2 review、knowledge closeout、fresh verification、final reviewが揃ったため、Phase 2を`LOCAL_COMPLETE`とする。
+- push、PR作成、merge、release、live installは未実施であり、remote stateは変更していない。
+
 ## [2026-07-27] written-spec-candidate | SDD Implementation Superpowers-first Revision
 
 - Superpowers v6.2.0の一次情報を調査し、SDDにはdispatchごとのmodel選択が既にある一方、modelと独立したreasoning effort contractとHermes Agent公式adapterはないことを`knowledge/wiki/syntheses/sdd-superpowers-model-and-reasoning-research.md`へ保存した。
@@ -1644,3 +1664,9 @@ append-only で使います。すべての entry は予測しやすい header �
 - `ec12012`に対するfinal whole-branch reviewはCritical 0、Important 5、Minor 1を検出した。`8b35113` `fix: address Superpowers-first SDD review findings`が6件すべてをbounded waveで解消し、scoped re-reviewはall findings addressed・new Critical/Important breakageなしでapprovedとなった。
 - fresh post-fix verificationはSDD 17/17、LLM Wiki 6/6、scoped dual-host compatibility、skill-creator quick validator、`git diff --check HEAD^ HEAD`のすべてが成功した。Task 2 full bundleとしてscripts 68/68、skill architecture validator、3 skill context contracts、scoped dual-host compatibility、skill-creator quick validator、`git diff --check`もcandidate closeoutで成功済みである。
 - knowledgeのdesign、current / implemented successor plan、index、append-only logをcloseoutへ同期した。residual material riskはない。push、PR作成、merge、release、live install、issue / comment / project変更を含むremote writeは実施していない。
+
+## [2026-07-28] main-integration | SDD Implementation Skill Phase 2
+
+- GitHub上の最新`main`である`dec5647`（PR #39、Superpowers-first revision）を`codex/sdd-implementation-phase2-removal`へ統合した。`AGENTS.md`、architecture policy / tests、SDD design、knowledge index / logの競合は、Superpowers-first lifecycleとSDD-only route / legacy removalの両方を保持して解消した。
+- fresh verificationはSDD 17 tests、LLM Wiki 5 tests、repository scripts 43 tests、skill architecture validator、1 skill context contract、warningsなしのcontext report、scoped dual-host validator、skill-creator quick validator、legacy directory absence、`git diff --check`のすべてが成功した。
+- branchはDraft PR #41として公開済みである。PR merge、release、live installは未実施である。

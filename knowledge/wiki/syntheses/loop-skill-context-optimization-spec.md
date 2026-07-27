@@ -107,9 +107,9 @@ git diff --check
 
 ## 出典
 
-- [skills/grill-to-pr-loop/SKILL.md](../../../skills/grill-to-pr-loop/SKILL.md)
-- [skills/grill-to-pr-loop/references/workflow-contract.md](../../../skills/grill-to-pr-loop/references/workflow-contract.md)
-- [skills/grill-to-pr-loop/scripts/check_prereqs.py](../../../skills/grill-to-pr-loop/scripts/check_prereqs.py)
-- [skills/issue-implementation-loop/SKILL.md](../../../skills/issue-implementation-loop/SKILL.md)
-- [skills/issue-implementation-loop/scripts/_common.py](../../../skills/issue-implementation-loop/scripts/_common.py)
-- [skills/issue-implementation-loop/tests/test_issue_implementation_loop.py](../../../skills/issue-implementation-loop/tests/test_issue_implementation_loop.py)
+- historical production path（Phase 2で削除済み）: `skills/grill-to-pr-loop/SKILL.md`
+- historical production path（Phase 2で削除済み）: `skills/grill-to-pr-loop/references/workflow-contract.md`
+- historical production path（Phase 2で削除済み）: `skills/grill-to-pr-loop/scripts/check_prereqs.py`
+- historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/SKILL.md`
+- historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/scripts/_common.py`
+- historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/tests/test_issue_implementation_loop.py`

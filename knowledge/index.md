@@ -2,6 +2,8 @@
 
 wiki の最初の navigation surface として使います。durable page はすべて 1 回だけ載せ、1 行 summary を付けます。現役一覧には canonical page だけを残します。
 
+旧`grill-to-pr-loop` / `issue-implementation-loop` familyのspec、ledger、packet、handoff、baselineは履歴参照用に保持するが、current executable surfaceやrestart entrypointではない。現行のapproved implementation planは`sdd-implementation`を使用し、新しいapprovalとrunを作る。
+
 ## ソース
 
 - [2026-06-08 LLM Wiki Draft Review And Canonicalize Design](wiki/sources/2026-06-08-llm-wiki-draft-review-and-canonicalize-design.md) — `llm-wiki` skill に `draft-review` と `canonicalize` を first-class mode として追加する添付設計の source summary。
@@ -34,7 +36,7 @@ _現在なし。_
 - [Portfolio OS Task Backend Plugin Skill POTASK-011 Execution Envelope](wiki/syntheses/portfolio-os-task-backend-plugin-skill-potask-011-execution-envelope.json) — historical / non-executable な Execution Envelope v3。旧runの証跡としてbytesを保持し、resumeせずnew approval / new runを作る。
   検索語: historical POTASK-011, Execution Envelope v3, non-executable, resume不可, 履歴証跡
 - [LLM Wiki Draft Review And Canonicalize Goal Spec](wiki/syntheses/llm-wiki-draft-review-and-canonicalize-goal-spec.md) — Goal command で `skills/llm-wiki` を更新するための詳細実装契約。
-- [Grill To PR Loop Issue Implementation Review Gate Plan](wiki/syntheses/grill-to-pr-loop-issue-implementation-review-gate-plan.md) — `skills/grill-to-pr-loop` に issue 単位の実装レビューゲートを追加するための実装計画。
+- [Grill To PR Loop Issue Implementation Review Gate Plan](wiki/syntheses/grill-to-pr-loop-issue-implementation-review-gate-plan.md) — 削除済み`skills/grill-to-pr-loop`への過去の実装計画。historical / non-executableとして保持する。
   検索語: grill-to-pr-loop, requesting-code-review, 実装レビュー, issue review, PR review, review gate, implementation plan
 - [Loop Review Governance Spec](wiki/syntheses/loop-review-governance-spec.md) — Issue 意図適合レビューを必須にし、future-only hardening は通常レビュー観点から外し、明示依頼または current PR delivery risk の candidate だけを制御する Spec Gate 承認済み仕様。
   検索語: loop review governance, issue intent, hardening candidate, future-only hardening, safety escalation, final PR, human decision, requesting-code-review, context budget, 実装レビュー, 堅牢化, 人間判断
@@ -44,7 +46,7 @@ _現在なし。_
   検索語: LRSP-001, local issue, Issue Gate, context contract schema v3, phase mapping, material review, TDD, blocker graph, ローカルIssue, フェーズ別読込, 実装レビュー
 - [Loop Review Simplicity And Phase Skills Implementation Plan](wiki/syntheses/loop-review-simplicity-and-phase-skills/implementation-plan.md) — baseline pressure、schema v3、material review、full verification、2-cycle reviewまで完了したExecution Plan Gate承認済み計画。
   検索語: LRSP-001, Execution Plan Gate, implementation plan, TDD, pressure scenario, schema v3, skills, dispatch_skills, material review, RED GREEN, 実装計画, テスト駆動, フェーズ別読込
-- [Loop Review Simplicity And Phase Skills Input Packet](wiki/syntheses/loop-review-simplicity-and-phase-skills/input-packet.json) — approved spec bindingと`per_action` remote policyを固定したcurrent executable Input Packet v2。
+- [Loop Review Simplicity And Phase Skills Input Packet](wiki/syntheses/loop-review-simplicity-and-phase-skills/input-packet.json) — 旧loop familyの過去runを固定したhistorical / non-executable Input Packet v2。current validatorで再利用せず、新しいapproval/new runを作る。
   検索語: LRSP-001, Input Packet v2, approved spec binding, per_action, phase-scoped skill, material review
 - [Loop Review Governance Issue 台帳](wiki/syntheses/loop-review-governance-issues.md) — `loop-review-governance` の Issue Gate 承認済み local issue ledger。LRG-001 から LRG-005 の blocker graph、acceptance criteria、remote policy を定義する。
   検索語: loop review governance, local issue, Issue Gate, LRG, blocker graph, hardening candidate, requesting-code-review, context budget, ローカルIssue, 堅牢化
@@ -54,7 +56,7 @@ _現在なし。_
   検索語: loop review governance, execution envelope, worker_context_required, batch_issue_prs, requesting-code-review, hardening candidate, pending_decision, draft PR, worktree reservation
 - [Loop Review Governance Final Delivery Plan](wiki/syntheses/loop-review-governance-final-delivery-plan.json) — `loop-review-governance` の draft final PR 作成用 delivery plan。head は `codex/loop-review-governance/epic-base`、base は `main`、draft only。
   検索語: loop review governance, delivery plan, draft PR, final PR, epic-base, hardening decision
-- [Loop Review Governance Handoff Brief](wiki/syntheses/loop-review-governance-handoff-brief.md) — Execution Plan Gate 後に raw transcript へ依存せず `issue-implementation-loop` を再開するための bounded handoff brief。
+- [Loop Review Governance Handoff Brief](wiki/syntheses/loop-review-governance-handoff-brief.md) — 削除済み`issue-implementation-loop`の過去runに関するbounded handoff brief。historical / non-executableであり、再開には使わない。
   検索語: loop review governance, handoff brief, Execution Plan Gate, runtime root, worker packet, hardening_candidate, local_only
 - [Loop Review Governance Hardening Candidate Decisions](wiki/syntheses/loop-review-governance-hardening-decisions.md) — 既存 `hardening_candidate` 4 件を `deferred_follow_up` とし、future-only hardening を通常レビュー観点から外す判断を記録する decision artifact。
   検索語: loop review governance, hardening candidate, future-only hardening, deferred follow-up, review scope, source review, registry path, 保存場所, 出典, 堅牢化, 人間判断
@@ -96,7 +98,7 @@ _現在なし。_
   検索語: planning authority, PAP, Issue Gate, local issue, blocker graph, family policy, advisory only, model persistence, ローカルIssue, ブロッカー
 - [Planning Authority Policy 実装計画](wiki/syntheses/planning-authority-policy/implementation-plan.md) / [sealed Input Packet v2](wiki/syntheses/planning-authority-policy/input-packet.json) — Execution Plan Gate、5-field coverage fix、final branch integration、worker-only境界と未実施のPAP-004 cycle 2 reviewsを区別するlocal-only handoff。
   検索語: planning authority, implementation plan, Input Packet v2, Execution Plan Gate, sealed packet, TDD, worker-only, local-only, 実装計画
-- [SDD Implementation Skill 設計](wiki/syntheses/sdd-implementation-skill-design.md) — Superpowersを開発方法論の正本とするHuman-approved Written Spec。Superpowers-first revisionは実装、task review、knowledge closeout、最終whole-branch review、bounded fixとscoped re-reviewまで完了し、locally completeである。
+- [SDD Implementation Skill 設計](wiki/syntheses/sdd-implementation-skill-design.md) — Superpowersを開発方法論の正本とするHuman-approved Written Spec。Superpowers-first revisionはlocally completeであり、Phase 2ではSDDを唯一のuser-facing実装入口として旧loop familyをcurrent treeから削除した。
   検索語: sdd-implementation, Superpowers, brainstorming, writing-plans, Subagent-Driven Development, SDD, Grill with Docs, spec refinement, model selection, reasoning effort, host adapter, Codex, Hermes Agent, llm-wiki, knowledge lifecycle, Written Spec, 仕様作成, 仕様精緻化
 - [Superpowers SDD のモデル選択・Reasoning・Host 境界調査](wiki/syntheses/sdd-superpowers-model-and-reasoning-research.md) — Superpowers v6.2.0のdispatch model選択、reasoning effort不在、Codex/Hermes adapter境界、brainstorming・planning・SDDの責任分割を一次情報で確認した調査。
   検索語: Superpowers, v6.2.0, SDD, model selection, MODEL REQUIRED, reasoning_effort, Thinking Effort, Codex, Hermes Agent, host adapter, brainstorming, writing-plans, upstream research, モデル選択, 思考強度
@@ -104,6 +106,8 @@ _現在なし。_
   検索語: sdd-implementation, Superpowers-first, implementation plan, Execution Plan Gate, Grill with Docs, llm-wiki, reasoning effort, host adapter, TDD, 後継実装計画
 - [SDD Implementation Skill 実装計画](wiki/syntheses/sdd-implementation-skill-implementation-plan.md) — 現行Skill本体、runtime-only routing、material review、既定repository route、日本語knowledge closeoutを実装・検証したPhase 1のhistorical plan。後継revisionには再利用しない。
   検索語: sdd-implementation, historical implementation plan, Phase 1, Subagent-Driven Development, model routing, reasoning effort, material review, knowledge closeout, dual-host, 実装計画, 既定実装入口
+- [SDD Implementation Phase 2 旧実装スキル削除計画](wiki/syntheses/sdd-implementation-phase2-removal-plan.md) — SDD実run、fresh coordinator verification、final whole-branch reviewを完了し、旧loop skill本体と専用runtime/context surfaceをlocal treeから除去した`LOCAL_COMPLETE` Phase 2計画。
+  検索語: sdd-implementation, Phase 2, grill-to-pr-loop, issue-implementation-loop, removal, legacy implementation skill, historical evidence, context report, SDD実run, 旧実装スキル削除
 - [Issue Implementation Loop Common Lib Split Spec](wiki/syntheses/issue-implementation-loop-common-lib-split-spec.md) — `issue-implementation-loop` の `_common.py` と単一巨大 test file を internal common lib / behavior-domain tests へ分割する後続実装契約。
   検索語: issue-implementation-loop, common lib, _common.py, scripts/lib, test split, context optimization, skill split, コンテキスト最適化
 - [Issue Implementation Loop Common Lib Split Issues](wiki/syntheses/issue-implementation-loop-common-lib-split-issues.md) — common lib split 実装のローカルIssue ledger。
@@ -122,7 +126,7 @@ _現在なし。_
 - [Skill Repository Optimization V4 Input Packet](wiki/syntheses/skill-repository-optimization-v4-input-packet.json) — historical / non-executable な Input Packet v1。過去の実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
 - [Skill Repository Optimization V4 Execution Envelope](wiki/syntheses/skill-repository-optimization-v4-execution-envelope.json) — historical / non-executable な Execution Envelope v1。過去の実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
   検索語: skill repository optimization, execution envelope, worker_context_required, local_only, SRO4, worktree reservation, 実行計画
-- [Skill Repository Optimization V4 Context Baseline](wiki/syntheses/skill-repository-optimization-v4-context-baseline.json) — SRO4-001 で固定した loop skill operation context metrics baseline。
+- [Skill Repository Optimization V4 Context Baseline](wiki/syntheses/skill-repository-optimization-v4-context-baseline.json) — 削除済みloop familyのSRO4-001 context metricsを残すhistorical / non-executable baseline。current reporter / validatorのbaseline比較には使わない。
   検索語: skill repository optimization, SRO4-001, context baseline, operation metrics, word count, grill-to-pr-loop, issue-implementation-loop
 - [Loop Skill 運用単純化仕様](wiki/syntheses/loop-skill-operational-simplicity-spec.md) — loop 系 skill の適用基準、役割境界モデル、workflow complexity レポートを追加する Spec Gate 承認済み契約。
   検索語: 適用基準, 役割境界モデル, 複雑性, grill-to-pr-loop, issue-implementation-loop, operational simplicity, workflow complexity, mental model, コンテキスト最適化
@@ -140,7 +144,7 @@ _現在なし。_
   検索語: LSCC, input packet, Execution Plan Gate, issue-implementation-loop, worker-only, local_only, write scope, dependency graph
 - [Loop Skill Context Compaction Execution Envelope](wiki/syntheses/loop-skill-context-compaction-execution-envelope.json) — historical / non-executable な Execution Envelope v2。過去の LSCC 実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
   検索語: LSCC, execution envelope, worker_context_required, coordinator_may_implement, local_only, session_compaction, hard_stop_percent, worktree reservation
-- [Loop Skill Context Compaction Handoff Brief](wiki/syntheses/loop-skill-context-compaction-handoff-brief.md) — Execution Plan Gate 後に raw transcript へ依存せず再開するための bounded handoff brief。
+- [Loop Skill Context Compaction Handoff Brief](wiki/syntheses/loop-skill-context-compaction-handoff-brief.md) — 旧loop familyの過去runに関するbounded handoff brief。historical / non-executableであり、再開には使わない。
   検索語: LSCC, handoff brief, carry-forward capsule, resume, runtime root, worker packet, context compaction
 - [Loop Skill 自動継続 Gate 仕様](wiki/syntheses/loop-skill-autonomous-gates-spec.md) — `Execution Plan Gate` と `Live Root Gate` を agent preflight + commit boundary として自動継続し、承認済み delivery policy 内の draft final PR 作成を追加承認なしに行う Spec Gate 承認済み仕様。
   検索語: Execution Plan Gate, Live Root Gate, Adapter Availability Gate, final PR, draft PR, approved_actions, auto-continue, grill-to-pr-loop, issue-implementation-loop, remote policy, human-only merge
@@ -162,7 +166,7 @@ _現在なし。_
   検索語: ASBC-007, ASBC-008, ASBC-009, COMPLETE, PR_READY, artifact layout, runtime boundary, issue ledger, full verification, pending remote delivery, Draft PR 32
 - [Loop Skill Approved Spec Binding Artifact Lifecycle Implementation Plan](wiki/syntheses/approved-spec-binding-contract/implementation-plan.md) — layout validation、current artifact migration/reseal、fresh-agent 3/3、full verification、local risk reviewとcontroller delivery境界を記録した実行plan。
   検索語: artifact lifecycle implementation plan, TDD, reseal, input packet, execution envelope, fresh evaluator, full verification, PR_READY, controller review, Draft PR 32
-- [Loop Skill Approved Spec Binding Artifact Lifecycle Input Packet](wiki/syntheses/approved-spec-binding-contract/input-packet.json) — current executable Input Packet v2。承認済みconsolidated spec、six-part approval evidence、ASBC-007〜ASBC-009のexecution intentを同一Epic rootでsealする唯一のtracked machine-readable lock。
+- [Loop Skill Approved Spec Binding Artifact Lifecycle Input Packet](wiki/syntheses/approved-spec-binding-contract/input-packet.json) — 旧loop familyのASBC-007〜ASBC-009 execution intentを残すhistorical / non-executable Input Packet v2。current validatorで再利用せず、新しいapproval/new runを作る。
   検索語: ASBC-007, ASBC-008, ASBC-009, current Input Packet v2, approved spec binding, spec digest, approval evidence, per_action, executable artifact, seal
 - [Portfolio OS Install Review And Procedure](wiki/syntheses/portfolio-os-install-review-and-procedure.md) — `skills` repo に Portfolio OS 固有 runtime を混ぜないためのレビュー結果と導入手順。
 - [Decide In Order Skill 原案](wiki/sources/2026-07-17-decide-in-order-source-brief.md) — 目的、守るもの、許容損失、核心の問いから始める実行支援型 skill の一次資料と設計時の解釈。

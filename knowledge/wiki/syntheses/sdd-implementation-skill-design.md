@@ -6,6 +6,8 @@ Phase 1 の local implementation と verification は完了済みである。本
 
 この revision の実装、Task 1〜2 の task review、Task 3 の knowledge closeout、fresh verification、最終 whole-branch review は完了しており、local completion の要件を満たした。候補コミット`ec12012`に対する最終 review は Critical 0、Important 5、Minor 1 を検出したが、限定したfix commit `8b35113`で6件すべてを解消し、scoped re-review は全finding解消・新規Critical/Importantなしで承認された。post-fix evidence はSDD 17/17、LLM Wiki 6/6、scoped dual-host compatibility、skill-creator quick validator、`git diff --check`の成功を含む。Task 2 のfull bundle（scripts 68/68、architecture / context validators）もcloseout candidateに記録したとおり成功している。残るmaterial riskはない。後継かつ current のimplementation planは[SDD Implementation Superpowers-first Revision Implementation Plan](sdd-implementation-superpowers-first-implementation-plan.md)である。push、PR、merge、release、live installその他のremote writeは実施していない。
 
+Phase 2 は fresh coordinator verification と final whole-branch review を含めて `LOCAL_COMPLETE` である。`sdd-implementation` が既定かつ唯一の user-facing 実装入口であり、`skills/grill-to-pr-loop/` と `skills/issue-implementation-loop/`、および専用 runtime / context surface は current tree から削除済みである。historical wiki と旧 baseline は非実行の証跡として保持する。本 branch は Superpowers-first revision を含む `main` のコミット `dec5647` を統合し、Draft PR #41 として公開済みである。PR merge、release、live install は未実施である。
+
 ## 調査で確認した前提
 
 Superpowers v6.2.0 では、開発フローの責任が次のように分かれている。
@@ -213,6 +215,8 @@ knowledge root が存在するのに authority、canonical target、write bounda
 - concrete model / effort / provider / agent ID / run-specific resolution を durable artifact に保存しない。
 - knowledge root がある場合、spec、plan、closeout、index、log、validation が completion contract に含まれる。
 - old loop skill、独自 scheduler、packet schema、event store、runtime snapshot を fallback または新規依存として導入しない。
+- Codex と Hermes Agent の両方から同じ `SKILL.md` を読み、skill discovery route と dual-host validator を通過する。
+- `sdd-implementation` 以外の user-facing 実装 skill directory と専用 runtime / context surface が current tree に存在しない。
 
 ## Testing Strategy
 
@@ -260,9 +264,10 @@ knowledge root が存在するのに authority、canonical target、write bounda
 
 - 既存 Phase 1 implementation は current behavior の evidence として保持する。
 - 既存の [SDD Implementation Skill 実装計画](sdd-implementation-skill-implementation-plan.md) は Phase 1 の historical plan とし、この revision の実行には再利用しない。
-- 本 Written Spec の Human approval 後、Superpowers `writing-plans` で successor implementation plan を作る。
-- successor implementation は最小の skill / tests / routing policy 更新に限定し、旧 loop family の削除は別 task とする。
-- 実 run evidence と forward verification が揃うまで、旧 skill を削除しない。
+- Superpowers-first successor implementation は `main` へ統合済みである。
+- Phase 2 は別 task / PR として実行し、`skills/grill-to-pr-loop/` と `skills/issue-implementation-loop/`、専用 runtime / context surface を current tree から削除した。
+- historical wiki source / spec / ledger と `skill-repository-optimization-v4-context-baseline.json` は、実行可能 artifact として再利用せず非実行の evidence として保持する。
+- Phase 2 の fresh coordinator verification（SDD 9、llm-wiki 5、scripts 42 tests、architecture / context / dual-host / skill validators、legacy absence / link checks）と、`8ff2bdc..804c2c7` の final review（Critical 0、Important 0、Minor 0、Ready to merge Yes）は完了済みである。
 
 ## 非目標
 
@@ -285,6 +290,11 @@ knowledge root が存在するのに authority、canonical target、write bounda
 
 ## 出典
 
+- [Planning Authority Policy 仕様](planning-authority-policy/spec.md)
+- [Loop Skill 運用単純化仕様](loop-skill-operational-simplicity-spec.md)
+- historical production path（Phase 2で削除済み）: `skills/grill-to-pr-loop/SKILL.md`
+- historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/SKILL.md`
+- `codex-plugin-cache:openai-curated-remote/superpowers/6.2.0/skills/subagent-driven-development/SKILL.md`
 - [Superpowers v6.2.0](https://github.com/obra/superpowers/tree/v6.2.0)
 - [Superpowers Basic Workflow](https://github.com/obra/superpowers/blob/v6.2.0/README.md#L184-L197)
 - [Superpowers Brainstorming](https://github.com/obra/superpowers/blob/v6.2.0/skills/brainstorming/SKILL.md)

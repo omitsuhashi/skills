@@ -6,86 +6,18 @@ import re
 from pathlib import Path
 from typing import Dict, List, Mapping, MutableMapping, Sequence, Tuple
 
-from validate_skill_architecture import (
-    DEFAULT_POLICY_PATH,
-    PolicyError,
-    REQUIRED_FAMILY_ID,
-    load_policy,
-)
-
 from skill_context.metrics import collect_file_metrics
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SKILLS_ROOT = REPO_ROOT / "skills"
 
-EXPECTED_PHASE_SKILL_MAPPINGS = {
-    "grill-to-pr-loop": {
-        "grill": (["grill-with-docs"], []),
-        "final-review": (["requesting-code-review"], []),
-    },
-    "issue-implementation-loop": {
-        "execute.dispatch": ([], ["tdd"]),
-        "execute.review": (["requesting-code-review"], []),
-    },
-}
-
-
 class ContractError(Exception):
     """Raised when a context contract cannot be parsed."""
 
 
-def _policy_family(errors: List[str]) -> Dict[str, object]:
-    try:
-        policy = load_policy(DEFAULT_POLICY_PATH)
-    except PolicyError as exc:
-        errors.append(str(exc))
-        return {}
-    families = policy.get("families")
-    if not isinstance(families, dict):
-        errors.append("skill architecture policy must contain families")
-        return {}
-    family = families.get(REQUIRED_FAMILY_ID)
-    if not isinstance(family, dict):
-        errors.append(f"skill architecture policy missing family: {REQUIRED_FAMILY_ID}")
-        return {}
-    return family
-
-
-def _policy_string_list(family: Dict[str, object], field: str, errors: List[str]) -> List[str]:
-    value = family.get(field)
-    if not isinstance(value, list) or not all(isinstance(item, str) and item for item in value):
-        errors.append(f"{REQUIRED_FAMILY_ID}.{field} must be an array of non-empty strings")
-        return []
-    return list(value)
-
-
-def _forbidden_standalone_skill_names(errors: List[str]) -> set[str]:
-    family = _policy_family(errors)
-    if not family:
-        return set()
-    return set(_policy_string_list(family, "forbidden_standalone_skill_names", errors))
-
-
 def all_skill_dirs() -> List[Path]:
-    errors: List[str] = []
-    family = _policy_family(errors)
-    skill_names = _policy_string_list(family, "user_facing_skills", errors) if family else []
-    if errors:
-        raise ContractError("; ".join(errors))
-
-    skill_dirs: List[Path] = []
-    seen: set[Path] = set()
-    for skill_name in skill_names:
-        skill_dir = SKILLS_ROOT / skill_name
-        skill_dirs.append(skill_dir)
-        seen.add(skill_dir)
-    for contract_path in sorted(SKILLS_ROOT.glob("*/context-contract.toml")):
-        skill_dir = contract_path.parent
-        if skill_dir not in seen:
-            skill_dirs.append(skill_dir)
-            seen.add(skill_dir)
-    return skill_dirs
+    return sorted(path.parent for path in SKILLS_ROOT.glob("*/context-contract.toml"))
 
 
 def _strip_comment(line: str) -> str:
@@ -551,7 +483,6 @@ def _validate_operation_metrics(
 
 def validate_contract(skill_dir: Path, contract: Dict[str, object]) -> List[str]:
     errors: List[str] = []
-    forbidden_standalone_skill_names = _forbidden_standalone_skill_names(errors)
     schema = _schema_version(contract, errors)
     skill = _as_string(contract, "skill", errors)
     entrypoint = _as_string(contract, "entrypoint", errors)
@@ -565,8 +496,6 @@ def validate_contract(skill_dir: Path, contract: Dict[str, object]) -> List[str]
     if skill:
         if skill != skill_dir.name:
             errors.append(f"skill must match directory name: {skill_dir.name}")
-        if skill in forbidden_standalone_skill_names:
-            errors.append(f"forbidden standalone skill name: {skill}")
 
     if entrypoint and not _safe_relative_path(entrypoint):
         errors.append(f"invalid entrypoint path: {entrypoint}")
@@ -578,8 +507,6 @@ def validate_contract(skill_dir: Path, contract: Dict[str, object]) -> List[str]
         validate_reference_path(skill_dir, reference, errors)
 
     for operation, raw_config in operations.items():
-        if operation in forbidden_standalone_skill_names:
-            errors.append(f"forbidden standalone skill name: {operation}")
         if not isinstance(raw_config, dict):
             errors.append(f"operation {operation} must be a table")
             continue
@@ -595,20 +522,6 @@ def validate_contract(skill_dir: Path, contract: Dict[str, object]) -> List[str]
             schema,
             errors,
         )
-        expected_mapping = EXPECTED_PHASE_SKILL_MAPPINGS.get(skill or "")
-        if schema == 3 and expected_mapping is not None:
-            expected = expected_mapping.get(operation, ([], []))
-            for field, actual, expected_values in zip(
-                ("skills", "dispatch_skills"),
-                operation_skills,
-                expected,
-            ):
-                if actual != expected_values:
-                    errors.append(
-                        "unexpected phase skill mapping: "
-                        f"{skill} {operation}.{field}; "
-                        f"expected {expected_values}, got {actual}"
-                    )
         _validate_operation_budget_fields(operation, raw_config, errors)
         combined = ([entrypoint] if entrypoint else []) + references + (operation_references or [])
         duplicates = sorted({item for item in combined if combined.count(item) > 1})

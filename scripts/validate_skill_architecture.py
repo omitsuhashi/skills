@@ -20,11 +20,6 @@ DEFAULT_POLICY_PATH = REPO_ROOT / "skill-architecture.toml"
 SKILLS_ROOT = REPO_ROOT / "skills"
 REQUIRED_FAMILY_ID = "repository-change-loop"
 SKILL_NAME_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]*")
-EXPECTED_CONTEXT_COMPACTION_POLICY = {
-    "soft_trigger_percent": 65,
-    "hard_stop_percent": 75,
-    "mandatory_handoff_compaction": 1,
-}
 EXPECTED_PLANNING_AUTHORITY_POLICY = {
     "integration_owner": "main_planning_context",
     "supporting_agent_authority": "advisory_only",
@@ -205,28 +200,6 @@ def _duplicates(values: Sequence[str]) -> List[str]:
     return sorted({value for value in values if values.count(value) > 1})
 
 
-def _validate_context_compaction_policy(family: Dict[str, object], errors: List[str]) -> None:
-    policy = family.get("context_compaction")
-    if not isinstance(policy, dict):
-        errors.append("repository-change-loop.context_compaction must be a table")
-        return
-
-    soft_trigger = policy.get("soft_trigger_percent")
-    if type(soft_trigger) is not int or soft_trigger != EXPECTED_CONTEXT_COMPACTION_POLICY["soft_trigger_percent"]:
-        errors.append("context_compaction.soft_trigger_percent must be 65")
-
-    hard_stop = policy.get("hard_stop_percent")
-    if type(hard_stop) is not int or hard_stop != EXPECTED_CONTEXT_COMPACTION_POLICY["hard_stop_percent"]:
-        errors.append("context_compaction.hard_stop_percent must be exactly 75")
-
-    mandatory_handoff = policy.get("mandatory_handoff_compaction")
-    if (
-        type(mandatory_handoff) is not int
-        or mandatory_handoff != EXPECTED_CONTEXT_COMPACTION_POLICY["mandatory_handoff_compaction"]
-    ):
-        errors.append("context_compaction.mandatory_handoff_compaction must be integer flag 1")
-
-
 def _validate_planning_authority_policy(family: Dict[str, object], errors: List[str]) -> None:
     policy = family.get("planning_authority")
     if not isinstance(policy, dict):
@@ -268,8 +241,11 @@ def validate_policy(policy: Dict[str, object]) -> List[str]:
     forbidden = _as_string_list(family, "forbidden_standalone_skill_names", errors) or []
     internal_components = _as_string_list(family, "internal_components", errors) or []
 
-    if len(user_facing) != 2:
-        errors.append("repository-change-loop.user_facing_skills must contain exactly 2 skills")
+    if user_facing != [EXPECTED_DEFAULT_IMPLEMENTATION_SKILL]:
+        errors.append(
+            "repository-change-loop.user_facing_skills must be exactly "
+            f"[{EXPECTED_DEFAULT_IMPLEMENTATION_SKILL!r}]"
+        )
     for duplicate in _duplicates(user_facing):
         errors.append(f"duplicate user-facing skill: {duplicate}")
     for duplicate in _duplicates(forbidden):
@@ -303,7 +279,6 @@ def validate_policy(policy: Dict[str, object]) -> List[str]:
     if not internal_components:
         errors.append("internal_components must not be empty")
     _validate_planning_authority_policy(family, errors)
-    _validate_context_compaction_policy(family, errors)
     return errors
 
 

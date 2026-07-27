@@ -483,15 +483,15 @@ context contract は operation を増やさず、既存 `planning-contract.md`�
 
 ## 出典
 
-- [grill-to-pr-loop execution handoff](../../../../skills/grill-to-pr-loop/references/execution-handoff.md)
-- [issue-implementation-loop input packet schema](../../../../skills/issue-implementation-loop/assets/schemas/input-packet.schema.json)
-- [issue-implementation-loop input packet validator](../../../../skills/issue-implementation-loop/scripts/lib/issue_implementation_loop/validation/input_packet.py)
-- [issue-implementation-loop execution envelope schema](../../../../skills/issue-implementation-loop/assets/schemas/execution-envelope.schema.json)
-- [issue-implementation-loop worker packet schema](../../../../skills/issue-implementation-loop/assets/schemas/worker-packet.schema.json)
-- [issue-implementation-loop runtime state schema](../../../../skills/issue-implementation-loop/assets/schemas/runtime-state.schema.json)
-- [issue-implementation-loop event schema](../../../../skills/issue-implementation-loop/assets/schemas/event.schema.json)
-- [issue-implementation-loop worker report schema](../../../../skills/issue-implementation-loop/assets/schemas/worker-report.schema.json)
-- [issue-implementation-loop operation selection](../../../../skills/issue-implementation-loop/scripts/lib/issue_implementation_loop/operation_selection.py)
-- [issue-implementation-loop review gate](../../../../skills/issue-implementation-loop/references/review-gate.md)
-- [issue-implementation-loop recovery contract](../../../../skills/issue-implementation-loop/references/recovery.md)
+- historical production path（Phase 2で削除済み）: `grill-to-pr-loop/references/execution-handoff.md`
+- historical production path（Phase 2で削除済み）: `issue-implementation-loop/assets/schemas/input-packet.schema.json`
+- historical production path（Phase 2で削除済み）: `issue-implementation-loop/scripts/lib/issue_implementation_loop/validation/input_packet.py`
+- historical production path（Phase 2で削除済み）: `issue-implementation-loop/assets/schemas/execution-envelope.schema.json`
+- historical production path（Phase 2で削除済み）: `issue-implementation-loop/assets/schemas/worker-packet.schema.json`
+- historical production path（Phase 2で削除済み）: `issue-implementation-loop/assets/schemas/runtime-state.schema.json`
+- historical production path（Phase 2で削除済み）: `issue-implementation-loop/assets/schemas/event.schema.json`
+- historical production path（Phase 2で削除済み）: `issue-implementation-loop/assets/schemas/worker-report.schema.json`
+- historical production path（Phase 2で削除済み）: `issue-implementation-loop/scripts/lib/issue_implementation_loop/operation_selection.py`
+- historical production path（Phase 2で削除済み）: `issue-implementation-loop/references/review-gate.md`
+- historical production path（Phase 2で削除済み）: `issue-implementation-loop/references/recovery.md`
 - 2026-07-21 session user decision: packet-rooted A案を採用。

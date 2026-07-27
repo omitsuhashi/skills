@@ -140,10 +140,10 @@ Spec Gate / Issue Gate / Execution Plan Gate は承認後に、承認済み loca
 
 ## 出典
 
-- [skills/grill-to-pr-loop/SKILL.md](../../../skills/grill-to-pr-loop/SKILL.md)
-- [skills/issue-implementation-loop/SKILL.md](../../../skills/issue-implementation-loop/SKILL.md)
-- [skills/grill-to-pr-loop/context-contract.toml](../../../skills/grill-to-pr-loop/context-contract.toml)
-- [skills/issue-implementation-loop/context-contract.toml](../../../skills/issue-implementation-loop/context-contract.toml)
+- historical production path（Phase 2で削除済み）: `skills/grill-to-pr-loop/SKILL.md`
+- historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/SKILL.md`
+- historical production path（Phase 2で削除済み）: `skills/grill-to-pr-loop/context-contract.toml`
+- historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/context-contract.toml`
 - [skill-architecture.toml](../../../skill-architecture.toml)
 - [scripts/report_skill_context.py](../../../scripts/report_skill_context.py)
 - [scripts/validate_skill_context.py](../../../scripts/validate_skill_context.py)
