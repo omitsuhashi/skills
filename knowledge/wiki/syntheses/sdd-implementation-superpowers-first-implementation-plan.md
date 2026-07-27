@@ -622,16 +622,16 @@ Perform one scoped review of the final evidence-only commit against the approved
 
 Do not push, create a PR, merge, release, or install live.
 
-## Closeout Candidate
+## Closeout
 
-2026-07-27時点で、Task 1〜3 の実装、Task 1〜2 の task review、fresh verification を final whole-branch review に渡せる状態へ同期した。この section は final review の候補証跡であり、`LOCAL_COMPLETE` や final approval を主張しない。
+2026-07-27時点で、Task 1〜3 の実装、Task 1〜2 のtask review、fresh verification、final whole-branch review、bounded fix、scoped re-reviewを完了した。`LOCAL_COMPLETE`のlocal completion contractを満たし、residual material riskはない。
 
 ### Task commits と task review
 
 - Task 1: `65abafa` `feat: make SDD implementation Superpowers-first`。review fix は`6fa0f4f` `test: cover SDD review and remote boundaries`であり、Task 1 review fix round 1 は approved（open material finding なし）。
 - Task 2: `693e1aa` `docs: route repository changes through Superpowers`。Task 2 review は approved（material finding なし）。
 
-上記SHAとsubjectは`git log --oneline --reverse 8c18ef0..HEAD`から確認した。Task 1 の初期実装とreview fix、Task 2 のrouter / architecture / metadata同期は、いずれもこのcloseout candidateの親コミットに含まれる。
+上記SHAとsubjectは`git log --oneline --reverse 8c18ef0..HEAD`から確認した。Task 1 の初期実装とreview fix、Task 2 のrouter / architecture / metadata同期は、いずれもfinal review candidateの親コミットに含まれる。
 
 ### Fresh verification
 
@@ -651,6 +651,22 @@ Step 4:
 - `PYTHONPYCACHEPREFIX=/private/tmp/sdd-superpowers-final python3 -m unittest discover -s skills/llm-wiki/tests` — 6 tests、`OK`。
 - `git diff --check` — 出力なし、成功。
 
-### 未実施 remote action
+### Final whole-branch review とbounded fix
 
-push、PR作成、merge、release、live install は実施していない。最終 whole-branch review も未実施であり、その承認後まで completion status は変更しない。
+- candidate commit `ec12012`に対するfinal whole-branch reviewはCritical 0、Important 5、Minor 1を検出した。Importantはdual-host dependency preflight、append-only log順序、incomplete specのsettled portion保持、generic remote-write authorization、model / effort override precedenceに関するもの、MinorはPhase 1 historical planのsuccessor wordingに関するものである。
+- `8b35113` `fix: address Superpowers-first SDD review findings`は、この5 Importantと1 Minorをすべてbounded waveで解消した。
+- scoped re-reviewはall findings addressed、new Critical/Important breakageなしでapprovedとなった。詳細なfindingとfix evidenceはSuperpowers workspaceの`final-findings.md`および`final-fix-report.md`に保持する。
+
+### Post-fix fresh verification
+
+- `PYTHONPYCACHEPREFIX=/private/tmp/sdd-superpowers-final-fix-head-sdd python3 -m unittest discover -s skills/sdd-implementation/tests` — 17 tests、`OK`。
+- `PYTHONPYCACHEPREFIX=/private/tmp/sdd-superpowers-final-fix-head-wiki python3 -m unittest discover -s skills/llm-wiki/tests` — 6 tests、`OK`。
+- `python3 scripts/validate_dual_host_compatibility.py --skill skills/sdd-implementation` — `OK: dual-host repository compatibility`。
+- `python3 /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_validate.py skills/sdd-implementation` — `Skill is valid!`。
+- `git diff --check HEAD^ HEAD` — 出力なし、成功。
+
+Task 2 full verification bundleとして、repository scripts 68 tests、skill architecture validator、3 skill context contracts、scoped dual-host compatibility、skill-creator quick validator、および`git diff --check`もcandidate closeoutで成功済みである。
+
+### 未実施 remote action と residual risk
+
+push、PR作成、merge、release、live install、issue / comment / project変更を含むremote writeは実施していない。residual material riskはない。

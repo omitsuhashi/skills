@@ -4,7 +4,7 @@
 
 Phase 1 の local implementation と verification は完了済みである。本書は、その後の調査と Human の方向性承認を反映し、2026-07-27にHumanがWritten Specとして承認した **Superpowers-first revision** である。
 
-この revision の実装、Task 1〜2 の task review、Task 3 の closeout candidate と fresh verification は完了している。最終 whole-branch review は未実施であり、`LOCAL_COMPLETE` はまだ主張しない。後継かつ current のimplementation planは[SDD Implementation Superpowers-first Revision Implementation Plan](sdd-implementation-superpowers-first-implementation-plan.md)である。push、PR、merge、release、live install は実施していない。
+この revision の実装、Task 1〜2 の task review、Task 3 の knowledge closeout、fresh verification、最終 whole-branch review は完了しており、local completion の要件を満たした。候補コミット`ec12012`に対する最終 review は Critical 0、Important 5、Minor 1 を検出したが、限定したfix commit `8b35113`で6件すべてを解消し、scoped re-review は全finding解消・新規Critical/Importantなしで承認された。post-fix evidence はSDD 17/17、LLM Wiki 6/6、scoped dual-host compatibility、skill-creator quick validator、`git diff --check`の成功を含む。Task 2 のfull bundle（scripts 68/68、architecture / context validators）もcloseout candidateに記録したとおり成功している。残るmaterial riskはない。後継かつ current のimplementation planは[SDD Implementation Superpowers-first Revision Implementation Plan](sdd-implementation-superpowers-first-implementation-plan.md)である。push、PR、merge、release、live installその他のremote writeは実施していない。
 
 ## 調査で確認した前提
 

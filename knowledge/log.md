@@ -1637,3 +1637,10 @@ append-only で使います。すべての entry は予測しやすい header �
 - Task 1は`65abafa` `feat: make SDD implementation Superpowers-first`とreview fix `6fa0f4f` `test: cover SDD review and remote boundaries`で完了し、Task 1 review fix round 1はapproved（open material findingなし）である。Task 2は`693e1aa` `docs: route repository changes through Superpowers`で完了し、task reviewはmaterial findingなしでapprovedである。SHAとsubjectは`git log --oneline --reverse 8c18ef0..HEAD`で確認した。
 - fresh verificationはLLM Wiki 6 tests、`sdd-implementation` 12 tests、repository scripts 68 testsがすべて`OK`である。skill architecture、3 skill context contracts、`sdd-implementation` scoped dual-host compatibility、skill-creator quick validator、Step 3 / Step 4の`git diff --check`も成功した。
 - design、current successor plan、indexをfinal whole-branch review待ちへ同期した。`LOCAL_COMPLETE`、final review approval、`local-complete` entryは記録していない。push、PR作成、merge、release、live installも未実施である。
+
+## [2026-07-27] local-complete | SDD Implementation Superpowers-first Revision
+
+- Task 1は`65abafa` `feat: make SDD implementation Superpowers-first`とreview fix `6fa0f4f` `test: cover SDD review and remote boundaries`、Task 2は`693e1aa` `docs: route repository changes through Superpowers`で完了し、各task reviewはapprovedである。Task 3 closeout candidateは`ec12012` `docs: prepare Superpowers-first SDD final review`で記録した。
+- `ec12012`に対するfinal whole-branch reviewはCritical 0、Important 5、Minor 1を検出した。`8b35113` `fix: address Superpowers-first SDD review findings`が6件すべてをbounded waveで解消し、scoped re-reviewはall findings addressed・new Critical/Important breakageなしでapprovedとなった。
+- fresh post-fix verificationはSDD 17/17、LLM Wiki 6/6、scoped dual-host compatibility、skill-creator quick validator、`git diff --check HEAD^ HEAD`のすべてが成功した。Task 2 full bundleとしてscripts 68/68、skill architecture validator、3 skill context contracts、scoped dual-host compatibility、skill-creator quick validator、`git diff --check`もcandidate closeoutで成功済みである。
+- knowledgeのdesign、current / implemented successor plan、index、append-only logをcloseoutへ同期した。residual material riskはない。push、PR作成、merge、release、live install、issue / comment / project変更を含むremote writeは実施していない。
