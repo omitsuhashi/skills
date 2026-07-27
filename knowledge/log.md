@@ -2,6 +2,15 @@
 
 append-only で使います。すべての entry は予測しやすい header で始めます。
 
+## [2026-07-27] written-spec-candidate | SDD Implementation Superpowers-first Revision
+
+- Superpowers v6.2.0の一次情報を調査し、SDDにはdispatchごとのmodel選択が既にある一方、modelと独立したreasoning effort contractとHermes Agent公式adapterはないことを`knowledge/wiki/syntheses/sdd-superpowers-model-and-reasoning-research.md`へ保存した。
+- `sdd-implementation`の後継設計を、Superpowers `brainstorming -> writing-plans -> subagent-driven-development`を主系とする構成へ更新した。repo-local skillはupstream lifecycle、TDD、review、model tierを再実装しない。
+- specが存在しない、未承認、またはmaterialに未確定な場合は`Grill with Docs`を必須とし、一問一答で仕様を詰める。Human-approved current specがある場合は再grillingせず、完了済みstageをskipする。
+- `llm-wiki`はrelevant knowledge queryと、Human-approved spec、repository-approved plan、implementation closeoutのdurable syncを所有する。Grill / Domain Modelingの既定出力を使った`CONTEXT.md`やrepo-root `docs/adr/`という並行正本は作らない。
+- dispatch model tierはSuperpowersを正本とし、repo-local責務をhostのconcrete model resolutionとoptionalなlow / medium / high reasoning effort overlayへ限定した。effort非対応hostは`not_supported`としてmodel selectionだけで継続し、isolated model dispatch自体が不可能な場合だけ`BLOCKED`とする。
+- 既存implementation planはPhase 1のhistorical evidenceへ状態変更した。production skill変更、successor implementation plan、remote actionは未実施であり、本Written SpecのHuman review待ちである。
+
 ## [2026-07-27] spec-gate | Loop Review Simplicity And Phase Skills
 
 - Epic ID `loop-review-simplicity-and-phase-skills` として、reviewを要件達成、material simplicity、material riskに絞り、`Minor` / nit / 好み / 任意改善をfindingとして報告しないSpec Gate候補を追加した。
