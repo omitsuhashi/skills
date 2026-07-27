@@ -1448,3 +1448,21 @@ append-only で使います。すべての entry は予測しやすい header �
 - verification: architecture / loop / wiki tests、context validator、dual-host validator、skill validator、`git diff --check`を要求する。
 - remote policy: `local_only`。GitHub issue、push、PR、merge、release、live installは非承認である。
 - stop conditions: authorityを分離できない、具体的model値の保存が必要、execution側変更が必要、Human gateまたはworker-only契約が弱まる、context budget超過、planned scope競合、relevant validation失敗。
+
+## [2026-07-27] issue-gate-candidate | Planning Authority Policy
+
+- approved specをPAP-001からPAP-004のserial dependencyへ分解した。PAP-001はfamily policy / validator、PAP-002はmain planning / supporting agent運用契約、PAP-003はmodel非永続化 / execution non-regression、PAP-004はwiki / full verification closeoutを所有する。
+- Issue Gate候補では`PAP-001 -> PAP-002 -> PAP-003 -> PAP-004`をcycleなしのblocker graphとし、実行可能はPAP-001だけ、PAP-002〜004はblocker releaseまで`ブロック中`とした。
+- productionのInput Packet、Execution Envelope、Worker Packet、`issue-implementation-loop` scheduler / runtime / worker lifecycleはwrite scope外とした。
+- local Issue台帳をcanonicalとし、GitHub Issue / PRは`未作成`、remote policyは`local_only`を維持する。Human Issue Gate approval前にImplementation Plan / Input Packet作成やproduction implementationへ進まない。
+
+## [2026-07-27] issue-gate-approval | Planning Authority Policy
+
+- actor expression: `session-user`
+- approved at: `2026-07-27T09:43:11+09:00`
+- decision: `approved`
+- approved dependency: `PAP-001 -> PAP-002 -> PAP-003 -> PAP-004`
+- approved scope: 各Issueのwrite scope、acceptance criteria、non-goals、verification。
+- PAP-001だけを`実行可能`、PAP-002〜PAP-004をblocker releaseまで`ブロック中`とする。
+- local Issue台帳はcanonical、GitHub Issue / PRは`未作成`、remote policyは`local_only`。push、PR、merge、release、live installは非承認である。
+- Issue Gate commitを固定してからImplementation Plan、Input Packet、Execution Plan Gate evidenceを作成する。production implementationはExecution Plan Gate commit前に開始しない。
