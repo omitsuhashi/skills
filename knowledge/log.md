@@ -1600,3 +1600,10 @@ append-only で使います。すべての entry は予測しやすい header �
 - scoped skill tests、repository script tests、architecture / context validators、新Skillのdual-host / skill-creator validators、`llm-wiki` tests、Git diff checkがfreshに成功した。
 - repository-wide dual-host validationには変更前から`skills/llm-wiki/DESCRIPTION.md`の既知findingが残る。Phase 1ではscopeを広げず、新Skillのscoped dual-host validationを完了条件とした。
 - push、PR作成、merge、release、live install、Phase 2の旧skill削除は未実施。
+
+## [2026-07-27] execution-plan-gate | SDD Implementation Skill Phase 2
+
+- session userが`sdd-implementation`を既定実装入口とした後の旧実装系skill削除を依頼し、既存designのPhase 2 scopeを実行承認した。
+- `knowledge/wiki/syntheses/sdd-implementation-phase2-removal-plan.md`を作成し、Task 1をSDD単独route化と削除前の実run / forward evidence、Task 2を`skills/grill-to-pr-loop/`、`skills/issue-implementation-loop/`、専用runtime/context surfaceの削除に限定した。
+- historical wiki、`knowledge/raw/**`、`skill-repository-optimization-v4-context-baseline.json`は削除せず、current executable surfaceからだけ切り離す。`planning_authority`とSDDのforbidden standalone component policyは保持する。
+- worktreeは`codex/sdd-implementation-phase2-removal`、開始HEADは`8ff2bdcb5e8e74e2de17ca742ff0e2ff6488c8bd`、default checkoutは同HEAD・差分なし。push、PR、merge、release、live installは非対象である。
