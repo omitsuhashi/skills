@@ -139,6 +139,10 @@ active runtime's capabilities. Detect the fresh worker/reviewer dispatch
 mechanism, model selector, optional effort control, and wait/resume mechanisms
 before entering SDD. Required isolated dispatch and explicit-model capabilities
 are `BLOCKED` when absent; optional effort is `not_supported` when absent.
+Synchronous dispatch that returns a completed result is a valid
+result-collection mechanism. Asynchronous dispatch requires both wait and
+resume capabilities. If neither synchronous result collection nor asynchronous
+wait/resume is available, return `BLOCKED`.
 
 Do not hard-code host tool names or model catalogs. Do not silently fall back to
 main-session implementation or an old loop skill when required SDD capability

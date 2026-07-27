@@ -174,6 +174,23 @@ class SddImplementationSkillContractTests(unittest.TestCase):
         self.assertNotIn("Codex", self.skill_text)
         self.assertNotIn("Hermes Agent", self.skill_text)
 
+    def test_result_collection_requires_sync_completion_or_async_coordination(self) -> None:
+        normalized = " ".join(self.skill_text.split())
+        self.assertIn(
+            "Synchronous dispatch that returns a completed result is a valid "
+            "result-collection mechanism.",
+            normalized,
+        )
+        self.assertIn(
+            "Asynchronous dispatch requires both wait and resume capabilities.",
+            normalized,
+        )
+        self.assertIn(
+            "If neither synchronous result collection nor asynchronous wait/resume "
+            "is available, return `BLOCKED`.",
+            normalized,
+        )
+
     def test_review_is_bounded_to_material_findings(self) -> None:
         for lens in ("requirements fit", "material simplicity", "material current risk"):
             self.assertIn(lens, self.skill_text)

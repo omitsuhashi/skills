@@ -100,14 +100,14 @@ _現在なし。_
   検索語: planning authority, implementation plan, Input Packet v2, Execution Plan Gate, sealed packet, TDD, worker-only, local-only, 実装計画
 - [SDD Implementation Skill 設計](wiki/syntheses/sdd-implementation-skill-design.md) — Superpowersを開発方法論の正本とし、skill behaviorを入力・依存skill・active runtime capabilityだけで解決するHuman-approved Written Spec。
   検索語: sdd-implementation, Superpowers, brainstorming, writing-plans, Subagent-Driven Development, SDD, Grill with Docs, active runtime, capability boundary, agent-agnostic, portable skill, reasoning effort, llm-wiki, knowledge lifecycle, Written Spec, 仕様作成, 仕様精緻化
-- [SDD Agent-Agnostic Runtime Contract Implementation Plan](wiki/syntheses/sdd-agent-agnostic-runtime-implementation-plan.md) — Task 1実装と独立reviewを完了し、active runtimeのcapability解決へ置き換えたportable skill contractのcloseout candidate。
+- [SDD Agent-Agnostic Runtime Contract Implementation Plan](wiki/syntheses/sdd-agent-agnostic-runtime-implementation-plan.md) — active runtimeのcapability解決へ置き換えたportable skill contractのcurrent delta / final-review-fix candidate。scoped re-reviewはpending。
   検索語: sdd-implementation, agent-agnostic, portable skill, active runtime, dependency discovery, capability boundary, implementation plan, TDD, pressure scenario, 実装計画, エージェント非依存
 - [SDD Reasoning Effort Risk Precedence Implementation Plan](wiki/syntheses/sdd-effort-risk-precedence-implementation-plan.md) — high-risk task reviewをhighとして扱い、共有default effort vocabularyを増やさない変更は、Task 1、final review、bounded fix、scoped re-reviewを完了した`LOCAL_COMPLETE` plan。
   検索語: reasoning effort, risk precedence, task complexity, high-risk task review, low, medium, high, runtime override, final review, リスク優先, 実装計画
 - [Superpowers SDD のモデル選択・Reasoning・Host 境界調査](wiki/syntheses/sdd-superpowers-model-and-reasoning-research.md) — Superpowers v6.2.0のdispatch model選択、reasoning effort不在、Codex/Hermes adapter境界、brainstorming・planning・SDDの責任分割を一次情報で確認した調査。
   検索語: Superpowers, v6.2.0, SDD, model selection, MODEL REQUIRED, reasoning_effort, Thinking Effort, Codex, Hermes Agent, host adapter, brainstorming, writing-plans, upstream research, モデル選択, 思考強度
-- [SDD Implementation Superpowers-first Revision 実装計画](wiki/syntheses/sdd-implementation-superpowers-first-implementation-plan.md) — current / implemented successor plan。承認済みWritten SpecをSkill lifecycle contract、repository routing、LLM Wiki closeoutの3 taskでTDD実装・検証し、final review、bounded fix、scoped re-reviewまで完了したHuman-approved Execution Plan。
-  検索語: sdd-implementation, Superpowers-first, implementation plan, Execution Plan Gate, Grill with Docs, llm-wiki, reasoning effort, host adapter, TDD, 後継実装計画
+- [SDD Implementation Superpowers-first Revision 実装計画](wiki/syntheses/sdd-implementation-superpowers-first-implementation-plan.md) — 実装済みbaselineを保持するhistorical / non-executable plan。runtime固有部分はagent-agnostic revisionにsupersedeされ、current runtime behaviorの実行入口には使わない。
+  検索語: sdd-implementation, Superpowers-first, implemented baseline, historical, non-executable, superseded runtime adapter, implementation plan, Execution Plan Gate, Grill with Docs, llm-wiki, reasoning effort, TDD, 履歴実装計画
 - [SDD Implementation Skill 実装計画](wiki/syntheses/sdd-implementation-skill-implementation-plan.md) — 現行Skill本体、runtime-only routing、material review、既定repository route、日本語knowledge closeoutを実装・検証したPhase 1のhistorical plan。後継revisionには再利用しない。
   検索語: sdd-implementation, historical implementation plan, Phase 1, Subagent-Driven Development, model routing, reasoning effort, material review, knowledge closeout, dual-host, 実装計画, 既定実装入口
 - [SDD Implementation Phase 2 旧実装スキル削除計画](wiki/syntheses/sdd-implementation-phase2-removal-plan.md) — SDD実run、fresh coordinator verification、final whole-branch reviewを完了し、旧loop skill本体と専用runtime/context surfaceをlocal treeから除去した`LOCAL_COMPLETE` Phase 2計画。
@@ -181,8 +181,8 @@ _現在なし。_
   検索語: decide-in-order, implementation plan, skill-creator, forward test, contract test, TDD, standalone skill, 実装計画, 意思決定支援, 回帰検証
 - [Codex / Hermes Dual-host Authoring Contract 設計](wiki/syntheses/hermes-dual-host-authoring-contract-design.md) — skill behaviorについてはagent-agnostic contractにsupersedeされたhistorical設計。plugin packagingと過去のdiscovery / live load evidenceを参照する場合だけ使う。
   検索語: Hermes Agent, Codex, dual-host, SKILL.md, description.md, plugin.yaml, register(ctx), external_dirs, install, discovery, live load, skill creator, plugin creator, 作成指示, 互換性, インストール, 検証
-- [Codex / Hermes Dual-host Authoring Contract 実装計画](wiki/syntheses/2026-07-17-hermes-dual-host-authoring-contract-implementation-plan.md) — 薄いauthoring guidance、標準ライブラリvalidator、既存skill/plugin導入契約、CIを4つのTDD単位で実装する計画。
-  検索語: Hermes Agent, Codex, dual-host, implementation plan, AGENTS.md, validator, unittest, CI, TDD, SKILL.md, plugin.yaml, register(ctx), 実装計画, 作成ルール, 検証
+- [Codex / Hermes Dual-host Authoring Contract 実装計画](wiki/syntheses/2026-07-17-hermes-dual-host-authoring-contract-implementation-plan.md) — historical / non-executableな旧dual-host plan。原文は過去の実装証跡として保持し、current skill behaviorの実行指示には使わない。
+  検索語: Hermes Agent, Codex, dual-host, historical, non-executable, superseded, implementation plan, AGENTS.md, validator, unittest, CI, TDD, SKILL.md, plugin.yaml, register(ctx), 履歴実装計画, 作成ルール, 検証
 
 ## クエリ起点成果物
 

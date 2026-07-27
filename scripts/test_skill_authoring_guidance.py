@@ -27,9 +27,10 @@ class SkillAuthoringGuidanceTests(unittest.TestCase):
         for value in (
             ".codex-plugin/plugin.json", "plugin.yaml", "__init__.py",
             "register(ctx)", "ctx.register_skill", "standalone companion skill",
-            "hermes plugins list",
+            "hermes plugins list", "scripts/validate_repository_compatibility.py",
         ):
             self.assertIn(value, text)
+        self.assertNotIn("repository dual-host validator", text)
 
 
 if __name__ == "__main__":
