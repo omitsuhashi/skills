@@ -1,0 +1,4 @@
+interface:
+  display_name: "SDD Implementation"
+  short_description: "Execute approved plans with isolated SDD workers."
+  default_prompt: "Use $sdd-implementation to execute this approved implementation plan through local completion."
