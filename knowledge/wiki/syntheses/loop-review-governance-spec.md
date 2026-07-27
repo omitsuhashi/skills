@@ -363,11 +363,11 @@ GitHub issue mirror、ready-for-review、merge、force push、deploy、credentia
 
 ## 出典
 
-- [skills/grill-to-pr-loop/SKILL.md](../../../skills/grill-to-pr-loop/SKILL.md)
-- [skills/grill-to-pr-loop/references/planning-contract.md](../../../skills/grill-to-pr-loop/references/planning-contract.md)
-- [skills/issue-implementation-loop/SKILL.md](../../../skills/issue-implementation-loop/SKILL.md)
-- [skills/issue-implementation-loop/references/review-gate.md](../../../skills/issue-implementation-loop/references/review-gate.md)
-- [skills/issue-implementation-loop/references/human-wait.md](../../../skills/issue-implementation-loop/references/human-wait.md)
-- [skills/issue-implementation-loop/references/runtime-state.md](../../../skills/issue-implementation-loop/references/runtime-state.md)
-- [skills/issue-implementation-loop/references/remote-delivery.md](../../../skills/issue-implementation-loop/references/remote-delivery.md)
-- [skills/issue-implementation-loop/assets/templates/execution-envelope.json](../../../skills/issue-implementation-loop/assets/templates/execution-envelope.json)
+- historical production path（Phase 2で削除済み）: `skills/grill-to-pr-loop/SKILL.md`
+- historical production path（Phase 2で削除済み）: `skills/grill-to-pr-loop/references/planning-contract.md`
+- historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/SKILL.md`
+- historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/references/review-gate.md`
+- historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/references/human-wait.md`
+- historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/references/runtime-state.md`
+- historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/references/remote-delivery.md`
+- historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/assets/templates/execution-envelope.json`

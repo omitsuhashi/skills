@@ -211,7 +211,7 @@ Spec Gate / Issue Gate / Execution Plan Gate は承認後に、承認済み loca
 
 - [Skill Repository Optimization V4 Design](../sources/2026-06-26-skill-repository-optimization-v4-design.md)
 - [raw/sources/2026-06-26-skill-repository-optimization-v4-design.md](../../raw/sources/2026-06-26-skill-repository-optimization-v4-design.md)
-- [skills/grill-to-pr-loop/context-contract.toml](../../../skills/grill-to-pr-loop/context-contract.toml)
-- [skills/issue-implementation-loop/context-contract.toml](../../../skills/issue-implementation-loop/context-contract.toml)
-- [skills/issue-implementation-loop/assets/schemas/worker-packet.schema.json](../../../skills/issue-implementation-loop/assets/schemas/worker-packet.schema.json)
-- [skills/issue-implementation-loop/scripts/build_resume_brief.py](../../../skills/issue-implementation-loop/scripts/build_resume_brief.py)
+- historical production path（Phase 2で削除済み）: `skills/grill-to-pr-loop/context-contract.toml`
+- historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/context-contract.toml`
+- historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/assets/schemas/worker-packet.schema.json`
+- historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/scripts/build_resume_brief.py`

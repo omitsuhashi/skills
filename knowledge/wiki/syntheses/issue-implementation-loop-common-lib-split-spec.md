@@ -154,9 +154,9 @@ UV_CACHE_DIR=/private/tmp/uv-cache uv run --isolated --python 3.12 --with 'PyYAM
 
 ## 出典
 
-- [skills/issue-implementation-loop/SKILL.md](../../../skills/issue-implementation-loop/SKILL.md)
-- [skills/issue-implementation-loop/scripts/_common.py](../../../skills/issue-implementation-loop/scripts/_common.py)
-- [skills/issue-implementation-loop/tests/test_issue_implementation_loop.py](../../../skills/issue-implementation-loop/tests/test_issue_implementation_loop.py)
-- [skills/issue-implementation-loop/scripts/check_capabilities.py](../../../skills/issue-implementation-loop/scripts/check_capabilities.py)
-- [skills/issue-implementation-loop/scripts/compute_next_actions.py](../../../skills/issue-implementation-loop/scripts/compute_next_actions.py)
-- [skills/issue-implementation-loop/scripts/validate_delivery_plan.py](../../../skills/issue-implementation-loop/scripts/validate_delivery_plan.py)
+- historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/SKILL.md`
+- historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/scripts/_common.py`
+- historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/tests/test_issue_implementation_loop.py`
+- historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/scripts/check_capabilities.py`
+- historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/scripts/compute_next_actions.py`
+- historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/scripts/validate_delivery_plan.py`

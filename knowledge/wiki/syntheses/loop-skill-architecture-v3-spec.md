@@ -184,7 +184,7 @@ Spec Gate / Issue Gate / Execution Plan Gate は承認後に、承認済み loca
 
 - [Loop Skill Architecture V3 Design](../sources/2026-06-25-loop-skill-architecture-v3-design.md)
 - [raw/sources/2026-06-25-loop-skill-architecture-v3-design.md](../../raw/sources/2026-06-25-loop-skill-architecture-v3-design.md)
-- [skills/grill-to-pr-loop/SKILL.md](../../../skills/grill-to-pr-loop/SKILL.md)
-- [skills/issue-implementation-loop/SKILL.md](../../../skills/issue-implementation-loop/SKILL.md)
-- [skills/grill-to-pr-loop/references/workflow-contract.md](../../../skills/grill-to-pr-loop/references/workflow-contract.md)
-- [skills/issue-implementation-loop/scripts/lib/issue_implementation_loop](../../../skills/issue-implementation-loop/scripts/lib/issue_implementation_loop)
+- historical production path（Phase 2で削除済み）: `skills/grill-to-pr-loop/SKILL.md`
+- historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/SKILL.md`
+- historical production path（Phase 2で削除済み）: `skills/grill-to-pr-loop/references/workflow-contract.md`
+- historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/scripts/lib/issue_implementation_loop`

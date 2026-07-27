@@ -61,7 +61,7 @@ loop 系の適用基準を明文化する
 
 - 仕様: [Loop Skill 運用単純化仕様](loop-skill-operational-simplicity-spec.md)
 - policy: [skill-architecture.toml](../../../skill-architecture.toml)
-- current context contracts: [grill-to-pr-loop/context-contract.toml](../../../skills/grill-to-pr-loop/context-contract.toml), [issue-implementation-loop/context-contract.toml](../../../skills/issue-implementation-loop/context-contract.toml)
+- historical context contracts（Phase 2で削除済み）: `grill-to-pr-loop/context-contract.toml`, `issue-implementation-loop/context-contract.toml`
 
 ### 検証
 

@@ -91,5 +91,5 @@ python3 skills/issue-implementation-loop/scripts/reconcile_git_state.py knowledg
 ## 出典
 
 - [raw/sources/2026-06-21-grill-to-pr-loop-skill-split-design-v2.md](../../raw/sources/2026-06-21-grill-to-pr-loop-skill-split-design-v2.md)
-- [skills/grill-to-pr-loop/SKILL.md](../../../skills/grill-to-pr-loop/SKILL.md)
-- [skills/grill-to-pr-loop/references/workflow-contract.md](../../../skills/grill-to-pr-loop/references/workflow-contract.md)
+- historical production path（Phase 2で削除済み）: `skills/grill-to-pr-loop/SKILL.md`
+- historical production path（Phase 2で削除済み）: `skills/grill-to-pr-loop/references/workflow-contract.md`

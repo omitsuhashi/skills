@@ -176,12 +176,12 @@ GitHub auth、network、permission、branch protection、conflict、failed check
 
 ## 出典
 
-- [skills/grill-to-pr-loop/SKILL.md](../../../skills/grill-to-pr-loop/SKILL.md)
-- [skills/grill-to-pr-loop/references/core.md](../../../skills/grill-to-pr-loop/references/core.md)
-- [skills/grill-to-pr-loop/references/execution-handoff.md](../../../skills/grill-to-pr-loop/references/execution-handoff.md)
-- [skills/grill-to-pr-loop/references/remote-delivery.md](../../../skills/grill-to-pr-loop/references/remote-delivery.md)
-- [skills/issue-implementation-loop/SKILL.md](../../../skills/issue-implementation-loop/SKILL.md)
-- [skills/issue-implementation-loop/references/execution-envelope.md](../../../skills/issue-implementation-loop/references/execution-envelope.md)
-- [skills/issue-implementation-loop/references/remote-delivery.md](../../../skills/issue-implementation-loop/references/remote-delivery.md)
+- historical production path（Phase 2で削除済み）: `skills/grill-to-pr-loop/SKILL.md`
+- historical production path（Phase 2で削除済み）: `skills/grill-to-pr-loop/references/core.md`
+- historical production path（Phase 2で削除済み）: `skills/grill-to-pr-loop/references/execution-handoff.md`
+- historical production path（Phase 2で削除済み）: `skills/grill-to-pr-loop/references/remote-delivery.md`
+- historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/SKILL.md`
+- historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/references/execution-envelope.md`
+- historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/references/remote-delivery.md`
 - [plugins/task-management/skills/task-management/references/github-mcp-projects.md](../../../plugins/task-management/skills/task-management/references/github-mcp-projects.md)
 - [knowledge/AGENTS.md](../../AGENTS.md)

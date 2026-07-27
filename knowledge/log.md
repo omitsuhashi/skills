@@ -1607,3 +1607,10 @@ append-only で使います。すべての entry は予測しやすい header �
 - `knowledge/wiki/syntheses/sdd-implementation-phase2-removal-plan.md`を作成し、Task 1をSDD単独route化と削除前の実run / forward evidence、Task 2を`skills/grill-to-pr-loop/`、`skills/issue-implementation-loop/`、専用runtime/context surfaceの削除に限定した。
 - historical wiki、`knowledge/raw/**`、`skill-repository-optimization-v4-context-baseline.json`は削除せず、current executable surfaceからだけ切り離す。`planning_authority`とSDDのforbidden standalone component policyは保持する。
 - worktreeは`codex/sdd-implementation-phase2-removal`、開始HEADは`8ff2bdcb5e8e74e2de17ca742ff0e2ff6488c8bd`、default checkoutは同HEAD・差分なし。push、PR、merge、release、live installは非対象である。
+
+## [2026-07-27] implementation-closeout | SDD Implementation Skill Phase 2
+
+- Task 1は`ce87b65`とfix `4e4f532`でSDD-only route、architecture policy、CIを成立させ、fix round 1後のtask reviewはcleanとなった。reported GREEN evidenceはfocused architecture/CI 11 tests、`skills/sdd-implementation/tests` 9 tests、architecture validatorのpassである。
+- Task 2は`1def312405a1c1046366be749d85d3a493e5f887`で`skills/grill-to-pr-loop/`、`skills/issue-implementation-loop/`、3件の旧loop ledger test、専用runtime/context report surfaceをcurrent treeから削除し、task reviewはfindings 0でcleanとなった。reported GREEN evidenceはfocused architecture/context 12 tests、scripts 42 tests、`skills/llm-wiki/tests` 5 tests、context validator/report、architecture validator、dual-host CI workflowのpass、およびproduction surface grepのmatchなしである。
+- `knowledge/raw/**`、historical wiki、`skill-repository-optimization-v4-context-baseline.json`は削除せず、historical / non-executable evidenceとして保持した。indexの旧packet、handoff、baselineのcurrent / executable / restart表現を更新し、削除済みproduction filesへのMarkdown linkをhistorical inline codeへ置換した。
+- Phase 2のfresh final verificationとknowledge closeout後のwhole-branch final reviewは未実施であり、`LOCAL_COMPLETE`を先取りしない。push、PR作成、merge、release、live installも未実施で、remote stateは変更していない。

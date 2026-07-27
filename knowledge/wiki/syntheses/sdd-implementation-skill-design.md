@@ -2,7 +2,7 @@
 
 ## 状態
 
-Human-approved Phase 1 designのlocal implementationとfresh verificationが完了した。`sdd-implementation`を既定実装入口とし、旧loop skillは明示指定時だけ残している。push、PR作成、merge、release、live install、およびPhase 2の旧skill削除は未実施。
+Phase 1のlocal implementationとfresh verificationに続き、Phase 2のlocal implementationと各Task reviewが完了した。`sdd-implementation`が既定かつ唯一のuser-facing実装入口であり、`skills/grill-to-pr-loop/`と`skills/issue-implementation-loop/`、および専用runtime/context surfaceはcurrent treeから削除済みである。historical wikiと旧baselineは非実行の証跡として保持する。Phase 2のfresh final verificationとwhole-branch final review、push、PR作成、merge、release、live installは未実施である。
 
 ## 問題設定
 
@@ -224,6 +224,8 @@ flowchart TD
 - historical wiki source / spec / ledgerは実行可能artifactとして再利用せず、superseded / historicalとして保持する。durable decision historyを無差別に削除しない。
 - new skillの実run evidenceとforward verificationが揃う前にPhase 2へ進まない。
 
+Phase 2 local outcome: Task 1は`ce87b65`とfix `4e4f532`でreview clean、Task 2は`1def312405a1c1046366be749d85d3a493e5f887`でfindings 0のreview cleanとなった。2つの旧skill directoryと専用runtime/context surfaceは削除済みで、historical wikiと`skill-repository-optimization-v4-context-baseline.json`は非実行証跡として保持する。fresh final verification、whole-branch final review、push、PR、merge、release、live installはこのlocal outcomeに含まれず未実施である。
+
 Phase 1 と Phase 2 を同一PRにしない。新skillのforward testとfallback behaviorを確認してから削除scopeを確定する。
 
 ## Testing Strategy
@@ -292,6 +294,6 @@ Phase 1 と Phase 2 を同一PRにしない。新skillのforward testとfallback
 
 - [Planning Authority Policy 仕様](planning-authority-policy/spec.md)
 - [Loop Skill 運用単純化仕様](loop-skill-operational-simplicity-spec.md)
-- [skills/grill-to-pr-loop/SKILL.md](../../../skills/grill-to-pr-loop/SKILL.md)
-- [skills/issue-implementation-loop/SKILL.md](../../../skills/issue-implementation-loop/SKILL.md)
+- historical production path（Phase 2で削除済み）: `skills/grill-to-pr-loop/SKILL.md`
+- historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/SKILL.md`
 - `codex-plugin-cache:openai-curated-remote/superpowers/6.2.0/skills/subagent-driven-development/SKILL.md`
