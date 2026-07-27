@@ -135,11 +135,26 @@ class SddDefaultImplementationRouteTests(unittest.TestCase):
             validate_policy(policy),
         )
 
-    def test_repository_router_uses_only_sdd_for_approved_plans(self) -> None:
+    def test_repository_router_uses_only_sdd_for_the_full_change_lifecycle(self) -> None:
         router = REPO_ROUTER.read_text(encoding="utf-8")
-        self.assertIn("use `sdd-implementation` by default", router)
+        self.assertIn(
+            "For repository changes, use `sdd-implementation` by default.",
+            router,
+        )
+        self.assertIn(
+            "Superpowers lifecycle, `grill-with-docs`, and `llm-wiki`",
+            router,
+        )
         self.assertNotIn(f"Use `{LEGACY_GRILL_SKILL}`", router)
         self.assertNotIn(f"`{LEGACY_ISSUE_SKILL}`", router)
+
+    def test_repository_change_family_describes_requirements_to_completion(self) -> None:
+        family = repository_change_loop_family()
+        self.assertEqual(
+            "Repository change workflow skills that move work from requirements "
+            "through specification, planning, and local implementation.",
+            family["description"],
+        )
 
     def test_validator_rejects_default_implementation_skill_drift(self) -> None:
         policy = architecture_policy()
