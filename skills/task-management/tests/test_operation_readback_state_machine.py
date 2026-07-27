@@ -437,6 +437,25 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
                 self.assertEqual([], mcp.writes)
                 self.assertEqual([], runner.local_preflights)
 
+    def test_missing_item_receipt_requires_every_planned_field_transition(
+        self,
+    ) -> None:
+        self._seed_issue()
+        malformed = partial_receipt(
+            state="project_item_missing",
+            unfinished_transitions=["project_item"],
+        )
+
+        self.assertEqual(
+            "blocked",
+            self.runner.run(
+                "task_project_register",
+                context(partial_receipt=malformed),
+            ),
+        )
+        self.assertEqual([], self.mcp.writes)
+        self.assertEqual([], self.runner.local_preflights)
+
     def test_preexisting_multiple_project_items_is_ambiguous_zero_write(
         self,
     ) -> None:
@@ -445,10 +464,8 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
             "first": project_item_record(item_id="PVTI_1"),
             "second": project_item_record(item_id="PVTI_2"),
         }
-        receipt = recovery_receipt(
+        receipt = partial_receipt(
             state="project_item_unknown",
-            project_item_id=None,
-            unfinished_transitions=["project_item"],
         )
 
         self.assertEqual(
@@ -479,10 +496,8 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
         mcp = DuplicateAfterUnknownAdd(issues={"issue": issue_record()})
         mcp.fail_next("project_item_add", "after")
         runner = ContractRunner(self.contract, mcp)
-        receipt = recovery_receipt(
+        receipt = partial_receipt(
             state="project_item_missing",
-            project_item_id=None,
-            unfinished_transitions=["project_item"],
         )
 
         self.assertEqual(
@@ -507,15 +522,8 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
             self.runner.run(
                 "task_project_register",
                 context(
-                    project_item_id=None,
-                    partial_receipt=recovery_receipt(
-                        state="project_item_unknown",
-                        project_item_id=None,
-                        unfinished_transitions=[
-                            "project_item",
-                            "default_priority",
-                        ],
-                    ),
+                    project_item_id="PVTI_1",
+                    partial_receipt=recovery_receipt(),
                 ),
             ),
         )
@@ -731,9 +739,7 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
                 "task_project_register",
                 context(
                     issue_node_id="I_1",
-                    partial_receipt=partial_receipt(
-                        unfinished_transitions=["project_item"],
-                    ),
+                    partial_receipt=partial_receipt(),
                 ),
             ),
         )
@@ -768,6 +774,27 @@ class OperationReadbackStateMachineTests(unittest.TestCase):
         )
         self.assertEqual([], self.runner.local_preflights)
         self.assertEqual([], self.mcp.writes)
+
+    def test_register_rejects_boolean_issue_number_in_receipt(self) -> None:
+        self._seed_issue()
+        malformed = partial_receipt(
+            issue_number=True,
+            issue_node_id=None,
+        )
+
+        self.assertEqual(
+            "blocked",
+            self.runner.run(
+                "task_project_register",
+                context(
+                    issue_number=True,
+                    issue_node_id=None,
+                    partial_receipt=malformed,
+                ),
+            ),
+        )
+        self.assertEqual([], self.mcp.writes)
+        self.assertEqual([], self.runner.local_preflights)
 
     def test_wrong_project_link_is_not_accepted_as_exact_readback(self) -> None:
         self._seed_issue()

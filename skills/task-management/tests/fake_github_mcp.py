@@ -812,9 +812,19 @@ class ContractRunner:
         if receipt_steps is not None:
             transition_id = transition["id"]
             if phase == "step":
-                return transition_id in receipt_steps
-            return transition_id in {"issue", "project_item"} or (
-                transition_id in receipt_steps
+                if transition_id not in receipt_steps:
+                    return False
+                if transition_id == "project_item":
+                    return True
+            elif transition_id in {"issue", "project_item"}:
+                return True
+            elif transition_id not in receipt_steps:
+                return False
+            if context.get("_receipt_state") == "fields_incomplete":
+                return True
+            return (
+                context.get("_project_item_created_this_invocation")
+                is True
             )
         condition = transition.get("applies_when")
         if condition is None:
@@ -868,7 +878,7 @@ class ContractRunner:
         if (number is None) == (node_id is None):
             return False
         if number is not None and (
-            not isinstance(number, int) or number <= 0
+            type(number) is not int or number <= 0
         ):
             return False
         if node_id is not None and (
@@ -940,7 +950,11 @@ class ContractRunner:
                 or "project_item" in unfinished_set
             ):
                 return False
-        elif receipt_item_id is not None or "project_item" not in unfinished_set:
+        elif (
+            receipt_item_id is not None
+            or unfinished_set
+            != expected_transitions | {"project_item"}
+        ):
             return False
         if supplied_item_id not in {None, receipt_item_id}:
             return False
