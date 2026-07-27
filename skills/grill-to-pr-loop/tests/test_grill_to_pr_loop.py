@@ -313,6 +313,20 @@ class GrillToPrLoopTests(unittest.TestCase):
         combined = f"{skill_text}\n{planning_text}"
 
         for required in (
+            "main planning context integrates canonical spec/issue ledger/execution plan/sealed packet",
+            "finalizes the Human Gate approval candidate",
+            "Human decides the Gate",
+        ):
+            self.assertIn(required, skill_text)
+
+        for required in (
+            "integrates canonical content across the spec, issue ledger, execution plan, and sealed Input Packet",
+            "finalizes the approval candidate presented to the Human Gate",
+            "Human decides the Gate",
+        ):
+            self.assertIn(required, planning_text)
+
+        for required in (
             "main planning context is the integration owner",
             "supporting agents are advisory-only and read-only",
             "Human is the decision authority",

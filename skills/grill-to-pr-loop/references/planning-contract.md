@@ -10,7 +10,7 @@ Before Written Spec or any planning write, run:
 python3 <skill-dir>/scripts/planning_worktree.py prepare --repo-root <absolute> --epic-id <lower-kebab> --json
 ```
 
-From the registered default checkout, create/reuse one Epic-scoped planning worktree, `codex/<epic-id>/planning`, through planning sync. Ignore project-local roots; failure stops before writes or default-checkout use. Reuse existing consent. Store host paths and starting HEAD/status at untracked `$(git rev-parse --git-common-dir)/agent-runs/grill-to-pr-loop/<epic-id>/planning-worktree.json`.
+From the registered default checkout, create/reuse one Epic-scoped planning worktree, `codex/<epic-id>/planning`, through planning sync. Reject project-local roots; failure stops before writes/default-checkout use. Reuse consent. Store host paths/start HEAD/status at untracked `$(git rev-parse --git-common-dir)/agent-runs/grill-to-pr-loop/<epic-id>/planning-worktree.json`.
 
 ## Artifact Contract
 
@@ -24,11 +24,11 @@ Track this tree for every current Epic:
 └── input-packet.json
 ```
 
-`<durable-planning-root>` is `knowledge/wiki/syntheses`, or `docs/grill-to-pr-loop` without a wiki. `artifact_root` is that Epic directory; shown files are direct children. Commit it, maintain `knowledge/index.md` / `knowledge/log.md`, and leave execution artifacts untracked.
+`<durable-planning-root>` is `knowledge/wiki/syntheses` (`docs/grill-to-pr-loop` without a wiki); `artifact_root` is that Epic directory with shown direct children. Commit it, update `knowledge/index.md` / `knowledge/log.md`, and leave execution artifacts untracked.
 
 ## Planning Authority / Supporting Agent Dispatch
 
-The main planning context is the integration owner; supporting agents are advisory-only and read-only; Human is the decision authority. Dispatch one bounded question, minimum repo-relative read paths, and stop conditions. Return evidence, source paths, critique, disagreements, uncertainties, and a recommendation.
+The main planning context is the integration owner. It integrates canonical content across the spec, issue ledger, execution plan, and sealed Input Packet and finalizes the approval candidate presented to the Human Gate. Human is the decision authority; Human decides the Gate; supporting agents are advisory-only and read-only. Dispatch one bounded question, minimum repo-relative read paths, and stop conditions; return source-linked evidence, critique, disagreements, uncertainty, and recommendation.
 
 Supporting agents must not write canonical planning artifacts, approve a spec or scope, or seal an Input Packet. The main context compares evidence when advice conflicts and never uses a vote or majority. Send authority-bearing ambiguity to a Human gate.
 
@@ -68,14 +68,14 @@ python3 <issue-implementation-loop-skill-dir>/scripts/approved_spec_binding.py i
   --repo-root <repo-root> --spec-path <repo-relative-spec-path>
 ```
 
-Present the path/digest, `Epic ID`, and six fields: `accepted_decisions`, `non_goals`, `acceptance_criteria`, `verification`, `remote_policy`, `stop_conditions`. Record one Spec Gate approval and wait before issue decomposition unless that exact revision and scope are already approved.
+Present path/digest, `Epic ID`, and `accepted_decisions`, `non_goals`, `acceptance_criteria`, `verification`, `remote_policy`, `stop_conditions`. Record one Spec Gate approval; wait unless that exact revision/scope is approved.
 
 Any spec byte change requires re-approval and a new seal. Never infer approval, alter its digest, or edit while sealing. After Spec Gate approval, commit the spec and ledger/log before issue decomposition.
 
 ### Issue Gate
 
-Present local issues with `Epic ID`, blockers, order, `実行可能/ブロック中`, and criteria. Wait for approval. After Issue Gate approval, commit the local ledger and ledger/log before mirroring or execution planning.
+Present local issues with `Epic ID`, blockers, order, `実行可能/ブロック中`, and criteria. Wait for approval; after Issue Gate approval, commit the local ledger and ledger/log before mirroring or execution planning.
 
 ### GitHub Mirror Gate Preparation
 
-For optional GitHub issue mirroring after Issue Gate, stop planning and load `remote-delivery.md`; this reference alone never authorizes creation. The remote reference owns auth checks, publication set, approval, writes, and local ledger updates.
+After Issue Gate, optional GitHub mirroring requires `remote-delivery.md`; this reference never authorizes creation. It owns auth, publication, approval, writes, and ledger updates.
