@@ -9,13 +9,28 @@ Superpowers is the authoritative development methodology. Compose its current
 skills; do not copy their process into a custom scheduler, worker packet schema,
 runtime snapshot, event log, or resume protocol.
 
+## Dependency Preflight
+
+Before entering a selected route, verify its dependency discovery and required host capabilities on both Codex and Hermes Agent.
+Use Codex skill discovery and Hermes Agent installed skills or `skills.external_dirs`.
+Check the Superpowers lifecycle skills for every route.
+Check `grill-with-docs` when the Spec Stage requires it.
+Check `llm-wiki` when a knowledge root exists.
+
+If a required family is missing, return the matching result:
+
+- `BLOCKED: missing Superpowers lifecycle dependency`
+- `BLOCKED: missing grill-with-docs dependency`
+- `BLOCKED: missing llm-wiki dependency`
+
 ## Route By Input Maturity
 
 Do not repeat a completed stage.
 
 - **Change request or incomplete specification:** use
   `superpowers:brainstorming`, the Spec Stage below, and Human written-spec
-  approval before planning.
+  approval before planning. Preserve approved and complete portions of an incomplete specification.
+  Use Grill with Docs only for unresolved material decisions.
 - **Human-approved current specification:** verify authority, applicability,
   requirements, and acceptance criteria, then use `superpowers:writing-plans`.
   Return to the Spec Stage only for a material conflict.
@@ -95,6 +110,8 @@ All implementation tasks and task reviews must be complete before closeout.
 Follow the current Superpowers SDD Model Selection contract. Every subagent dispatch must state its model. Let Superpowers choose the relative tier for the task and resolve that tier to a concrete model available in the current host.
 Do not maintain a second role-to-model table.
 
+An explicit user runtime model override takes precedence over upstream model-tier resolution.
+
 Apply reasoning effort as an independent runtime-only overlay when supported:
 
 | Superpowers task class | Reasoning effort |
@@ -103,8 +120,9 @@ Apply reasoning effort as an independent runtime-only overlay when supported:
 | Multi-file integration, normal debugging, or task review | `medium` |
 | Architecture-sensitive or high-risk task, or final review | `high` |
 
-Honor an explicit user runtime override. For a stuck fix, raise effort one
-available step before following Superpowers model escalation.
+An explicit user runtime effort override takes precedence over the default effort overlay.
+For a stuck fix, raise effort one available step before following Superpowers
+model escalation.
 
 When a host has no independent effort control, record `not_supported` and continue with Superpowers model selection. Lack of independent effort control does not block the flow. Lack of isolated dispatch with an explicit model is `BLOCKED`.
 
@@ -135,6 +153,8 @@ the approved specification and plan, and knowledge artifacts. Return
 `LOCAL_COMPLETE` only after reviewed tasks, fresh verification, scoped commits,
 applicable closeout, and final approval.
 
+Do not perform any remote write without separate explicit authorization.
+This includes push, PR, merge, release, live install, issue, comment, and project changes.
 Do not push, create a PR, merge, release, or install live without separate
-explicit authorization. Report blockers, residual material risk, and
-unperformed remote actions briefly.
+explicit authorization. Report blockers, residual material risk, and unperformed
+remote actions briefly.

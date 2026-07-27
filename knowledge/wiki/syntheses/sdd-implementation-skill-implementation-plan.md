@@ -1,6 +1,6 @@
 # SDD Implementation Skill Implementation Plan
 
-> **Status:** Phase 1 の historical plan。実装済みの過去 evidence として保持する。Superpowers-first revision の実装には再利用せず、更新された Written Spec の Human approval 後に successor plan を作成する。
+> **Status:** Phase 1 の historical plan。実装済みの過去 evidence として保持する。Superpowers-first revision の実装には再利用せず、更新された Written Spec の Human approval 後に[SDD Implementation Superpowers-first Revision Implementation Plan](sdd-implementation-superpowers-first-implementation-plan.md)を作成し、2026-07-27にHuman-approved Execution Planとなった。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

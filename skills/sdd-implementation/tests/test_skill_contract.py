@@ -48,6 +48,16 @@ class SddImplementationSkillContractTests(unittest.TestCase):
             self.assertIn(state, self.skill_text)
         self.assertIn("Do not repeat a completed stage.", self.skill_text)
 
+    def test_incomplete_spec_preserves_settled_portions(self) -> None:
+        self.assertIn(
+            "Preserve approved and complete portions of an incomplete specification.",
+            self.skill_text,
+        )
+        self.assertIn(
+            "Use Grill with Docs only for unresolved material decisions.",
+            self.skill_text,
+        )
+
     def test_grill_with_docs_is_required_for_spec_authoring_and_refinement(self) -> None:
         self.assertIn("REQUIRED SUB-SKILL: Use grill-with-docs", self.skill_text)
         for trigger in (
@@ -79,11 +89,60 @@ class SddImplementationSkillContractTests(unittest.TestCase):
         self.assertIn("| Mechanical task or small scoped re-review | `low` |", self.skill_text)
         self.assertIn("| Multi-file integration, normal debugging, or task review | `medium` |", self.skill_text)
         self.assertIn("| Architecture-sensitive or high-risk task, or final review | `high` |", self.skill_text)
-        self.assertIn("Honor an explicit user runtime override.", self.skill_text)
         self.assertIn("`not_supported`", self.skill_text)
         self.assertNotIn("| orchestrator |", self.skill_text)
         self.assertNotIn("economical balanced", self.skill_text)
         self.assertNotRegex(self.skill_text, re.compile(r"\bgpt-[0-9]"))
+
+    def test_user_model_and_effort_overrides_have_independent_precedence(self) -> None:
+        self.assertIn(
+            "An explicit user runtime model override takes precedence over "
+            "upstream model-tier resolution.",
+            self.skill_text,
+        )
+        self.assertIn(
+            "An explicit user runtime effort override takes precedence over "
+            "the default effort overlay.",
+            self.skill_text,
+        )
+
+    def test_required_skill_families_are_preflighted_on_both_hosts(self) -> None:
+        self.assertIn(
+            "Before entering a selected route, verify its dependency discovery and "
+            "required host capabilities on both Codex and Hermes Agent.",
+            self.skill_text,
+        )
+        for dependency in (
+            "Superpowers lifecycle skills",
+            "`grill-with-docs`",
+            "`llm-wiki`",
+        ):
+            self.assertIn(dependency, self.skill_text)
+        self.assertIn("Codex skill discovery", self.skill_text)
+        self.assertIn(
+            "Hermes Agent installed skills or `skills.external_dirs`",
+            self.skill_text,
+        )
+        for blocker in (
+            "`BLOCKED: missing Superpowers lifecycle dependency`",
+            "`BLOCKED: missing grill-with-docs dependency`",
+            "`BLOCKED: missing llm-wiki dependency`",
+        ):
+            self.assertIn(blocker, self.skill_text)
+
+    def test_dependency_preflight_respects_route_conditions(self) -> None:
+        self.assertIn(
+            "Check the Superpowers lifecycle skills for every route.",
+            self.skill_text,
+        )
+        self.assertIn(
+            "Check `grill-with-docs` when the Spec Stage requires it.",
+            self.skill_text,
+        )
+        self.assertIn(
+            "Check `llm-wiki` when a knowledge root exists.",
+            self.skill_text,
+        )
 
     def test_host_boundary_distinguishes_optional_effort_from_required_dispatch(self) -> None:
         self.assertIn(
@@ -123,6 +182,17 @@ class SddImplementationSkillContractTests(unittest.TestCase):
             self.skill_text,
         )
         self.assertIn("explicit authorization.", self.skill_text)
+
+    def test_every_remote_write_requires_explicit_authorization(self) -> None:
+        self.assertIn(
+            "Do not perform any remote write without separate explicit authorization.",
+            self.skill_text,
+        )
+        self.assertIn(
+            "This includes push, PR, merge, release, live install, issue, comment, "
+            "and project changes.",
+            self.skill_text,
+        )
 
     def test_knowledge_closeout_precedes_final_review(self) -> None:
         task_review = self.skill_text.index("All implementation tasks and task reviews")
