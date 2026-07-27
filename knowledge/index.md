@@ -82,6 +82,8 @@ _現在なし。_
 - [Loop Skill Context Optimization Input Packet](wiki/syntheses/loop-skill-context-optimization-input-packet.json) — historical / non-executable な Input Packet v1。過去の実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
 - [Loop Skill Codex 最適化仕様](wiki/syntheses/loop-skill-codex-optimization-spec.md) — Codex の planning / execution context と phase branch policy に合わせ、Execution Envelope v3、branch ownership、fresh / compacted coordinator handoff を固定する仕様。
   検索語: Codex, phase_branch_policy, schema version 3, execution envelope, planning branch, epic_base, issue branch, worktree, grill-to-pr-loop, issue-implementation-loop
+- [Planning Authority Policy 仕様](wiki/syntheses/planning-authority-policy/spec.md) — planning integrationをhost-selected main context、人間をdecision authority、supporting agentをadvisory/read-onlyとし、model / reasoningをdurable artifactへ保存しないSpec Gate承認済み仕様。
+  検索語: planning authority, main planning context, supporting agent, advisory only, read only, human decision authority, host runtime, model selection, reasoning, Codex, Hermes, 計画統合, 人間承認
 - [Issue Implementation Loop Common Lib Split Spec](wiki/syntheses/issue-implementation-loop-common-lib-split-spec.md) — `issue-implementation-loop` の `_common.py` と単一巨大 test file を internal common lib / behavior-domain tests へ分割する後続実装契約。
   検索語: issue-implementation-loop, common lib, _common.py, scripts/lib, test split, context optimization, skill split, コンテキスト最適化
 - [Issue Implementation Loop Common Lib Split Issues](wiki/syntheses/issue-implementation-loop-common-lib-split-issues.md) — common lib split 実装のローカルIssue ledger。

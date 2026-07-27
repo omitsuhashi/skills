@@ -1425,3 +1425,26 @@ append-only で使います。すべての entry は予測しやすい header �
 - approved spec SHA-256 `f4b8cebd19a832963aa5e4d022759b21ef73dc417ff6d2f1555b87419b578ec3`とsealed Input Packet SHA-256 `7b7ecc562d1ff2aa2066438099741dad9e70ccb889c9dada4620eebb2224e219`は不変である。default checkoutのHEADとexact porcelain statusはruntime start snapshotと一致した。
 - prior production Important findingsはTDD fixと再reviewを経てすべてclosedし、最終fix reviewはCritical 0 / Important 0である。non-blocking MinorとしてGit environment policyのskill間重複、runtime load/validate stabilization sequenceの反復、planning/default identity parameter data clumpを残す。
 - delivery stateは`local_only`。push、PR作成、merge、GitHub mutation、default checkoutのreset / clean / stash、destructive recoveryは実行していない。
+
+## [2026-07-27] spec-candidate | Planning Authority Policy
+
+- Epic ID `planning-authority-policy` として、planning integrationを`main_planning_context`、supporting agentを`advisory_only` / `read_only`、Spec Gate / Issue Gateのdecision authorityをHumanへ固定する仕様候補を追加した。
+- model / reasoningはCodexの選択画面などhost runtimeが所有し、spec、Input Packet、Execution Envelope、Worker Packet、runtime stateへ永続化しない。supporting agent、execution coordinator、worker、reviewerのmodel routingはhostに委譲する。
+- `skill-architecture.toml`のclosed family policy、architecture validator、`grill-to-pr-loop` entrypoint / planning contract、focused testsだけを変更対象とし、`issue-implementation-loop`のschema、scheduler、worker lifecycleは変更しない。
+- planning branchは`codex/planning-authority-policy/planning`、planning baseは`f5d151e34de5089d75be68249e09da8a2d14f282`。remote policyは`local_only`であり、GitHub issue、push、PR、merge、release、live installは非承認である。
+- exact spec path / raw-byte SHA-256を確認し、Human Spec Gate approvalを得るまでIssue分解とproduction implementationへ進まない。
+
+## [2026-07-27] spec-gate-approval | Planning Authority Policy
+
+- actor expression: `session-user`
+- approved at: `2026-07-27T09:32:17+09:00`
+- decision: `approved`
+- Epic ID: `planning-authority-policy`
+- exact spec path: `knowledge/wiki/syntheses/planning-authority-policy/spec.md`
+- spec raw-byte SHA-256: `6f4a952f35dd44fb930af98403ddfe5f0760af1d398722b338a18ef4493f8c68`
+- approval scope: `accepted_decisions`, `non_goals`, `acceptance_criteria`, `verification`, `remote_policy`, `stop_conditions`
+- accepted decisions: planning integration ownerは`main_planning_context`、supporting agentは`advisory_only` / `read_only`、decision authorityはHuman、model selectionは`host_runtime`、具体的model / reasoning値のpersistenceは禁止する。
+- non-goals: model router、Codex設定、agent file、execution schema、scheduler、`issue-implementation-loop` production implementationは変更しない。
+- verification: architecture / loop / wiki tests、context validator、dual-host validator、skill validator、`git diff --check`を要求する。
+- remote policy: `local_only`。GitHub issue、push、PR、merge、release、live installは非承認である。
+- stop conditions: authorityを分離できない、具体的model値の保存が必要、execution側変更が必要、Human gateまたはworker-only契約が弱まる、context budget超過、planned scope競合、relevant validation失敗。
