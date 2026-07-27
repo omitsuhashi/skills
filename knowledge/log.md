@@ -1481,3 +1481,11 @@ append-only で使います。すべての entry は予測しやすい header �
 - approved write scopeと`PAP-001 -> PAP-002 -> PAP-003 -> PAP-004`はIssue Gateから不変。runnableはPAP-001だけ、後続worktreeはblocker releaseまで作らない。
 - phase policy: planning artifactをcurrent planning branchのGate commitで固定し、executionはfresh / compacted coordinatorへhandoffする。planning/grill sessionは実装しない。
 - remote policy: `local_only`。unapproved external / high-risk actionがないため、追加Human approvalなしでExecution Plan Gateをauto-continueした。
+
+## [2026-07-27] implementation-verification-handoff | Planning Authority Policy
+
+- serial releaseは `PAP-001 -> PAP-002 -> PAP-003 -> PAP-004`。PAP-001は`5dfe3ff38d7c46f46c61714e5ab154613517babc`でfamily policy / validatorを実装し、reviewはCritical 0 / Important 0 / Minor 0でapproved。PAP-002はinitial `9d79aa6ddf5f4344641d755b64d96a32d4dd8389`に対するcycle 1 Important `intent_gap` 1件を`bf04888b41a37d2dd6488a2258f8fda400e6dd33`で修正し、cycle 2はfindings 0でapproved。PAP-003は`681dfb723be171b81502540ded0458c186f6f036`でmodel非永続化 / execution non-regressionを固定し、findings 0でapprovedとなった。
+- PAP-004はIssue台帳、Implementation Plan、index、logをcurrent implementation evidenceへ同期した。specとsealed Input Packetはverify-onlyで、SHA-256は`6f4a952f35dd44fb930af98403ddfe5f0760af1d398722b338a18ef4493f8c68` / `90b22e13c1a91abcee126fd05345941d91d0671c60cb6ec03774005c5c90b9d5`のまま不変である。
+- fresh full verificationはgrill-to-pr-loop 63件、issue-implementation-loop 284件、llm-wiki 6件、scripts 63件がpassした。skill architecture、3 context contracts、scoped dual-host compatibility、grill-to-pr-loop quick validator、`git diff --check`もpassし、context reportはwarningsなし、execution-plan headroom 20%である。
+- approved PAP-004 write scope外のdiffはなく、execution schemas / validator / scheduler / runtimeのproduction diffはゼロ。default checkoutは`HEAD=f5d151e34de5089d75be68249e09da8a2d14f282`、`## main...origin/main`でplanning開始時snapshotと一致する。remote actionは0である。
+- PAP-004のcommitted rangeに対するimplementation reviewとspec alignment reviewは未実施であり、local `PR_READY`にはしていない。このentryはreview handoffまでを記録し、review approvalを先取りしない。

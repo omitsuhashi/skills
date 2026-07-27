@@ -14,10 +14,10 @@
 
 | Epic ID | ローカルID | タイトル | レビュー状態 | 実行状態 | ブロック元 | ブロック先 | GitHub Issue | 実装レビュー | PR |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| planning-authority-policy | PAP-001 | planning authority family policy と validator を追加する | 承認済み | 実行可能 | なし | PAP-002 | 未作成 | 未実施 | 未作成 |
-| planning-authority-policy | PAP-002 | main planning / supporting agent の運用契約を追加する | 承認済み | ブロック中 | PAP-001 | PAP-003 | 未作成 | 未実施 | 未作成 |
-| planning-authority-policy | PAP-003 | model非永続化と既存execution契約の回帰防止を追加する | 承認済み | ブロック中 | PAP-002 | PAP-004 | 未作成 | 未実施 | 未作成 |
-| planning-authority-policy | PAP-004 | wiki同期と全体verificationを完了する | 承認済み | ブロック中 | PAP-003 | なし | 未作成 | 未実施 | 未作成 |
+| planning-authority-policy | PAP-001 | planning authority family policy と validator を追加する | 承認済み | `PR_READY` | なし | PAP-002 | 未作成 | 承認済み（findings 0） | 未作成 |
+| planning-authority-policy | PAP-002 | main planning / supporting agent の運用契約を追加する | 承認済み | `PR_READY` | PAP-001 | PAP-003 | 未作成 | cycle 2 承認済み（cycle 1 Important 1件修正済み） | 未作成 |
+| planning-authority-policy | PAP-003 | model非永続化と既存execution契約の回帰防止を追加する | 承認済み | `PR_READY` | PAP-002 | PAP-004 | 未作成 | 承認済み（findings 0） | 未作成 |
+| planning-authority-policy | PAP-004 | wiki同期と全体verificationを完了する | 承認済み | 実装・verification完了 / review待ち | PAP-003 | なし | 未作成 | 未実施 | 未作成 |
 
 ## Blocker graph
 
@@ -25,13 +25,17 @@
 PAP-001 -> PAP-002 -> PAP-003 -> PAP-004
 ```
 
-cycle はない。Issue Gate 承認時点で実行可能なのは `PAP-001` だけとする。blocked issue は dependency を packet に保持し、blocker release 前にworkerへ渡さない。
+cycle はない。Issue Gate 承認時点で実行可能だったのは `PAP-001` だけであり、実装では各 predecessor のverificationとimplementation review承認後に `PAP-001 -> PAP-002 -> PAP-003 -> PAP-004` の順でreleaseした。
 
 ## PAP-001 planning authority family policy と validator を追加する
 
-- `実行状態`: `実行可能`
+- `実行状態`: `PR_READY`
 - `ブロック元`: `なし`
 - `ブロック先`: `PAP-002`
+- `release順`: `1 / 4`。本Issueのreview承認後に `PAP-002` をreleaseした。
+- `final implementation commit`: `5dfe3ff38d7c46f46c61714e5ab154613517babc`
+- `verification`: focused architecture tests 8件、architecture validator、`git diff --check` がpass。
+- `implementation review`: `approved`。Critical 0 / Important 0 / Minor 0。
 - `write scope`:
   - `path:skill-architecture.toml`
   - `path:scripts/validate_skill_architecture.py`
@@ -51,9 +55,14 @@ cycle はない。Issue Gate 承認時点で実行可能なのは `PAP-001` だ�
 
 ## PAP-002 main planning / supporting agent の運用契約を追加する
 
-- `実行状態`: `ブロック中`
+- `実行状態`: `PR_READY`
 - `ブロック元`: `PAP-001`
 - `ブロック先`: `PAP-003`
+- `release順`: `2 / 4`。`PAP-001` review承認後に開始し、本Issueのcycle 2 review承認後に `PAP-003` をreleaseした。
+- `initial implementation commit`: `9d79aa6ddf5f4344641d755b64d96a32d4dd8389`
+- `review fix / final implementation commit`: `bf04888b41a37d2dd6488a2258f8fda400e6dd33`
+- `verification`: grill-to-pr-loop 59件、context validator、context report、scoped dual-host validator、skill quick validator、`git diff --check` がpass。execution-plan context headroomは20%、warningsなし。
+- `implementation review`: cycle 1はImportant `intent_gap` 1件。fix後のcycle 2は`approved`、Critical 0 / Important 0 / Minor 0。
 - `write scope`:
   - `path:skills/grill-to-pr-loop/SKILL.md`
   - `path:skills/grill-to-pr-loop/references/planning-contract.md`
@@ -75,9 +84,13 @@ cycle はない。Issue Gate 承認時点で実行可能なのは `PAP-001` だ�
 
 ## PAP-003 model非永続化と既存execution契約の回帰防止を追加する
 
-- `実行状態`: `ブロック中`
+- `実行状態`: `PR_READY`
 - `ブロック元`: `PAP-002`
 - `ブロック先`: `PAP-004`
+- `release順`: `3 / 4`。`PAP-002` cycle 2 review承認後に開始し、本Issueのreview承認後に `PAP-004` をreleaseした。
+- `final implementation commit`: `681dfb723be171b81502540ded0458c186f6f036`
+- `verification`: focused regression 4件、grill-to-pr-loop 63件、issue-implementation-loop 284件、negative-control、`git diff --check` がpass。execution production diffはゼロ。
+- `implementation review`: `approved`。Critical 0 / Important 0 / Minor 0。
 - `write scope`:
   - `path:skills/grill-to-pr-loop/tests/test_planning_authority_policy.py`
 - `受け入れ条件`:
@@ -97,9 +110,15 @@ cycle はない。Issue Gate 承認時点で実行可能なのは `PAP-001` だ�
 
 ## PAP-004 wiki同期と全体verificationを完了する
 
-- `実行状態`: `ブロック中`
+- `実行状態`: `実装・verification完了 / review待ち`
 - `ブロック元`: `PAP-003`
 - `ブロック先`: `なし`
+- `release順`: `4 / 4`。`PAP-003` review承認後に開始した。
+- `implementation evidence`: Issue台帳、Implementation Plan、index、logを同期し、spec / sealed Input Packetはverify-onlyでbytes不変。
+- `verification`: grill-to-pr-loop 63件、issue-implementation-loop 284件、llm-wiki 6件、scripts 63件がpass。architecture、context、context report、scoped dual-host、skill quick validator、`git diff --check`もpass。
+- `immutability / scope`: spec SHA-256は`6f4a952f35dd44fb930af98403ddfe5f0760af1d398722b338a18ef4493f8c68`、packet SHA-256は`90b22e13c1a91abcee126fd05345941d91d0671c60cb6ec03774005c5c90b9d5`で不変。execution production diffはゼロ。
+- `default checkout`: `HEAD=f5d151e34de5089d75be68249e09da8a2d14f282`、`## main...origin/main`でplanning開始時snapshotと一致。
+- `pending`: committed rangeのimplementation reviewとspec alignment reviewは未実施。`PR_READY`ではない。
 - `write scope`:
   - `path:knowledge/wiki/syntheses/planning-authority-policy`
   - `path:knowledge/index.md`
