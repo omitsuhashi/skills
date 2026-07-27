@@ -1,0 +1,178 @@
+# Declarative agent contract. This is not an executor, adapter, or tool mapping.
+[contract]
+version = 1
+instruction_path = "direct_official_github_mcp"
+success_source = "observed_remote_state"
+zero_write_outcomes = ["blocked", "ambiguous", "duplicate", "bulk"]
+
+[operation.task_create]
+local_preflight = "once"
+retry_only = false
+
+[operation.task_create.step.issue]
+read_before = "issue_search_exact"
+write = "issue_create"
+read_after = "issue_read_exact"
+observed = "issue_exists"
+retry_after_unknown = true
+
+[operation.task_create.step.project_item]
+read_before = "project_item_read_exact"
+write = "project_item_add"
+read_after = "project_item_read_exact"
+observed = "project_item_exists"
+retry_after_unknown = true
+
+[operation.task_create.step.default_status]
+read_before = "project_status_read"
+write = "project_status_set_default"
+read_after = "project_status_read"
+observed = "default_status_observed"
+retry_after_unknown = true
+
+[operation.task_create.step.default_priority]
+read_before = "project_priority_read"
+write = "project_priority_set_default"
+read_after = "project_priority_read"
+observed = "default_priority_observed"
+retry_after_unknown = true
+
+[operation.task_create.final.issue]
+read = "issue_read_exact"
+observed = "issue_exists"
+
+[operation.task_create.final.project_item]
+read = "project_item_read_exact"
+observed = "project_item_exists"
+
+[operation.task_create.final.status]
+read = "project_status_read"
+observed = "default_status_observed"
+
+[operation.task_create.final.priority]
+read = "project_priority_read"
+observed = "default_priority_observed"
+
+[operation.task_create.final.due_date]
+read = "project_due_date_read"
+observed = "due_date_empty_observed"
+
+[operation.task_project_register]
+local_preflight = "once"
+retry_only = true
+
+[operation.task_project_register.step.project_item]
+read_before = "project_item_read_exact"
+write = "project_item_add"
+read_after = "project_item_read_exact"
+observed = "project_item_exists"
+retry_after_unknown = true
+
+[operation.task_project_register.step.default_status]
+read_before = "project_status_read"
+write = "project_status_set_default"
+read_after = "project_status_read"
+observed = "default_status_observed"
+retry_after_unknown = true
+
+[operation.task_project_register.step.default_priority]
+read_before = "project_priority_read"
+write = "project_priority_set_default"
+read_after = "project_priority_read"
+observed = "default_priority_observed"
+retry_after_unknown = true
+
+[operation.task_project_register.final.issue]
+read = "issue_read_exact"
+observed = "issue_exists"
+
+[operation.task_project_register.final.project_item]
+read = "project_item_read_exact"
+observed = "project_item_exists"
+
+[operation.task_project_register.final.status]
+read = "project_status_read"
+observed = "default_status_observed"
+
+[operation.task_project_register.final.priority]
+read = "project_priority_read"
+observed = "default_priority_observed"
+
+[operation.task_project_register.final.due_date]
+read = "project_due_date_read"
+observed = "due_date_empty_observed"
+
+[operation.task_update_issue]
+local_preflight = "once"
+retry_only = false
+
+[operation.task_update_issue.step.requested_property]
+read_before = "issue_read_exact"
+write = "issue_update_requested"
+read_after = "issue_read_exact"
+observed = "requested_issue_property_observed"
+retry_after_unknown = true
+
+[operation.task_update_issue.final.requested_property]
+read = "issue_read_exact"
+observed = "requested_issue_property_observed"
+
+[operation.task_update_project]
+local_preflight = "once"
+retry_only = false
+
+[operation.task_update_project.step.requested_field]
+read_before = "project_field_read"
+write = "project_field_update_requested"
+read_after = "project_field_read"
+observed = "requested_project_field_observed"
+retry_after_unknown = true
+
+[operation.task_update_project.final.requested_field]
+read = "project_field_read"
+observed = "requested_project_field_observed"
+
+[operation.task_comment]
+local_preflight = "once"
+retry_only = false
+
+[operation.task_comment.step.exact_comment]
+read_before = "issue_comment_read"
+write = "issue_comment_create"
+read_after = "issue_comment_read"
+observed = "exact_comment_observed"
+retry_after_unknown = true
+
+[operation.task_comment.final.exact_comment]
+read = "issue_comment_read"
+observed = "exact_comment_observed"
+
+[operation.task_complete]
+local_preflight = "per_remaining_side"
+retry_only = false
+
+[operation.task_complete.step.issue]
+side = "issue"
+read_before = "issue_terminal_read"
+write = "issue_close_requested"
+read_after = "issue_terminal_read"
+observed = "issue_terminal_observed"
+retry_after_unknown = true
+
+[operation.task_complete.step.project]
+side = "project"
+read_before = "project_terminal_status_read"
+write = "project_status_set_terminal"
+read_after = "project_terminal_status_read"
+observed = "project_terminal_observed"
+retry_after_unknown = true
+
+[operation.task_complete.final.issue]
+side = "issue"
+read = "issue_terminal_read"
+observed = "issue_terminal_observed"
+
+[operation.task_complete.final.project]
+side = "project"
+read = "project_terminal_status_read"
+observed = "project_terminal_observed"

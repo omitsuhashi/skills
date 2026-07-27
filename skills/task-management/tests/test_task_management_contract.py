@@ -19,8 +19,11 @@ EXPECTED_FILES = {
     "references/core.md",
     "references/github-projects.md",
     "references/issue-contract.md",
+    "references/operation-readback-state-machine.toml",
     "references/safety-and-failures.md",
     "references/target-authorization.md",
+    "tests/fake_github_mcp.py",
+    "tests/test_operation_readback_state_machine.py",
     "tests/test_task_management_contract.py",
 }
 
@@ -81,10 +84,14 @@ class TaskManagementContractTests(unittest.TestCase):
         ):
             self.assertIn(required, text)
 
-    def test_skill_has_no_runtime_implementation_surface(self) -> None:
+    def test_skill_has_no_host_specific_or_runtime_surface(self) -> None:
         production = [
             SKILL,
-            *sorted((SKILL_ROOT / "references").glob("*.md")),
+            *sorted(
+                path
+                for path in (SKILL_ROOT / "references").iterdir()
+                if path.is_file()
+            ),
         ]
         text = "\n".join(read(path) for path in production)
         for prohibited in (

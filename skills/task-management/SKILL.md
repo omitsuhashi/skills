@@ -22,6 +22,7 @@ while following the task workflow.
 - Read `references/issue-contract.md` before creating an Issue or deciding whether an existing Issue is the same task.
 - Read `references/safety-and-failures.md` before any write, destructive operation, bulk change, or recovery from a partial failure.
 - Read `references/target-authorization.md` before every write route.
+- Read `references/operation-readback-state-machine.toml` before every write or partial retry. Treat its semantic `read_before -> write -> read_after -> observed` transitions as the required direct-tool call order.
 
 ## Boundaries
 
@@ -39,7 +40,10 @@ while following the task workflow.
 3. For read, search, and list, require only the read capabilities because these routes perform no write.
 4. For every bounded write operation, run `portfolio-os task-preflight` for the exact typed target immediately before its first write. A blocked gate means zero writes.
 5. After an allowed local gate, perform a separate direct GitHub MCP capability and access check for only that operation, then invoke official GitHub MCP directly.
-6. Follow exactly one operation flow below. Combine flows only when the user explicitly requests each operation.
+6. For each mutation, call the named official GitHub MCP write directly, then perform its named `read_after` through official GitHub MCP and evaluate the named `observed` condition. A write acknowledgment alone is never success.
+7. On a timeout or unknown write result, perform the named `read_after` before any retry. Retry only when the observed remote state proves the write remains unfinished. Never repeat an observed write.
+8. Return success only from the operation's final observed remote state. On partial success, resume only unfinished transitions and preserve every already-observed Issue, Project item, and field.
+9. Follow exactly one operation flow below. Combine flows only when the user explicitly requests each operation.
 
 ### Read, search, and list
 
