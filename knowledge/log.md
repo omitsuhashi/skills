@@ -1631,3 +1631,9 @@ append-only で使います。すべての entry は予測しやすい header �
 - scoped skill tests、repository script tests、architecture / context validators、新Skillのdual-host / skill-creator validators、`llm-wiki` tests、Git diff checkがfreshに成功した。
 - repository-wide dual-host validationには変更前から`skills/llm-wiki/DESCRIPTION.md`の既知findingが残る。Phase 1ではscopeを広げず、新Skillのscoped dual-host validationを完了条件とした。
 - push、PR作成、merge、release、live install、Phase 2の旧skill削除は未実施。
+
+## [2026-07-27] final-review-candidate | SDD Implementation Superpowers-first Revision
+
+- Task 1は`65abafa` `feat: make SDD implementation Superpowers-first`とreview fix `6fa0f4f` `test: cover SDD review and remote boundaries`で完了し、Task 1 review fix round 1はapproved（open material findingなし）である。Task 2は`693e1aa` `docs: route repository changes through Superpowers`で完了し、task reviewはmaterial findingなしでapprovedである。SHAとsubjectは`git log --oneline --reverse 8c18ef0..HEAD`で確認した。
+- fresh verificationはLLM Wiki 6 tests、`sdd-implementation` 12 tests、repository scripts 68 testsがすべて`OK`である。skill architecture、3 skill context contracts、`sdd-implementation` scoped dual-host compatibility、skill-creator quick validator、Step 3 / Step 4の`git diff --check`も成功した。
+- design、current successor plan、indexをfinal whole-branch review待ちへ同期した。`LOCAL_COMPLETE`、final review approval、`local-complete` entryは記録していない。push、PR作成、merge、release、live installも未実施である。

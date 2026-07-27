@@ -621,3 +621,36 @@ git diff --check 8c18ef0..HEAD
 Perform one scoped review of the final evidence-only commit against the approved Written Spec and Step 7 requirements. Return `LOCAL_COMPLETE` only when the tests pass, diff check is clean, and the scoped re-review has no blocking finding.
 
 Do not push, create a PR, merge, release, or install live.
+
+## Closeout Candidate
+
+2026-07-27時点で、Task 1〜3 の実装、Task 1〜2 の task review、fresh verification を final whole-branch review に渡せる状態へ同期した。この section は final review の候補証跡であり、`LOCAL_COMPLETE` や final approval を主張しない。
+
+### Task commits と task review
+
+- Task 1: `65abafa` `feat: make SDD implementation Superpowers-first`。review fix は`6fa0f4f` `test: cover SDD review and remote boundaries`であり、Task 1 review fix round 1 は approved（open material finding なし）。
+- Task 2: `693e1aa` `docs: route repository changes through Superpowers`。Task 2 review は approved（material finding なし）。
+
+上記SHAとsubjectは`git log --oneline --reverse 8c18ef0..HEAD`から確認した。Task 1 の初期実装とreview fix、Task 2 のrouter / architecture / metadata同期は、いずれもこのcloseout candidateの親コミットに含まれる。
+
+### Fresh verification
+
+Step 3:
+
+- `PYTHONPYCACHEPREFIX=/private/tmp/sdd-superpowers-t3-wiki python3 -m unittest discover -s skills/llm-wiki/tests` — 6 tests、`OK`。
+- `git diff --check` — 出力なし、成功。
+
+Step 4:
+
+- `PYTHONPYCACHEPREFIX=/private/tmp/sdd-superpowers-final python3 -m unittest discover -s skills/sdd-implementation/tests` — 12 tests、`OK`。
+- `PYTHONPYCACHEPREFIX=/private/tmp/sdd-superpowers-final python3 -m unittest discover -s scripts` — 68 tests、`OK`。
+- `python3 scripts/validate_skill_architecture.py --all` — `OK: validated skill architecture policy (repository-change-loop)`。
+- `python3 scripts/validate_skill_context.py --all` — `OK: validated 3 skill context contract(s)`。
+- `python3 scripts/validate_dual_host_compatibility.py --skill skills/sdd-implementation` — `OK: dual-host repository compatibility`。
+- `python3 /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_validate.py skills/sdd-implementation` — `Skill is valid!`。
+- `PYTHONPYCACHEPREFIX=/private/tmp/sdd-superpowers-final python3 -m unittest discover -s skills/llm-wiki/tests` — 6 tests、`OK`。
+- `git diff --check` — 出力なし、成功。
+
+### 未実施 remote action
+
+push、PR作成、merge、release、live install は実施していない。最終 whole-branch review も未実施であり、その承認後まで completion status は変更しない。
