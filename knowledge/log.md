@@ -1699,3 +1699,10 @@ append-only で使います。すべての entry は予測しやすい header �
 - fresh verificationはLLM Wiki 5 testsが`OK`、`git diff --check`が出力なしで成功した。先行closeout candidateのSDD contract 18 tests、repository scripts 43 tests、skill architecture / context validator、scoped dual-host compatibility、skill quick validationも成功済みである。
 - Task 1 implementation、independent task review、knowledge closeout、final whole-branch review、bounded fix、scoped re-review、fresh verificationが揃ったため`LOCAL_COMPLETE`とする。
 - push、PR作成、merge、release、live installその他のremote writeは実施していない。
+
+## [2026-07-28] spec-and-plan-gate | SDD Agent-Agnostic Runtime Contract
+
+- Humanは、skillを特定agentに依存させず、どの対応runtimeでも同じ`SKILL.md`、入力、依存skill、必要capabilityからbehaviorを決める方針を明示承認した。
+- agentごとのdependency確認、agent名によるdispatch / fallback / verification分岐はcurrent contractから削除する。dependency discoveryはactive runtimeで一度だけ行い、isolated dispatch、explicit model、optional effort、wait / resumeはcapabilityとして解決する。
+- canonical designを`knowledge/wiki/syntheses/sdd-implementation-skill-design.md`へ同期し、実装計画を`knowledge/wiki/syntheses/sdd-agent-agnostic-runtime-implementation-plan.md`へ作成した。実装はportable skill contractとdurable knowledge closeoutの2 taskで行う。
+- plugin packaging adapterとhistorical non-executable planはscope外である。push、PR、merge、release、live installその他のremote writeは未承認である。

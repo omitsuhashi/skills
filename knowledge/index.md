@@ -98,8 +98,10 @@ _現在なし。_
   検索語: planning authority, PAP, Issue Gate, local issue, blocker graph, family policy, advisory only, model persistence, ローカルIssue, ブロッカー
 - [Planning Authority Policy 実装計画](wiki/syntheses/planning-authority-policy/implementation-plan.md) / [sealed Input Packet v2](wiki/syntheses/planning-authority-policy/input-packet.json) — Execution Plan Gate、5-field coverage fix、final branch integration、worker-only境界と未実施のPAP-004 cycle 2 reviewsを区別するlocal-only handoff。
   検索語: planning authority, implementation plan, Input Packet v2, Execution Plan Gate, sealed packet, TDD, worker-only, local-only, 実装計画
-- [SDD Implementation Skill 設計](wiki/syntheses/sdd-implementation-skill-design.md) — Superpowersを開発方法論の正本とするHuman-approved Written Spec。model tierはupstreamが所有し、runtime-only reasoning effortはlow / medium / highを維持しつつtask complexity / riskをrole defaultより優先する。
-  検索語: sdd-implementation, Superpowers, brainstorming, writing-plans, Subagent-Driven Development, SDD, Grill with Docs, spec refinement, model selection, reasoning effort, host adapter, Codex, Hermes Agent, llm-wiki, knowledge lifecycle, Written Spec, 仕様作成, 仕様精緻化
+- [SDD Implementation Skill 設計](wiki/syntheses/sdd-implementation-skill-design.md) — Superpowersを開発方法論の正本とし、skill behaviorを入力・依存skill・active runtime capabilityだけで解決するHuman-approved Written Spec。
+  検索語: sdd-implementation, Superpowers, brainstorming, writing-plans, Subagent-Driven Development, SDD, Grill with Docs, active runtime, capability boundary, agent-agnostic, portable skill, reasoning effort, llm-wiki, knowledge lifecycle, Written Spec, 仕様作成, 仕様精緻化
+- [SDD Agent-Agnostic Runtime Contract Implementation Plan](wiki/syntheses/sdd-agent-agnostic-runtime-implementation-plan.md) — agent名によるdependency確認・実行分岐をactive runtimeのcapability解決へ置き換えるHuman-approved実装計画。
+  検索語: sdd-implementation, agent-agnostic, portable skill, active runtime, dependency discovery, capability boundary, implementation plan, TDD, pressure scenario, 実装計画, エージェント非依存
 - [SDD Reasoning Effort Risk Precedence Implementation Plan](wiki/syntheses/sdd-effort-risk-precedence-implementation-plan.md) — high-risk task reviewをhighとして扱い、共有default effort vocabularyを増やさない変更は、Task 1、final review、bounded fix、scoped re-reviewを完了した`LOCAL_COMPLETE` plan。
   検索語: reasoning effort, risk precedence, task complexity, high-risk task review, low, medium, high, runtime override, final review, リスク優先, 実装計画
 - [Superpowers SDD のモデル選択・Reasoning・Host 境界調査](wiki/syntheses/sdd-superpowers-model-and-reasoning-research.md) — Superpowers v6.2.0のdispatch model選択、reasoning effort不在、Codex/Hermes adapter境界、brainstorming・planning・SDDの責任分割を一次情報で確認した調査。
@@ -177,7 +179,7 @@ _現在なし。_
   検索語: decide-in-order, decision support, DecisionFrame, DecisionRecord, light, deep, review, standalone skill, 決める順番, 意思決定支援, 日次計画, 継続判断, 調査方針, 許容損失
 - [Decide In Order Skill 実装計画](wiki/syntheses/2026-07-17-decide-in-order-implementation-plan.md) — standalone decision skillのtest-first実装とforward testを記録するhistorical plan。旧task-management plugin integrationはcurrent task contractではない。
   検索語: decide-in-order, implementation plan, skill-creator, forward test, contract test, TDD, standalone skill, 実装計画, 意思決定支援, 回帰検証
-- [Codex / Hermes Dual-host Authoring Contract 設計](wiki/syntheses/hermes-dual-host-authoring-contract-design.md) — repository互換、discovery、live loadを分離し、current standalone task-managementの`skills.external_dirs` discovery routeと旧plugin evidenceのhistorical境界を記録した設計。
+- [Codex / Hermes Dual-host Authoring Contract 設計](wiki/syntheses/hermes-dual-host-authoring-contract-design.md) — skill behaviorについてはagent-agnostic contractにsupersedeされたhistorical設計。plugin packagingと過去のdiscovery / live load evidenceを参照する場合だけ使う。
   検索語: Hermes Agent, Codex, dual-host, SKILL.md, description.md, plugin.yaml, register(ctx), external_dirs, install, discovery, live load, skill creator, plugin creator, 作成指示, 互換性, インストール, 検証
 - [Codex / Hermes Dual-host Authoring Contract 実装計画](wiki/syntheses/2026-07-17-hermes-dual-host-authoring-contract-implementation-plan.md) — 薄いauthoring guidance、標準ライブラリvalidator、既存skill/plugin導入契約、CIを4つのTDD単位で実装する計画。
   検索語: Hermes Agent, Codex, dual-host, implementation plan, AGENTS.md, validator, unittest, CI, TDD, SKILL.md, plugin.yaml, register(ctx), 実装計画, 作成ルール, 検証
