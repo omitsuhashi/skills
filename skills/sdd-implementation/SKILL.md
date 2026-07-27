@@ -120,6 +120,10 @@ Apply reasoning effort as an independent runtime-only overlay when supported:
 | Multi-file integration, normal debugging, or task review | `medium` |
 | Architecture-sensitive or high-risk task, or final review | `high` |
 
+Task complexity and current risk take precedence over role defaults.
+A high-risk task review uses `high`, regardless of its role default.
+The shared default effort vocabulary is limited to `low`, `medium`, and `high`.
+
 An explicit user runtime effort override takes precedence over the default effort overlay.
 For a stuck fix, raise effort one available step before following Superpowers
 model escalation.
