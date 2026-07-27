@@ -14,10 +14,10 @@
 
 | Epic ID | ローカルID | タイトル | レビュー状態 | 実行状態 | ブロック元 | ブロック先 | GitHub Issue | 実装レビュー | PR |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| planning-authority-policy | PAP-001 | planning authority family policy と validator を追加する | 承認済み | `PR_READY` | なし | PAP-002 | 未作成 | 承認済み（findings 0） | 未作成 |
+| planning-authority-policy | PAP-001 | planning authority family policy と validator を追加する | 承認済み | `PR_READY` | なし | PAP-002 | 未作成 | spec fix cycle 2 承認済み（findings 0） | 未作成 |
 | planning-authority-policy | PAP-002 | main planning / supporting agent の運用契約を追加する | 承認済み | `PR_READY` | PAP-001 | PAP-003 | 未作成 | cycle 2 承認済み（cycle 1 Important 1件修正済み） | 未作成 |
 | planning-authority-policy | PAP-003 | model非永続化と既存execution契約の回帰防止を追加する | 承認済み | `PR_READY` | PAP-002 | PAP-004 | 未作成 | 承認済み（findings 0） | 未作成 |
-| planning-authority-policy | PAP-004 | wiki同期と全体verificationを完了する | 承認済み | 実装・verification完了 / review待ち | PAP-003 | なし | 未作成 | 未実施 | 未作成 |
+| planning-authority-policy | PAP-004 | wiki同期と全体verificationを完了する | 承認済み | spec fix統合済み / cycle 2 reviews待ち | PAP-003 | なし | 未作成 | implementation cycle 1承認済み / spec cycle 1 Important 1件修正済み | 未作成 |
 
 ## Blocker graph
 
@@ -33,9 +33,12 @@ cycle はない。Issue Gate 承認時点で実行可能だったのは `PAP-001
 - `ブロック元`: `なし`
 - `ブロック先`: `PAP-002`
 - `release順`: `1 / 4`。本Issueのreview承認後に `PAP-002` をreleaseした。
-- `final implementation commit`: `5dfe3ff38d7c46f46c61714e5ab154613517babc`
-- `verification`: focused architecture tests 8件、architecture validator、`git diff --check` がpass。
-- `implementation review`: `approved`。Critical 0 / Important 0 / Minor 0。
+- `initial implementation commit`: `5dfe3ff38d7c46f46c61714e5ab154613517babc`
+- `spec alignment finding`: PAP-004 cycle 1でImportant 1件。production validatorは5 fieldすべての不正値を拒否していたが、恒久的なper-field invalid-value regression coverageは`supporting_agent_authority` 1件だけだった。
+- `spec fix / final implementation commit`: `40a4459a8a5ab9b6f6afff0bd3e6505821d049bf`
+- `fix evidence`: `integration_owner`、`supporting_agent_authority`、`decision_authority`、`model_selection`、`model_persistence`の5 subcaseをparameterized regressionへ固定した。
+- `verification`: focused architecture tests 8件（invalid-value 5 subcases）、scripts 63件、architecture validator、`git diff --check` がpass。
+- `implementation review`: spec fix cycle 2は`approved`。Critical 0 / Important 0 / Minor 0。
 - `write scope`:
   - `path:skill-architecture.toml`
   - `path:scripts/validate_skill_architecture.py`
@@ -110,15 +113,19 @@ cycle はない。Issue Gate 承認時点で実行可能だったのは `PAP-001
 
 ## PAP-004 wiki同期と全体verificationを完了する
 
-- `実行状態`: `実装・verification完了 / review待ち`
+- `実行状態`: `spec fix統合済み / cycle 2 reviews待ち`
 - `ブロック元`: `PAP-003`
 - `ブロック先`: `なし`
 - `release順`: `4 / 4`。`PAP-003` review承認後に開始した。
-- `implementation evidence`: Issue台帳、Implementation Plan、index、logを同期し、spec / sealed Input Packetはverify-onlyでbytes不変。
+- `initial closeout commit`: `4bc6fe52e4bdd062a10766b96446b325a57c540a`
+- `implementation review cycle 1`: range `681dfb723be171b81502540ded0458c186f6f036..4bc6fe52e4bdd062a10766b96446b325a57c540a` は`approved`。Critical 0 / Important 0 / Minor 0。
+- `spec alignment review cycle 1`: `changes_requested`。Critical 0 / Important 1 / Minor 0。PAP-001の5-field per-field invalid-value regression coverage不足を検出した。
+- `spec fix integration`: PAP-001 fix `40a4459a8a5ab9b6f6afff0bd3e6505821d049bf`をreview cycle 2承認後、merge commit `11477585f1d0c77c842a1b654d3aaf0f182bda63`でfinal branchへ統合した。
+- `implementation evidence`: Issue台帳、Implementation Plan、index、logをfix統合後のcurrent stateへ同期し、spec / sealed Input Packetはverify-onlyでbytes不変。
 - `verification`: grill-to-pr-loop 63件、issue-implementation-loop 284件、llm-wiki 6件、scripts 63件がpass。architecture、context、context report、scoped dual-host、skill quick validator、`git diff --check`もpass。
 - `immutability / scope`: spec SHA-256は`6f4a952f35dd44fb930af98403ddfe5f0760af1d398722b338a18ef4493f8c68`、packet SHA-256は`90b22e13c1a91abcee126fd05345941d91d0671c60cb6ec03774005c5c90b9d5`で不変。execution production diffはゼロ。
 - `default checkout`: `HEAD=f5d151e34de5089d75be68249e09da8a2d14f282`、`## main...origin/main`でplanning開始時snapshotと一致。
-- `pending`: committed rangeのimplementation reviewとspec alignment reviewは未実施。`PR_READY`ではない。
+- `pending`: fix統合後のcommitted rangeに対するimplementation review cycle 2とspec alignment review cycle 2は未実施。`PR_READY`ではない。
 - `write scope`:
   - `path:knowledge/wiki/syntheses/planning-authority-policy`
   - `path:knowledge/index.md`

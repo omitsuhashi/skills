@@ -84,9 +84,9 @@ _現在なし。_
   検索語: Codex, phase_branch_policy, schema version 3, execution envelope, planning branch, epic_base, issue branch, worktree, grill-to-pr-loop, issue-implementation-loop
 - [Planning Authority Policy 仕様](wiki/syntheses/planning-authority-policy/spec.md) — planning integrationをhost-selected main context、人間をdecision authority、supporting agentをadvisory/read-onlyとし、model / reasoningをdurable artifactへ保存しないcurrent canonical仕様。
   検索語: planning authority, main planning context, supporting agent, advisory only, read only, human decision authority, host runtime, model selection, reasoning, Codex, Hermes, 計画統合, 人間承認
-- [Planning Authority Policy Issue 台帳](wiki/syntheses/planning-authority-policy/issues.md) — PAP-001〜003のreview承認済み実装とPAP-004のfull verification完了・post-commit review待ちをserial release順、commit、evidenceとともに追跡するcurrent台帳。
+- [Planning Authority Policy Issue 台帳](wiki/syntheses/planning-authority-policy/issues.md) — PAP-001の5-field spec fixとcycle 2承認、PAP-004へのfix統合、未実施のPAP-004 cycle 2 reviewsをserial release順、commit、evidenceとともに追跡するcurrent台帳。
   検索語: planning authority, PAP, Issue Gate, local issue, blocker graph, family policy, advisory only, model persistence, ローカルIssue, ブロッカー
-- [Planning Authority Policy 実装計画](wiki/syntheses/planning-authority-policy/implementation-plan.md) / [sealed Input Packet v2](wiki/syntheses/planning-authority-policy/input-packet.json) — Execution Plan Gate、4 Issueの実行済みTDD / verification evidence、worker-only境界と未実施のPAP-004 reviewsを区別するlocal-only handoff。
+- [Planning Authority Policy 実装計画](wiki/syntheses/planning-authority-policy/implementation-plan.md) / [sealed Input Packet v2](wiki/syntheses/planning-authority-policy/input-packet.json) — Execution Plan Gate、5-field coverage fix、final branch integration、worker-only境界と未実施のPAP-004 cycle 2 reviewsを区別するlocal-only handoff。
   検索語: planning authority, implementation plan, Input Packet v2, Execution Plan Gate, sealed packet, TDD, worker-only, local-only, 実装計画
 - [Issue Implementation Loop Common Lib Split Spec](wiki/syntheses/issue-implementation-loop-common-lib-split-spec.md) — `issue-implementation-loop` の `_common.py` と単一巨大 test file を internal common lib / behavior-domain tests へ分割する後続実装契約。
   検索語: issue-implementation-loop, common lib, _common.py, scripts/lib, test split, context optimization, skill split, コンテキスト最適化

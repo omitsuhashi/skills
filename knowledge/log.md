@@ -1489,3 +1489,13 @@ append-only で使います。すべての entry は予測しやすい header �
 - fresh full verificationはgrill-to-pr-loop 63件、issue-implementation-loop 284件、llm-wiki 6件、scripts 63件がpassした。skill architecture、3 context contracts、scoped dual-host compatibility、grill-to-pr-loop quick validator、`git diff --check`もpassし、context reportはwarningsなし、execution-plan headroom 20%である。
 - approved PAP-004 write scope外のdiffはなく、execution schemas / validator / scheduler / runtimeのproduction diffはゼロ。default checkoutは`HEAD=f5d151e34de5089d75be68249e09da8a2d14f282`、`## main...origin/main`でplanning開始時snapshotと一致する。remote actionは0である。
 - PAP-004のcommitted rangeに対するimplementation reviewとspec alignment reviewは未実施であり、local `PR_READY`にはしていない。このentryはreview handoffまでを記録し、review approvalを先取りしない。
+
+## [2026-07-27] spec-alignment-fix-handoff | Planning Authority Policy
+
+- PAP-004 initial closeout range `681dfb723be171b81502540ded0458c186f6f036..4bc6fe52e4bdd062a10766b96446b325a57c540a`のimplementation review cycle 1はCritical 0 / Important 0 / Minor 0でapprovedとなった。
+- spec alignment review cycle 1はCritical 0 / Important 1 / Minor 0でchanges requestedとなった。production validatorはapproved 5 fieldすべての不正値を正しく拒否していたが、恒久的なinvalid-value regression coverageが`supporting_agent_authority` 1 fieldに限られていた。
+- PAP-001 fix `40a4459a8a5ab9b6f6afff0bd3e6505821d049bf`は`integration_owner`、`supporting_agent_authority`、`decision_authority`、`model_selection`、`model_persistence`の5 subcasesをparameterized regressionへ固定した。focused architecture suite 8件、scripts 63件、architecture validator、committed-range `git diff --check`がpassし、PAP-001 fix review cycle 2はfindings 0でapprovedとなった。
+- review-approved fixはmerge commit `11477585f1d0c77c842a1b654d3aaf0f182bda63`でPAP-004 final branchへ統合済みである。本docs fix workerはmerge、runtime mutation、remote actionを行わず、統合済みHEADをdurable docsへ同期した。
+- fix統合後のfresh full verificationはgrill-to-pr-loop 63件、issue-implementation-loop 284件、llm-wiki 6件、scripts 63件、skill architecture、3 context contracts、context report、scoped dual-host compatibility、grill-to-pr-loop quick validator、`git diff --check`がpassした。context reportはwarningsなし、execution-plan headroom 20%を維持した。
+- approved spec / sealed packetのSHA-256は`6f4a952f35dd44fb930af98403ddfe5f0760af1d398722b338a18ef4493f8c68` / `90b22e13c1a91abcee126fd05345941d91d0671c60cb6ec03774005c5c90b9d5`で不変。execution production diffはゼロ、default checkoutは開始時snapshotと一致、remote actionは0である。
+- PAP-004のfix同期commitを含むfinal rangeに対するimplementation review cycle 2とspec alignment review cycle 2は未実施であり、local `PR_READY`にはしていない。cycle 2 approvalを先取りしない。

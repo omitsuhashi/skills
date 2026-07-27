@@ -57,12 +57,12 @@
 ### 1.1 Failing tests を追加する
 
 - [x] `scripts/test_validate_skill_architecture.py` で `validate_policy` を import し、default policy を深い copy にして直接 mutate できる helper を追加する。
-- [x] 次の5ケースを `SkillArchitecturePolicyTests` に追加する。
+- [x] 次のstructural 4ケースとinvalid-value 5 subcasesを `SkillArchitecturePolicyTests` に追加する。
   - canonical policy が次の exact dict と一致する。
   - `planning_authority` table 全体の欠落を拒否する。
   - 必須 field 1件の欠落を拒否する。
   - 未定義 field `model_name` を拒否する。
-  - `supporting_agent_authority = "decision_maker"` の不正値を拒否する。
+  - `integration_owner`、`supporting_agent_authority`、`decision_authority`、`model_selection`、`model_persistence`の各不正値をsubtestで拒否する。
 
 期待する正本:
 
@@ -148,6 +148,13 @@ git diff --check
 git add skill-architecture.toml scripts/validate_skill_architecture.py scripts/test_validate_skill_architecture.py
 git commit -m "feat: define planning authority policy"
 ```
+
+#### Spec alignment fix evidence
+
+- PAP-004 spec alignment review cycle 1は、production validatorの挙動ではなく、5 fieldすべてに対する恒久的なper-field invalid-value regression coverage不足をImportant 1件として検出した。
+- PAP-001 fix commit `40a4459a8a5ab9b6f6afff0bd3e6505821d049bf`で5 fieldをparameterized subtestsへ固定した。
+- focused architecture suite 8件（invalid-value 5 subcases）、scripts 63件、architecture validator、committed-range `git diff --check`がpassした。
+- PAP-001 fix review cycle 2はCritical 0 / Important 0 / Minor 0で`approved`。merge commit `11477585f1d0c77c842a1b654d3aaf0f182bda63`でPAP-004 final branchへ統合した。
 
 ## Task 2: PAP-002 main planning / supporting agent 運用契約
 
@@ -342,6 +349,7 @@ git diff --check
 #### 実行結果
 
 - unit suites: grill-to-pr-loop 63件、issue-implementation-loop 284件、llm-wiki 6件、scripts 63件がpass。
+- focused spec fix: architecture suite 8件と5-field invalid-value subcasesがpass。
 - validators: skill architecture、3 context contracts、scoped dual-host compatibility、grill-to-pr-loop quick validatorがpass。
 - context report: warningsなし。grill-to-pr-loop execution-planは推定8778 / 11000 tokens、headroom 20%、baseline growth 9.89%。
 - immutable artifacts: spec SHA-256 `6f4a952f35dd44fb930af98403ddfe5f0760af1d398722b338a18ef4493f8c68`、sealed packet SHA-256 `90b22e13c1a91abcee126fd05345941d91d0671c60cb6ec03774005c5c90b9d5`。
@@ -357,8 +365,11 @@ git add knowledge/wiki/syntheses/planning-authority-policy/issues.md knowledge/w
 git commit -m "docs: close planning authority policy implementation"
 ```
 
-- [ ] committed rangeに対する implementation review と spec alignment review を別 worker / reviewer context で実施する。
-- [ ] in-scope Critical / Important finding は最大2 review cycleで workerが修正し、fresh verification、commit更新、再reviewを行う。
+- [x] initial closeout range `681dfb723be171b81502540ded0458c186f6f036..4bc6fe52e4bdd062a10766b96446b325a57c540a`のimplementation review cycle 1を実施し、findings 0で`approved`を得た。
+- [x] spec alignment review cycle 1を実施し、PAP-001のper-field regression coverage不足をImportant 1件として受けた。
+- [x] PAP-001 fix、fresh verification、fix review cycle 2承認、final branch integrationを完了した。
+- [ ] fix同期commitを含むfinal rangeに対するimplementation review cycle 2とspec alignment review cycle 2を別 reviewer contextで実施する。
+- [ ] cycle 2でin-scope Critical / Important findingがあれば、上限内でworkerが修正し、fresh verification、commit更新、再reviewを行う。
 - [ ] review承認後に local `PR_READY` とする。`local_only` なので push、GitHub Issue、PR、merge、release、live installは行わない。
 
 ## Completion criteria
