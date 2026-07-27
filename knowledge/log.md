@@ -1706,3 +1706,9 @@ append-only で使います。すべての entry は予測しやすい header �
 - agentごとのdependency確認、agent名によるdispatch / fallback / verification分岐はcurrent contractから削除する。dependency discoveryはactive runtimeで一度だけ行い、isolated dispatch、explicit model、optional effort、wait / resumeはcapabilityとして解決する。
 - canonical designを`knowledge/wiki/syntheses/sdd-implementation-skill-design.md`へ同期し、実装計画を`knowledge/wiki/syntheses/sdd-agent-agnostic-runtime-implementation-plan.md`へ作成した。実装はportable skill contractとdurable knowledge closeoutの2 taskで行う。
 - plugin packaging adapterとhistorical non-executable planはscope外である。push、PR、merge、release、live installその他のremote writeは未承認である。
+
+## [2026-07-28] implementation-closeout-candidate | SDD Agent-Agnostic Runtime Contract
+
+- Task 1 は `33fe86b240efcd03e8e9c6020f6620e87747da2d`（`Make skill runtime contracts agent agnostic`）で完了し、独立 task review は Critical / Important / Minor なしの `Approved` である。baseline pressure scenario の named dual-runtime preflight は、post-change scenario で active runtime の一回だけの dependency / capability discovery、capability-only dispatch mapping、optional effort `not_supported` 時の継続へ置換された。
+- fresh local verification は `skills/sdd-implementation/tests` 18 tests、`skills/llm-wiki/tests` 5 tests、`scripts` 44 tests が各 `OK`、`validate_skill_architecture.py --all`、`validate_skill_context.py --all`（1 contract）、`validate_repository_compatibility.py --skill skills/sdd-implementation`、`git diff --check` がすべて exit 0 である。
+- repository-wide compatibility は pre-existing な case-insensitive `skills/llm-wiki/DESCRIPTION.md` collision が本変更の範囲外のため未実行である。push、PR作成、merge、release、live install、issue / comment / project mutationその他のremote writeは実施していない。whole-branch final reviewと`LOCAL_COMPLETE`もこのcandidateでは未実施である。

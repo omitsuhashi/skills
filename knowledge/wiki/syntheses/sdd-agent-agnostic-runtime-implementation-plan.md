@@ -8,6 +8,10 @@
 
 **Tech Stack:** Markdown、Python 3 standard library、`unittest`、repository validators、Superpowers skill pressure scenarios。
 
+## 実施状況
+
+Task 1 は `33fe86b240efcd03e8e9c6020f6620e87747da2d`（`Make skill runtime contracts agent agnostic`）で完了した。baseline pressure scenario は named dual-runtime preflight を確認し、post-change scenario は active runtime を一度だけ確認して capability を写像する手順へ更新されたことを確認した。独立 task review は **Approved**（Critical / Important / Minor なし）である。Task 2 はこのplan、current SDD design、historical dual-host boundary、index、append-only logを同期し、fresh local verification を記録する closeout candidate である。fresh verification は SDD 18、LLM Wiki 5、repository scripts 44 tests が各 `OK`、skill architecture、1 skill context contract、scoped repository compatibility、`git diff --check` が成功した。whole-branch final review、`LOCAL_COMPLETE`、remote write はこのplanの完了条件に含めず、未実施のまま残す。
+
 ## Global Constraints
 
 - Skill behavior is defined only by inputs, applicable dependencies, and required capabilities.

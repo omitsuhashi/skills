@@ -100,7 +100,7 @@ _現在なし。_
   検索語: planning authority, implementation plan, Input Packet v2, Execution Plan Gate, sealed packet, TDD, worker-only, local-only, 実装計画
 - [SDD Implementation Skill 設計](wiki/syntheses/sdd-implementation-skill-design.md) — Superpowersを開発方法論の正本とし、skill behaviorを入力・依存skill・active runtime capabilityだけで解決するHuman-approved Written Spec。
   検索語: sdd-implementation, Superpowers, brainstorming, writing-plans, Subagent-Driven Development, SDD, Grill with Docs, active runtime, capability boundary, agent-agnostic, portable skill, reasoning effort, llm-wiki, knowledge lifecycle, Written Spec, 仕様作成, 仕様精緻化
-- [SDD Agent-Agnostic Runtime Contract Implementation Plan](wiki/syntheses/sdd-agent-agnostic-runtime-implementation-plan.md) — agent名によるdependency確認・実行分岐をactive runtimeのcapability解決へ置き換えるHuman-approved実装計画。
+- [SDD Agent-Agnostic Runtime Contract Implementation Plan](wiki/syntheses/sdd-agent-agnostic-runtime-implementation-plan.md) — Task 1実装と独立reviewを完了し、active runtimeのcapability解決へ置き換えたportable skill contractのcloseout candidate。
   検索語: sdd-implementation, agent-agnostic, portable skill, active runtime, dependency discovery, capability boundary, implementation plan, TDD, pressure scenario, 実装計画, エージェント非依存
 - [SDD Reasoning Effort Risk Precedence Implementation Plan](wiki/syntheses/sdd-effort-risk-precedence-implementation-plan.md) — high-risk task reviewをhighとして扱い、共有default effort vocabularyを増やさない変更は、Task 1、final review、bounded fix、scoped re-reviewを完了した`LOCAL_COMPLETE` plan。
   検索語: reasoning effort, risk precedence, task complexity, high-risk task review, low, medium, high, runtime override, final review, リスク優先, 実装計画

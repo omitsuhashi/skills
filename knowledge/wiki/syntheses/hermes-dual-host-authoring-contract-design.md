@@ -1,14 +1,16 @@
 ---
 kind: synthesis
 created: 2026-07-17
-updated: 2026-07-23
+updated: 2026-07-28
 ---
 
 # Codex / Hermes Dual-host Authoring Contract 設計
 
 ## 状態
 
-実装済み、リポジトリ互換性をローカル検証済み。2026-07-17 の plugin 前提の task-management 記録は、2026-07-23 の standalone skill migration により historical / superseded となった。current repository surface は `skills/task-management/SKILL.md` と4つの参照Markdownだけであり、task-management の plugin manifest、registration、runtime code、smoke scriptは残っていない。今回のmigrationは `local_only` であり、live `~/.hermes/config.yaml` の変更と `hermes skills list` による可視性確認は実施していない。
+本書の **skill behavior**（Codex / Hermes の名称ごとに discovery、dispatch、fallback、verification を選ぶ guidance）は、2026-07-28 の agent-agnostic runtime contract により historical / superseded である。current skill behavior は [SDD Implementation Skill 設計](sdd-implementation-skill-design.md) と shared `SKILL.md` の inputs、applicable dependencies、required capabilities だけから解決し、本書を active-runtime preflight の根拠にしてはならない。
+
+一方、plugin packaging の manifest、registration、paired package validation という境界は依然として skill behavior とは別であり、current repository compatibility validation に残る。本書の plugin packaging evidence と live discovery / load evidence は、その別境界または過去の検証記録を調べるためにだけ参照する。2026-07-17 の plugin 前提の task-management 記録は、2026-07-23 の standalone skill migration により historical / superseded となった。current repository surface は `skills/task-management/SKILL.md` と4つの参照Markdownだけであり、task-management の plugin manifest、registration、runtime code、smoke scriptは残っていない。今回のmigrationは `local_only` であり、live `~/.hermes/config.yaml` の変更と `hermes skills list` による可視性確認は実施していない。
 
 ## 実装・ローカル検証証跡
 
