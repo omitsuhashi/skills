@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` to implement this plan task-by-task. Use `superpowers:writing-skills` and `superpowers:test-driven-development` for the Skill contract change.
 
-> **Status:** 2026-07-28にHumanが現状のlow / medium / high mappingを維持し、task complexity / riskをrole defaultより優先する方針を承認した。Task 1のlocal implementationとindependent reviewは完了・approved、knowledge closeout candidateは作成済みである。final whole-branch reviewは未実施のため`LOCAL_COMPLETE`ではない。
+> **Status:** 2026-07-28にHumanが現状のlow / medium / high mappingを維持し、task complexity / riskをrole defaultより優先する方針を承認した。Task 1のlocal implementationとindependent reviewは完了・approvedである。final whole-branch reviewはknowledge discoverability / provenanceにImportant 2件を返し、bounded fix candidateを作成した。scoped re-reviewはpendingのため`LOCAL_COMPLETE`ではない。
 
 **Goal:** `sdd-implementation`のreasoning effort overlayに、roleではなく実taskのcomplexity / riskを優先する判定規則を追加し、通常のtask reviewはmedium、architecture-sensitive / high-risk task reviewはhighになることを固定する。
 
@@ -45,7 +45,7 @@
 
 - [x] canonical design、index、append-only logを実装結果へ同期する。
 - [x] focused tests、repository validators、dual-host compatibility、Skill quick validation、`git diff --check`をfreshに実行する。
-- [ ] final whole-branch reviewerがspec、plan、Skill、tests、knowledge artifactsを同じbranch rangeで確認する。
+- [x] final whole-branch reviewerがspec、plan、Skill、tests、knowledge artifactsを同じbranch rangeで確認し、knowledge discoverability / provenanceのImportant 2件を返す。
 - [ ] material findingがなければlocal completionを記録する。
 
 ## Completion Evidence
@@ -53,4 +53,15 @@
 - Task 1のspec / plan commitは`c49fa714c917d4a0e7948ab92dfb828f2748b555`（`docs: define SDD effort risk precedence`）、implementation commitは`2549892c07dc3f65c22094ca27b9208c831e65b0`（`Clarify SDD effort risk precedence`）である。
 - Task 1 implementer reportは、REDの18 tests中1 failureからGREENの18/18 `OK`への移行、`git diff --check`成功、独立task reviewerの`APPROVED`とmaterial findingなしを記録している。
 - closeout candidateのfresh verificationは、SDD contract 18 tests、repository scripts 43 tests、LLM Wiki 5 testsが各`OK`、`validate_skill_architecture.py --all`、`validate_skill_context.py --all`、scoped dual-host compatibility、skill quick validation、`git diff --check`が成功である。
-- final whole-branch reviewの実施・approvalはpendingであり、`LOCAL_COMPLETE`、`local-complete` log entry、remote writeはいずれも未実施である。
+- closeout candidate `ffa8339df00a5a8dfec90f572e843509516f49fe`へのfinal whole-branch reviewは、indexの検索語associationとfocused planのrelated-page / provenance不足をImportant 2件として返した。bounded fix後のLLM Wiki 5 testsと`git diff --check`は成功したが、scoped re-reviewはpendingである。
+- final whole-branch reviewのapprovalはpendingであり、`LOCAL_COMPLETE`、`local-complete` log entry、remote writeはいずれも未実施である。
+
+## 関連ページ
+
+- [SDD Implementation Skill 設計](sdd-implementation-skill-design.md) — risk-over-role precedenceとlow / medium / high vocabularyを定義するcanonical Written Spec。
+- [Superpowers SDD のモデル選択・Reasoning・Host 境界調査](sdd-superpowers-model-and-reasoning-research.md) — upstream model tier ownershipとrepo-local reasoning effort境界を確認する調査。
+
+## 出典
+
+- [SDD Implementation Skill 設計](sdd-implementation-skill-design.md) — 本planの要件、acceptance criteria、completion contractの正本。
+- [Superpowers SDD のモデル選択・Reasoning・Host 境界調査](sdd-superpowers-model-and-reasoning-research.md) — Superpowersのmodel selectionとreasoning effort非所有を確認した一次情報調査のsynthesis。

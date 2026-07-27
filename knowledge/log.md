@@ -1684,3 +1684,10 @@ append-only で使います。すべての entry は予測しやすい header �
 - fresh verificationはSDD contract 18 tests、repository scripts 43 tests、LLM Wiki 5 testsが各`OK`であり、skill architecture validator、1 skill context contract validator、scoped dual-host compatibility、skill quick validation、`git diff --check`も成功した。
 - canonical design、focused plan、indexをTask 1実装済み・independent approval済みの状態へ同期した。spec、plan、Skill、tests、knowledge artifactsを同じbranch rangeで確認するfinal whole-branch reviewはpendingである。
 - `LOCAL_COMPLETE`と`local-complete` entryは記録していない。push、PR、merge、release、live installその他のremote writeは未実施である。
+
+## [2026-07-28] final-review-fix-candidate | SDD Reasoning Effort Risk Precedence
+
+- closeout candidate `ffa8339df00a5a8dfec90f572e843509516f49fe`へのfinal whole-branch reviewはImportant 2件を返した。designとfocused planのindex entryが1つの検索語行を共有していたdiscoverability gap、およびfocused planにrelated-page linksとprovenance sectionがないcitation gapである。
+- bounded fixで各index entryへ直後の専用`検索語:`行を置き、focused planへcanonical designと既存Superpowers model / reasoning researchを辿る`関連ページ`と`出典`を追加した。
+- fresh LLM Wiki 5 testsと`git diff --check`は成功した。scoped re-reviewとfinal approvalはpendingであり、`LOCAL_COMPLETE`と`local-complete` entryは記録していない。
+- push、PR、merge、release、live installその他のremote writeは未実施である。
