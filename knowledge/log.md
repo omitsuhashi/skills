@@ -1732,3 +1732,10 @@ append-only で使います。すべての entry は予測しやすい header �
 - HumanはPR作成を選択し、publish前条件としてcross-runtime compatibilityは不要と明示した。標準`SKILL.md`とactive-runtime capabilityによるagent-agnostic behaviorは維持する。
 - paired runtime packages、manifest整合、repository compatibility validator、compatibility CI gateはcurrent requirementから削除する。pluginは必要なruntimeを個別targetでき、互換性だけのために別runtime packageを追加しない。
 - focused planを`knowledge/wiki/syntheses/sdd-compatibility-removal-follow-up-plan.md`へ作成した。local completion後のbranch pushとPull Request作成は承認済みであり、merge、release、live mutationは未承認である。
+
+## [2026-07-28] local-complete | SDD Compatibility Removal Follow-up
+
+- Task 1は`a1a177b877ebb07258bb69aa6d1f6f3429e9bc6e`（`Remove cross-runtime compatibility requirements`）で完了した。独立reviewは`APPROVED`で、Critical / Important / Minorのfindingはない。standard `SKILL.md`、agent-agnostic skill behavior、active-runtime capability boundaryは維持し、paired runtime packages、manifest compatibility、repository compatibility validator、compatibility CI gateはcurrent requirementから削除した。
+- current repositoryにはcompatibility validatorとcompatibility CI gateは存在しない。旧Codex / Hermes dual-host designはskill behaviorとplugin packaging compatibilityの双方でhistorical / non-executableであり、旧implementation plan本文と先行log entryはappend-only evidenceとして保持した。
+- fresh verificationは`PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 -m unittest discover -s skills/llm-wiki/tests`が5 tests `OK`、`PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 -m unittest discover -s scripts`が19 tests `OK`、`git diff --check`が出力なし・exit 0で成功した。
+- residual material riskはない。local branchはPR-readyである。pushとPull Request作成は承認済みだが本taskでは未実施であり、merge、release、live mutationは未承認かつ未実施である。

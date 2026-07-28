@@ -8,6 +8,12 @@
 
 **Tech Stack:** Markdown、Python 3 standard library、`unittest`、GitHub Actions、LLM Wiki。
 
+## 実施状況
+
+Task 1は`a1a177b877ebb07258bb69aa6d1f6f3429e9bc6e`（`Remove cross-runtime compatibility requirements`）で完了した。独立reviewは`APPROVED`で、Critical / Important / Minorのfindingはない。current repositoryは標準`SKILL.md`とactive-runtime capability boundaryを維持しつつ、repository compatibility validatorとcompatibility CI gateを持たない。旧dual-host designとそのimplementation planは、skill behaviorとplugin packaging compatibilityの双方についてhistorical / non-executableな証跡として原文を保持する。
+
+Task 2はこのcloseoutでcanonical design、historical boundary、catalog、append-only logを同期する。local verification後にbranchはPR-readyとなる。pushとPull Request作成は承認済みだが、本taskでは実行しない。merge、release、live mutationは未承認である。
+
 ## Global Constraints
 
 - Agent-agnostic skill behavior and the active-runtime capability boundary remain unchanged.
