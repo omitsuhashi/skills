@@ -14,7 +14,7 @@ Task 1は`a1a177b877ebb07258bb69aa6d1f6f3429e9bc6e`（`Remove cross-runtime comp
 
 Task 2は`41d43a9`と`bc46e60`でcanonical design、historical boundary、catalog、append-only logを同期し、local verificationまで完了した。ただし、`f0b8efd...bc46e60`のfinal whole-follow-up reviewはCritical 0 / Important 2 / Minor 1で`NOT READY TO MERGE`を返したため、先行する`LOCAL_COMPLETE` / PR-ready記録を撤回し、本計画をfinal-review-fix candidateとして再開した。
 
-Task 3では、その3 findingを1回のbounded fixで修正し、scoped re-reviewを受ける。scoped re-reviewの承認とfresh verificationが揃うまではfinal review pendingであり、`LOCAL_COMPLETE` / PR-readyへ戻さない。pushとPull Request作成はlocal completion後について承認済みだが、本taskでは実行しない。merge、release、live mutationは未承認である。
+Task 3は`ae151b9`の1回のbounded fixで3 findingを修正した。`bc46e60..ae151b9`のscoped re-reviewはCritical / Important / Minorのfindingなしで`APPROVED`となり、fresh verificationも成功したため、本follow-upは`LOCAL_COMPLETE`かつPR-readyである。pushとPull Request作成は承認済みだが、このlocal closeoutでは実行しない。merge、release、live mutationは未承認である。
 
 ## Global Constraints
 
@@ -160,13 +160,13 @@ instructions from the current Planning Authority spec、and synchronize the
 catalog、append-only log、and transient ledger. Do not modify production code or
 CI.
 
-- [ ] **Step 3: Run scoped re-review and fresh verification**
+- [x] **Step 3: Run scoped re-review and fresh verification**
 
 Review only this bounded fix and confirm that all three findings are resolved
 without new Critical / Important breakage. Re-run LLM Wiki tests、relevant
 repository tests / validators、and `git diff --check`.
 
-- [ ] **Step 4: Restore completion and publication readiness**
+- [x] **Step 4: Restore completion and publication readiness**
 
 Only after Step 3 is approved, update the durable and transient closeout state
 to `LOCAL_COMPLETE` / PR-ready. Publication remains a separate authorized

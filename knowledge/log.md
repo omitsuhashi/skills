@@ -1746,3 +1746,9 @@ append-only で使います。すべての entry は予測しやすい header �
 - `f0b8efd...bc46e60`のfinal reviewはCritical 0 / Important 2 / Minor 1で`NOT READY TO MERGE`を返した。bounded fixは、follow-up planへfinal review、fix、scoped re-review、completion restoreの順序を追加し、Task 2を完了済みのcloseout candidateとして記述した。preceding agent-agnostic planはhistorical / non-executableとし、削除済みcompatibility validator commandとunchecked checklistをobsoleteと明示した。
 - current Planning Authority specからdual-host requirement、runtime名ごとのmodel設定例、削除済みcompatibility validator command、scoped dual-host acceptance / stop conditionを除き、標準`SKILL.md`とactive-runtime capabilityによるportable contractへ置換した。catalogとtransient ledgerも同じcurrent / historical boundaryへ同期した。production codeとCIは変更していない。
 - fresh verificationはLLM Wiki 5 tests、repository scripts 19 testsが各`OK`、skill architecture validator、1 skill context contract validator、warning-free context report、`git diff --check`がすべて成功した。scoped re-reviewとcompletion restoreはpendingであり、現時点で`LOCAL_COMPLETE` / PR-readyではない。push、Pull Request作成、merge、release、live mutationは実施していない。
+
+## [2026-07-28] local-complete | SDD Compatibility Removal Follow-up
+
+- bounded final fix `ae151b979e20b656b5a7173eb841228256c90632`はfinal whole-follow-up reviewのCritical 0 / Important 2 / Minor 1を対象とした。`bc46e60..ae151b9`のscoped re-reviewは全3 findingの解消と新規findingなしを確認し、Critical 0 / Important 0 / Minor 0で`APPROVED`となった。
+- current follow-up planはfinal review、bounded fix、scoped re-review、completion restoreをすべて完了し、catalogとtransient ledgerも同じ状態へ同期した。これにより本follow-upを`LOCAL_COMPLETE`かつPR-readyとする。
+- closeout後のfresh verificationは`PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 -m unittest discover -s skills/llm-wiki/tests`が5 tests `OK`、`git diff --check`が出力なし・exit 0で成功した。pushとPull Request作成は承認済みだが未実施であり、merge、release、live mutationは未承認かつ未実施である。
