@@ -1,18 +1,20 @@
 ---
 kind: synthesis
 created: 2026-07-17
-updated: 2026-07-23
+updated: 2026-07-28
 ---
 
 # Codex / Hermes Dual-host Authoring Contract 設計
 
 ## 状態
 
-実装済み、リポジトリ互換性をローカル検証済み。2026-07-17 の plugin 前提の task-management 記録は、2026-07-23 の standalone skill migration により historical / superseded となった。current repository surface は `skills/task-management/SKILL.md` と4つの参照Markdownだけであり、task-management の plugin manifest、registration、runtime code、smoke scriptは残っていない。今回のmigrationは `local_only` であり、live `~/.hermes/config.yaml` の変更と `hermes skills list` による可視性確認は実施していない。
+本書の **skill behavior**（Codex / Hermes の名称ごとに discovery、dispatch、fallback、verification を選ぶ guidance）は、2026-07-28 の agent-agnostic runtime contract により historical / superseded である。current skill behavior は [SDD Implementation Skill 設計](sdd-implementation-skill-design.md) と shared `SKILL.md` の inputs、applicable dependencies、required capabilities だけから解決し、本書を active-runtime preflight の根拠にしてはならない。
+
+本書の **plugin packaging compatibility**（paired manifest、registration、複数runtime package、repository-wide compatibility validation）も、2026-07-28のcompatibility removalによりhistorical / non-executableである。current pluginは必要なruntimeを個別にtargetでき、別runtime packageを互換性だけのために追加しない。current repositoryにはcompatibility validatorもcompatibility CI gateも存在しない。本書のplugin packaging、live discovery、live load evidenceは過去の検証記録を調べる場合だけに参照し、current packagingまたはverificationの指示として使用してはならない。2026-07-17 の plugin 前提の task-management 記録は、2026-07-23 の standalone skill migration により historical / superseded となった。current repository surface は `skills/task-management/SKILL.md` と4つの参照Markdownだけであり、task-management の plugin manifest、registration、runtime code、smoke scriptは残っていない。今回のmigrationは `local_only` であり、live `~/.hermes/config.yaml` の変更と `hermes skills list` による可視性確認は実施していない。
 
 ## 実装・ローカル検証証跡
 
-`.github/workflows/skill-architecture.yml` は Python 3.9 / 3.12 matrix でauthoring guidance、CI workflow contract、dual-host validator、repository-wide compatibility、standalone `decide-in-order`、standalone `task-management` のcontract testsを実行する。通常CIはlive home、profile、config、credential、skill / plugin installationを変更しない。
+以下のCIとvalidator記述は2026-07-17時点のhistorical evidenceである。Task 1 commit `a1a177b877ebb07258bb69aa6d1f6f3429e9bc6e`により、current `.github/workflows/skill-architecture.yml`からrepository compatibility validatorとrepository-wide compatibilityのstepを削除し、validator source / test suiteも削除した。current CIはarchitecture、context、authoring guidance、CI workflow contract、skill-specific testを保持する。通常CIはlive home、profile、config、credential、skill / plugin installationを変更しない。
 
 以下は2026-07-17時点の最終ローカル検証結果を保存したhistorical evidenceである。表中のtask-management plugin manifest、registration、plugin validator、plugin suite、smoke testはすべて2026-07-23 standalone migrationによりsupersededされ、current implementationやcurrent verification commandではない。
 

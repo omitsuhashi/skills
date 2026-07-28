@@ -4,7 +4,17 @@
 
 Phase 1 の local implementation と verification は完了済みである。本書は、その後の調査と Human の方向性承認を反映し、2026-07-27にHumanがWritten Specとして承認した **Superpowers-first revision** である。
 
-この revision の実装、Task 1〜2 の task review、Task 3 の knowledge closeout、fresh verification、最終 whole-branch review は完了しており、local completion の要件を満たした。候補コミット`ec12012`に対する最終 review は Critical 0、Important 5、Minor 1 を検出したが、限定したfix commit `8b35113`で6件すべてを解消し、scoped re-review は全finding解消・新規Critical/Importantなしで承認された。post-fix evidence はSDD 17/17、LLM Wiki 6/6、scoped dual-host compatibility、skill-creator quick validator、`git diff --check`の成功を含む。Task 2 のfull bundle（scripts 68/68、architecture / context validators）もcloseout candidateに記録したとおり成功している。残るmaterial riskはない。後継かつ current のimplementation planは[SDD Implementation Superpowers-first Revision Implementation Plan](sdd-implementation-superpowers-first-implementation-plan.md)である。push、PR、merge、release、live installその他のremote writeは実施していない。
+2026-07-28にHumanは、skill contractをagent-agnosticにするrevisionを承認した。skillは実行環境の名称を判定材料にせず、入力、依存skill、必要capabilityだけで同じflowを選ぶ。依存確認はactive runtimeのdiscovery surfaceで一度行い、別runtimeを並行検査しない。isolated dispatch、model selection、optional effort、wait / resumeはruntime capabilityとして解決し、agent名による手順分岐、agent別dependency check、agent別fallbackをcurrent contractから削除する。
+
+同日のpublish前feedbackで、Humanはcross-runtime compatibility自体を非要件とした。標準`SKILL.md`によるagent-agnostic behaviorは維持するが、複数runtime向けpackageの併設、manifest整合、repository compatibility validator、compatibility CI gateはcurrent contractに含めない。pluginは必要なruntimeを個別にtargetでき、別runtime向けadapterを互換性だけのために追加しない。
+
+このcompatibility-free contractはTask 1 commit `a1a177b877ebb07258bb69aa6d1f6f3429e9bc6e`（`Remove cross-runtime compatibility requirements`）でrepository surfaceへ反映された。独立reviewは`APPROVED`（Critical / Important / Minorなし）であり、current repositoryにはcompatibility validatorもcompatibility CI gateも存在しない。旧dual-host designはskill behaviorだけでなくplugin packaging compatibilityについてもhistorical / non-executableであり、過去のplanとlogは実行指示ではなく証跡として保持する。current local completionはこのdesign、follow-up plan、index、append-only logとfresh verificationを同期して判断し、pushとPull Request作成だけがlocal completion後に承認済みである。merge、release、live mutationは未承認のままである。
+
+この agent-agnostic revision の spec / plan baseline は `c1f3791` である。Task 1 は `33fe86b240efcd03e8e9c6020f6620e87747da2d`（`Make skill runtime contracts agent agnostic`）で完了し、独立 task review は 0 findings で **Approved** となった。Task 2 は `171d4f1`、fix は `0501c45` であり、scoped re-review は **Approved** となった。baseline pressure scenario が検出した named dual-runtime preflight は、active runtime の一回だけの dependency / capability discovery に置換された。
+
+final review は Critical 0 / Important 3 / Minor 0 を返したが、bounded final fix `44edcf0` が3件を解消した。final scoped re-review は全3件の解消、新規Critical / Important breakageなし、**APPROVED** を確認した。fresh pressure scenarioでは、synchronous dispatchがcompleted resultを返す場合はwait / resumeなしで継続し、asynchronous dispatchがwaitまたはresumeを欠く場合は`BLOCKED`、optional effortがない場合は`not_supported`として継続する。したがってcurrent agent-agnostic designは `LOCAL_COMPLETE` であり、residual material riskはない。remote writeおよびlive mutationは実施していない。
+
+先行する Superpowers-first revision の実装、Task 1〜2 の task review、Task 3 の knowledge closeout、fresh verification、最終 whole-branch review は完了しており、local completion の要件を満たした。候補コミット`ec12012`に対する最終 review は Critical 0、Important 5、Minor 1 を検出したが、限定したfix commit `8b35113`で6件すべてを解消し、scoped re-review は全finding解消・新規Critical/Importantなしで承認された。post-fix evidence はSDD 17/17、LLM Wiki 6/6、scoped dual-host compatibility、skill-creator quick validator、`git diff --check`の成功を含む。Task 2 のfull bundle（scripts 68/68、architecture / context validators）もcloseout candidateに記録したとおり成功している。残るmaterial riskはない。[SDD Implementation Superpowers-first Revision Implementation Plan](sdd-implementation-superpowers-first-implementation-plan.md)は実装済みbaselineであり、そのruntime固有部分はagent-agnostic revisionにsupersedeされた。current runtime behaviorのdeltaは[SDD Agent-Agnostic Runtime Contract Implementation Plan](sdd-agent-agnostic-runtime-implementation-plan.md)であり、同planは`LOCAL_COMPLETE`である。push、PR、merge、release、live installその他のremote writeは実施していない。
 
 Phase 2 は fresh coordinator verification と final whole-branch review を含めて `LOCAL_COMPLETE` である。`sdd-implementation` が既定かつ唯一の user-facing 実装入口であり、`skills/grill-to-pr-loop/` と `skills/issue-implementation-loop/`、および専用 runtime / context surface は current tree から削除済みである。historical wiki と旧 baseline は非実行の証跡として保持する。本 branch は Superpowers-first revision を含む `main` のコミット `dec5647` を統合し、Draft PR #41 として公開済みである。PR merge、release、live install は未実施である。
 
@@ -18,7 +28,7 @@ Superpowers v6.2.0 では、開発フローの責任が次のように分かれ�
 - `writing-plans`: 承認済み spec を exact files、tests、verification、commit 単位の実行可能 plan へ変換。
 - `subagent-driven-development`: plan preflight、fresh implementer、task review、fix loop、final whole-branch review。
 
-SDD には dispatch ごとの model 選択がすでにあり、全 dispatch に model 指定を要求する。task の complexity / risk に応じた relative capability tier も upstream が所有する。一方、model と独立した Thinking Effort / `reasoning_effort` の選択・伝播・escalation contract はなく、Hermes Agent の公式 host adapter もない。
+SDD には dispatch ごとの model 選択がすでにあり、全 dispatch に model 指定を要求する。task の complexity / risk に応じた relative capability tier も upstream が所有する。一方、model と独立した Thinking Effort / `reasoning_effort` の選択・伝播・escalation contract と、すべてのruntimeに共通するadapterはない。
 
 詳細な evidence は [Superpowers SDD のモデル選択・Reasoning・Host 境界調査](sdd-superpowers-model-and-reasoning-research.md) に保存する。
 
@@ -30,8 +40,8 @@ SDD には dispatch ごとの model 選択がすでにあり、全 dispatch に 
 
 1. spec stage で `Grill with Docs` を使い、一問一答で曖昧さを解消し、domain terminology と decision を明確にする。
 2. `llm-wiki` を使い、既存知識の参照と、承認済み spec / plan / closeout の永続化を行う。
-3. Superpowers の abstract model tier を各 host の concrete model へ解決し、host が対応する場合だけ reasoning effort を追加する。
-4. Codex と Hermes Agent の capability 差を adapter boundary で扱う。
+3. Superpowers の abstract model tier をactive runtimeで利用可能な concrete modelへ解決し、capabilityがある場合だけreasoning effortを追加する。
+4. runtime identityではなく、isolated dispatch、model selector、optional effort、wait / resumeというcapability boundaryで実行可否を決める。
 
 ## 目的
 
@@ -49,7 +59,7 @@ requirements
        -> llm-wiki durable plan sync
   -> Superpowers subagent-driven-development
        -> upstream per-dispatch model selection
-       -> repo-local host model resolution
+       -> repo-local runtime capability resolution
        -> repo-local reasoning effort overlay when supported
   -> llm-wiki knowledge closeout
   -> Superpowers final review / branch finishing
@@ -71,7 +81,7 @@ caller は change request、既存 spec、または既存 implementation plan �
 
 - `Grill with Docs` は spec refinement の対話技法だけを所有する。
 - `llm-wiki` は durable knowledge の query / ingest / closeout だけを所有する。
-- repo-local host adapter は model resolution、optional reasoning effort、dispatch capability mapping だけを所有する。
+- repo-local runtime boundary は model resolution、optional reasoning effort、dispatch capability mapping だけを所有する。
 - runtime ledger、reports、diff、test logs、agent IDs は Superpowers の transient workspace に置き、wiki へ保存しない。
 
 ### Review は material finding だけを扱う
@@ -153,7 +163,7 @@ knowledge root がある場合、承認済み plan を durable page として同
 
 implementer、task reviewer、re-reviewer、final reviewer の model tier は Superpowers SDD の current `Model Selection` contract を正本とする。repo-local skill は別の role-to-model policy tableを持たない。
 
-全 dispatch で upstream が要求する model field を明示する。host adapter は upstream の relative tier を、その実行時に利用可能な concrete model へ解決する。user が runtime model を明示した場合は、その指定を優先する。
+全 dispatch で upstream が要求する model field を明示する。active runtimeのcapability layerはupstreamのrelative tierを、その実行時に利用可能なconcrete modelへ解決する。user が runtime model を明示した場合は、その指定を優先する。
 
 ### Reasoning effort overlay
 
@@ -169,17 +179,18 @@ effort は worker role だけでなく、実際の task complexity / risk で分
 
 fix loop が同じ failure で収束しない場合は、まず available な範囲で effort を一段上げる。それでも不足する場合は、Superpowers の model escalation に従う。user が runtime effort を明示した場合は、その指定を優先する。
 
-host が独立した effort control を提供しない場合は `not_supported` として扱い、Superpowers の model selection だけで継続する。reasoning effort がないことだけを理由に全 flow を block しない。model を明示して isolated dispatch する能力自体がない場合は `BLOCKED` とする。
+active runtimeが独立した effort control を提供しない場合は `not_supported` として扱い、Superpowers の model selection だけで継続する。reasoning effort がないことだけを理由に全 flow を block しない。model を明示して isolated dispatch する能力自体がない場合は `BLOCKED` とする。
 
-共有 contract の既定 vocabulary は low / medium / high に限定する。host がそれより高い effort level を提供していても、通常のtask classへ追加せず、明示的なruntime overrideとしてのみ扱う。
+共有 contract の既定 vocabulary は low / medium / high に限定する。runtimeがそれより高い effort level を提供していても、通常のtask classへ追加せず、明示的なruntime overrideとしてのみ扱う。
 
 concrete model、effort、provider、availability、agent ID、run-specific resolution は runtime-only とし、spec、plan、wiki、ledger、schemaへ永続化しない。
 
-### Host adapter
+### Runtime capability boundary
 
-- Codex: isolated subagent dispatch、per-dispatch model、利用可能なら reasoning effort、wait / resume lifecycle を current host capability へ写像する。
-- Hermes Agent: upstream の公式 adapter があると仮定せず、fresh worker / reviewer、model selector、effort control、resume lifecycle の actual capability を検出して写像する。
-- host-specific tool name や model catalog を共通 `SKILL.md` の durable contract に固定しない。
+- active runtimeのdiscovery surfaceでapplicable dependencyを一度確認する。別runtimeのinstallationやdiscoveryを同じrunのpreflightへ追加しない。
+- fresh worker / reviewer、model selector、optional effort、wait / resumeをactual capabilityとして検出し、runtime名ではなくcapabilityの有無へ写像する。
+- completed resultを返すsynchronous dispatchは有効なresult-collection mechanismとする。asynchronous dispatchはwaitとresumeの両capabilityを必須とし、synchronous result collectionもasynchronous wait / resumeも利用できない場合は`BLOCKED`を返す。
+- runtime固有のtool nameやmodel catalogを共通`SKILL.md`のdurable contractに固定しない。
 - required SDD capability を安全に満たせない場合、main session implementation や旧 loop skill へ silent fallback しない。
 
 ## Knowledge Lifecycle
@@ -215,13 +226,13 @@ knowledge root が存在するのに authority、canonical target、write bounda
 - Superpowers が lifecycle、plan、TDD、dispatch、review、model tier の正本であり、repo-local skill がそれらを再実装しない。
 - `llm-wiki` が relevant knowledge query と、approved spec / plan / closeout の durable storage を所有する。
 - Grill / Domain Modeling の既定出力を使って `CONTEXT.md` や repo-root `docs/adr/` という並行正本を作らない。
-- repo-local model logic は upstream tier の host resolution に限定される。
-- reasoning effort は `low` / `medium` / `high` の runtime-only overlay として選択され、unsupported host では model routing のみで継続できる。
-- Codex と Hermes Agent の host-specific capability は adapter boundary で解決される。
+- repo-local model logic は upstream tier の active-runtime resolution に限定される。
+- reasoning effort は `low` / `medium` / `high` の runtime-only overlay として選択され、capabilityがない場合はmodel routingのみで継続できる。
+- skill behaviorはruntime identityで分岐せず、入力、依存skill、必要capabilityだけで決まる。
 - concrete model / effort / provider / agent ID / run-specific resolution を durable artifact に保存しない。
 - knowledge root がある場合、spec、plan、closeout、index、log、validation が completion contract に含まれる。
 - old loop skill、独自 scheduler、packet schema、event store、runtime snapshot を fallback または新規依存として導入しない。
-- Codex と Hermes Agent の両方から同じ `SKILL.md` を読み、skill discovery route と dual-host validator を通過する。
+- 任意の対応runtimeが同じ`SKILL.md`を読み、標準entrypointとrepository skill validatorを通過する。
 - `sdd-implementation` 以外の user-facing 実装 skill directory と専用 runtime / context surface が current tree に存在しない。
 
 ## Testing Strategy
@@ -235,12 +246,13 @@ knowledge root が存在するのに authority、canonical target、write bounda
 - upstream model selection を参照し、重複する repo-local role-to-model table を持たない。
 - effort overlay が low / medium / high、risk-over-role precedence、user override / escalation を定義する。
 - architecture-sensitive / high-risk task review が generic task-review default の medium ではなく high になる。
-- 共有 contract の既定 vocabulary に host-specific な higher effort level を追加しない。
+- 共有 contract の既定 vocabulary に runtime固有の higher effort level を追加しない。
 - effort unsupported は `not_supported`、isolated model dispatch unsupported は `BLOCKED` になる。
+- synchronous dispatchはcompleted resultを直接収集でき、asynchronous dispatchはwait / resumeを要求し、どちらのresult collectionもない場合は`BLOCKED`になる。
 - knowledge root の有無と write boundary に応じて query / ingest / closeout を選べる。
 - concrete runtime choice を durable artifact へ保存しない。
 - old loop skillへ silent fallback しない。
-- dual-host discovery / compatibility validator を通過する。
+- active runtimeでapplicable dependencyを一度だけ確認し、repository skill validatorを通過する。
 
 ### Forward scenarios
 
@@ -250,11 +262,12 @@ knowledge root が存在するのに authority、canonical target、write bounda
 4. current spec に binding された approved plan を直接 SDD へ渡す。
 5. mechanical / integration / high-risk dispatch で upstream model tier と local effort overlay が独立して解決される。
 6. architecture-sensitive / high-risk task review で role default より risk classification が優先され、high が選ばれる。
-7. effort unsupported host で upstream model selection により正常継続する。
-8. Hermes capability 不足を明示して fail closed する。
-9. knowledge root ありで approved spec / plan / closeout、index、log を同期してから final review する。
-10. knowledge root なしで wiki stage を `not_applicable` にする。
-11. wiki validation failure が `LOCAL_COMPLETE` を block する。
+7. effort capabilityがないruntimeでupstream model selectionにより正常継続する。
+8. synchronous dispatchがcompleted resultを返すruntimeではwait / resumeなしで正常収集する。
+9. asynchronous dispatchだけを持ちwait / resumeのいずれかを欠くruntimeでは`BLOCKED`としてfail closedにする。
+10. knowledge root ありで approved spec / plan / closeout、index、log を同期してから final review する。
+11. knowledge root なしで wiki stage を `not_applicable` にする。
+12. wiki validation failure が `LOCAL_COMPLETE` を block する。
 
 ## Completion Contract
 
@@ -292,7 +305,10 @@ knowledge root が存在するのに authority、canonical target、write bounda
 
 ## 関連ページ
 
+- [SDD Compatibility Removal Follow-up Plan](sdd-compatibility-removal-follow-up-plan.md) — publish前feedbackで非要件となったcross-runtime compatibility layerを削除するcurrent follow-up plan。
 - [Superpowers SDD のモデル選択・Reasoning・Host 境界調査](sdd-superpowers-model-and-reasoning-research.md) — upstream v6.2.0 の model、effort、host、spec / plan / SDD ownership の evidence。
+- [SDD Agent-Agnostic Runtime Contract Implementation Plan](sdd-agent-agnostic-runtime-implementation-plan.md) — current runtime behaviorのdelta / closeout candidate。
+- [SDD Implementation Superpowers-first Revision Implementation Plan](sdd-implementation-superpowers-first-implementation-plan.md) — runtime固有部分がsupersedeされた実装済みbaseline。
 - [Planning Authority Policy 仕様](planning-authority-policy/spec.md) — Human authority と runtime model persistence の既存契約。
 - [SDD Implementation Skill 実装計画](sdd-implementation-skill-implementation-plan.md) — Phase 1 の historical implementation plan。
 - [Loop Skill 運用単純化仕様](loop-skill-operational-simplicity-spec.md) — 旧 loop family の複雑性と適用基準。

@@ -1699,3 +1699,56 @@ append-only で使います。すべての entry は予測しやすい header �
 - fresh verificationはLLM Wiki 5 testsが`OK`、`git diff --check`が出力なしで成功した。先行closeout candidateのSDD contract 18 tests、repository scripts 43 tests、skill architecture / context validator、scoped dual-host compatibility、skill quick validationも成功済みである。
 - Task 1 implementation、independent task review、knowledge closeout、final whole-branch review、bounded fix、scoped re-review、fresh verificationが揃ったため`LOCAL_COMPLETE`とする。
 - push、PR作成、merge、release、live installその他のremote writeは実施していない。
+
+## [2026-07-28] spec-and-plan-gate | SDD Agent-Agnostic Runtime Contract
+
+- Humanは、skillを特定agentに依存させず、どの対応runtimeでも同じ`SKILL.md`、入力、依存skill、必要capabilityからbehaviorを決める方針を明示承認した。
+- agentごとのdependency確認、agent名によるdispatch / fallback / verification分岐はcurrent contractから削除する。dependency discoveryはactive runtimeで一度だけ行い、isolated dispatch、explicit model、optional effort、wait / resumeはcapabilityとして解決する。
+- canonical designを`knowledge/wiki/syntheses/sdd-implementation-skill-design.md`へ同期し、実装計画を`knowledge/wiki/syntheses/sdd-agent-agnostic-runtime-implementation-plan.md`へ作成した。実装はportable skill contractとdurable knowledge closeoutの2 taskで行う。
+- plugin packaging adapterとhistorical non-executable planはscope外である。push、PR、merge、release、live installその他のremote writeは未承認である。
+
+## [2026-07-28] implementation-closeout-candidate | SDD Agent-Agnostic Runtime Contract
+
+- Task 1 は `33fe86b240efcd03e8e9c6020f6620e87747da2d`（`Make skill runtime contracts agent agnostic`）で完了し、独立 task review は Critical / Important / Minor なしの `Approved` である。baseline pressure scenario の named dual-runtime preflight は、post-change scenario で active runtime の一回だけの dependency / capability discovery、capability-only dispatch mapping、optional effort `not_supported` 時の継続へ置換された。
+- fresh local verification は `skills/sdd-implementation/tests` 18 tests、`skills/llm-wiki/tests` 5 tests、`scripts` 44 tests が各 `OK`、`validate_skill_architecture.py --all`、`validate_skill_context.py --all`（1 contract）、`validate_repository_compatibility.py --skill skills/sdd-implementation`、`git diff --check` がすべて exit 0 である。
+- repository-wide compatibility は pre-existing な case-insensitive `skills/llm-wiki/DESCRIPTION.md` collision が本変更の範囲外のため未実行である。push、PR作成、merge、release、live install、issue / comment / project mutationその他のremote writeは実施していない。whole-branch final reviewと`LOCAL_COMPLETE`もこのcandidateでは未実施である。
+
+## [2026-07-28] final-review-fix-candidate | SDD Agent-Agnostic Runtime Contract
+
+- `0501c4522f6d20775a88537b3cd7787a0b9d7eaf`までのwhole-branch final reviewはImportant 3件を返した。result collectionのfail-closed条件不足、current catalogからsuperseded planへ戻れるprovenance gap、plugin guidanceに残った旧validator名である。
+- bounded fixは、completed resultを返すsynchronous dispatchを有効なresult collectionとし、asynchronous dispatchにwait / resumeを要求し、どちらも利用できない場合を`BLOCKED`とした。dual-host planはhistorical / non-executable、Superpowers-first planはruntime固有部分がsupersedeされた実装済みbaseline、本agent-agnostic planはcurrent delta / closeout candidateとしてcatalogとcanonical designを同期した。plugin handoffは`scripts/validate_repository_compatibility.py`へ更新し、paired plugin manifest / version / registration validationは変更していない。
+- TDDのexpected REDは、SDD contractが19 tests中1 failure（result-collection semantics欠落）、authoring guidanceが3 tests中1 failure（現行validator path欠落）であった。production変更後はSDD contract 19 tests、authoring guidance 3 tests、LLM Wiki 5 tests、repository scripts 44 testsが各`OK`、skill architecture validator、1 skill context contract validator、scoped repository compatibility、skill-creator quick validation、`git diff --check`がすべて成功した。
+- pressure scenarioでは、synchronous dispatchがcompleted resultを返す場合はwait / resumeなしでも有効、asynchronous dispatchでwait / resumeを満たせない場合は`BLOCKED`、independent effort controlだけがない場合は`not_supported`としてSuperpowers model selectionで継続となる。
+- scoped re-review、final approval、`LOCAL_COMPLETE`はpendingである。push、PR作成、merge、release、live install、issue、comment、project mutationその他のremote writeとlive mutationは実施していない。
+
+## [2026-07-28] local-complete | SDD Agent-Agnostic Runtime Contract
+
+- spec / plan baselineは`c1f3791`、Task 1は`33fe86b`（review 0 findingsでApproved）、Task 2は`171d4f1`、Task 2 fixは`0501c45`（scoped re-review Approved）である。final reviewはCritical 0 / Important 3 / Minor 0を返した。
+- bounded final fix `44edcf0`が3件を解消し、final scoped re-reviewは全3件の解消、新規Critical / Important breakageなし、`APPROVED`を確認した。fresh pressure scenarioではsynchronous completed resultはwait / resumeなしで継続、asynchronous dispatchでwaitまたはresumeがなければ`BLOCKED`、optional effortがなければ`not_supported`として継続する。
+- canonical design、current plan、index、append-only logを同期し、fresh `skills/llm-wiki/tests` 5 testsと`git diff --check`が成功した。residual material riskはない。remote writeおよびlive mutationは実施していない。
+
+## [2026-07-28] spec-and-plan-gate | SDD Compatibility Removal Follow-up
+
+- HumanはPR作成を選択し、publish前条件としてcross-runtime compatibilityは不要と明示した。標準`SKILL.md`とactive-runtime capabilityによるagent-agnostic behaviorは維持する。
+- paired runtime packages、manifest整合、repository compatibility validator、compatibility CI gateはcurrent requirementから削除する。pluginは必要なruntimeを個別targetでき、互換性だけのために別runtime packageを追加しない。
+- focused planを`knowledge/wiki/syntheses/sdd-compatibility-removal-follow-up-plan.md`へ作成した。local completion後のbranch pushとPull Request作成は承認済みであり、merge、release、live mutationは未承認である。
+
+## [2026-07-28] local-complete | SDD Compatibility Removal Follow-up
+
+- Task 1は`a1a177b877ebb07258bb69aa6d1f6f3429e9bc6e`（`Remove cross-runtime compatibility requirements`）で完了した。独立reviewは`APPROVED`で、Critical / Important / Minorのfindingはない。standard `SKILL.md`、agent-agnostic skill behavior、active-runtime capability boundaryは維持し、paired runtime packages、manifest compatibility、repository compatibility validator、compatibility CI gateはcurrent requirementから削除した。
+- current repositoryにはcompatibility validatorとcompatibility CI gateは存在しない。旧Codex / Hermes dual-host designはskill behaviorとplugin packaging compatibilityの双方でhistorical / non-executableであり、旧implementation plan本文と先行log entryはappend-only evidenceとして保持した。
+- fresh verificationは`PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 -m unittest discover -s skills/llm-wiki/tests`が5 tests `OK`、`PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 -m unittest discover -s scripts`が19 tests `OK`、`git diff --check`が出力なし・exit 0で成功した。
+- residual material riskはない。local branchはPR-readyである。pushとPull Request作成は承認済みだが本taskでは未実施であり、merge、release、live mutationは未承認かつ未実施である。
+
+## [2026-07-28] final-review-correction | SDD Compatibility Removal Follow-up
+
+- 直前の`local-complete` entryは、complete branchに対するfinal whole-follow-up reviewより先に`LOCAL_COMPLETE` / PR-readyを記録したため、current completion stateとしてsupersedeする。append-only evidenceとして旧entryは保持するが、本follow-upはfinal-review-fix candidateへ戻し、scoped re-review承認まではfinal review pendingとする。
+- `f0b8efd...bc46e60`のfinal reviewはCritical 0 / Important 2 / Minor 1で`NOT READY TO MERGE`を返した。bounded fixは、follow-up planへfinal review、fix、scoped re-review、completion restoreの順序を追加し、Task 2を完了済みのcloseout candidateとして記述した。preceding agent-agnostic planはhistorical / non-executableとし、削除済みcompatibility validator commandとunchecked checklistをobsoleteと明示した。
+- current Planning Authority specからdual-host requirement、runtime名ごとのmodel設定例、削除済みcompatibility validator command、scoped dual-host acceptance / stop conditionを除き、標準`SKILL.md`とactive-runtime capabilityによるportable contractへ置換した。catalogとtransient ledgerも同じcurrent / historical boundaryへ同期した。production codeとCIは変更していない。
+- fresh verificationはLLM Wiki 5 tests、repository scripts 19 testsが各`OK`、skill architecture validator、1 skill context contract validator、warning-free context report、`git diff --check`がすべて成功した。scoped re-reviewとcompletion restoreはpendingであり、現時点で`LOCAL_COMPLETE` / PR-readyではない。push、Pull Request作成、merge、release、live mutationは実施していない。
+
+## [2026-07-28] local-complete | SDD Compatibility Removal Follow-up
+
+- bounded final fix `ae151b979e20b656b5a7173eb841228256c90632`はfinal whole-follow-up reviewのCritical 0 / Important 2 / Minor 1を対象とした。`bc46e60..ae151b9`のscoped re-reviewは全3 findingの解消と新規findingなしを確認し、Critical 0 / Important 0 / Minor 0で`APPROVED`となった。
+- current follow-up planはfinal review、bounded fix、scoped re-review、completion restoreをすべて完了し、catalogとtransient ledgerも同じ状態へ同期した。これにより本follow-upを`LOCAL_COMPLETE`かつPR-readyとする。
+- closeout後のfresh verificationは`PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 -m unittest discover -s skills/llm-wiki/tests`が5 tests `OK`、`git diff --check`が出力なし・exit 0で成功した。pushとPull Request作成は承認済みだが未実施であり、merge、release、live mutationは未承認かつ未実施である。
