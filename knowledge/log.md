@@ -1739,3 +1739,10 @@ append-only で使います。すべての entry は予測しやすい header �
 - current repositoryにはcompatibility validatorとcompatibility CI gateは存在しない。旧Codex / Hermes dual-host designはskill behaviorとplugin packaging compatibilityの双方でhistorical / non-executableであり、旧implementation plan本文と先行log entryはappend-only evidenceとして保持した。
 - fresh verificationは`PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 -m unittest discover -s skills/llm-wiki/tests`が5 tests `OK`、`PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 -m unittest discover -s scripts`が19 tests `OK`、`git diff --check`が出力なし・exit 0で成功した。
 - residual material riskはない。local branchはPR-readyである。pushとPull Request作成は承認済みだが本taskでは未実施であり、merge、release、live mutationは未承認かつ未実施である。
+
+## [2026-07-28] final-review-correction | SDD Compatibility Removal Follow-up
+
+- 直前の`local-complete` entryは、complete branchに対するfinal whole-follow-up reviewより先に`LOCAL_COMPLETE` / PR-readyを記録したため、current completion stateとしてsupersedeする。append-only evidenceとして旧entryは保持するが、本follow-upはfinal-review-fix candidateへ戻し、scoped re-review承認まではfinal review pendingとする。
+- `f0b8efd...bc46e60`のfinal reviewはCritical 0 / Important 2 / Minor 1で`NOT READY TO MERGE`を返した。bounded fixは、follow-up planへfinal review、fix、scoped re-review、completion restoreの順序を追加し、Task 2を完了済みのcloseout candidateとして記述した。preceding agent-agnostic planはhistorical / non-executableとし、削除済みcompatibility validator commandとunchecked checklistをobsoleteと明示した。
+- current Planning Authority specからdual-host requirement、runtime名ごとのmodel設定例、削除済みcompatibility validator command、scoped dual-host acceptance / stop conditionを除き、標準`SKILL.md`とactive-runtime capabilityによるportable contractへ置換した。catalogとtransient ledgerも同じcurrent / historical boundaryへ同期した。production codeとCIは変更していない。
+- fresh verificationはLLM Wiki 5 tests、repository scripts 19 testsが各`OK`、skill architecture validator、1 skill context contract validator、warning-free context report、`git diff --check`がすべて成功した。scoped re-reviewとcompletion restoreはpendingであり、現時点で`LOCAL_COMPLETE` / PR-readyではない。push、Pull Request作成、merge、release、live mutationは実施していない。

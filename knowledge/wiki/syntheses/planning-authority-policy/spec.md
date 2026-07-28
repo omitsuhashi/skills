@@ -2,7 +2,7 @@
 
 ## 問題設定 / 成功条件
 
-`grill-to-pr-loop` は planning と implementation を分離しているが、planning 中に supporting agent を使う場合の権限境界は機械可読な family policy として固定されていない。Codex はメインコンテキストと subagent で異なる model / reasoning 設定を選べるため、model routing を repository 契約へ持ち込むと、Codex / Hermes 共通 skill が一時的な host 設定へ依存する。一方、権限境界を明示しないまま delegation すると、supporting agent が spec 統合、scope 変更、approval candidate 確定を事実上所有する余地が残る。
+`grill-to-pr-loop` は planning と implementation を分離しているが、planning 中に supporting agent を使う場合の権限境界は機械可読な family policy として固定されていない。active runtimeはmain contextとsupporting contextで異なるmodel / reasoning設定を選べるため、model routingをrepository契約へ持ち込むと、portable skill contractが一時的なruntime設定へ依存する。一方、権限境界を明示しないままdelegationすると、supporting agentがspec統合、scope変更、approval candidate確定を事実上所有する余地が残る。
 
 成功条件は次のとおり。
 
@@ -11,7 +11,7 @@
 - Spec Gate / Issue Gate の最終 decision authority を Human に残す。
 - model / reasoning の選択を host runtime に任せ、repository artifact へ永続化しない。
 - `issue-implementation-loop` の worker-only 契約、Execution Envelope、Worker Packet、scheduler を変更しない。
-- Codex / Hermes の dual-host authoring 契約を維持する。
+- skill behaviorを標準`SKILL.md`とactive-runtime capabilityから解決するportable authoring契約を維持する。
 
 ## Epic ID
 
@@ -22,7 +22,7 @@
 - `main_planning_context`: 現在の planning authority を所有し、設計判断、spec、Issue 台帳、Input Packet、Human gate への approval candidate を統合する primary context。
 - `supporting_planning_agent`: codebase 探索、一次情報調査、設計批評、criteria gap 確認を行い、根拠付き advisory result を返す read-only agent。
 - `planning authority`: planning artifact の canonical 内容を統合し、Human gate へ提示する approval candidate を確定する権限。Human の decision authority は含まない。
-- `host_runtime`: Codex の選択画面、Hermes profile、または各 host の runtime 設定。model / reasoning の具体値を所有する。
+- `host_runtime`: active runtimeのsettingsとcapability surface。model / reasoningの具体値を所有する。
 - `ownership transfer`: context compaction または fresh context 移行時に、durable artifact と bounded brief を使って `main_planning_context` の役割を新しい primary context へ明示的に移すこと。supporting agent への delegation とは区別する。
 
 ## 採用した判断
@@ -54,7 +54,7 @@ model_persistence = "forbidden"
 
 ### Model selection
 
-- planning に使う model / reasoning は host runtime で選ぶ。Codex ではメインコンテキストに対して選択画面の設定を使う。
+- planningに使うmodel / reasoningはactive runtimeの設定で選ぶ。
 - supporting agent、execution coordinator、worker、reviewer の model routing は host に任せる。
 - model が利用できない、model 名が変わる、user が途中で設定を変える、という事象は spec / packet drift と扱わない。
 - `model`、`model_name`、`model_reasoning_effort`、`reasoning_level`、`intelligence_level` を durable planning / execution artifact に追加しない。
@@ -118,7 +118,7 @@ Human final merge decision
 - Execution Envelope schema / template / validator
 - Worker Packet schema / template / validator
 - `issue-implementation-loop` scheduler / runtime / worker lifecycle
-- Codex / Hermes 固有の model 名や reasoning level
+- runtime固有のmodel名やreasoning level
 
 ## 非目標
 
@@ -152,7 +152,7 @@ Human final merge decision
 - durable planning / execution artifact が model / reasoning field を新たに受け入れない。
 - `issue-implementation-loop` の worker-only、fresh / compacted coordinator、main planning session non-implementation 契約が不変である。
 - model unavailable または user-selected model change が repository drift / gate reset を起こさない。
-- scoped dual-host validation と対象 skill validator が成功する。
+- skill architecture validationと対象skill validatorが成功する。
 - repository の relevant regression suites と `git diff --check` が成功する。
 
 ## 検証方針 / コマンド
@@ -165,7 +165,6 @@ python3 -m unittest discover -s scripts
 python3 scripts/validate_skill_architecture.py --all
 python3 scripts/validate_skill_context.py --all
 python3 scripts/report_skill_context.py --all --json
-python3 scripts/validate_dual_host_compatibility.py --skill skills/grill-to-pr-loop
 python3 /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_validate.py skills/grill-to-pr-loop
 git diff --check
 ```
@@ -200,7 +199,7 @@ git diff --check
 - current architecture validatorのsmall TOML parserでは閉じたpolicyを安全に検証できない。
 - context budgetがbaselineから10%を超えて増加する。
 - planned write scopeと競合するdirty changeが見つかる。
-- scoped dual-host validationまたはrelevant regressionが失敗する。
+- skill architecture validation、対象skill validation、またはrelevant regressionが失敗する。
 
 ## 関連ページ
 

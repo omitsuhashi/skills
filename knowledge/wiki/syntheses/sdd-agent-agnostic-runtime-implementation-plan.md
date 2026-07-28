@@ -1,6 +1,8 @@
 # SDD Agent-Agnostic Runtime Contract Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Status: Historical / non-executable.** このplanはagent-agnostic runtime contractの過去の実装証跡として保持する。後続の[SDD Compatibility Removal Follow-up Plan](sdd-compatibility-removal-follow-up-plan.md)によりrepository compatibility validatorは削除済みであり、本文中の`validate_repository_compatibility.py`、`test_validate_repository_compatibility.py`、unchecked checklist、worker commandはすべてobsoleteである。current実装指示として実行せず、current contractは[SDD Implementation Skill 設計](sdd-implementation-skill-design.md)と後続planを参照する。
+
+> **Historical worker banner (preserved; do not follow):** For agentic workers: REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** `sdd-implementation`とrepositoryのskill authoring contractからagent名によるdependency確認・実行分岐を削除し、active runtimeのcapabilityだけで同じflowを解決する。
 
@@ -12,7 +14,7 @@
 
 spec / plan baseline は `c1f3791` である。Task 1 は `33fe86b240efcd03e8e9c6020f6620e87747da2d`（`Make skill runtime contracts agent agnostic`）で完了し、独立 task review は 0 findings で **Approved** となった。Task 2 は `171d4f1`、fix は `0501c45` であり、scoped re-review は **Approved** となった。
 
-final review は Critical 0 / Important 3 / Minor 0 を返した。bounded final fix `44edcf0` はresult collection、plan provenance、plugin validator guidanceの3件を解消し、final scoped re-review は全3件の解消、新規Critical / Important breakageなし、**APPROVED** を確認した。fresh pressure scenarioでは、synchronous dispatchがcompleted resultを返す場合はwait / resumeなしで継続し、asynchronous dispatchがwaitまたはresumeを欠く場合は`BLOCKED`、optional effortがない場合は`not_supported`として継続する。current planは `LOCAL_COMPLETE`、residual material riskはない。remote writeおよびlive mutationは実施していない。
+final review は Critical 0 / Important 3 / Minor 0 を返した。bounded final fix `44edcf0` はresult collection、plan provenance、plugin validator guidanceの3件を解消し、final scoped re-review は全3件の解消、新規Critical / Important breakageなし、**APPROVED** を確認した。fresh pressure scenarioでは、synchronous dispatchがcompleted resultを返す場合はwait / resumeなしで継続し、asynchronous dispatchがwaitまたはresumeを欠く場合は`BLOCKED`、optional effortがない場合は`not_supported`として継続する。この実装runは当時`LOCAL_COMPLETE`となったが、本pageは後続のcompatibility removalによりhistorical / non-executableであり、現在の実行入口ではない。remote writeおよびlive mutationは実施していない。
 
 ## Global Constraints
 

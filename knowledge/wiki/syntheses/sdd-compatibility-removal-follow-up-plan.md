@@ -12,7 +12,9 @@
 
 Task 1は`a1a177b877ebb07258bb69aa6d1f6f3429e9bc6e`（`Remove cross-runtime compatibility requirements`）で完了した。独立reviewは`APPROVED`で、Critical / Important / Minorのfindingはない。current repositoryは標準`SKILL.md`とactive-runtime capability boundaryを維持しつつ、repository compatibility validatorとcompatibility CI gateを持たない。旧dual-host designとそのimplementation planは、skill behaviorとplugin packaging compatibilityの双方についてhistorical / non-executableな証跡として原文を保持する。
 
-Task 2はこのcloseoutでcanonical design、historical boundary、catalog、append-only logを同期する。local verification後にbranchはPR-readyとなる。pushとPull Request作成は承認済みだが、本taskでは実行しない。merge、release、live mutationは未承認である。
+Task 2は`41d43a9`と`bc46e60`でcanonical design、historical boundary、catalog、append-only logを同期し、local verificationまで完了した。ただし、`f0b8efd...bc46e60`のfinal whole-follow-up reviewはCritical 0 / Important 2 / Minor 1で`NOT READY TO MERGE`を返したため、先行する`LOCAL_COMPLETE` / PR-ready記録を撤回し、本計画をfinal-review-fix candidateとして再開した。
+
+Task 3では、その3 findingを1回のbounded fixで修正し、scoped re-reviewを受ける。scoped re-reviewの承認とfresh verificationが揃うまではfinal review pendingであり、`LOCAL_COMPLETE` / PR-readyへ戻さない。pushとPull Request作成はlocal completion後について承認済みだが、本taskでは実行しない。merge、release、live mutationは未承認である。
 
 ## Global Constraints
 
@@ -102,7 +104,7 @@ git commit -m "Remove cross-runtime compatibility requirements"
 
 **Interfaces:**
 - Consumes: Task 1 commit, independent review, and fresh verification.
-- Produces: current compatibility-free contract, historical dual-host boundary, local-complete evidence, and PR-ready branch.
+- Produces: current compatibility-free contract、historical dual-host boundary、final reviewに渡すcloseout candidate。
 
 - [x] **Step 1: Close historical and current boundaries**
 
@@ -131,10 +133,49 @@ git add knowledge/wiki/syntheses/sdd-implementation-skill-design.md knowledge/wi
 git commit -m "Close out compatibility removal"
 ```
 
+### Task 3: Final review, bounded fix, and scoped re-review
+
+**Files:**
+- Modify: `knowledge/wiki/syntheses/sdd-compatibility-removal-follow-up-plan.md`
+- Modify: `knowledge/wiki/syntheses/sdd-agent-agnostic-runtime-implementation-plan.md`
+- Modify: `knowledge/wiki/syntheses/planning-authority-policy/spec.md`
+- Modify: `knowledge/index.md`
+- Modify: `knowledge/log.md`
+- Modify: `.superpowers/sdd/sdd-compatibility-removal-follow-up-plan/progress.md`
+
+**Interfaces:**
+- Consumes: complete follow-up branch、final whole-follow-up review findings。
+- Produces: corrected current / historical boundary and a scoped re-review candidate。`LOCAL_COMPLETE` / PR-readyはscoped re-review承認後に別closeoutとして記録する。
+
+- [x] **Step 1: Run the final whole-follow-up review**
+
+Review `f0b8efd...bc46e60` as one branch range. The review returned Critical 0 /
+Important 2 / Minor 1 and `NOT READY TO MERGE`.
+
+- [x] **Step 2: Apply one bounded final-fix wave**
+
+Reopen the completion state、mark the preceding implementation plan
+historical / non-executable、remove active dual-host and deleted-validator
+instructions from the current Planning Authority spec、and synchronize the
+catalog、append-only log、and transient ledger. Do not modify production code or
+CI.
+
+- [ ] **Step 3: Run scoped re-review and fresh verification**
+
+Review only this bounded fix and confirm that all three findings are resolved
+without new Critical / Important breakage. Re-run LLM Wiki tests、relevant
+repository tests / validators、and `git diff --check`.
+
+- [ ] **Step 4: Restore completion and publication readiness**
+
+Only after Step 3 is approved, update the durable and transient closeout state
+to `LOCAL_COMPLETE` / PR-ready. Publication remains a separate authorized
+action; merge、release、and live mutation remain unauthorized.
+
 ## 関連ページ
 
 - [SDD Implementation Skill 設計](sdd-implementation-skill-design.md) — current agent-agnostic and compatibility-free contract。
-- [SDD Agent-Agnostic Runtime Contract Implementation Plan](sdd-agent-agnostic-runtime-implementation-plan.md) — preceding runtime behavior change and review evidence。
+- [SDD Agent-Agnostic Runtime Contract Implementation Plan](sdd-agent-agnostic-runtime-implementation-plan.md) — historical / non-executableなpreceding runtime behavior change and review evidence。
 - [Codex / Hermes Dual-host Authoring Contract 設計](hermes-dual-host-authoring-contract-design.md) — historical compatibility design。
 
 ## 出典
