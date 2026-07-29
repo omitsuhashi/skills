@@ -1773,3 +1773,20 @@ append-only で使います。すべての entry は予測しやすい header �
 - Humanは`knowledge/wiki/syntheses/sdd-preimplementation-context-isolation-implementation-plan.md`をrepository-required Plan Gateとして承認した。これはcurrentな実行計画であり、承認済みWritten Spec `knowledge/wiki/syntheses/sdd-preimplementation-context-isolation-spec.md`およびbaseline `66d93ae4a233fc8f9750b6bc6d824cc54bb0838d`（`66d93ae`）にbindingされる。
 - 計画、`knowledge/index.md`、append-only `knowledge/log.md`をDurable Knowledge checkpointとして同期した。implementation、task review、knowledge closeout、final whole-branch reviewは未実施である。
 - push、PR、merge、release、live install、issue、comment、project変更その他のremote writeは未承認かつ未実施である。
+
+## [2026-07-29] implementation-closeout-candidate | SDD Pre-Implementation Context Isolation
+
+- Task 1は`1f5906fdb185cdf436eda31ccefedf3d0e3f1220 Add SDD planning controller contract`、Task 2は`44c52cdb3426363a32203cbcb3d486eeb0ac56d5 Route SDD planning work to fresh workers`である。`git log --format='%H %s' 66d93ae..HEAD`でfull SHAとsubjectを確認した。
+- Task 1の独立task reviewは`APPROVED`、material findingなしである。Task 2の独立task reviewも`APPROVED`、material findingなしである。
+- fresh-context forward scenarioは7件すべて`PASS`である。(1) rough change requestではResearch Workerだけがrepository evidenceを読み、Controllerはsourceを読まなかった。(2) 325行・2,365語のlong reportはartifactへ置き、direct returnを4 fieldに限定した。(3) confirmed decisionを再質問せず次のopen decisionへrouteした。(4) material conflictがあるdecisionだけを再openした。(5) fresh Spec Synthesis / Spec Reviewを分離し、Human Written Spec approvalを保持した。(6) fresh Plan Authorがbaseline `66d93ae`、approved spec、repository rules、`writing-plans`にbindingしたTDD planを作成・self-reviewした。(7) isolated dispatch欠如時は`BLOCKED`を返し、Controller explorationへfallbackしなかった。別のfresh verifierも7件にmaterial gapがないことを確認した。
+- `PYTHONPYCACHEPREFIX=/private/tmp/sdd-preimplementation-final python3 -m unittest discover -s skills/sdd-implementation/tests -v`は32 tests、`OK`である。
+- `PYTHONPYCACHEPREFIX=/private/tmp/sdd-preimplementation-final python3 -m unittest discover -s skills/llm-wiki/tests -v`は5 tests、`OK`である。
+- `PYTHONPYCACHEPREFIX=/private/tmp/sdd-preimplementation-final python3 -m unittest discover -s scripts -v`は19 tests、`OK`である。
+- `PYTHONPYCACHEPREFIX=/private/tmp/sdd-preimplementation-final python3 scripts/validate_skill_architecture.py --all`は`OK: validated skill architecture policy (repository-change-loop)`である。
+- `PYTHONPYCACHEPREFIX=/private/tmp/sdd-preimplementation-final python3 scripts/validate_skill_context.py --all`は`OK: validated 1 skill context contract(s)`であり、SDD context contractは追加されていない。
+- `PYTHONPYCACHEPREFIX=/private/tmp/sdd-preimplementation-final python3 scripts/report_skill_context.py --all --json --fail-on-warning`はexit 0、1 skill・12 operations、warnings 0である。
+- `PYTHONPYCACHEPREFIX=/private/tmp/sdd-preimplementation-final python3 /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_validate.py skills/sdd-implementation`は`Skill is valid!`である。
+- `test ! -e skills/grill-to-pr-loop`、`test ! -e skills/issue-implementation-loop`、`test ! -e skills/sdd-implementation/context-contract.toml`、`test ! -e skills/sdd-implementation/runtime-state.json`、`test ! -e skills/sdd-implementation/worker-packet.json`はすべてexit 0である。
+- `git diff --check 66d93ae4a233fc8f9750b6bc6d824cc54bb0838d..HEAD`はexit 0、出力なしである。residual material riskは`none`である。
+- canonical design、index、append-only logをimplementation closeout candidateへ同期した。whole-branch final reviewはcontrollerが別のfresh reviewerへdispatchするためpendingであり、`LOCAL_COMPLETE`を先取りしない。
+- push、PR作成、merge、release、live install、issue作成・更新、comment、project変更、その他のremote writeはすべて未実施であり、remote stateは変更していない。
