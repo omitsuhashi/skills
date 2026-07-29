@@ -105,6 +105,31 @@ style preference、具体的 failure path のない将来懸念、scope 外 refa
 
 `Grill with Docs` の `domain-modeling` が通常提案する `CONTEXT.md` や `docs/adr/` は、この repository では別の durable store として作らない。repository の `AGENTS.md` と `llm-wiki` write boundary を優先し、恒久的な glossary、ADR、spec、decision は `knowledge/wiki/...` の canonical page に統合する。
 
+## 実装前 Planning Controller
+
+実装前のmain sessionはPlanning Controllerであり、Human対話、current decision、
+spec draft内の`Confirmed Decisions` / `Open Decisions`、approval、stage routing、
+短いControl Returnだけを所有する。source code、broad wiki / docs、full spec /
+plan、diff、test output、複数file探索は直接読まない。
+
+Change requestまたはincomplete specではfresh Research Workerがgitignoredな
+`.superpowers/research/<epic-id>/`へpath / line evidence付きreportを書く。
+accepted decisionが揃った後はfresh Spec Synthesis Worker、別のfresh Spec
+Reviewer、fresh Plan Author Workerへ順にrouteする。workerはparent conversationを
+継承せずadvisory-onlyであり、Humanがmaterial decision、Written Spec approval、
+repository-required Plan approvalを保持する。
+
+workerの直接returnは`status`、`artifact_path`、`decision_requests`、
+`material_risks`へ限定し、詳細はartifact pathへ置く。stage transitionはcurrent
+result、canonical paths、open decisions、approval state、material riskだけを
+Stage Capsuleへcarryする。Control ReturnとStage Capsuleの長さは運用目安であり、
+context telemetry、manual compaction、word-count validatorをcorrectness gateにしない。
+
+このseamは`skills/sdd-implementation/references/`と`prompts/`に閉じる。新しい
+user-facing skill、custom scheduler、context contract、runtime state、packet schema、
+fallback matrix、main-session exploration fallbackは追加しない。Superpowers、
+`grill-with-docs`、`llm-wiki`の既存ownershipを変更しない。
+
 ## Entry Classification
 
 ### Change request だけがある
@@ -269,6 +294,20 @@ knowledge root が存在するのに authority、canonical target、write bounda
 11. knowledge root なしで wiki stage を `not_applicable` にする。
 12. wiki validation failure が `LOCAL_COMPLETE` を block する。
 
+### 実装前コンテキスト分離の landed verification coverage
+
+Task 2では、各scenarioをparent conversation非継承のfresh worker / controllerへ
+限定入力で渡し、次の7件をすべて`PASS`として確認した。詳細なreport、worker return、
+test outputはtransient evidenceに留め、wikiへはcurrent behaviorだけを統合する。
+
+1. rough change requestではfresh Research Workerだけがscoped repository evidenceを調査し、Planning Controllerはsourceを読まず、materialなdecision requestを1件だけ返した。
+2. 325行・2,365語のlong reportでは詳細をartifact pathへ置き、直接returnを`status`、`artifact_path`、`decision_requests`、`material_risks`の4 fieldだけに保った。
+3. confirmed decisionではfresh Planning Controllerが同じ質問を繰り返さず、forbidden readやauthoringなしに次のopen decisionへrouteした。
+4. material conflictでは矛盾したdecisionだけを再openし、prior decision、current conflict、impactを一緒に提示してHuman authorityを維持した。
+5. spec synthesis / reviewでは別々のfresh workerがconfirmed decisionを保持し、Spec Reviewerはadvisory-onlyの`ready_for_human_review`を返してHuman Written Spec approvalを要求した。
+6. Plan Authorではfresh workerがbaseline `66d93ae`、approved spec、repository rules、upstream `writing-plans`にbindingしたTDD planを作成・self-reviewし、直接returnをControl Returnだけに保った。
+7. isolated fresh-context dispatchがない場合は`BLOCKED`を返し、optional effortを`not_supported`として扱い、Planning Controllerへresearchやauthoringをfallbackしなかった。
+
 ## Completion Contract
 
 `LOCAL_COMPLETE` は次をすべて満たす場合だけ返す。
@@ -290,6 +329,7 @@ knowledge root が存在するのに authority、canonical target、write bounda
 - Phase 2 は別 task / PR として実行し、`skills/grill-to-pr-loop/` と `skills/issue-implementation-loop/`、専用 runtime / context surface を current tree から削除した。
 - historical wiki source / spec / ledger と `skill-repository-optimization-v4-context-baseline.json` は、実行可能 artifact として再利用せず非実行の evidence として保持する。
 - Phase 2 の fresh coordinator verification（SDD 9、llm-wiki 5、scripts 42 tests、architecture / context / dual-host / skill validators、legacy absence / link checks）と、`8ff2bdc..804c2c7` の final review（Critical 0、Important 0、Minor 0、Ready to merge Yes）は完了済みである。
+- [SDD 実装前コンテキスト分離仕様](sdd-preimplementation-context-isolation-spec.md)と[その実装計画](sdd-preimplementation-context-isolation-implementation-plan.md)がsupersedeするのはpre-implementation context ownershipの部分だけである。historicalなloop context documentsはnon-executable evidenceとして保持し、そのruntime machineryは復元しない。
 
 ## 非目標
 

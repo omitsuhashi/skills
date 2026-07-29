@@ -1752,3 +1752,47 @@ append-only で使います。すべての entry は予測しやすい header �
 - bounded final fix `ae151b979e20b656b5a7173eb841228256c90632`はfinal whole-follow-up reviewのCritical 0 / Important 2 / Minor 1を対象とした。`bc46e60..ae151b9`のscoped re-reviewは全3 findingの解消と新規findingなしを確認し、Critical 0 / Important 0 / Minor 0で`APPROVED`となった。
 - current follow-up planはfinal review、bounded fix、scoped re-review、completion restoreをすべて完了し、catalogとtransient ledgerも同じ状態へ同期した。これにより本follow-upを`LOCAL_COMPLETE`かつPR-readyとする。
 - closeout後のfresh verificationは`PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 -m unittest discover -s skills/llm-wiki/tests`が5 tests `OK`、`git diff --check`が出力なし・exit 0で成功した。pushとPull Request作成は承認済みだが未実施であり、merge、release、live mutationは未承認かつ未実施である。
+
+## [2026-07-29] written-spec-review-candidate | SDD Pre-Implementation Context Isolation
+
+- Humanは、`sdd-implementation`を唯一のuser-facing entrypointとして維持し、Research、Spec Synthesis、Plan Authoringを内部seamとfresh workerへ分離するGrand Designのshared understandingを承認した。
+- Planning ControllerはHuman対話、Decision Record、approval、routingだけを所有する。source code、broad wiki / docs、full spec / plan、diff、test output、複数file探索はworkerだけが読み、worker detailsはartifact pathへ置く。
+- Research Reportはplanning worktree内のgitignoredな`.superpowers/research/<epic-id>/`へ置く。spec draftのConfirmed Decisions / Open Decisionsを唯一のDecision Recordとし、別ledger、`CONTEXT.md`、custom scheduler、runtime / packet schemaを追加しない。
+- Control Return 200 words、Stage Capsule 400 wordsは運用目安に限定し、context telemetry、manual compaction、strict word validator、main-session fallbackは非目標とした。
+- focused revision spec、index、append-only logを文書レビュー候補として同期した。HumanのWritten Spec review、implementation plan、implementation、remote writeは未実施である。
+
+## [2026-07-29] spec-gate-approved | SDD Pre-Implementation Context Isolation
+
+- Humanは`knowledge/wiki/syntheses/sdd-preimplementation-context-isolation-spec.md`をWritten Specとして承認した。
+- approved scopeは、`sdd-implementation`を唯一のuser-facing entrypointとして維持し、Research、Spec Synthesis、Plan Authoringをfresh workerへ分離し、Planning ControllerをHuman対話、Decision Record、approval、routingへ限定する。
+- context telemetry、manual compaction、strict word validator、main-session exploration fallback、new user-facing skill、custom scheduler / runtime schemaは非目標のまま維持する。
+- Spec Gateは承認済みである。Implementation planの作成・review・approval、implementation、remote writeは未実施である。
+
+## [2026-07-29] plan-gate-approved | SDD Pre-Implementation Context Isolation
+
+- Humanは`knowledge/wiki/syntheses/sdd-preimplementation-context-isolation-implementation-plan.md`をrepository-required Plan Gateとして承認した。これはcurrentな実行計画であり、承認済みWritten Spec `knowledge/wiki/syntheses/sdd-preimplementation-context-isolation-spec.md`およびbaseline `66d93ae4a233fc8f9750b6bc6d824cc54bb0838d`（`66d93ae`）にbindingされる。
+- 計画、`knowledge/index.md`、append-only `knowledge/log.md`をDurable Knowledge checkpointとして同期した。implementation、task review、knowledge closeout、final whole-branch reviewは未実施である。
+- push、PR、merge、release、live install、issue、comment、project変更その他のremote writeは未承認かつ未実施である。
+
+## [2026-07-29] implementation-closeout-candidate | SDD Pre-Implementation Context Isolation
+
+- Task 1は`1f5906fdb185cdf436eda31ccefedf3d0e3f1220 Add SDD planning controller contract`、Task 2は`44c52cdb3426363a32203cbcb3d486eeb0ac56d5 Route SDD planning work to fresh workers`である。`git log --format='%H %s' 66d93ae..HEAD`でfull SHAとsubjectを確認した。
+- Task 1の独立task reviewは`APPROVED`、material findingなしである。Task 2の独立task reviewも`APPROVED`、material findingなしである。
+- fresh-context forward scenarioは7件すべて`PASS`である。(1) rough change requestではResearch Workerだけがrepository evidenceを読み、Controllerはsourceを読まなかった。(2) 325行・2,365語のlong reportはartifactへ置き、direct returnを4 fieldに限定した。(3) confirmed decisionを再質問せず次のopen decisionへrouteした。(4) material conflictがあるdecisionだけを再openした。(5) fresh Spec Synthesis / Spec Reviewを分離し、Human Written Spec approvalを保持した。(6) fresh Plan Authorがbaseline `66d93ae`、approved spec、repository rules、`writing-plans`にbindingしたTDD planを作成・self-reviewした。(7) isolated dispatch欠如時は`BLOCKED`を返し、Controller explorationへfallbackしなかった。別のfresh verifierも7件にmaterial gapがないことを確認した。
+- `PYTHONPYCACHEPREFIX=/private/tmp/sdd-preimplementation-final python3 -m unittest discover -s skills/sdd-implementation/tests -v`は32 tests、`OK`である。
+- `PYTHONPYCACHEPREFIX=/private/tmp/sdd-preimplementation-final python3 -m unittest discover -s skills/llm-wiki/tests -v`は5 tests、`OK`である。
+- `PYTHONPYCACHEPREFIX=/private/tmp/sdd-preimplementation-final python3 -m unittest discover -s scripts -v`は19 tests、`OK`である。
+- `PYTHONPYCACHEPREFIX=/private/tmp/sdd-preimplementation-final python3 scripts/validate_skill_architecture.py --all`は`OK: validated skill architecture policy (repository-change-loop)`である。
+- `PYTHONPYCACHEPREFIX=/private/tmp/sdd-preimplementation-final python3 scripts/validate_skill_context.py --all`は`OK: validated 1 skill context contract(s)`であり、SDD context contractは追加されていない。
+- `PYTHONPYCACHEPREFIX=/private/tmp/sdd-preimplementation-final python3 scripts/report_skill_context.py --all --json --fail-on-warning`はexit 0、1 skill・12 operations、warnings 0である。
+- `PYTHONPYCACHEPREFIX=/private/tmp/sdd-preimplementation-final python3 /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_validate.py skills/sdd-implementation`は`Skill is valid!`である。
+- `test ! -e skills/grill-to-pr-loop`、`test ! -e skills/issue-implementation-loop`、`test ! -e skills/sdd-implementation/context-contract.toml`、`test ! -e skills/sdd-implementation/runtime-state.json`、`test ! -e skills/sdd-implementation/worker-packet.json`はすべてexit 0である。
+- `git diff --check 66d93ae4a233fc8f9750b6bc6d824cc54bb0838d..HEAD`はexit 0、出力なしである。residual material riskは`none`である。
+- canonical design、index、append-only logをimplementation closeout candidateへ同期した。whole-branch final reviewはcontrollerが別のfresh reviewerへdispatchするためpendingであり、`LOCAL_COMPLETE`を先取りしない。
+- push、PR作成、merge、release、live install、issue作成・更新、comment、project変更、その他のremote writeはすべて未実施であり、remote stateは変更していない。
+
+## [2026-07-29] final-review-approved-local-complete | SDD Pre-Implementation Context Isolation
+
+- fresh whole-branch reviewは`66d93ae4a233fc8f9750b6bc6d824cc54bb0838d..c7a69927cf74f9316b2b1122283ca0b0e47d8e6b`を対象に、Critical 0 / Important 0 / Minor 0、`Ready to merge: Yes`で承認した。Task 1 / 2 / 3 reviewもcleanであり、residual material riskはない。
+- full fresh verification（SDD 32/32、LLM Wiki 5/5、repository scripts 19/19、全validator・absence・diff・branch-integrity check）は成功したため、本変更を`LOCAL_COMPLETE`とする。
+- local-only completionである。push、PR作成、merge、release、live install、issue、comment、project変更を含むremote writeはすべて未実施かつ未承認である。
