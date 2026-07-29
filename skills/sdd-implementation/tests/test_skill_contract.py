@@ -237,7 +237,7 @@ class SddImplementationSkillContractTests(unittest.TestCase):
 
     def test_skill_has_only_the_minimal_resource_shape(self) -> None:
         children = {path.name for path in SKILL_DIR.iterdir()} if SKILL_DIR.is_dir() else set()
-        self.assertEqual({"SKILL.md", "agents", "tests"}, children)
+        self.assertEqual({"SKILL.md", "agents", "references", "tests"}, children)
         self.assertFalse((SKILL_DIR / "description.md").exists())
 
     def test_openai_metadata_matches_the_skill(self) -> None:
