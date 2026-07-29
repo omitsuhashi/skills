@@ -2,6 +2,14 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+## 状態
+
+2026-07-29にHumanが本計画をrepository-required Plan Gateとして承認した。これは
+currentな実行計画であり、承認済みWritten Spec
+`knowledge/wiki/syntheses/sdd-preimplementation-context-isolation-spec.md`と、baseline
+commit `66d93ae4a233fc8f9750b6bc6d824cc54bb0838d`（`66d93ae`）にbindingされる。
+implementation、remote writeは未実施である。
+
 **Goal:** `sdd-implementation`を唯一のuser-facing repository-change skillとして維持しながら、実装前のrepository調査、Spec Synthesis / Review、Plan Authoringをisolated fresh-context workerへ移し、main sessionをPlanning Controllerへ限定する。
 
 **Architecture:** portableな`SKILL.md`にはinput maturity routing、Planning Controller invariant、lazy-loaded stage reference、fresh worker dispatch requirementだけを置く。詳細なread boundary、Decision Record、Control Return、Stage Capsuleは2つのinternal referenceへ分け、Research / Spec Synthesis / Spec Reviewは3つのinternal promptで実行する。Plan Authorは新しいpromptやskillを作らず、`planning-context.md`からfresh workerへcurrent Superpowers `writing-plans`をrouteする。

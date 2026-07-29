@@ -1767,3 +1767,9 @@ append-only で使います。すべての entry は予測しやすい header �
 - approved scopeは、`sdd-implementation`を唯一のuser-facing entrypointとして維持し、Research、Spec Synthesis、Plan Authoringをfresh workerへ分離し、Planning ControllerをHuman対話、Decision Record、approval、routingへ限定する。
 - context telemetry、manual compaction、strict word validator、main-session exploration fallback、new user-facing skill、custom scheduler / runtime schemaは非目標のまま維持する。
 - Spec Gateは承認済みである。Implementation planの作成・review・approval、implementation、remote writeは未実施である。
+
+## [2026-07-29] plan-gate-approved | SDD Pre-Implementation Context Isolation
+
+- Humanは`knowledge/wiki/syntheses/sdd-preimplementation-context-isolation-implementation-plan.md`をrepository-required Plan Gateとして承認した。これはcurrentな実行計画であり、承認済みWritten Spec `knowledge/wiki/syntheses/sdd-preimplementation-context-isolation-spec.md`およびbaseline `66d93ae4a233fc8f9750b6bc6d824cc54bb0838d`（`66d93ae`）にbindingされる。
+- 計画、`knowledge/index.md`、append-only `knowledge/log.md`をDurable Knowledge checkpointとして同期した。implementation、task review、knowledge closeout、final whole-branch reviewは未実施である。
+- push、PR、merge、release、live install、issue、comment、project変更その他のremote writeは未承認かつ未実施である。
