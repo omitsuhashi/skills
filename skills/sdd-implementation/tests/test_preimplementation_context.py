@@ -7,6 +7,10 @@ import unittest
 SKILL_DIR = Path(__file__).resolve().parents[1]
 SKILL = SKILL_DIR / "SKILL.md"
 PLANNING_CONTEXT = SKILL_DIR / "references" / "planning-context.md"
+RESEARCH_STAGE = SKILL_DIR / "references" / "research-stage.md"
+RESEARCHER_PROMPT = SKILL_DIR / "prompts" / "repository-researcher.md"
+SYNTHESIZER_PROMPT = SKILL_DIR / "prompts" / "spec-synthesizer.md"
+REVIEWER_PROMPT = SKILL_DIR / "prompts" / "spec-reviewer.md"
 
 
 def read_or_empty(path: Path) -> str:
@@ -18,6 +22,10 @@ class PreImplementationContextContractTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.skill_text = read_or_empty(SKILL)
         cls.planning_text = read_or_empty(PLANNING_CONTEXT)
+        cls.research_text = read_or_empty(RESEARCH_STAGE)
+        cls.researcher_text = read_or_empty(RESEARCHER_PROMPT)
+        cls.synthesizer_text = read_or_empty(SYNTHESIZER_PROMPT)
+        cls.reviewer_text = read_or_empty(REVIEWER_PROMPT)
 
     def test_entrypoint_limits_main_session_to_planning_controller(self) -> None:
         self.assertIn("## Planning Controller", self.skill_text)
@@ -116,6 +124,111 @@ class PreImplementationContextContractTests(unittest.TestCase):
         self.assertIn(
             "Do not fall back to Planning Controller exploration or artifact authoring.",
             self.planning_text,
+        )
+
+    def test_research_stage_routes_only_fresh_repository_exploration(self) -> None:
+        normalized = " ".join(self.research_text.split())
+        self.assertIn("`.superpowers/research/<epic-id>/`", self.research_text)
+        self.assertIn("`prompts/repository-researcher.md`", self.research_text)
+        self.assertIn("Do not inherit the parent conversation.", self.research_text)
+        self.assertIn(
+            "The Planning Controller reads the Control Return, not the report body.",
+            normalized,
+        )
+        for category in ("confirmed facts", "material conflicts", "unknowns"):
+            self.assertIn(category, self.research_text)
+
+    def test_every_worker_prompt_is_advisory_and_returns_control_fields(self) -> None:
+        for prompt_text in (
+            self.researcher_text,
+            self.synthesizer_text,
+            self.reviewer_text,
+        ):
+            self.assertIn("Do not inherit the parent conversation.", prompt_text)
+            self.assertIn("advisory-only", prompt_text)
+            for field in (
+                "`status`",
+                "`artifact_path`",
+                "`decision_requests`",
+                "`material_risks`",
+            ):
+                self.assertIn(field, prompt_text)
+
+    def test_research_prompt_requires_path_and_line_evidence(self) -> None:
+        for category in (
+            "Confirmed Facts",
+            "Material Conflicts",
+            "Unknowns",
+        ):
+            self.assertIn(category, self.researcher_text)
+        self.assertIn("repository-relative path and line range", self.researcher_text)
+        self.assertIn("git history", self.researcher_text)
+        self.assertIn("llm-wiki", self.researcher_text)
+
+    def test_spec_synthesis_and_review_are_separate_fresh_workers(self) -> None:
+        self.assertIn("Spec Synthesis Worker", self.synthesizer_text)
+        self.assertIn("Spec Reviewer", self.reviewer_text)
+        self.assertIn("`Confirmed Decisions`", self.synthesizer_text)
+        self.assertIn("`Open Decisions`", self.synthesizer_text)
+        self.assertIn("Do not fill an unresolved decision with an assumption.", self.synthesizer_text)
+        for review_lens in (
+            "accepted decisions",
+            "resolved questions",
+            "repository evidence",
+            "unknowns",
+            "acceptance criteria",
+            "non-goals",
+            "stop conditions",
+        ):
+            self.assertIn(review_lens, self.reviewer_text)
+
+    def test_internal_resource_shape_has_no_new_user_facing_or_runtime_surface(self) -> None:
+        references = {
+            path.name for path in (SKILL_DIR / "references").iterdir()
+        }
+        prompts = {
+            path.name for path in (SKILL_DIR / "prompts").iterdir()
+        }
+        self.assertEqual(
+            {"planning-context.md", "research-stage.md"},
+            references,
+        )
+        self.assertEqual(
+            {
+                "repository-researcher.md",
+                "spec-synthesizer.md",
+                "spec-reviewer.md",
+            },
+            prompts,
+        )
+        for forbidden in (
+            "context-contract.toml",
+            "runtime-state.json",
+            "worker-packet.json",
+            "fallback-matrix.md",
+            "scheduler.py",
+        ):
+            self.assertFalse((SKILL_DIR / forbidden).exists())
+
+    def test_contract_rejects_numerical_context_control_and_controller_fallback(self) -> None:
+        combined = "\n".join(
+            (
+                self.skill_text,
+                self.planning_text,
+                self.research_text,
+                self.researcher_text,
+                self.synthesizer_text,
+                self.reviewer_text,
+            )
+        )
+        self.assertIn(
+            "Do not require context telemetry, manual compaction, or a strict "
+            "word-count validator.",
+            combined,
+        )
+        self.assertIn(
+            "Do not fall back to Planning Controller exploration or artifact authoring.",
+            combined,
         )
 
 

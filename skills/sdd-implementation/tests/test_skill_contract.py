@@ -235,10 +235,26 @@ class SddImplementationSkillContractTests(unittest.TestCase):
         self.assertLess(task_review, closeout)
         self.assertLess(closeout, final_review)
 
-    def test_skill_has_only_the_minimal_resource_shape(self) -> None:
+    def test_skill_has_only_the_internal_stage_resource_shape(self) -> None:
         children = {path.name for path in SKILL_DIR.iterdir()} if SKILL_DIR.is_dir() else set()
-        self.assertEqual({"SKILL.md", "agents", "references", "tests"}, children)
+        self.assertEqual(
+            {"SKILL.md", "agents", "prompts", "references", "tests"},
+            children,
+        )
+        self.assertEqual(
+            {"planning-context.md", "research-stage.md"},
+            {path.name for path in (SKILL_DIR / "references").iterdir()},
+        )
+        self.assertEqual(
+            {
+                "repository-researcher.md",
+                "spec-synthesizer.md",
+                "spec-reviewer.md",
+            },
+            {path.name for path in (SKILL_DIR / "prompts").iterdir()},
+        )
         self.assertFalse((SKILL_DIR / "description.md").exists())
+        self.assertFalse((SKILL_DIR / "context-contract.toml").exists())
 
     def test_openai_metadata_matches_the_skill(self) -> None:
         self.assertIn('display_name: "SDD Implementation"', self.openai_text)

@@ -23,6 +23,11 @@ the current question, and missing task-local facts only. If isolated dispatch
 with an explicit model is unavailable, return `BLOCKED`; do not move research
 or authoring into the Planning Controller.
 
+For a change request or incomplete specification, read
+`references/research-stage.md` before repository investigation. Research,
+Spec Synthesis, Spec Review, and Plan Authoring must each use a fresh worker.
+Do not require context telemetry, manual compaction, or a strict word-count validator.
+
 Read `references/planning-context.md` only when entering a pre-implementation
 decision, synthesis, review, or plan-authoring stage. Keep stage details out of
 this entrypoint.
@@ -44,9 +49,11 @@ If a required family is missing, return the matching result:
 
 Do not repeat a completed stage.
 
-- **Change request or incomplete specification:** use
-  `superpowers:brainstorming`, the Spec Stage below, and Human written-spec
-  approval before planning. Preserve approved and complete portions of an incomplete specification.
+- **Change request or incomplete specification:** enter the Planning Controller,
+  dispatch the fresh Research Worker defined by `references/research-stage.md`,
+  then use `superpowers:brainstorming` and the Spec Stage below. Require Human
+  written-spec approval before planning.
+  Preserve approved and complete portions of an incomplete specification.
   Use Grill with Docs only for unresolved material decisions.
 - **Human-approved current specification:** verify authority, applicability,
   requirements, and acceptance criteria, then use `superpowers:writing-plans`.
