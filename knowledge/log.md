@@ -1760,3 +1760,10 @@ append-only で使います。すべての entry は予測しやすい header �
 - Research Reportはplanning worktree内のgitignoredな`.superpowers/research/<epic-id>/`へ置く。spec draftのConfirmed Decisions / Open Decisionsを唯一のDecision Recordとし、別ledger、`CONTEXT.md`、custom scheduler、runtime / packet schemaを追加しない。
 - Control Return 200 words、Stage Capsule 400 wordsは運用目安に限定し、context telemetry、manual compaction、strict word validator、main-session fallbackは非目標とした。
 - focused revision spec、index、append-only logを文書レビュー候補として同期した。HumanのWritten Spec review、implementation plan、implementation、remote writeは未実施である。
+
+## [2026-07-29] spec-gate-approved | SDD Pre-Implementation Context Isolation
+
+- Humanは`knowledge/wiki/syntheses/sdd-preimplementation-context-isolation-spec.md`をWritten Specとして承認した。
+- approved scopeは、`sdd-implementation`を唯一のuser-facing entrypointとして維持し、Research、Spec Synthesis、Plan Authoringをfresh workerへ分離し、Planning ControllerをHuman対話、Decision Record、approval、routingへ限定する。
+- context telemetry、manual compaction、strict word validator、main-session exploration fallback、new user-facing skill、custom scheduler / runtime schemaは非目標のまま維持する。
+- Spec Gateは承認済みである。Implementation planの作成・review・approval、implementation、remote writeは未実施である。
