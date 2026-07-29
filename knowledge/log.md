@@ -1752,3 +1752,11 @@ append-only で使います。すべての entry は予測しやすい header �
 - bounded final fix `ae151b979e20b656b5a7173eb841228256c90632`はfinal whole-follow-up reviewのCritical 0 / Important 2 / Minor 1を対象とした。`bc46e60..ae151b9`のscoped re-reviewは全3 findingの解消と新規findingなしを確認し、Critical 0 / Important 0 / Minor 0で`APPROVED`となった。
 - current follow-up planはfinal review、bounded fix、scoped re-review、completion restoreをすべて完了し、catalogとtransient ledgerも同じ状態へ同期した。これにより本follow-upを`LOCAL_COMPLETE`かつPR-readyとする。
 - closeout後のfresh verificationは`PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 -m unittest discover -s skills/llm-wiki/tests`が5 tests `OK`、`git diff --check`が出力なし・exit 0で成功した。pushとPull Request作成は承認済みだが未実施であり、merge、release、live mutationは未承認かつ未実施である。
+
+## [2026-07-29] written-spec-review-candidate | SDD Pre-Implementation Context Isolation
+
+- Humanは、`sdd-implementation`を唯一のuser-facing entrypointとして維持し、Research、Spec Synthesis、Plan Authoringを内部seamとfresh workerへ分離するGrand Designのshared understandingを承認した。
+- Planning ControllerはHuman対話、Decision Record、approval、routingだけを所有する。source code、broad wiki / docs、full spec / plan、diff、test output、複数file探索はworkerだけが読み、worker detailsはartifact pathへ置く。
+- Research Reportはplanning worktree内のgitignoredな`.superpowers/research/<epic-id>/`へ置く。spec draftのConfirmed Decisions / Open Decisionsを唯一のDecision Recordとし、別ledger、`CONTEXT.md`、custom scheduler、runtime / packet schemaを追加しない。
+- Control Return 200 words、Stage Capsule 400 wordsは運用目安に限定し、context telemetry、manual compaction、strict word validator、main-session fallbackは非目標とした。
+- focused revision spec、index、append-only logを文書レビュー候補として同期した。HumanのWritten Spec review、implementation plan、implementation、remote writeは未実施である。
