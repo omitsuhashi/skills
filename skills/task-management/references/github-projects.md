@@ -161,10 +161,26 @@ Creation defaults are `Status=Inbox`, `Priority=P2`, and no due date. Apply them
 
 - `Done` maps to Issue close reason `completed`.
 - `Cancelled` maps to Issue close reason `not planned`.
-- Treat the Project Status and Issue close as one logical transition.
+- `Done` targets Issue state `closed`, close reason `completed`, and Project Status `Done`.
+- `Cancelled` targets Issue state `closed`, close reason `not planned`, and Project Status `Cancelled`.
+- Treat the Project Status and Issue close as two sides of one logical transition.
+- Read the current Issue state, close reason, and Project Status first. Attempt only sides that differ from the target.
+- An explicit terminal instruction needs no second confirmation. An inferred terminal transition still requires confirmation before mutation.
 - Keep the item in the Project; do not remove or archive it.
 - When an externally closed Issue has a reliable close reason, reconcile the Project Status as a safe non-destructive update.
-- If only one side succeeds, report the mismatch. Continue only the unfinished steps after applying the safety contract.
+- If only one side succeeds, return `partial`, name the completed and remaining sides in `first_remaining_sides`, and include exact readback. Do not report a two-side partial success as `complete`.
+- Retry after another exact readback. Put only the still-missing side in `retry_attempted_sides`; do not write an already-correct side again.
+
+## Reopen
+
+Issue state and Project Status are two sides of one logical operation. Reopen targets Issue state `open`, no close reason, and a non-terminal Project Status.
+
+- Normalize an explicit target and allow only `Inbox`, `Backlog`, `Ready`, `In progress`, and `Blocked`. A bare reopen defaults to `Backlog`.
+- Block `Done`, `Cancelled`, every unknown or non-normalizable value, and a schema-ambiguous target before either side is attempted.
+- Read the current Issue state and Project Status first. Attempt only sides that differ from the target.
+- If both sides read back at their targets, return `complete`. If one side succeeds and the other does not, return `partial`, name the completed side and `first_remaining_sides`, and include the current Issue state and Status as exact readback.
+- When the other side fails, do not roll back a successful side. Keep its exact readback as the resume basis.
+- On retry, read both sides again and put the remaining side only in `retry_attempted_sides`. Never reopen an Issue already confirmed open, rewrite a Status already confirmed correct, or reset a successful explicit Status to the bare-reopen default.
 
 ## Setup boundary
 

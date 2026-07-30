@@ -76,9 +76,15 @@ Only this operation uses the new-task flow:
 
 ### Terminal update
 
-- Complete the `done_cancelled` operation-scoped preflight in `references/github-projects.md` before mutation. Complete the `reopen` preflight when reopening a completed or cancelled Issue.
+- Complete the `done_cancelled` operation-scoped preflight in `references/github-projects.md` before mutation.
 - Treat an explicit terminal instruction as approval for the Issue close and matching Project Status transition. Do not ask twice.
 - Obtain confirmation before an inferred terminal transition.
 - Apply the terminal and partial-failure contracts in `references/github-projects.md` and `references/safety-and-failures.md`, then return the result of each side and any unfinished step.
+
+### Reopen
+
+- Complete the `reopen` operation-scoped preflight in `references/github-projects.md` before mutation.
+- Use the user's explicit non-terminal Status target. For a bare reopen, use `Backlog`.
+- Read both current sides first, apply the reopen state machine, and return each side's exact readback, result, and remaining work.
 
 Stop before writing when the Project, repository, task outcome, acceptance criteria, capability, authentication, permission, or schema is not reliable enough to proceed.

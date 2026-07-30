@@ -22,6 +22,7 @@ EXPECTED_FILES = {
     "references/safety-and-failures.md",
     "tests/fixtures/operation-capability-cases.json",
     "tests/fixtures/pagination-cases.json",
+    "tests/fixtures/transition-cases.json",
     "tests/test_task_management_contract.py",
 }
 
@@ -386,6 +387,61 @@ STATUS_WORDING = {
     "Cancelled": {"Cancelled", "Canceled", "中止", "キャンセル"},
 }
 
+NON_TERMINAL_REOPEN_STATUSES = frozenset(
+    {"Inbox", "Backlog", "Ready", "In progress", "Blocked"}
+)
+
+
+def transition_targets(case: dict[str, object]) -> tuple[object, object, object]:
+    operation = case["operation"]
+    if operation == "done":
+        return "closed", "completed", "Done"
+    if operation == "cancelled":
+        return "closed", "not planned", "Cancelled"
+    requested = case["requested_status"]
+    if requested is not None and requested not in NON_TERMINAL_REOPEN_STATUSES:
+        return None, None, None
+    return "open", None, requested or "Backlog"
+
+
+def run_transition(case: dict[str, object]) -> dict[str, object]:
+    target_issue, target_reason, target_status = transition_targets(case)
+    if target_issue is None:
+        return {
+            "target_issue_state": None,
+            "target_close_reason": None,
+            "target_status": None,
+            "first_attempted_sides": [],
+            "first_result": "blocked",
+            "first_remaining_sides": [],
+            "retry_attempted_sides": [],
+            "final_result": "blocked",
+            "final_remaining_sides": [],
+        }
+    sides = []
+    if case["initial_issue"] != target_issue:
+        sides.append("issue")
+    if case["initial_status"] != target_status:
+        sides.append("project_status")
+    first_success = set(case["first_success"])
+    if not first_success <= set(sides):
+        raise AssertionError("first_success must be a subset of readback-derived sides")
+    first_remaining = [side for side in sides if side not in first_success]
+    retry_attempted = list(first_remaining)
+    retry_success = set(case["retry_success"])
+    final_remaining = [side for side in first_remaining if side not in retry_success]
+    return {
+        "target_issue_state": target_issue,
+        "target_close_reason": target_reason,
+        "target_status": target_status,
+        "first_attempted_sides": sides,
+        "first_result": "complete" if not first_remaining else "partial",
+        "first_remaining_sides": first_remaining,
+        "retry_attempted_sides": retry_attempted,
+        "final_result": "complete" if not final_remaining else "partial",
+        "final_remaining_sides": final_remaining,
+    }
+
 
 def duplicate_decision(
     envelope_value: dict[str, object],
@@ -446,6 +502,86 @@ def field_options(text: str, field: str) -> list[str]:
 
 
 class TaskManagementContractTests(unittest.TestCase):
+    def test_transition_fixtures_execute_complete_partial_and_retry(self) -> None:
+        for case in fixture("transition-cases.json")["cases"]:
+            with self.subTest(case=case["name"]):
+                self.assertEqual(case["expected"], run_transition(case))
+
+    def test_reopen_target_allowlist_blocks_terminal_and_unknown_values(self) -> None:
+        self.assertEqual(
+            {"Inbox", "Backlog", "Ready", "In progress", "Blocked"},
+            set(NON_TERMINAL_REOPEN_STATUSES),
+        )
+        cases = fixture("transition-cases.json")["cases"]
+        blocked = {
+            case["name"]: run_transition(case)
+            for case in cases
+            if case["name"] in {
+                "invalid_terminal_reopen",
+                "invalid_done_reopen",
+                "unknown_reopen_target",
+            }
+        }
+        self.assertEqual(
+            {
+                "invalid_terminal_reopen",
+                "invalid_done_reopen",
+                "unknown_reopen_target",
+            },
+            set(blocked),
+        )
+        for result in blocked.values():
+            self.assertEqual("blocked", result["first_result"])
+            self.assertEqual([], result["first_attempted_sides"])
+            self.assertEqual([], result["retry_attempted_sides"])
+
+    def test_terminal_and_reopen_contract_names_state_machine_outputs(self) -> None:
+        text = read(SKILL) + "\n" + read(PROJECTS) + "\n" + read(SAFETY)
+        for required in (
+            "bare reopen",
+            "`Backlog`",
+            "completed",
+            "not planned",
+            "first_remaining_sides",
+            "retry_attempted_sides",
+            "remaining side only",
+            "exact readback",
+            "do not roll back",
+        ):
+            self.assertIn(required, text)
+
+        terminal = section(read(PROJECTS), "## Terminal transitions")
+        self.assertIn("`Done` maps to Issue close reason `completed`", terminal)
+        self.assertIn("`Cancelled` maps to Issue close reason `not planned`", terminal)
+        self.assertNotIn("`Done` maps to Issue close reason `not planned`", terminal)
+        self.assertNotIn("`Cancelled` maps to Issue close reason `completed`", terminal)
+
+        reopen = section(read(PROJECTS), "## Reopen")
+        self.assertEqual(
+            ["Backlog"],
+            re.findall(r"bare reopen defaults to `([^`]+)`", reopen),
+        )
+        for required in (
+            "Issue state and Project Status are two sides of one logical operation",
+            "bare reopen",
+            "`Backlog`",
+            "`Inbox`, `Backlog`, `Ready`, `In progress`, and `Blocked`",
+            "before either side is attempted",
+            "first_remaining_sides",
+            "retry_attempted_sides",
+            "remaining side only",
+            "exact readback",
+            "do not roll back",
+        ):
+            self.assertIn(required, reopen)
+        for contradiction in (
+            "bare reopen defaults to `Inbox`",
+            "retry both sides",
+            "roll back the successful side",
+            "partial success is complete",
+        ):
+            self.assertNotIn(contradiction, reopen)
+
     def test_pagination_fixtures_match_exact_counts_conflicts_and_continuation(self) -> None:
         for case in fixture("pagination-cases.json")["cases"]:
             with self.subTest(case=case["name"]):

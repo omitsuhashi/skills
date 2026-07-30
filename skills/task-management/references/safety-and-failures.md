@@ -27,7 +27,16 @@ Do not fall back to a CLI, direct API client, browser automation, or local backe
 
 Do not delete the created Issue if Issue creation succeeds but Project add or field update fails. Return its URL, successful steps, unfinished steps, and the safe resume action. On retry, continue only the unfinished steps. Do not reset completed or current fields. Do not create a duplicate Issue.
 
-If Issue close and terminal Project Status diverge, do not roll back the successful side automatically. Report the mismatch and complete only the missing side after the applicable confirmation rule.
+For a terminal or reopen operation, exact-read the Issue state, close reason when
+applicable, and Project Status before writing. Attempt only sides that differ
+from the target. If the sides diverge, do not roll back the successful side.
+Return `partial`, the completed sides, `first_remaining_sides`, and exact
+readback. A two-side partial success is never `complete`.
+
+On retry, exact-read both sides again, put the remaining side only in
+`retry_attempted_sides`, and write only that side. Continue only the unfinished steps.
+Do not retry a side already confirmed successful. Preserve the successful side
+even when the remaining side keeps failing.
 
 For duplicate discovery or another completeness-required query, only confirmed
 raw source exhaustion may produce `complete`. A 50-item display/return limit is
