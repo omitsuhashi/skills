@@ -1824,3 +1824,11 @@ append-only で使います。すべての entry は予測しやすい header �
 - `test_public_contract_reports_completion_and_recovery_state`、`test_every_legacy_semantic_field_maps_to_exactly_one_current_identity`、`test_local_contract_selects_obsidian_without_copying_authoring_syntax`は、それぞれ欠落していたcontract、creation identity、cross-root semantic ruleを理由にREDとなり、最小実装後にGREENとなった。
 - full fresh verificationはLLM Wiki 21 tests、12 topology × modeのcontext validation / warning-free report、repository skill architecture validation、skill-creator quick validation、focused boundary suite、literal 37-path assertion、baseline / working-tree diff check、raw / external-skill scope checkをすべてexit `0`で完了した。`knowledge/raw/**`とexternal installed authoring skillは変更していない。
 - [[wiki/syntheses/llm-wiki-authoring-responsibility-separation-spec|current spec]] と [[wiki/syntheses/llm-wiki-authoring-responsibility-separation-implementation-plan|current plan]] のproduct boundaryは変更していない。Step 7のfresh whole-branch re-reviewはcontroller-owned gateとしてpendingであり、`LOCAL_COMPLETE`は宣言しない。
+
+## [2026-07-30] draft-review | SDD first-write worktree migration 仕様
+
+- Actor: repository maintainer-delegated actor。Canonical OwnerであるHuman / repository maintainerの明示承認に基づく。
+- Decision: `promote`。proposal [[wiki/drafts/sdd-first-write-worktree-migration-spec|SDD first-write worktree migration 仕様（昇格済み draft）]] を、active canonical synthesis [[wiki/syntheses/sdd-first-write-worktree-migration-spec|SDD first-write worktree migration 仕様]] へ昇格した。
+- Authority result: `Read: allowed`、`Write Boundary: owned`、Canonical OwnerのHuman承認、およびselected authoring profile `obsidian` の手順を満たし、direct canonical updateを許可した。
+- Lifecycle effect: draftを`promoted`として保持し、canonical targetを`accepted` / `active`として作成した。active catalogにはcanonical targetを1件だけ登録し、draftは登録していない。
+- Evidence: HumanのWritten Spec明示承認、draft内の`Confirmed Decisions`、`Open Decisions: なし`、および`knowledge/AGENTS.md`のsingle-root owner/write-boundary contract。
