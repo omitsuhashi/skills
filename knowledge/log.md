@@ -1862,3 +1862,8 @@ append-only で使います。すべての entry は予測しやすい header �
 - Human rulingにより、final whitespace gateの正本はclean working treeだけを見る`git diff --check`ではなく、complete planning-branch rangeを検査する`git diff --check 282fa44a9fe97d9d0feb2e8d6733a6ae47f00f78..HEAD`とした。[[wiki/syntheses/sdd-first-write-worktree-migration-implementation-plan|canonical implementation plan]]のTask 3/Task 4 closeout instructionsとglobal final-gate ruleをこの判断へ同期した。
 - [[wiki/syntheses/sdd-first-write-worktree-migration-spec|canonical specification]]末尾のsemanticsを持たないtrailing blank recordを除去した。accepted lifecycle、provenance、acceptance criteria、active catalog identityは変更していない。index summaryにgate表現は含まれないため変更不要である。
 - このscoped correctionは明示されたHuman rulingに基づく。fresh validation、original-checkout preservation確認、canonical final reviewはこの訂正commit後にあらためて行い、remote publicationは承認・実施していない。
+
+## [2026-07-30] correction | SDD first-write worktree migration final-review sequencing
+
+- append-only recordとして、直前の`human-ruling-correction` eventにある「canonical final reviewはこの訂正commit後にあらためて行い」という wording を supersede する。このcorrection commitはTask 4のscoped re-reviewを受け、その完了後にcontrollerがTask 4 closeout後のsingle canonical final whole-branch reviewを初回として一度だけ実行する。
+- canonical final whole-branch reviewはまだ実行しておらず、full reviewのrepeatは発生していない。remote publicationは承認・実施していない。
