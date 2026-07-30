@@ -42,6 +42,10 @@ class FirstWriteContractTests(unittest.TestCase):
         for value in ("pre-plan compaction", "post-transfer", "canonical plan ledger tuple", "do not reconstruct"):
             self.assertIn(value, capsule)
 
+    def test_starting_branch_is_pr_base_and_integration_branch_is_distinct_pr_head(self) -> None:
+        for value in ("`starting_branch` is the PR base", "`integration_branch` is the distinct PR head"):
+            self.assertIn(value, self.contract)
+
 class NativeWorktreeContractTests(unittest.TestCase):
     def make_repository(self, root: Path) -> None:
         run_git(root, "init", "-b", "main")
@@ -59,8 +63,12 @@ class NativeWorktreeContractTests(unittest.TestCase):
             self.assertEqual("main", branch)
             before = fingerprint(original)
             self.assertEqual("", before[5])
-            run_git(original, "worktree", "add", "-b", "integration/default", str(planning), sha)
+            integration_branch = "integration/default"
+            run_git(original, "worktree", "add", "-b", integration_branch, str(planning), sha)
             report = planning / ".superpowers/research/default/report.md"; report.parent.mkdir(parents=True); report.write_text("report\n", encoding="utf-8")
+            self.assertEqual(integration_branch, run_git(planning, "branch", "--show-current").strip())
+            self.assertNotEqual(branch, integration_branch)
+            run_git(planning, "merge-base", "--is-ancestor", branch, integration_branch)
             self.assertEqual(sha, run_git(planning, "rev-parse", "HEAD").strip())
             self.assertEqual(before, fingerprint(original))
             self.assertFalse((original / ".superpowers/research/default/report.md").exists())
@@ -76,9 +84,13 @@ class NativeWorktreeContractTests(unittest.TestCase):
             branch, sha = run_git(original, "branch", "--show-current").strip(), run_git(original, "rev-parse", "HEAD").strip()
             before = fingerprint(original)
             self.assertTrue(before[3]); self.assertTrue(before[4]); self.assertIn("?? untracked.txt", before[5])
-            run_git(original, "worktree", "add", "-b", "integration/epic-42", str(planning), sha)
+            integration_branch = "integration/epic-42"
+            run_git(original, "worktree", "add", "-b", integration_branch, str(planning), sha)
             report = planning / ".superpowers/research/epic-42/report.md"; report.parent.mkdir(parents=True); report.write_text("report\n", encoding="utf-8")
             self.assertEqual("feature/start", branch); self.assertEqual(sha, run_git(planning, "rev-parse", "HEAD").strip())
+            self.assertEqual(integration_branch, run_git(planning, "branch", "--show-current").strip())
+            self.assertNotEqual(branch, integration_branch)
+            run_git(planning, "merge-base", "--is-ancestor", branch, integration_branch)
             self.assertEqual(before, fingerprint(original))
             self.assertTrue(report.is_relative_to(planning)); self.assertFalse((original / ".superpowers/research/epic-42/report.md").exists())
 
@@ -90,11 +102,16 @@ class NativeWorktreeContractTests(unittest.TestCase):
             (original / "tracked.txt").write_text("staged\n", encoding="utf-8"); run_git(original, "add", "tracked.txt")
             (original / "unstaged.txt").write_text("unstaged\n", encoding="utf-8")
             (original / "failed-untracked.txt").write_bytes(b"failed-allocation-untracked\n")
+            starting_branch = run_git(original, "branch", "--show-current").strip()
             sha = run_git(original, "rev-parse", "HEAD").strip()
             before = fingerprint(original)
             self.assertTrue(before[3]); self.assertTrue(before[4])
             self.assertEqual((("failed-untracked.txt", b"failed-allocation-untracked\n"),), before[6])
-            run_git(original, "worktree", "add", "-b", "integration/existing", str(first), sha)
+            integration_branch = "integration/existing"
+            run_git(original, "worktree", "add", "-b", integration_branch, str(first), sha)
+            self.assertEqual(integration_branch, run_git(first, "branch", "--show-current").strip())
+            self.assertNotEqual(starting_branch, integration_branch)
+            run_git(first, "merge-base", "--is-ancestor", starting_branch, integration_branch)
             result = subprocess.run(["git", "worktree", "add", "-b", "integration/existing", str(failed), sha], cwd=original, capture_output=True, text=True)
             self.assertNotEqual(0, result.returncode)
             self.assertEqual(before, fingerprint(original))
