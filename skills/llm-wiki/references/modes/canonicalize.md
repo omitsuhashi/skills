@@ -1,45 +1,49 @@
 # Canonicalize Mode
 
-重複や強い重なり、境界の崩れを見つけたときに、owner actor が page boundary を整理する mode です。
+Use this mode when an owner resolves duplication, strong overlap, or a broken durable topic boundary through `rename`, `merge`, `archive`, `split`, or `rehome`.
 
-Read first: `references/core.md`, chosen topology reference, then this file. Read `references/page-authoring.md` before changing page boundaries, links, or citations.
+Read first: `references/core.md`, the chosen topology reference, then this file. That is the structural read-set.
 
 ## Goal
 
-page を増やし続けず、canonical page, discoverability, audit trail を保ったまま wiki を整理する。
+Maintain one canonical target identity, reader discoverability, relation integrity, provenance, and an audit trail while changing page boundaries.
 
 ## Check First
 
-- actor は対象 root の canonical owner か。
-- 対象 root の `Read` は `allowed` か。
-- direct canonical update は canonical owner authority、target root の `Read: allowed`、`Write: owned`、local contract / adapter の許可を満たすか。
-- 対象 page は `index.md` の目的別入口と Active Page Catalog にどう載っているか。
-- 対象 page の inbound / outbound link はどこか。
-- action は `rename`, `merge`, `archive`, `split`, `rehome` のどれか。
-- 複数 root をまたぐ場合、canonical owner と draft target はどこか。
+- Confirm canonical-owner authority, allowed read access, owned write boundary, and local permission.
+- Resolve the current index entry, inbound and outbound relation identities, and affected provenance.
+- Choose exactly one canonicalization action and one canonical target.
+- For cross-root work, resolve the canonical owner and draft target for every affected root.
+
+## Authoring Handoff
+
+After the structural read-set, resolve exactly one readable selected authoring skill. Give it each affected semantic schema from `references/page-authoring.md` and all predecessor, successor, inbound, outbound, and provenance relation identities. Propagate the selected authoring skill's ordinary check failure. `llm-wiki` must never inspect syntax.
+
+If discovery is missing, ambiguous, incompatible, or unreadable, return `BLOCKED` before changing a page, index, or log.
 
 ## Action Set
 
-- `rename`: canonical 名称へ寄せる。旧 page を消すだけで discoverability を失うなら、短い案内 stub を残して新 page へ誘導する。
-- `merge`: destination を 1 つ決め、unique な内容だけを canonical page へ移す。統合元は削除せず、merged / superseded の案内を短く残すか archive する。
-- `archive`: obsolete, superseded, duplicate のときだけ使う。archive 先または後継 page を明示し、現役 page と誤認される書き方を避ける。
-- `split`: 1 page に複数の durable topic が混ざったとき、独立 page へ分け、元 page に境界と link を残す。
-- `rehome`: page が wrong root / wrong page type / wrong directory にあるとき、canonical owner と保存先を直し、旧位置から新位置へ誘導する。
+- `rename`: preserve the previous identity as discoverability metadata or a successor relation when needed.
+- `merge`: choose one destination, preserve unique supported content, and mark predecessor identity.
+- `archive`: remove obsolete or superseded knowledge from active discovery while preserving its successor or reason.
+- `split`: create independent durable topic identities and preserve their boundary and relations.
+- `rehome`: move knowledge to the correct root, page type, or directory while preserving ownership and successor identity.
 
 ## Default Procedure
 
-1. `index.md` から対象 page と重なり候補を確認する。
-2. 編集前に対象 page、関連 page、`log.md` を読む。
-3. canonical page と action を決める。
-4. canonical owner authority があり、target root が `Read: allowed` かつ `Write: owned` で、local contract または adapter が owner canonical update を許す場合だけ canonical page を直接更新する。
-5. direct update できず `Read: allowed`, `Write: owned` または `propose`, `Draft Target` 解決済みの場合だけ、root 内の `Draft Target` に proposed note を作り、canonical page, `index.md`, `log.md` は直接更新しない。
-6. `closed`, `restricted`, `no-access`, target 不明、または `Draft Target` 未解決の場合は verified claim も proposed note も書かずに session user または local governance へ確認する。
-7. direct update した場合は、対象 page、関連 link、`index.md`, `log.md` を更新する。Active Page Catalog では canonical page だけを 1 回残し、目的別入口の shortcut は reader task としてまだ有効なものだけ残す。
-8. canonical page へ最低 1 本の inbound link が残ることを確認する。
+1. Use the index to resolve the affected targets and overlap candidates.
+2. Read the affected pages and prior lifecycle events.
+3. Select the canonical target and action.
+4. Resolve authority, the selected authoring skill, applicable semantic schemas, and all affected relation identities.
+5. Apply the canonical change only when owner authority, allowed read, owned write, and local permission hold.
+6. Otherwise create only a proposal in a resolved in-root draft target when the write boundary permits it.
+7. Return `BLOCKED` without durable write when authority, access, identity, or draft routing is insufficient.
+8. For a direct update, synchronize affected pages and relations, keep exactly one active canonical index record, retain only valid reader-task shortcuts, and append a `canonicalize` log event.
+9. Apply the selected authoring skill's ordinary check before committing the write set.
 
 ## Pause And Align When
 
-- canonical owner が不明。
-- split / rehome が複数 root の authority boundary をまたぐ。
-- archive が historical context や citation trail を失わせる。
-- rename / merge により大量の link 更新が必要になる。
+- canonical ownership is unclear;
+- split or rehome crosses authority boundaries;
+- archive would lose historical or provenance value; or
+- the action requires broad relation changes.

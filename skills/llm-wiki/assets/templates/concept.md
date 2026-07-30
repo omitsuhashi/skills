@@ -1,36 +1,18 @@
----
-kind: concept
-created: 2026-04-12
-updated: 2026-04-12
-source_files: []
----
+# Concept Schema
 
-# サンプル概念
+This asset is a syntax-neutral field contract. Supply these semantic fields to the selected authoring skill.
 
-## 作業定義
+- `page_type`: `concept`.
+- `purpose`: maintain a working definition and evidence-backed boundary for a recurring idea.
+- `required_fields`: title; creation identity; last-update identity; working definition; importance; supporting claims; tensions; provenance.
+- `optional_fields`: aliases; tags; counterevidence; open questions; scope exclusions; confidence.
+- `relation_kinds`: source summary; entity; synthesis; related concept; query note.
+- `lifecycle_state`: active, superseded, merged, split, or archived.
+- `discoverability_metadata`: canonical term; aliases; one-line summary; tags; primary search terms.
+- `provenance_requirement`: provide evidence identities for support, contradiction, and disputed interpretation.
+- `index_log_effect`: maintain one active canonical index record; creation and lifecycle changes require log events.
 
-この wiki で採用する現時点の定義を書く。
+Semantic constraints:
 
-## 重要性
-
-なぜ独立 page にする価値があるかを書く。
-
-## 支持する記述
-
-- 記述
-- 記述
-- 記述
-
-## 緊張関係と反証
-
-- competing interpretation
-- contradictory evidence
-
-## 関連ページ
-
-- [サンプルエンティティ](../entities/sample-entity.md) — この概念が現れる entity。
-- [サンプルシンセシス](../syntheses/sample-synthesis.md) — この概念を使う synthesis。
-
-## 出典
-
-- [2026-04-12 記事タイトル](../sources/2026-04-12-article-title.md)
+- Preserve one durable topic and one canonical target identity.
+- Retain competing interpretations instead of flattening them.

@@ -1,45 +1,18 @@
----
-kind: synthesis
-created: 2026-04-12
-updated: 2026-04-12
-source_files: []
----
+# Synthesis Schema
 
-# サンプルシンセシス
+This asset is a syntax-neutral field contract. Supply these semantic fields to the selected authoring skill.
 
-## 結論
+- `page_type`: `synthesis`.
+- `purpose`: preserve a durable decision, comparison, specification, plan, briefing, or cross-source conclusion.
+- `required_fields`: title; creation identity; last-update identity; status; decision; problem; goal; non-goal; acceptance; provenance.
+- `optional_fields`: aliases; tags; relations; alternatives; implications; risks; open questions; operating guidance.
+- `relation_kinds`: source summary; entity; concept; predecessor decision; successor decision; evidence; implementation progress ledger.
+- `lifecycle_state`: proposed, active, accepted, superseded, or archived.
+- `discoverability_metadata`: title; one-line summary; artifact kind; status; aliases; tags; reader tasks; primary search terms.
+- `provenance_requirement`: provide evidence and decision authority for claims, acceptance, and lifecycle state.
+- `index_log_effect`: maintain one active canonical index record; creation, decision, status, and successor changes require log events.
 
-現時点の synthesis を数文で書く。
+Semantic constraints:
 
-## 主要比較または論点
-
-- supporting page or source
-- supporting page or source
-
-## 含意と判断材料
-
-- 何を意思決定に使えるか
-- どこまでを briefing / short report として再利用できるか
-
-## 手順・運用入口
-
-procedure / operation 系 synthesis の場合だけ使う。該当しない場合は削除する。
-
-- 前提条件:
-- セットアップ / インストール:
-- アップデート / 運用:
-- トラブルシュート:
-- `index.md` の検索語候補: setup, install, update, operate, troubleshoot, セットアップ, インストール, アップデート, 運用, トラブルシュート
-
-## 反証と留保
-
-- tension, contradiction, or missing piece
-
-## 関連ページ
-
-- [サンプルエンティティ](../entities/sample-entity.md) — この synthesis で扱う主要 entity。
-- [サンプル概念](../concepts/sample-concept.md) — 判断の前提になる概念。
-
-## 出典
-
-- [2026-04-12 記事タイトル](../sources/2026-04-12-article-title.md)
+- Distinguish a decision from alternatives and unresolved risks.
+- Keep acceptance evidence and successor identity discoverable.

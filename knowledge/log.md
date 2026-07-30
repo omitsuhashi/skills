@@ -1796,3 +1796,31 @@ append-only で使います。すべての entry は予測しやすい header �
 - fresh whole-branch reviewは`66d93ae4a233fc8f9750b6bc6d824cc54bb0838d..c7a69927cf74f9316b2b1122283ca0b0e47d8e6b`を対象に、Critical 0 / Important 0 / Minor 0、`Ready to merge: Yes`で承認した。Task 1 / 2 / 3 reviewもcleanであり、residual material riskはない。
 - full fresh verification（SDD 32/32、LLM Wiki 5/5、repository scripts 19/19、全validator・absence・diff・branch-integrity check）は成功したため、本変更を`LOCAL_COMPLETE`とする。
 - local-only completionである。push、PR作成、merge、release、live install、issue、comment、project変更を含むremote writeはすべて未実施かつ未承認である。
+
+## [2026-07-30] spec-gate-approved | llm-wiki Authoring Responsibility Separation
+
+- Human は [[wiki/syntheses/llm-wiki-authoring-responsibility-separation-spec|llm-wiki authoring 責務分離仕様]] を Written Spec として承認した。仕様の `status` を `approved` とし、承認日を `2026-07-30` と記録した。
+- durable catalog を同じ承認状態へ同期した。implementation plan、implementation、remote write は未実施である。
+
+## [2026-07-30] plan-gate-approved | llm-wiki Authoring Responsibility Separation
+
+- Human は [[wiki/syntheses/llm-wiki-authoring-responsibility-separation-implementation-plan|llm-wiki authoring 責務分離実装計画]] を実装計画として承認し、`Human-approved / current` として記録した。[[index|durable catalog]] を同じ承認状態へ同期した。
+
+## [2026-07-30] implementation | llm-wiki authoring responsibility separation
+
+- [[llm-wiki-authoring-responsibility-separation-spec]] と [[llm-wiki-authoring-responsibility-separation-implementation-plan]] に従い、[[AGENTS.md|local contract]] と [[index|durable catalog]] を `obsidian` authoring profile と maintained internal-note migration へ同期した。
+- `raw/**` は untouched のまま保持し、historical spec の evidence と raw citation を変更していない。
+
+## [2026-07-30] implementation-closeout | llm-wiki authoring responsibility separation
+
+- current [[wiki/syntheses/llm-wiki-authoring-responsibility-separation-spec|llm-wiki authoring 責務分離仕様]] と [[wiki/syntheses/llm-wiki-authoring-responsibility-separation-implementation-plan|llm-wiki authoring 責務分離実装計画]] を`Implemented / closeout verified`へ同期した。authoring responsibility boundaryと各taskのacceptance criteriaは変更していない。
+- prerequisiteとなるreviewed commitsは、Task 1 `ee46afd4cb26be2b25b0376670b8d3e6c8e1e4ac` / `eb46b685eb256276f7c56419f71fa86d32eec7f8`、Task 2 `9c76d0253995b375009867d5181ff7ba06cc6f54` / `dd73e3bb23ae4749ccacf53dc837b003d517278e` / `0d9928c5e717cc6f66d8cd1c6c4994b8111a71b3`、Task 3 `10cccfe18afa6c430b1541dee76963bfc92dd098` / `5ff7520777828d67bac6aa4e4c2fd9cc7655b882`であり、各独立task reviewはopen findingなしである。
+- full fresh verificationとして、`python3 -m unittest discover -s skills/llm-wiki/tests -v`、`python3 scripts/validate_skill_context.py --skill skills/llm-wiki --json`、`python3 scripts/report_skill_context.py --skill skills/llm-wiki --json --fail-on-warning`、`python3 scripts/validate_skill_architecture.py --all`、skill-creator `quick_validate.py`、focused `test_authoring_boundary.py`、`git diff --check f23bde7..HEAD`、`git diff --check`をすべてexit `0`で完了した。repository checkはObsidian reading-view renderingの証拠として扱っていない。
+- `knowledge/raw/**`はuntouchedである。installed-skill-directed authoring reviewはstatic skill-directed reviewとして`PASS`し、Critical / Important findingはない。active runtimeにactual Obsidian reading-view controlはなく、`Obsidian reading-view rendering: unavailable`であり、rendered proofは主張しない。pendingなのはcontroller-owned Step 7 whole-branch reviewだけであり、その承認前に`LOCAL_COMPLETE`を宣言しない。
+
+## [2026-07-30] final-review-fix | llm-wiki authoring responsibility separation
+
+- final whole-branch reviewの3件のImportant findingに対し、一回のscoped fix waveで、portable Outputs / recovery stateとauthority-scoped durable edit capability、5つのlegacy templateのcreation / last-update semantic identityとrepresentation-neutral baseline mapping、adapter-resolved cross-root target identityのselected authoring skillへのserialization委譲を補完した。
+- `test_public_contract_reports_completion_and_recovery_state`、`test_every_legacy_semantic_field_maps_to_exactly_one_current_identity`、`test_local_contract_selects_obsidian_without_copying_authoring_syntax`は、それぞれ欠落していたcontract、creation identity、cross-root semantic ruleを理由にREDとなり、最小実装後にGREENとなった。
+- full fresh verificationはLLM Wiki 21 tests、12 topology × modeのcontext validation / warning-free report、repository skill architecture validation、skill-creator quick validation、focused boundary suite、literal 37-path assertion、baseline / working-tree diff check、raw / external-skill scope checkをすべてexit `0`で完了した。`knowledge/raw/**`とexternal installed authoring skillは変更していない。
+- [[wiki/syntheses/llm-wiki-authoring-responsibility-separation-spec|current spec]] と [[wiki/syntheses/llm-wiki-authoring-responsibility-separation-implementation-plan|current plan]] のproduct boundaryは変更していない。Step 7のfresh whole-branch re-reviewはcontroller-owned gateとしてpendingであり、`LOCAL_COMPLETE`は宣言しない。

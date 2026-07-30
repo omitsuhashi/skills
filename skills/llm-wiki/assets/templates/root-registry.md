@@ -1,28 +1,21 @@
-# Knowledge Root Registry
+# Knowledge Root Registry Schema
 
-## Roots
+This asset is a syntax-neutral field contract. Supply these semantic fields to the selected authoring skill.
 
-| Root ID | Root URI/Path | Scope | Canonical Owner | Read | Write | Draft Target |
-|---|---|---|---|---|---|---|
-| shared | file:/absolute/path/to/shared-wiki | shared policy and operations | <canonical-owner> | allowed | owned | wiki/drafts/ |
-| actor:<name> | file:/absolute/path/to/actor-wiki | actor working memory | <canonical-owner> | allowed | owned | wiki/drafts/ |
-| domain:<name> | repo:<name>:knowledge | product or domain knowledge | <canonical-owner> | allowed | propose | wiki/drafts/ |
+- `page_type`: `root-registry`.
+- `purpose`: resolve durable root identity, scope, authority, access, proposal routing, and authoring compatibility.
+- `required_fields`: registry identity; for each root, Root ID, Root URI or Path identity, Scope, Canonical Owner, Read, Write, Draft Target, Authoring Profile, Compatibility Requirement.
+- `optional_fields`: root alias; governance note; deprecation reason; successor root identity.
+- `relation_kinds`: root local contract; selected authoring profile; draft destination; predecessor root; successor root.
+- `lifecycle_state`: active, deprecated, or superseded.
+- `discoverability_metadata`: registry identity; root ids; scopes; owners; lifecycle states.
+- `provenance_requirement`: identify adapter or governance authority for every root record and lifecycle change.
+- `index_log_effect`: keep registry identity discoverable from each multi-root contract; append affected-root log events for material registry changes.
 
-## Column Rules
+Semantic constraints:
 
-- `Root ID` is a stable root id used in cross-root links and citations.
-- `Root URI/Path` is a root URI. Allowed forms: `file:/absolute/path`, `repo:<repo-name>:<relative-path>`, `memory:<path>`.
-- `Scope` describes the local ownership boundary. Use the taxonomy that matches the system; the examples above are not mandatory categories.
-- `Canonical Owner` names the authority holder for verified claims. Replace `<canonical-owner>` with a human, team, role, AI profile, or operating process before using the registry.
-- `Read` is one of `allowed`, `restricted`, `no-access`.
-- `Write` is the write mode available to the current actor during routine work. It is one of `owned`, `propose`, `closed`.
-- Direct canonical update is allowed only when the actor is the canonical owner, `Read` is `allowed`, `Write` is `owned`, and the local contract or adapter permits the action.
-- `Draft Target` is where proposed notes go. It is required when `Write` is `propose`, and required for non-owner proposals when `Write` is `owned`.
-- `Draft Target` must resolve as a root-relative directory inside the target root. Prefer `wiki/drafts/`. Do not use absolute paths, `~`, `..`, or paths that resolve outside the target root.
-- Proposed notes are allowed only when `Read` is `allowed`, `Write` is `owned` or `propose`, and `Draft Target` resolves inside the target root.
-- If `Read` is `restricted` or `no-access`, `Write` is `closed`, or `Draft Target` is unresolved, do not write verified claims or proposed notes; ask the session user or local governance.
-
-## Routing Notes
-
-- Example: domain-specific customer claims go to that domain root; reusable actor workflow notes go to the actor root and link back to the domain root when needed.
-- Cross-root links and citations should use `root-id:path/inside/root.md`; do not copy private or restricted source text into roots without access.
+- `Read` is `allowed`, `restricted`, or `no-access`.
+- `Write` is `owned`, `propose`, or `closed`.
+- Direct canonical update requires the canonical owner, allowed read, owned write, local permission, and a successful authoring gate.
+- Proposal routing requires allowed read, a write boundary that permits proposals, and a resolved in-root draft target.
+- Return `BLOCKED` when required identity, authority, access, routing, profile, or compatibility cannot be resolved.

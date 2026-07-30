@@ -1,57 +1,30 @@
 # Single Root Topology
 
-1 つの knowledge root だけを扱う時の topology です。single-root の query や ingest では multi-root reference を読まない。
+Use this topology for one knowledge root. Do not create a root registry. The knowledge-root local contract is the authority source.
 
-## Rule
+## Local Contract
 
-root registry を作らない。knowledge-root `AGENTS.md` を authority source として扱い、owner / write boundary / draft target / local overrides をそこに置く。
+The local contract declares the root identity, Canonical Owner, Read access, Write Boundary, Draft Target, Authoring Profile, Compatibility Requirement, durable-document routing overrides, and local overrides that do not weaken this skill's structural gate.
 
-## Entrypoints
-
-- dedicated wiki repo: repo root が knowledge root でよい。
-- mixed repo: repo root `AGENTS.md` は thin router として、knowledge-root `AGENTS.md` への導線だけを置く。
-- knowledge-root `AGENTS.md` は `llm-wiki` skill への導線と local contract だけを書く。
-
-汎用 wiki 運用ルールは skill 側を canonical とし、local `AGENTS.md` に複写しない。
-
-## Local Contract Fields
-
-knowledge-root `AGENTS.md` に最低限次を置く。
-
-- knowledge root path
-- Canonical Owner
-- Write Boundary: `owned`, `propose`, or `closed`
-- Non-owner proposal target / Draft Target
-- durable doc routing override
-- local naming, page type, frontmatter, link convention の override
+The Authoring Profile must resolve through existing skill discovery to exactly one readable authoring `SKILL.md`. Its Compatibility Requirement must be supported by that selected skill's documented procedure. Otherwise return `BLOCKED` before page, index, or log write.
 
 ## Write Boundary
 
-- `Write: owned`: owner actor だけが verified claim を直接更新できる。non-owner actor は `Read: allowed` かつ Draft Target がある場合だけ proposed note を書く。
-- `Write: propose`: routine actor は verified claim を直接更新できない。Draft Target がある場合だけ proposed note を書く。owner `draft-review` / `canonicalize` でも canonical page へ直接反映しない。
-- `Write: closed`: verified claim も proposed note も書かない。
+- `Read`: `allowed`, `restricted`, or `no-access`.
+- `owned`: only the owner actor directly updates verified claims; an allowed non-owner may create a proposal in the resolved draft target.
+- `propose`: routine actors do not directly update verified claims; an allowed actor may create a proposal in the resolved draft target.
+- `closed`: do not create verified claims or proposals.
 
-direct canonical update は、actor が canonical owner であり、`Write: owned` であり、local contract が許す場合だけ行う。それ以外の durable proposal は draft note に route する。
-
-## Draft Target
-
-Draft Target は knowledge root 内の root-relative directory として解決する。通常は `wiki/drafts/` を使う。absolute path、`~`、`..`、root 外へ解決される path は使わない。
-
-Draft Target が未設定、未解決、または root 外へ解決される場合は proposed note を書かず、session user に確認する。
+Direct canonical update requires `Read: allowed`, `Write: owned`, owner authority, and the selected authoring gate to succeed. Proposal routing requires `Read: allowed`, a write boundary that permits proposals, and an in-root resolved Draft Target. A missing, restricted, no-access, or out-of-root target returns `BLOCKED` before a durable write.
 
 ## Bootstrap Notes
 
-single-root bootstrap では:
-
-1. knowledge root を確定する。
-2. root registry を作らないことを local contract に明記する。
-3. owner, write boundary, non-owner proposal target を knowledge-root `AGENTS.md` に書く。
-4. mixed repo なら repo root `AGENTS.md` を thin router にする。
-5. `raw/`, `wiki/`, `index.md`, `log.md`, `AGENTS.md` を knowledge root の内側に揃える。
+1. Establish the knowledge-root identity and confirm that no root registry is needed.
+2. Declare owner, Read access, write boundary, non-owner draft target, Authoring Profile, and Compatibility Requirement in the local contract.
+3. Establish immutable source material, maintained knowledge, discovery index, change log, and local contract inside the root.
 
 ## Common Mistakes
 
-- single-root 作業なのに root registry を作ること。
-- owner / write boundary / draft target を local contract に置かないこと。
-- repo root `AGENTS.md` に汎用 wiki 運用ルールを長く複写すること。
-- non-owner actor が canonical page を直接更新すること。
+- Creating a root registry for a single root.
+- Omitting authoring profile or compatibility requirement from the local contract.
+- Writing a verified claim without owner authority, an allowed boundary, and a successful authoring gate.

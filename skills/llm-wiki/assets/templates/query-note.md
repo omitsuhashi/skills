@@ -1,37 +1,18 @@
----
-kind: query
-created: 2026-04-12
-updated: 2026-04-12
-source_files: []
----
+# Query Note Schema
 
-# 2026-04-12 サンプルクエリ
+This asset is a syntax-neutral field contract. Supply these semantic fields to the selected authoring skill.
 
-## 質問または依頼
+- `page_type`: `query-note`.
+- `purpose`: preserve a reusable answer, comparison, briefing, or decision input originating from a question.
+- `required_fields`: title; creation identity; last-update identity; originating question; durable answer; decision material; provenance; follow-up disposition.
+- `optional_fields`: aliases; tags; alternatives; uncertainties; missing sources; candidate page updates.
+- `relation_kinds`: source summary; entity; concept; synthesis; follow-up target.
+- `lifecycle_state`: active, superseded, merged, or archived.
+- `discoverability_metadata`: question; one-line summary; answer kind; aliases; tags; reader tasks; primary search terms.
+- `provenance_requirement`: provide resolvable evidence identity for the answer and every disputed claim.
+- `index_log_effect`: reusable active notes have one canonical index record; durable filing and lifecycle changes require log events.
 
-user question か、それを durable に言い換えた形を書く。
+Semantic constraints:
 
-## 結論
-
-再利用できる形で最終回答を書く。比較メモ、briefing、判断材料メモ、短報のどれとして残すかが分かる書き方にする。
-
-## 判断材料または比較
-
-| 項目 | A | B |
-|---|---|---|
-| 例 | Note | Note |
-
-## 関連ページ
-
-- [サンプルシンセシス](../syntheses/sample-synthesis.md) — この query の背景になる synthesis。
-- [サンプル概念](../concepts/sample-concept.md) — 判断材料の前提概念。
-
-## 次に反映すべきこと
-
-- missing source
-- 次に作るか更新すべき page
-
-## 出典
-
-- [2026-04-12 記事タイトル](../sources/2026-04-12-article-title.md)
-- [サンプルシンセシス](../syntheses/sample-synthesis.md)
+- File back only when the answer has durable reuse value and authority permits it.
+- Preserve uncertainty and the identity of any knowledge target that should be updated next.

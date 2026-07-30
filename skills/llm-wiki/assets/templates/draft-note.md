@@ -1,50 +1,18 @@
-# Draft Note
+# Draft Note Schema
 
-This is a proposed note, not a verified claim. Do not list it as an active canonical page in `index.md` unless an owner later promotes or merges it.
+This asset is a syntax-neutral field contract. Supply these semantic fields to the selected authoring skill.
 
-## Status
+- `page_type`: `draft-note`.
+- `purpose`: preserve a non-owner proposal and the owner's eventual decision without presenting it as verified.
+- `required_fields`: title; current status; review state; confidence; target root; canonical target identity; proposal; evidence; created actor; created date; reason direct update was unavailable; requested owner action.
+- `optional_fields`: related targets; destination identity; open questions; follow-up condition; owner decision; decision reason; decision actor; decision date.
+- `relation_kinds`: target root; canonical target; related page; source evidence; decision log event; destination.
+- `lifecycle_state`: proposed, promoted, merged, rejected, or deferred.
+- `discoverability_metadata`: proposal title; target identity; current status; owner; review condition; never active-canonical discovery while unverified.
+- `provenance_requirement`: provide evidence for the proposal and owner authority for the final decision.
+- `index_log_effect`: proposed and deferred drafts stay out of the active catalog; every owner decision requires a log event; promoted or merged canonical targets are synchronized in the index.
 
-- Current Status: proposed | promoted | merged | rejected | deferred
-- Review State: active | closed | deferred
-- Confidence: low | medium | high
+Semantic constraints:
 
-## Target
-
-- Root ID:
-- Canonical Page / Claim:
-- Related Pages:
-- Requested Owner Action: promote | merge | reject | defer
-- Destination Page:
-
-## Proposal
-
-
-## Source Summary
-
-- Source:
-- Key Claims:
-
-## Open Questions
-
-- TBD
-
-## Context
-
-- Created At:
-- Created By:
-- Reason Direct Update Was Not Used:
-
-## Owner Decision
-
-- Decision:
-- Decided At:
-- Decided By:
-- Reason:
-- Destination Page:
-- Log Entry:
-
-Update `Current Status` after owner review. Allowed final status values: promoted, merged, rejected, deferred.
-
-## Follow-up
-
-- TBD
+- A draft is not a verified claim.
+- Preserve the final decision and reason; never delete a draft without decision history.

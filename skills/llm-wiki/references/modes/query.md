@@ -1,43 +1,44 @@
 # Query Mode
 
-maintained wiki に対して質問へ答えるときに使います。
+Use this mode to answer a question from maintained durable knowledge and decide whether the answer should be filed back.
 
-Read first: `references/core.md`, chosen topology reference, then this file. Read `references/structure.md` only when filing a new durable output. Read `references/page-authoring.md` only when updating page body text, links, or citations.
+Read first: `references/core.md`, the chosen topology reference, then this file. That is the structural read-set. Read `references/structure.md` only when resolving a new durable destination.
 
 ## Goal
 
-compiled wiki を再利用して根拠付きで素早く答え、その出力自体を wiki に残すべきか判断する。
+Reuse compiled knowledge for a grounded answer, consult raw provenance only when needed, and preserve reusable output within the target root when authority permits.
 
 ## Check First
 
-- `index.md` の目的別入口または現役 page catalog のどこが関連 page を指しているか。
-- actor が owner ではない場合、durable output を `Draft Target` に proposed note として残せるか。
-- 既に必要 topic をまとめている wiki page はあるか。
-- 裏取りや dispute resolution に raw source が要るか。
-- 回答は一時的なものか、durable page にすべきか。
+- Identify relevant reader-task shortcuts or active canonical targets in the index.
+- Resolve authority and proposal routing before any durable filing.
+- Determine whether maintained knowledge is sufficient or raw provenance is needed.
+- Decide whether the answer is transient or has reusable durable value.
+
+## Authoring Handoff
+
+After the structural read-set, resolve exactly one readable selected authoring skill before durable filing. Give it the relevant semantic schema from `references/page-authoring.md`, supporting provenance, and the canonical or proposed relation identity. Propagate the selected authoring skill's ordinary check failure. `llm-wiki` must never inspect syntax.
+
+A read-only answer may be assembled before authoring discovery. Missing, ambiguous, incompatible, or unreadable discovery returns `BLOCKED` before a page, index, or log write.
 
 ## Default Procedure
 
-1. `index.md` から始める。
-2. 必要最小限の wiki page を読む。
-3. wiki が薄い、争点がある、古い場合だけ raw citation を追加で引く。
-4. 必要に応じて wiki page と raw source を引用して答える。
-5. 再利用価値があり、`Read: allowed`, `Write: owned`, actor が canonical owner のすべてを満たす場合だけ、`wiki/queries/` か `wiki/syntheses/` に page を作るか更新する。
-6. direct update できず `Read: allowed`, `Write: owned` または `propose`, `Draft Target` 解決済みの場合は、durable output を root 内の `Draft Target` に proposed note として残す。
-7. direct update した場合だけ、新しい durable page を `index.md` に summary / 検索語付きで登録し、代表的 reader task に当たる場合だけ目的別入口にも shortcut を追加し、`log.md` に `query` entry を追加する。書けない root では canonical page, `index.md`, `log.md` を直接更新しない。
+1. Start from the index and read the minimum relevant durable pages.
+2. Consult raw provenance only when maintained knowledge is thin, stale, or disputed.
+3. Answer with resolvable evidence identities.
+4. Decide whether the answer has durable reuse value.
+5. If filing is warranted, resolve authority, the selected authoring skill, the applicable semantic schema, and target relation identity.
+6. Directly create or update a query note or synthesis only when read is allowed, write is owned, and the actor is canonical owner.
+7. Otherwise create only a proposal in the resolved in-root draft target when the write boundary permits it.
+8. For a direct update, synchronize one active canonical index record, any warranted reader-task shortcut, and a `query` log event.
+9. Propagate an ordinary authoring check failure and leave durable state unchanged.
 
 ## File-Back Rule
 
-次のいずれかに当てはまるなら、回答を wiki へ戻す。
-
-- 比較や synthesis を後で再利用しそう。
-- taxonomy, table, framing など durable な整理を作れた。
-- 未完了 scope、partial implementation state、複数 slice の進捗を横断整理し、次回 review の入口として再利用できる。
-- query が露出させた gap を新しい page が埋めた。
-- user が durable note, memo, briefing, deck, report を明示的に求めた。
+File the answer when authority permits and it creates reusable comparison, synthesis, taxonomy, decision material, implementation-state discovery, a durable gap closure, or a user-requested durable artifact.
 
 ## Pause And Align When
 
-- query の結果をどの page に落とすべきか曖昧で、既存 page を大きく再編しそう。
-- 回答が複数の durable artifact 候補にまたがり、emphasis の置き方で成果物が変わる。
-- query への回答が broad rewrite や rename / merge 判断を伴う。
+- the durable target is ambiguous and would require broad reorganization;
+- the answer spans several materially different artifact candidates; or
+- filing requires a rename, merge, split, archive, or rehome decision.

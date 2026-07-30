@@ -1,48 +1,48 @@
 # Draft Review Mode
 
-owner actor が proposed note を review queue から閉じるときに使います。draft は verified claim ではなく、owner が判断するまで canonical wiki page にはしません。
+Use this mode when the canonical owner closes a proposed note as `promote`, `merge`, `reject`, or `defer`.
 
-Read first: `references/core.md`, chosen topology reference, then this file. Read `references/page-authoring.md` only when promoting or merging content into canonical page body text.
+Read first: `references/core.md`, the chosen topology reference, then this file. That is the structural read-set.
 
 ## Goal
 
-owner decision を明示し、採用した内容だけを canonical page へ反映する。採用しない、またはまだ判断できない draft も履歴を残して閉じるか保留し、判断履歴なしに削除しない。
+Record an explicit owner decision, apply only accepted content to canonical knowledge, preserve rejected or deferred reasoning, and never delete a proposal without decision history.
 
 ## Check First
 
-- actor は対象 root の canonical owner か。
-- 対象 root の `Read` は `allowed` か。
-- owner が canonical page を更新する場合、target root は `Read: allowed` かつ `Write: owned` で、local contract または adapter は owner canonical update を許すか。
-- draft note の status / review state / requested action は何か。
-- draft が指す canonical page / claim は存在するか。
-- draft の evidence と source summary は十分か。
-- `index.md` に active page として載せるべき canonical page はどれか。目的別入口に代表 shortcut として載せるべきか。
-- `log.md` に残すべき decision history は何か。
+- Confirm canonical-owner authority, allowed read access, owned write boundary, and any local restriction on direct owner update.
+- Resolve the proposal's canonical target identity, evidence, requested action, and current lifecycle state.
+- Identify the index and log effects of each possible decision.
+
+## Authoring Handoff
+
+After the structural read-set, resolve exactly one readable selected authoring skill. Give it the draft-note semantic schema, any affected canonical semantic schema from `references/page-authoring.md`, and the proposal, target, provenance, and decision relation identities. Propagate the selected authoring skill's ordinary check failure. `llm-wiki` must never inspect syntax.
+
+If discovery is missing, ambiguous, incompatible, or unreadable, return `BLOCKED` before changing the draft, canonical page, index, or log.
 
 ## Decision Set
 
-- `promote`: canonical owner が draft-review authority を持ち、target root が `Read: allowed` かつ `Write: owned` で、local contract または adapter が owner canonical update を許す場合に、draft を verified claim として canonical page へ反映する。
-- `merge`: canonical owner が draft-review authority を持ち、target root が `Read: allowed` かつ `Write: owned` で、local contract または adapter が owner canonical update を許す場合に、draft の unique な内容を既存 canonical page へ統合する。
-- `reject`: 採用しない理由を残し、active queue から外す。
-- `defer`: 未判断の理由と次の条件を残し、保留する。
+- `promote`: establish the proposal as a verified canonical target.
+- `merge`: incorporate only unique supported content into an existing canonical target.
+- `reject`: close the proposal with a reason and no canonical claim change.
+- `defer`: retain the proposal with the missing evidence, owner action, or review condition.
 
 ## Default Procedure
 
-1. `Draft Target` から対象 draft を読む。
-2. 関連する canonical page と `index.md`, `log.md` を読む。
-3. draft の evidence, open questions, requested action を確認する。
-4. decision を `promote`, `merge`, `reject`, `defer` のいずれかに決める。
-5. `promote` の場合は、canonical owner が draft-review authority を持ち、target root が `Read: allowed` かつ `Write: owned` で、local contract または adapter が owner canonical update を許すときだけ、draft の提案を verified claim として新規または既存 canonical page に反映する。
-6. `merge` の場合は、canonical owner が draft-review authority を持ち、target root が `Read: allowed` かつ `Write: owned` で、local contract または adapter が owner canonical update を許すときだけ、draft の unique な内容を既存 canonical page へ統合する。
-7. `reject` の場合は、採用しない理由を draft 側または `log.md` に残し、active review queue から外す。
-8. `defer` の場合は、未判断の理由、次に必要な source / owner action、再確認条件を draft 側または `log.md` に残す。
-9. `promote` / `merge` 後は target root が `Read: allowed` かつ `Write: owned` で owner canonical update が許される場合だけ canonical page と `index.md` を更新し、summary / 検索語 / 目的別 shortcut の要否を確認し、`log.md` に `draft-review` entry を追加する。許されない場合は decision と必要な owner action を draft 側または `log.md` に残す。
-10. いずれの decision でも、draft の `Current Status` を final status に更新する。
-11. `reject` / `defer` でも日付、判断者、理由を残す。履歴なしに draft を削除しない。
+1. Read the proposal, canonical target, index, and log.
+2. Confirm evidence, open questions, requested action, owner authority, and direct-update boundary.
+3. Choose exactly one decision.
+4. Resolve the selected authoring skill and give it the applicable semantic schemas and relation identities.
+5. Apply `promote` or `merge` to canonical knowledge only when owner authority, allowed read, owned write, and local permission all hold.
+6. Record `reject` or `defer` with reason and follow-up identity without changing verified claims.
+7. Update the draft lifecycle state for every decision.
+8. When canonical knowledge changes, synchronize its one active index record and any warranted reader-task shortcut.
+9. Append a `draft-review` log event for every decision.
+10. Apply the selected authoring skill's ordinary check before committing the write set.
 
 ## Pause And Align When
 
-- actor が owner か不明。
-- draft の evidence が弱く、採否で downstream page が大きく変わる。
-- `promote` / `merge` が rename, split, rehome を伴う。
-- `reject` が重要な competing interpretation を消す可能性がある。
+- owner authority is unclear;
+- evidence is too weak for a high-impact decision;
+- promotion or merge requires rename, split, or rehome; or
+- rejection could erase a material competing interpretation.

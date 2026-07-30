@@ -1,34 +1,19 @@
----
-kind: source
-created: 2026-04-12
-updated: 2026-04-12
-source_files:
-  - raw/sources/article-title.md
----
+# Source Summary Schema
 
-# 2026-04-12 記事タイトル
+This asset is a syntax-neutral field contract. Supply these semantic fields to the selected authoring skill.
 
-## この source の位置づけ
+- `page_type`: `source-summary`.
+- `purpose`: preserve what a source establishes, why it matters, and which maintained knowledge it affects.
+- `required_fields`: title; creation identity; last-update identity; source identity; source position; key claims; affected knowledge; open questions; provenance.
+- `optional_fields`: aliases; tags; chronology; contradictions; source limitations; confidence.
+- `relation_kinds`: raw source; entity; concept; synthesis; query note; competing source.
+- `lifecycle_state`: active, superseded, or archived.
+- `discoverability_metadata`: title; one-line summary; source identity; aliases; tags; primary search terms.
+- `provenance_requirement`: provide a resolvable immutable-source identity for each durable claim.
+- `index_log_effect`: maintain one active canonical index record; creation and lifecycle changes require log events.
 
-この source が既存 wiki をどう変えるか、何を補強するかを書く。
+Semantic constraints:
 
-## 要点
-
-- 要点
-- 要点
-- 要点
-
-## 関連ページ
-
-- [サンプルエンティティ](../entities/sample-entity.md) — この source が補強する entity。
-- [サンプル概念](../concepts/sample-concept.md) — この source が補強する概念。
-- [サンプルシンセシス](../syntheses/sample-synthesis.md) — この source を反映すべき synthesis。
-
-## 未解決点
-
-- 何がまだ不明か
-- 他 source と照合すべき点は何か
-
-## 出典
-
-- [raw/sources/article-title.md](../../raw/sources/article-title.md)
+- Preserve source disagreement and limitations.
+- Keep the raw source immutable.
+- Give each affected durable target a stable relation identity.

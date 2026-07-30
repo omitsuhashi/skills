@@ -20,8 +20,10 @@
 - `wiki/` は maintained knowledge base として扱い、作成と更新はここで行う
 - `index.md` は active canonical durable wiki page の catalog として扱う
 - `log.md` は bootstrap, ingest, query, draft-review decision, canonicalize action, lint, Goal command preparation の append-only timeline として扱う
-- canonical link style は relative Markdown link とし、Obsidian wikilink `[[...]]` は使わない
-- root を跨ぐ参照は Markdown link にせず、`root-id:path/inside/root.md` 形式で書く
+- authoring profile: obsidian
+- Obsidian compatibility requirement は selected authoring skill の文書化された手順で満たす
+- internal note / external URL / cross-root relation の具体的な表現は selected authoring skill に委譲し、この local contract に authoring syntax を複製しない
+- root を跨ぐ relation は adapter-resolved cross-root target identity を保持し、文書上の表現は selected authoring skill に委譲する
 - wiki documentation の本文は日本語を基本にする
 - Goal command 用の長い詳細仕様、実装契約、acceptance criteria は `wiki/syntheses/` に保存する
 - Goal prompt は短く保ち、詳細仕様ファイルを明示的に参照する

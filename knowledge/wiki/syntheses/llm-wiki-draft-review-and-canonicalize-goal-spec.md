@@ -8,6 +8,10 @@ source_files:
 
 # LLM Wiki Draft Review And Canonicalize Goal Spec
 
+## Historical / superseded note
+
+この historical Goal spec の `draft-review` / `canonicalize` lifecycle、authority、acceptance evidence は保持する。一方で concrete page serialization、link notation、frontmatter guidance の authoring ownership は [[llm-wiki-authoring-responsibility-separation-spec]] に superseded される。
+
 ## 目的
 
 `skills/llm-wiki` を、local Markdown wiki の汎用 lifecycle skill として強化する。今回の実装は Portfolio OS などの固有 runtime には触れず、既存文書とテンプレートだけを更新する。
@@ -127,5 +131,5 @@ rg -n "Portfolio OS|Hermes|work_unit|commander|council|registry-core|governance-
 
 ## 出典
 
-- [2026-06-08 LLM Wiki Draft Review And Canonicalize Design](../sources/2026-06-08-llm-wiki-draft-review-and-canonicalize-design.md)
+- [[2026-06-08-llm-wiki-draft-review-and-canonicalize-design|2026-06-08 LLM Wiki Draft Review And Canonicalize Design]]
 - [raw source](../../raw/sources/2026-06-08%20LLM%20Wiki%20Draft%20Review%20And%20Canonicalize%20Design.md)

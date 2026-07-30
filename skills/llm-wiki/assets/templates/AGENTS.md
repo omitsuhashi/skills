@@ -1,42 +1,20 @@
-# LLM Wiki Router
+# Knowledge-root Local Contract Schema
 
-この directory は persistent な LLM-maintained wiki の knowledge root です。
+This asset is a syntax-neutral field contract. Supply these semantic fields to the selected authoring skill.
 
-## Canonical Procedure
+- `page_type`: `knowledge-root-local-contract`.
+- `purpose`: declare the root's authority, access, lifecycle routing, and authoring compatibility.
+- `required_fields`: knowledge-root identity; topology; root-registry policy; canonical owner; read access; write boundary; draft target policy; Authoring Profile; Compatibility Requirement; immutable-source boundary; maintained-knowledge boundary; index purpose; log purpose; default durable-document routing; conflict rule.
+- `optional_fields`: local naming, page-type, language, routing, and governance overrides; multi-root adapter identity and resolution rules.
+- `relation_kinds`: repository router; selected authoring profile; registry adapter; immutable-source destination; maintained-knowledge destination; index; log; draft destination; durable-document destination.
+- `lifecycle_state`: active; superseded only by an identified successor local contract.
+- `discoverability_metadata`: root scope; entrypoint identity; owner; topology; supported lifecycle operations.
+- `provenance_requirement`: identify local governance or owner authority for each override and profile selection.
+- `index_log_effect`: do not catalog this contract as an active knowledge page; append a lifecycle log event when authority, routing, access, or authoring compatibility changes.
 
-- wiki の `bootstrap`, `ingest`, `query`, `draft-review`, `canonicalize`, `lint` の汎用手順は `llm-wiki` スキルを canonical source として扱う
-- 汎用的な schema, naming, citation, canonicalization, `index.md` / `log.md` 更新規約も `llm-wiki` スキルに従う
-- single-root 作業では `llm-wiki` skill の router に従い、skill-local `references/core.md` + `references/single-root.md` + 該当 `references/modes/*.md` を読む
-- `references/structure.md`, `references/page-authoring.md`, `references/optional-tooling.md` は task が必要とする時だけ読む
-- multi-root へ変更した場合だけ skill-local `references/multi-root.md` を読む
-- この file はスキルの複製ではなく、この knowledge root 固有の前提と差分だけを書く
+Semantic constraints:
 
-## Local Contract
-
-- knowledge root はこの directory とする
-- Topology: single-root
-- Root Registry: 作らない
-- Canonical Owner:
-- Write Boundary: owned | propose | closed
-- Draft Target: `wiki/drafts/` when Write Boundary is `owned` or `propose`; `closed` roots accept no canonical or draft writes
-- Direct canonical update は canonical owner かつ `Write: owned` かつ local contract が許す場合だけ行う
-- non-owner actor の durable proposal は Draft Target に route する
-- `raw/` は不変の source material として扱い、読んでも編集しない
-- `wiki/` は maintained knowledge base として扱い、作成と更新はここで行う
-- `index.md` は目的別入口と Active Page Catalog を持つ reader-facing discovery surface として扱う
-- `log.md` は bootstrap, ingest, query, draft-review decision, canonicalize action, lint の append-only timeline として扱う
-- canonical link style は relative Markdown link とし、Obsidian wikilink `[[...]]` は local override が明示した場合だけ使う
-- root を跨ぐ参照は Markdown link にせず、`root-id:path/inside/root.md` 形式で書く
-- wiki documentation の本文は日本語を基本にする
-- superpowers など他 workflow が作る durable な roadmap / ADR / spec / design doc / implementation plan も knowledge root 配下へ保存する
-- default routing は、roadmap / ADR / spec / design doc / implementation plan / implementation progress ledger / briefing / comparison note を `wiki/syntheses/`、質問起点の短い判断メモを `wiki/queries/` とする
-
-## Local Overrides
-
-- この knowledge root 固有の命名規則、page type の追加、frontmatter 規約、link 規約、durable doc の保存先 override がある場合だけここへ追記する
-- multi-root topology へ変更する場合だけ、system-specific root registry adapter の所在地と root resolution rule をここへ追記する
-- 汎用運用ルールをここへ再掲しない
-
-## Conflict Rule
-
-- この file の local rule が `llm-wiki` スキルと衝突する場合は、この file をこの knowledge root の優先ルールとして扱う
+- Single-root topology has no root registry.
+- Direct canonical update requires allowed read access, owned write, canonical-owner authority, and a successful authoring gate.
+- A non-owner proposal requires allowed read access, a write boundary that permits proposals, and a resolved in-root draft target.
+- Local overrides may specialize the root but cannot weaken the structural authoring gate.
