@@ -30,8 +30,9 @@ Do not delete the created Issue if Issue creation succeeds but Project add or fi
 For a terminal or reopen operation, exact-read the Issue state, close reason when
 applicable, and Project Status before writing. Attempt only sides that differ
 from the target. If the sides diverge, do not roll back the successful side.
-Return `partial`, the completed sides, `first_remaining_sides`, and exact
-readback. A two-side partial success is never `complete`.
+Return `partial`. Per-side result and exact readback identify completed work;
+`first_remaining_sides` contains unfinished sides only. A two-side partial
+success is never `complete`.
 
 On retry, exact-read both sides again, put the remaining side only in
 `retry_attempted_sides`, and write only that side. Continue only the unfinished steps.

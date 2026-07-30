@@ -398,6 +398,8 @@ def transition_targets(case: dict[str, object]) -> tuple[object, object, object]
         return "closed", "completed", "Done"
     if operation == "cancelled":
         return "closed", "not planned", "Cancelled"
+    if operation != "reopen":
+        raise ValueError(f"unknown transition operation: {operation}")
     requested = case["requested_status"]
     if requested is not None and requested not in NON_TERMINAL_REOPEN_STATUSES:
         return None, None, None
@@ -429,6 +431,10 @@ def run_transition(case: dict[str, object]) -> dict[str, object]:
     first_remaining = [side for side in sides if side not in first_success]
     retry_attempted = list(first_remaining)
     retry_success = set(case["retry_success"])
+    if not retry_success <= set(first_remaining):
+        raise AssertionError(
+            "retry_success must be a subset of first_remaining"
+        )
     final_remaining = [side for side in first_remaining if side not in retry_success]
     return {
         "target_issue_state": target_issue,
@@ -535,6 +541,30 @@ class TaskManagementContractTests(unittest.TestCase):
             self.assertEqual([], result["first_attempted_sides"])
             self.assertEqual([], result["retry_attempted_sides"])
 
+    def test_transition_rejects_invalid_operation_and_retry_evidence(self) -> None:
+        with self.assertRaisesRegex(ValueError, "unknown transition operation"):
+            transition_targets(
+                {
+                    "operation": "reopne",
+                    "requested_status": "Ready",
+                }
+            )
+
+        with self.assertRaisesRegex(
+            AssertionError,
+            "retry_success must be a subset of first_remaining",
+        ):
+            run_transition(
+                {
+                    "operation": "done",
+                    "initial_issue": "open",
+                    "initial_status": "In progress",
+                    "requested_status": None,
+                    "first_success": ["issue"],
+                    "retry_success": ["issue"],
+                }
+            )
+
     def test_terminal_and_reopen_contract_names_state_machine_outputs(self) -> None:
         text = read(SKILL) + "\n" + read(PROJECTS) + "\n" + read(SAFETY)
         for required in (
@@ -553,6 +583,14 @@ class TaskManagementContractTests(unittest.TestCase):
         terminal = section(read(PROJECTS), "## Terminal transitions")
         self.assertIn("`Done` maps to Issue close reason `completed`", terminal)
         self.assertIn("`Cancelled` maps to Issue close reason `not planned`", terminal)
+        self.assertIn(
+            "Per-side result and exact readback identify completed work",
+            terminal,
+        )
+        self.assertIn(
+            "`first_remaining_sides` contains unfinished sides only",
+            terminal,
+        )
         self.assertNotIn("`Done` maps to Issue close reason `not planned`", terminal)
         self.assertNotIn("`Cancelled` maps to Issue close reason `completed`", terminal)
 
@@ -581,6 +619,23 @@ class TaskManagementContractTests(unittest.TestCase):
             "partial success is complete",
         ):
             self.assertNotIn(contradiction, reopen)
+
+        partial = section(read(SAFETY), "## Partial success")
+        self.assertIn(
+            "Per-side result and exact readback identify completed work",
+            partial,
+        )
+        self.assertIn(
+            "`first_remaining_sides` contains unfinished sides only",
+            partial,
+        )
+        contradiction = re.compile(
+            r"(?im)^(?:-\s*)?(?:retry both sides|"
+            r"roll back the successful side|"
+            r"(?:a |two-side )?partial success is complete)\b"
+        )
+        for operative in (terminal, reopen, partial):
+            self.assertIsNone(contradiction.search(operative))
 
     def test_pagination_fixtures_match_exact_counts_conflicts_and_continuation(self) -> None:
         for case in fixture("pagination-cases.json")["cases"]:

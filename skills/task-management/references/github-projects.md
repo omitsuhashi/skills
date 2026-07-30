@@ -168,7 +168,7 @@ Creation defaults are `Status=Inbox`, `Priority=P2`, and no due date. Apply them
 - An explicit terminal instruction needs no second confirmation. An inferred terminal transition still requires confirmation before mutation.
 - Keep the item in the Project; do not remove or archive it.
 - When an externally closed Issue has a reliable close reason, reconcile the Project Status as a safe non-destructive update.
-- If only one side succeeds, return `partial`, name the completed and remaining sides in `first_remaining_sides`, and include exact readback. Do not report a two-side partial success as `complete`.
+- If only one side succeeds, return `partial`. Per-side result and exact readback identify completed work; `first_remaining_sides` contains unfinished sides only. Do not report a two-side partial success as `complete`.
 - Retry after another exact readback. Put only the still-missing side in `retry_attempted_sides`; do not write an already-correct side again.
 
 ## Reopen
