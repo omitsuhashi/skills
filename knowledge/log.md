@@ -1824,3 +1824,16 @@ append-only で使います。すべての entry は予測しやすい header �
 - `test_public_contract_reports_completion_and_recovery_state`、`test_every_legacy_semantic_field_maps_to_exactly_one_current_identity`、`test_local_contract_selects_obsidian_without_copying_authoring_syntax`は、それぞれ欠落していたcontract、creation identity、cross-root semantic ruleを理由にREDとなり、最小実装後にGREENとなった。
 - full fresh verificationはLLM Wiki 21 tests、12 topology × modeのcontext validation / warning-free report、repository skill architecture validation、skill-creator quick validation、focused boundary suite、literal 37-path assertion、baseline / working-tree diff check、raw / external-skill scope checkをすべてexit `0`で完了した。`knowledge/raw/**`とexternal installed authoring skillは変更していない。
 - [[wiki/syntheses/llm-wiki-authoring-responsibility-separation-spec|current spec]] と [[wiki/syntheses/llm-wiki-authoring-responsibility-separation-implementation-plan|current plan]] のproduct boundaryは変更していない。Step 7のfresh whole-branch re-reviewはcontroller-owned gateとしてpendingであり、`LOCAL_COMPLETE`は宣言しない。
+
+## [2026-07-30] query/spec-synthesis | Task Management Hermes Schedule Secretary Readiness
+
+- repository-only research、[[wiki/syntheses/direct-github-projects-task-management/spec|current direct GitHub Projects spec]]、Human-confirmed decisionsを統合し、[[wiki/syntheses/task-management-hermes-readiness/spec|Task Management Hermes Schedule Secretary Readiness 仕様]]をWritten Spec review candidateとして作成した。
+- portable skill、Companies / Portfolio OS managed-native delivery、live Hermes / GitHub MCPを独立ownership seamとし、operation-scoped preflight、Status-filtered pagination/completeness、bare reopenの`Backlog`、resume-only partial failure、native metadata write exclusion、no fallbackを固定した。
+- Skills repository、Companies repository、live Hermes、live GitHub MCPのowner、durable artifact、acceptance evidence、approval boundary、sequence、runbook/receiptを外部delivery mapへ記録した。live workflowは`dry-run -> apply -> status -> readback`として計画したが、apply、permission/configuration change、live task writeは未承認かつ未実施である。
+- [[index|durable catalog]]へdiscoverability entryを同期した。current [[wiki/syntheses/direct-github-projects-task-management/issues|direct GitHub Projects ledger]]とapproved specは変更せず、本follow-upのWritten Spec Gate、Issue Gate、implementation planningはpendingである。
+
+## [2026-07-30] spec-review-fix | Task Management Hermes Schedule Secretary Readiness
+
+- spec reviewのblocking findingに対し、[[wiki/syntheses/task-management-hermes-readiness/spec|Written Spec candidate]]へcanonical task / Project item identity、page間reconciliation、unique match count、deterministic output orderとresult envelopeを追加した。50件上限、exhaustion、partial/truncationのConfirmed Decisionは変更していない。
+- Schedule Secretary readinessへatomic condition mapping、`blocked > partial > ready` precedence、operation scope、`not_applicable`除外、reason code、non-mutating write evidence ceilingを追加した。stale/missing hash、skill discovery、caller default、semantic tool、permission、target rejection、schemaのaggregation testを直接導出可能にした。
+- Confirmed Decisions、MVP scope、external delivery map、authorization boundaryは変更していない。Written Spec Gateとすべてのexternal/live applyは引き続きpendingかつ未承認である。
