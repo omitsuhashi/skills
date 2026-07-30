@@ -203,7 +203,7 @@ Spec Gate / Issue Gate / Execution Plan Gate は承認後に、承認済み loca
 
 ## 関連ページ
 
-- [[2026-06-26-skill-repository-optimization-v4-design|Skill Repository Optimization V4 Design]]
+- [[wiki/sources/2026-06-26-skill-repository-optimization-v4-design|Skill Repository Optimization V4 Design]]
 - [[skill-repository-optimization-v4-issues|Skill Repository Optimization V4 Issues]]
 - [[skill-repository-optimization-v4-context-baseline.json|Skill Repository Optimization V4 Context Baseline]]
 - [[loop-skill-architecture-v3-spec|Loop Skill Architecture V3 Spec]]
@@ -213,7 +213,7 @@ Spec Gate / Issue Gate / Execution Plan Gate は承認後に、承認済み loca
 
 ## 出典
 
-- [[2026-06-26-skill-repository-optimization-v4-design|Skill Repository Optimization V4 Design]]
+- [[wiki/sources/2026-06-26-skill-repository-optimization-v4-design|Skill Repository Optimization V4 Design]]
 - [raw/sources/2026-06-26-skill-repository-optimization-v4-design.md](../../raw/sources/2026-06-26-skill-repository-optimization-v4-design.md)
 - historical production path（Phase 2で削除済み）: `skills/grill-to-pr-loop/context-contract.toml`
 - historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/context-contract.toml`

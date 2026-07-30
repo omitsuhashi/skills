@@ -267,6 +267,21 @@ class AuthoringBoundaryTests(unittest.TestCase):
         self.assertIn(current_spec, sro4_spec)
         self.assertIn("superseded", sro4_spec)
 
+    def test_sro4_uses_qualified_maintained_source_links_and_preserves_raw_citation(self) -> None:
+        sro4_spec = read_repo("knowledge/wiki/syntheses/skill-repository-optimization-v4-spec.md")
+        maintained_source = (
+            "[[wiki/sources/2026-06-26-skill-repository-optimization-v4-design|"
+            "Skill Repository Optimization V4 Design]]"
+        )
+        raw_citation = (
+            "[raw/sources/2026-06-26-skill-repository-optimization-v4-design.md]"
+            "(../../raw/sources/2026-06-26-skill-repository-optimization-v4-design.md)"
+        )
+
+        self.assertEqual(sro4_spec.count(maintained_source), 2)
+        self.assertNotIn("[[2026-06-26-skill-repository-optimization-v4-design|", sro4_spec)
+        self.assertIn(raw_citation, sro4_spec)
+
     def test_migration_log_is_append_only_and_discoverable(self) -> None:
         log = read_repo("knowledge/log.md")
 
