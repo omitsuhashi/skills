@@ -1843,3 +1843,23 @@ append-only で使います。すべての entry は予測しやすい header �
 - Human は [[wiki/syntheses/task-management-hermes-readiness/spec|Task Management Hermes Schedule Secretary Readiness 仕様]] を Written Spec として承認した。spec frontmatterとStatus、[[index|durable catalog]]を`approved` / `2026-07-31`へ同期した。
 - approved scopeはoperation-scoped semantic capability preflight、canonical identityとpagination/completeness、reopen、deterministic Schedule Secretary readiness、portable/managed-native/live ownership、external delivery map、permission/setup runbook、acceptance/verification/authorization boundaryである。Confirmed Decisionsと本文contractは変更していない。
 - Issue ledger、Issue Gate、implementation plan、Execution Plan Gate、implementation、Companies repository変更、managed-native apply、live Hermes / GitHub MCP configuration、live task mutation、push/PR/mergeは未実施であり、本Written Spec approvalには含まれない。
+
+## [2026-07-31] implementation-plan | Task Management Hermes Schedule Secretary Readiness
+
+- `superpowers:writing-plans`に従い、[[wiki/syntheses/task-management-hermes-readiness/implementation-plan|Task Management Hermes Schedule Secretary Readiness Implementation Plan]]へportable Skills TDD、Companies evidence-resolution / spec-binding Gate、managed-native delivery/readiness、durable live runbook、両repositoryとlive stateの独立closeoutを14 taskで固定した。
+- planはapproved spec raw-byte SHA-256 `338e0c1e192949c352a1fdd6deec1231ad495f19b68729e2aff3f330356ced4f`とapproval commit `088b91669813649363ddda28ea3d45387b92dbc3`へbindingした。current `task-management` validatorが全write capability setを要求するdriftはTask 1のRED/GREEN対象とした。
+- read-only Companies evidenceではobserved current `main` `42e9f0600f2fbec66f7fe05f9023f3a6328292d7`がPortfolio OSのskill selector/hash/install/discovery ownershipを禁止し、overlapping branch `c5359467dd1346f3d2ec8ff4649aaad74fedf017`がdivergentかつall-active-profile selectorを持つため、clean current-main worktreeでのownership reconciliationとHuman approvalをproduction変更前の停止Gateにした。
+- [[index|durable catalog]]へplan discoverabilityを同期した。Companies変更、live apply、permission/configuration/schema mutation、Issue / Project write、push、PR、mergeは未承認かつ未実施である。
+
+## [2026-07-31] implementation-plan-review-fix | Task Management Hermes Schedule Secretary Readiness
+
+- plan reviewの9 blocking findingを受け、[[wiki/syntheses/task-management-hermes-readiness/implementation-plan|implementation plan]]をSkills portable implementation 5 taskとcross-repository handoff 1 taskへ再構成した。未承認Companies production / live mutation taskはexecutable scopeから除外した。
+- capability fixtureはapproved Markdown matrix全行をparseするtest、paginationは50/51・repeat/update/conflict・failureをexact envelopeで評価するrunnable oracle、terminal/reopenはDone / Cancelledと両partial順序を実行するstate machine、metadataは各operationのbefore/change/after全体比較へ修正した。
+- opaque pagination continuation tokenは許可し、禁止対象をcredential / secret / authentication token valuesへ限定した。unique-50 overshoot pageはconsumeせずincoming cursorを返すlossless rule、全fixtureを含むfinal `EXPECTED_FILES`、Skills merged revisionから始まるCompanies evidence-resolution / separate live authorization handoffを固定した。
+- Companies変更、managed-native apply、live MCP configuration、permission/schema mutation、Issue / Project write、push、PR、mergeは未承認かつ未実施のままである。
+
+## [2026-07-31] implementation-plan-re-review-fix | Task Management Hermes Schedule Secretary Readiness
+
+- re-reviewの4 blocking findingに対し、[[wiki/syntheses/task-management-hermes-readiness/implementation-plan|implementation plan]]へprovider explicit clear、same-item/different-task identity isolation、unique 51件の二回呼出し継続、raw fetch countを含むexact oracleを追加した。
+- reopen targetは`Inbox`、`Backlog`、`Ready`、`In progress`、`Blocked`のexact allowlistとし、`Done`、`Cancelled`、unknown / non-normalizable / schema-ambiguous targetを両side実行前にblockするfixtureとassertionを追加した。
+- `register_existing_issue`をnative metadata preservationの全状態比較へ追加し、Project membership / requested fieldsだけが変わり、assignees、labels、milestone、issue type、parent、sub-issuesが保存されるcontractを実行可能にした。approved scope、Companies/live authorization boundaryは変更していない。
