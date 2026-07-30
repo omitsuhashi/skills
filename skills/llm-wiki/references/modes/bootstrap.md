@@ -1,51 +1,50 @@
 # Bootstrap Mode
 
-新規 local Markdown wiki を作るとき、または既存の Markdown repo / vault を LLM Wiki pattern へ寄せるときに使います。
+Use this mode to establish a new knowledge root or align an existing durable knowledge repository with the LLM Wiki lifecycle.
 
-Read first: `references/core.md`, chosen topology reference, then this file. Read `references/structure.md` before creating layout, page types, naming rules, durable document routing, or frontmatter guidance.
+Read first: `references/core.md`, the chosen topology reference, then this file. That is the structural read-set. Read `references/structure.md` only when resolving layout, page types, durable-document routing, or filename identity.
 
 ## Goal
 
-raw source を不変に保ちつつ、knowledge root, wiki の page 種別, `AGENTS.md` の local contract が明確で、汎用運用は `llm-wiki` skill に集約された構成を作る。加えて、他 workflow が作る durable な spec / ADR / plan / roadmap の保存先も knowledge root に寄せる。
+Establish immutable source material, maintained durable knowledge, a discovery index, a change log, and a local authority contract. Keep generic lifecycle rules in `llm-wiki`, and route durable specifications, decisions, plans, and roadmaps into the knowledge root.
 
 ## Check First
 
-- 既存の local Markdown wiki または Markdown repo はあるか。
-- dedicated wiki repo か、mixed repo 内の subdirectory wiki か。
-- wiki topology は `single-root` か `multi-root` か。
-- knowledge root はどこに置くべきか。
-- `raw/`, `wiki/`, `index.md`, `log.md`, `AGENTS.md` は既にあるか。
-- owner, write boundary, draft target をどこで解決するか。
-- 既存の naming convention を維持すべきか。
-- 他 workflow が durable doc をどこへ書くべきか。
+- Determine whether the repository is dedicated or mixed and whether the topology is single-root or multi-root.
+- Resolve the knowledge-root identity, canonical owner, read access, write boundary, draft target, Authoring Profile, and Compatibility Requirement.
+- Inventory existing source, maintained knowledge, index, log, and local-contract state.
+- Preserve established structural naming or routing unless an explicit local decision changes it.
+
+## Authoring Handoff
+
+After the structural read-set, resolve exactly one readable selected authoring skill through existing skill discovery. Give it the relevant semantic schema from `references/page-authoring.md` and the relation identity for every local contract, repository router, root registry, index, or log record it must serialize. Propagate the selected authoring skill's ordinary check failure. `llm-wiki` must never inspect syntax.
+
+If profile discovery is missing, ambiguous, incompatible, or unreadable, return `BLOCKED` before any durable write.
 
 ## Default Procedure
 
-1. dedicated wiki repo か mixed repo かを決める。
-2. `single-root` / `multi-root` topology を判定し、target knowledge root を確定する。
-3. `single-root` なら root registry は作らず、repo root または knowledge root の `AGENTS.md` を entrypoint にし、canonical owner, write boundary, non-owner proposal target を local contract に書く。
-4. `multi-root` なら system-specific root registry adapter を用意し、各 router `AGENTS.md` から adapter と canonical root へ辿れるようにする。Markdown registry を採用する場合だけ `assets/templates/root-registry.md` を元にしてよい。
-5. mixed repo なら `assets/templates/root-AGENTS.md` を元に repo root に thin router `AGENTS.md` を置き、knowledge root への導線と durable doc routing だけを書く。
-6. 無ければ knowledge root に `assets/templates/AGENTS.md`, `index.md`, `log.md` をコピーする。
-7. `references/structure.md` の default layout に従って必要な subdirectory を knowledge root 配下に作る。
-8. roadmap, ADR, spec, design doc, implementation plan の default 保存先を `wiki/syntheses/` にするか、project 固有の subdirectory を使うか決めて `AGENTS.md` に明記する。
-9. YAML frontmatter を使うか決める。
-10. 初期構成を knowledge root の `index.md` に記録する。目的別入口は root の代表的 reader task に合わせて seed category を調整し、現役ページ一覧は Active Page Catalog として使う。`multi-root` の場合は registry の所在地と root id も記録する。
-11. knowledge root の `log.md` に `bootstrap` entry を追加する。
+1. Resolve repository shape, topology, target knowledge root, authority, and write boundary.
+2. For single-root topology, establish the knowledge-root local contract as authority and do not create a root registry.
+3. For multi-root topology, establish a system-specific adapter that resolves root identity, scope, owner, access, write boundary, draft target, authoring profile, and compatibility requirement.
+4. For a mixed repository, establish a thin repository router to the knowledge-root contract and durable-document destinations.
+5. Resolve the selected authoring skill and hand it the applicable semantic schema and relation identities.
+6. Establish only the missing structural directories and durable records.
+7. Decide any project-specific durable-document routing and record it as a local override.
+8. Seed reader-task discovery and active canonical catalog semantics in the index.
+9. Append a `bootstrap` lifecycle event to the log.
+10. Apply the selected authoring skill's ordinary check before committing the write set.
 
 ## Pause And Align When
 
-- directory layout や naming に複数の妥当案があり、後で rename / relink が多発しそう。
-- `single-root` / `multi-root` のどちらにするかで owner / access / durable doc routing が変わる。
-- repo root を knowledge root のまま使うべきか、subdirectory に切り出すべきかで運用コストが変わる。
-- 既存 wiki と新規ルールのどちらを canonical にするかで運用コストが変わる。
-- 1 回の bootstrap で広範囲の page 再配置を伴う。
-- 既存 workflow が repo-root `docs/` など別の durable doc 置き場に強く依存しており、routing 変更の影響が読めない。
+- topology, knowledge-root location, owner, or access changes the authority boundary;
+- competing layout or routing choices would cause broad relocation later;
+- an existing repository contract conflicts with the proposed canonical contract;
+- bootstrap requires broad relocation of existing durable pages; or
+- existing workflows depend on a durable-document destination whose migration impact is unclear.
 
 ## Output Expectations
 
-- knowledge root に local contract と entrypoint がある。
-- repo root から wiki に辿りやすい entrypoint がある。
-- `single-root` の場合は root registry なしで entrypoint と write authority が分かる。
-- `multi-root` の場合は adapter があり、root id / URI / owner / read-write policy / draft target が解決できる。
-- 後続 session が ingest / query / lint のやり方を再発明せずに済む。
+- The knowledge root has an authoritative local contract, immutable-source boundary, maintained-knowledge boundary, discovery index, and change log.
+- A mixed repository has a thin route to the knowledge root.
+- Single-root topology has no registry; multi-root topology has an adapter that resolves authority, access, draft routing, and authoring compatibility.
+- Later lifecycle modes can reuse the contract without rediscovering serialization policy.

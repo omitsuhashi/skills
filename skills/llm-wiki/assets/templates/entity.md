@@ -1,35 +1,18 @@
----
-kind: entity
-created: 2026-04-12
-updated: 2026-04-12
-source_files: []
----
+# Entity Schema
 
-# サンプルエンティティ
+This asset is a syntax-neutral field contract. Supply these semantic fields to the selected authoring skill.
 
-## 要約
+- `page_type`: `entity`.
+- `purpose`: maintain the durable identity, facts, importance, and history of a named thing.
+- `required_fields`: title; identity boundary; summary; key facts; importance; provenance.
+- `optional_fields`: aliases; tags; entity kind; timeline; open questions; contradictions; status.
+- `relation_kinds`: source summary; concept; synthesis; related entity; query note.
+- `lifecycle_state`: active, superseded, merged, or archived.
+- `discoverability_metadata`: canonical name; aliases; one-line summary; entity kind; tags; primary search terms.
+- `provenance_requirement`: provide evidence identity for each material fact and each disputed interpretation.
+- `index_log_effect`: maintain one active canonical index record; creation and lifecycle changes require log events.
 
-entity を 2-4 文で定義する。
+Semantic constraints:
 
-## 主要事実
-
-- 事実
-- 事実
-- 事実
-
-## タイムライン
-
-- 日付または期間 — 出来事
-
-## 関連ページ
-
-- [サンプル概念](../concepts/sample-concept.md) とどう関係するか
-- [サンプルシンセシス](../syntheses/sample-synthesis.md) のどこで重要になるか
-
-## 未解決点
-
-- 未確定点や争点
-
-## 出典
-
-- [2026-04-12 記事タイトル](../sources/2026-04-12-article-title.md)
+- Preserve one canonical identity for strongly overlapping entity pages.
+- Keep disagreements explicit and evidence-linked.

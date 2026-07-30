@@ -1,45 +1,45 @@
 # Lint Mode
 
-単一 source の処理ではなく、wiki 全体の health check をするときに使います。
+Use this mode for a whole-root health review rather than single-source processing. Lint detects structural weaknesses, applies bounded low-risk corrections, and routes owner decisions to `draft-review` or `canonicalize`.
 
-Read first: `references/core.md`, chosen topology reference, then this file. Read `references/page-authoring.md` only before applying link, citation, or page-boundary fixes. Read `references/optional-tooling.md` only if better search or reporting is needed.
+Read first: `references/core.md`, the chosen topology reference, then this file. That is the structural read-set.
 
 ## Goal
 
-wiki が断片的な summary の寄せ集めへ劣化する前に、構造的な弱点を見つける。lint は LLM/human review procedure であり、機械的な品質採点ではない。検出、軽微修正、`draft-review` / `canonicalize` への routing を主責務とする。
+Detect discovery gaps, orphan targets, stale claims, contradictions, unnamed recurring concepts, unresolved proposals, and incomplete implementation-state evidence without mechanically scoring presentation.
 
 ## Check First
 
-- `index.md` が reader-facing discovery surface として機能しているか。
-- 目的別入口が代表的 reader task への shortcut になっているか。全 page の完全分類になっていないか。
-- Active Page Catalog が active canonical durable page を 1 回ずつ載せ、summary と主要検索語を持っているか。
-- procedure / operation 系 page の検索語が、該当する英日語彙を含んでいるか。
-- owner として扱う root では、`Draft Target` に未整理 draft が残っていないか。
-- `log.md` に recent ingest はあるのに wiki 更新が追随していない箇所はないか。
-- active な implementation progress ledger がある場合、`index.md` から発見でき、各 slice に status / evidence / review-after または next trigger があるか。
-- inbound link のない page はどれか。
-- 新しい source で superseded されていそうな claim はどれか。
-- 繰り返し言及されるのに独立 page を持たない concept はどれか。
+- Determine whether the index provides useful reader-task entrypoints and exactly one record per active canonical target.
+- Identify active catalog entries missing summary, aliases, search terms, or valid target identity.
+- Review unresolved proposals, recent lifecycle events, orphan pages, stale claims, recurring unnamed concepts, and implementation ledgers lacking evidence or review conditions.
+- Resolve authority before applying any correction.
+
+## Authoring Handoff
+
+After the structural read-set, resolve exactly one readable selected authoring skill before any correction or lint log event. Give it the relevant semantic schema from `references/page-authoring.md` and each affected canonical, proposed, provenance, and discovery relation identity. Propagate the selected authoring skill's ordinary check failure. `llm-wiki` must never inspect syntax.
+
+Read-only detection may proceed before authoring discovery. Missing, ambiguous, incompatible, or unreadable discovery returns `BLOCKED` before a page, index, or log write.
 
 ## Default Procedure
 
-1. `index.md` と `log.md` を走査する。
-2. owner として扱う root では `Draft Target` を確認し、未整理 draft を `draft-review` 候補として記録する。
-3. orphan page, stale page, contradiction candidate, recurring unnamed concept, discovery gap を洗う。
-4. 編集前に対象 page を確認して問題を確定する。
-5. link 修正、明白な `index.md` catalog 漏れ、summary / 検索語の軽微な補強、stale claim の superseded 明記など軽微な修正だけ行う。
-6. draft 採否判断は `draft-review`、rename / merge / archive / split / rehome は `canonicalize` へ routing する。
-7. 具体的な gap がある箇所だけ targeted な source 追加や web check を提案する。
-8. 所見、routing 結果、軽微修正を `log.md` の `lint` entry へ記録する。
+1. Review the discovery index and change log.
+2. For roots owned by the actor, identify unresolved proposals for `draft-review`.
+3. Confirm orphan targets, stale claims, contradiction candidates, recurring unnamed concepts, and discovery gaps against affected pages.
+4. Resolve authority, selected authoring skill, semantic schemas, and relation identities before any write.
+5. Apply only bounded corrections to semantic discoverability, relation identity, or clearly superseded lifecycle state.
+6. Route proposal decisions to `draft-review` and boundary changes to `canonicalize`.
+7. Propose targeted source acquisition only for confirmed evidence gaps.
+8. Synchronize any corrected active index records and append one `lint` log event describing findings, routing, and bounded corrections.
+9. Apply the selected authoring skill's ordinary check before committing the write set.
 
 ## Common Lint Findings
 
-- inbound link を持たない page。
-- `index.md` の Active Page Catalog に summary または検索語がない page。
-- procedure / operation 系 page なのに `setup`, `install`, `update`, `インストール`, `アップデート` など reader search terms がない。
-- 目的別入口が page catalog の重複版になり、reader task の shortcut になっていない。
-- 同じ concept の重複 page。
-- entity / concept へ波及していない source summary。
-- citation trail のない assertion。
-- newer source を反映していない synthesis page。
-- implementation progress ledger の `verified` に証跡 link がない、または `deferred` / `blocked` に理由と review-after / 解除条件がない。
+- an active canonical target without inbound discovery;
+- an active catalog record missing summary or search metadata;
+- a reader-task shortcut that merely duplicates the full catalog;
+- duplicate concept identities;
+- a source summary whose supported entity or concept effects were never integrated;
+- a claim without resolvable provenance;
+- a synthesis not updated for newer evidence; or
+- an implementation slice marked verified without evidence, or deferred or blocked without reason and review or unblock conditions.
