@@ -61,17 +61,30 @@ def merge_observation(
     item_id = str(observation["item_identity"])
     current = items.get(item_id)
     if current is None:
-        items[item_id] = deepcopy(observation)
+        initial = deepcopy(observation)
+        explicit_clear = set(observation.get("explicit_clear", []))
+        initial["_field_updated_at"] = {
+            field: observation.get("updated_at")
+            for field in ("status", "priority")
+            if (
+                field in observation
+                and (
+                    observation[field] is not None
+                    or field in explicit_clear
+                )
+            )
+        }
+        items[item_id] = initial
         return False
     if current["task_identity"] != observation["task_identity"]:
         item_identity_conflicts.add(item_id)
         return True
     explicit_clear = set(observation.get("explicit_clear", []))
+    field_updated_at = current.setdefault("_field_updated_at", {})
     for field in ("status", "priority"):
         if field in explicit_clear:
             current[field] = None
-            if observation.get("updated_at") is not None:
-                current["updated_at"] = observation["updated_at"]
+            field_updated_at[field] = observation.get("updated_at")
             continue
         if field not in observation:
             continue
@@ -79,15 +92,23 @@ def merge_observation(
         existing = current.get(field)
         if incoming is None:
             continue
-        if existing is None or incoming == existing:
-            current[field] = incoming
-            continue
-        old_time = current.get("updated_at")
+        old_time = field_updated_at.get(field)
         new_time = observation.get("updated_at")
+        if incoming == existing:
+            if (
+                new_time is not None
+                and (old_time is None or str(new_time) >= str(old_time))
+            ):
+                field_updated_at[field] = new_time
+            continue
+        if existing is None:
+            current[field] = incoming
+            field_updated_at[field] = new_time
+            continue
         if old_time is not None and new_time is not None:
             if str(new_time) >= str(old_time):
                 current[field] = incoming
-                current["updated_at"] = new_time
+                field_updated_at[field] = new_time
         else:
             reconciliation_conflicts.add(item_id)
     return True
@@ -384,6 +405,35 @@ class TaskManagementContractTests(unittest.TestCase):
                         case["expected_item_state"],
                         reconcile_fixture_item_state(case),
                     )
+
+    def test_reconciliation_tracks_freshness_per_field(self) -> None:
+        cases = {
+            case["name"]: case
+            for case in fixture("pagination-cases.json")["cases"]
+        }
+        self.assertEqual(
+            {
+                "PVTI-FRESH": {
+                    "task_identity": "I-FRESH",
+                    "status": "Ready",
+                }
+            },
+            reconcile_fixture_item_state(
+                cases["same_value_advances_field_freshness"]
+            ),
+        )
+        self.assertEqual(
+            {
+                "PVTI-FIELDS": {
+                    "task_identity": "I-FIELDS",
+                    "status": "Backlog",
+                    "priority": "P2",
+                }
+            },
+            reconcile_fixture_item_state(
+                cases["status_and_priority_freshness_are_independent"]
+            ),
+        )
 
     def test_unique_51_two_call_continuation_is_lossless(self) -> None:
         source = next(

@@ -42,6 +42,32 @@
       "expected": {"raw_observation_count": 4, "deduplicated_observation_count": 2, "identity_conflict_count": 0, "reconciliation_conflict_count": 0, "unique_task_count": 2, "returned_count": 2, "task_order": ["I-B", "I-A"], "completeness": "complete", "truncated": false, "continuation": null, "stop_reason": "source_exhausted"}
     },
     {
+      "name": "same_value_advances_field_freshness",
+      "filter": "Ready",
+      "pages": [
+        {"incoming_cursor": null, "outgoing_cursor": null, "has_next": false, "items": [
+          {"item_identity": "PVTI-FRESH", "task_identity": "I-FRESH", "status": "Ready", "updated_at": "2026-07-31T00:00:00Z"},
+          {"item_identity": "PVTI-FRESH", "task_identity": "I-FRESH", "status": "Ready", "updated_at": "2026-07-31T02:00:00Z"},
+          {"item_identity": "PVTI-FRESH", "task_identity": "I-FRESH", "status": "Backlog", "updated_at": "2026-07-31T01:00:00Z"}
+        ]}
+      ],
+      "expected_item_state": {"PVTI-FRESH": {"task_identity": "I-FRESH", "status": "Ready"}},
+      "expected": {"raw_observation_count": 3, "deduplicated_observation_count": 2, "identity_conflict_count": 0, "reconciliation_conflict_count": 0, "unique_task_count": 1, "returned_count": 1, "task_order": ["I-FRESH"], "completeness": "complete", "truncated": false, "continuation": null, "stop_reason": "source_exhausted"}
+    },
+    {
+      "name": "status_and_priority_freshness_are_independent",
+      "filter": "Backlog",
+      "pages": [
+        {"incoming_cursor": null, "outgoing_cursor": null, "has_next": false, "items": [
+          {"item_identity": "PVTI-FIELDS", "task_identity": "I-FIELDS", "status": "Ready", "priority": "P1", "updated_at": "2026-07-31T00:00:00Z"},
+          {"item_identity": "PVTI-FIELDS", "task_identity": "I-FIELDS", "status": "Backlog", "updated_at": "2026-07-31T02:00:00Z"},
+          {"item_identity": "PVTI-FIELDS", "task_identity": "I-FIELDS", "priority": "P2", "updated_at": "2026-07-31T01:00:00Z"}
+        ]}
+      ],
+      "expected_item_state": {"PVTI-FIELDS": {"task_identity": "I-FIELDS", "status": "Backlog", "priority": "P2"}},
+      "expected": {"raw_observation_count": 3, "deduplicated_observation_count": 2, "identity_conflict_count": 0, "reconciliation_conflict_count": 0, "unique_task_count": 0, "returned_count": 0, "task_order": [], "completeness": "complete", "truncated": false, "continuation": null, "stop_reason": "source_exhausted"}
+    },
+    {
       "name": "same_task_multiple_items",
       "filter": "Ready",
       "pages": [
