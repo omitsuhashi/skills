@@ -1,5 +1,9 @@
 # Skill Repository Optimization V4 Spec
 
+## Historical / superseded note
+
+この historical V4 spec の context contract、lifecycle、acceptance evidence は保持する。一方で `llm-wiki` の concrete page serialization、link notation、frontmatter guidance に関する authoring ownership は [[llm-wiki-authoring-responsibility-separation-spec]] に superseded される。
+
 ## 状態
 
 Spec Gate / Issue Gate / Execution Plan Gate 承認済み。承認日時は 2026-06-26。2026-06-26 のユーザー追補として、実装開始前にメイン planning session の context 圧縮または fresh execution coordinator への切り替えを skill 契約へ追加する。PR #20 作成後の追加方針として、loop 専用 wrapper CLI と deprecated workflow router shim は残さず、canonical CLI と `context-contract.toml` に一本化する。
@@ -199,17 +203,17 @@ Spec Gate / Issue Gate / Execution Plan Gate は承認後に、承認済み loca
 
 ## 関連ページ
 
-- [Skill Repository Optimization V4 Design](../sources/2026-06-26-skill-repository-optimization-v4-design.md)
-- [Skill Repository Optimization V4 Issues](skill-repository-optimization-v4-issues.md)
-- [Skill Repository Optimization V4 Context Baseline](skill-repository-optimization-v4-context-baseline.json)
-- [Loop Skill Architecture V3 Spec](loop-skill-architecture-v3-spec.md)
-- [Loop Skill Architecture V3 Issues](loop-skill-architecture-v3-issues.md)
-- [Loop Skill Context Optimization Spec](loop-skill-context-optimization-spec.md)
-- [Issue Implementation Loop Context Policy Spec](issue-implementation-loop-context-policy-spec.md)
+- [[2026-06-26-skill-repository-optimization-v4-design|Skill Repository Optimization V4 Design]]
+- [[skill-repository-optimization-v4-issues|Skill Repository Optimization V4 Issues]]
+- [[skill-repository-optimization-v4-context-baseline.json|Skill Repository Optimization V4 Context Baseline]]
+- [[loop-skill-architecture-v3-spec|Loop Skill Architecture V3 Spec]]
+- [[loop-skill-architecture-v3-issues|Loop Skill Architecture V3 Issues]]
+- [[loop-skill-context-optimization-spec|Loop Skill Context Optimization Spec]]
+- [[issue-implementation-loop-context-policy-spec|Issue Implementation Loop Context Policy Spec]]
 
 ## 出典
 
-- [Skill Repository Optimization V4 Design](../sources/2026-06-26-skill-repository-optimization-v4-design.md)
+- [[2026-06-26-skill-repository-optimization-v4-design|Skill Repository Optimization V4 Design]]
 - [raw/sources/2026-06-26-skill-repository-optimization-v4-design.md](../../raw/sources/2026-06-26-skill-repository-optimization-v4-design.md)
 - historical production path（Phase 2で削除済み）: `skills/grill-to-pr-loop/context-contract.toml`
 - historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/context-contract.toml`

@@ -100,7 +100,7 @@ orchestrating workflow は schema と content payload を selected authoring ski
 - selected authoring skill の文書化された contract に従い、semantic schema を profile-compatible document へ lossless に serialization し、その skill が指示する確認を実行する capability。
 - Markdown / Obsidian syntax を解釈せず、semantic field / relation preservation、authority、path、bounded write set、index/log effect だけを検証する capability。
 
-この repository の local contract は `knowledge/AGENTS.md` で `obsidian` profile、日本語本文、Obsidian compatibility を宣言する。現行 active runtime が discovery できる `obsidian-markdown` の readable な `SKILL.md` は、Obsidian Markdown の作成・編集、properties、wikilink、external link、reading view 確認を文書化しているため、この repository の authoring operation に適用可能である。standard Markdown は同 skill の前提知識として扱い、別 capability ID や manifest を新設しない。外部 installed `obsidian-markdown` skill はこの migration の変更対象外である。
+この repository の local contract は `knowledge/AGENTS.md` で `obsidian` profile、日本語本文、Obsidian compatibility を宣言する。現行 active runtime が discovery できる `obsidian-markdown` の readable な `SKILL.md` は、[Obsidian Flavored Markdown](https://help.obsidian.md/obsidian-flavored-markdown) の作成・編集、properties、wikilink、external link、reading view 確認を文書化しているため、この repository の authoring operation に適用可能である。standard Markdown は同 skill の前提知識として扱い、別 capability ID や manifest を新設しない。外部 installed `obsidian-markdown` skill はこの migration の変更対象外である。
 
 ## Authoring skill discovery と fail-closed behavior
 
@@ -197,6 +197,8 @@ Human-approved execution-policy override により、spec / plan correction 自�
 - [[skill-repository-optimization-v4-spec]]
 
 `knowledge/AGENTS.md` は `obsidian` profile、日本語本文、Obsidian compatibility requirement だけを local difference として宣言し、relative Markdown link の canonical rule と wikilink 禁止を削除する。別 profile manifest は追加しない。既存 canonical spec はこの仕様により supersede される authoring ownership を明示し、structural/lifecycle decision は保持する。`raw/**` は migration 対象外とする。
+
+[[llm-wiki-draft-review-and-canonicalize-goal-spec]] の concrete page serialization、link notation、frontmatter guidance と、[[skill-repository-optimization-v4-spec]] の `llm-wiki` authoring contract / context guidance における同じ ownership clause は、この仕様が supersede する。両仕様の draft-review / canonicalize、context contract、lifecycle、historical acceptance evidence の決定は保持する。
 
 ### Validators、tests、CI
 

@@ -1805,3 +1805,8 @@ append-only で使います。すべての entry は予測しやすい header �
 ## [2026-07-30] plan-gate-approved | llm-wiki Authoring Responsibility Separation
 
 - Human は [[wiki/syntheses/llm-wiki-authoring-responsibility-separation-implementation-plan|llm-wiki authoring 責務分離実装計画]] を実装計画として承認し、`Human-approved / current` として記録した。[[index|durable catalog]] を同じ承認状態へ同期した。
+
+## [2026-07-30] implementation | llm-wiki authoring responsibility separation
+
+- [[llm-wiki-authoring-responsibility-separation-spec]] と [[llm-wiki-authoring-responsibility-separation-implementation-plan]] に従い、[[AGENTS.md|local contract]] と [[index|durable catalog]] を `obsidian` authoring profile と maintained internal-note migration へ同期した。
+- `raw/**` は untouched のまま保持し、historical spec の evidence と raw citation を変更していない。

@@ -43,6 +43,14 @@ SEMANTIC_SCHEMA_KEYS = (
     "provenance_requirement",
     "index_log_effect",
 )
+KNOWLEDGE_MIGRATION_FILES = (
+    REPO_ROOT / "knowledge/AGENTS.md",
+    REPO_ROOT / "knowledge/index.md",
+    REPO_ROOT / "knowledge/log.md",
+    REPO_ROOT / "knowledge/wiki/syntheses/llm-wiki-authoring-responsibility-separation-spec.md",
+    REPO_ROOT / "knowledge/wiki/syntheses/llm-wiki-draft-review-and-canonicalize-goal-spec.md",
+    REPO_ROOT / "knowledge/wiki/syntheses/skill-repository-optimization-v4-spec.md",
+)
 INVENTORY_ASSETS = (
     (
         "knowledge-root-local-contract",
@@ -202,6 +210,10 @@ def read(name: str) -> str:
     return (SKILL_DIR / name).read_text(encoding="utf-8")
 
 
+def read_repo(name: str) -> str:
+    return (REPO_ROOT / name).read_text(encoding="utf-8")
+
+
 def report_operation(name: str) -> dict[str, object]:
     result = subprocess.run(
         [sys.executable, str(REPORT_CONTEXT), "--skill", "skills/llm-wiki", "--json"],
@@ -220,6 +232,54 @@ def report_operation(name: str) -> dict[str, object]:
 
 
 class AuthoringBoundaryTests(unittest.TestCase):
+    def test_local_contract_selects_obsidian_without_copying_authoring_syntax(self) -> None:
+        contract = read_repo("knowledge/AGENTS.md")
+
+        self.assertIn("authoring profile: obsidian", contract)
+        self.assertIn("Obsidian compatibility requirement", contract)
+        self.assertNotIn("relative Markdown link", contract)
+        self.assertNotIn("[[...]]", contract)
+
+    def test_migrated_knowledge_uses_wikilinks_and_preserves_external_urls(self) -> None:
+        for path in KNOWLEDGE_MIGRATION_FILES:
+            text = path.read_text(encoding="utf-8")
+            self.assertNotRegex(text, r"\[[^]]+\]\((?:\.\.?/)?wiki/")
+        self.assertIn(
+            "[Obsidian Flavored Markdown](https://help.obsidian.md/obsidian-flavored-markdown)",
+            read_repo(
+                "knowledge/wiki/syntheses/llm-wiki-authoring-responsibility-separation-spec.md"
+            ),
+        )
+
+    def test_historical_specs_are_preserved_and_explicitly_superseded(self) -> None:
+        current_spec = "[[llm-wiki-authoring-responsibility-separation-spec]]"
+        old_goal_spec = read_repo(
+            "knowledge/wiki/syntheses/llm-wiki-draft-review-and-canonicalize-goal-spec.md"
+        )
+        sro4_spec = read_repo("knowledge/wiki/syntheses/skill-repository-optimization-v4-spec.md")
+
+        self.assertIn("# LLM Wiki Draft Review And Canonicalize Goal Spec", old_goal_spec)
+        self.assertIn("draft-review", old_goal_spec)
+        self.assertIn(current_spec, old_goal_spec)
+        self.assertIn("superseded", old_goal_spec)
+        self.assertIn("# Skill Repository Optimization V4 Spec", sro4_spec)
+        self.assertIn("PR #19", sro4_spec)
+        self.assertIn(current_spec, sro4_spec)
+        self.assertIn("superseded", sro4_spec)
+
+    def test_migration_log_is_append_only_and_discoverable(self) -> None:
+        log = read_repo("knowledge/log.md")
+
+        self.assertEqual(
+            log.count("implementation | llm-wiki authoring responsibility separation"),
+            1,
+        )
+        self.assertIn("[[llm-wiki-authoring-responsibility-separation-spec]]", log)
+        self.assertIn(
+            "[[llm-wiki-authoring-responsibility-separation-implementation-plan]]",
+            log,
+        )
+
     def test_boundary_uses_no_semantic_schema_serialization_parser(self) -> None:
         for forbidden_global in ("re", "semantic_schema_fields", "inventory_entry"):
             self.assertNotIn(forbidden_global, globals())
