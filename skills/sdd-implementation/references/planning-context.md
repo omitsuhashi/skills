@@ -66,7 +66,7 @@ At each stage transition carry only:
 
 Aim for about 400 words; do not copy raw discussion or tool output.
 
-Before approved-plan entry, the compact tuple is held only in current Stage Capsule/control context: original checkout path, `starting_branch`, `starting_head_sha`, captured starting status, `integration_branch`, and planning-worktree identity. After pre-plan compaction, if that tuple is not trusted, return `BLOCKED` and request Human restart/confirmation; do not reconstruct from Git or conversation and do not create a compatibility bridge, pre-plan reservation, snapshot, runtime state, scheduler, lock, event schema, or resume record. On normal approved-plan SDD entry transfer the trusted tuple to the ordinary plan-owned workspace/progress ledger. Post-transfer recovery compares the canonical plan ledger tuple with current Git facts. This post-transfer recovery uses that canonical plan ledger tuple.
+Before approved-plan entry, the compact tuple is held only in current Stage Capsule/control context: original checkout path, `starting_branch`, `starting_head_sha`, captured starting status, `integration_branch`, and planning-worktree identity. After pre-plan compaction, if that tuple is not trusted, return `BLOCKED` and request Human restart/confirmation; do not reconstruct from Git or conversation and do not create a compatibility bridge, pre-plan reservation, snapshot, runtime state, scheduler, lock, event schema, or resume record. On normal approved-plan SDD entry transfer the trusted tuple to the ordinary plan-owned workspace/progress ledger. Post-transfer recovery compares the canonical plan ledger tuple with current Git facts.
 
 ## Spec Synthesis And Review
 
