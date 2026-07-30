@@ -20,7 +20,7 @@ Why the work is needed and the confirmed decision context.
 Related Issues, PRs, durable specifications, files, or confirmed external references.
 ```
 
-Do not store raw conversation transcripts, internal prompts, hidden reasoning, credentials, or agent names. Prefer durable repository references for implementation work. Use existing repository labels and Issue types rather than imposing a global taxonomy.
+Do not store raw conversation transcripts, internal prompts, hidden reasoning, credentials, or agent names. Do not store or return credential, secret, or authentication token values. Prefer durable repository references for implementation work. Use existing repository labels and Issue types rather than imposing a global taxonomy.
 
 ## Creation gate
 
@@ -47,3 +47,9 @@ candidates.
 | `partial` or `truncated` | any | false | false | false | stop |
 
 When reusing an Issue or Project item, never create a second Issue. Preserve its current fields unless the requested operation or a documented unfinished partial-failure step requires a particular missing write. Do not reapply creation defaults or repeat completed steps.
+
+For `register_existing_issue`, add only the resolved Project membership and
+explicitly requested Project fields or applicable defaults. Preserve
+`assignees`, `labels`, `milestone`, `issue_type`, `parent_issue`, and
+`sub_issues`, and require their exact readback with the requested Project
+changes.

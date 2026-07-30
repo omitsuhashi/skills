@@ -20,6 +20,7 @@ EXPECTED_FILES = {
     "references/github-projects.md",
     "references/issue-contract.md",
     "references/safety-and-failures.md",
+    "tests/fixtures/native-metadata-cases.json",
     "tests/fixtures/operation-capability-cases.json",
     "tests/fixtures/pagination-cases.json",
     "tests/fixtures/transition-cases.json",
@@ -33,6 +34,18 @@ def read(path: Path) -> str:
 
 def fixture(name: str) -> dict[str, object]:
     return json.loads((FIXTURES / name).read_text(encoding="utf-8"))
+
+
+def apply_requested_change(
+    before: dict[str, object],
+    requested_change: dict[str, object],
+) -> dict[str, object]:
+    result = deepcopy(before)
+    mutable = result["mutable"]
+    if not isinstance(mutable, dict):
+        raise AssertionError("mutable fixture state must be an object")
+    mutable.update(requested_change)
+    return result
 
 
 def expand_page(page: dict[str, object]) -> list[dict[str, object]]:
@@ -508,6 +521,93 @@ def field_options(text: str, field: str) -> list[str]:
 
 
 class TaskManagementContractTests(unittest.TestCase):
+    def test_every_supported_mutation_preserves_native_metadata(self) -> None:
+        expected_operations = {
+            "register_existing_issue",
+            "edit_title",
+            "edit_body",
+            "comment",
+            "status",
+            "priority",
+            "due_date",
+            "done",
+            "cancelled",
+            "reopen",
+        }
+        protected_keys = {
+            "assignees",
+            "labels",
+            "milestone",
+            "issue_type",
+            "parent_issue",
+            "sub_issues",
+        }
+        observed = set()
+        for case in fixture("native-metadata-cases.json")["cases"]:
+            observed.add(case["operation"])
+            with self.subTest(operation=case["operation"]):
+                actual = apply_requested_change(
+                    case["before"],
+                    case["requested_change"],
+                )
+                self.assertEqual(case["after"], actual)
+                self.assertEqual(
+                    case["before"]["protected"],
+                    actual["protected"],
+                )
+                self.assertEqual(
+                    case["after"]["protected"],
+                    actual["protected"],
+                )
+                self.assertEqual(protected_keys, set(actual["protected"]))
+        self.assertEqual(expected_operations, observed)
+
+        operative = "\n".join(
+            (
+                section(read(SKILL), "## Boundaries"),
+                section(read(SKILL), "## Operation routing"),
+                section(read(PROJECTS), "## Project item model"),
+                section(read(PROJECTS), "## Fields"),
+                section(read(PROJECTS), "## Terminal transitions"),
+                section(read(PROJECTS), "## Reopen"),
+                section(read(ISSUES), "## Duplicate handling"),
+                section(read(SAFETY), "## Partial success"),
+            )
+        )
+        for operation in expected_operations:
+            self.assertIn(f"`{operation}`", operative)
+        for protected_key in protected_keys:
+            self.assertIn(f"`{protected_key}`", operative)
+        self.assertIn(
+            "Every supported mutation requires exact readback of the requested "
+            "fields and all protected native metadata",
+            " ".join(operative.split()),
+        )
+        self.assertIn(
+            "If protected native metadata readback is unavailable, return "
+            "`partial`; never report the mutation as `complete`",
+            " ".join(operative.split()),
+        )
+
+    def test_portable_contract_forbids_secret_values_not_pagination_terms(self) -> None:
+        production = "\n".join(
+            read(path)
+            for path in [SKILL, *sorted((SKILL_ROOT / "references").glob("*.md"))]
+        )
+        self.assertIn("continuation token", production)
+        self.assertIn(
+            "Do not store or return credential, secret, or authentication token values",
+            production,
+        )
+        for prohibited in (
+            "credential_value",
+            "secret_value",
+            "authentication_token_value",
+            "raw_profile_dump",
+        ):
+            self.assertNotIn(prohibited, production)
+        self.assertIn("Do not fall back to a CLI", production)
+
     def test_transition_fixtures_execute_complete_partial_and_retry(self) -> None:
         for case in fixture("transition-cases.json")["cases"]:
             with self.subTest(case=case["name"]):

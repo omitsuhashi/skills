@@ -22,6 +22,7 @@ Manage task content as GitHub Issues and portfolio state as Project items. Use a
 - Store every task as a GitHub Issue. The Issue repository is the work unit boundary.
 - Use GitHub MCP directly. Do not route through a facade, adapter, provider-neutral schema, CLI, direct API client, browser automation, or local backend.
 - Do not own credentials, MCP registration, Project creation, repository creation, or normal-operation schema repair.
+- Native metadata may be read, but the MVP never writes assignees, labels, milestone, Issue type, or parent/sub-issue relationships. Preserve it across every supported mutation and exact-read it back with the requested result.
 
 ## Operation routing
 
@@ -51,7 +52,8 @@ Only this operation uses the new-task flow:
 5. Before mutation, use the `create` preflight when creating an Issue or the `register_existing_issue` preflight when registering an existing Issue.
 6. If no Issue matches, create it. If the Issue is not yet in the selected Project, add it and apply `Status=Inbox`, `Priority=P2`, and no due date only to that newly created Project item when the user supplied no value.
 7. For an existing Project item, preserve every Issue and Project item field except an explicitly requested change or documented unfinished write.
-8. Return the Issue URL, repository, Project URL, completed steps, preserved state, and unfinished steps.
+8. When registering an existing Issue, change only Project membership and explicitly requested Project fields or applicable defaults; preserve and exact-read back the Issue's native metadata.
+9. Return the Issue URL, repository, Project URL, completed steps, preserved state, and unfinished steps.
 
 ### Edit
 

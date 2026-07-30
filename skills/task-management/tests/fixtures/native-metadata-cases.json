@@ -1,0 +1,70 @@
+{
+  "cases": [
+    {
+      "operation": "register_existing_issue",
+      "before": {
+        "protected": {"assignees": ["octo"], "labels": ["planning"], "milestone": "M1", "issue_type": "Task", "parent_issue": "R#10", "sub_issues": ["R#12"]},
+        "mutable": {"project_membership": false, "status": null, "priority": null, "due_date": null}
+      },
+      "requested_change": {"project_membership": true, "status": "Inbox", "priority": "P2", "due_date": null},
+      "after": {
+        "protected": {"assignees": ["octo"], "labels": ["planning"], "milestone": "M1", "issue_type": "Task", "parent_issue": "R#10", "sub_issues": ["R#12"]},
+        "mutable": {"project_membership": true, "status": "Inbox", "priority": "P2", "due_date": null}
+      }
+    },
+    {
+      "operation": "edit_title",
+      "before": {"protected": {"assignees": ["octo"], "labels": ["planning"], "milestone": "M1", "issue_type": "Task", "parent_issue": "R#10", "sub_issues": ["R#12"]}, "mutable": {"title": "old"}},
+      "requested_change": {"title": "new"},
+      "after": {"protected": {"assignees": ["octo"], "labels": ["planning"], "milestone": "M1", "issue_type": "Task", "parent_issue": "R#10", "sub_issues": ["R#12"]}, "mutable": {"title": "new"}}
+    },
+    {
+      "operation": "edit_body",
+      "before": {"protected": {"assignees": ["octo"], "labels": ["planning"], "milestone": "M1", "issue_type": "Task", "parent_issue": "R#10", "sub_issues": ["R#12"]}, "mutable": {"body": "old"}},
+      "requested_change": {"body": "new"},
+      "after": {"protected": {"assignees": ["octo"], "labels": ["planning"], "milestone": "M1", "issue_type": "Task", "parent_issue": "R#10", "sub_issues": ["R#12"]}, "mutable": {"body": "new"}}
+    },
+    {
+      "operation": "comment",
+      "before": {"protected": {"assignees": ["octo"], "labels": ["planning"], "milestone": "M1", "issue_type": "Task", "parent_issue": "R#10", "sub_issues": ["R#12"]}, "mutable": {"comments": []}},
+      "requested_change": {"comments": ["note"]},
+      "after": {"protected": {"assignees": ["octo"], "labels": ["planning"], "milestone": "M1", "issue_type": "Task", "parent_issue": "R#10", "sub_issues": ["R#12"]}, "mutable": {"comments": ["note"]}}
+    },
+    {
+      "operation": "status",
+      "before": {"protected": {"assignees": ["octo"], "labels": ["planning"], "milestone": "M1", "issue_type": "Task", "parent_issue": "R#10", "sub_issues": ["R#12"]}, "mutable": {"status": "Backlog"}},
+      "requested_change": {"status": "Ready"},
+      "after": {"protected": {"assignees": ["octo"], "labels": ["planning"], "milestone": "M1", "issue_type": "Task", "parent_issue": "R#10", "sub_issues": ["R#12"]}, "mutable": {"status": "Ready"}}
+    },
+    {
+      "operation": "priority",
+      "before": {"protected": {"assignees": ["octo"], "labels": ["planning"], "milestone": "M1", "issue_type": "Task", "parent_issue": "R#10", "sub_issues": ["R#12"]}, "mutable": {"priority": "P2"}},
+      "requested_change": {"priority": "P1"},
+      "after": {"protected": {"assignees": ["octo"], "labels": ["planning"], "milestone": "M1", "issue_type": "Task", "parent_issue": "R#10", "sub_issues": ["R#12"]}, "mutable": {"priority": "P1"}}
+    },
+    {
+      "operation": "due_date",
+      "before": {"protected": {"assignees": ["octo"], "labels": ["planning"], "milestone": "M1", "issue_type": "Task", "parent_issue": "R#10", "sub_issues": ["R#12"]}, "mutable": {"due_date": null}},
+      "requested_change": {"due_date": "2026-08-01"},
+      "after": {"protected": {"assignees": ["octo"], "labels": ["planning"], "milestone": "M1", "issue_type": "Task", "parent_issue": "R#10", "sub_issues": ["R#12"]}, "mutable": {"due_date": "2026-08-01"}}
+    },
+    {
+      "operation": "done",
+      "before": {"protected": {"assignees": ["octo"], "labels": ["planning"], "milestone": "M1", "issue_type": "Task", "parent_issue": "R#10", "sub_issues": ["R#12"]}, "mutable": {"issue_state": "open", "close_reason": null, "status": "In progress"}},
+      "requested_change": {"issue_state": "closed", "close_reason": "completed", "status": "Done"},
+      "after": {"protected": {"assignees": ["octo"], "labels": ["planning"], "milestone": "M1", "issue_type": "Task", "parent_issue": "R#10", "sub_issues": ["R#12"]}, "mutable": {"issue_state": "closed", "close_reason": "completed", "status": "Done"}}
+    },
+    {
+      "operation": "cancelled",
+      "before": {"protected": {"assignees": ["octo"], "labels": ["planning"], "milestone": "M1", "issue_type": "Task", "parent_issue": "R#10", "sub_issues": ["R#12"]}, "mutable": {"issue_state": "open", "close_reason": null, "status": "Blocked"}},
+      "requested_change": {"issue_state": "closed", "close_reason": "not planned", "status": "Cancelled"},
+      "after": {"protected": {"assignees": ["octo"], "labels": ["planning"], "milestone": "M1", "issue_type": "Task", "parent_issue": "R#10", "sub_issues": ["R#12"]}, "mutable": {"issue_state": "closed", "close_reason": "not planned", "status": "Cancelled"}}
+    },
+    {
+      "operation": "reopen",
+      "before": {"protected": {"assignees": ["octo"], "labels": ["planning"], "milestone": "M1", "issue_type": "Task", "parent_issue": "R#10", "sub_issues": ["R#12"]}, "mutable": {"issue_state": "closed", "close_reason": "completed", "status": "Done"}},
+      "requested_change": {"issue_state": "open", "close_reason": null, "status": "Backlog"},
+      "after": {"protected": {"assignees": ["octo"], "labels": ["planning"], "milestone": "M1", "issue_type": "Task", "parent_issue": "R#10", "sub_issues": ["R#12"]}, "mutable": {"issue_state": "open", "close_reason": null, "status": "Backlog"}}
+    }
+  ]
+}

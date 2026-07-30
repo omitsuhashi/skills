@@ -22,6 +22,8 @@ Confirmation is required for ambiguous Project or repository selection, unclear 
 - Schema ambiguity during Status normalization: stop the operation and return `partial`; do not select an option by similarity.
 
 Do not fall back to a CLI, direct API client, browser automation, or local backend.
+Do not store or return credential, secret, or authentication token values.
+Repository artifacts must not contain such values or raw profile dumps.
 
 ## Partial success
 
@@ -38,6 +40,11 @@ On retry, exact-read both sides again, put the remaining side only in
 `retry_attempted_sides`, and write only that side. Continue only the unfinished steps.
 Do not retry a side already confirmed successful. Preserve the successful side
 even when the remaining side keeps failing.
+
+For every supported mutation, exact-read the requested fields and protected
+native metadata before reporting completion. If any protected metadata readback
+is unavailable, return `partial` and identify the unavailable readback; do not
+infer preservation or report `complete`.
 
 For duplicate discovery or another completeness-required query, only confirmed
 raw source exhaustion may produce `complete`. A 50-item display/return limit is

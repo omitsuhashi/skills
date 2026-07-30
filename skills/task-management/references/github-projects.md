@@ -41,6 +41,24 @@ Tool names may differ by host integration. Match semantic capabilities, but use 
 - Keep completed and cancelled items in the Project for history.
 - Do not create a Project, repository, field, option, view, or workflow as a side effect of normal task operations.
 
+### Native metadata preservation
+
+The protected GitHub-native metadata keys are `assignees`, `labels`,
+`milestone`, `issue_type`, `parent_issue`, and `sub_issues`. The MVP may read
+them, but no supported mutation writes them. This applies to
+`register_existing_issue`, `edit_title`, `edit_body`, `comment`, `status`,
+`priority`, `due_date`, `done`, `cancelled`, and `reopen`.
+
+For `register_existing_issue`, change only Project membership and explicitly
+requested Project fields or applicable creation defaults. Do not modify the
+existing Issue's protected native metadata. For every other supported mutation,
+change only the operation's requested field or state sides.
+
+Every supported mutation requires exact readback of the requested fields and all
+protected native metadata. Compare all protected keys with their pre-write
+values. If protected native metadata readback is unavailable, return `partial`;
+never report the mutation as `complete`.
+
 ## Status normalization
 
 | Canonical Status | Accepted user wording |
@@ -85,6 +103,9 @@ state:
 - If accepting it would exceed 50, do not consume or commit any part of that page. Return the page's unchanged provider-supplied incoming cursor, the reconciliation state from before that page, and `unique_limit_page_deferred`, even though this can return fewer than 50 tasks.
 
 `ContinuationState` contains the opaque `provider_cursor` unchanged plus the exact `already_emitted_task_identities`. The resumed call supplies that incoming cursor and identity set, suppresses already emitted canonical tasks, and may then reconcile the formerly deferred whole page. It must not synthesize an intra-page offset, replacement cursor, item identity, or task identity. Provider intra-page resume is outside this contract because a later observation in the same page may revise an earlier one.
+
+An opaque provider continuation token is permitted only as pagination state and
+must be returned unchanged.
 
 When the source is exhausted, return `source_exhausted`; when a later page fails, preserve previously reconciled results, return that page's incoming cursor, and use the failure as `stop_reason`. Any continuation is partial; exhaustion is complete only when no conflict prevents completeness.
 

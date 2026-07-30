@@ -39,7 +39,27 @@ class SkillCiWorkflowTests(unittest.TestCase):
     def test_task_management_contract_is_host_neutral(self) -> None:
         text = TASK_MANAGEMENT_TEST.read_text(encoding="utf-8")
         self.assertIn("test_skill_has_no_host_specific_or_runtime_surface", text)
-        self.assertIn("test_capability_and_partial_failures_are_fail_closed", text)
+        self.assertIn(
+            "test_operation_capability_matrix_matches_every_approved_row",
+            text,
+        )
+        self.assertIn(
+            "test_pagination_fixtures_match_exact_counts_conflicts_and_continuation",
+            text,
+        )
+        self.assertIn("test_unique_51_two_call_continuation_is_lossless", text)
+        self.assertIn(
+            "test_transition_fixtures_execute_complete_partial_and_retry",
+            text,
+        )
+        self.assertIn(
+            "test_reopen_target_allowlist_blocks_terminal_and_unknown_values",
+            text,
+        )
+        self.assertIn(
+            "test_every_supported_mutation_preserves_native_metadata",
+            text,
+        )
 
     def test_workflow_omits_repository_compatibility_entrypoints(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
