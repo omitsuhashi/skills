@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Status:** `Human-approved / current`。2026-07-30にHumanが実装計画を承認した。
+
 **Goal:** `llm-wiki` を durable knowledge の structural / lifecycle coordinator に限定し、Obsidian 文書の serialization を選択済み authoring skill へ fail-closed で委譲する。
 
 **Architecture:** portable contract は operation、topology、authority、semantic schema、relation identity を所有し、selected authoring profile の discovery と readable `SKILL.md` を write 前の gate にする。既存の `context-contract.toml` は entrypoint + core + topology + mode の四つの structural read-set を維持し、authoring skill を内部 reference、sidecar、runtime 固有 metadata として追加しない。semantic template は `llm-wiki` に残すが、headings、frontmatter、link notation、callout、embed、presentation の serialization instruction は selected authoring skill にだけ残す。

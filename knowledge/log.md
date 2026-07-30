@@ -1801,3 +1801,7 @@ append-only で使います。すべての entry は予測しやすい header �
 
 - Human は [[wiki/syntheses/llm-wiki-authoring-responsibility-separation-spec|llm-wiki authoring 責務分離仕様]] を Written Spec として承認した。仕様の `status` を `approved` とし、承認日を `2026-07-30` と記録した。
 - durable catalog を同じ承認状態へ同期した。implementation plan、implementation、remote write は未実施である。
+
+## [2026-07-30] plan-gate-approved | llm-wiki Authoring Responsibility Separation
+
+- Human は [[wiki/syntheses/llm-wiki-authoring-responsibility-separation-implementation-plan|llm-wiki authoring 責務分離実装計画]] を実装計画として承認し、`Human-approved / current` として記録した。[[index|durable catalog]] を同じ承認状態へ同期した。

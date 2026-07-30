@@ -23,6 +23,8 @@ _現在なし。_
 
 - [[wiki/syntheses/llm-wiki-authoring-responsibility-separation-spec|llm-wiki authoring 責務分離仕様]] — `llm-wiki` の構造・ライフサイクル責務と Obsidian authoring skill の serialization 責務を分離する、Written Spec Gate 承認済みの current 仕様。
   検索語: llm-wiki, authoring responsibility separation, structural lifecycle coordinator, Obsidian, authoring skill, serialization, fail closed, durable knowledge, 責務分離, 構造, ライフサイクル, 文書作成, 承認済み仕様
+- [[wiki/syntheses/llm-wiki-authoring-responsibility-separation-implementation-plan|llm-wiki authoring 責務分離実装計画]] — 承認済み仕様を、portable contract、semantic schema、Obsidian移行、検証・単一commitの順で実装する current な実行計画。
+  検索語: llm-wiki, authoring responsibility separation, implementation plan, Execution Plan Gate, Obsidian, semantic schema, fail closed, TDD, 実装計画, 実装計画承認, 責務分離, 検証
 - [GitHub Projects 直接接続型 Task Management Skill 仕様](wiki/syntheses/direct-github-projects-task-management/spec.md) — 1個のcaller-selected Projectへ複数repositoryのIssueを集約し、standalone skillからGitHub MCPへ直接接続するWritten Spec Gate承認済みのcurrent設計。
   検索語: task-management, GitHub Projects, GitHub MCP, Issue, standalone skill, project_url, inbox repository, repository work unit, Status, Priority, Due date, approval policy, fail closed, タスク管理, 直接接続, 承認, セットアップ
 - [GitHub Projects 直接接続型 Task Management Skill Issue 台帳](wiki/syntheses/direct-github-projects-task-management/issues.md) — DGPTM-001からDGPTM-004へstandalone skill、direct MCP contract、旧plugin削除、historical supersessionを依存順に分解したIssue Gate承認済み台帳。
