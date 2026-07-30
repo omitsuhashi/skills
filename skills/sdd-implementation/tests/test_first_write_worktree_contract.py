@@ -31,7 +31,7 @@ class FirstWriteContractTests(unittest.TestCase):
 
     def test_all_first_write_stop_cases(self) -> None:
         gate = self.skill_text.split("## First-Write Worktree Gate", 1)[1].split("## Planning Controller", 1)[0]
-        for value in ("default-branch inference", "detached HEAD", "task-relevant uncommitted original content", "branch collision", "path collision", "allocation failure", "zero content/artifact write", "original checkout fallback", "switch/reset/stash/clean/add/commit"):
+        for value in ("default-branch inference", "Detached HEAD", "task-relevant uncommitted original content", "branch collision", "path collision", "allocation failure", "zero content/artifact write", "original checkout fallback", "switch/reset/stash/clean/add/commit"):
             self.assertIn(value, gate)
 
     def test_reuse_compaction_and_ownership_cases(self) -> None:
@@ -39,12 +39,14 @@ class FirstWriteContractTests(unittest.TestCase):
         capsule = self.planning_text.split("## Stage Capsule", 1)[1].split("## Spec Synthesis And Review", 1)[0]
         for value in ("continuing controller/chat", "atomic allocation", "two allocators", "loser", "independent chat", "stale/foreign state", "HEAD/index/tracked/untracked"):
             self.assertIn(value, gate)
-        for value in ("pre-plan compaction", "post-transfer", "canonical plan ledger tuple", "do not reconstruct"):
+        for value in ("pre-plan compaction", "Post-transfer", "canonical plan ledger tuple", "do not reconstruct"):
             self.assertIn(value, capsule)
 
     def test_starting_branch_is_pr_base_and_integration_branch_is_distinct_pr_head(self) -> None:
-        for value in ("`starting_branch` is the PR base", "`integration_branch` is the distinct PR head"):
-            self.assertIn(value, self.contract)
+        self.assertIn(
+            "`starting_branch` is PR base and `integration_branch` is PR head and integration target.",
+            self.contract,
+        )
 
 class NativeWorktreeContractTests(unittest.TestCase):
     def make_repository(self, root: Path) -> None:

@@ -271,12 +271,12 @@ class SddImplementationSkillContractTests(unittest.TestCase):
     def test_first_write_gate_precedes_controller(self) -> None:
         self.assertLess(self.skill_text.index("## First-Write Worktree Gate"), self.skill_text.index("## Planning Controller"))
         gate = self.skill_text.split("## First-Write Worktree Gate", 1)[1].split("## Planning Controller", 1)[0]
-        for value in ("read-only discovery", "detached HEAD", "default-branch inference", "`starting_branch`", "`starting_head_sha`", "`integration_branch`", "shared Git metadata", "zero content/artifact write", "original checkout fallback"):
+        for value in ("read-only discovery", "Detached HEAD", "default-branch inference", "`starting_branch`", "`starting_head_sha`", "Epic branch/path", "shared Git metadata", "zero content/artifact write", "original checkout fallback"):
             self.assertIn(value, gate)
 
     def test_parallel_adapter_leaves_issue_sdd_sequential(self) -> None:
         section = self.skill_text.split("## Epic Parallel Issue Adapter", 1)[1].split("## Runtime Model", 1)[0]
-        for value in ("Within an issue, never dispatch concurrent implementers.", "Do not advance to the next task until its task review and any canonical fix are complete.", "Each issue execution unit has exactly one writer.", "does not schedule issue-internal tasks"):
+        for value in ("Within an issue, never dispatch concurrent implementers.", "Do not advance to the next task until its task review and any canonical fix are complete.", "Each issue execution unit has exactly one branch/worktree/session/plan/artifact workspace and exactly one writer.", "does not schedule issue-internal tasks"):
             self.assertIn(value, section)
 
     def test_parallel_eligibility_is_fail_closed(self) -> None:
@@ -286,7 +286,7 @@ class SddImplementationSkillContractTests(unittest.TestCase):
 
     def test_actual_result_revalidation_is_required(self) -> None:
         section = self.skill_text.split("## Epic Parallel Issue Adapter", 1)[1].split("## Runtime Model", 1)[0]
-        for value in ("actual commit range", "actual changed paths", "semantic/resource assumptions", "before integration-ready", "before every serialized integration", "sibling results"):
+        for value in ("actual commit range", "actual changed paths", "semantic/resource assumptions", "Before integration-ready", "before every serialized integration", "sibling results"):
             self.assertIn(value, section)
 
     def test_every_task_commit_reachability_is_required(self) -> None:
