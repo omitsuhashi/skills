@@ -130,7 +130,7 @@ read-only query は authoring skill が未解決でも、durable output を生�
 
 この migration は planning worktree 内だけで実施する。implementation plan は着手前に、変更・追加する repository-relative file を wildcard なしの explicit write set として列挙する。実装中に追加 target が必要になった場合は plan の write set を更新して scope を再確認してから編集する。unexpected dirty file、`raw/**`、scope 外 file が含まれる場合は停止する。
 
-Human-approved execution-policy override により、spec / plan correction 自体を先に commit し、Task 1、Task 2、Task 3 は各々 implement、scoped verification、scoped commit、実装者とは別の fresh reviewer による independent task review の順に完了する。Task 4 は durable knowledge closeout、full fresh verification、selected `obsidian-markdown` skill-directed authoring review、exact approved-write-set assertion、scoped closeout commit、post-closeout whole-branch review を行う。review または check が失敗した task は次へ進めず、修正 commit と scoped re-review を行う。isolated worktree と task-scoped Git history を recovery boundary とし、exact changed-file set、review package、report、failing check を残して repair と再検証を可能にする。generic transaction subsystem、recovery bundle、custom lifecycle state、commit に連動する runtime completion state は導入しない。
+Human-approved execution-policy override により、spec / plan correction 自体を先に commit し、Task 1、Task 2、Task 3 は各々 implement、scoped verification、scoped commit、実装者とは別の fresh reviewer による independent task review の順に完了する。Task 4 は durable knowledge closeout、full fresh verification、selected `obsidian-markdown` skill-directed authoring review、exact approved-write-set assertion、一件の scoped closeout commit、post-closeout whole-branch review を行う。SDD review loop が修正を要求した場合、Task 4 は必要な scoped review-fix commit を追加でき、各fixを実装者とは別のfresh reviewerが独立re-reviewする。この追加はTask 4のexecution historyだけを変更し、product responsibility boundaryは変更しない。Task 1–3のreviewed commitsはamend、squash、revertしない。review または check が失敗した task は次へ進めず、修正 commit と scoped re-review を行う。isolated worktree と task-scoped Git history を recovery boundary とし、exact changed-file set、review package、report、failing check を残して repair と再検証を可能にする。generic transaction subsystem、recovery bundle、custom lifecycle state、commit に連動する runtime completion state は導入しない。
 
 この override は execution order、commit / review gate、recovery policy だけを変更する。Goals、Non-goals、Confirmed Decisions、責務境界、semantic schema と serialization の seam は変更しない。
 
@@ -144,7 +144,7 @@ Human-approved execution-policy override により、spec / plan correction 自�
 - external URL は migration で書き換えない。URL と link label の保持を検証する。
 - `raw/` への write が write set に含まれた場合は操作全体を拒否する。
 - index/log invariant を同じ operation で満たせない場合は durable change の完了を宣言しない。
-- task-scoped check または independent review が失敗した場合は後続 task に進まず、isolated worktree と直前の task commit を recovery boundary として repair、再検証、再レビューする。Task 4 の closeout check が失敗した場合は closeout commit を作らない。
+- task-scoped check または independent review が失敗した場合は後続 task に進まず、isolated worktree と直前の task commit を recovery boundary として repair、再検証、再レビューする。Task 4 の pre-commit closeout check が失敗した場合は closeout commit を作らず、post-commit review が修正を要求した場合はscoped review-fix commitを追加して独立re-reviewする。Task 1–3のreviewed commitsはamend、squash、revertしない。
 
 ## Exact affected surfaces
 
@@ -226,7 +226,7 @@ implementation plan は上記候補と実際の migration target を照合し、
 7. llm-wiki の concrete Markdown templates を semantic schema へ置換し、installed `/Users/omitsuhashi/.agents/skills/obsidian-markdown/SKILL.md` を全部読んだ fresh read-only authoring reviewer が、exact maintained-note / template write set を同 skill の手順に照らして確認する。Obsidian reading-view control が active runtime にない場合はその capability limitation を report に明記し、static skill-directed review を最強の利用可能な evidence とする。repository text test を rendered proof と扱わない。
 8. 既存 durable spec の authoring ownership を superseded として同期し、index/log を migration の durable change として最後に更新する。
 9. selected authoring skill-directed review と repository validator / test suite を fresh に実行し、semantic field loss、duplicate ownership、read-set drift がないことを確認する。authoring syntax の判定は `llm-wiki` test / validator に実装しない。
-10. Tasks 1–3 は各 scoped check 成功後に scoped commit と independent task reviewを完了し、Task 4 は closeout edit と全 fresh check 成功後に scoped closeout commit を作成する。
+10. Tasks 1–3 は各 scoped check 成功後に scoped commit と independent task reviewを完了し、Task 4 は closeout edit と全 fresh check 成功後に一件のscoped closeout commitを作成する。後続SDD review loopが修正を要求した場合だけscoped review-fix commitを追加し、各fixを独立re-reviewする。これはexecution historyだけの変更でありproduct responsibility boundaryを変更せず、Task 1–3のreviewed commitsをamendまたはsquashしない。
 11. closeout commit 後、approved baseline `f23bde7` から `HEAD` までの SDD review package を作成し、fresh な most-capable reviewer に code、tests、approved spec / plan、knowledge artifacts の whole-branch review を依頼する。blocking finding が解消されるまで implementation complete を宣言しない。
 
 各段階は同じ migration branch で行い、profile declaration と authoring capability が利用可能になる前に local link policy を切り替えない。本仕様作成時点では `knowledge/index.md` と `knowledge/log.md` を更新しない。
@@ -288,7 +288,7 @@ implementation plan は上記候補と実際の migration target を照合し、
 8. `raw/**` が不変で、migration 前後の external URL と semantic field が保持される。
 9. affected surface の legacy authoring rule が削除または superseded として同期され、duplicate ownership validator が通る。
 10. installed `/Users/omitsuhashi/.agents/skills/obsidian-markdown/SKILL.md` を source of instructions とする fresh read-only authoring review、current llm-wiki tests、context / architecture validators、skill-creator validator、boundary test、baseline range と working tree の diff check が fresh run で成功する。actual Obsidian reading-view rendering が利用不能な場合は limitation を report し、rendered proof を主張しない。
-11. implementation plan の literal approved write set だけが `f23bde7` 以降に変更され、Task 1–3 の各 scoped commit / independent review と Task 4 の scoped closeout commit が完了する。失敗時は isolated worktree と Git history から task 単位で repair 可能な状態を保持する。
+11. implementation plan の literal approved write set だけが `f23bde7` 以降に変更され、Task 1–3 の各 scoped commit / independent review と Task 4 の一件のscoped closeout commitが完了する。SDD review loopが要求するscoped review-fix commitは追加できるが、各fixは独立re-reviewを必須とし、Task 1–3のreviewed commitsをamendまたはsquashしない。失敗時は isolated worktree と Git history から task 単位で repair 可能な状態を保持する。
 12. closeout commit 後、`f23bde7` から `HEAD` までの SDD review package を fresh な most-capable reviewer が whole-branch review し、blocking finding がない。
 
 ## Stop conditions

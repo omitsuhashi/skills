@@ -19,7 +19,7 @@
 - この knowledge root は local contract で `obsidian` profile、日本語本文、Obsidian compatibility requirement を選択する。internal note link は wikilink、external URL は standard Markdown link のままにする。
 - 各 task の write set はその task の Files に列挙した repository-relative path のみである。unexpected dirty file、scope 外 file、`knowledge/raw/**` が含まれたら停止し、計画を更新して再承認されるまで書かない。
 - validator / test / authoring check の一つでも失敗した task は completion / commit を宣言しない。Task 1、Task 2、Task 3 は各々 implement → scoped verification → scoped commit → 実装者と別 actor による独立 task review の順に完了する。isolated worktree と Git の task-scoped commit が recoverability を担保するため、Task 4 まで commit を遅延させる transaction rule は採用しない。
-- Task 4 は Task 1–3 のコミットを改変せず、durable knowledge closeout を uncommitted diff として作成した後に full fresh verification、approved changed-file set の検査、closeout commit を行う。レビューで blocker が出た task は後続 task に進めず、その task の commit を起点に修正、再検証、再レビューする。
+- Task 4 は Task 1–3 のreviewed commitsをamend、squash、revertせず、durable knowledge closeout を uncommitted diff として作成した後に full fresh verification、approved changed-file set の検査、一件のcloseout commitを行う。SDD review loopが修正を要求した場合は必要なscoped review-fix commitを追加でき、各fixを実装者とは別のfresh reviewerが独立re-reviewする。この追加はTask 4のexecution historyだけを変更し、product responsibility boundaryは変更しない。
 - Human-approved execution-policy override を反映した current spec と current plan は Task 1 dispatch 前に commit 済みでなければならない。Task 1 start gate は clean working tree を要求し、この二ファイルを含む未コミット変更を一件も exempt しない。
 - repository text tests / validators は responsibility、semantic preservation、read-set、bounded scope の evidence であり、Obsidian reading-view rendering の evidence ではない。Task 4 の fresh authoring reviewer は installed `/Users/omitsuhashi/.agents/skills/obsidian-markdown/SKILL.md` を source of instructions とし、actual reading-view capability の有無を report する。
 - `.superpowers/sdd/llm-wiki-authoring-responsibility-separation-implementation-plan/` はこの plan 専用の gitignored SDD execution workspace である。この directory 内の `progress.md`、task briefs、implementer reports、review packages、`authoring-review.md`、`final-whole-branch-review.md` だけを execution artifact として許可する。これらは approved source write set の外にあり、never staged / never committed であるため、37-path tracked-diff assertion には意図的に含めない。他 plan の SDD workspace、repo 内の別 directory、または同 directory 外に execution artifact を作らない。
@@ -314,8 +314,8 @@
 **Interfaces:**
 
 - Consumes: independent-review済みの Task 1–3 contract、semantic schema、migration、tests とその scoped commits。
-- Produces: product responsibility boundaryを変更しない durable closeout record、full existing validation stack の fresh success evidence、installed `obsidian-markdown` skill-directed authoring report、baseline からの mechanical exact approved-write-set assertion、一件の closeout commit、post-closeout whole-branch review approval。
-- Failure result: closeout commit を作らず、isolated worktree の uncommitted closeout diff、失敗 command、exact changed-file set を保持して修正する。Task 1–3 の approved commits を squash、amend、revert しない。
+- Produces: product responsibility boundaryを変更しない durable closeout record、full existing validation stack の fresh success evidence、installed `obsidian-markdown` skill-directed authoring report、baseline からの mechanical exact approved-write-set assertion、一件の closeout commit、SDD review loopが要求した場合のscoped review-fix commit(s)と各fixの独立re-review、post-closeout whole-branch review approval。
+- Failure result: pre-commit checkが失敗した場合はcloseout commitを作らず、isolated worktree の uncommitted closeout diff、失敗 command、exact changed-file set を保持して修正する。post-commit reviewが修正を要求した場合はscoped review-fix commitを追加して独立re-reviewする。いずれの場合もTask 1–3 の approved commits を squash、amend、revert しない。
 
 - [ ] **Step 1: Perform durable knowledge closeout without changing the approved product boundary.**
 
@@ -433,7 +433,7 @@
   git commit -m "docs(knowledge): close out authoring responsibility separation"
   ```
 
-  Expected: one closeout commit containing only the four Task 4 closeout files; Task 1–3 changes remain in their previously reviewed scoped commits. If staging or commit fails, do not claim completion; inspect `git status --short`, preserve the diff, repair, and rerun every command in Step 2.
+  Expected: one closeout commit containing only the four Task 4 closeout files; Task 1–3 changes remain in their previously reviewed scoped commits and are never amended or squashed. If staging or commit fails, do not claim completion; inspect `git status --short`, preserve the diff, repair, and rerun every command in Step 2. If the later SDD review loop requires a fix, add a scoped review-fix commit and require an independent re-review for that fix; do not rewrite Task 1–3 history.
 
 - [ ] **Step 6: Re-run post-commit branch checks.**
 
@@ -451,7 +451,7 @@
 
 ## Self-review
 
-- **Spec coverage:** the pre-implementation gate requires the corrected spec / plan commit and a clean tree before Task 1. Tasks 1–3 each create a scoped commit and pass an SDD review package to a fresh independent reviewer. Task 4 performs four-file durable closeout, full fresh validation, installed-skill-directed authoring review, mechanical exact-write-set assertion, scoped closeout commit, and post-closeout whole-branch review.
+- **Spec coverage:** the pre-implementation gate requires the corrected spec / plan commit and a clean tree before Task 1. Tasks 1–3 each create a scoped commit and pass an SDD review package to a fresh independent reviewer. Task 4 performs four-file durable closeout, full fresh validation, installed-skill-directed authoring review, mechanical exact-write-set assertion, one scoped closeout commit, any SDD-required scoped review-fix commit with independent re-review, and post-closeout whole-branch review.
 - **No-placeholder scan:** this plan has no TBD / TODO / later-work placeholder, wildcard write target, unspecified review target, unspecified test, or unspecified command. The mechanical baseline-diff assertion uses literal baseline `f23bde7`, a 37-entry literal tuple, asserted length and uniqueness, and no self-referential future commit SHA.
 - **Interface consistency:** Tasks 2–3 consume the same Task-1 names: `selected authoring skill`, `semantic schema`, `relation identity`, `BLOCKED`, and four-file structural read-set. Task review packages use the recorded task-start base rather than `HEAD^`; the final package uses `f23bde7` through post-closeout `HEAD`. Repository tests remain text-level ownership / preservation tests only; the separate authoring report states whether actual Obsidian reading-view control was available and never substitutes test success for rendered proof.
 
@@ -463,4 +463,4 @@ Plan saved at `knowledge/wiki/syntheses/llm-wiki-authoring-responsibility-separa
 
 - Task 1は`ee46afd4cb26be2b25b0376670b8d3e6c8e1e4ac`とreview fix `eb46b685eb256276f7c56419f71fa86d32eec7f8`、Task 2は`9c76d0253995b375009867d5181ff7ba06cc6f54`とreview fixes `dd73e3bb23ae4749ccacf53dc837b003d517278e` / `0d9928c5e717cc6f66d8cd1c6c4994b8111a71b3`、Task 3は`10cccfe18afa6c430b1541dee76963bfc92dd098`とreview fix `5ff7520777828d67bac6aa4e4c2fd9cc7655b882`で完了し、各taskの独立reviewはopen findingなしである。
 - Task 4 closeout後のfull fresh verificationは、LLM Wiki unittest、12 topology × modeのcontext validation / warning-free report、repository skill architecture validation、skill-creator quick validation、focused authoring-boundary suite、baseline rangeとworking treeの両diff checkをすべてexit `0`で完了した。repository checkはMarkdown / Obsidian parser、renderer、formatterを実装せず、rendering evidenceとして扱っていない。
-- 承認済みproduct responsibility boundary、各taskのacceptance criteria、`knowledge/raw/**`のbytesは変更していない。installed-skill-directed authoring reviewとpost-closeout whole-branch reviewは後続の独立gateであり、その承認前に`LOCAL_COMPLETE`を宣言しない。
+- 承認済みproduct responsibility boundary、各taskのacceptance criteria、`knowledge/raw/**`のbytesは変更していない。installed-skill-directed authoring reviewはstatic skill-directed reviewとして`PASS`し、Critical / Important findingはない。active runtimeにactual Obsidian reading-view controlはなく、`Obsidian reading-view rendering: unavailable`であり、rendered proofは主張しない。本executionのTask 4 historyは一件のcloseout commitと一件のscoped review-fix commitだけを保持し、本execution-policy correctionは後者へamendする。Task 1–3のreviewed commitsはamendまたはsquashしない。pendingなのはcontroller-owned Step 7 whole-branch reviewだけであり、その承認前に`LOCAL_COMPLETE`を宣言しない。
