@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-> **Status:** `Human-approved / current`。2026-07-30にHumanが実装計画を承認した。
+> **Status:** `Implemented / closeout verified`。2026-07-30にHumanが実装計画を承認し、Task 1〜3の独立reviewとTask 4のdurable knowledge closeout / full fresh verificationを完了した。
 
 **Goal:** `llm-wiki` を durable knowledge の structural / lifecycle coordinator に限定し、Obsidian 文書の serialization を選択済み authoring skill へ fail-closed で委譲する。
 
@@ -458,3 +458,9 @@
 ## Execution handoff
 
 Plan saved at `knowledge/wiki/syntheses/llm-wiki-authoring-responsibility-separation-implementation-plan.md`. Execute it task-by-task with the repository's `sdd-implementation` route; do not begin implementation until the plan receives the required repository approval.
+
+## Execution closeout
+
+- Task 1は`ee46afd4cb26be2b25b0376670b8d3e6c8e1e4ac`とreview fix `eb46b685eb256276f7c56419f71fa86d32eec7f8`、Task 2は`9c76d0253995b375009867d5181ff7ba06cc6f54`とreview fixes `dd73e3bb23ae4749ccacf53dc837b003d517278e` / `0d9928c5e717cc6f66d8cd1c6c4994b8111a71b3`、Task 3は`10cccfe18afa6c430b1541dee76963bfc92dd098`とreview fix `5ff7520777828d67bac6aa4e4c2fd9cc7655b882`で完了し、各taskの独立reviewはopen findingなしである。
+- Task 4 closeout後のfull fresh verificationは、LLM Wiki unittest、12 topology × modeのcontext validation / warning-free report、repository skill architecture validation、skill-creator quick validation、focused authoring-boundary suite、baseline rangeとworking treeの両diff checkをすべてexit `0`で完了した。repository checkはMarkdown / Obsidian parser、renderer、formatterを実装せず、rendering evidenceとして扱っていない。
+- 承認済みproduct responsibility boundary、各taskのacceptance criteria、`knowledge/raw/**`のbytesは変更していない。installed-skill-directed authoring reviewとpost-closeout whole-branch reviewは後続の独立gateであり、その承認前に`LOCAL_COMPLETE`を宣言しない。

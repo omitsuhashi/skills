@@ -1810,3 +1810,10 @@ append-only で使います。すべての entry は予測しやすい header �
 
 - [[llm-wiki-authoring-responsibility-separation-spec]] と [[llm-wiki-authoring-responsibility-separation-implementation-plan]] に従い、[[AGENTS.md|local contract]] と [[index|durable catalog]] を `obsidian` authoring profile と maintained internal-note migration へ同期した。
 - `raw/**` は untouched のまま保持し、historical spec の evidence と raw citation を変更していない。
+
+## [2026-07-30] implementation-closeout | llm-wiki authoring responsibility separation
+
+- current [[wiki/syntheses/llm-wiki-authoring-responsibility-separation-spec|llm-wiki authoring 責務分離仕様]] と [[wiki/syntheses/llm-wiki-authoring-responsibility-separation-implementation-plan|llm-wiki authoring 責務分離実装計画]] を`Implemented / closeout verified`へ同期した。authoring responsibility boundaryと各taskのacceptance criteriaは変更していない。
+- prerequisiteとなるreviewed commitsは、Task 1 `ee46afd4cb26be2b25b0376670b8d3e6c8e1e4ac` / `eb46b685eb256276f7c56419f71fa86d32eec7f8`、Task 2 `9c76d0253995b375009867d5181ff7ba06cc6f54` / `dd73e3bb23ae4749ccacf53dc837b003d517278e` / `0d9928c5e717cc6f66d8cd1c6c4994b8111a71b3`、Task 3 `10cccfe18afa6c430b1541dee76963bfc92dd098` / `5ff7520777828d67bac6aa4e4c2fd9cc7655b882`であり、各独立task reviewはopen findingなしである。
+- full fresh verificationとして、`python3 -m unittest discover -s skills/llm-wiki/tests -v`、`python3 scripts/validate_skill_context.py --skill skills/llm-wiki --json`、`python3 scripts/report_skill_context.py --skill skills/llm-wiki --json --fail-on-warning`、`python3 scripts/validate_skill_architecture.py --all`、skill-creator `quick_validate.py`、focused `test_authoring_boundary.py`、`git diff --check f23bde7..HEAD`、`git diff --check`をすべてexit `0`で完了した。repository checkはObsidian reading-view renderingの証拠として扱っていない。
+- `knowledge/raw/**`はuntouchedである。installed-skill-directed authoring reviewとpost-closeout whole-branch reviewは独立gateとしてpendingであり、その承認前に`LOCAL_COMPLETE`を宣言しない。
