@@ -4,7 +4,7 @@ This asset is a syntax-neutral field contract. Supply these semantic fields to t
 
 - `page_type`: `synthesis`.
 - `purpose`: preserve a durable decision, comparison, specification, plan, briefing, or cross-source conclusion.
-- `required_fields`: title; status; decision; problem; goal; non-goal; acceptance; provenance.
+- `required_fields`: title; creation identity; last-update identity; status; decision; problem; goal; non-goal; acceptance; provenance.
 - `optional_fields`: aliases; tags; relations; alternatives; implications; risks; open questions; operating guidance.
 - `relation_kinds`: source summary; entity; concept; predecessor decision; successor decision; evidence; implementation progress ledger.
 - `lifecycle_state`: proposed, active, accepted, superseded, or archived.

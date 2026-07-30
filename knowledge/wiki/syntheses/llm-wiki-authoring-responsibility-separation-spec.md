@@ -55,6 +55,8 @@ aliases:
 
 2026-07-30、[[llm-wiki-authoring-responsibility-separation-implementation-plan|llm-wiki authoring 責務分離実装計画]]は`Implemented / closeout verified`となった。実装は本仕様のauthoring responsibility boundaryを変更せず、`llm-wiki`のstructural / lifecycle coordinationとselected authoring skillのserialization責務をそのまま維持する。
 
+final whole-branch reviewの3件のImportant findingに対する一回のfix waveでは、portable output / recovery stateとauthority-scoped edit capability、5つのlegacy templateのcreation / last-update semantic identity、adapter-resolved cross-root target identityのsyntax-neutral ownershipを補完した。product boundaryとacceptance criteriaは変更していない。focused RED/GREENとfull fresh verificationは完了したが、Step 7のfresh whole-branch re-reviewはcontroller-owned gateとしてpendingであり、`LOCAL_COMPLETE`は宣言しない。
+
 ## 責務境界
 
 | Surface | `llm-wiki` の責務 | authoring skill の責務 | local knowledge contract の責務 |

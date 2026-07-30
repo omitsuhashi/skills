@@ -4,7 +4,7 @@ This asset is a syntax-neutral field contract. Supply these semantic fields to t
 
 - `page_type`: `concept`.
 - `purpose`: maintain a working definition and evidence-backed boundary for a recurring idea.
-- `required_fields`: title; working definition; importance; supporting claims; tensions; provenance.
+- `required_fields`: title; creation identity; last-update identity; working definition; importance; supporting claims; tensions; provenance.
 - `optional_fields`: aliases; tags; counterevidence; open questions; scope exclusions; confidence.
 - `relation_kinds`: source summary; entity; synthesis; related concept; query note.
 - `lifecycle_state`: active, superseded, merged, split, or archived.

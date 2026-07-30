@@ -4,7 +4,7 @@ This asset is a syntax-neutral field contract. Supply these semantic fields to t
 
 - `page_type`: `query-note`.
 - `purpose`: preserve a reusable answer, comparison, briefing, or decision input originating from a question.
-- `required_fields`: title; originating question; durable answer; decision material; provenance; follow-up disposition.
+- `required_fields`: title; creation identity; last-update identity; originating question; durable answer; decision material; provenance; follow-up disposition.
 - `optional_fields`: aliases; tags; alternatives; uncertainties; missing sources; candidate page updates.
 - `relation_kinds`: source summary; entity; concept; synthesis; follow-up target.
 - `lifecycle_state`: active, superseded, merged, or archived.

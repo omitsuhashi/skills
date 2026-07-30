@@ -17,11 +17,14 @@ This skill routes durable knowledge lifecycle work through a local contract. `ra
 
 ## Outputs
 
-- an authority- and routing-valid operation result, its required index/log sync set, or `BLOCKED` before a durable write.
+- `operation success` with the authored or changed document identity, required index/log sync set, and its completion state;
+- `BLOCKED` before a durable write when a precondition is unresolved; or
+- an incomplete result after an in-progress failure, with the exact changed-file set and failed check needed for recovery.
 
 ## Required Capabilities
 
 - read the declared structural read-set and local contract;
+- apply durable file edits only within resolved authority;
 - resolve an applicable selected authoring skill through existing skill discovery and read its `SKILL.md`;
 - serialize the semantic schema by that skill's documented procedure; and
 - validate only semantic preservation, authority, path, bounded write set, and index/log effect.

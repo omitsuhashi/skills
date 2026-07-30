@@ -204,6 +204,147 @@ INVENTORY_ASSETS = (
         ),
     ),
 )
+LEGACY_BASELINE_FIELDS = {
+    "entity": (
+        "kind",
+        "created",
+        "updated",
+        "source_files",
+        "title",
+        "summary",
+        "key facts",
+        "timeline",
+        "related pages",
+        "open questions",
+        "sources",
+    ),
+    "concept": (
+        "kind",
+        "created",
+        "updated",
+        "source_files",
+        "title",
+        "working definition",
+        "importance",
+        "supporting claims",
+        "tensions and counterevidence",
+        "related pages",
+        "sources",
+    ),
+    "query-note": (
+        "kind",
+        "created",
+        "updated",
+        "source_files",
+        "title",
+        "originating question",
+        "durable answer",
+        "decision material",
+        "related pages",
+        "follow-up disposition",
+        "sources",
+    ),
+    "source-summary": (
+        "kind",
+        "created",
+        "updated",
+        "source_files",
+        "title",
+        "source position",
+        "key claims",
+        "related pages",
+        "open questions",
+        "sources",
+    ),
+    "synthesis": (
+        "kind",
+        "created",
+        "updated",
+        "source_files",
+        "title",
+        "decision",
+        "supporting claims",
+        "decision material",
+        "operating guidance",
+        "tensions and counterevidence",
+        "related pages",
+        "sources",
+    ),
+}
+LEGACY_FIELD_MAPPINGS = {
+    "entity": (
+        ("kind", "page_type"),
+        ("created", "creation identity"),
+        ("updated", "last-update identity"),
+        ("source_files", "provenance"),
+        ("title", "title"),
+        ("summary", "summary"),
+        ("key facts", "key facts"),
+        ("timeline", "timeline"),
+        ("related pages", "relation_kinds"),
+        ("open questions", "open questions"),
+        ("sources", "provenance"),
+    ),
+    "concept": (
+        ("kind", "page_type"),
+        ("created", "creation identity"),
+        ("updated", "last-update identity"),
+        ("source_files", "provenance"),
+        ("title", "title"),
+        ("working definition", "working definition"),
+        ("importance", "importance"),
+        ("supporting claims", "supporting claims"),
+        ("tensions and counterevidence", "tensions"),
+        ("related pages", "relation_kinds"),
+        ("sources", "provenance"),
+    ),
+    "query-note": (
+        ("kind", "page_type"),
+        ("created", "creation identity"),
+        ("updated", "last-update identity"),
+        ("source_files", "provenance"),
+        ("title", "title"),
+        ("originating question", "originating question"),
+        ("durable answer", "durable answer"),
+        ("decision material", "decision material"),
+        ("related pages", "relation_kinds"),
+        ("follow-up disposition", "follow-up disposition"),
+        ("sources", "provenance"),
+    ),
+    "source-summary": (
+        ("kind", "page_type"),
+        ("created", "creation identity"),
+        ("updated", "last-update identity"),
+        ("source_files", "source identity"),
+        ("title", "title"),
+        ("source position", "source position"),
+        ("key claims", "key claims"),
+        ("related pages", "relation_kinds"),
+        ("open questions", "open questions"),
+        ("sources", "provenance"),
+    ),
+    "synthesis": (
+        ("kind", "page_type"),
+        ("created", "creation identity"),
+        ("updated", "last-update identity"),
+        ("source_files", "provenance"),
+        ("title", "title"),
+        ("decision", "decision"),
+        ("supporting claims", "provenance"),
+        ("decision material", "implications"),
+        ("operating guidance", "operating guidance"),
+        ("tensions and counterevidence", "risks"),
+        ("related pages", "relation_kinds"),
+        ("sources", "provenance"),
+    ),
+}
+AFFECTED_LEGACY_ASSETS = {
+    "entity": SKILL_DIR / "assets/templates/entity.md",
+    "concept": SKILL_DIR / "assets/templates/concept.md",
+    "query-note": SKILL_DIR / "assets/templates/query-note.md",
+    "source-summary": SKILL_DIR / "assets/templates/source-summary.md",
+    "synthesis": SKILL_DIR / "assets/templates/synthesis.md",
+}
 
 
 def read(name: str) -> str:
@@ -239,6 +380,10 @@ class AuthoringBoundaryTests(unittest.TestCase):
         self.assertIn("Obsidian compatibility requirement", contract)
         self.assertNotIn("relative Markdown link", contract)
         self.assertNotIn("[[...]]", contract)
+        self.assertIn("adapter-resolved cross-root target identity", contract)
+        self.assertIn("selected authoring skill", contract)
+        self.assertNotIn("root-id:path/inside/root.md", contract)
+        self.assertNotIn("root を跨ぐ参照は Markdown link にせず", contract)
 
     def test_migrated_knowledge_uses_wikilinks_and_preserves_external_urls(self) -> None:
         for path in KNOWLEDGE_MIGRATION_FILES:
@@ -308,6 +453,24 @@ class AuthoringBoundaryTests(unittest.TestCase):
         self.assertIn("`BLOCKED`", skill)
         self.assertNotIn("fallback renderer", skill.casefold())
 
+    def test_public_contract_reports_completion_and_recovery_state(self) -> None:
+        skill = read("SKILL.md")
+
+        for required_output in (
+            "authored or changed document identity",
+            "required index/log sync set",
+            "completion state",
+            "operation success",
+            "`BLOCKED`",
+            "exact changed-file set",
+            "failed check",
+        ):
+            self.assertIn(required_output, skill)
+        self.assertIn(
+            "apply durable file edits only within resolved authority",
+            skill,
+        )
+
     def test_context_operations_keep_only_structural_four_file_read_sets(self) -> None:
         operation = report_operation("single-root.ingest")
 
@@ -340,6 +503,26 @@ class AuthoringBoundaryTests(unittest.TestCase):
             for token in (page_identity, *semantic_tokens):
                 self.assertIn(token.casefold(), inventory, page_identity)
                 self.assertIn(token.casefold(), asset_text, str(asset))
+
+    def test_every_legacy_semantic_field_maps_to_exactly_one_current_identity(self) -> None:
+        inventory = read("references/page-authoring.md").casefold()
+
+        self.assertEqual(
+            set(LEGACY_BASELINE_FIELDS),
+            set(LEGACY_FIELD_MAPPINGS),
+        )
+        for page_identity, baseline_fields in LEGACY_BASELINE_FIELDS.items():
+            mappings = LEGACY_FIELD_MAPPINGS[page_identity]
+            mapped_legacy_fields = tuple(legacy for legacy, _current in mappings)
+            self.assertCountEqual(mapped_legacy_fields, baseline_fields, page_identity)
+            self.assertEqual(len(mapped_legacy_fields), len(set(mapped_legacy_fields)))
+
+            asset = AFFECTED_LEGACY_ASSETS[page_identity]
+            asset_text = asset.read_text(encoding="utf-8").casefold()
+            for legacy_field, current_identity in mappings:
+                self.assertTrue(current_identity, legacy_field)
+                self.assertIn(current_identity.casefold(), inventory, legacy_field)
+                self.assertIn(current_identity.casefold(), asset_text, legacy_field)
 
     def test_modes_delegate_authoring_without_reading_concrete_templates(self) -> None:
         for mode in MODE_REFERENCES:

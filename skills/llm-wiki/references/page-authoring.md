@@ -84,7 +84,7 @@ Keep one durable topic per page. When two pages strongly overlap, select one can
 
 - `page_type`: `source-summary`.
 - `purpose`: preserve what a source establishes, why it matters, and which maintained knowledge it affects.
-- `required_fields`: title; source identity; source position; key claims; affected knowledge; open questions; provenance.
+- `required_fields`: title; creation identity; last-update identity; source identity; source position; key claims; affected knowledge; open questions; provenance.
 - `optional_fields`: aliases; tags; chronology; contradictions; source limitations; confidence.
 - `relation_kinds`: raw source; entity; concept; synthesis; query note; competing source.
 - `lifecycle_state`: active, superseded, or archived.
@@ -96,7 +96,7 @@ Keep one durable topic per page. When two pages strongly overlap, select one can
 
 - `page_type`: `entity`.
 - `purpose`: maintain the durable identity, facts, importance, and history of a named thing.
-- `required_fields`: title; identity boundary; summary; key facts; importance; provenance.
+- `required_fields`: title; creation identity; last-update identity; identity boundary; summary; key facts; importance; provenance.
 - `optional_fields`: aliases; tags; entity kind; timeline; open questions; contradictions; status.
 - `relation_kinds`: source summary; concept; synthesis; related entity; query note.
 - `lifecycle_state`: active, superseded, merged, or archived.
@@ -108,7 +108,7 @@ Keep one durable topic per page. When two pages strongly overlap, select one can
 
 - `page_type`: `concept`.
 - `purpose`: maintain a working definition and evidence-backed boundary for a recurring idea.
-- `required_fields`: title; working definition; importance; supporting claims; tensions; provenance.
+- `required_fields`: title; creation identity; last-update identity; working definition; importance; supporting claims; tensions; provenance.
 - `optional_fields`: aliases; tags; counterevidence; open questions; scope exclusions; confidence.
 - `relation_kinds`: source summary; entity; synthesis; related concept; query note.
 - `lifecycle_state`: active, superseded, merged, split, or archived.
@@ -120,7 +120,7 @@ Keep one durable topic per page. When two pages strongly overlap, select one can
 
 - `page_type`: `synthesis`.
 - `purpose`: preserve a durable decision, comparison, specification, plan, briefing, or cross-source conclusion.
-- `required_fields`: title; status; decision; problem; goal; non-goal; acceptance; provenance.
+- `required_fields`: title; creation identity; last-update identity; status; decision; problem; goal; non-goal; acceptance; provenance.
 - `optional_fields`: aliases; tags; relations; alternatives; implications; risks; open questions; operating guidance.
 - `relation_kinds`: source summary; entity; concept; predecessor decision; successor decision; evidence; implementation progress ledger.
 - `lifecycle_state`: proposed, active, accepted, superseded, or archived.
@@ -132,7 +132,7 @@ Keep one durable topic per page. When two pages strongly overlap, select one can
 
 - `page_type`: `query-note`.
 - `purpose`: preserve a reusable answer, comparison, briefing, or decision input originating from a question.
-- `required_fields`: title; originating question; durable answer; decision material; provenance; follow-up disposition.
+- `required_fields`: title; creation identity; last-update identity; originating question; durable answer; decision material; provenance; follow-up disposition.
 - `optional_fields`: aliases; tags; alternatives; uncertainties; missing sources; candidate page updates.
 - `relation_kinds`: source summary; entity; concept; synthesis; follow-up target.
 - `lifecycle_state`: active, superseded, merged, or archived.

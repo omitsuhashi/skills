@@ -4,7 +4,7 @@ This asset is a syntax-neutral field contract. Supply these semantic fields to t
 
 - `page_type`: `source-summary`.
 - `purpose`: preserve what a source establishes, why it matters, and which maintained knowledge it affects.
-- `required_fields`: title; source identity; source position; key claims; affected knowledge; open questions; provenance.
+- `required_fields`: title; creation identity; last-update identity; source identity; source position; key claims; affected knowledge; open questions; provenance.
 - `optional_fields`: aliases; tags; chronology; contradictions; source limitations; confidence.
 - `relation_kinds`: raw source; entity; concept; synthesis; query note; competing source.
 - `lifecycle_state`: active, superseded, or archived.

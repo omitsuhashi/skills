@@ -4,7 +4,7 @@ This asset is a syntax-neutral field contract. Supply these semantic fields to t
 
 - `page_type`: `entity`.
 - `purpose`: maintain the durable identity, facts, importance, and history of a named thing.
-- `required_fields`: title; identity boundary; summary; key facts; importance; provenance.
+- `required_fields`: title; creation identity; last-update identity; identity boundary; summary; key facts; importance; provenance.
 - `optional_fields`: aliases; tags; entity kind; timeline; open questions; contradictions; status.
 - `relation_kinds`: source summary; concept; synthesis; related entity; query note.
 - `lifecycle_state`: active, superseded, merged, or archived.
