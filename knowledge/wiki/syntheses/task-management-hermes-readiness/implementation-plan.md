@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Status:** `Human-approved / current`。2026-07-31にHumanがExecution Plan Gateとして承認した。Skills implementationとterminal cross-repository handoffが承認対象であり、Companies production変更とlive mutationは引き続き別承認を要する。
+
 **Goal:** `skills/task-management/` の portable task semantics を fixture-backed TDD で完成させ、Companies / Portfolio OS と live Hermes / GitHub MCP の未実施 work を、current-main evidence Gate と別承認を失わない durable handoffへ引き渡す。
 
 **Architecture:** Skills repository は operation-scoped capability matrix、canonical identity、page reconciliation、lossless unique-50 pagination、complete/partial result、Done / Cancelled / reopen、resume-only partial failure、GitHub-native metadata preservationを Markdown contract と standard-library behavioral testsで所有する。本 plan の executable scope は Skills implementation と cross-repository handoffまでとし、Companies production interface、hash/install mechanism、live runbook commandは事前に固定しない。Companies は clean current `main` から別の Written Spec / Issue / Execution Plan Gateを通り、その後に live read-only / setup / task-writeを別 authorization Gateで計画する。

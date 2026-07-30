@@ -1863,3 +1863,9 @@ append-only で使います。すべての entry は予測しやすい header �
 - re-reviewの4 blocking findingに対し、[[wiki/syntheses/task-management-hermes-readiness/implementation-plan|implementation plan]]へprovider explicit clear、same-item/different-task identity isolation、unique 51件の二回呼出し継続、raw fetch countを含むexact oracleを追加した。
 - reopen targetは`Inbox`、`Backlog`、`Ready`、`In progress`、`Blocked`のexact allowlistとし、`Done`、`Cancelled`、unknown / non-normalizable / schema-ambiguous targetを両side実行前にblockするfixtureとassertionを追加した。
 - `register_existing_issue`をnative metadata preservationの全状態比較へ追加し、Project membership / requested fieldsだけが変わり、assignees、labels、milestone、issue type、parent、sub-issuesが保存されるcontractを実行可能にした。approved scope、Companies/live authorization boundaryは変更していない。
+
+## [2026-07-31] plan-gate-approved | Task Management Hermes Schedule Secretary Readiness
+
+- Human は [[wiki/syntheses/task-management-hermes-readiness/implementation-plan|Task Management Hermes Schedule Secretary Readiness Implementation Plan]] をExecution Plan Gateとして承認し、plan statusと[[index|durable catalog]]を`Human-approved / current`へ同期した。
+- 承認対象はTasks 1〜5のportable Skills fixture-backed TDDと、Task 6のterminal cross-repository handoffである。task内容、approved spec binding、Companies current-main evidence Gate、後続live authorization boundaryは変更していない。
+- Companies production変更、managed-native apply、live MCP configuration、permission/schema mutation、Issue / Project write、push、PR、mergeは本承認に含まれず、未実施である。
