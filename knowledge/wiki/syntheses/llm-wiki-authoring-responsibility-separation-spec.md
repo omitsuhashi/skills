@@ -126,7 +126,9 @@ read-only query は authoring skill が未解決でも、durable output を生�
 
 この migration は planning worktree 内だけで実施する。implementation plan は着手前に、変更・追加する repository-relative file を wildcard なしの explicit write set として列挙する。実装中に追加 target が必要になった場合は plan の write set を更新して scope を再確認してから編集する。unexpected dirty file、`raw/**`、scope 外 file が含まれる場合は停止する。
 
-write set の編集後、selected authoring skill の文書化された確認と repository tests / validators を実行する。すべて成功した場合だけ write set を一つの scoped commit にする。いずれかが失敗した場合は completion を宣言せず commit しない。isolated worktree の diff と Git history を recovery boundary とし、exact changed-file set と failing check を残して repair と再検証を可能にする。generic transaction subsystem、recovery bundle、custom lifecycle state、commit に連動する runtime completion state は導入しない。
+Human-approved execution-policy override により、spec / plan correction 自体を先に commit し、Task 1、Task 2、Task 3 は各々 implement、scoped verification、scoped commit、実装者とは別の fresh reviewer による independent task review の順に完了する。Task 4 は durable knowledge closeout、full fresh verification、selected `obsidian-markdown` skill-directed authoring review、exact approved-write-set assertion、scoped closeout commit、post-closeout whole-branch review を行う。review または check が失敗した task は次へ進めず、修正 commit と scoped re-review を行う。isolated worktree と task-scoped Git history を recovery boundary とし、exact changed-file set、review package、report、failing check を残して repair と再検証を可能にする。generic transaction subsystem、recovery bundle、custom lifecycle state、commit に連動する runtime completion state は導入しない。
+
+この override は execution order、commit / review gate、recovery policy だけを変更する。Goals、Non-goals、Confirmed Decisions、責務境界、semantic schema と serialization の seam は変更しない。
 
 ## Failure handling
 
@@ -138,7 +140,7 @@ write set の編集後、selected authoring skill の文書化された確認と
 - external URL は migration で書き換えない。URL と link label の保持を検証する。
 - `raw/` への write が write set に含まれた場合は操作全体を拒否する。
 - index/log invariant を同じ operation で満たせない場合は durable change の完了を宣言しない。
-- migration の check が失敗した場合は commit せず、isolated worktree の exact diff を repair 対象として保持する。
+- task-scoped check または independent review が失敗した場合は後続 task に進まず、isolated worktree と直前の task commit を recovery boundary として repair、再検証、再レビューする。Task 4 の closeout check が失敗した場合は closeout commit を作らない。
 
 ## Exact affected surfaces
 
@@ -215,10 +217,11 @@ implementation plan は上記候補と実際の migration target を照合し、
 4. `SKILL.md`、core / topology / structure / page boundary、各 mode から syntax ownership と concrete authoring examples を除き、schema-to-authoring handoff に置き換える。
 5. `knowledge/AGENTS.md` を `obsidian` profile selection へ変更する。repository 固有の日本語本文と compatibility requirement は保持するが、wikilink syntax 自体は再記載しない。external installed `obsidian-markdown` は変更しない。
 6. implementation plan で explicit write set を inventory してから、その集合に含まれる `knowledge/wiki/` pages、`knowledge/index.md`、`knowledge/log.md` の internal note link を wikilink に変換する。external URL は standard Markdown link のまま保持し、`raw/**` は変更しない。既存 `knowledge/log.md` entry は対象 internal link がない限り書き換えない。
-7. llm-wiki の concrete Markdown templates を semantic schema へ置換し、Obsidian authoring skill 経由で同等の document を生成できることを検証する。
+7. llm-wiki の concrete Markdown templates を semantic schema へ置換し、installed `/Users/omitsuhashi/.agents/skills/obsidian-markdown/SKILL.md` を全部読んだ fresh read-only authoring reviewer が、exact maintained-note / template write set を同 skill の手順に照らして確認する。Obsidian reading-view control が active runtime にない場合はその capability limitation を report に明記し、static skill-directed review を最強の利用可能な evidence とする。repository text test を rendered proof と扱わない。
 8. 既存 durable spec の authoring ownership を superseded として同期し、index/log を migration の durable change として最後に更新する。
-9. selected authoring skill の文書化された確認と repository validator / test suite を実行し、semantic field loss、duplicate ownership、read-set drift がないことを確認する。authoring syntax の判定は `llm-wiki` test / validator に実装しない。
-10. すべての check が成功した後だけ explicit write set を一つの scoped commit にする。失敗時は commit せず、isolated worktree diff を修復して全 check を再実行する。
+9. selected authoring skill-directed review と repository validator / test suite を fresh に実行し、semantic field loss、duplicate ownership、read-set drift がないことを確認する。authoring syntax の判定は `llm-wiki` test / validator に実装しない。
+10. Tasks 1–3 は各 scoped check 成功後に scoped commit と independent task reviewを完了し、Task 4 は closeout edit と全 fresh check 成功後に scoped closeout commit を作成する。
+11. closeout commit 後、approved baseline `f23bde7` から `HEAD` までの SDD review package を作成し、fresh な most-capable reviewer に code、tests、approved spec / plan、knowledge artifacts の whole-branch review を依頼する。blocking finding が解消されるまで implementation complete を宣言しない。
 
 各段階は同じ migration branch で行い、profile declaration と authoring capability が利用可能になる前に local link policy を切り替えない。本仕様作成時点では `knowledge/index.md` と `knowledge/log.md` を更新しない。
 
@@ -243,6 +246,7 @@ implementation plan は上記候補と実際の migration target を照合し、
 
 - selected authoring skill の文書化された手順で、`obsidian` profile の internal note link は wikilink、external URL は standard Markdown link になることを確認する。
 - properties の serialization と Obsidian reading view compatibility を selected authoring skill の手順で確認する。
+- actual Obsidian reading-view rendering capability が利用できない場合は、authoring review report に `unavailable` と理由を記録し、skill-directed static review のみを主張する。repository test / validator の成功を rendering evidence として代用しない。
 - required semantic field、relation、provenance、lifecycle state、index/log effect が round-trip で保持される。
 - unknown または ambiguous internal target を推測して link 化しない。
 
@@ -261,6 +265,7 @@ implementation plan は上記候補と実際の migration target を照合し、
 - `python3 scripts/validate_skill_architecture.py --all`
 - `python3 /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_validate.py skills/llm-wiki`
 - `python3 -m unittest discover -s skills/llm-wiki/tests -p 'test_authoring_boundary.py' -v`
+- `git diff --check f23bde7..HEAD`
 - `git diff --check`
 
 全 command は exit `0` を success、non-zero を failure とする。`test_authoring_boundary.py` は ownership declaration、read-set routing、duplicated `llm-wiki` syntax policy の不在だけを検証し、Markdown / Obsidian syntax parser、renderer、formatter を実装しない。syntax / profile correctness は selected authoring skill の文書化された確認へ委ね、その通常の success / failure を orchestration が扱う。
@@ -276,8 +281,9 @@ implementation plan は上記候補と実際の migration target を照合し、
 7. six modes が authority、routing、lifecycle、index/log invariant を維持しながら、serialization を discovered authoring skill に委譲する。
 8. `raw/**` が不変で、migration 前後の external URL と semantic field が保持される。
 9. affected surface の legacy authoring rule が削除または superseded として同期され、duplicate ownership validator が通る。
-10. selected authoring skill の文書化された確認、current llm-wiki tests、context / architecture validators、skill-creator validator、boundary test、`git diff --check` が fresh run で成功する。
-11. implementation plan の explicit write set だけが変更され、全 check 成功後に一つの scoped commit になる。失敗時は commit せず、isolated worktree diff を repair 可能な状態で保持する。
+10. installed `/Users/omitsuhashi/.agents/skills/obsidian-markdown/SKILL.md` を source of instructions とする fresh read-only authoring review、current llm-wiki tests、context / architecture validators、skill-creator validator、boundary test、baseline range と working tree の diff check が fresh run で成功する。actual Obsidian reading-view rendering が利用不能な場合は limitation を report し、rendered proof を主張しない。
+11. implementation plan の literal approved write set だけが `f23bde7` 以降に変更され、Task 1–3 の各 scoped commit / independent review と Task 4 の scoped closeout commit が完了する。失敗時は isolated worktree と Git history から task 単位で repair 可能な状態を保持する。
+12. closeout commit 後、`f23bde7` から `HEAD` までの SDD review package を fresh な most-capable reviewer が whole-branch review し、blocking finding がない。
 
 ## Stop conditions
 
