@@ -1837,3 +1837,9 @@ append-only で使います。すべての entry は予測しやすい header �
 - spec reviewのblocking findingに対し、[[wiki/syntheses/task-management-hermes-readiness/spec|Written Spec candidate]]へcanonical task / Project item identity、page間reconciliation、unique match count、deterministic output orderとresult envelopeを追加した。50件上限、exhaustion、partial/truncationのConfirmed Decisionは変更していない。
 - Schedule Secretary readinessへatomic condition mapping、`blocked > partial > ready` precedence、operation scope、`not_applicable`除外、reason code、non-mutating write evidence ceilingを追加した。stale/missing hash、skill discovery、caller default、semantic tool、permission、target rejection、schemaのaggregation testを直接導出可能にした。
 - Confirmed Decisions、MVP scope、external delivery map、authorization boundaryは変更していない。Written Spec Gateとすべてのexternal/live applyは引き続きpendingかつ未承認である。
+
+## [2026-07-31] spec-gate-approved | Task Management Hermes Schedule Secretary Readiness
+
+- Human は [[wiki/syntheses/task-management-hermes-readiness/spec|Task Management Hermes Schedule Secretary Readiness 仕様]] を Written Spec として承認した。spec frontmatterとStatus、[[index|durable catalog]]を`approved` / `2026-07-31`へ同期した。
+- approved scopeはoperation-scoped semantic capability preflight、canonical identityとpagination/completeness、reopen、deterministic Schedule Secretary readiness、portable/managed-native/live ownership、external delivery map、permission/setup runbook、acceptance/verification/authorization boundaryである。Confirmed Decisionsと本文contractは変更していない。
+- Issue ledger、Issue Gate、implementation plan、Execution Plan Gate、implementation、Companies repository変更、managed-native apply、live Hermes / GitHub MCP configuration、live task mutation、push/PR/mergeは未実施であり、本Written Spec approvalには含まれない。

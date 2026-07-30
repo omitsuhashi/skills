@@ -1,13 +1,15 @@
 ---
 title: Task Management Hermes Schedule Secretary Readiness 仕様
 date: 2026-07-30
+updated: 2026-07-31
 tags:
   - task-management
   - github-projects
   - hermes
   - schedule-secretary
   - specification
-status: proposed
+status: approved
+approved_on: 2026-07-31
 aliases:
   - Task Management Hermes Readiness
   - Schedule Secretary Task Management MVP
@@ -17,9 +19,11 @@ aliases:
 
 ## Status
 
-Written Spec review candidate。Human が本 file の exact revision を承認するまで
-Written Spec Gate は未承認であり、実装、Companies repository の変更、managed-native
-apply、live Hermes / GitHub MCP の設定変更は開始しない。
+2026-07-31、Human が本 page を Written Spec として承認した。Written Spec Gate は
+承認済みである。Issue ledger、Issue Gate、implementation plan、Execution Plan Gate、
+implementation は未実施であり、それぞれの current gate を通過するまで開始しない。
+Companies repository の変更、managed-native apply、live Hermes / GitHub MCP の設定変更と
+task mutation は本承認に含まれず、引き続き別の明示承認を要する。
 
 本書は [[../direct-github-projects-task-management/spec|GitHub Projects 直接接続型 Task Management Skill 仕様]]
 を置き換えるものではない。同仕様を現在の task semantics の基礎とし、
