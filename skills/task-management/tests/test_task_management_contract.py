@@ -323,6 +323,13 @@ class TaskManagementContractTests(unittest.TestCase):
             {name: set(values) for name, values in parse_retry_side_matrix(read(PROJECTS)).items()},
         )
 
+    def test_issue_only_operations_require_only_their_resolved_targets(self) -> None:
+        capability_check = section(read(PROJECTS), "## Semantic capability check")
+        self.assertIn(
+            "Require access only to the targets resolved by that operation.",
+            capability_check,
+        )
+
     def test_operation_scoped_cases_derive_requirements_from_markdown(self) -> None:
         matrix = parse_capability_matrix(read(PROJECTS))
         retry = parse_retry_side_matrix(read(PROJECTS))

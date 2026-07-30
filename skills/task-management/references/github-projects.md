@@ -2,7 +2,7 @@
 
 ## Semantic capability check
 
-Resolve the requested operation first. Before it runs, require its exact read and write semantic capabilities and access to the resolved owner, repository, Project, and relevant private content. Read-only operations have `none` for their write requirement and perform no write. If a required capability or target permission is missing, stop before mutation and report the missing capability.
+Resolve the requested operation first. Before it runs, require its exact read and write semantic capabilities. Require access only to the targets resolved by that operation. This includes relevant private content. Read-only operations have `none` for their write requirement and perform no write. If a required capability or target permission is missing, stop before mutation and report the missing capability.
 
 ## Operation capability matrix
 
