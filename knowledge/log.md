@@ -1824,3 +1824,46 @@ append-only で使います。すべての entry は予測しやすい header �
 - `test_public_contract_reports_completion_and_recovery_state`、`test_every_legacy_semantic_field_maps_to_exactly_one_current_identity`、`test_local_contract_selects_obsidian_without_copying_authoring_syntax`は、それぞれ欠落していたcontract、creation identity、cross-root semantic ruleを理由にREDとなり、最小実装後にGREENとなった。
 - full fresh verificationはLLM Wiki 21 tests、12 topology × modeのcontext validation / warning-free report、repository skill architecture validation、skill-creator quick validation、focused boundary suite、literal 37-path assertion、baseline / working-tree diff check、raw / external-skill scope checkをすべてexit `0`で完了した。`knowledge/raw/**`とexternal installed authoring skillは変更していない。
 - [[wiki/syntheses/llm-wiki-authoring-responsibility-separation-spec|current spec]] と [[wiki/syntheses/llm-wiki-authoring-responsibility-separation-implementation-plan|current plan]] のproduct boundaryは変更していない。Step 7のfresh whole-branch re-reviewはcontroller-owned gateとしてpendingであり、`LOCAL_COMPLETE`は宣言しない。
+
+## [2026-07-30] draft-review | SDD first-write worktree migration 仕様
+
+- Actor: repository maintainer-delegated actor。Canonical OwnerであるHuman / repository maintainerの明示承認に基づく。
+- Decision: `promote`。proposal [[wiki/drafts/sdd-first-write-worktree-migration-spec|SDD first-write worktree migration 仕様（昇格済み draft）]] を、active canonical synthesis [[wiki/syntheses/sdd-first-write-worktree-migration-spec|SDD first-write worktree migration 仕様]] へ昇格した。
+- Authority result: `Read: allowed`、`Write Boundary: owned`、Canonical OwnerのHuman承認、およびselected authoring profile `obsidian` の手順を満たし、direct canonical updateを許可した。
+- Lifecycle effect: draftを`promoted`として保持し、canonical targetを`accepted` / `active`として作成した。active catalogにはcanonical targetを1件だけ登録し、draftは登録していない。
+- Evidence: HumanのWritten Spec明示承認、draft内の`Confirmed Decisions`、`Open Decisions: なし`、および`knowledge/AGENTS.md`のsingle-root owner/write-boundary contract。
+
+## [2026-07-30] draft-review | SDD first-write worktree migration 実装計画
+
+- Actor: repository maintainer-delegated actor。Canonical OwnerであるHuman / repository maintainerの明示承認に基づく。
+- Decision: `promote`。proposal [[wiki/drafts/sdd-first-write-worktree-migration-implementation-plan|SDD first-write worktree migration Implementation Plan（昇格済み draft）]] を、active canonical synthesis [[wiki/syntheses/sdd-first-write-worktree-migration-implementation-plan|SDD first-write worktree migration 実装計画]] へ昇格した。
+- Authority result: `Read: allowed`、`Write Boundary: owned`、Canonical OwnerのHuman承認、およびselected authoring profile `obsidian` の手順を満たし、direct canonical updateを許可した。
+- Lifecycle effect: draftを`promoted`として保持し、canonical targetを`accepted` / `active` implementation planとして作成した。active catalogにはcanonical targetを1件だけ登録し、draftは登録していない。
+- Evidence: Humanのimplementation plan明示承認、承認済みdraft本文、および`knowledge/AGENTS.md`のsingle-root owner/write-boundary contract。remote publicationは承認・実施していない。
+
+## [2026-07-30] plan-gate-approved | SDD first-write worktree migration
+
+- Human承認済みの[[wiki/syntheses/sdd-first-write-worktree-migration-spec|SDD first-write worktree migration 仕様]]をaccepted specとして、[[wiki/syntheses/sdd-first-write-worktree-migration-implementation-plan|SDD first-write worktree migration 実装計画]]をrepository-approved canonical implementation planとしてPlan Gateへ記録した。
+- Canonical OwnerであるHuman / repository maintainerの明示承認に基づく。remote publicationは承認・実施していない。
+
+## [2026-07-30] canonical-correction | SDD first-write worktree migration 実装計画
+
+- [[wiki/syntheses/sdd-first-write-worktree-migration-implementation-plan|SDD first-write worktree migration 実装計画]]に、昇格元draftの`## Draft Review Decision`本文を決定内容を変えずに復元した。canonical metadata、active catalog、accepted specとのrelation identityは維持した。
+- Canonical OwnerであるHuman / repository maintainerの承認済み昇格内容の完全性を是正するscoped correctionであり、remote publicationは承認・実施していない。
+
+## [2026-07-30] implementation-closeout | SDD first-write worktree migration
+
+- accepted [[wiki/syntheses/sdd-first-write-worktree-migration-spec|SDD first-write worktree migration 仕様]] と canonical [[wiki/syntheses/sdd-first-write-worktree-migration-implementation-plan|SDD first-write worktree migration 実装計画]] に従い、first-write planning worktree gate、bound planning paths、後続Epic限定のopt-in parallel adapter、single-writer integration/final gateから成るportable contractを完了した。仕様・計画の承認済みproduct boundaryは変更していない。
+- 実装・task review済みcommitは Plan Gate `d463ce3`、Task 0 `62f9184`、Task 1 `17545a3` / `4942640`、Task 2 `cf30396` / `7477705` / `4551e06`であり、各task reviewはopen findingなしで完了した。promoted implementation-plan draftの先頭frontmatterを有効な`---`へ是正し、lifecycle / provenance / canonical target identityは維持した。
+- local validationはSDD implementation unittest、skill architecture validation、skill context validation、architecture / CI validator unittest、skill-creator authoring validation、`git diff --check`を通過した。captured tupleとのoriginal checkout比較は開始時の`main`、`282fa44a9fe97d9d0feb2e8d6733a6ae47f00f78`、clean statusと一致した。remote publicationは承認・実施していない。
+
+## [2026-07-30] human-ruling-correction | SDD first-write worktree migration
+
+- Human rulingにより、final whitespace gateの正本はclean working treeだけを見る`git diff --check`ではなく、complete planning-branch rangeを検査する`git diff --check 282fa44a9fe97d9d0feb2e8d6733a6ae47f00f78..HEAD`とした。[[wiki/syntheses/sdd-first-write-worktree-migration-implementation-plan|canonical implementation plan]]のTask 3/Task 4 closeout instructionsとglobal final-gate ruleをこの判断へ同期した。
+- [[wiki/syntheses/sdd-first-write-worktree-migration-spec|canonical specification]]末尾のsemanticsを持たないtrailing blank recordを除去した。accepted lifecycle、provenance、acceptance criteria、active catalog identityは変更していない。index summaryにgate表現は含まれないため変更不要である。
+- このscoped correctionは明示されたHuman rulingに基づく。fresh validation、original-checkout preservation確認、canonical final reviewはこの訂正commit後にあらためて行い、remote publicationは承認・実施していない。
+
+## [2026-07-30] correction | SDD first-write worktree migration final-review sequencing
+
+- append-only recordとして、直前の`human-ruling-correction` eventにある「canonical final reviewはこの訂正commit後にあらためて行い」という wording を supersede する。このcorrection commitはTask 4のscoped re-reviewを受け、その完了後にcontrollerがTask 4 closeout後のsingle canonical final whole-branch reviewを初回として一度だけ実行する。
+- canonical final whole-branch reviewはまだ実行しておらず、full reviewのrepeatは発生していない。remote publicationは承認・実施していない。

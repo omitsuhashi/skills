@@ -231,6 +231,30 @@ class PreImplementationContextContractTests(unittest.TestCase):
             combined,
         )
 
+    def test_binding_tuple_lifetime_and_recovery_are_required(self) -> None:
+        section = self.planning_text.split("## Stage Capsule", 1)[1].split("## Spec Synthesis And Review", 1)[0]
+        for value in ("original checkout path", "`starting_branch`", "`starting_head_sha`", "captured starting status", "`integration_branch`", "Stage Capsule/control context", "plan-owned workspace/progress ledger", "Human restart/confirmation", "`BLOCKED`"):
+            self.assertIn(value, section)
+        for value in ("reconstruct", "compatibility bridge", "pre-plan reservation", "resume record"):
+            self.assertIn(value, section)
+
+    def test_bound_paths_and_first_report_are_required(self) -> None:
+        for text in (self.researcher_text, self.synthesizer_text, self.reviewer_text):
+            for value in ("resolved planning worktree root", "CWD", "writable artifact path", "original checkout"):
+                self.assertIn(value, text)
+            self.assertNotIn("- repository root;", text)
+        for value in ("first transient Research Report", "relative", "absolute", "stale path", "escape"):
+            self.assertIn(value, self.research_text)
+        for value in ("original checkout metadata (read-only)", "baseline commit", "epic ID and current research question", "applicable repository and knowledge constraints", "current spec path when one exists"):
+            self.assertIn(value, self.research_text)
+        self.assertNotIn("- repository root and current baseline commit;", self.research_text)
+
+    def test_plan_author_uses_only_bound_planning_paths(self) -> None:
+        section = self.planning_text.split("## Plan Authoring", 1)[1].split("## Failure Boundary", 1)[0]
+        for value in ("resolved planning worktree root", "bound CWD", "writable plan artifact path", "original checkout metadata (read-only)", "Plan Author Worker"):
+            self.assertIn(value, section)
+        self.assertNotIn("repository root, baseline commit", section)
+
 
 if __name__ == "__main__":
     unittest.main()
