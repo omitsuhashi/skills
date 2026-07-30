@@ -1796,3 +1796,8 @@ append-only で使います。すべての entry は予測しやすい header �
 - fresh whole-branch reviewは`66d93ae4a233fc8f9750b6bc6d824cc54bb0838d..c7a69927cf74f9316b2b1122283ca0b0e47d8e6b`を対象に、Critical 0 / Important 0 / Minor 0、`Ready to merge: Yes`で承認した。Task 1 / 2 / 3 reviewもcleanであり、residual material riskはない。
 - full fresh verification（SDD 32/32、LLM Wiki 5/5、repository scripts 19/19、全validator・absence・diff・branch-integrity check）は成功したため、本変更を`LOCAL_COMPLETE`とする。
 - local-only completionである。push、PR作成、merge、release、live install、issue、comment、project変更を含むremote writeはすべて未実施かつ未承認である。
+
+## [2026-07-30] spec-gate-approved | llm-wiki Authoring Responsibility Separation
+
+- Human は [[wiki/syntheses/llm-wiki-authoring-responsibility-separation-spec|llm-wiki authoring 責務分離仕様]] を Written Spec として承認した。仕様の `status` を `approved` とし、承認日を `2026-07-30` と記録した。
+- durable catalog を同じ承認状態へ同期した。implementation plan、implementation、remote write は未実施である。

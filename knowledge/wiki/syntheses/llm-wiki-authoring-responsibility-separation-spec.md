@@ -6,7 +6,8 @@ tags:
   - skill-architecture
   - obsidian
   - specification
-status: draft
+status: approved
+approved_on: 2026-07-30
 aliases:
   - llm-wiki structural-only specification
 ---
