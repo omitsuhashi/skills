@@ -49,6 +49,13 @@ class AuthoringBoundaryTests(unittest.TestCase):
         self.assertEqual(len(operation["files"]), 4)
         self.assertNotIn("obsidian-markdown", "\n".join(operation["files"]))
 
+    def test_single_root_declares_read_access_for_canonical_and_proposal_writes(self) -> None:
+        single_root = read("references/single-root.md")
+
+        self.assertIn("- `Read`: `allowed`, `restricted`, or `no-access`.", single_root)
+        self.assertIn("Direct canonical update requires `Read: allowed`", single_root)
+        self.assertIn("Proposal routing requires `Read: allowed`", single_root)
+
 
 if __name__ == "__main__":
     unittest.main()
