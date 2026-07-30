@@ -1,80 +1,74 @@
 ---
 name: llm-wiki
-description: Use when building or maintaining a persistent knowledge base in a local Markdown wiki, with optional Obsidian compatibility, where raw sources stay immutable and the LLM incrementally updates wiki pages, index.md, and log.md.
+description: Use when building or maintaining a persistent knowledge base whose durable lifecycle includes bootstrap, ingest, query filing, draft review, canonicalization, or lint.
 ---
 
 # LLM Wiki
 
 ## Overview
 
-この skill は、local Markdown wiki を都度再発見する RAG ではなく、蓄積される knowledge base として運用するためのものです。canonical な link style は relative Markdown link を基本とし、Obsidian は optional viewer / tooling として扱います。耐久性のある成果物は wiki であり、`raw/` は不変、`index.md` と `log.md` は first-class の運用ファイルとして扱います。wiki documentation は本文を日本語で保つことを基本にします。
+This skill routes durable knowledge lifecycle work through a local contract. `raw/` remains immutable source material; the maintained knowledge base, its discovery index, and its change log remain synchronized durable state.
 
-mixed repo では、wiki 専用の `knowledge root` を 1 つ決めます。repo root の `AGENTS.md` は thin router に留め、knowledge root の `AGENTS.md` もこの skill への導線と local override だけを書く thin contract として扱います。汎用的な wiki 運用ルールの canonical source はこの skill です。
+## Inputs
+
+- `operation`: `bootstrap`, `ingest`, `query`, `draft-review`, `canonicalize`, or `lint`.
+- resolved `knowledge_root`, topology, actor / authority context, operation payload, existing document state, target relation identity, and syntax-neutral semantic schema.
+- the local contract's selected authoring profile and compatibility requirement.
+
+## Outputs
+
+- an authority- and routing-valid operation result, its required index/log sync set, or `BLOCKED` before a durable write.
+
+## Required Capabilities
+
+- read the declared structural read-set and local contract;
+- resolve an applicable selected authoring skill through existing skill discovery and read its `SKILL.md`;
+- serialize the semantic schema by that skill's documented procedure; and
+- validate only semantic preservation, authority, path, bounded write set, and index/log effect.
 
 ## Router
 
-作業前に mode と topology を判定し、`context-contract.toml` の read-set だけを読む。全 reference を最初から読まない。
+Before work, choose one mode and resolve the topology. Read only the operation's structural read-set from `context-contract.toml`; do not read every reference initially.
 
-1. Mode を 1 つ選ぶ: `bootstrap`, `ingest`, `query`, `draft-review`, `canonicalize`, `lint`。
-2. Topology を判定する:
-   - `single-root`: knowledge-root `AGENTS.md` を authority source とし、root registry は作らない。
-   - `multi-root`: system-specific root registry adapter で Root ID / URI / Scope / Owner / Read / Write / Draft Target を解決する。
-3. Operation `<topology>.<mode>` を `context-contract.toml` で解決し、declared read-set を読む。
-4. 作業中に必要になった detail reference だけを追加で読む。
+1. Resolve topology and authority.
+2. Read the local contract's selected authoring profile and compatibility requirement.
+3. Discover exactly one applicable, readable authoring `SKILL.md` through existing skill discovery.
+4. Hand off serialization of the syntax-neutral semantic schema to that skill.
+5. Validate the resulting structural effect before writing.
 
-Do not read `references/multi-root.md` for ordinary `single-root` ingest or query. Do not read every mode file to start a task.
-If a listed reference disagrees with the contract, treat `context-contract.toml` as the source of truth and fix the mismatch before relying on the read-set.
+Missing, ambiguous, incompatible, or unreadable authoring discovery returns `BLOCKED` before any page, index, or log write. A read-only query may collect material until it would file back; it must return `BLOCKED` before that durable write if the gate is not satisfied.
+
+If a declared reference disagrees with `context-contract.toml`, treat the contract as the source of truth and fix the mismatch before relying on the read-set.
 
 ## Quick Rules
 
-- Inspect `index.md` before touching wiki pages unless the task is pure bootstrap.
-- Direct canonical update is allowed only when actor is canonical owner, target has `Read: allowed`, target allows `Write: owned`, and the local contract or adapter allows the action.
-- In multi-root topology, proposed notes are allowed only when adapter resolution returns `Read: allowed`, `Write: owned` or `propose`, and a resolved in-root `Draft Target`.
-- If adapter resolution returns `Read: restricted`, `Read: no-access`, `Write: closed`, unresolved target root, or unresolved `Draft Target`, do not write a verified claim or proposed note; confirm with the session user or local governance.
-- Non-owner durable proposals route to a draft note only when the write boundary permits it; draft is not a verified claim.
+- Inspect the discovery index before changing durable pages unless the task is pure bootstrap.
+- Direct canonical update is allowed only when the actor is canonical owner, the target allows read and owned write, and the local contract or adapter permits the action.
+- Non-owner durable proposals route to a draft only when the write boundary permits it; a draft is not a verified claim.
+- If target resolution or required authority is unavailable, do not write a verified claim or proposal; return `BLOCKED` before a durable write.
 - Owner `draft-review` decisions are exactly `promote`, `merge`, `reject`, `defer`.
 - `canonicalize` actions are exactly `rename`, `merge`, `archive`, `split`, `rehome`.
-- Update `index.md` and `log.md` for direct durable changes, draft-review decisions, canonicalize actions, ingest, durable query filing, and lint passes. Treat `index.md` as the reader-facing discovery surface: purpose shortcuts plus an Active Page Catalog with summary and search terms.
-- If an answer creates durable value, file it back into the wiki instead of leaving it in chat only when write boundary permits.
+- Synchronize the discovery index and change log for direct durable changes, draft-review decisions, canonicalize actions, ingest, durable query filing, and lint passes.
 - Pause only for ambiguous, high-impact, or multi-page changes. Routine low-risk updates proceed autonomously.
 
 ## Reference Map
 
-- `references/core.md`
-  `raw/`, `wiki/`, draft status, write boundary, `Index Invariant`, `Log Invariant` の最小共通契約。
-- `references/single-root.md`
-  root registry を作らない topology。knowledge-root `AGENTS.md` を authority source とし、owner / write boundary / draft target を local contract に置く。
-- `references/multi-root.md`
-  複数 knowledge root を持つ system で、adapter の Root ID / URI / Scope / Owner / Read / Write / Draft Target から保存先と cross-root policy を判断するルール。
-- `references/structure.md`
-  layout, page type, durable document routing, naming, frontmatter guidance。必要な時だけ読む。
-- `references/page-authoring.md`
-  page boundary, linking, citation rules。本文作成・更新時だけ読む。
-- `references/modes/*.md`
-  mode ごとの check first, default procedure, pause rules。
-- `references/optional-tooling.md`
-  Obsidian Web Clipper, local image handling, Dataview, Marp, `qmd` などの任意ツール。どれも必須ではありません。
-- `assets/templates/`
-  knowledge-root 用 thin `AGENTS.md`, repo root 用 `root-AGENTS.md`, Markdown registry を採用する multi-root 用 `root-registry.md`, `index.md`, `log.md`, source/entity/concept/synthesis/query note, implementation progress ledger, `draft-note.md` の初期雛形。
+- `references/core.md`: shared layers, authority, routing, and semantic index/log invariants.
+- `references/single-root.md`: local-contract topology without a root registry.
+- `references/multi-root.md`: adapter-resolved root identity, authority, and cross-root routing.
+- `references/structure.md`: layout and durable-document routing detail; read only when needed.
+- `references/page-authoring.md`: page-boundary and semantic-preservation detail; read only when needed after the authoring gate succeeds.
+- `references/modes/*.md`: mode-specific checks, default procedure, and pause rules.
+- `references/optional-tooling.md`: optional local workflow support; never a gate requirement.
+- `assets/templates/`: optional initial local-contract and durable-record templates.
 
 ## Common Mistakes
 
-- `raw/` の source file を編集すること。
-- 既存 wiki を見ずに記憶だけで答えること。
-- page を更新したのに `index.md` や `log.md` を更新しないこと。
-- canonical owner authority がない、または local contract / adapter が禁止しているのに canonical page を直接更新すること。
-- proposed draft を判断履歴なしに削除すること。
-- draft を active page として `index.md` の現役一覧に載せること。
-- `index.md` を path catalog だけにして、目的別入口、summary、検索語を欠いたままにすること。
-- 発見性を Python validator, CI check, graph generator, Dataview 必須化, Obsidian plugin 依存で機械的に採点しようとすること。
-- 価値のある query output を chat にだけ残して wiki に還元しないこと。
-- superpowers など別 workflow が作る durable な spec / ADR / roadmap / plan を knowledge root の外へ散らし、wiki の catalog と切り離すこと。
-- 重複 page を見つけても canonical page を決めずに増やし続けること。
-- scope 固有 claim をより広い shared root や別 actor root に混ぜること。
-- role 固有 strategy を project domain wiki など別 scope の root に混ぜること。
-- 複数 knowledge root 間で canonical owner を決めず、同じ知識を copy すること。
-- lint で検出した rename / merge / archive / split / rehome を、`canonicalize` decision なしに大きく進めること。
-- wiki documentation を英語へ寄せて、継続運用の読みやすさを落とすこと。
-- knowledge root の `AGENTS.md` に汎用運用ルールを複写し、skill 側と二重管理にすること。
-- mixed repo なのに detailed な wiki 運用契約を repo root の `AGENTS.md` に長く書くこと。
-- 全 reference を最初から読み込むこと。必要な section だけ読むこと。
+- Editing immutable source material.
+- Updating a durable page without synchronizing its discovery index or change log.
+- Writing a canonical page without required authority or an allowed write boundary.
+- Continuing to a page, index, or log write when selected authoring discovery is missing, ambiguous, incompatible, or unreadable instead of returning `BLOCKED`.
+- Treating a proposed draft as a verified claim or deleting it without a recorded decision.
+- Filing scope-specific claims into a broader or unrelated root.
+- Duplicating a canonical claim across roots instead of preserving one canonical target identity.
+- Loading every reference before resolving the operation's structural read-set.

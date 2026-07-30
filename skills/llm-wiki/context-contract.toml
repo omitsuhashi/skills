@@ -1,3 +1,4 @@
+# Structural read-set: entrypoint, core invariant, topology, and mode only.
 schema_version = 2
 skill = "llm-wiki"
 entrypoint = "SKILL.md"

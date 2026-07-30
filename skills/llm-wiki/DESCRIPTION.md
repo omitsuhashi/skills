@@ -1,1 +1,1 @@
-Maintains durable local Markdown knowledge roots by routing wiki bootstrap, ingest, query, draft review, canonicalization, and lint work through the llm-wiki skill contract.
+Routes durable knowledge lifecycle work for bootstrap, ingest, query filing, draft review, canonicalization, and lint through the llm-wiki skill contract.

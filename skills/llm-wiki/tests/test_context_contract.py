@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import re
 import subprocess
 import sys
 import tempfile
@@ -77,6 +78,31 @@ class LlmWikiContextContractTests(unittest.TestCase):
         self.assertEqual(observed, expected)
         self.assertEqual(llm_wiki["operation_count"], len(expected))
         self.assertIn("warnings", payload)
+
+    def test_every_operation_keeps_the_schema_v2_structural_four_file_read_set(self) -> None:
+        result = run_script(REPORT_CONTEXT, "--skill", "skills/llm-wiki", "--json")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        llm_wiki = payload["skills"][0]
+        contract = (SKILL_DIR / "context-contract.toml").read_text(encoding="utf-8")
+
+        self.assertRegex(contract, r"(?m)^schema_version\s*=\s*2$")
+        self.assertRegex(contract, r"(?m)^max_file_count\s*=\s*4$")
+        for operation in llm_wiki["operations"]:
+            topology = operation["topology"]
+            mode = operation["mode"]
+            self.assertEqual(
+                operation["files"],
+                [
+                    "skills/llm-wiki/SKILL.md",
+                    "skills/llm-wiki/references/core.md",
+                    f"skills/llm-wiki/references/{topology}.md",
+                    f"skills/llm-wiki/references/modes/{mode}.md",
+                ],
+            )
+            self.assertNotIn("page-authoring.md", operation["files"])
+            self.assertNotIn("optional-tooling.md", operation["files"])
 
     def test_validator_rejects_missing_topology_mode_operation(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
