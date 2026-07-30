@@ -2,15 +2,35 @@
 
 ## Semantic capability check
 
-Read, search, and list require only the read capabilities needed to answer: Issue read and search, Project read when Project data is requested, and access to the resolved target content. These operations perform no write.
+Resolve the requested operation first. Before it runs, require its exact read and write semantic capabilities and access to the resolved owner, repository, Project, and relevant private content. Read-only operations have `none` for their write requirement and perform no write. If a required capability or target permission is missing, stop before mutation and report the missing capability.
 
-Every write route requires this complete set before mutation, even when the requested operation will use only part of it:
+## Operation capability matrix
 
-- Issue read, search, create, update, and comment.
-- Project read, item add, and field update.
-- Access to the resolved owner, repository, Project, and relevant private content.
+| Operation | Required read capabilities | Required write capabilities |
+| --- | --- | --- |
+| read | `target_issue_or_project_item_read` | none |
+| search | `issue_search`, `project_item_read`, `project_item_list` | none |
+| status_filtered_list | `project_item_read`, `project_item_list`, `status_field_read` | none |
+| create | `duplicate_discovery`, `target_repository_read`, `target_project_read`, `project_schema_read` | `issue_create`, `project_item_add`, `requested_field_update` |
+| register_existing_issue | `issue_read`, `duplicate_membership_discovery`, `target_project_read`, `project_schema_read` | `project_item_add`, `requested_field_update` |
+| title_body_edit | `issue_read` | `issue_title_body_update` |
+| comment | `issue_read` | `issue_comment_create` |
+| status_priority_due_date | `project_item_read`, `requested_field_read` | `requested_field_update` |
+| done_cancelled | `issue_state_reason_read`, `project_status_read` | `issue_close`, `project_status_update` |
+| reopen | `issue_state_read`, `project_status_read` | `issue_reopen`, `project_status_update` |
 
-If any operation or target permission in this complete write set is missing, stop before mutation and report the missing capability. Do not narrow the write preflight by operation type.
+## Retry side capability matrix
+
+| Remaining side | Required write capabilities |
+| --- | --- |
+| issue_create | `issue_create` |
+| project_item_add | `project_item_add` |
+| requested_fields | `requested_field_update` |
+| issue_terminal | `issue_close` |
+| project_status | `project_status_update` |
+| issue_reopen | `issue_reopen` |
+
+For a partial-failure retry, exact-read the current sides first. Then check only the operation's read set plus the write capabilities for the named remaining sides; do not require completed-side writes again.
 
 Tool names may differ by host integration. Match semantic capabilities, but use only GitHub MCP. Do not fall back to a CLI, direct API client, browser automation, or local backend.
 

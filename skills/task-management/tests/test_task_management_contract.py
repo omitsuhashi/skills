@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 import re
 import unittest
@@ -10,6 +11,7 @@ CORE = SKILL_ROOT / "references" / "core.md"
 PROJECTS = SKILL_ROOT / "references" / "github-projects.md"
 ISSUES = SKILL_ROOT / "references" / "issue-contract.md"
 SAFETY = SKILL_ROOT / "references" / "safety-and-failures.md"
+FIXTURES = SKILL_ROOT / "tests" / "fixtures"
 
 EXPECTED_FILES = {
     "SKILL.md",
@@ -17,12 +19,17 @@ EXPECTED_FILES = {
     "references/github-projects.md",
     "references/issue-contract.md",
     "references/safety-and-failures.md",
+    "tests/fixtures/operation-capability-cases.json",
     "tests/test_task_management_contract.py",
 }
 
 
 def read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
+
+
+def fixture(name: str) -> dict[str, object]:
+    return json.loads((FIXTURES / name).read_text(encoding="utf-8"))
 
 
 def section(text: str, heading: str) -> str:
@@ -34,6 +41,86 @@ def section(text: str, heading: str) -> str:
     if match is None:
         raise AssertionError(f"missing section: {heading}")
     return match.group(1)
+
+
+def parse_table(text: str, heading: str) -> list[list[str]]:
+    block = section(text, heading)
+    lines = [line for line in block.splitlines() if line.startswith("|")]
+    if len(lines) < 3:
+        raise AssertionError(f"missing Markdown table: {heading}")
+    return [
+        [cell.strip() for cell in line.strip("|").split("|")]
+        for line in lines[2:]
+    ]
+
+
+def capability_cell(cell: str) -> frozenset[str]:
+    if cell == "none":
+        return frozenset()
+    return frozenset(re.findall(r"`([a-z_]+)`", cell))
+
+
+def parse_capability_matrix(text: str) -> dict[str, dict[str, frozenset[str]]]:
+    rows = parse_table(text, "## Operation capability matrix")
+    return {
+        row[0]: {
+            "read": capability_cell(row[1]),
+            "write": capability_cell(row[2]),
+        }
+        for row in rows
+    }
+
+
+def parse_retry_side_matrix(text: str) -> dict[str, frozenset[str]]:
+    return {
+        row[0]: capability_cell(row[1])
+        for row in parse_table(text, "## Retry side capability matrix")
+    }
+
+
+EXPECTED_CAPABILITIES = {
+    "read": {"read": {"target_issue_or_project_item_read"}, "write": set()},
+    "search": {
+        "read": {"issue_search", "project_item_read", "project_item_list"},
+        "write": set(),
+    },
+    "status_filtered_list": {
+        "read": {"project_item_read", "project_item_list", "status_field_read"},
+        "write": set(),
+    },
+    "create": {
+        "read": {"duplicate_discovery", "target_repository_read", "target_project_read", "project_schema_read"},
+        "write": {"issue_create", "project_item_add", "requested_field_update"},
+    },
+    "register_existing_issue": {
+        "read": {"issue_read", "duplicate_membership_discovery", "target_project_read", "project_schema_read"},
+        "write": {"project_item_add", "requested_field_update"},
+    },
+    "title_body_edit": {"read": {"issue_read"}, "write": {"issue_title_body_update"}},
+    "comment": {"read": {"issue_read"}, "write": {"issue_comment_create"}},
+    "status_priority_due_date": {
+        "read": {"project_item_read", "requested_field_read"},
+        "write": {"requested_field_update"},
+    },
+    "done_cancelled": {
+        "read": {"issue_state_reason_read", "project_status_read"},
+        "write": {"issue_close", "project_status_update"},
+    },
+    "reopen": {
+        "read": {"issue_state_read", "project_status_read"},
+        "write": {"issue_reopen", "project_status_update"},
+    },
+}
+
+
+EXPECTED_RETRY_SIDES = {
+    "issue_create": {"issue_create"},
+    "project_item_add": {"project_item_add"},
+    "requested_fields": {"requested_field_update"},
+    "issue_terminal": {"issue_close"},
+    "project_status": {"project_status_update"},
+    "issue_reopen": {"issue_reopen"},
+}
 
 
 def field_options(text: str, field: str) -> list[str]:
@@ -179,10 +266,10 @@ class TaskManagementContractTests(unittest.TestCase):
     def test_operation_routing_is_classified_before_capabilities(self) -> None:
         text = read(SKILL)
         routing = section(text, "## Operation routing")
-        self.assertIn("For every write route", routing)
+        self.assertIn("For every operation", routing)
         self.assertLess(
             routing.index("Classify the requested operation"),
-            routing.index("For every write route"),
+            routing.index("For every operation"),
         )
 
         read_flow = section(text, "### Read, search, and list")
@@ -224,42 +311,32 @@ class TaskManagementContractTests(unittest.TestCase):
         self.assertIn("inferred terminal transition", terminal_flow)
         self.assertIn("confirmation", terminal_flow)
 
-    def test_write_routes_share_complete_capability_preflight(self) -> None:
-        skill_text = read(SKILL)
-        project_text = section(read(PROJECTS), "## Semantic capability check")
-
-        for required in (
-            "Every write route requires this complete set before mutation",
-            "Issue read, search, create, update, and comment",
-            "Project read, item add, and field update",
-            "Access to the resolved owner, repository, Project, and relevant private content",
-            "Read, search, and list require only the read capabilities",
-        ):
-            self.assertIn(required, project_text)
-
-        write_preflight = (
-            "Complete the full write preflight in "
-            "`references/github-projects.md` before mutation"
+    def test_operation_capability_matrix_matches_every_approved_row(self) -> None:
+        actual = parse_capability_matrix(read(PROJECTS))
+        normalized = {
+            operation: {name: set(values) for name, values in groups.items()}
+            for operation, groups in actual.items()
+        }
+        self.assertEqual(EXPECTED_CAPABILITIES, normalized)
+        self.assertEqual(
+            EXPECTED_RETRY_SIDES,
+            {name: set(values) for name, values in parse_retry_side_matrix(read(PROJECTS)).items()},
         )
-        for heading in (
-            "### Create and register",
-            "### Edit",
-            "### Comment",
-            "### Non-terminal field update",
-            "### Terminal update",
-        ):
-            self.assertIn(write_preflight, section(skill_text, heading))
 
-        read_flow = section(skill_text, "### Read, search, and list")
-        self.assertIn("Require only Issue read/search and Project read capabilities", read_flow)
-        for contradiction in (
-            "Select only the semantic capabilities required by that operation",
-            "check only the capability needed",
-            "Check the semantic read and search capabilities needed",
-            "check Issue-create capability",
-            "check item-add and required field-update capabilities",
-        ):
-            self.assertNotIn(contradiction, skill_text)
+    def test_operation_scoped_cases_derive_requirements_from_markdown(self) -> None:
+        matrix = parse_capability_matrix(read(PROJECTS))
+        retry = parse_retry_side_matrix(read(PROJECTS))
+        for case in fixture("operation-capability-cases.json")["cases"]:
+            with self.subTest(operation=case["operation"], sides=case["remaining_sides"]):
+                operation = matrix[case["operation"]]
+                required = set(operation["read"])
+                if case["remaining_sides"]:
+                    for side in case["remaining_sides"]:
+                        required.update(retry[side])
+                else:
+                    required.update(operation["write"])
+                missing = sorted(required - set(case["available"]))
+                self.assertEqual(case["expected_missing"], missing)
 
     def test_reuse_and_partial_failure_preserve_existing_state(self) -> None:
         issue_text = section(read(ISSUES), "## Duplicate handling")
@@ -287,8 +364,8 @@ class TaskManagementContractTests(unittest.TestCase):
     def test_capability_and_partial_failures_are_fail_closed(self) -> None:
         text = read(PROJECTS) + "\n" + read(SAFETY)
         for required in (
-            "Issue read, search, create, update, and comment",
-            "Project read, item add, and field update",
+            "## Operation capability matrix",
+            "## Retry side capability matrix",
             "Do not fall back to a CLI, direct API client, browser automation, or local backend",
             "Do not delete the created Issue",
             "Continue only the unfinished steps",

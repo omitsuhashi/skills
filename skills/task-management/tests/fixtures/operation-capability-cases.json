@@ -1,0 +1,19 @@
+{
+  "cases": [
+    {"operation": "read", "available": ["target_issue_or_project_item_read"], "remaining_sides": [], "expected_missing": []},
+    {"operation": "search", "available": ["issue_search", "project_item_read", "project_item_list"], "remaining_sides": [], "expected_missing": []},
+    {"operation": "status_filtered_list", "available": ["project_item_read", "project_item_list", "status_field_read"], "remaining_sides": [], "expected_missing": []},
+    {"operation": "create", "available": ["duplicate_discovery", "target_repository_read", "target_project_read", "project_schema_read", "issue_create", "project_item_add", "requested_field_update"], "remaining_sides": [], "expected_missing": []},
+    {"operation": "register_existing_issue", "available": ["issue_read", "duplicate_membership_discovery", "target_project_read", "project_schema_read", "project_item_add", "requested_field_update"], "remaining_sides": [], "expected_missing": []},
+    {"operation": "title_body_edit", "available": ["issue_read", "issue_title_body_update"], "remaining_sides": [], "expected_missing": []},
+    {"operation": "comment", "available": ["issue_read", "issue_comment_create"], "remaining_sides": [], "expected_missing": []},
+    {"operation": "status_priority_due_date", "available": ["project_item_read", "requested_field_read", "requested_field_update"], "remaining_sides": [], "expected_missing": []},
+    {"operation": "done_cancelled", "available": ["issue_state_reason_read", "project_status_read", "issue_close", "project_status_update"], "remaining_sides": [], "expected_missing": []},
+    {"operation": "reopen", "available": ["issue_state_read", "project_status_read", "issue_reopen", "project_status_update"], "remaining_sides": [], "expected_missing": []},
+    {"operation": "comment", "available": ["issue_read", "issue_comment_create"], "remaining_sides": [], "expected_missing": []},
+    {"operation": "comment", "available": ["issue_read"], "remaining_sides": [], "expected_missing": ["issue_comment_create"]},
+    {"operation": "register_existing_issue", "available": ["issue_read", "duplicate_membership_discovery", "target_project_read", "project_schema_read", "project_item_add", "requested_field_update"], "remaining_sides": [], "expected_missing": []},
+    {"operation": "reopen", "available": ["issue_state_read", "project_status_read", "project_status_update"], "remaining_sides": ["project_status"], "expected_missing": []},
+    {"operation": "done_cancelled", "available": ["issue_state_reason_read", "project_status_read"], "remaining_sides": ["issue_terminal"], "expected_missing": ["issue_close"]}
+  ]
+}
