@@ -31,5 +31,7 @@ If Issue close and terminal Project Status diverge, do not roll back the success
 
 For duplicate discovery or another completeness-required query, only confirmed
 raw source exhaustion may produce `complete`. A 50-item display/return limit is
-not an investigation limit. If discovery is `partial` or `truncated`, do not
-claim no duplicate and do not continue to create.
+not an investigation limit: continue across opaque provider continuations while
+keeping the returned buffer at 50. If discovery is `partial` or `truncated`, or
+its exhausted outcome is `ambiguous_or_multiple`, do not claim no duplicate and
+do not continue to create.

@@ -76,7 +76,9 @@ The result envelope reports `raw_observation_count`, `deduplicated_observation_c
 
 ## Lossless unique-50 continuation
 
-The maximum is 50 unique matching tasks per call. Reconcile each whole page atomically against a candidate copy of the prior state:
+For a standard display call, the maximum is 50 unique matching tasks per call.
+Reconcile each whole page atomically against a candidate copy of the prior
+state:
 
 - If accepting the whole page yields fewer than 50 unique matches, commit it and continue when the provider has another page.
 - If accepting it yields exactly 50, commit it and stop with `unique_limit_reached`.
@@ -85,6 +87,18 @@ The maximum is 50 unique matching tasks per call. Reconcile each whole page atom
 `ContinuationState` contains the opaque `provider_cursor` unchanged plus the exact `already_emitted_task_identities`. The resumed call supplies that incoming cursor and identity set, suppresses already emitted canonical tasks, and may then reconcile the formerly deferred whole page. It must not synthesize an intra-page offset, replacement cursor, item identity, or task identity. Provider intra-page resume is outside this contract because a later observation in the same page may revise an earlier one.
 
 When the source is exhausted, return `source_exhausted`; when a later page fails, preserve previously reconciled results, return that page's incoming cursor, and use the failure as `stop_reason`. Any continuation is partial; exhaustion is complete only when no conflict prevents completeness.
+
+Completeness-required mode overrides the standard display call's
+`unique_limit_reached` stop. Keep a display/return buffer containing at most the
+first 50 unique canonical tasks, but continue the investigation and
+reconciliation state across every provider page. Follow each provider-supplied
+opaque continuation without changing it. The aggregate result's counts,
+conflicts, and stop reason cover the full investigated extent even when
+`returned_count` stays at 50. Duplicate discovery must not set
+`create_allowed=true` until this aggregate loop confirms raw source exhaustion.
+If the loop hits a hard stop, preserve its current buffer and aggregate state,
+return `partial`, and expose the unchanged provider continuation when one is
+available.
 
 ## Completeness envelope
 
@@ -109,6 +123,16 @@ completeness-required investigation, including duplicate discovery, continues
 to raw source exhaustion even if only 50 items can be displayed or returned. If
 that investigation cannot exhaust the source, return `partial`; never treat 50
 returned results as evidence of completeness.
+
+### Query mode decision matrix
+
+| Query mode | Condition | Investigation action | Completeness | Returned items |
+| --- | --- | --- | --- | --- |
+| standard display | 50 unique matches before exhaustion | stop the call | `partial` | at most 50 |
+| completeness-required | 50 unique matches before exhaustion | continue investigation | `partial` | at most 50 |
+| completeness-required | provider continuation available | follow the opaque continuation | `partial` | at most 50 |
+| any | raw source exhausted without conflicts | stop | `complete` | at most 50 |
+| any | hard stop or conflict | stop and preserve results | `partial` | at most 50 |
 
 ## Fields
 

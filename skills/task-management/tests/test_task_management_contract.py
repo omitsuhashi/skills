@@ -389,16 +389,44 @@ STATUS_WORDING = {
 
 def duplicate_decision(
     envelope_value: dict[str, object],
-    unique_match: bool,
+    discovery_outcome: str,
 ) -> dict[str, object]:
     complete = (
         envelope_value["completeness"] == "complete"
         and not bool(envelope_value.get("truncated", False))
+        and envelope_value.get("stop_reason") == "source_exhausted"
     )
+    if discovery_outcome not in {
+        "none",
+        "unique_high_confidence",
+        "ambiguous_or_multiple",
+    }:
+        raise ValueError(f"unknown discovery outcome: {discovery_outcome}")
     return {
-        "no_duplicate_claim": complete and not unique_match,
-        "create_allowed": complete and not unique_match,
+        "no_duplicate_claim": complete and discovery_outcome == "none",
+        "create_allowed": complete and discovery_outcome == "none",
+        "reuse_existing": complete and discovery_outcome == "unique_high_confidence",
+        "stop": not complete or discovery_outcome == "ambiguous_or_multiple",
     }
+
+
+def completeness_required_decision(
+    *,
+    source_exhausted: bool,
+    unique_match_count: int,
+    hard_stop: bool = False,
+) -> dict[str, object]:
+    returned_count = min(unique_match_count, 50)
+    complete = source_exhausted and not hard_stop
+    return {
+        "returned_count": returned_count,
+        "continue_investigation": not source_exhausted and not hard_stop,
+        "completeness": "complete" if complete else "partial",
+    }
+
+
+def status_schema_decision(schema_match_count: int) -> str:
+    return "proceed" if schema_match_count == 1 else "stop_schema_ambiguity"
 
 
 def field_options(text: str, field: str) -> list[str]:
@@ -531,69 +559,159 @@ class TaskManagementContractTests(unittest.TestCase):
             for row in rows
         }
         self.assertEqual(STATUS_WORDING, actual)
-        for required in (
-            "Normalize user wording to one canonical Status before",
-            "schema ambiguity",
-            "missing",
-            "duplicate",
-            "stop the operation",
-            "Do not guess",
+        self.assertEqual("stop_schema_ambiguity", status_schema_decision(0))
+        self.assertEqual("proceed", status_schema_decision(1))
+        self.assertEqual("stop_schema_ambiguity", status_schema_decision(2))
+        self.assertIn(
+            "A missing option, duplicate option, or other schema ambiguity "
+            "must stop the operation",
+            " ".join(status_text.split()),
+        )
+        for contradiction in (
+            "may choose the closest",
+            "may continue on schema ambiguity",
+            "schema ambiguity does not stop",
         ):
-            self.assertIn(required, status_text)
+            self.assertNotIn(contradiction, status_text.lower())
 
     def test_duplicate_discovery_requires_complete_exhaustion(self) -> None:
-        partial = {"completeness": "partial"}
-        complete = {"completeness": "complete"}
-        self.assertEqual(
-            {"no_duplicate_claim": False, "create_allowed": False},
-            duplicate_decision(partial, unique_match=False),
-        )
-        self.assertEqual(
-            {"no_duplicate_claim": True, "create_allowed": True},
-            duplicate_decision(complete, unique_match=False),
-        )
-        self.assertEqual(
-            {"no_duplicate_claim": False, "create_allowed": False},
-            duplicate_decision(complete, unique_match=True),
-        )
-        self.assertEqual(
-            {"no_duplicate_claim": False, "create_allowed": False},
-            duplicate_decision(
-                {"completeness": "complete", "truncated": True},
-                unique_match=False,
-            ),
-        )
+        partial = {"completeness": "partial", "stop_reason": "permission_failure"}
+        complete = {"completeness": "complete", "stop_reason": "source_exhausted"}
+        expected = {
+            ("partial", "none"): {
+                "no_duplicate_claim": False,
+                "create_allowed": False,
+                "reuse_existing": False,
+                "stop": True,
+            },
+            ("complete", "none"): {
+                "no_duplicate_claim": True,
+                "create_allowed": True,
+                "reuse_existing": False,
+                "stop": False,
+            },
+            ("complete", "unique_high_confidence"): {
+                "no_duplicate_claim": False,
+                "create_allowed": False,
+                "reuse_existing": True,
+                "stop": False,
+            },
+            ("complete", "ambiguous_or_multiple"): {
+                "no_duplicate_claim": False,
+                "create_allowed": False,
+                "reuse_existing": False,
+                "stop": True,
+            },
+        }
+        self.assertEqual(expected[("partial", "none")], duplicate_decision(partial, "none"))
+        for outcome in ("none", "unique_high_confidence", "ambiguous_or_multiple"):
+            self.assertEqual(
+                expected[("complete", outcome)],
+                duplicate_decision(complete, outcome),
+            )
+        for outcome in ("none", "unique_high_confidence", "ambiguous_or_multiple"):
+            decision = duplicate_decision(
+                {
+                    "completeness": "complete",
+                    "truncated": True,
+                    "stop_reason": "unique_limit_reached",
+                },
+                outcome,
+            )
+            self.assertFalse(decision["create_allowed"])
+            self.assertTrue(decision["stop"])
+        with self.assertRaises(ValueError):
+            duplicate_decision(complete, "zero_or_more")
 
         duplicate_text = section(read(ISSUES), "## Duplicate handling")
-        for required in (
-            "completeness-required",
-            "source exhaustion",
-            "create_allowed=false",
-            "partial",
-            "truncated",
-            "unique match",
+        decision_rows = parse_table(
+            read(ISSUES),
+            "### Duplicate discovery decision matrix",
+        )
+        self.assertEqual(
+            [
+                ["`complete` / `source_exhausted`", "`none`", "true", "true", "false", "proceed to create"],
+                ["`complete` / `source_exhausted`", "`unique_high_confidence`", "false", "false", "true", "reuse existing"],
+                ["`complete` / `source_exhausted`", "`ambiguous_or_multiple`", "false", "false", "false", "stop"],
+                ["`partial` or `truncated`", "any", "false", "false", "false", "stop"],
+            ],
+            decision_rows,
+        )
+        for contradiction in (
+            "partial discovery may create",
+            "truncated discovery may create",
+            "multiple matches may create",
+            "ambiguous discovery may create",
         ):
-            self.assertIn(required, duplicate_text)
+            self.assertNotIn(contradiction, duplicate_text.lower())
 
         pagination_text = section(read(PROJECTS), "## Completeness envelope")
-        for required in (
-            "`complete` only after raw source exhaustion",
-            "50-item display/return limit",
-            "investigation extent",
-            "provider-supplied continuation",
-            "Never synthesize",
-            "`partial`",
-            "schema ambiguity",
-            "permission failure",
-            "page retrieval failure",
-            "tool hard limit",
-            "resumption",
-        ):
-            self.assertIn(required, pagination_text)
-        self.assertNotIn(
-            "50 results means complete",
-            pagination_text.lower(),
+        mode_rows = parse_table(
+            read(PROJECTS),
+            "### Query mode decision matrix",
         )
+        self.assertEqual(
+            [
+                ["standard display", "50 unique matches before exhaustion", "stop the call", "`partial`", "at most 50"],
+                ["completeness-required", "50 unique matches before exhaustion", "continue investigation", "`partial`", "at most 50"],
+                ["completeness-required", "provider continuation available", "follow the opaque continuation", "`partial`", "at most 50"],
+                ["any", "raw source exhausted without conflicts", "stop", "`complete`", "at most 50"],
+                ["any", "hard stop or conflict", "stop and preserve results", "`partial`", "at most 50"],
+            ],
+            mode_rows,
+        )
+        self.assertEqual(
+            {
+                "returned_count": 50,
+                "continue_investigation": True,
+                "completeness": "partial",
+            },
+            completeness_required_decision(
+                source_exhausted=False,
+                unique_match_count=50,
+            ),
+        )
+        self.assertEqual(
+            {
+                "returned_count": 50,
+                "continue_investigation": True,
+                "completeness": "partial",
+            },
+            completeness_required_decision(
+                source_exhausted=False,
+                unique_match_count=73,
+            ),
+        )
+        self.assertEqual(
+            {
+                "returned_count": 50,
+                "continue_investigation": False,
+                "completeness": "complete",
+            },
+            completeness_required_decision(
+                source_exhausted=True,
+                unique_match_count=73,
+            ),
+        )
+        self.assertEqual(
+            {
+                "returned_count": 50,
+                "continue_investigation": False,
+                "completeness": "partial",
+            },
+            completeness_required_decision(
+                source_exhausted=False,
+                unique_match_count=73,
+                hard_stop=True,
+            ),
+        )
+        for contradiction in (
+            "50 unique matches proves complete",
+            "50 results means complete",
+            "stop the investigation at 50",
+            "duplicate discovery may stop at 50",
+        ):
+            self.assertNotIn(contradiction, pagination_text.lower())
 
     def test_standalone_structure_and_frontmatter(self) -> None:
         actual_files = {
