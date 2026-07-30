@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 from pathlib import Path
 import re
 import unittest
@@ -20,6 +21,7 @@ EXPECTED_FILES = {
     "references/issue-contract.md",
     "references/safety-and-failures.md",
     "tests/fixtures/operation-capability-cases.json",
+    "tests/fixtures/pagination-cases.json",
     "tests/test_task_management_contract.py",
 }
 
@@ -30,6 +32,237 @@ def read(path: Path) -> str:
 
 def fixture(name: str) -> dict[str, object]:
     return json.loads((FIXTURES / name).read_text(encoding="utf-8"))
+
+
+def expand_page(page: dict[str, object]) -> list[dict[str, object]]:
+    generated = page.get("generated_unique")
+    items = list(page.get("items", []))
+    if isinstance(generated, dict):
+        start = int(generated["start"])
+        count = int(generated["count"])
+        items = [
+            {
+                "item_identity": f"PVTI-{number}",
+                "task_identity": f"I-{number}",
+                "status": "Ready",
+                "updated_at": "2026-07-30T00:00:00Z",
+            }
+            for number in range(start, start + count)
+        ] + items
+    return items
+
+
+def merge_observation(
+    items: dict[str, dict[str, object]],
+    observation: dict[str, object],
+    item_identity_conflicts: set[str],
+    reconciliation_conflicts: set[str],
+) -> bool:
+    item_id = str(observation["item_identity"])
+    current = items.get(item_id)
+    if current is None:
+        items[item_id] = deepcopy(observation)
+        return False
+    if current["task_identity"] != observation["task_identity"]:
+        item_identity_conflicts.add(item_id)
+        return True
+    explicit_clear = set(observation.get("explicit_clear", []))
+    for field in ("status", "priority"):
+        if field in explicit_clear:
+            current[field] = None
+            if observation.get("updated_at") is not None:
+                current["updated_at"] = observation["updated_at"]
+            continue
+        if field not in observation:
+            continue
+        incoming = observation[field]
+        existing = current.get(field)
+        if incoming is None:
+            continue
+        if existing is None or incoming == existing:
+            current[field] = incoming
+            continue
+        old_time = current.get("updated_at")
+        new_time = observation.get("updated_at")
+        if old_time is not None and new_time is not None:
+            if str(new_time) >= str(old_time):
+                current[field] = incoming
+                current["updated_at"] = new_time
+        else:
+            reconciliation_conflicts.add(item_id)
+    return True
+
+
+def envelope(
+    *,
+    items: dict[str, dict[str, object]],
+    first_seen: dict[str, int],
+    raw_count: int,
+    duplicate_count: int,
+    item_identity_conflicts: set[str],
+    reconciliation_conflicts: set[str],
+    already_emitted: set[str],
+    continuation: object,
+    completeness: str,
+    truncated: bool,
+    stop_reason: str,
+) -> dict[str, object]:
+    task_memberships: dict[str, list[str]] = {}
+    for item_id, item in items.items():
+        if (
+            item_id in item_identity_conflicts
+            or item_id in reconciliation_conflicts
+            or item.get("status") != "Ready"
+        ):
+            continue
+        task_id = str(item["task_identity"])
+        if task_id in already_emitted:
+            continue
+        task_memberships.setdefault(task_id, []).append(item_id)
+    identity_conflicts = {
+        task for task, memberships in task_memberships.items() if len(memberships) > 1
+    }
+    ordered = sorted(task_memberships, key=lambda task: first_seen[task])
+    result_order: object = ordered
+    if len(ordered) >= 49:
+        result_order = {"first": ordered[0], "last": ordered[-1]}
+    if reconciliation_conflicts:
+        completeness = "partial"
+        stop_reason = "reconciliation_conflict"
+    elif item_identity_conflicts or identity_conflicts:
+        completeness = "partial"
+        stop_reason = "identity_conflict"
+    return {
+        "raw_observation_count": raw_count,
+        "deduplicated_observation_count": duplicate_count,
+        "identity_conflict_count": len(item_identity_conflicts) + len(identity_conflicts),
+        "reconciliation_conflict_count": len(reconciliation_conflicts),
+        "unique_task_count": len(ordered),
+        "returned_count": len(ordered),
+        "task_order": result_order,
+        "completeness": completeness,
+        "truncated": truncated,
+        "continuation": continuation,
+        "stop_reason": stop_reason,
+        "_returned_task_identities": ordered,
+    }
+
+
+def reconcile_pages(case: dict[str, object]) -> dict[str, object]:
+    items: dict[str, dict[str, object]] = {}
+    first_seen: dict[str, int] = {}
+    raw_count = 0
+    duplicate_count = 0
+    item_identity_conflicts: set[str] = set()
+    reconciliation_conflicts: set[str] = set()
+    already_emitted = set(case.get("already_emitted_task_identities", []))
+    sequence = 0
+    for page in case["pages"]:
+        incoming = page.get("incoming_cursor")
+        if "error" in page:
+            return envelope(
+                items=items,
+                first_seen=first_seen,
+                raw_count=raw_count,
+                duplicate_count=duplicate_count,
+                item_identity_conflicts=item_identity_conflicts,
+                reconciliation_conflicts=reconciliation_conflicts,
+                already_emitted=already_emitted,
+                continuation=incoming,
+                completeness="partial",
+                truncated=False,
+                stop_reason=str(page["error"]),
+            )
+        candidate_items = deepcopy(items)
+        candidate_first_seen = dict(first_seen)
+        candidate_identity_conflicts = set(item_identity_conflicts)
+        candidate_conflicts = set(reconciliation_conflicts)
+        candidate_raw = raw_count
+        candidate_duplicates = duplicate_count
+        observations = expand_page(page)
+        for observation in observations:
+            candidate_raw += 1
+            if merge_observation(
+                candidate_items,
+                observation,
+                candidate_identity_conflicts,
+                candidate_conflicts,
+            ):
+                candidate_duplicates += 1
+        valid_tasks = {
+            str(item["task_identity"])
+            for item_id, item in candidate_items.items()
+            if (
+                item_id not in candidate_identity_conflicts
+                and item_id not in candidate_conflicts
+                and item.get("status") == "Ready"
+            )
+        }
+        for observation in observations:
+            task_id = str(observation["task_identity"])
+            if task_id in valid_tasks and task_id not in candidate_first_seen:
+                candidate_first_seen[task_id] = sequence
+                sequence += 1
+        candidate = envelope(
+            items=candidate_items,
+            first_seen=candidate_first_seen,
+            raw_count=candidate_raw,
+            duplicate_count=candidate_duplicates,
+            item_identity_conflicts=candidate_identity_conflicts,
+            reconciliation_conflicts=candidate_conflicts,
+            already_emitted=already_emitted,
+            continuation=page.get("outgoing_cursor"),
+            completeness="partial" if page.get("has_next") else "complete",
+            truncated=bool(page.get("has_next")),
+            stop_reason="unique_limit_reached" if page.get("has_next") else "source_exhausted",
+        )
+        if candidate["unique_task_count"] > 50:
+            return envelope(
+                items=items,
+                first_seen=first_seen,
+                raw_count=candidate_raw,
+                duplicate_count=candidate_duplicates,
+                item_identity_conflicts=item_identity_conflicts,
+                reconciliation_conflicts=reconciliation_conflicts,
+                already_emitted=already_emitted,
+                continuation=incoming,
+                completeness="partial",
+                truncated=True,
+                stop_reason="unique_limit_page_deferred",
+            )
+        items = candidate_items
+        first_seen = candidate_first_seen
+        item_identity_conflicts = candidate_identity_conflicts
+        reconciliation_conflicts = candidate_conflicts
+        raw_count = candidate_raw
+        duplicate_count = candidate_duplicates
+        if candidate["unique_task_count"] == 50 or not page.get("has_next"):
+            return candidate
+    raise AssertionError("fixture must terminate with exhaustion, limit, or error")
+
+
+def reconcile_fixture_item_state(case: dict[str, object]) -> dict[str, object]:
+    items: dict[str, dict[str, object]] = {}
+    item_identity_conflicts: set[str] = set()
+    reconciliation_conflicts: set[str] = set()
+    for page in case["pages"]:
+        if "error" in page:
+            break
+        for observation in expand_page(page):
+            merge_observation(
+                items,
+                observation,
+                item_identity_conflicts,
+                reconciliation_conflicts,
+            )
+    expected = case.get("expected_item_state", {})
+    return {
+        item_id: {
+            field: items[item_id].get(field)
+            for field in fields
+        }
+        for item_id, fields in expected.items()
+    }
 
 
 def section(text: str, heading: str) -> str:
@@ -140,6 +373,79 @@ def field_options(text: str, field: str) -> list[str]:
 
 
 class TaskManagementContractTests(unittest.TestCase):
+    def test_pagination_fixtures_match_exact_counts_conflicts_and_continuation(self) -> None:
+        for case in fixture("pagination-cases.json")["cases"]:
+            with self.subTest(case=case["name"]):
+                actual = reconcile_pages(case)
+                actual.pop("_returned_task_identities")
+                self.assertEqual(case["expected"], actual)
+                if "expected_item_state" in case:
+                    self.assertEqual(
+                        case["expected_item_state"],
+                        reconcile_fixture_item_state(case),
+                    )
+
+    def test_unique_51_two_call_continuation_is_lossless(self) -> None:
+        source = next(
+            case
+            for case in fixture("pagination-cases.json")["cases"]
+            if case["name"] == "page_would_create_51"
+        )
+        first = reconcile_pages(source)
+        first_identities = first.pop("_returned_task_identities")
+        self.assertEqual([f"I-{number}" for number in range(1, 50)], first_identities)
+        self.assertEqual(52, first["raw_observation_count"])
+        self.assertEqual(49, first["unique_task_count"])
+        self.assertEqual("partial", first["completeness"])
+        self.assertEqual("cursor-2", first["continuation"])
+
+        second_case = {
+            "filter": "Ready",
+            "already_emitted_task_identities": first_identities,
+            "pages": [source["pages"][1]],
+        }
+        second = reconcile_pages(second_case)
+        second_identities = second.pop("_returned_task_identities")
+        self.assertEqual(["I-50", "I-51"], second_identities)
+        self.assertEqual(
+            {
+                "raw_observation_count": 3,
+                "deduplicated_observation_count": 0,
+                "identity_conflict_count": 0,
+                "reconciliation_conflict_count": 0,
+                "unique_task_count": 2,
+                "returned_count": 2,
+                "task_order": ["I-50", "I-51"],
+                "completeness": "complete",
+                "truncated": False,
+                "continuation": None,
+                "stop_reason": "source_exhausted",
+            },
+            second,
+        )
+        combined = first_identities + second_identities
+        self.assertEqual([f"I-{number}" for number in range(1, 52)], combined)
+        self.assertEqual(51, len(set(combined)))
+        self.assertEqual(1, combined.count("I-1"))
+
+    def test_identity_and_lossless_page_boundary_are_explicit(self) -> None:
+        text = read(CORE) + "\n" + read(PROJECTS)
+        for required in (
+            "canonical_task_identity",
+            "canonical_project_item_identity",
+            "stable Issue ID",
+            "canonical Issue URL",
+            "owner/repository#number",
+            "whole page",
+            "incoming cursor",
+            "do not consume",
+            "unique_limit_page_deferred",
+            "must not synthesize an intra-page offset",
+            "already_emitted_task_identities",
+            "raw observations fetched and inspected",
+        ):
+            self.assertIn(required, text)
+
     def test_standalone_structure_and_frontmatter(self) -> None:
         actual_files = {
             path.relative_to(SKILL_ROOT).as_posix()

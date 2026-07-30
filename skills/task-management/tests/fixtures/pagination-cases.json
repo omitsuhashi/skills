@@ -1,0 +1,102 @@
+{
+  "cases": [
+    {
+      "name": "exact_50_after_duplicate",
+      "filter": "Ready",
+      "pages": [
+        {"incoming_cursor": null, "outgoing_cursor": "cursor-2", "has_next": true, "generated_unique": {"start": 1, "count": 48}},
+        {"incoming_cursor": "cursor-2", "outgoing_cursor": "cursor-3", "has_next": true, "items": [
+          {"item_identity": "PVTI-1", "task_identity": "I-1", "status": "Ready", "updated_at": "2026-07-31T00:00:00Z"},
+          {"item_identity": "PVTI-49", "task_identity": "I-49", "status": "Ready", "updated_at": "2026-07-31T00:00:00Z"},
+          {"item_identity": "PVTI-50", "task_identity": "I-50", "status": "Ready", "updated_at": "2026-07-31T00:00:00Z"}
+        ]}
+      ],
+      "expected": {"raw_observation_count": 51, "deduplicated_observation_count": 1, "identity_conflict_count": 0, "reconciliation_conflict_count": 0, "unique_task_count": 50, "returned_count": 50, "task_order": {"first": "I-1", "last": "I-50"}, "completeness": "partial", "truncated": true, "continuation": "cursor-3", "stop_reason": "unique_limit_reached"}
+    },
+    {
+      "name": "page_would_create_51",
+      "filter": "Ready",
+      "pages": [
+        {"incoming_cursor": null, "outgoing_cursor": "cursor-2", "has_next": true, "generated_unique": {"start": 1, "count": 49}},
+        {"incoming_cursor": "cursor-2", "outgoing_cursor": null, "has_next": false, "items": [
+          {"item_identity": "PVTI-1", "task_identity": "I-1", "status": "Ready", "updated_at": "2026-07-31T00:00:00Z"},
+          {"item_identity": "PVTI-50", "task_identity": "I-50", "status": "Ready", "updated_at": "2026-07-31T00:00:00Z"},
+          {"item_identity": "PVTI-51", "task_identity": "I-51", "status": "Ready", "updated_at": "2026-07-31T00:00:00Z"}
+        ]}
+      ],
+      "expected": {"raw_observation_count": 52, "deduplicated_observation_count": 1, "identity_conflict_count": 0, "reconciliation_conflict_count": 0, "unique_task_count": 49, "returned_count": 49, "task_order": {"first": "I-1", "last": "I-49"}, "completeness": "partial", "truncated": true, "continuation": "cursor-2", "stop_reason": "unique_limit_page_deferred"}
+    },
+    {
+      "name": "repeated_and_updated_across_pages",
+      "filter": "Ready",
+      "pages": [
+        {"incoming_cursor": null, "outgoing_cursor": "cursor-b", "has_next": true, "items": [
+          {"item_identity": "PVTI-A", "task_identity": "I-A", "status": "Backlog", "updated_at": "2026-07-30T00:00:00Z"},
+          {"item_identity": "PVTI-B", "task_identity": "I-B", "status": "Ready", "updated_at": "2026-07-30T00:00:00Z"}
+        ]},
+        {"incoming_cursor": "cursor-b", "outgoing_cursor": null, "has_next": false, "items": [
+          {"item_identity": "PVTI-A", "task_identity": "I-A", "status": "Ready", "updated_at": "2026-07-31T00:00:00Z"},
+          {"item_identity": "PVTI-B", "task_identity": "I-B", "status": null, "updated_at": "2026-07-31T00:00:00Z"}
+        ]}
+      ],
+      "expected": {"raw_observation_count": 4, "deduplicated_observation_count": 2, "identity_conflict_count": 0, "reconciliation_conflict_count": 0, "unique_task_count": 2, "returned_count": 2, "task_order": ["I-B", "I-A"], "completeness": "complete", "truncated": false, "continuation": null, "stop_reason": "source_exhausted"}
+    },
+    {
+      "name": "same_task_multiple_items",
+      "filter": "Ready",
+      "pages": [
+        {"incoming_cursor": null, "outgoing_cursor": null, "has_next": false, "items": [
+          {"item_identity": "PVTI-X", "task_identity": "I-X", "status": "Ready", "updated_at": null},
+          {"item_identity": "PVTI-Y", "task_identity": "I-X", "status": "Ready", "updated_at": null}
+        ]}
+      ],
+      "expected": {"raw_observation_count": 2, "deduplicated_observation_count": 0, "identity_conflict_count": 1, "reconciliation_conflict_count": 0, "unique_task_count": 1, "returned_count": 1, "task_order": ["I-X"], "completeness": "partial", "truncated": false, "continuation": null, "stop_reason": "identity_conflict"}
+    },
+    {
+      "name": "irreconcilable_same_item",
+      "filter": "Ready",
+      "pages": [
+        {"incoming_cursor": null, "outgoing_cursor": null, "has_next": false, "items": [
+          {"item_identity": "PVTI-Z", "task_identity": "I-Z", "status": "Ready", "priority": "P1", "updated_at": null},
+          {"item_identity": "PVTI-Z", "task_identity": "I-Z", "status": "Ready", "priority": "P2", "updated_at": null}
+        ]}
+      ],
+      "expected": {"raw_observation_count": 2, "deduplicated_observation_count": 1, "identity_conflict_count": 0, "reconciliation_conflict_count": 1, "unique_task_count": 0, "returned_count": 0, "task_order": [], "completeness": "partial", "truncated": false, "continuation": null, "stop_reason": "reconciliation_conflict"}
+    },
+    {
+      "name": "missing_preserves_then_explicit_clear_removes",
+      "filter": "Ready",
+      "pages": [
+        {"incoming_cursor": null, "outgoing_cursor": "cursor-clear", "has_next": true, "items": [
+          {"item_identity": "PVTI-C", "task_identity": "I-C", "status": "Ready", "priority": "P1", "updated_at": "2026-07-29T00:00:00Z"}
+        ]},
+        {"incoming_cursor": "cursor-clear", "outgoing_cursor": null, "has_next": false, "items": [
+          {"item_identity": "PVTI-C", "task_identity": "I-C", "status": null, "updated_at": "2026-07-30T00:00:00Z"},
+          {"item_identity": "PVTI-C", "task_identity": "I-C", "status": null, "priority": null, "explicit_clear": ["priority"], "updated_at": "2026-07-31T00:00:00Z"}
+        ]}
+      ],
+      "expected_item_state": {"PVTI-C": {"task_identity": "I-C", "status": "Ready", "priority": null}},
+      "expected": {"raw_observation_count": 3, "deduplicated_observation_count": 2, "identity_conflict_count": 0, "reconciliation_conflict_count": 0, "unique_task_count": 1, "returned_count": 1, "task_order": ["I-C"], "completeness": "complete", "truncated": false, "continuation": null, "stop_reason": "source_exhausted"}
+    },
+    {
+      "name": "same_item_different_task_identity",
+      "filter": "Ready",
+      "pages": [
+        {"incoming_cursor": null, "outgoing_cursor": null, "has_next": false, "items": [
+          {"item_identity": "PVTI-Q", "task_identity": "I-Q1", "status": "Ready", "updated_at": null},
+          {"item_identity": "PVTI-Q", "task_identity": "I-Q2", "status": "Ready", "updated_at": null}
+        ]}
+      ],
+      "expected": {"raw_observation_count": 2, "deduplicated_observation_count": 1, "identity_conflict_count": 1, "reconciliation_conflict_count": 0, "unique_task_count": 0, "returned_count": 0, "task_order": [], "completeness": "partial", "truncated": false, "continuation": null, "stop_reason": "identity_conflict"}
+    },
+    {
+      "name": "permission_failure_preserves_results",
+      "filter": "Ready",
+      "pages": [
+        {"incoming_cursor": null, "outgoing_cursor": "cursor-f", "has_next": true, "generated_unique": {"start": 1, "count": 3}},
+        {"incoming_cursor": "cursor-f", "error": "permission_failure"}
+      ],
+      "expected": {"raw_observation_count": 3, "deduplicated_observation_count": 0, "identity_conflict_count": 0, "reconciliation_conflict_count": 0, "unique_task_count": 3, "returned_count": 3, "task_order": ["I-1", "I-2", "I-3"], "completeness": "partial", "truncated": false, "continuation": "cursor-f", "stop_reason": "permission_failure"}
+    }
+  ]
+}

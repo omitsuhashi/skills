@@ -33,3 +33,15 @@ Never use inbox as an ambiguity fallback. The repository is the work unit bounda
 - Issue title and body are the source of task content.
 - Project membership, Status, Priority, and Due date are the source of portfolio workflow state.
 - One operation targets one resolved Project and one resolved Issue repository.
+
+## Canonical identity
+
+Determine `canonical_task_identity` by the first available value in this order:
+
+1. The provider's stable Issue ID.
+2. The canonical Issue URL.
+3. The normalized `owner/repository#number` key.
+
+Normalize an Issue URL to `https://github.com/<owner>/<repository>/issues/<number>` after resolving provider-declared canonical redirects; remove query, fragment, and trailing slash. Normalize the fallback key from that same resolved owner, repository, and Issue number, using case-insensitive owner and repository comparison. Display casing is not identity.
+
+Determine `canonical_project_item_identity` from the provider's stable item ID. Only when that ID is unavailable, use the tuple `(canonical_project_url, canonical_task_identity)`. Normalize the Project URL to its canonical `/users/<owner>/projects/<number>` or `/orgs/<owner>/projects/<number>` form after removing query, fragment, and trailing slash. Never use a title, mutable field, page position, or fetch order as identity.

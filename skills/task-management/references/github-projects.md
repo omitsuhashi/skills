@@ -41,6 +41,34 @@ Tool names may differ by host integration. Match semantic capabilities, but use 
 - Keep completed and cancelled items in the Project for history.
 - Do not create a Project, repository, field, option, view, or workflow as a side effect of normal task operations.
 
+## Page reconciliation and unique matching
+
+Reconcile observations by `canonical_project_item_identity`, then match and return each `canonical_task_identity` once. Process pages and observations in provider order, and retain the stable first-valid observation order for returned tasks.
+
+For a repeated Project item:
+
+- Count every observation after the first as deduplicated.
+- If its task identity changes, isolate that item as an identity conflict. Do not choose either task identity or return the item.
+- Merge `Status` and `Priority` independently. A field that is missing or ordinary `null` preserves the last known value. Clear a value only when the provider explicitly declares that field in an explicit-clear signal.
+- When both the old and new non-null values have timestamps, the newest timestamp wins; equal timestamps use the later provider observation.
+- When conflicting non-null values cannot be ordered because a timestamp is missing, isolate that item as a reconciliation conflict instead of guessing.
+
+Apply the requested filter only after reconciliation. Exclude isolated item conflicts. If multiple valid Project items resolve to the same task, return the canonical task once in its first-valid order, count an identity conflict, and mark the result partial. Other unambiguous results remain usable. A same-item/different-task conflict or reconciliation conflict likewise marks the result partial without discarding unrelated results.
+
+The result envelope reports `raw_observation_count`, `deduplicated_observation_count`, `identity_conflict_count`, `reconciliation_conflict_count`, `unique_task_count`, `returned_count`, `task_order`, `completeness`, `truncated`, `continuation`, and `stop_reason`. `raw_observation_count` counts all raw observations fetched and inspected during the call, including observations in an overshoot page that is deferred rather than committed.
+
+## Lossless unique-50 continuation
+
+The maximum is 50 unique matching tasks per call. Reconcile each whole page atomically against a candidate copy of the prior state:
+
+- If accepting the whole page yields fewer than 50 unique matches, commit it and continue when the provider has another page.
+- If accepting it yields exactly 50, commit it and stop with `unique_limit_reached`.
+- If accepting it would exceed 50, do not consume or commit any part of that page. Return the page's unchanged provider-supplied incoming cursor, the reconciliation state from before that page, and `unique_limit_page_deferred`, even though this can return fewer than 50 tasks.
+
+`ContinuationState` contains the opaque `provider_cursor` unchanged plus the exact `already_emitted_task_identities`. The resumed call supplies that incoming cursor and identity set, suppresses already emitted canonical tasks, and may then reconcile the formerly deferred whole page. It must not synthesize an intra-page offset, replacement cursor, item identity, or task identity. Provider intra-page resume is outside this contract because a later observation in the same page may revise an earlier one.
+
+When the source is exhausted, return `source_exhausted`; when a later page fails, preserve previously reconciled results, return that page's incoming cursor, and use the failure as `stop_reason`. Any continuation is partial; exhaustion is complete only when no conflict prevents completeness.
+
 ## Fields
 
 `Status` options:
