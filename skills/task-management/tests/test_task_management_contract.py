@@ -325,10 +325,19 @@ class TaskManagementContractTests(unittest.TestCase):
 
     def test_issue_only_operations_require_only_their_resolved_targets(self) -> None:
         capability_check = section(read(PROJECTS), "## Semantic capability check")
+        matrix = parse_capability_matrix(read(PROJECTS))
+        self.assertNotIn(
+            "access to the resolved owner, repository, Project",
+            capability_check,
+        )
         self.assertIn(
             "Require access only to the targets resolved by that operation.",
             capability_check,
         )
+        self.assertEqual({"issue_read"}, set(matrix["comment"]["read"]))
+        self.assertEqual({"issue_read"}, set(matrix["title_body_edit"]["read"]))
+        self.assertIn("project_item_read", matrix["status_priority_due_date"]["read"])
+        self.assertIn("target_project_read", matrix["create"]["read"])
 
     def test_operation_scoped_cases_derive_requirements_from_markdown(self) -> None:
         matrix = parse_capability_matrix(read(PROJECTS))
