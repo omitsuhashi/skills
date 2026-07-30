@@ -35,6 +35,15 @@ aliases:
 
 # SDD first-write worktree migration Implementation Plan
 
+## Draft Review Decision
+
+- status: `promoted`
+- owner decision: `promote`
+- decision authority: Human / repository maintainer（Canonical Owner）
+- decision date: 2026-07-30
+- destination: [[wiki/syntheses/sdd-first-write-worktree-migration-implementation-plan|SDD first-write worktree migration 実装計画]]
+- evidence: Human の明示承認
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Require `sdd-implementation` to bind the first repository content/artifact write to a captured-SHA Epic planning worktree, while preserving sequential SDD and offering a thin parallel adapter only for later opt-in Epics.

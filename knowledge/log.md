@@ -1845,3 +1845,8 @@ append-only で使います。すべての entry は予測しやすい header �
 
 - Human承認済みの[[wiki/syntheses/sdd-first-write-worktree-migration-spec|SDD first-write worktree migration 仕様]]をaccepted specとして、[[wiki/syntheses/sdd-first-write-worktree-migration-implementation-plan|SDD first-write worktree migration 実装計画]]をrepository-approved canonical implementation planとしてPlan Gateへ記録した。
 - Canonical OwnerであるHuman / repository maintainerの明示承認に基づく。remote publicationは承認・実施していない。
+
+## [2026-07-30] canonical-correction | SDD first-write worktree migration 実装計画
+
+- [[wiki/syntheses/sdd-first-write-worktree-migration-implementation-plan|SDD first-write worktree migration 実装計画]]に、昇格元draftの`## Draft Review Decision`本文を決定内容を変えずに復元した。canonical metadata、active catalog、accepted specとのrelation identityは維持した。
+- Canonical OwnerであるHuman / repository maintainerの承認済み昇格内容の完全性を是正するscoped correctionであり、remote publicationは承認・実施していない。
