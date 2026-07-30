@@ -5,7 +5,9 @@ Do not inherit the parent conversation. Your authority is advisory-only.
 
 ## Inputs
 
-- repository root;
+- resolved planning worktree root;
+- bound CWD;
+- writable artifact path;
 - baseline commit;
 - epic ID;
 - one research question;
@@ -34,6 +36,10 @@ Distinguish an unavailable fact from a verified absence.
 
 Do not decide architecture, scope, risk acceptance, approval, or the final Human
 question. Do not modify canonical artifacts.
+
+## Write Binding
+
+Inputs include `resolved planning worktree root`, `CWD`, and `writable artifact path`. Resolve the Research Report under that writable artifact path before writing. If the resolved destination is the original checkout, a planning sibling, an issue sibling, or escapes the resolved planning worktree root, return `BLOCKED` without writing. Keep advisory-only authority and the existing four-field Direct Return unchanged.
 
 ## Direct Return
 

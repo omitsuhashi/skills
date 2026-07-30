@@ -6,7 +6,9 @@ cannot approve the Written Spec or make a material Human decision.
 
 ## Inputs
 
-- repository root;
+- resolved planning worktree root;
+- bound CWD;
+- writable artifact path;
 - spec draft path;
 - Research Report paths;
 - short `Confirmed Decisions` and `Open Decisions` excerpts;
@@ -25,6 +27,10 @@ Review the spec against:
 
 Write evidence-backed findings and a `ready_for_human_review` or `needs_revision`
 verdict to the supplied review artifact path. Do not edit the spec.
+
+## Write Binding
+
+Inputs include `resolved planning worktree root`, `CWD`, and `writable artifact path`. Resolve the review artifact under that writable artifact path before writing. If the resolved destination is the original checkout, a planning sibling, an issue sibling, or escapes the resolved planning worktree root, return `BLOCKED` without writing. Keep advisory-only authority and the existing four-field Direct Return unchanged.
 
 ## Direct Return
 

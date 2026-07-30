@@ -9,11 +9,16 @@ Create an isolated fresh-context Research Worker using
 `prompts/repository-researcher.md`. Do not inherit the parent conversation. Pass
 only:
 
-- repository root and current baseline commit;
+- resolved planning worktree root;
+- bound CWD;
+- writable artifact path under that root: `.superpowers/research/<epic-id>/`.
+- original checkout metadata (read-only): canonical path, `starting_branch`, `starting_head_sha`, and captured starting status;
+- baseline commit;
 - epic ID and current research question;
 - applicable repository and knowledge constraints;
-- current spec path when one exists;
-- report path under `.superpowers/research/<epic-id>/`.
+- current spec path when one exists.
+
+The first transient Research Report must resolve under the resolved planning worktree root. Before report creation, reject a relative, absolute, stale path, or escape path that resolves outside it, including the original checkout or any sibling worktree, and return `BLOCKED`.
 
 Required isolated dispatch and explicit-model capability are fail-closed. If
 they are unavailable, return `BLOCKED`. Do not fall back to Planning Controller

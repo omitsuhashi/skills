@@ -6,7 +6,9 @@ Spec approval.
 
 ## Inputs
 
-- repository root;
+- resolved planning worktree root;
+- bound CWD;
+- writable artifact path;
 - current spec draft path;
 - Research Report paths;
 - short `Confirmed Decisions` and `Open Decisions` excerpts;
@@ -20,6 +22,10 @@ Do not fill an unresolved decision with an assumption.
 
 Keep `Confirmed Decisions` and `Open Decisions` in the spec draft as the only
 Decision Record. Do not create another ledger, `CONTEXT.md`, or `docs/adr/`.
+
+## Write Binding
+
+Inputs include `resolved planning worktree root`, `CWD`, and `writable artifact path`. Resolve the spec draft under that writable artifact path before writing. If the resolved destination is the original checkout, a planning sibling, an issue sibling, or escapes the resolved planning worktree root, return `BLOCKED` without writing. Keep advisory-only authority and the existing four-field Direct Return unchanged.
 
 ## Direct Return
 
