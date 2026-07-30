@@ -24,6 +24,9 @@ _現在なし。_
 - [[wiki/syntheses/sdd-first-write-worktree-migration-spec.md|SDD first-write worktree migration 仕様]] — 最初のrepository write前にEpic planning worktreeをallocate/reuseしてbindingを証明し、original checkoutを保全すること、ならびにHuman opt-inのparallel issueをsingle-writer integrationへ限定するHuman承認済みcurrent仕様。
   検索語: sdd-implementation, first write, planning worktree, original checkout, starting_branch, starting_head_sha, binding tuple, integration_branch, parallel issue, Epic adapter, fail closed, 作業ツリー, 最初の書込み, 保全, 並列実行, 統合
 
+- [[wiki/syntheses/sdd-first-write-worktree-migration-implementation-plan.md|SDD first-write worktree migration 実装計画]] — Human承認済みのcurrent implementation plan。captured-SHA Epic planning worktreeへのfirst-write binding、sequential SDD、後続Epicだけのthin opt-in parallel adapter、single-writer integration、final verificationを実行順に定義する。
+  検索語: sdd-implementation, implementation plan, Plan Gate, first write, planning worktree, captured SHA, integration branch, sequential SDD, parallel issue adapter, single writer, final review, 実装計画, 作業ツリー, 最初の書込み, 承認
+
 - [[wiki/syntheses/llm-wiki-authoring-responsibility-separation-spec|llm-wiki authoring 責務分離仕様]] — `llm-wiki` の構造・ライフサイクル責務と Obsidian authoring skill の serialization 責務を分離する、Written Spec Gate 承認済みの current 仕様。
   検索語: llm-wiki, authoring responsibility separation, structural lifecycle coordinator, Obsidian, authoring skill, serialization, fail closed, durable knowledge, 責務分離, 構造, ライフサイクル, 文書作成, 承認済み仕様
 - [[wiki/syntheses/llm-wiki-authoring-responsibility-separation-implementation-plan|llm-wiki authoring 責務分離実装計画]] — `Implemented / closeout verified`。承認済み仕様を、portable contract、semantic schema、Obsidian移行、durable knowledge closeout、full fresh verificationへ実装したcurrent plan。

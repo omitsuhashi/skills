@@ -1832,3 +1832,11 @@ append-only で使います。すべての entry は予測しやすい header �
 - Authority result: `Read: allowed`、`Write Boundary: owned`、Canonical OwnerのHuman承認、およびselected authoring profile `obsidian` の手順を満たし、direct canonical updateを許可した。
 - Lifecycle effect: draftを`promoted`として保持し、canonical targetを`accepted` / `active`として作成した。active catalogにはcanonical targetを1件だけ登録し、draftは登録していない。
 - Evidence: HumanのWritten Spec明示承認、draft内の`Confirmed Decisions`、`Open Decisions: なし`、および`knowledge/AGENTS.md`のsingle-root owner/write-boundary contract。
++
+## [2026-07-30] draft-review | SDD first-write worktree migration 実装計画
+
+- Actor: repository maintainer-delegated actor。Canonical OwnerであるHuman / repository maintainerの明示承認に基づく。
+- Decision: `promote`。proposal [[wiki/drafts/sdd-first-write-worktree-migration-implementation-plan|SDD first-write worktree migration Implementation Plan（昇格済み draft）]] を、active canonical synthesis [[wiki/syntheses/sdd-first-write-worktree-migration-implementation-plan|SDD first-write worktree migration 実装計画]] へ昇格した。
+- Authority result: `Read: allowed`、`Write Boundary: owned`、Canonical OwnerのHuman承認、およびselected authoring profile `obsidian` の手順を満たし、direct canonical updateを許可した。
+- Lifecycle effect: draftを`promoted`として保持し、canonical targetを`accepted` / `active` implementation planとして作成した。active catalogにはcanonical targetを1件だけ登録し、draftは登録していない。
+- Evidence: Humanのimplementation plan明示承認、承認済みdraft本文、および`knowledge/AGENTS.md`のsingle-root owner/write-boundary contract。remote publicationは承認・実施していない。
