@@ -1840,3 +1840,8 @@ append-only で使います。すべての entry は予測しやすい header �
 - Authority result: `Read: allowed`、`Write Boundary: owned`、Canonical OwnerのHuman承認、およびselected authoring profile `obsidian` の手順を満たし、direct canonical updateを許可した。
 - Lifecycle effect: draftを`promoted`として保持し、canonical targetを`accepted` / `active` implementation planとして作成した。active catalogにはcanonical targetを1件だけ登録し、draftは登録していない。
 - Evidence: Humanのimplementation plan明示承認、承認済みdraft本文、および`knowledge/AGENTS.md`のsingle-root owner/write-boundary contract。remote publicationは承認・実施していない。
+
+## [2026-07-30] plan-gate-approved | SDD first-write worktree migration
+
+- Human承認済みの[[wiki/syntheses/sdd-first-write-worktree-migration-spec|SDD first-write worktree migration 仕様]]をaccepted specとして、[[wiki/syntheses/sdd-first-write-worktree-migration-implementation-plan|SDD first-write worktree migration 実装計画]]をrepository-approved canonical implementation planとしてPlan Gateへ記録した。
+- Canonical OwnerであるHuman / repository maintainerの明示承認に基づく。remote publicationは承認・実施していない。
