@@ -376,6 +376,30 @@ EXPECTED_RETRY_SIDES = {
     "issue_reopen": {"issue_reopen"},
 }
 
+STATUS_WORDING = {
+    "Inbox": {"Inbox", "受信箱", "未整理"},
+    "Backlog": {"Backlog", "バックログ", "実施候補"},
+    "Ready": {"Ready", "着手可能", "準備完了"},
+    "In progress": {"In progress", "進行中", "着手中", "対応中"},
+    "Blocked": {"Blocked", "ブロック中", "停止中"},
+    "Done": {"Done", "完了", "終了"},
+    "Cancelled": {"Cancelled", "Canceled", "中止", "キャンセル"},
+}
+
+
+def duplicate_decision(
+    envelope_value: dict[str, object],
+    unique_match: bool,
+) -> dict[str, object]:
+    complete = (
+        envelope_value["completeness"] == "complete"
+        and not bool(envelope_value.get("truncated", False))
+    )
+    return {
+        "no_duplicate_claim": complete and not unique_match,
+        "create_allowed": complete and not unique_match,
+    }
+
 
 def field_options(text: str, field: str) -> list[str]:
     """Parse the backtick option names in one Project field subsection."""
@@ -495,6 +519,81 @@ class TaskManagementContractTests(unittest.TestCase):
             "raw observations fetched and inspected",
         ):
             self.assertIn(required, text)
+
+    def test_status_wording_and_schema_ambiguity_contract(self) -> None:
+        status_text = section(read(PROJECTS), "## Status normalization")
+        rows = parse_table(read(PROJECTS), "## Status normalization")
+        actual = {
+            row[0].strip("`"): {
+                value.strip().strip("`")
+                for value in row[1].split(",")
+            }
+            for row in rows
+        }
+        self.assertEqual(STATUS_WORDING, actual)
+        for required in (
+            "Normalize user wording to one canonical Status before",
+            "schema ambiguity",
+            "missing",
+            "duplicate",
+            "stop the operation",
+            "Do not guess",
+        ):
+            self.assertIn(required, status_text)
+
+    def test_duplicate_discovery_requires_complete_exhaustion(self) -> None:
+        partial = {"completeness": "partial"}
+        complete = {"completeness": "complete"}
+        self.assertEqual(
+            {"no_duplicate_claim": False, "create_allowed": False},
+            duplicate_decision(partial, unique_match=False),
+        )
+        self.assertEqual(
+            {"no_duplicate_claim": True, "create_allowed": True},
+            duplicate_decision(complete, unique_match=False),
+        )
+        self.assertEqual(
+            {"no_duplicate_claim": False, "create_allowed": False},
+            duplicate_decision(complete, unique_match=True),
+        )
+        self.assertEqual(
+            {"no_duplicate_claim": False, "create_allowed": False},
+            duplicate_decision(
+                {"completeness": "complete", "truncated": True},
+                unique_match=False,
+            ),
+        )
+
+        duplicate_text = section(read(ISSUES), "## Duplicate handling")
+        for required in (
+            "completeness-required",
+            "source exhaustion",
+            "create_allowed=false",
+            "partial",
+            "truncated",
+            "unique match",
+        ):
+            self.assertIn(required, duplicate_text)
+
+        pagination_text = section(read(PROJECTS), "## Completeness envelope")
+        for required in (
+            "`complete` only after raw source exhaustion",
+            "50-item display/return limit",
+            "investigation extent",
+            "provider-supplied continuation",
+            "Never synthesize",
+            "`partial`",
+            "schema ambiguity",
+            "permission failure",
+            "page retrieval failure",
+            "tool hard limit",
+            "resumption",
+        ):
+            self.assertIn(required, pagination_text)
+        self.assertNotIn(
+            "50 results means complete",
+            pagination_text.lower(),
+        )
 
     def test_standalone_structure_and_frontmatter(self) -> None:
         actual_files = {

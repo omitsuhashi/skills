@@ -41,6 +41,23 @@ Tool names may differ by host integration. Match semantic capabilities, but use 
 - Keep completed and cancelled items in the Project for history.
 - Do not create a Project, repository, field, option, view, or workflow as a side effect of normal task operations.
 
+## Status normalization
+
+| Canonical Status | Accepted user wording |
+| --- | --- |
+| `Inbox` | `Inbox`, `受信箱`, `未整理` |
+| `Backlog` | `Backlog`, `バックログ`, `実施候補` |
+| `Ready` | `Ready`, `着手可能`, `準備完了` |
+| `In progress` | `In progress`, `進行中`, `着手中`, `対応中` |
+| `Blocked` | `Blocked`, `ブロック中`, `停止中` |
+| `Done` | `Done`, `完了`, `終了` |
+| `Cancelled` | `Cancelled`, `Canceled`, `中止`, `キャンセル` |
+
+Normalize user wording to one canonical Status before comparing it with the
+Project schema. Do not guess between multiple Status values. A missing option,
+duplicate option, or other schema ambiguity must stop the operation as a schema
+mismatch before any write or filtered result claim.
+
 ## Page reconciliation and unique matching
 
 Reconcile observations by `canonical_project_item_identity`, then match and return each `canonical_task_identity` once. Process pages and observations in provider order, and retain the stable first-valid observation order for returned tasks.
@@ -68,6 +85,30 @@ The maximum is 50 unique matching tasks per call. Reconcile each whole page atom
 `ContinuationState` contains the opaque `provider_cursor` unchanged plus the exact `already_emitted_task_identities`. The resumed call supplies that incoming cursor and identity set, suppresses already emitted canonical tasks, and may then reconcile the formerly deferred whole page. It must not synthesize an intra-page offset, replacement cursor, item identity, or task identity. Provider intra-page resume is outside this contract because a later observation in the same page may revise an earlier one.
 
 When the source is exhausted, return `source_exhausted`; when a later page fails, preserve previously reconciled results, return that page's incoming cursor, and use the failure as `stop_reason`. Any continuation is partial; exhaustion is complete only when no conflict prevents completeness.
+
+## Completeness envelope
+
+Use the reconciled result envelope for unfiltered lists, Status-filtered lists,
+searches, duplicate discovery, and other completeness-required investigations.
+It reports `raw_observation_count`, `deduplicated_observation_count`,
+`identity_conflict_count`, `reconciliation_conflict_count`,
+`unique_task_count`, `returned_count`, `task_order`, `completeness`,
+`truncated`, `continuation`, and `stop_reason`.
+
+Set `complete` only after raw source exhaustion is confirmed and no identity,
+reconciliation, or schema ambiguity prevents a complete result. Reaching the
+unique-result limit, deferring a page, or stopping for a permission failure,
+page retrieval failure, schema ambiguity, or tool hard limit is `partial`.
+Preserve all already fetched, reconciled results and report the precise
+`stop_reason`, `truncated` state, provider-supplied continuation when available,
+and whether resumption is possible. Never synthesize a provider cursor,
+continuation value, or intra-page position.
+
+The 50-item display/return limit is distinct from investigation extent. A
+completeness-required investigation, including duplicate discovery, continues
+to raw source exhaustion even if only 50 items can be displayed or returned. If
+that investigation cannot exhaust the source, return `partial`; never treat 50
+returned results as evidence of completeness.
 
 ## Fields
 

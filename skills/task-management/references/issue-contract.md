@@ -28,6 +28,12 @@ Do not create the Issue when the outcome or acceptance criteria cannot support a
 
 ## Duplicate handling
 
-Search open Issues and current Project items read-only before creation. Reuse an Issue only when repository, outcome, and references make identity high-confidence. Similar titles alone are not sufficient. After a partial failure, resume from the returned Issue URL and never create a second Issue for the same operation.
+Search open Issues and current Project items read-only before creation. Duplicate discovery is a completeness-required investigation: paginate to source exhaustion and use the completeness envelope from `github-projects.md`. Reuse an Issue only when repository, outcome, and references make identity high-confidence. Similar titles alone are not sufficient. After a partial failure, resume from the returned Issue URL and never create a second Issue for the same operation.
+
+Only a `complete`, exhausted discovery with no unique match may claim no
+duplicate and set `create_allowed=true`. A `partial` or `truncated` discovery
+must set `create_allowed=false`, must not claim no duplicate, and must stop
+creation. A complete discovery that finds a unique match also sets
+`create_allowed=false` and reuses that Issue instead of creating another.
 
 When reusing an Issue or Project item, never create a second Issue. Preserve its current fields unless the requested operation or a documented unfinished partial-failure step requires a particular missing write. Do not reapply creation defaults or repeat completed steps.

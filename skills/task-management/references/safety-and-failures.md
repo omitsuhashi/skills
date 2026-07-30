@@ -18,6 +18,8 @@ Confirmation is required for ambiguous Project or repository selection, unclear 
 - Authentication or permission failure: name the target and rejected operation without requesting or storing a credential.
 - Schema mismatch: list missing fields or options and route to separate setup.
 - Ambiguous result: show candidates without writing.
+- Pagination, result-limit, deferred-page, provider hard-limit, or page-retrieval stop: preserve fetched results and return `partial`, the precise stop reason, truncation state, provider continuation when available, and whether resumption is possible.
+- Schema ambiguity during Status normalization: stop the operation and return `partial`; do not select an option by similarity.
 
 Do not fall back to a CLI, direct API client, browser automation, or local backend.
 
@@ -26,3 +28,8 @@ Do not fall back to a CLI, direct API client, browser automation, or local backe
 Do not delete the created Issue if Issue creation succeeds but Project add or field update fails. Return its URL, successful steps, unfinished steps, and the safe resume action. On retry, continue only the unfinished steps. Do not reset completed or current fields. Do not create a duplicate Issue.
 
 If Issue close and terminal Project Status diverge, do not roll back the successful side automatically. Report the mismatch and complete only the missing side after the applicable confirmation rule.
+
+For duplicate discovery or another completeness-required query, only confirmed
+raw source exhaustion may produce `complete`. A 50-item display/return limit is
+not an investigation limit. If discovery is `partial` or `truncated`, do not
+claim no duplicate and do not continue to create.

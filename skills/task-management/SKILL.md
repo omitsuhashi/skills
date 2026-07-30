@@ -35,6 +35,8 @@ Manage task content as GitHub Issues and portfolio state as Project items. Use a
 
 - Resolve only the query scope needed to answer.
 - Require only Issue read/search and Project read capabilities. Do not require write capabilities for a zero-write request.
+- Normalize a requested Status and apply the completeness envelope in `references/github-projects.md`. A result is complete only when raw source exhaustion is confirmed; otherwise preserve fetched results and report the partial stop.
+- Treat duplicate discovery and any request that depends on all matching tasks as completeness-required. The 50-item return limit does not limit that investigation.
 - Perform no mutation: never create or edit an Issue, add a comment, close an Issue, add an Issue to a Project, or update a Project field.
 - Return only read results, resolved scope, and any ambiguity that prevented an answer. Do not claim completed writes.
 
@@ -44,7 +46,7 @@ Only this operation uses the new-task flow:
 
 1. Determine the requested outcome and observable acceptance criteria.
 2. Resolve the Project and Issue repository.
-3. Search read-only for an obvious existing Issue and Project item.
+3. Search read-only for an obvious existing Issue and Project item through a completeness-required duplicate discovery. Stop creation unless discovery is complete and finds no unique match.
 4. Reuse a high-confidence match according to `references/issue-contract.md`.
 5. Before mutation, use the `create` preflight when creating an Issue or the `register_existing_issue` preflight when registering an existing Issue.
 6. If no Issue matches, create it. If the Issue is not yet in the selected Project, add it and apply `Status=Inbox`, `Priority=P2`, and no due date only to that newly created Project item when the user supplied no value.
