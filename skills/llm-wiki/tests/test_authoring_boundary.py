@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import re
 import subprocess
 import sys
 import unittest
@@ -32,10 +33,51 @@ MODE_REFERENCES = (
     SKILL_DIR / "references/modes/canonicalize.md",
     SKILL_DIR / "references/modes/lint.md",
 )
+SEMANTIC_SCHEMA_KEYS = (
+    "page_type",
+    "purpose",
+    "required_fields",
+    "optional_fields",
+    "relation_kinds",
+    "lifecycle_state",
+    "discoverability_metadata",
+    "provenance_requirement",
+    "index_log_effect",
+)
+INVENTORY_ASSETS = (
+    ("Knowledge-root local contract", TEMPLATE_ASSETS[0]),
+    ("Repository router", TEMPLATE_ASSETS[1]),
+    ("Root registry", TEMPLATE_ASSETS[2]),
+    ("Discovery index", TEMPLATE_ASSETS[3]),
+    ("Change log", TEMPLATE_ASSETS[4]),
+    ("Source summary", TEMPLATE_ASSETS[5]),
+    ("Entity", TEMPLATE_ASSETS[6]),
+    ("Concept", TEMPLATE_ASSETS[7]),
+    ("Synthesis", TEMPLATE_ASSETS[8]),
+    ("Query note", TEMPLATE_ASSETS[9]),
+    ("Draft note", TEMPLATE_ASSETS[10]),
+    ("Implementation progress ledger", TEMPLATE_ASSETS[11]),
+)
 
 
 def read(name: str) -> str:
     return (SKILL_DIR / name).read_text(encoding="utf-8")
+
+
+def semantic_schema_fields(text: str) -> dict[str, str]:
+    fields: dict[str, str] = {}
+    for line in text.splitlines():
+        match = re.fullmatch(r"- `([^`]+)`: (.+)", line)
+        if match and match.group(1) in SEMANTIC_SCHEMA_KEYS:
+            fields[match.group(1)] = match.group(2)
+    return fields
+
+
+def inventory_entry(text: str, heading: str) -> str:
+    start_marker = f"### {heading}\n"
+    start = text.index(start_marker) + len(start_marker)
+    end = text.find("\n### ", start)
+    return text[start:] if end == -1 else text[start:end]
 
 
 def report_operation(name: str) -> dict[str, object]:
@@ -78,12 +120,24 @@ class AuthoringBoundaryTests(unittest.TestCase):
         self.assertIn("Direct canonical update requires `Read: allowed`", single_root)
         self.assertIn("Proposal routing requires `Read: allowed`", single_root)
 
-    def test_every_semantic_template_declares_the_complete_schema_without_serialization_fields(self) -> None:
+    def test_every_semantic_template_is_syntax_neutral(self) -> None:
         for asset in TEMPLATE_ASSETS:
             text = asset.read_text(encoding="utf-8")
             self.assertIn("semantic fields", text.casefold())
             for forbidden in ("YAML frontmatter", "relative Markdown link", "wikilink", "callout", "embed"):
                 self.assertNotIn(forbidden.casefold(), text.casefold())
+
+    def test_inventory_and_assets_share_one_complete_semantic_contract(self) -> None:
+        inventory = read("references/page-authoring.md")
+        expected_keys = set(SEMANTIC_SCHEMA_KEYS)
+
+        for heading, asset in INVENTORY_ASSETS:
+            inventory_fields = semantic_schema_fields(inventory_entry(inventory, heading))
+            asset_fields = semantic_schema_fields(asset.read_text(encoding="utf-8"))
+
+            self.assertEqual(expected_keys, set(inventory_fields), heading)
+            self.assertEqual(expected_keys, set(asset_fields), str(asset))
+            self.assertEqual(inventory_fields, asset_fields, heading)
 
     def test_modes_delegate_authoring_without_reading_concrete_templates(self) -> None:
         for mode in MODE_REFERENCES:
