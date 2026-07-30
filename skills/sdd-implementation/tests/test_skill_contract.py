@@ -268,6 +268,45 @@ class SddImplementationSkillContractTests(unittest.TestCase):
             self.openai_text,
         )
 
+    def test_first_write_gate_precedes_controller(self) -> None:
+        self.assertLess(self.skill_text.index("## First-Write Worktree Gate"), self.skill_text.index("## Planning Controller"))
+        gate = self.skill_text.split("## First-Write Worktree Gate", 1)[1].split("## Planning Controller", 1)[0]
+        for value in ("read-only discovery", "detached HEAD", "default-branch inference", "`starting_branch`", "`starting_head_sha`", "`integration_branch`", "shared Git metadata", "zero content/artifact write", "original checkout fallback"):
+            self.assertIn(value, gate)
+
+    def test_parallel_adapter_leaves_issue_sdd_sequential(self) -> None:
+        section = self.skill_text.split("## Epic Parallel Issue Adapter", 1)[1].split("## Runtime Model", 1)[0]
+        for value in ("Within an issue, never dispatch concurrent implementers.", "Do not advance to the next task until its task review and any canonical fix are complete.", "Each issue execution unit has exactly one writer.", "does not schedule issue-internal tasks"):
+            self.assertIn(value, section)
+
+    def test_parallel_eligibility_is_fail_closed(self) -> None:
+        section = self.skill_text.split("## Epic Parallel Issue Adapter", 1)[1].split("## Runtime Model", 1)[0]
+        for value in ("explicit Human opt-in", "Human-approved issue plan", "one branch/worktree/session/plan/artifact workspace", "expected write overlap", "shared mutable resource", "pinned-base ancestry", "unknown", "sequential handling or Human decision"):
+            self.assertIn(value, section)
+
+    def test_actual_result_revalidation_is_required(self) -> None:
+        section = self.skill_text.split("## Epic Parallel Issue Adapter", 1)[1].split("## Runtime Model", 1)[0]
+        for value in ("actual commit range", "actual changed paths", "semantic/resource assumptions", "before integration-ready", "before every serialized integration", "sibling results"):
+            self.assertIn(value, section)
+
+    def test_every_task_commit_reachability_is_required(self) -> None:
+        section = self.skill_text.split("## Epic Parallel Issue Adapter", 1)[1].split("## Runtime Model", 1)[0]
+        for value in ("blocked or unreviewed result is not integration-ready", "every required issue/task commit", "reachable", "issue tip", "squash", "selected cherry-pick"):
+            self.assertIn(value, section)
+
+    def test_serialized_integration_and_target_drift_are_required(self) -> None:
+        section = self.skill_text.split("## Epic Parallel Issue Adapter", 1)[1].split("## Runtime Model", 1)[0]
+        for value in ("target head is unchanged", "single-writer serialized integration", "one ready issue at a time", "partial integrated state", "descendant advance", "non-descendant rewrite", "silently retarget"):
+            self.assertIn(value, section)
+
+    def test_combined_gate_is_canonical_and_single_pass(self) -> None:
+        for value in ("fresh combined verification", "whole-branch review", "one fixer", "exactly one scoped re-review", "second fix wave", "repeated whole-branch review"):
+            self.assertIn(value, self.skill_text)
+
+    def test_completion_and_publication_boundary(self) -> None:
+        for value in ("original-checkout preservation", "`LOCAL_COMPLETE`", "separate explicit authorization", "PR base", "PR head", "valid remote PR base"):
+            self.assertIn(value, self.skill_text)
+
 
 if __name__ == "__main__":
     unittest.main()
