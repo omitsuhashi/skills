@@ -938,4 +938,3 @@ temporary repository fixture または同等の isolated test で、次を検証
 ## Open Decisions
 
 なし。
-

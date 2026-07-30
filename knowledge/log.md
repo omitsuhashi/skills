@@ -1856,3 +1856,9 @@ append-only で使います。すべての entry は予測しやすい header �
 - accepted [[wiki/syntheses/sdd-first-write-worktree-migration-spec|SDD first-write worktree migration 仕様]] と canonical [[wiki/syntheses/sdd-first-write-worktree-migration-implementation-plan|SDD first-write worktree migration 実装計画]] に従い、first-write planning worktree gate、bound planning paths、後続Epic限定のopt-in parallel adapter、single-writer integration/final gateから成るportable contractを完了した。仕様・計画の承認済みproduct boundaryは変更していない。
 - 実装・task review済みcommitは Plan Gate `d463ce3`、Task 0 `62f9184`、Task 1 `17545a3` / `4942640`、Task 2 `cf30396` / `7477705` / `4551e06`であり、各task reviewはopen findingなしで完了した。promoted implementation-plan draftの先頭frontmatterを有効な`---`へ是正し、lifecycle / provenance / canonical target identityは維持した。
 - local validationはSDD implementation unittest、skill architecture validation、skill context validation、architecture / CI validator unittest、skill-creator authoring validation、`git diff --check`を通過した。captured tupleとのoriginal checkout比較は開始時の`main`、`282fa44a9fe97d9d0feb2e8d6733a6ae47f00f78`、clean statusと一致した。remote publicationは承認・実施していない。
+
+## [2026-07-30] human-ruling-correction | SDD first-write worktree migration
+
+- Human rulingにより、final whitespace gateの正本はclean working treeだけを見る`git diff --check`ではなく、complete planning-branch rangeを検査する`git diff --check 282fa44a9fe97d9d0feb2e8d6733a6ae47f00f78..HEAD`とした。[[wiki/syntheses/sdd-first-write-worktree-migration-implementation-plan|canonical implementation plan]]のTask 3/Task 4 closeout instructionsとglobal final-gate ruleをこの判断へ同期した。
+- [[wiki/syntheses/sdd-first-write-worktree-migration-spec|canonical specification]]末尾のsemanticsを持たないtrailing blank recordを除去した。accepted lifecycle、provenance、acceptance criteria、active catalog identityは変更していない。index summaryにgate表現は含まれないため変更不要である。
+- このscoped correctionは明示されたHuman rulingに基づく。fresh validation、original-checkout preservation確認、canonical final reviewはこの訂正commit後にあらためて行い、remote publicationは承認・実施していない。

@@ -61,7 +61,7 @@ aliases:
 - Issue SDD remains sequential. Later parallel mode needs explicit Human opt-in and Human-approved independent plans; one issue owns one branch/worktree/session/plan/artifact workspace and one writer.
 - Adapter authority is readiness/dependency/conflict verdict, allocation/wait/result routing, actual-result revalidation, and serialized single-writer integration only.
 - Unknown/conflicting dependency, overlap, semantic/resource, ancestry, target-drift, or integration facts fail closed. Every required task commit remains reachable from `integration_branch`.
-- Commit Plan Gate and implementation-closeout knowledge before fresh final verification and the one canonical whole-branch review. No repository write follows final review. Remote publication is separate authorization.
+- Commit Plan Gate and implementation-closeout knowledge before fresh final verification and the one canonical whole-branch review. The final whitespace gate is `git diff --check 282fa44a9fe97d9d0feb2e8d6733a6ae47f00f78..HEAD`; it proves the complete planning-branch range, not only a clean working tree. No repository write follows final review. Remote publication is separate authorization.
 
 ---
 
@@ -466,9 +466,9 @@ Expected: `Skill is valid!`; if no runtime-discovered equivalent exists, return 
 
 - [ ] **Step 4: Check diff and commit test edits if not already committed in Task 1**
 
-Run: `git diff --check`
+Run: `git diff --check 282fa44a9fe97d9d0feb2e8d6733a6ae47f00f78..HEAD`
 
-Expected: no output, exit 0.
+Expected: no output, exit 0 for the complete planning-branch range.
 
 ```bash
 git add skills/sdd-implementation/tests/test_skill_contract.py skills/sdd-implementation/tests/test_preimplementation_context.py skills/sdd-implementation/tests/test_first_write_worktree_contract.py
@@ -506,9 +506,9 @@ Run: `PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 scripts/validate_skill_con
 
 Expected: context validator PASS on final committed branch.
 
-Run: `git diff --check`
+Run: `git diff --check 282fa44a9fe97d9d0feb2e8d6733a6ae47f00f78..HEAD`
 
-Expected: no output, exit 0.
+Expected: no output, exit 0 for the complete planning-branch range.
 
   Invoke canonical Superpowers final whole-branch review exactly once. A material finding follows its one fixer/exactly one scoped re-review/adjudication flow; after that permitted fix commit, rerun fresh verification and only its scoped re-review. Do not start another full review.
 
