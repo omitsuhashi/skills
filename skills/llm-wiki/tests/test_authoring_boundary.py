@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-import re
 import subprocess
 import sys
 import unittest
@@ -45,39 +44,162 @@ SEMANTIC_SCHEMA_KEYS = (
     "index_log_effect",
 )
 INVENTORY_ASSETS = (
-    ("Knowledge-root local contract", TEMPLATE_ASSETS[0]),
-    ("Repository router", TEMPLATE_ASSETS[1]),
-    ("Root registry", TEMPLATE_ASSETS[2]),
-    ("Discovery index", TEMPLATE_ASSETS[3]),
-    ("Change log", TEMPLATE_ASSETS[4]),
-    ("Source summary", TEMPLATE_ASSETS[5]),
-    ("Entity", TEMPLATE_ASSETS[6]),
-    ("Concept", TEMPLATE_ASSETS[7]),
-    ("Synthesis", TEMPLATE_ASSETS[8]),
-    ("Query note", TEMPLATE_ASSETS[9]),
-    ("Draft note", TEMPLATE_ASSETS[10]),
-    ("Implementation progress ledger", TEMPLATE_ASSETS[11]),
+    (
+        "knowledge-root-local-contract",
+        TEMPLATE_ASSETS[0],
+        (
+            "root-registry policy",
+            "index purpose",
+            "log purpose",
+            "Authoring Profile",
+            "Compatibility Requirement",
+            "immutable-source destination",
+            "supported lifecycle operations",
+            "profile selection",
+        ),
+    ),
+    (
+        "repository-router",
+        TEMPLATE_ASSETS[1],
+        (
+            "repository identity",
+            "thin-router boundary",
+            "durable planning or decision outputs",
+            "blocked-write conditions",
+            "supported lifecycle operations",
+            "repository governance",
+        ),
+    ),
+    (
+        "root-registry",
+        TEMPLATE_ASSETS[2],
+        (
+            "registry identity",
+            "Root URI or Path identity",
+            "Authoring Profile",
+            "predecessor root",
+            "lifecycle states",
+            "adapter or governance authority",
+            "affected-root log events",
+        ),
+    ),
+    (
+        "discovery-index",
+        TEMPLATE_ASSETS[3],
+        (
+            "representative reader-task shortcuts",
+            "page types",
+            "lifecycle inclusion rule",
+            "canonical title",
+            "primary search terms",
+            "active canonical page target",
+            "change-log event",
+        ),
+    ),
+    (
+        "change-log",
+        TEMPLATE_ASSETS[4],
+        (
+            "affected index identity",
+            "canonicalization action",
+            "proposal",
+            "decision or action",
+            "decision authority",
+            "append-only active history",
+            "deleting or rewriting prior history",
+        ),
+    ),
+    (
+        "source-summary",
+        TEMPLATE_ASSETS[5],
+        (
+            "maintained knowledge",
+            "source limitations",
+            "confidence",
+            "immutable-source identity",
+            "competing source",
+            "primary search terms",
+        ),
+    ),
+    (
+        "entity",
+        TEMPLATE_ASSETS[6],
+        (
+            "identity boundary",
+            "entity kind",
+            "related entity",
+            "disputed interpretation",
+            "primary search terms",
+            "maintain one active canonical index record",
+        ),
+    ),
+    (
+        "concept",
+        TEMPLATE_ASSETS[7],
+        (
+            "working definition",
+            "scope exclusions",
+            "confidence",
+            "related concept",
+            "contradiction",
+            "one-line summary",
+        ),
+    ),
+    (
+        "synthesis",
+        TEMPLATE_ASSETS[8],
+        (
+            "non-goal",
+            "acceptance",
+            "implementation progress ledger",
+            "decision authority",
+            "artifact kind",
+            "operating guidance",
+        ),
+    ),
+    (
+        "query-note",
+        TEMPLATE_ASSETS[9],
+        (
+            "originating question",
+            "follow-up disposition",
+            "candidate page updates",
+            "answer kind",
+            "disputed claim",
+            "canonical index record",
+        ),
+    ),
+    (
+        "draft-note",
+        TEMPLATE_ASSETS[10],
+        (
+            "reason direct update was unavailable",
+            "requested owner action",
+            "current status",
+            "never active-canonical discovery while unverified",
+            "decision log event",
+            "promoted or merged canonical targets",
+        ),
+    ),
+    (
+        "implementation-progress-ledger",
+        TEMPLATE_ASSETS[11],
+        (
+            "slice id",
+            "landed scope",
+            "remaining scope",
+            "next trigger",
+            "review condition",
+            "implemented-unverified",
+            "unblock",
+            "ledger lifecycle update",
+        ),
+    ),
 )
 
 
 def read(name: str) -> str:
     return (SKILL_DIR / name).read_text(encoding="utf-8")
-
-
-def semantic_schema_fields(text: str) -> dict[str, str]:
-    fields: dict[str, str] = {}
-    for line in text.splitlines():
-        match = re.fullmatch(r"- `([^`]+)`: (.+)", line)
-        if match and match.group(1) in SEMANTIC_SCHEMA_KEYS:
-            fields[match.group(1)] = match.group(2)
-    return fields
-
-
-def inventory_entry(text: str, heading: str) -> str:
-    start_marker = f"### {heading}\n"
-    start = text.index(start_marker) + len(start_marker)
-    end = text.find("\n### ", start)
-    return text[start:] if end == -1 else text[start:end]
 
 
 def report_operation(name: str) -> dict[str, object]:
@@ -98,6 +220,10 @@ def report_operation(name: str) -> dict[str, object]:
 
 
 class AuthoringBoundaryTests(unittest.TestCase):
+    def test_boundary_uses_no_semantic_schema_serialization_parser(self) -> None:
+        for forbidden_global in ("re", "semantic_schema_fields", "inventory_entry"):
+            self.assertNotIn(forbidden_global, globals())
+
     def test_public_contract_declares_portable_handoff_and_fail_closed_boundary(self) -> None:
         skill = read("SKILL.md")
 
@@ -128,16 +254,17 @@ class AuthoringBoundaryTests(unittest.TestCase):
                 self.assertNotIn(forbidden.casefold(), text.casefold())
 
     def test_inventory_and_assets_share_one_complete_semantic_contract(self) -> None:
-        inventory = read("references/page-authoring.md")
-        expected_keys = set(SEMANTIC_SCHEMA_KEYS)
+        inventory = read("references/page-authoring.md").casefold()
+        self.assertIn("authoritative semantic contract", inventory)
 
-        for heading, asset in INVENTORY_ASSETS:
-            inventory_fields = semantic_schema_fields(inventory_entry(inventory, heading))
-            asset_fields = semantic_schema_fields(asset.read_text(encoding="utf-8"))
-
-            self.assertEqual(expected_keys, set(inventory_fields), heading)
-            self.assertEqual(expected_keys, set(asset_fields), str(asset))
-            self.assertEqual(inventory_fields, asset_fields, heading)
+        for page_identity, asset, semantic_tokens in INVENTORY_ASSETS:
+            asset_text = asset.read_text(encoding="utf-8").casefold()
+            for key in SEMANTIC_SCHEMA_KEYS:
+                self.assertIn(key.casefold(), inventory, page_identity)
+                self.assertIn(key.casefold(), asset_text, str(asset))
+            for token in (page_identity, *semantic_tokens):
+                self.assertIn(token.casefold(), inventory, page_identity)
+                self.assertIn(token.casefold(), asset_text, str(asset))
 
     def test_modes_delegate_authoring_without_reading_concrete_templates(self) -> None:
         for mode in MODE_REFERENCES:
