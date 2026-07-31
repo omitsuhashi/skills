@@ -102,6 +102,11 @@ For a repeated Project item:
   non-null observation may replace the clear only when its timestamp is at
   least as fresh; an older or unorderable observation must not resurrect the
   cleared value.
+- Tombstone presence is distinct from its timestamp value. Accept and retain a
+  timestamp-less tombstone when the provider explicitly clears a field with no
+  timestamp. A later non-null value cannot be ordered against that tombstone:
+  keep the field cleared and isolate the item as a reconciliation conflict
+  until exact readback establishes an authoritative order.
 - When both the old and new non-null values have timestamps, the newest timestamp wins; equal timestamps use the later provider observation.
 - A same-value observation advances only that field's freshness, including Due
   date; it cannot make another field stale. Due date update, missing/null
@@ -137,8 +142,9 @@ state:
 - If accepting it yields exactly 50, commit it and stop with `unique_limit_reached`.
 - If accepting it would exceed 50, do not consume or commit any part of that page. Return the page's unchanged provider-supplied incoming cursor, the reconciliation state from before that page, and `unique_limit_page_deferred`, even though this can return fewer than 50 tasks.
 
-`ContinuationState` contains two separate values: the opaque provider
-continuation unchanged, and a caller-held lossless reconciliation checkpoint.
+`ContinuationState` is one indivisible caller-held value containing the opaque
+provider continuation unchanged, a lossless reconciliation checkpoint, and a
+non-secret association that binds those exact two components.
 The provider continuation is never embedded in the checkpoint. The checkpoint
 uses an explicit allowlist only: canonical item/task identities; reconciled
 Status, Priority, and Due date values; per-field freshness and explicit-clear
@@ -146,15 +152,20 @@ tombstones; stable first-valid order; item-identity, reconciliation, and
 membership conflicts; `already_emitted_task_identities`; cumulative raw and
 deduplicated counts; normalized filter and query mode; and the aggregate
 matching, display, and invalidated identity sets. The resumed call supplies the
-unchanged provider continuation beside that checkpoint, suppresses already
-emitted canonical tasks only after membership conflict detection, and may then
-reconcile the formerly deferred whole page.
+exact prior `ContinuationState`, suppresses already emitted canonical tasks only
+after membership conflict detection, and may then reconcile the formerly
+deferred whole page.
 
 This checkpoint is portable state, not a credential. It must not contain a
 credential, secret, authentication-token value, raw provider session, arbitrary
 provider key, or arbitrary provider payload. Checkpoint serialization copies
-only the allowlisted fields and recursively excludes everything else. The
-provider continuation remains opaque and unchanged; the skill must not synthesize an
+only the allowlisted fields and recursively excludes everything else. It must
+also recursively type-check every allowlisted value before serialization and
+resume: identities and timestamps are normalized strings, Status/Priority/Due
+date are permitted scalar forms, counts are non-negative integers, collections
+contain normalized strings, and maps use their exact declared schemas.
+Malformed provider values are never stringified or copied; isolate their item
+as `partial`. The provider continuation remains opaque and unchanged; the skill must not synthesize an
 intra-page offset, replacement cursor, item identity, or task identity.
 Provider intra-page resume is outside this contract because a later observation
 in the same page may revise an earlier one. Preserving only a cursor and emitted
@@ -163,6 +174,16 @@ identity, field value, explicit-clear state, freshness, or Project membership.
 
 An opaque provider continuation token is permitted only as pagination state and
 must be returned unchanged.
+
+The caller must not decompose `ContinuationState`, pair its checkpoint with a
+separately supplied cursor, or recombine components from different results.
+Resume accepts only `resume_continuation_state`. Before any provider fetch,
+verify its exact schema, recursively validate the checkpoint, verify the
+cursor/checkpoint association, and consume the bound provider continuation
+unchanged. Reject a missing, altered, or mismatched association as `blocked`;
+such a request cannot reach a duplicate-creation decision. The result envelope
+may expose the unchanged opaque continuation for diagnostics, but that value is
+not a standalone resume input.
 
 Before resume, compare the checkpoint's normalized Status filter and query mode
 with the new request. Reject a mismatch before reading another page. After

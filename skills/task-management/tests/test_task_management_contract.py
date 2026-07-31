@@ -1,5 +1,7 @@
 import json
+import hashlib
 from copy import deepcopy
+from datetime import datetime
 from pathlib import Path
 import re
 import unittest
@@ -76,6 +78,67 @@ def expand_page(page: dict[str, object]) -> list[dict[str, object]]:
 
 
 RECONCILED_FIELDS = ("status", "priority", "due_date")
+CANONICAL_STATUSES = {
+    "Inbox",
+    "Backlog",
+    "Ready",
+    "In progress",
+    "Blocked",
+    "Done",
+    "Cancelled",
+}
+CANONICAL_PRIORITIES = {"P0", "P1", "P2", "P3"}
+TIMESTAMP_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
+DUE_DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+INVALID_VALUE = object()
+
+
+def normalized_identity(value: object) -> object:
+    if (
+        type(value) is str
+        and value
+        and not any(ord(character) < 32 for character in value)
+    ):
+        return value
+    return None
+
+
+def normalized_timestamp(value: object) -> object:
+    if value is None:
+        return None
+    if type(value) is str and TIMESTAMP_PATTERN.fullmatch(value):
+        try:
+            datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
+        except ValueError:
+            return INVALID_VALUE
+        return value
+    return INVALID_VALUE
+
+
+def normalized_field_value(field: str, value: object) -> object:
+    if value is None:
+        return None
+    if field == "status" and type(value) is str and value in CANONICAL_STATUSES:
+        return value
+    if field == "priority" and type(value) is str and value in CANONICAL_PRIORITIES:
+        return value
+    if field == "due_date" and type(value) is str and DUE_DATE_PATTERN.fullmatch(value):
+        try:
+            datetime.strptime(value, "%Y-%m-%d")
+        except ValueError:
+            return INVALID_VALUE
+        return value
+    return INVALID_VALUE
+
+
+def normalized_explicit_clear(value: object) -> object:
+    if type(value) is not list:
+        return None
+    if any(type(field) is not str or field not in RECONCILED_FIELDS for field in value):
+        return None
+    if len(value) != len(set(value)):
+        return None
+    return set(value)
 
 
 def merge_observation(
@@ -84,49 +147,70 @@ def merge_observation(
     item_identity_conflicts: set[str],
     reconciliation_conflicts: set[str],
 ) -> bool:
-    item_id = str(observation["item_identity"])
+    item_id = normalized_identity(observation.get("item_identity"))
+    if item_id is None:
+        item_identity_conflicts.add("malformed-item-identity")
+        return False
+    task_id = normalized_identity(observation.get("task_identity"))
+    if task_id is None:
+        item_identity_conflicts.add(item_id)
+        task_id = "malformed-task-identity"
+    explicit_clear = normalized_explicit_clear(
+        observation.get("explicit_clear", [])
+    )
+    if explicit_clear is None:
+        explicit_clear = set()
+        reconciliation_conflicts.add(item_id)
+    new_time = normalized_timestamp(observation.get("updated_at"))
+    timestamp_is_valid = new_time is not INVALID_VALUE
+    if not timestamp_is_valid:
+        new_time = None
+        reconciliation_conflicts.add(item_id)
     current = items.get(item_id)
     if current is None:
-        explicit_clear = set(observation.get("explicit_clear", []))
+        normalized_fields: dict[str, object] = {}
+        for field in RECONCILED_FIELDS:
+            value = normalized_field_value(field, observation.get(field))
+            if value is INVALID_VALUE:
+                reconciliation_conflicts.add(item_id)
+                value = None
+            normalized_fields[field] = (
+                None if field in explicit_clear else value
+            )
         initial = {
             "item_identity": item_id,
-            "task_identity": str(observation["task_identity"]),
-            **{
-                field: (
-                    None
-                    if field in explicit_clear
-                    else deepcopy(observation.get(field))
-                )
-                for field in RECONCILED_FIELDS
-            },
+            "task_identity": task_id,
+            **normalized_fields,
         }
         initial["_field_updated_at"] = {
-            field: observation.get("updated_at")
+            field: new_time
             for field in RECONCILED_FIELDS
             if (
+                timestamp_is_valid
+                and
                 field in observation
                 and (
-                    observation[field] is not None
+                    normalized_fields[field] is not None
                     or field in explicit_clear
                 )
             )
         }
         initial["_field_tombstones"] = {
-            field: observation.get("updated_at")
+            field: new_time
             for field in explicit_clear
             if field in RECONCILED_FIELDS
         }
         items[item_id] = initial
         return False
-    if current["task_identity"] != observation["task_identity"]:
+    if current["task_identity"] != task_id:
         item_identity_conflicts.add(item_id)
         return True
-    explicit_clear = set(observation.get("explicit_clear", []))
+    if not timestamp_is_valid:
+        return True
     field_updated_at = current.setdefault("_field_updated_at", {})
     field_tombstones = current.setdefault("_field_tombstones", {})
     for field in RECONCILED_FIELDS:
         old_time = field_updated_at.get(field)
-        new_time = observation.get("updated_at")
         if field in explicit_clear:
             if (
                 old_time is not None
@@ -140,10 +224,20 @@ def merge_observation(
             continue
         if field not in observation:
             continue
-        incoming = observation[field]
+        incoming = normalized_field_value(field, observation[field])
+        if incoming is INVALID_VALUE:
+            reconciliation_conflicts.add(item_id)
+            continue
         existing = current.get(field)
         if incoming is None:
             continue
+        if field in field_tombstones:
+            tombstone_time = field_tombstones[field]
+            if tombstone_time is None or new_time is None:
+                reconciliation_conflicts.add(item_id)
+                continue
+            if str(new_time) < str(tombstone_time):
+                continue
         if (
             old_time is not None
             and new_time is not None
@@ -288,24 +382,44 @@ def checkpoint_for(
     field_freshness: dict[str, dict[str, object]] = {}
     field_tombstones: dict[str, dict[str, object]] = {}
     for item_id, item in items.items():
+        if normalized_identity(item_id) != item_id:
+            raise AssertionError("checkpoint item identity is malformed")
+        task_id = normalized_identity(item.get("task_identity"))
+        if task_id is None:
+            raise AssertionError("checkpoint task identity is malformed")
+        safe_fields: dict[str, object] = {}
+        for field in RECONCILED_FIELDS:
+            value = normalized_field_value(field, item.get(field))
+            if value is INVALID_VALUE:
+                raise AssertionError(
+                    f"checkpoint {field} is not a permitted scalar"
+                )
+            safe_fields[field] = value
         serialized_items[item_id] = {
             "item_identity": item_id,
-            "task_identity": str(item["task_identity"]),
-            **{
-                field: deepcopy(item.get(field))
-                for field in RECONCILED_FIELDS
-            },
+            "task_identity": task_id,
+            **safe_fields,
         }
-        field_freshness[item_id] = {
-            field: deepcopy(item.get("_field_updated_at", {}).get(field))
-            for field in RECONCILED_FIELDS
-            if field in item.get("_field_updated_at", {})
-        }
-        field_tombstones[item_id] = {
-            field: deepcopy(item.get("_field_tombstones", {}).get(field))
-            for field in RECONCILED_FIELDS
-            if field in item.get("_field_tombstones", {})
-        }
+        field_freshness[item_id] = {}
+        field_tombstones[item_id] = {}
+        for map_name, target in (
+            ("_field_updated_at", field_freshness[item_id]),
+            ("_field_tombstones", field_tombstones[item_id]),
+        ):
+            values = item.get(map_name, {})
+            if type(values) is not dict or not set(values).issubset(
+                RECONCILED_FIELDS
+            ):
+                raise AssertionError(
+                    f"checkpoint {map_name} has an invalid field schema"
+                )
+            for field, timestamp in values.items():
+                normalized = normalized_timestamp(timestamp)
+                if normalized is INVALID_VALUE:
+                    raise AssertionError(
+                        f"checkpoint {map_name} timestamp is malformed"
+                    )
+                target[field] = normalized
     _, membership_conflicts, matching = matching_state(
         items=items,
         first_seen=first_seen,
@@ -314,7 +428,7 @@ def checkpoint_for(
         requested_filter=requested_filter,
     )
     invalidated = sorted(already_emitted - set(matching))
-    return {
+    checkpoint = {
         "items": serialized_items,
         "field_freshness": field_freshness,
         "field_tombstones": field_tombstones,
@@ -332,6 +446,197 @@ def checkpoint_for(
         "display_task_identities": matching[:50],
         "invalidated_task_identities": invalidated,
     }
+    validate_checkpoint(checkpoint)
+    return checkpoint
+
+
+CHECKPOINT_KEYS = {
+    "items",
+    "field_freshness",
+    "field_tombstones",
+    "first_seen",
+    "item_identity_conflicts",
+    "reconciliation_conflicts",
+    "membership_conflicts",
+    "already_emitted_task_identities",
+    "raw_observation_count",
+    "deduplicated_observation_count",
+    "normalized_filter",
+    "query_mode",
+    "matching_task_identities",
+    "unique_matching_count",
+    "display_task_identities",
+    "invalidated_task_identities",
+}
+CHECKPOINT_ITEM_KEYS = {
+    "item_identity",
+    "task_identity",
+    "status",
+    "priority",
+    "due_date",
+}
+
+
+def require_normalized_string_list(value: object, label: str) -> list[str]:
+    if type(value) is not list:
+        raise AssertionError(f"checkpoint {label} must be a list")
+    normalized: list[str] = []
+    for entry in value:
+        identity = normalized_identity(entry)
+        if identity is None:
+            raise AssertionError(
+                f"checkpoint {label} must contain normalized strings"
+            )
+        normalized.append(identity)
+    if len(normalized) != len(set(normalized)):
+        raise AssertionError(f"checkpoint {label} must not contain duplicates")
+    return normalized
+
+
+def validate_checkpoint(checkpoint: object) -> None:
+    if type(checkpoint) is not dict or set(checkpoint) != CHECKPOINT_KEYS:
+        raise AssertionError("checkpoint must have the exact safe schema")
+    items = checkpoint["items"]
+    if type(items) is not dict:
+        raise AssertionError("checkpoint items must be an object")
+    for item_id, item in items.items():
+        if normalized_identity(item_id) != item_id:
+            raise AssertionError("checkpoint item keys must be normalized strings")
+        if type(item) is not dict or set(item) != CHECKPOINT_ITEM_KEYS:
+            raise AssertionError("checkpoint item must have the exact safe schema")
+        if item["item_identity"] != item_id:
+            raise AssertionError("checkpoint item identity must match its key")
+        if normalized_identity(item["task_identity"]) is None:
+            raise AssertionError("checkpoint task identity must be a string")
+        for field in RECONCILED_FIELDS:
+            if normalized_field_value(field, item[field]) is INVALID_VALUE:
+                raise AssertionError(
+                    f"checkpoint {field} must be a permitted scalar"
+                )
+
+    for map_name in ("field_freshness", "field_tombstones"):
+        field_map = checkpoint[map_name]
+        if type(field_map) is not dict or set(field_map) != set(items):
+            raise AssertionError(
+                f"checkpoint {map_name} must map every exact item"
+            )
+        for item_id, values in field_map.items():
+            if type(values) is not dict or not set(values).issubset(
+                RECONCILED_FIELDS
+            ):
+                raise AssertionError(
+                    f"checkpoint {map_name} has an invalid field schema"
+                )
+            for timestamp in values.values():
+                if normalized_timestamp(timestamp) is INVALID_VALUE:
+                    raise AssertionError(
+                        f"checkpoint {map_name} timestamps must be scalar"
+                    )
+
+    first_seen = checkpoint["first_seen"]
+    if type(first_seen) is not dict:
+        raise AssertionError("checkpoint first_seen must be an object")
+    for task_id, ordinal in first_seen.items():
+        if normalized_identity(task_id) != task_id:
+            raise AssertionError("checkpoint first_seen keys must be strings")
+        if type(ordinal) is not int or ordinal < 0:
+            raise AssertionError(
+                "checkpoint first_seen ordinals must be non-negative integers"
+            )
+
+    for collection_name in (
+        "item_identity_conflicts",
+        "reconciliation_conflicts",
+        "already_emitted_task_identities",
+        "matching_task_identities",
+        "display_task_identities",
+        "invalidated_task_identities",
+    ):
+        require_normalized_string_list(
+            checkpoint[collection_name],
+            collection_name,
+        )
+
+    membership_conflicts = checkpoint["membership_conflicts"]
+    if type(membership_conflicts) is not dict:
+        raise AssertionError("checkpoint membership_conflicts must be an object")
+    for task_id, memberships in membership_conflicts.items():
+        if normalized_identity(task_id) != task_id:
+            raise AssertionError(
+                "checkpoint membership conflict keys must be strings"
+            )
+        require_normalized_string_list(
+            memberships,
+            "membership conflict memberships",
+        )
+
+    for count_name in (
+        "raw_observation_count",
+        "deduplicated_observation_count",
+        "unique_matching_count",
+    ):
+        value = checkpoint[count_name]
+        if type(value) is not int or value < 0:
+            raise AssertionError(
+                f"checkpoint {count_name} must be a non-negative integer"
+            )
+    normalized_filter = checkpoint["normalized_filter"]
+    if not (
+        normalized_filter is None
+        or (
+            type(normalized_filter) is str
+            and normalized_filter in CANONICAL_STATUSES
+        )
+    ):
+        raise AssertionError("checkpoint normalized_filter must be canonical")
+    query_mode = checkpoint["query_mode"]
+    if type(query_mode) is not str or query_mode not in {
+        "standard_display",
+        "completeness_required",
+    }:
+        raise AssertionError("checkpoint query_mode is invalid")
+    matching = checkpoint["matching_task_identities"]
+    if checkpoint["unique_matching_count"] != len(matching):
+        raise AssertionError("checkpoint unique count must match identities")
+    if checkpoint["display_task_identities"] != matching[:50]:
+        raise AssertionError("checkpoint display must be the first 50 matches")
+
+
+def continuation_association(
+    provider_continuation: object,
+    checkpoint: dict[str, object],
+) -> str:
+    if provider_continuation is not None and type(provider_continuation) is not str:
+        raise AssertionError("provider continuation must be an opaque string")
+    validate_checkpoint(checkpoint)
+    payload = json.dumps(
+        {
+            "provider_continuation": provider_continuation,
+            "checkpoint": checkpoint,
+        },
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+    return "sha256:" + hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def continuation_state_for(
+    provider_continuation: object,
+    checkpoint: dict[str, object],
+) -> dict[str, object]:
+    return {
+        "provider_continuation": provider_continuation,
+        "checkpoint": checkpoint,
+        "association": continuation_association(
+            provider_continuation,
+            checkpoint,
+        ),
+    }
+
+
+def result_checkpoint(result: dict[str, object]) -> dict[str, object]:
+    return result["continuation_state"]["checkpoint"]
 
 
 def attach_checkpoint(
@@ -349,7 +654,7 @@ def attach_checkpoint(
 ) -> dict[str, object]:
     emitted = set(already_emitted)
     emitted.update(result["_returned_task_identities"])
-    result["checkpoint"] = checkpoint_for(
+    checkpoint = checkpoint_for(
         items=items,
         first_seen=first_seen,
         item_identity_conflicts=item_identity_conflicts,
@@ -359,6 +664,10 @@ def attach_checkpoint(
         duplicate_count=duplicate_count,
         requested_filter=requested_filter,
         query_mode=query_mode,
+    )
+    result["continuation_state"] = continuation_state_for(
+        result["continuation"],
+        checkpoint,
     )
     return result
 
@@ -372,40 +681,86 @@ def reconcile_pages(case: dict[str, object]) -> dict[str, object]:
         if case.get("mode") == "completeness_required"
         else "standard_display"
     )
-    resume = case.get("resume_checkpoint", {})
-    if not isinstance(resume, dict):
-        raise AssertionError("resume_checkpoint must be an object")
+    if (
+        "resume_checkpoint" in case
+        or "resume_provider_continuation" in case
+    ):
+        raise AssertionError(
+            "resume requires one indivisible ContinuationState"
+        )
+    resume_state = case.get("resume_continuation_state")
+    expected_resume_cursor = None
+    if resume_state is None:
+        resume: dict[str, object] = {}
+    else:
+        if (
+            type(resume_state) is not dict
+            or set(resume_state)
+            != {"provider_continuation", "checkpoint", "association"}
+        ):
+            raise AssertionError(
+                "resume requires one indivisible ContinuationState"
+            )
+        resume_checkpoint = resume_state["checkpoint"]
+        if type(resume_checkpoint) is not dict:
+            raise AssertionError("ContinuationState checkpoint is invalid")
+        expected_association = continuation_association(
+            resume_state["provider_continuation"],
+            resume_checkpoint,
+        )
+        if resume_state["association"] != expected_association:
+            raise AssertionError(
+                "ContinuationState association does not match cursor/checkpoint"
+            )
+        expected_resume_cursor = resume_state["provider_continuation"]
+        resume = resume_checkpoint
     if resume:
+        validate_checkpoint(resume)
         if resume.get("normalized_filter") != requested_filter:
             raise AssertionError(
                 "resume checkpoint normalized Status filter does not match"
             )
         if resume.get("query_mode") != query_mode:
             raise AssertionError("resume checkpoint query mode does not match")
-    items = deepcopy(resume.get("items", {}))
-    if not isinstance(items, dict):
-        raise AssertionError("checkpoint items must be an object")
+    items = {
+        item_id: {
+            "item_identity": item["item_identity"],
+            "task_identity": item["task_identity"],
+            **{
+                field: item[field]
+                for field in RECONCILED_FIELDS
+            },
+        }
+        for item_id, item in dict(resume.get("items", {})).items()
+    }
     freshness = resume.get("field_freshness", {})
-    if not isinstance(freshness, dict):
-        raise AssertionError("checkpoint field_freshness must be an object")
     tombstones = resume.get("field_tombstones", {})
-    if not isinstance(tombstones, dict):
-        raise AssertionError("checkpoint field_tombstones must be an object")
     for item_id, item in items.items():
-        item["_field_updated_at"] = deepcopy(freshness.get(item_id, {}))
-        item["_field_tombstones"] = deepcopy(tombstones.get(item_id, {}))
+        item["_field_updated_at"] = {
+            field: timestamp
+            for field, timestamp in freshness.get(item_id, {}).items()
+        }
+        item["_field_tombstones"] = {
+            field: timestamp
+            for field, timestamp in tombstones.get(item_id, {}).items()
+        }
     first_seen = {
-        str(task_id): int(ordinal)
+        task_id: ordinal
         for task_id, ordinal in dict(resume.get("first_seen", {})).items()
     }
-    raw_count = int(resume.get("raw_observation_count", 0))
-    duplicate_count = int(resume.get("deduplicated_observation_count", 0))
+    raw_count = resume.get("raw_observation_count", 0)
+    duplicate_count = resume.get("deduplicated_observation_count", 0)
     call_start_raw = raw_count
     call_start_duplicates = duplicate_count
     item_identity_conflicts = set(resume.get("item_identity_conflicts", []))
     reconciliation_conflicts = set(resume.get("reconciliation_conflicts", []))
     already_emitted = set(resume.get("already_emitted_task_identities", []))
-    already_emitted.update(case.get("already_emitted_task_identities", []))
+    already_emitted.update(
+        require_normalized_string_list(
+            case.get("already_emitted_task_identities", []),
+            "already_emitted_task_identities input",
+        )
+    )
     completeness_required = query_mode == "completeness_required"
 
     def output_counts(
@@ -419,8 +774,16 @@ def reconcile_pages(case: dict[str, object]) -> dict[str, object]:
             cumulative_duplicates - call_start_duplicates,
         )
 
-    for page in case["pages"]:
+    for page_index, page in enumerate(case["pages"]):
         incoming = page.get("incoming_cursor")
+        if (
+            page_index == 0
+            and resume_state is not None
+            and incoming != expected_resume_cursor
+        ):
+            raise AssertionError(
+                "ContinuationState association cursor must be consumed unchanged"
+            )
         if "error" in page:
             output_raw, output_duplicates = output_counts(
                 raw_count,
@@ -473,8 +836,10 @@ def reconcile_pages(case: dict[str, object]) -> dict[str, object]:
                 candidate_conflicts,
             ):
                 candidate_duplicates += 1
-            item_id = str(observation["item_identity"])
-            task_id = str(observation["task_identity"])
+            item_id = normalized_identity(observation.get("item_identity"))
+            task_id = normalized_identity(observation.get("task_identity"))
+            if item_id is None or task_id is None or item_id not in candidate_items:
+                continue
             item = candidate_items[item_id]
             if (
                 item_id not in candidate_identity_conflicts
@@ -951,6 +1316,214 @@ def field_options(text: str, field: str) -> list[str]:
 
 
 class TaskManagementContractTests(unittest.TestCase):
+    def test_checkpoint_recursively_rejects_nested_secret_and_malformed_values(
+        self,
+    ) -> None:
+        result = reconcile_pages(
+            {
+                "filter": "Ready",
+                "pages": [
+                    {
+                        "incoming_cursor": None,
+                        "outgoing_cursor": None,
+                        "has_next": False,
+                        "items": [
+                            {
+                                "item_identity": "PVTI-NESTED",
+                                "task_identity": "I-NESTED",
+                                "status": "Ready",
+                                "priority": {
+                                    "authentication_token": "NESTED-SECRET",
+                                },
+                                "due_date": "2026-08-10",
+                                "updated_at": [
+                                    "malformed",
+                                    {
+                                        "raw_provider_session": "NESTED-SESSION",
+                                    },
+                                ],
+                                "raw_provider_session": {
+                                    "nested": {
+                                        "authentication_token": "NESTED-SESSION",
+                                    }
+                                },
+                            }
+                        ],
+                    }
+                ],
+            }
+        )
+        self.assertEqual("partial", result["completeness"])
+        self.assertEqual(
+            "reconciliation_conflict",
+            result["stop_reason"],
+        )
+        self.assertEqual(1, result["reconciliation_conflict_count"])
+        checkpoint = result["continuation_state"]["checkpoint"]
+        serialized = json.dumps(checkpoint, sort_keys=True)
+        for forbidden in (
+            "NESTED-SECRET",
+            "NESTED-SESSION",
+            "authentication_token",
+            "raw_provider_session",
+            "malformed",
+        ):
+            self.assertNotIn(forbidden, serialized)
+        self.assertIsNone(checkpoint["items"]["PVTI-NESTED"]["priority"])
+        self.assertEqual(
+            {},
+            checkpoint["field_freshness"]["PVTI-NESTED"],
+        )
+        malformed_checkpoint = deepcopy(checkpoint)
+        malformed_checkpoint["items"]["PVTI-NESTED"]["priority"] = {
+            "authentication_token": "NESTED-RESUME-SECRET",
+        }
+        with self.assertRaisesRegex(AssertionError, "permitted scalar"):
+            validate_checkpoint(malformed_checkpoint)
+
+        negative_count = deepcopy(checkpoint)
+        negative_count["raw_observation_count"] = -1
+        with self.assertRaisesRegex(AssertionError, "non-negative integer"):
+            validate_checkpoint(negative_count)
+
+        nested_collection = deepcopy(checkpoint)
+        nested_collection["matching_task_identities"] = [
+            {"raw_provider_session": "NESTED-COLLECTION-SECRET"}
+        ]
+        with self.assertRaisesRegex(AssertionError, "normalized strings"):
+            validate_checkpoint(nested_collection)
+        self.assertIn(
+            "recursively type-check",
+            read(PROJECTS),
+        )
+
+    def test_timestamp_less_clear_blocks_unordered_resurrection(self) -> None:
+        for field, initial in (
+            ("status", "Ready"),
+            ("priority", "P1"),
+            ("due_date", "2026-08-10"),
+        ):
+            with self.subTest(field=field):
+                items: dict[str, dict[str, object]] = {}
+                identity_conflicts: set[str] = set()
+                reconciliation_conflicts: set[str] = set()
+                merge_observation(
+                    items,
+                    {
+                        "item_identity": f"PVTI-NO-TIME-{field}",
+                        "task_identity": f"I-NO-TIME-{field}",
+                        field: initial,
+                        "updated_at": "2026-07-31T00:00:00Z",
+                    },
+                    identity_conflicts,
+                    reconciliation_conflicts,
+                )
+                merge_observation(
+                    items,
+                    {
+                        "item_identity": f"PVTI-NO-TIME-{field}",
+                        "task_identity": f"I-NO-TIME-{field}",
+                        field: None,
+                        "explicit_clear": [field],
+                        "updated_at": None,
+                    },
+                    identity_conflicts,
+                    reconciliation_conflicts,
+                )
+                merge_observation(
+                    items,
+                    {
+                        "item_identity": f"PVTI-NO-TIME-{field}",
+                        "task_identity": f"I-NO-TIME-{field}",
+                        field: initial,
+                        "updated_at": "2026-08-01T00:00:00Z",
+                    },
+                    identity_conflicts,
+                    reconciliation_conflicts,
+                )
+                item = items[f"PVTI-NO-TIME-{field}"]
+                self.assertIsNone(item[field])
+                self.assertIn(field, item["_field_tombstones"])
+                self.assertIsNone(item["_field_tombstones"][field])
+                self.assertIn(
+                    f"PVTI-NO-TIME-{field}",
+                    reconciliation_conflicts,
+                )
+        self.assertIn("timestamp-less tombstone", read(PROJECTS))
+
+    def test_continuation_state_is_indivisible_and_cursor_bound(self) -> None:
+        source = next(
+            case
+            for case in fixture("pagination-cases.json")["cases"]
+            if case["name"] == "completeness_required_post_50_hard_stop"
+        )
+        first = completeness_required_traversal(source)
+        state = first["continuation_state"]
+        self.assertEqual(first["continuation"], state["provider_continuation"])
+        self.assertNotIn(
+            "provider_cursor",
+            json.dumps(state["checkpoint"], sort_keys=True),
+        )
+
+        exact = completeness_required_traversal(
+            {
+                "mode": "completeness_required",
+                "filter": "Ready",
+                "resume_continuation_state": deepcopy(state),
+                "pages": [
+                    {
+                        "incoming_cursor": state["provider_continuation"],
+                        "outgoing_cursor": None,
+                        "has_next": False,
+                        "generated_unique": {"start": 56, "count": 5},
+                    }
+                ],
+            }
+        )
+        self.assertEqual("complete", exact["completeness"])
+        self.assertTrue(duplicate_decision(exact, "none")["create_allowed"])
+
+        with self.assertRaisesRegex(
+            AssertionError,
+            "indivisible ContinuationState",
+        ):
+            completeness_required_traversal(
+                {
+                    "mode": "completeness_required",
+                    "filter": "Ready",
+                    "resume_checkpoint": state["checkpoint"],
+                    "pages": [
+                        {
+                            "incoming_cursor": state["provider_continuation"],
+                            "outgoing_cursor": None,
+                            "has_next": False,
+                            "generated_unique": {"start": 56, "count": 5},
+                        }
+                    ],
+                }
+            )
+
+        mixed = deepcopy(state)
+        mixed["provider_continuation"] = "cursor-WRONG"
+        with self.assertRaisesRegex(AssertionError, "association"):
+            completeness_required_traversal(
+                {
+                    "mode": "completeness_required",
+                    "filter": "Ready",
+                    "resume_continuation_state": mixed,
+                    "pages": [
+                        {
+                            "incoming_cursor": "cursor-WRONG",
+                            "outgoing_cursor": None,
+                            "has_next": False,
+                            "generated_unique": {"start": 56, "count": 5},
+                        }
+                    ],
+                }
+            )
+        self.assertIn("resume_continuation_state", read(SKILL))
+        self.assertIn("must not decompose", read(PROJECTS))
+
     def test_checkpoint_serialization_is_explicit_and_secret_safe(self) -> None:
         result = reconcile_pages(
             {
@@ -981,7 +1554,7 @@ class TaskManagementContractTests(unittest.TestCase):
                 ],
             }
         )
-        checkpoint = result["checkpoint"]
+        checkpoint = result_checkpoint(result)
         serialized = json.dumps(checkpoint, sort_keys=True)
         for forbidden in (
             "authentication_token_value",
@@ -1106,7 +1679,7 @@ class TaskManagementContractTests(unittest.TestCase):
         resumed = reconcile_pages(
             {
                 "filter": "Ready",
-                "resume_checkpoint": first["checkpoint"],
+                "resume_continuation_state": first["continuation_state"],
                 "pages": [
                     {
                         "incoming_cursor": first["continuation"],
@@ -1129,12 +1702,12 @@ class TaskManagementContractTests(unittest.TestCase):
         self.assertEqual(1, resumed["identity_conflict_count"])
         self.assertEqual(
             ["PVTI-X-A", "PVTI-X-B"],
-            resumed["checkpoint"]["membership_conflicts"]["I-X"],
+            result_checkpoint(resumed)["membership_conflicts"]["I-X"],
         )
         self.assertEqual(
             "blocked",
             write_target_decision(
-                resumed["checkpoint"]["membership_conflicts"]["I-X"]
+                result_checkpoint(resumed)["membership_conflicts"]["I-X"]
             )["decision"],
         )
 
@@ -1149,7 +1722,7 @@ class TaskManagementContractTests(unittest.TestCase):
             {
                 "mode": "completeness_required",
                 "filter": "Ready",
-                "resume_checkpoint": first["checkpoint"],
+                "resume_continuation_state": first["continuation_state"],
                 "pages": [
                     {
                         "incoming_cursor": first["continuation"],
@@ -1177,11 +1750,11 @@ class TaskManagementContractTests(unittest.TestCase):
         )
         self.assertEqual(
             60,
-            resumed["checkpoint"]["raw_observation_count"],
+            result_checkpoint(resumed)["raw_observation_count"],
         )
         self.assertEqual(
             60,
-            resumed["checkpoint"]["unique_matching_count"],
+            result_checkpoint(resumed)["unique_matching_count"],
         )
 
     def test_resume_binds_filter_and_reports_invalidated_tasks(self) -> None:
@@ -1206,10 +1779,13 @@ class TaskManagementContractTests(unittest.TestCase):
                 ],
             }
         )
-        self.assertEqual("Ready", first["checkpoint"]["normalized_filter"])
+        self.assertEqual(
+            "Ready",
+            result_checkpoint(first)["normalized_filter"],
+        )
         self.assertEqual(
             "standard_display",
-            first["checkpoint"]["query_mode"],
+            result_checkpoint(first)["query_mode"],
         )
         with self.assertRaisesRegex(
             AssertionError,
@@ -1218,7 +1794,7 @@ class TaskManagementContractTests(unittest.TestCase):
             reconcile_pages(
                 {
                     "filter": "Backlog",
-                    "resume_checkpoint": first["checkpoint"],
+                    "resume_continuation_state": first["continuation_state"],
                     "pages": [
                         {
                             "incoming_cursor": first["continuation"],
@@ -1234,7 +1810,7 @@ class TaskManagementContractTests(unittest.TestCase):
                 {
                     "mode": "completeness_required",
                     "filter": "Ready",
-                    "resume_checkpoint": first["checkpoint"],
+                    "resume_continuation_state": first["continuation_state"],
                     "pages": [
                         {
                             "incoming_cursor": first["continuation"],
@@ -1249,7 +1825,7 @@ class TaskManagementContractTests(unittest.TestCase):
         resumed = reconcile_pages(
             {
                 "filter": "Ready",
-                "resume_checkpoint": first["checkpoint"],
+                "resume_continuation_state": first["continuation_state"],
                 "pages": [
                     {
                         "incoming_cursor": first["continuation"],
@@ -1273,11 +1849,11 @@ class TaskManagementContractTests(unittest.TestCase):
         )
         self.assertEqual(
             49,
-            resumed["checkpoint"]["unique_matching_count"],
+            result_checkpoint(resumed)["unique_matching_count"],
         )
         self.assertNotIn(
             "I-INVALIDATE",
-            resumed["checkpoint"]["display_task_identities"],
+            result_checkpoint(resumed)["display_task_identities"],
         )
 
     def test_first_valid_order_uses_first_matching_observation(self) -> None:
@@ -1382,8 +1958,8 @@ class TaskManagementContractTests(unittest.TestCase):
             if case["name"] == "page_would_create_51"
         )
         first = reconcile_pages(source)
-        self.assertIn("checkpoint", first)
-        checkpoint = first["checkpoint"]
+        self.assertIn("continuation_state", first)
+        checkpoint = result_checkpoint(first)
         self.assertIsInstance(checkpoint, dict)
         self.assertIn("items", checkpoint)
         self.assertIn("field_freshness", checkpoint)
@@ -1391,7 +1967,7 @@ class TaskManagementContractTests(unittest.TestCase):
 
         resumed_identity_change = {
             "filter": "Ready",
-            "resume_checkpoint": checkpoint,
+            "resume_continuation_state": first["continuation_state"],
             "pages": [
                 {
                     "incoming_cursor": first["continuation"],
@@ -1445,7 +2021,7 @@ class TaskManagementContractTests(unittest.TestCase):
         field_first = reconcile_pages(field_source)
         field_resume = {
             "filter": "Ready",
-            "resume_checkpoint": field_first["checkpoint"],
+            "resume_continuation_state": field_first["continuation_state"],
             "pages": [
                 {
                     "incoming_cursor": field_first["continuation"],
@@ -1466,7 +2042,9 @@ class TaskManagementContractTests(unittest.TestCase):
             ],
         }
         field_result = reconcile_pages(field_resume)
-        resumed_item = field_result["checkpoint"]["items"]["PVTI-FIELD-RESUME"]
+        resumed_item = result_checkpoint(field_result)["items"][
+            "PVTI-FIELD-RESUME"
+        ]
         self.assertEqual("Ready", resumed_item["status"])
         self.assertEqual("P1", resumed_item["priority"])
         self.assertIsNone(resumed_item["due_date"])
@@ -1524,7 +2102,8 @@ class TaskManagementContractTests(unittest.TestCase):
                 case = cases[name]
                 actual = completeness_required_traversal(case)
                 returned = actual.pop("_returned_task_identities")
-                checkpoint = actual.pop("checkpoint")
+                continuation_state = actual.pop("continuation_state")
+                checkpoint = continuation_state["checkpoint"]
                 self.assertEqual(case["expected"], actual)
                 self.assertEqual(
                     case["expected_returned"],
@@ -1868,7 +2447,7 @@ class TaskManagementContractTests(unittest.TestCase):
             with self.subTest(case=case["name"]):
                 actual = reconcile_pages(case)
                 actual.pop("_returned_task_identities")
-                actual.pop("checkpoint")
+                actual.pop("continuation_state")
                 self.assertEqual(case["expected"], actual)
                 if "expected_item_state" in case:
                     self.assertEqual(
@@ -1913,7 +2492,7 @@ class TaskManagementContractTests(unittest.TestCase):
         )
         first = reconcile_pages(source)
         first_identities = first.pop("_returned_task_identities")
-        checkpoint = first.pop("checkpoint")
+        continuation_state = first.pop("continuation_state")
         self.assertEqual([f"I-{number}" for number in range(1, 50)], first_identities)
         self.assertEqual(52, first["raw_observation_count"])
         self.assertEqual(49, first["unique_task_count"])
@@ -1922,12 +2501,12 @@ class TaskManagementContractTests(unittest.TestCase):
 
         second_case = {
             "filter": "Ready",
-            "resume_checkpoint": checkpoint,
+            "resume_continuation_state": continuation_state,
             "pages": [source["pages"][1]],
         }
         second = reconcile_pages(second_case)
         second_identities = second.pop("_returned_task_identities")
-        second.pop("checkpoint")
+        second.pop("continuation_state")
         self.assertEqual(["I-50", "I-51"], second_identities)
         self.assertEqual(
             {

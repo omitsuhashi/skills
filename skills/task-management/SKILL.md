@@ -19,16 +19,17 @@ Manage task content as GitHub Issues and portfolio state as Project items. Use a
 - Operation payload: the target Issue or query, requested mutation values, and
   optional Status filter. A bare reopen defaults only its target Status to
   `Backlog`.
-- Resume input: optional opaque provider continuation plus the caller-held,
-  non-secret reconciliation checkpoint defined in
-  `references/github-projects.md`. A new traversal has neither.
+- `resume_continuation_state`: optional single caller-held value defined in
+  `references/github-projects.md`. It binds the opaque provider continuation,
+  non-secret reconciliation checkpoint, and their association. A new traversal
+  omits it. Never accept a separately supplied cursor and checkpoint.
 
 ## Outputs
 
 - A result envelope with the resolved target and one of `complete`, `partial`,
   or `blocked`.
 - Read/list results include counts, conflicts, display truncation, stop reason,
-  opaque continuation, and the lossless caller-held checkpoint.
+  opaque continuation, and one lossless caller-held `ContinuationState`.
 - Mutation results include requested-field and protected-native-metadata exact
   readback, completed sides, remaining sides, and recovery instructions.
 - A `partial` or `blocked` result identifies missing semantic capability,
@@ -42,8 +43,9 @@ Manage task content as GitHub Issues and portfolio state as Project items. Use a
   `references/github-projects.md`.
 - Exact readback of every requested mutation and protected native metadata;
   retries require readback plus only the remaining-side write capabilities.
-- Preserve opaque provider continuation and caller-held reconciliation state
-  without storing credentials, secrets, or authentication-token values.
+- Preserve opaque provider continuation and caller-held reconciliation state as
+  one bound `ContinuationState`, without storing credentials, secrets, or
+  authentication-token values.
 - Fail closed when identity, target membership, capability, permission, schema,
   or exact readback is ambiguous. Exact live tool names are runtime-resolved and
   are not part of this portable contract.
