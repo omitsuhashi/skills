@@ -19,8 +19,8 @@ aliases:
 ## 現在地
 
 本台帳は `task-management-hermes-readiness` の local-first durable execution
-ledger である。portable Skills Tasks 1〜5と、4回のwhole-branch review指摘への
-修正実装は完了している。ただし第4 fix後のwhole-branch再reviewはpendingであり、現時点では
+ledger である。portable Skills Tasks 1〜5と、5回のwhole-branch review指摘への
+修正実装は完了している。ただし第5 fix後のwhole-branch再reviewはpendingであり、現時点では
 `LOCAL_COMPLETE`またはremote publish可能とは判定しない。
 
 Task 6 cross-repository handoffは、修正済みSkills revisionが`origin/main`へmergeされた
@@ -58,7 +58,8 @@ gateを事後にdurable化する。
 | Whole-branch fix wave 1 | reviewed / follow-up fixed | `836c80bebbea0820803c76cf29056eadb9a7a07b` | initial reviewはFAIL: Critical 0 / Important 9 / Minor 1。10件を修正後、第2回reviewはFAIL: Critical 0 / Important 5 / Minor 2 | checkpoint hardening fix参照 |
 | Whole-branch checkpoint hardening fix | reviewed / follow-up fixed | `dfb3b79d61e8ea66bbff670ef1234b396bc3375b` | 第2回reviewのImportant 5 / Minor 2を修正後、第3回reviewはFAIL: Critical 0 / Important 3 / Minor 0 | bound continuation fix参照 |
 | Whole-branch bound continuation fix | reviewed / follow-up fixed | `57076755bf27e95cfdd44beafc4dcfc8b30bbead` | 第3回reviewのImportant 3を修正後、第4回reviewはFAIL: Critical 0 / Important 2 / Minor 2 | trusted continuation fix参照 |
-| Whole-branch trusted continuation fix | implemented / review pending | `8a4469cbec9bf5ed6069a5d17b0ed1d7aefd97e5` | same-runtime trust boundary、全page cursor boundary、field-scoped authoritative recovery、invalid continuation blocked envelopeをadversarial TDDで修正 | fresh whole-branch再review |
+| Whole-branch trusted continuation fix | reviewed / follow-up fixed | `8a4469cbec9bf5ed6069a5d17b0ed1d7aefd97e5` | 第4回reviewのImportant 2 / Minor 2を修正後、第5回reviewはFAIL: Critical 0 / Important 1 / Minor 1 | terminal pagination fix参照 |
+| Whole-branch terminal pagination fix | implemented / review pending | `42bdfb27d5aa008741ec7e7fdff0a15f77e75290` | exact-bool `has_next`とterminal outgoing cursor schema、unresumable partial、SKILL trusted-runtime wordingをadversarial TDDで修正 | fresh whole-branch再review |
 | Task 6 cross-repository handoff | blocked | なし | 未着手 | 修正済みSkills revisionが`origin/main`へmergeされたexact evidence |
 
 ## Portable acceptance mapping
@@ -84,6 +85,7 @@ gateを事後にdurable化する。
 | resumeはcursorとcheckpointを一つのassociated ContinuationStateとしてのみ受理 | `test_continuation_state_is_indivisible_and_cursor_bound` | `57076755bf27e95cfdd44beafc4dcfc8b30bbead` |
 | public checksumは事故検知だけとし、same-runtime trusted state以外をblock | `test_continuation_state_trust_boundary_blocks_reconstructed_state` | `8a4469cbec9bf5ed6069a5d17b0ed1d7aefd97e5` |
 | 全provider page境界でoutgoing / next incoming cursorをexact照合 | `test_every_provider_page_boundary_is_validated` | `8a4469cbec9bf5ed6069a5d17b0ed1d7aefd97e5` |
+| 全成功pageの`has_next` / outgoing cursor終端schemaを検証し、false+nullだけをexhaustionとする | `test_terminal_pagination_cursor_schema_is_fail_closed` | `42bdfb27d5aa008741ec7e7fdff0a15f77e75290` |
 | authoritative exact readbackはfield conflictだけを解消しidentity conflictを保持 | `test_authoritative_readback_resolves_field_conflict` | `8a4469cbec9bf5ed6069a5d17b0ed1d7aefd97e5` |
 | invalid / untrusted continuationはexceptionではなくblocked envelope | `test_invalid_continuation_inputs_return_blocked_envelopes` | `8a4469cbec9bf5ed6069a5d17b0ed1d7aefd97e5` |
 | truncated / partial duplicate discoveryからcreateしない | `test_duplicate_discovery_requires_complete_exhaustion`, `test_completeness_required_traversal_executes_all_pages` | `c2b94574cfd6c013d176ca0f7dd325857c3468bf`, `d1d1d2d25ef2b9ebee1b58fe61ec58cfe0e25284`, `836c80bebbea0820803c76cf29056eadb9a7a07b` |
@@ -174,6 +176,27 @@ Minor 2）だった。trusted continuation fix
 追加4件を含むtask-management contract testは47/47 GREENである。fresh verificationは
 skill CI contract 3/3、repository scripts 19/19、llm-wiki 21/21、architecture
 validator、quick validatorもpassした。ただし第4 fix後のwhole-branch再review前に
+review completeとは扱わない。
+
+第4 fix後の第5回whole-branch reviewは`FAIL`（Critical 0 / Important 1 /
+Minor 1）だった。terminal pagination fix
+`42bdfb27d5aa008741ec7e7fdff0a15f77e75290`は次を修正した。
+
+1. 成功fetchした全pageの`has_next`をexact boolとして検証。missing、string、integer
+   `0`/`1`は`pagination_schema_ambiguity`。
+2. `has_next=true`ではnon-null / non-empty outgoing cursorを必須とし、欠落時は
+   fetched/reconciled結果を保持した`continuation_unavailable` partial、
+   `create_allowed=false`、trusted continuationなし、resume unsupported guidance。
+3. `has_next=false`ではoutgoing cursor absent/nullだけを許可。non-nullは
+   `pagination_terminal_cursor_mismatch` partial。exact false + nullだけが
+   `source_exhausted`とduplicate creation判断を許可する。
+4. `SKILL.md`のInputs / Outputs / Required Capabilitiesを
+   same trusted runtime-held opaque stateへ統一し、caller-held表現を削除。
+   user/transcript/artifact serialization unsupportedを明記。
+
+追加1件を含むtask-management contract testは48/48 GREENである。fresh verificationは
+skill CI contract 3/3、repository scripts 19/19、llm-wiki 21/21、architecture
+validator、quick validatorもpassした。ただし第5 fix後のwhole-branch再review前に
 review completeとは扱わない。
 
 ## Remote / external boundary
