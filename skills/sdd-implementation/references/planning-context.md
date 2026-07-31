@@ -66,6 +66,8 @@ At each stage transition carry only:
 
 Aim for about 400 words; do not copy raw discussion or tool output.
 
+Before approved-plan entry, the compact tuple is held only in current Stage Capsule/control context: original checkout path, `starting_branch`, `starting_head_sha`, captured starting status, `integration_branch`, and planning-worktree identity. After pre-plan compaction, if that tuple is not trusted, return `BLOCKED` and request Human restart/confirmation; do not reconstruct from Git or conversation and do not create a compatibility bridge, pre-plan reservation, snapshot, runtime state, scheduler, lock, event schema, or resume record. On normal approved-plan SDD entry transfer the trusted tuple to the ordinary plan-owned workspace/progress ledger. Post-transfer recovery compares the canonical plan ledger tuple with current Git facts.
+
 ## Spec Synthesis And Review
 
 After all material decisions are confirmed, dispatch a fresh Spec Synthesis
@@ -80,9 +82,8 @@ advisory-only. The Human must approve the Written Spec before Plan Stage.
 ## Plan Authoring
 
 For a Human-approved current specification, dispatch a fresh Plan Author Worker.
-Do not inherit the parent conversation. Pass the repository root, baseline
-commit, approved spec path, required plan path, applicable repository rules, and
-the current `superpowers:writing-plans` skill path. The worker maps current files
+Do not inherit the parent conversation. Pass the resolved planning worktree root, bound CWD, writable plan artifact path contained by that root, original checkout metadata (read-only), baseline commit, approved spec path, applicable repository rules, and current `superpowers:writing-plans` skill path to a fresh Plan Author Worker. Reject a stale, sibling, original-checkout, or escaping writable plan artifact path before authoring.
+The worker maps current files
 and tests, writes an executable TDD plan, performs the upstream plan
 self-review, and returns only a Control Return.
 
