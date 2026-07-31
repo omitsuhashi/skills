@@ -98,6 +98,10 @@ For a repeated Project item:
   own authoritative freshness timestamp. A field that is missing or ordinary
   `null` preserves the last known value. Clear a value only when the provider
   explicitly declares that field in an explicit-clear signal.
+- Persist an explicit-clear tombstone with that field's freshness. A later
+  non-null observation may replace the clear only when its timestamp is at
+  least as fresh; an older or unorderable observation must not resurrect the
+  cleared value.
 - When both the old and new non-null values have timestamps, the newest timestamp wins; equal timestamps use the later provider observation.
 - A same-value observation advances only that field's freshness, including Due
   date; it cannot make another field stale. Due date update, missing/null
@@ -108,11 +112,18 @@ Normalize and retain the requested Status filter for the entire traversal and
 apply that filter only after reconciliation; never substitute a fixed Status.
 Exclude isolated item conflicts. If an updated observation ceases matching, remove
 the earlier match; if it starts matching, add the canonical task once in its
-first-valid order. If multiple valid Project items resolve to the same task,
+first-valid order. First-valid means the provider-order position at which the
+reconciled item first satisfies the normalized filter, not the position of an
+earlier non-matching observation. If multiple valid Project items resolve to the same task,
 return the canonical task once in its first-valid order, count an identity
 conflict, and mark the result partial. Other unambiguous results remain usable.
 A same-item/different-task conflict or reconciliation conflict likewise marks
 the result partial without discarding unrelated results.
+
+Build the complete canonical-task-to-Project-membership map before suppressing
+tasks delivered by an earlier call. This preserves same-task/multiple-membership
+conflicts discovered after resume. Delivery suppression must never hide that
+conflict or permit a Project write.
 
 The result envelope reports `raw_observation_count`, `deduplicated_observation_count`, `identity_conflict_count`, `reconciliation_conflict_count`, `unique_task_count`, `returned_count`, `task_order`, `completeness`, `truncated`, `continuation`, and `stop_reason`. `raw_observation_count` counts all raw observations fetched and inspected during the call, including observations in an overshoot page that is deferred rather than committed.
 
@@ -126,18 +137,24 @@ state:
 - If accepting it yields exactly 50, commit it and stop with `unique_limit_reached`.
 - If accepting it would exceed 50, do not consume or commit any part of that page. Return the page's unchanged provider-supplied incoming cursor, the reconciliation state from before that page, and `unique_limit_page_deferred`, even though this can return fewer than 50 tasks.
 
-`ContinuationState` contains the opaque `provider_cursor` unchanged plus a
-caller-held, lossless reconciliation checkpoint. The checkpoint contains the
-reconciled Project-item observations, field-by-field freshness for Status,
-Priority, and Due date, stable first-valid task order, item-identity and
-reconciliation conflict sets, and exact
-`already_emitted_task_identities`. The resumed call supplies that unchanged
-incoming cursor and checkpoint, suppresses already emitted canonical tasks, and
-may then reconcile the formerly deferred whole page.
+`ContinuationState` contains two separate values: the opaque provider
+continuation unchanged, and a caller-held lossless reconciliation checkpoint.
+The provider continuation is never embedded in the checkpoint. The checkpoint
+uses an explicit allowlist only: canonical item/task identities; reconciled
+Status, Priority, and Due date values; per-field freshness and explicit-clear
+tombstones; stable first-valid order; item-identity, reconciliation, and
+membership conflicts; `already_emitted_task_identities`; cumulative raw and
+deduplicated counts; normalized filter and query mode; and the aggregate
+matching, display, and invalidated identity sets. The resumed call supplies the
+unchanged provider continuation beside that checkpoint, suppresses already
+emitted canonical tasks only after membership conflict detection, and may then
+reconcile the formerly deferred whole page.
 
 This checkpoint is portable state, not a credential. It must not contain a
-credential, secret, authentication-token value, or raw provider session. The
-provider cursor remains opaque and unchanged; the skill must not synthesize an
+credential, secret, authentication-token value, raw provider session, arbitrary
+provider key, or arbitrary provider payload. Checkpoint serialization copies
+only the allowlisted fields and recursively excludes everything else. The
+provider continuation remains opaque and unchanged; the skill must not synthesize an
 intra-page offset, replacement cursor, item identity, or task identity.
 Provider intra-page resume is outside this contract because a later observation
 in the same page may revise an earlier one. Preserving only a cursor and emitted
@@ -146,6 +163,12 @@ identity, field value, explicit-clear state, freshness, or Project membership.
 
 An opaque provider continuation token is permitted only as pagination state and
 must be returned unchanged.
+
+Before resume, compare the checkpoint's normalized Status filter and query mode
+with the new request. Reject a mismatch before reading another page. After
+reconciliation, report any previously emitted task that no longer matches as an
+invalidated task, remove it from aggregate matching/display identities, and
+update aggregate counts. Do not silently retain stale filter results.
 
 When the source is exhausted, return `source_exhausted`; when a later page
 fails, preserve previously reconciled results, return that page's unchanged
@@ -174,6 +197,11 @@ display `truncated=true`; on permission, page, or tool failure it returns
 `partial`, preserves the current display and aggregate checkpoint, and exposes
 the failed page's unchanged incoming continuation. It never sets
 `create_allowed=true` before conflict-free source exhaustion.
+
+On a later resume, cumulative raw/deduplicated counts, all unique matching
+identities, first-50 display identities, conflicts, and invalidations continue
+from the checkpoint rather than restarting at zero. The final envelope and
+checkpoint therefore describe the full investigation across calls.
 
 ## Completeness envelope
 

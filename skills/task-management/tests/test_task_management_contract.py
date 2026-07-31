@@ -87,8 +87,19 @@ def merge_observation(
     item_id = str(observation["item_identity"])
     current = items.get(item_id)
     if current is None:
-        initial = deepcopy(observation)
         explicit_clear = set(observation.get("explicit_clear", []))
+        initial = {
+            "item_identity": item_id,
+            "task_identity": str(observation["task_identity"]),
+            **{
+                field: (
+                    None
+                    if field in explicit_clear
+                    else deepcopy(observation.get(field))
+                )
+                for field in RECONCILED_FIELDS
+            },
+        }
         initial["_field_updated_at"] = {
             field: observation.get("updated_at")
             for field in RECONCILED_FIELDS
@@ -100,6 +111,11 @@ def merge_observation(
                 )
             )
         }
+        initial["_field_tombstones"] = {
+            field: observation.get("updated_at")
+            for field in explicit_clear
+            if field in RECONCILED_FIELDS
+        }
         items[item_id] = initial
         return False
     if current["task_identity"] != observation["task_identity"]:
@@ -107,6 +123,7 @@ def merge_observation(
         return True
     explicit_clear = set(observation.get("explicit_clear", []))
     field_updated_at = current.setdefault("_field_updated_at", {})
+    field_tombstones = current.setdefault("_field_tombstones", {})
     for field in RECONCILED_FIELDS:
         old_time = field_updated_at.get(field)
         new_time = observation.get("updated_at")
@@ -119,6 +136,7 @@ def merge_observation(
                 continue
             current[field] = None
             field_updated_at[field] = new_time
+            field_tombstones[field] = new_time
             continue
         if field not in observation:
             continue
@@ -126,41 +144,46 @@ def merge_observation(
         existing = current.get(field)
         if incoming is None:
             continue
+        if (
+            old_time is not None
+            and new_time is not None
+            and str(new_time) < str(old_time)
+        ):
+            continue
         if incoming == existing:
             if (
                 new_time is not None
                 and (old_time is None or str(new_time) >= str(old_time))
             ):
                 field_updated_at[field] = new_time
+            field_tombstones.pop(field, None)
             continue
         if existing is None:
+            if old_time is not None and new_time is None:
+                reconciliation_conflicts.add(item_id)
+                continue
             current[field] = incoming
             field_updated_at[field] = new_time
+            field_tombstones.pop(field, None)
             continue
         if old_time is not None and new_time is not None:
             if str(new_time) >= str(old_time):
                 current[field] = incoming
                 field_updated_at[field] = new_time
+                field_tombstones.pop(field, None)
         else:
             reconciliation_conflicts.add(item_id)
     return True
 
 
-def envelope(
+def matching_state(
     *,
     items: dict[str, dict[str, object]],
     first_seen: dict[str, int],
-    raw_count: int,
-    duplicate_count: int,
     item_identity_conflicts: set[str],
     reconciliation_conflicts: set[str],
-    already_emitted: set[str],
     requested_filter: object,
-    continuation: object,
-    completeness: str,
-    truncated: bool,
-    stop_reason: str,
-) -> dict[str, object]:
+) -> tuple[dict[str, list[str]], dict[str, list[str]], list[str]]:
     task_memberships: dict[str, list[str]] = {}
     for item_id, item in items.items():
         if (
@@ -173,13 +196,50 @@ def envelope(
         ):
             continue
         task_id = str(item["task_identity"])
-        if task_id in already_emitted:
-            continue
         task_memberships.setdefault(task_id, []).append(item_id)
-    identity_conflicts = {
-        task for task, memberships in task_memberships.items() if len(memberships) > 1
+    membership_conflicts = {
+        task_id: sorted(memberships)
+        for task_id, memberships in task_memberships.items()
+        if len(memberships) > 1
     }
-    ordered = sorted(task_memberships, key=lambda task: first_seen[task])
+    ordered = sorted(
+        task_memberships,
+        key=lambda task_id: first_seen.get(task_id, len(first_seen)),
+    )
+    return task_memberships, membership_conflicts, ordered
+
+
+def envelope(
+    *,
+    items: dict[str, dict[str, object]],
+    first_seen: dict[str, int],
+    raw_count: int,
+    duplicate_count: int,
+    item_identity_conflicts: set[str],
+    reconciliation_conflicts: set[str],
+    already_emitted: set[str],
+    requested_filter: object,
+    query_mode: str,
+    continuation: object,
+    completeness: str,
+    truncated: bool,
+    stop_reason: str,
+) -> dict[str, object]:
+    _, membership_conflicts, all_matching = matching_state(
+        items=items,
+        first_seen=first_seen,
+        item_identity_conflicts=item_identity_conflicts,
+        reconciliation_conflicts=reconciliation_conflicts,
+        requested_filter=requested_filter,
+    )
+    if query_mode == "completeness_required":
+        ordered = all_matching
+    else:
+        ordered = [
+            task_id
+            for task_id in all_matching
+            if task_id not in already_emitted
+        ]
     returned = ordered[:50]
     result_order: object = returned
     if len(returned) >= 49:
@@ -187,13 +247,15 @@ def envelope(
     if reconciliation_conflicts:
         completeness = "partial"
         stop_reason = "reconciliation_conflict"
-    elif item_identity_conflicts or identity_conflicts:
+    elif item_identity_conflicts or membership_conflicts:
         completeness = "partial"
         stop_reason = "identity_conflict"
-    return {
+    result = {
         "raw_observation_count": raw_count,
         "deduplicated_observation_count": duplicate_count,
-        "identity_conflict_count": len(item_identity_conflicts) + len(identity_conflicts),
+        "identity_conflict_count": (
+            len(item_identity_conflicts) + len(membership_conflicts)
+        ),
         "reconciliation_conflict_count": len(reconciliation_conflicts),
         "unique_task_count": len(ordered),
         "returned_count": len(returned),
@@ -204,6 +266,10 @@ def envelope(
         "stop_reason": stop_reason,
         "_returned_task_identities": returned,
     }
+    invalidated = sorted(already_emitted - set(all_matching))
+    if invalidated:
+        result["invalidated_task_identities"] = invalidated
+    return result
 
 
 def checkpoint_for(
@@ -213,25 +279,58 @@ def checkpoint_for(
     item_identity_conflicts: set[str],
     reconciliation_conflicts: set[str],
     already_emitted: set[str],
-    provider_cursor: object,
+    raw_count: int,
+    duplicate_count: int,
+    requested_filter: object,
+    query_mode: str,
 ) -> dict[str, object]:
-    serialized_items = {}
-    field_freshness = {}
+    serialized_items: dict[str, dict[str, object]] = {}
+    field_freshness: dict[str, dict[str, object]] = {}
+    field_tombstones: dict[str, dict[str, object]] = {}
     for item_id, item in items.items():
         serialized_items[item_id] = {
-            key: deepcopy(value)
-            for key, value in item.items()
-            if key != "_field_updated_at"
+            "item_identity": item_id,
+            "task_identity": str(item["task_identity"]),
+            **{
+                field: deepcopy(item.get(field))
+                for field in RECONCILED_FIELDS
+            },
         }
-        field_freshness[item_id] = deepcopy(item.get("_field_updated_at", {}))
+        field_freshness[item_id] = {
+            field: deepcopy(item.get("_field_updated_at", {}).get(field))
+            for field in RECONCILED_FIELDS
+            if field in item.get("_field_updated_at", {})
+        }
+        field_tombstones[item_id] = {
+            field: deepcopy(item.get("_field_tombstones", {}).get(field))
+            for field in RECONCILED_FIELDS
+            if field in item.get("_field_tombstones", {})
+        }
+    _, membership_conflicts, matching = matching_state(
+        items=items,
+        first_seen=first_seen,
+        item_identity_conflicts=item_identity_conflicts,
+        reconciliation_conflicts=reconciliation_conflicts,
+        requested_filter=requested_filter,
+    )
+    invalidated = sorted(already_emitted - set(matching))
     return {
-        "provider_cursor": provider_cursor,
         "items": serialized_items,
         "field_freshness": field_freshness,
+        "field_tombstones": field_tombstones,
         "first_seen": dict(first_seen),
         "item_identity_conflicts": sorted(item_identity_conflicts),
         "reconciliation_conflicts": sorted(reconciliation_conflicts),
+        "membership_conflicts": membership_conflicts,
         "already_emitted_task_identities": sorted(already_emitted),
+        "raw_observation_count": raw_count,
+        "deduplicated_observation_count": duplicate_count,
+        "normalized_filter": requested_filter,
+        "query_mode": query_mode,
+        "matching_task_identities": matching,
+        "unique_matching_count": len(matching),
+        "display_task_identities": matching[:50],
+        "invalidated_task_identities": invalidated,
     }
 
 
@@ -243,7 +342,10 @@ def attach_checkpoint(
     item_identity_conflicts: set[str],
     reconciliation_conflicts: set[str],
     already_emitted: set[str],
-    provider_cursor: object,
+    raw_count: int,
+    duplicate_count: int,
+    requested_filter: object,
+    query_mode: str,
 ) -> dict[str, object]:
     emitted = set(already_emitted)
     emitted.update(result["_returned_task_identities"])
@@ -253,7 +355,10 @@ def attach_checkpoint(
         item_identity_conflicts=item_identity_conflicts,
         reconciliation_conflicts=reconciliation_conflicts,
         already_emitted=emitted,
-        provider_cursor=provider_cursor,
+        raw_count=raw_count,
+        duplicate_count=duplicate_count,
+        requested_filter=requested_filter,
+        query_mode=query_mode,
     )
     return result
 
@@ -262,47 +367,75 @@ def reconcile_pages(case: dict[str, object]) -> dict[str, object]:
     requested_filter = normalize_status(str(case["filter"])) if case.get("filter") else None
     if case.get("filter") and requested_filter is None:
         raise ValueError("unknown Status filter")
+    query_mode = (
+        "completeness_required"
+        if case.get("mode") == "completeness_required"
+        else "standard_display"
+    )
     resume = case.get("resume_checkpoint", {})
     if not isinstance(resume, dict):
         raise AssertionError("resume_checkpoint must be an object")
+    if resume:
+        if resume.get("normalized_filter") != requested_filter:
+            raise AssertionError(
+                "resume checkpoint normalized Status filter does not match"
+            )
+        if resume.get("query_mode") != query_mode:
+            raise AssertionError("resume checkpoint query mode does not match")
     items = deepcopy(resume.get("items", {}))
     if not isinstance(items, dict):
         raise AssertionError("checkpoint items must be an object")
     freshness = resume.get("field_freshness", {})
     if not isinstance(freshness, dict):
         raise AssertionError("checkpoint field_freshness must be an object")
+    tombstones = resume.get("field_tombstones", {})
+    if not isinstance(tombstones, dict):
+        raise AssertionError("checkpoint field_tombstones must be an object")
     for item_id, item in items.items():
         item["_field_updated_at"] = deepcopy(freshness.get(item_id, {}))
+        item["_field_tombstones"] = deepcopy(tombstones.get(item_id, {}))
     first_seen = {
         str(task_id): int(ordinal)
         for task_id, ordinal in dict(resume.get("first_seen", {})).items()
     }
-    raw_count = 0
-    duplicate_count = 0
+    raw_count = int(resume.get("raw_observation_count", 0))
+    duplicate_count = int(resume.get("deduplicated_observation_count", 0))
+    call_start_raw = raw_count
+    call_start_duplicates = duplicate_count
     item_identity_conflicts = set(resume.get("item_identity_conflicts", []))
     reconciliation_conflicts = set(resume.get("reconciliation_conflicts", []))
     already_emitted = set(resume.get("already_emitted_task_identities", []))
     already_emitted.update(case.get("already_emitted_task_identities", []))
-    sequence = max(first_seen.values(), default=-1) + 1
-    completeness_required = case.get("mode") == "completeness_required"
+    completeness_required = query_mode == "completeness_required"
+
+    def output_counts(
+        cumulative_raw: int,
+        cumulative_duplicates: int,
+    ) -> tuple[int, int]:
+        if completeness_required:
+            return cumulative_raw, cumulative_duplicates
+        return (
+            cumulative_raw - call_start_raw,
+            cumulative_duplicates - call_start_duplicates,
+        )
+
     for page in case["pages"]:
         incoming = page.get("incoming_cursor")
-        if (
-            resume.get("provider_cursor") is not None
-            and incoming != resume.get("provider_cursor")
-        ):
-            raise AssertionError("provider cursor must be resumed unchanged")
-        resume = {}
         if "error" in page:
+            output_raw, output_duplicates = output_counts(
+                raw_count,
+                duplicate_count,
+            )
             result = envelope(
                 items=items,
                 first_seen=first_seen,
-                raw_count=raw_count,
-                duplicate_count=duplicate_count,
+                raw_count=output_raw,
+                duplicate_count=output_duplicates,
                 item_identity_conflicts=item_identity_conflicts,
                 reconciliation_conflicts=reconciliation_conflicts,
                 already_emitted=already_emitted,
                 requested_filter=requested_filter,
+                query_mode=query_mode,
                 continuation=incoming,
                 completeness="partial",
                 truncated=False,
@@ -315,7 +448,10 @@ def reconcile_pages(case: dict[str, object]) -> dict[str, object]:
                 item_identity_conflicts=item_identity_conflicts,
                 reconciliation_conflicts=reconciliation_conflicts,
                 already_emitted=already_emitted,
-                provider_cursor=incoming,
+                raw_count=raw_count,
+                duplicate_count=duplicate_count,
+                requested_filter=requested_filter,
+                query_mode=query_mode,
             )
         candidate_items = deepcopy(items)
         candidate_first_seen = dict(first_seen)
@@ -323,6 +459,10 @@ def reconcile_pages(case: dict[str, object]) -> dict[str, object]:
         candidate_conflicts = set(reconciliation_conflicts)
         candidate_raw = raw_count
         candidate_duplicates = duplicate_count
+        candidate_sequence = max(
+            candidate_first_seen.values(),
+            default=-1,
+        ) + 1
         observations = expand_page(page)
         for observation in observations:
             candidate_raw += 1
@@ -333,9 +473,9 @@ def reconcile_pages(case: dict[str, object]) -> dict[str, object]:
                 candidate_conflicts,
             ):
                 candidate_duplicates += 1
-        valid_tasks = {
-            str(item["task_identity"])
-            for item_id, item in candidate_items.items()
+            item_id = str(observation["item_identity"])
+            task_id = str(observation["task_identity"])
+            item = candidate_items[item_id]
             if (
                 item_id not in candidate_identity_conflicts
                 and item_id not in candidate_conflicts
@@ -343,37 +483,56 @@ def reconcile_pages(case: dict[str, object]) -> dict[str, object]:
                     requested_filter is None
                     or item.get("status") == requested_filter
                 )
-            )
-        }
-        for observation in observations:
-            task_id = str(observation["task_identity"])
-            if task_id in valid_tasks and task_id not in candidate_first_seen:
-                candidate_first_seen[task_id] = sequence
-                sequence += 1
+                and task_id not in candidate_first_seen
+            ):
+                candidate_first_seen[task_id] = candidate_sequence
+                candidate_sequence += 1
+        output_raw, output_duplicates = output_counts(
+            candidate_raw,
+            candidate_duplicates,
+        )
         candidate = envelope(
             items=candidate_items,
             first_seen=candidate_first_seen,
-            raw_count=candidate_raw,
-            duplicate_count=candidate_duplicates,
+            raw_count=output_raw,
+            duplicate_count=output_duplicates,
             item_identity_conflicts=candidate_identity_conflicts,
             reconciliation_conflicts=candidate_conflicts,
             already_emitted=already_emitted,
             requested_filter=requested_filter,
+            query_mode=query_mode,
             continuation=page.get("outgoing_cursor"),
             completeness="partial" if page.get("has_next") else "complete",
             truncated=bool(page.get("has_next")),
             stop_reason="unique_limit_reached" if page.get("has_next") else "source_exhausted",
         )
-        if not completeness_required and candidate["unique_task_count"] > 50:
+        _, _, candidate_matching = matching_state(
+            items=candidate_items,
+            first_seen=candidate_first_seen,
+            item_identity_conflicts=candidate_identity_conflicts,
+            reconciliation_conflicts=candidate_conflicts,
+            requested_filter=requested_filter,
+        )
+        candidate_deliverable = [
+            task_id
+            for task_id in candidate_matching
+            if task_id not in already_emitted
+        ]
+        if not completeness_required and len(candidate_deliverable) > 50:
+            output_raw, output_duplicates = output_counts(
+                candidate_raw,
+                candidate_duplicates,
+            )
             result = envelope(
                 items=items,
                 first_seen=first_seen,
-                raw_count=candidate_raw,
-                duplicate_count=candidate_duplicates,
+                raw_count=output_raw,
+                duplicate_count=output_duplicates,
                 item_identity_conflicts=item_identity_conflicts,
                 reconciliation_conflicts=reconciliation_conflicts,
                 already_emitted=already_emitted,
                 requested_filter=requested_filter,
+                query_mode=query_mode,
                 continuation=incoming,
                 completeness="partial",
                 truncated=True,
@@ -386,7 +545,10 @@ def reconcile_pages(case: dict[str, object]) -> dict[str, object]:
                 item_identity_conflicts=item_identity_conflicts,
                 reconciliation_conflicts=reconciliation_conflicts,
                 already_emitted=already_emitted,
-                provider_cursor=incoming,
+                raw_count=candidate_raw,
+                duplicate_count=candidate_duplicates,
+                requested_filter=requested_filter,
+                query_mode=query_mode,
             )
         items = candidate_items
         first_seen = candidate_first_seen
@@ -396,7 +558,7 @@ def reconcile_pages(case: dict[str, object]) -> dict[str, object]:
         duplicate_count = candidate_duplicates
         if (
             not completeness_required
-            and candidate["unique_task_count"] == 50
+            and len(candidate_deliverable) == 50
         ) or not page.get("has_next"):
             return attach_checkpoint(
                 candidate,
@@ -405,17 +567,22 @@ def reconcile_pages(case: dict[str, object]) -> dict[str, object]:
                 item_identity_conflicts=item_identity_conflicts,
                 reconciliation_conflicts=reconciliation_conflicts,
                 already_emitted=already_emitted,
-                provider_cursor=page.get("outgoing_cursor"),
+                raw_count=raw_count,
+                duplicate_count=duplicate_count,
+                requested_filter=requested_filter,
+                query_mode=query_mode,
             )
+    output_raw, output_duplicates = output_counts(raw_count, duplicate_count)
     result = envelope(
         items=items,
         first_seen=first_seen,
-        raw_count=raw_count,
-        duplicate_count=duplicate_count,
+        raw_count=output_raw,
+        duplicate_count=output_duplicates,
         item_identity_conflicts=item_identity_conflicts,
         reconciliation_conflicts=reconciliation_conflicts,
         already_emitted=already_emitted,
         requested_filter=requested_filter,
+        query_mode=query_mode,
         continuation=case["pages"][-1].get("outgoing_cursor"),
         completeness="partial",
         truncated=False,
@@ -428,7 +595,10 @@ def reconcile_pages(case: dict[str, object]) -> dict[str, object]:
         item_identity_conflicts=item_identity_conflicts,
         reconciliation_conflicts=reconciliation_conflicts,
         already_emitted=already_emitted,
-        provider_cursor=case["pages"][-1].get("outgoing_cursor"),
+        raw_count=raw_count,
+        duplicate_count=duplicate_count,
+        requested_filter=requested_filter,
+        query_mode=query_mode,
     )
 
 
@@ -781,6 +951,390 @@ def field_options(text: str, field: str) -> list[str]:
 
 
 class TaskManagementContractTests(unittest.TestCase):
+    def test_checkpoint_serialization_is_explicit_and_secret_safe(self) -> None:
+        result = reconcile_pages(
+            {
+                "filter": "Ready",
+                "pages": [
+                    {
+                        "incoming_cursor": None,
+                        "outgoing_cursor": None,
+                        "has_next": False,
+                        "items": [
+                            {
+                                "item_identity": "PVTI-SAFE",
+                                "task_identity": "I-SAFE",
+                                "status": "Ready",
+                                "priority": "P1",
+                                "due_date": "2026-08-10",
+                                "updated_at": "2026-07-31T00:00:00Z",
+                                "authentication_token_value": "never-copy-token",
+                                "raw_provider_session": {
+                                    "session": "never-copy-session",
+                                },
+                                "provider_payload": {
+                                    "nested": ["never-copy-payload"],
+                                },
+                            }
+                        ],
+                    }
+                ],
+            }
+        )
+        checkpoint = result["checkpoint"]
+        serialized = json.dumps(checkpoint, sort_keys=True)
+        for forbidden in (
+            "authentication_token_value",
+            "never-copy-token",
+            "raw_provider_session",
+            "never-copy-session",
+            "provider_payload",
+            "never-copy-payload",
+            "provider_cursor",
+        ):
+            self.assertNotIn(forbidden, serialized)
+        self.assertEqual(
+            {
+                "items",
+                "field_freshness",
+                "field_tombstones",
+                "first_seen",
+                "item_identity_conflicts",
+                "reconciliation_conflicts",
+                "membership_conflicts",
+                "already_emitted_task_identities",
+                "raw_observation_count",
+                "deduplicated_observation_count",
+                "normalized_filter",
+                "query_mode",
+                "matching_task_identities",
+                "unique_matching_count",
+                "display_task_identities",
+                "invalidated_task_identities",
+            },
+            set(checkpoint),
+        )
+        self.assertEqual(
+            {
+                "item_identity",
+                "task_identity",
+                "status",
+                "priority",
+                "due_date",
+            },
+            set(checkpoint["items"]["PVTI-SAFE"]),
+        )
+
+    def test_explicit_clear_tombstone_prevents_stale_resurrection(self) -> None:
+        for field, initial in (
+            ("status", "Ready"),
+            ("priority", "P1"),
+            ("due_date", "2026-08-10"),
+        ):
+            with self.subTest(field=field):
+                items: dict[str, dict[str, object]] = {}
+                identity_conflicts: set[str] = set()
+                reconciliation_conflicts: set[str] = set()
+                merge_observation(
+                    items,
+                    {
+                        "item_identity": f"PVTI-{field}",
+                        "task_identity": f"I-{field}",
+                        field: initial,
+                        "updated_at": "2026-07-31T00:00:00Z",
+                    },
+                    identity_conflicts,
+                    reconciliation_conflicts,
+                )
+                merge_observation(
+                    items,
+                    {
+                        "item_identity": f"PVTI-{field}",
+                        "task_identity": f"I-{field}",
+                        field: None,
+                        "explicit_clear": [field],
+                        "updated_at": "2026-07-31T02:00:00Z",
+                    },
+                    identity_conflicts,
+                    reconciliation_conflicts,
+                )
+                merge_observation(
+                    items,
+                    {
+                        "item_identity": f"PVTI-{field}",
+                        "task_identity": f"I-{field}",
+                        field: initial,
+                        "updated_at": "2026-07-31T01:00:00Z",
+                    },
+                    identity_conflicts,
+                    reconciliation_conflicts,
+                )
+                item = items[f"PVTI-{field}"]
+                self.assertIsNone(item[field])
+                self.assertEqual(
+                    "2026-07-31T02:00:00Z",
+                    item["_field_updated_at"][field],
+                )
+                self.assertEqual(
+                    "2026-07-31T02:00:00Z",
+                    item["_field_tombstones"][field],
+                )
+
+    def test_cross_call_membership_conflict_precedes_delivery_suppression(self) -> None:
+        first = reconcile_pages(
+            {
+                "filter": "Ready",
+                "pages": [
+                    {
+                        "incoming_cursor": None,
+                        "outgoing_cursor": "cursor-membership",
+                        "has_next": True,
+                        "generated_unique": {"start": 2, "count": 49},
+                        "items": [
+                            {
+                                "item_identity": "PVTI-X-A",
+                                "task_identity": "I-X",
+                                "status": "Ready",
+                                "updated_at": "2026-07-31T00:00:00Z",
+                            }
+                        ],
+                    }
+                ],
+            }
+        )
+        self.assertIn("I-X", first["_returned_task_identities"])
+        resumed = reconcile_pages(
+            {
+                "filter": "Ready",
+                "resume_checkpoint": first["checkpoint"],
+                "pages": [
+                    {
+                        "incoming_cursor": first["continuation"],
+                        "outgoing_cursor": None,
+                        "has_next": False,
+                        "items": [
+                            {
+                                "item_identity": "PVTI-X-B",
+                                "task_identity": "I-X",
+                                "status": "Ready",
+                                "updated_at": "2026-08-01T00:00:00Z",
+                            }
+                        ],
+                    }
+                ],
+            }
+        )
+        self.assertEqual("partial", resumed["completeness"])
+        self.assertEqual("identity_conflict", resumed["stop_reason"])
+        self.assertEqual(1, resumed["identity_conflict_count"])
+        self.assertEqual(
+            ["PVTI-X-A", "PVTI-X-B"],
+            resumed["checkpoint"]["membership_conflicts"]["I-X"],
+        )
+        self.assertEqual(
+            "blocked",
+            write_target_decision(
+                resumed["checkpoint"]["membership_conflicts"]["I-X"]
+            )["decision"],
+        )
+
+    def test_completeness_required_resume_preserves_aggregate_state(self) -> None:
+        source = next(
+            case
+            for case in fixture("pagination-cases.json")["cases"]
+            if case["name"] == "completeness_required_post_50_hard_stop"
+        )
+        first = completeness_required_traversal(source)
+        resumed = completeness_required_traversal(
+            {
+                "mode": "completeness_required",
+                "filter": "Ready",
+                "resume_checkpoint": first["checkpoint"],
+                "pages": [
+                    {
+                        "incoming_cursor": first["continuation"],
+                        "outgoing_cursor": None,
+                        "has_next": False,
+                        "generated_unique": {"start": 56, "count": 5},
+                    }
+                ],
+            }
+        )
+        self.assertEqual(60, resumed["raw_observation_count"])
+        self.assertEqual(0, resumed["deduplicated_observation_count"])
+        self.assertEqual(60, resumed["unique_task_count"])
+        self.assertEqual(50, resumed["returned_count"])
+        self.assertEqual(
+            [f"I-{number}" for number in range(1, 51)],
+            resumed["_returned_task_identities"],
+        )
+        self.assertEqual("complete", resumed["completeness"])
+        self.assertTrue(resumed["truncated"])
+        self.assertIsNone(resumed["continuation"])
+        self.assertEqual("source_exhausted", resumed["stop_reason"])
+        self.assertTrue(
+            duplicate_decision(resumed, "none")["create_allowed"]
+        )
+        self.assertEqual(
+            60,
+            resumed["checkpoint"]["raw_observation_count"],
+        )
+        self.assertEqual(
+            60,
+            resumed["checkpoint"]["unique_matching_count"],
+        )
+
+    def test_resume_binds_filter_and_reports_invalidated_tasks(self) -> None:
+        first = reconcile_pages(
+            {
+                "filter": "Ready",
+                "pages": [
+                    {
+                        "incoming_cursor": None,
+                        "outgoing_cursor": "cursor-invalidate",
+                        "has_next": True,
+                        "generated_unique": {"start": 2, "count": 49},
+                        "items": [
+                            {
+                                "item_identity": "PVTI-INVALIDATE",
+                                "task_identity": "I-INVALIDATE",
+                                "status": "Ready",
+                                "updated_at": "2026-07-31T00:00:00Z",
+                            }
+                        ],
+                    }
+                ],
+            }
+        )
+        self.assertEqual("Ready", first["checkpoint"]["normalized_filter"])
+        self.assertEqual(
+            "standard_display",
+            first["checkpoint"]["query_mode"],
+        )
+        with self.assertRaisesRegex(
+            AssertionError,
+            "normalized Status filter",
+        ):
+            reconcile_pages(
+                {
+                    "filter": "Backlog",
+                    "resume_checkpoint": first["checkpoint"],
+                    "pages": [
+                        {
+                            "incoming_cursor": first["continuation"],
+                            "outgoing_cursor": None,
+                            "has_next": False,
+                            "items": [],
+                        }
+                    ],
+                }
+            )
+        with self.assertRaisesRegex(AssertionError, "query mode"):
+            reconcile_pages(
+                {
+                    "mode": "completeness_required",
+                    "filter": "Ready",
+                    "resume_checkpoint": first["checkpoint"],
+                    "pages": [
+                        {
+                            "incoming_cursor": first["continuation"],
+                            "outgoing_cursor": None,
+                            "has_next": False,
+                            "items": [],
+                        }
+                    ],
+                }
+            )
+
+        resumed = reconcile_pages(
+            {
+                "filter": "Ready",
+                "resume_checkpoint": first["checkpoint"],
+                "pages": [
+                    {
+                        "incoming_cursor": first["continuation"],
+                        "outgoing_cursor": None,
+                        "has_next": False,
+                        "items": [
+                            {
+                                "item_identity": "PVTI-INVALIDATE",
+                                "task_identity": "I-INVALIDATE",
+                                "status": "Backlog",
+                                "updated_at": "2026-08-01T00:00:00Z",
+                            }
+                        ],
+                    }
+                ],
+            }
+        )
+        self.assertEqual(
+            ["I-INVALIDATE"],
+            resumed["invalidated_task_identities"],
+        )
+        self.assertEqual(
+            49,
+            resumed["checkpoint"]["unique_matching_count"],
+        )
+        self.assertNotIn(
+            "I-INVALIDATE",
+            resumed["checkpoint"]["display_task_identities"],
+        )
+
+    def test_first_valid_order_uses_first_matching_observation(self) -> None:
+        result = reconcile_pages(
+            {
+                "filter": "Ready",
+                "pages": [
+                    {
+                        "incoming_cursor": None,
+                        "outgoing_cursor": None,
+                        "has_next": False,
+                        "items": [
+                            {
+                                "item_identity": "PVTI-A",
+                                "task_identity": "I-A",
+                                "status": "Backlog",
+                                "updated_at": "2026-07-31T00:00:00Z",
+                            },
+                            {
+                                "item_identity": "PVTI-B",
+                                "task_identity": "I-B",
+                                "status": "Ready",
+                                "updated_at": "2026-07-31T00:01:00Z",
+                            },
+                            {
+                                "item_identity": "PVTI-A",
+                                "task_identity": "I-A",
+                                "status": "Ready",
+                                "updated_at": "2026-07-31T00:02:00Z",
+                            },
+                        ],
+                    }
+                ],
+            }
+        )
+        self.assertEqual(
+            ["I-B", "I-A"],
+            result["_returned_task_identities"],
+        )
+
+    def test_index_keeps_distinct_plan_and_ledger_search_terms(self) -> None:
+        lines = read(REPO_ROOT / "knowledge" / "index.md").splitlines()
+        plan_index = next(
+            index
+            for index, line in enumerate(lines)
+            if "task-management-hermes-readiness/implementation-plan|" in line
+        )
+        ledger_index = next(
+            index
+            for index, line in enumerate(lines)
+            if "task-management-hermes-readiness/issues|" in line
+        )
+        self.assertTrue(lines[plan_index + 1].startswith("  検索語:"))
+        self.assertTrue(lines[ledger_index + 1].startswith("  検索語:"))
+        self.assertIn("implementation plan", lines[plan_index + 1])
+        self.assertIn("Issue ledger", lines[ledger_index + 1])
+
     def test_requested_status_filter_controls_reconciled_matches(self) -> None:
         cases = {
             case["name"]: case
@@ -983,8 +1537,9 @@ class TaskManagementContractTests(unittest.TestCase):
                 )
                 self.assertEqual(
                     case["expected_checkpoint_cursor"],
-                    checkpoint["provider_cursor"],
+                    actual["continuation"],
                 )
+                self.assertNotIn("provider_cursor", checkpoint)
 
     def test_skill_declares_portable_inputs_outputs_and_capabilities(self) -> None:
         text = read(SKILL)
