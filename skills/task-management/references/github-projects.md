@@ -112,6 +112,11 @@ For a repeated Project item:
   date; it cannot make another field stale. Due date update, missing/null
   preservation, and provider explicit clear follow the same rules.
 - When conflicting non-null values cannot be ordered because a timestamp is missing, isolate that item as a reconciliation conflict instead of guessing.
+- Track reconciliation conflict fields independently. A provider-declared
+  `authoritative_readback` for an exact Status, Priority, or Due date may replace
+  that field's unresolved value/tombstone and clear only that field's conflict.
+  Remove the item-level reconciliation conflict only when no field conflict
+  remains. Authoritative field recovery never clears an identity conflict.
 
 Normalize and retain the requested Status filter for the entire traversal and
 apply that filter only after reconciliation; never substitute a fixed Status.
@@ -141,10 +146,15 @@ state:
 - If accepting the whole page yields fewer than 50 unique matches, commit it and continue when the provider has another page.
 - If accepting it yields exactly 50, commit it and stop with `unique_limit_reached`.
 - If accepting it would exceed 50, do not consume or commit any part of that page. Return the page's unchanged provider-supplied incoming cursor, the reconciliation state from before that page, and `unique_limit_page_deferred`, even though this can return fewer than 50 tasks.
+- Validate every page boundary before consuming the next page. When a page says
+  another page exists, its provider-supplied outgoing cursor must exactly equal
+  the next page's incoming cursor. A mismatch returns a structured `blocked`
+  envelope from the last committed page, with `create_allowed=false` and
+  restart-from-source guidance; do not consume the mismatched page.
 
-`ContinuationState` is one indivisible caller-held value containing the opaque
+`ContinuationState` is one indivisible runtime-held value containing the opaque
 provider continuation unchanged, a lossless reconciliation checkpoint, and a
-non-secret association that binds those exact two components.
+non-secret public association over those exact two components.
 The provider continuation is never embedded in the checkpoint. The checkpoint
 uses an explicit allowlist only: canonical item/task identities; reconciled
 Status, Priority, and Due date values; per-field freshness and explicit-clear
@@ -175,15 +185,36 @@ identity, field value, explicit-clear state, freshness, or Project membership.
 An opaque provider continuation token is permitted only as pagination state and
 must be returned unchanged.
 
+### MVP continuation trust boundary
+
+Retain `ContinuationState` only inside the same trusted caller/runtime execution
+context that received the prior result. Its public SHA-256 association detects
+accidental mix or corruption only; it does not authenticate state and must not
+be described as protection against malicious recombination.
+
 The caller must not decompose `ContinuationState`, pair its checkpoint with a
 separately supplied cursor, or recombine components from different results.
-Resume accepts only `resume_continuation_state`. Before any provider fetch,
-verify its exact schema, recursively validate the checkpoint, verify the
-cursor/checkpoint association, and consume the bound provider continuation
-unchanged. Reject a missing, altered, or mismatched association as `blocked`;
-such a request cannot reach a duplicate-creation decision. The result envelope
-may expose the unchanged opaque continuation for diagnostics, but that value is
-not a standalone resume input.
+User-supplied, transcript- or artifact-loaded, independently serialized,
+reconstructed, copied across an execution boundary, or otherwise untrusted
+state is unsupported even when its public digest was recomputed correctly.
+Resume accepts only the exact runtime-retained `resume_continuation_state`.
+Before any provider fetch, verify trusted provenance, exact schema, checkpoint
+types, public association, normalized filter/query mode, and the unchanged
+provider continuation.
+
+Invalid provenance, association, schema, filter, query mode, or legacy separate
+input returns a structured `blocked` envelope with
+`create_allowed=false`, a precise `stop_reason`, and restart-from-source
+guidance. It is a portable caller result, not an assertion or exception, and
+cannot reach duplicate creation. The result envelope may expose the unchanged
+opaque continuation for diagnostics, but that value is not a standalone resume
+input.
+
+A malicious trusted caller is outside the MVP threat model because it can also
+falsify provider observations. If cross-boundary persisted resume is later
+required, it needs a runtime-owned MAC or signature, or a server-side opaque handle.
+That is a separate Companies/live design and permission review; this
+portable skill must not implement or hard-code a signing key.
 
 Before resume, compare the checkpoint's normalized Status filter and query mode
 with the new request. Reject a mismatch before reading another page. After

@@ -19,10 +19,12 @@ Manage task content as GitHub Issues and portfolio state as Project items. Use a
 - Operation payload: the target Issue or query, requested mutation values, and
   optional Status filter. A bare reopen defaults only its target Status to
   `Backlog`.
-- `resume_continuation_state`: optional single caller-held value defined in
-  `references/github-projects.md`. It binds the opaque provider continuation,
-  non-secret reconciliation checkpoint, and their association. A new traversal
-  omits it. Never accept a separately supplied cursor and checkpoint.
+- `resume_continuation_state`: optional single runtime-held value returned by a
+  prior operation in the same trusted caller/runtime execution context, as
+  defined in `references/github-projects.md`. It contains the opaque provider
+  continuation, non-secret reconciliation checkpoint, and their accidental-mix
+  association. A new traversal omits it. Never accept a separately supplied
+  cursor/checkpoint or user-/artifact-reconstructed state.
 
 ## Outputs
 
@@ -35,6 +37,9 @@ Manage task content as GitHub Issues and portfolio state as Project items. Use a
 - A `partial` or `blocked` result identifies missing semantic capability,
   permission, schema, identity, or readback evidence. Recovery resumes only
   unfinished work and never guesses a target or silently changes transport.
+- An invalid or untrusted continuation returns `blocked`,
+  `create_allowed=false`, and restart-from-source guidance; it is never raised
+  as a portable caller exception.
 
 ## Required Capabilities
 
@@ -43,9 +48,9 @@ Manage task content as GitHub Issues and portfolio state as Project items. Use a
   `references/github-projects.md`.
 - Exact readback of every requested mutation and protected native metadata;
   retries require readback plus only the remaining-side write capabilities.
-- Preserve opaque provider continuation and caller-held reconciliation state as
-  one bound `ContinuationState`, without storing credentials, secrets, or
-  authentication-token values.
+- Preserve opaque provider continuation and runtime-held reconciliation state
+  as one `ContinuationState` inside the same trusted execution context, without
+  storing credentials, secrets, or authentication-token values.
 - Fail closed when identity, target membership, capability, permission, schema,
   or exact readback is ambiguous. Exact live tool names are runtime-resolved and
   are not part of this portable contract.

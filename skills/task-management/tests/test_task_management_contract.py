@@ -91,6 +91,7 @@ CANONICAL_PRIORITIES = {"P0", "P1", "P2", "P3"}
 TIMESTAMP_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 DUE_DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 INVALID_VALUE = object()
+TRUSTED_CONTINUATION_STATES: dict[int, dict[str, object]] = {}
 
 
 def normalized_identity(value: object) -> object:
@@ -141,6 +142,39 @@ def normalized_explicit_clear(value: object) -> object:
     return set(value)
 
 
+def normalized_authoritative_fields(value: object) -> object:
+    if value is None:
+        return set()
+    if type(value) is not list:
+        return INVALID_VALUE
+    if any(type(field) is not str or field not in RECONCILED_FIELDS for field in value):
+        return INVALID_VALUE
+    if len(value) != len(set(value)):
+        return INVALID_VALUE
+    return set(value)
+
+
+def add_field_conflict(
+    item: dict[str, object],
+    item_id: str,
+    field: str,
+    reconciliation_conflicts: set[str],
+) -> None:
+    item.setdefault("_field_conflicts", set()).add(field)
+    reconciliation_conflicts.add(item_id)
+
+
+def clear_field_conflict(
+    item: dict[str, object],
+    item_id: str,
+    field: str,
+    reconciliation_conflicts: set[str],
+) -> None:
+    item.setdefault("_field_conflicts", set()).discard(field)
+    if not item["_field_conflicts"]:
+        reconciliation_conflicts.discard(item_id)
+
+
 def merge_observation(
     items: dict[str, dict[str, object]],
     observation: dict[str, object],
@@ -158,21 +192,31 @@ def merge_observation(
     explicit_clear = normalized_explicit_clear(
         observation.get("explicit_clear", [])
     )
+    observation_conflict = False
     if explicit_clear is None:
         explicit_clear = set()
-        reconciliation_conflicts.add(item_id)
+        observation_conflict = True
+    authoritative_fields = normalized_authoritative_fields(
+        observation.get("authoritative_readback")
+    )
+    if authoritative_fields is INVALID_VALUE:
+        authoritative_fields = set()
+        observation_conflict = True
     new_time = normalized_timestamp(observation.get("updated_at"))
     timestamp_is_valid = new_time is not INVALID_VALUE
     if not timestamp_is_valid:
         new_time = None
-        reconciliation_conflicts.add(item_id)
+        observation_conflict = True
     current = items.get(item_id)
     if current is None:
         normalized_fields: dict[str, object] = {}
+        initial_conflicts: set[str] = set()
+        if observation_conflict:
+            initial_conflicts.add("observation")
         for field in RECONCILED_FIELDS:
             value = normalized_field_value(field, observation.get(field))
             if value is INVALID_VALUE:
-                reconciliation_conflicts.add(item_id)
+                initial_conflicts.add(field)
                 value = None
             normalized_fields[field] = (
                 None if field in explicit_clear else value
@@ -200,16 +244,59 @@ def merge_observation(
             for field in explicit_clear
             if field in RECONCILED_FIELDS
         }
+        initial["_field_conflicts"] = initial_conflicts
+        if initial_conflicts:
+            reconciliation_conflicts.add(item_id)
         items[item_id] = initial
         return False
     if current["task_identity"] != task_id:
         item_identity_conflicts.add(item_id)
         return True
+    current.setdefault("_field_conflicts", set())
+    if observation_conflict:
+        add_field_conflict(
+            current,
+            item_id,
+            "observation",
+            reconciliation_conflicts,
+        )
     if not timestamp_is_valid:
         return True
     field_updated_at = current.setdefault("_field_updated_at", {})
     field_tombstones = current.setdefault("_field_tombstones", {})
+    for field in authoritative_fields:
+        if field not in observation:
+            add_field_conflict(
+                current,
+                item_id,
+                field,
+                reconciliation_conflicts,
+            )
+            continue
+        incoming = normalized_field_value(field, observation[field])
+        if incoming is INVALID_VALUE:
+            add_field_conflict(
+                current,
+                item_id,
+                field,
+                reconciliation_conflicts,
+            )
+            continue
+        current[field] = incoming
+        field_updated_at[field] = new_time
+        if incoming is None:
+            field_tombstones[field] = new_time
+        else:
+            field_tombstones.pop(field, None)
+        clear_field_conflict(
+            current,
+            item_id,
+            field,
+            reconciliation_conflicts,
+        )
     for field in RECONCILED_FIELDS:
+        if field in authoritative_fields:
+            continue
         old_time = field_updated_at.get(field)
         if field in explicit_clear:
             if (
@@ -226,7 +313,12 @@ def merge_observation(
             continue
         incoming = normalized_field_value(field, observation[field])
         if incoming is INVALID_VALUE:
-            reconciliation_conflicts.add(item_id)
+            add_field_conflict(
+                current,
+                item_id,
+                field,
+                reconciliation_conflicts,
+            )
             continue
         existing = current.get(field)
         if incoming is None:
@@ -234,7 +326,12 @@ def merge_observation(
         if field in field_tombstones:
             tombstone_time = field_tombstones[field]
             if tombstone_time is None or new_time is None:
-                reconciliation_conflicts.add(item_id)
+                add_field_conflict(
+                    current,
+                    item_id,
+                    field,
+                    reconciliation_conflicts,
+                )
                 continue
             if str(new_time) < str(tombstone_time):
                 continue
@@ -254,7 +351,12 @@ def merge_observation(
             continue
         if existing is None:
             if old_time is not None and new_time is None:
-                reconciliation_conflicts.add(item_id)
+                add_field_conflict(
+                    current,
+                    item_id,
+                    field,
+                    reconciliation_conflicts,
+                )
                 continue
             current[field] = incoming
             field_updated_at[field] = new_time
@@ -266,7 +368,12 @@ def merge_observation(
                 field_updated_at[field] = new_time
                 field_tombstones.pop(field, None)
         else:
-            reconciliation_conflicts.add(item_id)
+            add_field_conflict(
+                current,
+                item_id,
+                field,
+                reconciliation_conflicts,
+            )
     return True
 
 
@@ -381,6 +488,7 @@ def checkpoint_for(
     serialized_items: dict[str, dict[str, object]] = {}
     field_freshness: dict[str, dict[str, object]] = {}
     field_tombstones: dict[str, dict[str, object]] = {}
+    reconciliation_field_conflicts: dict[str, list[str]] = {}
     for item_id, item in items.items():
         if normalized_identity(item_id) != item_id:
             raise AssertionError("checkpoint item identity is malformed")
@@ -420,6 +528,17 @@ def checkpoint_for(
                         f"checkpoint {map_name} timestamp is malformed"
                     )
                 target[field] = normalized
+        item_field_conflicts = item.get("_field_conflicts", set())
+        if type(item_field_conflicts) is not set or not item_field_conflicts.issubset(
+            set(RECONCILED_FIELDS) | {"observation"}
+        ):
+            raise AssertionError(
+                "checkpoint reconciliation field conflicts are malformed"
+            )
+        if item_field_conflicts:
+            reconciliation_field_conflicts[item_id] = sorted(
+                item_field_conflicts
+            )
     _, membership_conflicts, matching = matching_state(
         items=items,
         first_seen=first_seen,
@@ -435,6 +554,7 @@ def checkpoint_for(
         "first_seen": dict(first_seen),
         "item_identity_conflicts": sorted(item_identity_conflicts),
         "reconciliation_conflicts": sorted(reconciliation_conflicts),
+        "reconciliation_field_conflicts": reconciliation_field_conflicts,
         "membership_conflicts": membership_conflicts,
         "already_emitted_task_identities": sorted(already_emitted),
         "raw_observation_count": raw_count,
@@ -457,6 +577,7 @@ CHECKPOINT_KEYS = {
     "first_seen",
     "item_identity_conflicts",
     "reconciliation_conflicts",
+    "reconciliation_field_conflicts",
     "membership_conflicts",
     "already_emitted_task_identities",
     "raw_observation_count",
@@ -570,6 +691,33 @@ def validate_checkpoint(checkpoint: object) -> None:
             "membership conflict memberships",
         )
 
+    field_conflicts = checkpoint["reconciliation_field_conflicts"]
+    if type(field_conflicts) is not dict:
+        raise AssertionError(
+            "checkpoint reconciliation_field_conflicts must be an object"
+        )
+    for item_id, fields in field_conflicts.items():
+        if item_id not in items or type(fields) is not list:
+            raise AssertionError(
+                "checkpoint reconciliation field conflict target is invalid"
+            )
+        if (
+            not fields
+            or len(fields) != len(set(fields))
+            or any(
+                type(field) is not str
+                or field not in set(RECONCILED_FIELDS) | {"observation"}
+                for field in fields
+            )
+        ):
+            raise AssertionError(
+                "checkpoint reconciliation field conflict fields are invalid"
+            )
+    if set(field_conflicts) != set(checkpoint["reconciliation_conflicts"]):
+        raise AssertionError(
+            "checkpoint reconciliation conflicts must match field conflicts"
+        )
+
     for count_name in (
         "raw_observation_count",
         "deduplicated_observation_count",
@@ -625,7 +773,7 @@ def continuation_state_for(
     provider_continuation: object,
     checkpoint: dict[str, object],
 ) -> dict[str, object]:
-    return {
+    state = {
         "provider_continuation": provider_continuation,
         "checkpoint": checkpoint,
         "association": continuation_association(
@@ -633,10 +781,51 @@ def continuation_state_for(
             checkpoint,
         ),
     }
+    TRUSTED_CONTINUATION_STATES[id(state)] = state
+    return state
 
 
 def result_checkpoint(result: dict[str, object]) -> dict[str, object]:
     return result["continuation_state"]["checkpoint"]
+
+
+def blocked_result(
+    stop_reason: str,
+    *,
+    recovery: str = (
+        "Discard this continuation state and restart from source."
+    ),
+) -> dict[str, object]:
+    return {
+        "raw_observation_count": 0,
+        "deduplicated_observation_count": 0,
+        "identity_conflict_count": 0,
+        "reconciliation_conflict_count": 0,
+        "unique_task_count": 0,
+        "returned_count": 0,
+        "task_order": [],
+        "completeness": "blocked",
+        "truncated": False,
+        "continuation": None,
+        "stop_reason": stop_reason,
+        "recovery": recovery,
+        "create_allowed": False,
+        "_returned_task_identities": [],
+    }
+
+
+def mark_result_blocked(
+    result: dict[str, object],
+    stop_reason: str,
+) -> dict[str, object]:
+    result["completeness"] = "blocked"
+    result["stop_reason"] = stop_reason
+    result["recovery"] = (
+        "Discard this continuation state and restart from source."
+    )
+    result["create_allowed"] = False
+    result.pop("continuation_state", None)
+    return result
 
 
 def attach_checkpoint(
@@ -685,8 +874,8 @@ def reconcile_pages(case: dict[str, object]) -> dict[str, object]:
         "resume_checkpoint" in case
         or "resume_provider_continuation" in case
     ):
-        raise AssertionError(
-            "resume requires one indivisible ContinuationState"
+        return blocked_result(
+            "legacy_separated_continuation",
         )
     resume_state = case.get("resume_continuation_state")
     expected_resume_cursor = None
@@ -698,30 +887,38 @@ def reconcile_pages(case: dict[str, object]) -> dict[str, object]:
             or set(resume_state)
             != {"provider_continuation", "checkpoint", "association"}
         ):
-            raise AssertionError(
-                "resume requires one indivisible ContinuationState"
+            return blocked_result(
+                "invalid_continuation_state",
             )
+        if TRUSTED_CONTINUATION_STATES.get(id(resume_state)) is not resume_state:
+            return blocked_result("untrusted_continuation_state")
         resume_checkpoint = resume_state["checkpoint"]
         if type(resume_checkpoint) is not dict:
-            raise AssertionError("ContinuationState checkpoint is invalid")
-        expected_association = continuation_association(
-            resume_state["provider_continuation"],
-            resume_checkpoint,
-        )
+            return blocked_result("invalid_continuation_state")
+        try:
+            expected_association = continuation_association(
+                resume_state["provider_continuation"],
+                resume_checkpoint,
+            )
+        except (AssertionError, TypeError, ValueError):
+            return blocked_result("invalid_continuation_state")
         if resume_state["association"] != expected_association:
-            raise AssertionError(
-                "ContinuationState association does not match cursor/checkpoint"
+            return blocked_result(
+                "continuation_association_mismatch",
             )
         expected_resume_cursor = resume_state["provider_continuation"]
         resume = resume_checkpoint
     if resume:
-        validate_checkpoint(resume)
+        try:
+            validate_checkpoint(resume)
+        except (AssertionError, TypeError, ValueError):
+            return blocked_result("invalid_continuation_state")
         if resume.get("normalized_filter") != requested_filter:
-            raise AssertionError(
-                "resume checkpoint normalized Status filter does not match"
+            return blocked_result(
+                "continuation_filter_mismatch",
             )
         if resume.get("query_mode") != query_mode:
-            raise AssertionError("resume checkpoint query mode does not match")
+            return blocked_result("continuation_query_mode_mismatch")
     items = {
         item_id: {
             "item_identity": item["item_identity"],
@@ -735,6 +932,10 @@ def reconcile_pages(case: dict[str, object]) -> dict[str, object]:
     }
     freshness = resume.get("field_freshness", {})
     tombstones = resume.get("field_tombstones", {})
+    reconciliation_field_conflicts = resume.get(
+        "reconciliation_field_conflicts",
+        {},
+    )
     for item_id, item in items.items():
         item["_field_updated_at"] = {
             field: timestamp
@@ -744,6 +945,9 @@ def reconcile_pages(case: dict[str, object]) -> dict[str, object]:
             field: timestamp
             for field, timestamp in tombstones.get(item_id, {}).items()
         }
+        item["_field_conflicts"] = set(
+            reconciliation_field_conflicts.get(item_id, [])
+        )
     first_seen = {
         task_id: ordinal
         for task_id, ordinal in dict(resume.get("first_seen", {})).items()
@@ -774,6 +978,8 @@ def reconcile_pages(case: dict[str, object]) -> dict[str, object]:
             cumulative_duplicates - call_start_duplicates,
         )
 
+    expected_page_cursor = None
+    previous_had_next = None
     for page_index, page in enumerate(case["pages"]):
         incoming = page.get("incoming_cursor")
         if (
@@ -781,8 +987,35 @@ def reconcile_pages(case: dict[str, object]) -> dict[str, object]:
             and resume_state is not None
             and incoming != expected_resume_cursor
         ):
-            raise AssertionError(
-                "ContinuationState association cursor must be consumed unchanged"
+            return blocked_result(
+                "continuation_cursor_mismatch",
+            )
+        if page_index > 0 and (
+            previous_had_next is not True
+            or incoming != expected_page_cursor
+        ):
+            output_raw, output_duplicates = output_counts(
+                raw_count,
+                duplicate_count,
+            )
+            result = envelope(
+                items=items,
+                first_seen=first_seen,
+                raw_count=output_raw,
+                duplicate_count=output_duplicates,
+                item_identity_conflicts=item_identity_conflicts,
+                reconciliation_conflicts=reconciliation_conflicts,
+                already_emitted=already_emitted,
+                requested_filter=requested_filter,
+                query_mode=query_mode,
+                continuation=expected_page_cursor,
+                completeness="blocked",
+                truncated=False,
+                stop_reason="page_cursor_mismatch",
+            )
+            return mark_result_blocked(
+                result,
+                "page_cursor_mismatch",
             )
         if "error" in page:
             output_raw, output_duplicates = output_counts(
@@ -921,6 +1154,8 @@ def reconcile_pages(case: dict[str, object]) -> dict[str, object]:
         reconciliation_conflicts = candidate_conflicts
         raw_count = candidate_raw
         duplicate_count = candidate_duplicates
+        expected_page_cursor = page.get("outgoing_cursor")
+        previous_had_next = bool(page.get("has_next"))
         if (
             not completeness_required
             and len(candidate_deliverable) == 50
@@ -1316,6 +1551,264 @@ def field_options(text: str, field: str) -> list[str]:
 
 
 class TaskManagementContractTests(unittest.TestCase):
+    def test_continuation_state_trust_boundary_blocks_reconstructed_state(
+        self,
+    ) -> None:
+        source = next(
+            case
+            for case in fixture("pagination-cases.json")["cases"]
+            if case["name"] == "completeness_required_post_50_hard_stop"
+        )
+        first = completeness_required_traversal(source)
+        trusted_state = first["continuation_state"]
+        exact = completeness_required_traversal(
+            {
+                "mode": "completeness_required",
+                "filter": "Ready",
+                "resume_continuation_state": trusted_state,
+                "pages": [
+                    {
+                        "incoming_cursor": trusted_state[
+                            "provider_continuation"
+                        ],
+                        "outgoing_cursor": None,
+                        "has_next": False,
+                        "generated_unique": {"start": 56, "count": 5},
+                    }
+                ],
+            }
+        )
+        self.assertEqual("complete", exact["completeness"])
+
+        reconstructed = json.loads(json.dumps(trusted_state))
+        reconstructed["association"] = continuation_association(
+            reconstructed["provider_continuation"],
+            reconstructed["checkpoint"],
+        )
+        blocked = completeness_required_traversal(
+            {
+                "mode": "completeness_required",
+                "filter": "Ready",
+                "resume_continuation_state": reconstructed,
+                "pages": [
+                    {
+                        "incoming_cursor": reconstructed[
+                            "provider_continuation"
+                        ],
+                        "outgoing_cursor": None,
+                        "has_next": False,
+                        "generated_unique": {"start": 56, "count": 5},
+                    }
+                ],
+            }
+        )
+        self.assertEqual("blocked", blocked["completeness"])
+        self.assertEqual(
+            "untrusted_continuation_state",
+            blocked["stop_reason"],
+        )
+        self.assertFalse(blocked["create_allowed"])
+        self.assertIn("restart from source", blocked["recovery"])
+        trust_contract = read(PROJECTS)
+        for required in (
+            "accidental mix or corruption only",
+            "malicious trusted caller is outside the MVP threat model",
+            "runtime-owned MAC or signature",
+            "server-side opaque handle",
+        ):
+            self.assertIn(required, trust_contract)
+
+    def test_every_provider_page_boundary_is_validated(self) -> None:
+        result = completeness_required_traversal(
+            {
+                "mode": "completeness_required",
+                "filter": "Ready",
+                "pages": [
+                    {
+                        "incoming_cursor": None,
+                        "outgoing_cursor": "cursor-EXPECTED",
+                        "has_next": True,
+                        "generated_unique": {"start": 1, "count": 1},
+                    },
+                    {
+                        "incoming_cursor": "cursor-WRONG",
+                        "outgoing_cursor": None,
+                        "has_next": False,
+                        "generated_unique": {"start": 2, "count": 1},
+                    },
+                ],
+            }
+        )
+        self.assertEqual("blocked", result["completeness"])
+        self.assertEqual("page_cursor_mismatch", result["stop_reason"])
+        self.assertEqual(1, result["raw_observation_count"])
+        self.assertEqual(["I-1"], result["_returned_task_identities"])
+        self.assertFalse(result["create_allowed"])
+        self.assertNotIn("continuation_state", result)
+        self.assertIn("every page boundary", read(PROJECTS))
+
+    def test_authoritative_readback_resolves_field_conflict(self) -> None:
+        for field, value in (
+            ("status", "Ready"),
+            ("priority", "P1"),
+            ("due_date", "2026-08-10"),
+        ):
+            with self.subTest(field=field):
+                item_id = f"PVTI-AUTH-{field}"
+                task_id = f"I-AUTH-{field}"
+                initial = {
+                    "item_identity": item_id,
+                    "task_identity": task_id,
+                    "status": "Ready",
+                    field: value,
+                    "updated_at": "2026-07-31T00:00:00Z",
+                }
+                partial = reconcile_pages(
+                    {
+                        "filter": "Ready",
+                        "pages": [
+                            {
+                                "incoming_cursor": None,
+                                "outgoing_cursor": None,
+                                "has_next": False,
+                                "items": [
+                                    initial,
+                                    {
+                                        "item_identity": item_id,
+                                        "task_identity": task_id,
+                                        field: None,
+                                        "explicit_clear": [field],
+                                        "updated_at": None,
+                                    },
+                                    {
+                                        "item_identity": item_id,
+                                        "task_identity": task_id,
+                                        field: value,
+                                        "updated_at": "2026-08-01T00:00:00Z",
+                                    },
+                                ],
+                            }
+                        ],
+                    }
+                )
+                self.assertEqual("partial", partial["completeness"])
+                self.assertEqual(
+                    [field],
+                    result_checkpoint(partial)[
+                        "reconciliation_field_conflicts"
+                    ][item_id],
+                )
+
+                recovered = reconcile_pages(
+                    {
+                        "filter": "Ready",
+                        "resume_continuation_state": partial[
+                            "continuation_state"
+                        ],
+                        "pages": [
+                            {
+                                "incoming_cursor": None,
+                                "outgoing_cursor": None,
+                                "has_next": False,
+                                "items": [
+                                    {
+                                        "item_identity": item_id,
+                                        "task_identity": task_id,
+                                        field: value,
+                                        "authoritative_readback": [field],
+                                        "updated_at": (
+                                            "2026-08-02T00:00:00Z"
+                                        ),
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                )
+                self.assertEqual("complete", recovered["completeness"])
+                self.assertEqual(0, recovered["reconciliation_conflict_count"])
+                self.assertEqual([task_id], recovered["_returned_task_identities"])
+                checkpoint = result_checkpoint(recovered)
+                self.assertNotIn(
+                    item_id,
+                    checkpoint["reconciliation_field_conflicts"],
+                )
+                self.assertEqual(
+                    value,
+                    checkpoint["items"][item_id][field],
+                )
+        self.assertIn("authoritative_readback", read(PROJECTS))
+
+    def test_invalid_continuation_inputs_return_blocked_envelopes(self) -> None:
+        first = reconcile_pages(
+            {
+                "filter": "Ready",
+                "pages": [
+                    {
+                        "incoming_cursor": None,
+                        "outgoing_cursor": "cursor-BLOCK",
+                        "has_next": True,
+                        "generated_unique": {"start": 1, "count": 1},
+                    }
+                ],
+            }
+        )
+        trusted_state = first["continuation_state"]
+        original_association = trusted_state["association"]
+        cases: list[tuple[str, dict[str, object]]] = []
+
+        association_mismatch = {
+            "filter": "Ready",
+            "resume_continuation_state": trusted_state,
+            "pages": [],
+        }
+        trusted_state["association"] = "sha256:wrong"
+        cases.append(("continuation_association_mismatch", association_mismatch))
+
+        cases.extend(
+            [
+                (
+                    "legacy_separated_continuation",
+                    {
+                        "filter": "Ready",
+                        "resume_checkpoint": trusted_state["checkpoint"],
+                        "pages": [],
+                    },
+                ),
+                (
+                    "continuation_filter_mismatch",
+                    {
+                        "filter": "Backlog",
+                        "resume_continuation_state": trusted_state,
+                        "pages": [],
+                    },
+                ),
+                (
+                    "invalid_continuation_state",
+                    {
+                        "filter": "Ready",
+                        "resume_continuation_state": {
+                            "provider_continuation": "cursor-BLOCK",
+                        },
+                        "pages": [],
+                    },
+                ),
+            ]
+        )
+        try:
+            for expected_reason, case in cases:
+                if expected_reason != "continuation_association_mismatch":
+                    trusted_state["association"] = original_association
+                with self.subTest(reason=expected_reason):
+                    result = reconcile_pages(case)
+                    self.assertEqual("blocked", result["completeness"])
+                    self.assertEqual(expected_reason, result["stop_reason"])
+                    self.assertFalse(result["create_allowed"])
+                    self.assertIn("restart from source", result["recovery"])
+        finally:
+            trusted_state["association"] = original_association
+        self.assertIn("structured `blocked` envelope", read(PROJECTS))
+
     def test_checkpoint_recursively_rejects_nested_secret_and_malformed_values(
         self,
     ) -> None:
@@ -1469,7 +1962,7 @@ class TaskManagementContractTests(unittest.TestCase):
             {
                 "mode": "completeness_required",
                 "filter": "Ready",
-                "resume_continuation_state": deepcopy(state),
+                "resume_continuation_state": state,
                 "pages": [
                     {
                         "incoming_cursor": state["provider_continuation"],
@@ -1483,44 +1976,49 @@ class TaskManagementContractTests(unittest.TestCase):
         self.assertEqual("complete", exact["completeness"])
         self.assertTrue(duplicate_decision(exact, "none")["create_allowed"])
 
-        with self.assertRaisesRegex(
-            AssertionError,
-            "indivisible ContinuationState",
-        ):
-            completeness_required_traversal(
-                {
-                    "mode": "completeness_required",
-                    "filter": "Ready",
-                    "resume_checkpoint": state["checkpoint"],
-                    "pages": [
-                        {
-                            "incoming_cursor": state["provider_continuation"],
-                            "outgoing_cursor": None,
-                            "has_next": False,
-                            "generated_unique": {"start": 56, "count": 5},
-                        }
-                    ],
-                }
-            )
+        separated = completeness_required_traversal(
+            {
+                "mode": "completeness_required",
+                "filter": "Ready",
+                "resume_checkpoint": state["checkpoint"],
+                "pages": [
+                    {
+                        "incoming_cursor": state["provider_continuation"],
+                        "outgoing_cursor": None,
+                        "has_next": False,
+                        "generated_unique": {"start": 56, "count": 5},
+                    }
+                ],
+            }
+        )
+        self.assertEqual("blocked", separated["completeness"])
+        self.assertEqual(
+            "legacy_separated_continuation",
+            separated["stop_reason"],
+        )
 
         mixed = deepcopy(state)
         mixed["provider_continuation"] = "cursor-WRONG"
-        with self.assertRaisesRegex(AssertionError, "association"):
-            completeness_required_traversal(
-                {
-                    "mode": "completeness_required",
-                    "filter": "Ready",
-                    "resume_continuation_state": mixed,
-                    "pages": [
-                        {
-                            "incoming_cursor": "cursor-WRONG",
-                            "outgoing_cursor": None,
-                            "has_next": False,
-                            "generated_unique": {"start": 56, "count": 5},
-                        }
-                    ],
-                }
-            )
+        mixed_result = completeness_required_traversal(
+            {
+                "mode": "completeness_required",
+                "filter": "Ready",
+                "resume_continuation_state": mixed,
+                "pages": [
+                    {
+                        "incoming_cursor": "cursor-WRONG",
+                        "outgoing_cursor": None,
+                        "has_next": False,
+                        "generated_unique": {"start": 56, "count": 5},
+                    }
+                ],
+            }
+        )
+        self.assertEqual("blocked", mixed_result["completeness"])
+        self.assertEqual(
+            "untrusted_continuation_state",
+            mixed_result["stop_reason"],
+        )
         self.assertIn("resume_continuation_state", read(SKILL))
         self.assertIn("must not decompose", read(PROJECTS))
 
@@ -1574,6 +2072,7 @@ class TaskManagementContractTests(unittest.TestCase):
                 "first_seen",
                 "item_identity_conflicts",
                 "reconciliation_conflicts",
+                "reconciliation_field_conflicts",
                 "membership_conflicts",
                 "already_emitted_task_identities",
                 "raw_observation_count",
@@ -1787,40 +2286,45 @@ class TaskManagementContractTests(unittest.TestCase):
             "standard_display",
             result_checkpoint(first)["query_mode"],
         )
-        with self.assertRaisesRegex(
-            AssertionError,
-            "normalized Status filter",
-        ):
-            reconcile_pages(
-                {
-                    "filter": "Backlog",
-                    "resume_continuation_state": first["continuation_state"],
-                    "pages": [
-                        {
-                            "incoming_cursor": first["continuation"],
-                            "outgoing_cursor": None,
-                            "has_next": False,
-                            "items": [],
-                        }
-                    ],
-                }
-            )
-        with self.assertRaisesRegex(AssertionError, "query mode"):
-            reconcile_pages(
-                {
-                    "mode": "completeness_required",
-                    "filter": "Ready",
-                    "resume_continuation_state": first["continuation_state"],
-                    "pages": [
-                        {
-                            "incoming_cursor": first["continuation"],
-                            "outgoing_cursor": None,
-                            "has_next": False,
-                            "items": [],
-                        }
-                    ],
-                }
-            )
+        filter_mismatch = reconcile_pages(
+            {
+                "filter": "Backlog",
+                "resume_continuation_state": first["continuation_state"],
+                "pages": [
+                    {
+                        "incoming_cursor": first["continuation"],
+                        "outgoing_cursor": None,
+                        "has_next": False,
+                        "items": [],
+                    }
+                ],
+            }
+        )
+        self.assertEqual(
+            "continuation_filter_mismatch",
+            filter_mismatch["stop_reason"],
+        )
+        self.assertEqual("blocked", filter_mismatch["completeness"])
+        query_mismatch = reconcile_pages(
+            {
+                "mode": "completeness_required",
+                "filter": "Ready",
+                "resume_continuation_state": first["continuation_state"],
+                "pages": [
+                    {
+                        "incoming_cursor": first["continuation"],
+                        "outgoing_cursor": None,
+                        "has_next": False,
+                        "items": [],
+                    }
+                ],
+            }
+        )
+        self.assertEqual(
+            "continuation_query_mode_mismatch",
+            query_mismatch["stop_reason"],
+        )
+        self.assertEqual("blocked", query_mismatch["completeness"])
 
         resumed = reconcile_pages(
             {
