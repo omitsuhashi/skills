@@ -19,8 +19,8 @@ aliases:
 ## 現在地
 
 本台帳は `task-management-hermes-readiness` の local-first durable execution
-ledger である。portable Skills Tasks 1〜5とwhole-branch指摘への修正実装は完了している。
-ただし修正後のwhole-branch再reviewはpendingであり、現時点では
+ledger である。portable Skills Tasks 1〜5と、2回のwhole-branch review指摘への
+修正実装は完了している。ただし第2 fix後のwhole-branch再reviewはpendingであり、現時点では
 `LOCAL_COMPLETE`またはremote publish可能とは判定しない。
 
 Task 6 cross-repository handoffは、修正済みSkills revisionが`origin/main`へmergeされた
@@ -55,7 +55,8 @@ gateを事後にdurable化する。
 | Task 3 Status / completeness / duplicate | verified | `c2b94574cfd6c013d176ca0f7dd325857c3468bf`, `d1d1d2d25ef2b9ebee1b58fe61ec58cfe0e25284` | spec PASS / quality PASS。exhaustive discoveryとduplicate outcomeを修正・再review済み | whole-branch executor補強はfix wave参照 |
 | Task 4 terminal / reopen | verified | `0256102471980819edcaf463def64b0ad04554f5`, `6fb93e511369a212ce5a990bd0b385ab937b7fdb` | spec PASS / quality PASS。retry safetyとcontradiction guardを修正・再review済み | whole-branch close-reason補強はfix wave参照 |
 | Task 5 metadata / portable closeout | verified | `eb0fa84f10c627658c74c0e974189ee45f709594`, `df001eee038d0003b834dd9a39afcbe6da287300` | spec PASS / quality PASS。findingなし | whole-branch shared declaration補強はfix wave参照 |
-| Whole-branch fix wave | implemented / review pending | `836c80bebbea0820803c76cf29056eadb9a7a07b` | initial whole-branch reviewはFAIL: Critical 0 / Important 9 / Minor 1。10件を一つのcoherent TDD waveで修正した。修正後再reviewはpending | fresh whole-branch再review |
+| Whole-branch fix wave 1 | reviewed / follow-up fixed | `836c80bebbea0820803c76cf29056eadb9a7a07b` | initial reviewはFAIL: Critical 0 / Important 9 / Minor 1。10件を修正後、第2回reviewはFAIL: Critical 0 / Important 5 / Minor 2 | checkpoint hardening fix参照 |
+| Whole-branch checkpoint hardening fix | implemented / review pending | `dfb3b79d61e8ea66bbff670ef1234b396bc3375b` | explicit allowlist、clear tombstone、cross-call membership conflict、aggregate resume、filter/mode bindingとinvalidation、first-valid orderをadversarial TDDで修正 | fresh whole-branch再review |
 | Task 6 cross-repository handoff | blocked | なし | 未着手 | 修正済みSkills revisionが`origin/main`へmergeされたexact evidence |
 
 ## Portable acceptance mapping
@@ -69,8 +70,13 @@ gateを事後にdurable化する。
 | seven Status、利用者表現、schema ambiguity stop | `test_status_wording_and_schema_ambiguity_contract`, `test_requested_status_filter_controls_reconciled_matches` | `c2b94574cfd6c013d176ca0f7dd325857c3468bf`, `836c80bebbea0820803c76cf29056eadb9a7a07b` |
 | Status-filtered list、unique 50、complete/partial/truncation/continuation | `test_pagination_fixtures_match_exact_counts_conflicts_and_continuation`, `test_unique_51_two_call_continuation_is_lossless`, `test_resume_checkpoint_is_lossless_across_identity_and_field_changes` | `1efacf0c3708a5eb31162f98ae2d2d7df856cf18`, `4a4cf986e4354917648b6dc9665035911e72d29d`, `836c80bebbea0820803c76cf29056eadb9a7a07b` |
 | canonical identity、page reconciliation、conflict、stable order | `test_identity_and_lossless_page_boundary_are_explicit`, `test_reconciliation_tracks_freshness_per_field`, `test_canonical_issue_identity_normalizes_case_and_decimal_number`, `test_due_date_reconciliation_is_independent_and_lossless` | `1efacf0c3708a5eb31162f98ae2d2d7df856cf18`, `4a4cf986e4354917648b6dc9665035911e72d29d`, `836c80bebbea0820803c76cf29056eadb9a7a07b` |
+| checkpointはexplicit allowlistでsecret / provider session / cursorを保存しない | `test_checkpoint_serialization_is_explicit_and_secret_safe` | `dfb3b79d61e8ea66bbff670ef1234b396bc3375b` |
+| explicit clear tombstoneは古い非null値による復活を防ぐ | `test_explicit_clear_tombstone_prevents_stale_resurrection` | `dfb3b79d61e8ea66bbff670ef1234b396bc3375b` |
 | ambiguous membershipではProject writeを停止 | `test_ambiguous_project_membership_blocks_project_writes` | `836c80bebbea0820803c76cf29056eadb9a7a07b` |
+| cross-call membership conflictをdelivery suppressionより先に検出 | `test_cross_call_membership_conflict_precedes_delivery_suppression` | `dfb3b79d61e8ea66bbff670ef1234b396bc3375b` |
 | completeness-required queryはpage-drivenでexhaustionまたはpartial | `test_completeness_required_traversal_executes_all_pages`, `test_duplicate_discovery_requires_complete_exhaustion` | `d1d1d2d25ef2b9ebee1b58fe61ec58cfe0e25284`, `836c80bebbea0820803c76cf29056eadb9a7a07b` |
+| completeness-required resumeは全callの集計とfirst-50 displayを維持 | `test_completeness_required_resume_preserves_aggregate_state` | `dfb3b79d61e8ea66bbff670ef1234b396bc3375b` |
+| resumeはfilter / modeを拘束し、非該当化をinvalidationとして返す | `test_resume_binds_filter_and_reports_invalidated_tasks`, `test_first_valid_order_uses_first_matching_observation` | `dfb3b79d61e8ea66bbff670ef1234b396bc3375b` |
 | truncated / partial duplicate discoveryからcreateしない | `test_duplicate_discovery_requires_complete_exhaustion`, `test_completeness_required_traversal_executes_all_pages` | `c2b94574cfd6c013d176ca0f7dd325857c3468bf`, `d1d1d2d25ef2b9ebee1b58fe61ec58cfe0e25284`, `836c80bebbea0820803c76cf29056eadb9a7a07b` |
 | explicit reopen優先、bare reopenはBacklog | `test_reopen_target_allowlist_blocks_terminal_and_unknown_values`, `test_terminal_and_reopen_contract_names_state_machine_outputs` | `0256102471980819edcaf463def64b0ad04554f5`, `6fb93e511369a212ce5a990bd0b385ab937b7fdb` |
 | Done / Cancelled / reopenはclose reasonを含む二side、no rollback、resume-only | `test_transition_fixtures_execute_complete_partial_and_retry`, `test_transition_rejects_invalid_operation_and_retry_evidence` | `0256102471980819edcaf463def64b0ad04554f5`, `6fb93e511369a212ce5a990bd0b385ab937b7fdb`, `836c80bebbea0820803c76cf29056eadb9a7a07b` |
@@ -95,8 +101,28 @@ Important 9、Minor 1を報告した。fix wave
 9. 本local Issue ledger、index、append-only logのdurable化。
 10. owner/repository casefold、decimal Issue number、不完全identity isolation。
 
-修正後のfocused GREENとfull verificationは本台帳作成後にfresh実行し、whole-branch
-再reviewのevidenceとする。再review前にreview completeとは扱わない。
+第1 fix後の第2回whole-branch reviewは`FAIL`（Critical 0 / Important 5 /
+Minor 2）だった。checkpoint hardening fix
+`dfb3b79d61e8ea66bbff670ef1234b396bc3375b`は次を修正した。
+
+1. checkpointをexplicit allowlist serializationへ限定し、secret、raw provider
+   session、arbitrary provider payload、provider cursorを再帰的に除外。
+2. Status / Priority / Due dateのexplicit clearをfreshness付きtombstoneとして保存し、
+   staleな非null observationによる復活を防止。
+3. already-emitted delivery suppressionより前に全Project membershipをgroup化し、
+   callを跨いだsame-task/multiple-membership conflictを保持。
+4. completeness-required resumeでraw / deduplicated count、全matching identity、
+   unique count、first-50 display、conflictを累積。
+5. checkpointをnormalized Status filterとquery modeへbindingし、mismatchをreject。
+   既出taskが非該当化した場合はinvalidationを返し、aggregate display/countから除外。
+6. first-valid orderを「reconciled itemが初めてfilterへ一致したprovider-order」として固定。
+7. `knowledge/index.md`のimplementation planとIssue ledgerへ別々の検索語行を復元。
+
+追加した7 adversarial testを含むtask-management contract testは40/40 GREENである。
+fresh repository-wide verificationはtask-management 40/40、skill CI contract 3/3、
+repository scripts 19/19、llm-wiki 21/21、skill architecture validator、skill-creator
+quick validator、production-only forbidden-string probe、branch/worktree diff checkが
+すべてpassした。ただし第2 fix後のwhole-branch再review前にreview completeとは扱わない。
 
 ## Remote / external boundary
 
