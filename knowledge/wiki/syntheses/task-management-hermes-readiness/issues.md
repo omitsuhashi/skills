@@ -19,8 +19,8 @@ aliases:
 ## 現在地
 
 本台帳は `task-management-hermes-readiness` の local-first durable execution
-ledger である。portable Skills Tasks 1〜5と、3回のwhole-branch review指摘への
-修正実装は完了している。ただし第3 fix後のwhole-branch再reviewはpendingであり、現時点では
+ledger である。portable Skills Tasks 1〜5と、4回のwhole-branch review指摘への
+修正実装は完了している。ただし第4 fix後のwhole-branch再reviewはpendingであり、現時点では
 `LOCAL_COMPLETE`またはremote publish可能とは判定しない。
 
 Task 6 cross-repository handoffは、修正済みSkills revisionが`origin/main`へmergeされた
@@ -57,7 +57,8 @@ gateを事後にdurable化する。
 | Task 5 metadata / portable closeout | verified | `eb0fa84f10c627658c74c0e974189ee45f709594`, `df001eee038d0003b834dd9a39afcbe6da287300` | spec PASS / quality PASS。findingなし | whole-branch shared declaration補強はfix wave参照 |
 | Whole-branch fix wave 1 | reviewed / follow-up fixed | `836c80bebbea0820803c76cf29056eadb9a7a07b` | initial reviewはFAIL: Critical 0 / Important 9 / Minor 1。10件を修正後、第2回reviewはFAIL: Critical 0 / Important 5 / Minor 2 | checkpoint hardening fix参照 |
 | Whole-branch checkpoint hardening fix | reviewed / follow-up fixed | `dfb3b79d61e8ea66bbff670ef1234b396bc3375b` | 第2回reviewのImportant 5 / Minor 2を修正後、第3回reviewはFAIL: Critical 0 / Important 3 / Minor 0 | bound continuation fix参照 |
-| Whole-branch bound continuation fix | implemented / review pending | `57076755bf27e95cfdd44beafc4dcfc8b30bbead` | nested value type validation、timestamp-less clear tombstone、indivisible cursor/checkpoint associationをadversarial TDDで修正 | fresh whole-branch再review |
+| Whole-branch bound continuation fix | reviewed / follow-up fixed | `57076755bf27e95cfdd44beafc4dcfc8b30bbead` | 第3回reviewのImportant 3を修正後、第4回reviewはFAIL: Critical 0 / Important 2 / Minor 2 | trusted continuation fix参照 |
+| Whole-branch trusted continuation fix | implemented / review pending | `8a4469cbec9bf5ed6069a5d17b0ed1d7aefd97e5` | same-runtime trust boundary、全page cursor boundary、field-scoped authoritative recovery、invalid continuation blocked envelopeをadversarial TDDで修正 | fresh whole-branch再review |
 | Task 6 cross-repository handoff | blocked | なし | 未着手 | 修正済みSkills revisionが`origin/main`へmergeされたexact evidence |
 
 ## Portable acceptance mapping
@@ -81,6 +82,10 @@ gateを事後にdurable化する。
 | completeness-required resumeは全callの集計とfirst-50 displayを維持 | `test_completeness_required_resume_preserves_aggregate_state` | `dfb3b79d61e8ea66bbff670ef1234b396bc3375b` |
 | resumeはfilter / modeを拘束し、非該当化をinvalidationとして返す | `test_resume_binds_filter_and_reports_invalidated_tasks`, `test_first_valid_order_uses_first_matching_observation` | `dfb3b79d61e8ea66bbff670ef1234b396bc3375b` |
 | resumeはcursorとcheckpointを一つのassociated ContinuationStateとしてのみ受理 | `test_continuation_state_is_indivisible_and_cursor_bound` | `57076755bf27e95cfdd44beafc4dcfc8b30bbead` |
+| public checksumは事故検知だけとし、same-runtime trusted state以外をblock | `test_continuation_state_trust_boundary_blocks_reconstructed_state` | `8a4469cbec9bf5ed6069a5d17b0ed1d7aefd97e5` |
+| 全provider page境界でoutgoing / next incoming cursorをexact照合 | `test_every_provider_page_boundary_is_validated` | `8a4469cbec9bf5ed6069a5d17b0ed1d7aefd97e5` |
+| authoritative exact readbackはfield conflictだけを解消しidentity conflictを保持 | `test_authoritative_readback_resolves_field_conflict` | `8a4469cbec9bf5ed6069a5d17b0ed1d7aefd97e5` |
+| invalid / untrusted continuationはexceptionではなくblocked envelope | `test_invalid_continuation_inputs_return_blocked_envelopes` | `8a4469cbec9bf5ed6069a5d17b0ed1d7aefd97e5` |
 | truncated / partial duplicate discoveryからcreateしない | `test_duplicate_discovery_requires_complete_exhaustion`, `test_completeness_required_traversal_executes_all_pages` | `c2b94574cfd6c013d176ca0f7dd325857c3468bf`, `d1d1d2d25ef2b9ebee1b58fe61ec58cfe0e25284`, `836c80bebbea0820803c76cf29056eadb9a7a07b` |
 | explicit reopen優先、bare reopenはBacklog | `test_reopen_target_allowlist_blocks_terminal_and_unknown_values`, `test_terminal_and_reopen_contract_names_state_machine_outputs` | `0256102471980819edcaf463def64b0ad04554f5`, `6fb93e511369a212ce5a990bd0b385ab937b7fdb` |
 | Done / Cancelled / reopenはclose reasonを含む二side、no rollback、resume-only | `test_transition_fixtures_execute_complete_partial_and_retry`, `test_transition_rejects_invalid_operation_and_retry_evidence` | `0256102471980819edcaf463def64b0ad04554f5`, `6fb93e511369a212ce5a990bd0b385ab937b7fdb`, `836c80bebbea0820803c76cf29056eadb9a7a07b` |
@@ -145,6 +150,31 @@ Minor 0）だった。bound continuation fix
 skill CI contract 3/3、repository scripts 19/19、llm-wiki 21/21、architecture
 validator、quick validator、negative probe、diff checkもpassした。ただし第3 fix後の
 whole-branch再review前にreview completeとは扱わない。
+
+第3 fix後の第4回whole-branch reviewは`FAIL`（Critical 0 / Important 2 /
+Minor 2）だった。trusted continuation fix
+`8a4469cbec9bf5ed6069a5d17b0ed1d7aefd97e5`は次を修正した。
+
+1. public SHA-256 associationはaccidental mix / corruption検知だけであり、
+   malicious recombinationへのauthenticationではないと訂正。同一trusted
+   caller/runtime execution contextで保持したexact stateだけを受理し、user supplied、
+   transcript/artifact loaded、serialized/reconstructed stateはdigest再計算後もblocked。
+   malicious trusted callerはMVP threat model外。cross-boundary persisted resumeは
+   runtime-owned MAC / signatureまたはserver-side opaque handleを要する別Companies/live
+   designとし、本portable skillにkeyを実装しない。
+2. 全page boundaryで前page outgoing cursorと次page incoming cursorをfetch前照合。
+   mismatch pageはconsumeせず、最後にcommitした集計をblockedで返す。
+3. reconciliation conflictをfield単位でcheckpointへ保持し、provider-declared
+   authoritative exact readbackが対象fieldだけを回復。全field conflict解消後だけ
+   item-level conflictを除去し、identity conflictは保持。
+4. association、legacy separate input、filter/query mismatch、untrusted provenance、
+   malformed stateをAssertionErrorではなくstructured `blocked` envelope、
+   `create_allowed=false`、restart-from-source guidanceとして返す。
+
+追加4件を含むtask-management contract testは47/47 GREENである。fresh verificationは
+skill CI contract 3/3、repository scripts 19/19、llm-wiki 21/21、architecture
+validator、quick validatorもpassした。ただし第4 fix後のwhole-branch再review前に
+review completeとは扱わない。
 
 ## Remote / external boundary
 
