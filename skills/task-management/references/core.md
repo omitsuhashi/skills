@@ -42,6 +42,20 @@ Determine `canonical_task_identity` by the first available value in this order:
 2. The canonical Issue URL.
 3. The normalized `owner/repository#number` key.
 
-Normalize an Issue URL to `https://github.com/<owner>/<repository>/issues/<number>` after resolving provider-declared canonical redirects; remove query, fragment, and trailing slash. Normalize the fallback key from that same resolved owner, repository, and Issue number, using case-insensitive owner and repository comparison. Display casing is not identity.
+Normalize an Issue URL to
+`https://github.com/<casefold(owner)>/<casefold(repository)>/issues/<decimal-number>`
+after resolving provider-declared canonical redirects. Require the `github.com`
+host and exact Issue path shape; remove query, fragment, and trailing slash.
+Owner and repository comparison is case-insensitive and the stored identity uses
+their casefold form. Normalize the Issue number as its decimal integer
+representation, so `0007` and `7` identify the same Issue. Apply the same
+casefold and decimal rules to the `owner/repository#number` fallback key.
+Display casing is not identity.
 
 Determine `canonical_project_item_identity` from the provider's stable item ID. Only when that ID is unavailable, use the tuple `(canonical_project_url, canonical_task_identity)`. Normalize the Project URL to its canonical `/users/<owner>/projects/<number>` or `/orgs/<owner>/projects/<number>` form after removing query, fragment, and trailing slash. Never use a title, mutable field, page position, or fetch order as identity.
+
+If required components are missing, malformed, or contradictory and no unique
+canonical identity can be proven, isolate the observation as `partial`. Do not
+deduplicate by title or mutable display fields, and do not write by title,
+mutable display fields, page position, or fetch order. Exact identity readback
+is required before the observation can enter a unique match or mutation target.

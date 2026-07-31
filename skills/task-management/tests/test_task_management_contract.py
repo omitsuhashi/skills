@@ -3,6 +3,7 @@ from copy import deepcopy
 from pathlib import Path
 import re
 import unittest
+from urllib.parse import urlsplit
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -13,6 +14,14 @@ PROJECTS = SKILL_ROOT / "references" / "github-projects.md"
 ISSUES = SKILL_ROOT / "references" / "issue-contract.md"
 SAFETY = SKILL_ROOT / "references" / "safety-and-failures.md"
 FIXTURES = SKILL_ROOT / "tests" / "fixtures"
+HERMES_READINESS_LEDGER = (
+    REPO_ROOT
+    / "knowledge"
+    / "wiki"
+    / "syntheses"
+    / "task-management-hermes-readiness"
+    / "issues.md"
+)
 
 EXPECTED_FILES = {
     "SKILL.md",
@@ -66,6 +75,9 @@ def expand_page(page: dict[str, object]) -> list[dict[str, object]]:
     return items
 
 
+RECONCILED_FIELDS = ("status", "priority", "due_date")
+
+
 def merge_observation(
     items: dict[str, dict[str, object]],
     observation: dict[str, object],
@@ -79,7 +91,7 @@ def merge_observation(
         explicit_clear = set(observation.get("explicit_clear", []))
         initial["_field_updated_at"] = {
             field: observation.get("updated_at")
-            for field in ("status", "priority")
+            for field in RECONCILED_FIELDS
             if (
                 field in observation
                 and (
@@ -95,10 +107,18 @@ def merge_observation(
         return True
     explicit_clear = set(observation.get("explicit_clear", []))
     field_updated_at = current.setdefault("_field_updated_at", {})
-    for field in ("status", "priority"):
+    for field in RECONCILED_FIELDS:
+        old_time = field_updated_at.get(field)
+        new_time = observation.get("updated_at")
         if field in explicit_clear:
+            if (
+                old_time is not None
+                and new_time is not None
+                and str(new_time) < str(old_time)
+            ):
+                continue
             current[field] = None
-            field_updated_at[field] = observation.get("updated_at")
+            field_updated_at[field] = new_time
             continue
         if field not in observation:
             continue
@@ -106,8 +126,6 @@ def merge_observation(
         existing = current.get(field)
         if incoming is None:
             continue
-        old_time = field_updated_at.get(field)
-        new_time = observation.get("updated_at")
         if incoming == existing:
             if (
                 new_time is not None
@@ -137,6 +155,7 @@ def envelope(
     item_identity_conflicts: set[str],
     reconciliation_conflicts: set[str],
     already_emitted: set[str],
+    requested_filter: object,
     continuation: object,
     completeness: str,
     truncated: bool,
@@ -147,7 +166,10 @@ def envelope(
         if (
             item_id in item_identity_conflicts
             or item_id in reconciliation_conflicts
-            or item.get("status") != "Ready"
+            or (
+                requested_filter is not None
+                and item.get("status") != requested_filter
+            )
         ):
             continue
         task_id = str(item["task_identity"])
@@ -158,9 +180,10 @@ def envelope(
         task for task, memberships in task_memberships.items() if len(memberships) > 1
     }
     ordered = sorted(task_memberships, key=lambda task: first_seen[task])
-    result_order: object = ordered
-    if len(ordered) >= 49:
-        result_order = {"first": ordered[0], "last": ordered[-1]}
+    returned = ordered[:50]
+    result_order: object = returned
+    if len(returned) >= 49:
+        result_order = {"first": returned[0], "last": returned[-1]}
     if reconciliation_conflicts:
         completeness = "partial"
         stop_reason = "reconciliation_conflict"
@@ -173,29 +196,105 @@ def envelope(
         "identity_conflict_count": len(item_identity_conflicts) + len(identity_conflicts),
         "reconciliation_conflict_count": len(reconciliation_conflicts),
         "unique_task_count": len(ordered),
-        "returned_count": len(ordered),
+        "returned_count": len(returned),
         "task_order": result_order,
         "completeness": completeness,
-        "truncated": truncated,
+        "truncated": truncated or len(ordered) > len(returned),
         "continuation": continuation,
         "stop_reason": stop_reason,
-        "_returned_task_identities": ordered,
+        "_returned_task_identities": returned,
     }
 
 
+def checkpoint_for(
+    *,
+    items: dict[str, dict[str, object]],
+    first_seen: dict[str, int],
+    item_identity_conflicts: set[str],
+    reconciliation_conflicts: set[str],
+    already_emitted: set[str],
+    provider_cursor: object,
+) -> dict[str, object]:
+    serialized_items = {}
+    field_freshness = {}
+    for item_id, item in items.items():
+        serialized_items[item_id] = {
+            key: deepcopy(value)
+            for key, value in item.items()
+            if key != "_field_updated_at"
+        }
+        field_freshness[item_id] = deepcopy(item.get("_field_updated_at", {}))
+    return {
+        "provider_cursor": provider_cursor,
+        "items": serialized_items,
+        "field_freshness": field_freshness,
+        "first_seen": dict(first_seen),
+        "item_identity_conflicts": sorted(item_identity_conflicts),
+        "reconciliation_conflicts": sorted(reconciliation_conflicts),
+        "already_emitted_task_identities": sorted(already_emitted),
+    }
+
+
+def attach_checkpoint(
+    result: dict[str, object],
+    *,
+    items: dict[str, dict[str, object]],
+    first_seen: dict[str, int],
+    item_identity_conflicts: set[str],
+    reconciliation_conflicts: set[str],
+    already_emitted: set[str],
+    provider_cursor: object,
+) -> dict[str, object]:
+    emitted = set(already_emitted)
+    emitted.update(result["_returned_task_identities"])
+    result["checkpoint"] = checkpoint_for(
+        items=items,
+        first_seen=first_seen,
+        item_identity_conflicts=item_identity_conflicts,
+        reconciliation_conflicts=reconciliation_conflicts,
+        already_emitted=emitted,
+        provider_cursor=provider_cursor,
+    )
+    return result
+
+
 def reconcile_pages(case: dict[str, object]) -> dict[str, object]:
-    items: dict[str, dict[str, object]] = {}
-    first_seen: dict[str, int] = {}
+    requested_filter = normalize_status(str(case["filter"])) if case.get("filter") else None
+    if case.get("filter") and requested_filter is None:
+        raise ValueError("unknown Status filter")
+    resume = case.get("resume_checkpoint", {})
+    if not isinstance(resume, dict):
+        raise AssertionError("resume_checkpoint must be an object")
+    items = deepcopy(resume.get("items", {}))
+    if not isinstance(items, dict):
+        raise AssertionError("checkpoint items must be an object")
+    freshness = resume.get("field_freshness", {})
+    if not isinstance(freshness, dict):
+        raise AssertionError("checkpoint field_freshness must be an object")
+    for item_id, item in items.items():
+        item["_field_updated_at"] = deepcopy(freshness.get(item_id, {}))
+    first_seen = {
+        str(task_id): int(ordinal)
+        for task_id, ordinal in dict(resume.get("first_seen", {})).items()
+    }
     raw_count = 0
     duplicate_count = 0
-    item_identity_conflicts: set[str] = set()
-    reconciliation_conflicts: set[str] = set()
-    already_emitted = set(case.get("already_emitted_task_identities", []))
-    sequence = 0
+    item_identity_conflicts = set(resume.get("item_identity_conflicts", []))
+    reconciliation_conflicts = set(resume.get("reconciliation_conflicts", []))
+    already_emitted = set(resume.get("already_emitted_task_identities", []))
+    already_emitted.update(case.get("already_emitted_task_identities", []))
+    sequence = max(first_seen.values(), default=-1) + 1
+    completeness_required = case.get("mode") == "completeness_required"
     for page in case["pages"]:
         incoming = page.get("incoming_cursor")
+        if (
+            resume.get("provider_cursor") is not None
+            and incoming != resume.get("provider_cursor")
+        ):
+            raise AssertionError("provider cursor must be resumed unchanged")
+        resume = {}
         if "error" in page:
-            return envelope(
+            result = envelope(
                 items=items,
                 first_seen=first_seen,
                 raw_count=raw_count,
@@ -203,10 +302,20 @@ def reconcile_pages(case: dict[str, object]) -> dict[str, object]:
                 item_identity_conflicts=item_identity_conflicts,
                 reconciliation_conflicts=reconciliation_conflicts,
                 already_emitted=already_emitted,
+                requested_filter=requested_filter,
                 continuation=incoming,
                 completeness="partial",
                 truncated=False,
                 stop_reason=str(page["error"]),
+            )
+            return attach_checkpoint(
+                result,
+                items=items,
+                first_seen=first_seen,
+                item_identity_conflicts=item_identity_conflicts,
+                reconciliation_conflicts=reconciliation_conflicts,
+                already_emitted=already_emitted,
+                provider_cursor=incoming,
             )
         candidate_items = deepcopy(items)
         candidate_first_seen = dict(first_seen)
@@ -230,7 +339,10 @@ def reconcile_pages(case: dict[str, object]) -> dict[str, object]:
             if (
                 item_id not in candidate_identity_conflicts
                 and item_id not in candidate_conflicts
-                and item.get("status") == "Ready"
+                and (
+                    requested_filter is None
+                    or item.get("status") == requested_filter
+                )
             )
         }
         for observation in observations:
@@ -246,13 +358,14 @@ def reconcile_pages(case: dict[str, object]) -> dict[str, object]:
             item_identity_conflicts=candidate_identity_conflicts,
             reconciliation_conflicts=candidate_conflicts,
             already_emitted=already_emitted,
+            requested_filter=requested_filter,
             continuation=page.get("outgoing_cursor"),
             completeness="partial" if page.get("has_next") else "complete",
             truncated=bool(page.get("has_next")),
             stop_reason="unique_limit_reached" if page.get("has_next") else "source_exhausted",
         )
-        if candidate["unique_task_count"] > 50:
-            return envelope(
+        if not completeness_required and candidate["unique_task_count"] > 50:
+            result = envelope(
                 items=items,
                 first_seen=first_seen,
                 raw_count=candidate_raw,
@@ -260,10 +373,20 @@ def reconcile_pages(case: dict[str, object]) -> dict[str, object]:
                 item_identity_conflicts=item_identity_conflicts,
                 reconciliation_conflicts=reconciliation_conflicts,
                 already_emitted=already_emitted,
+                requested_filter=requested_filter,
                 continuation=incoming,
                 completeness="partial",
                 truncated=True,
                 stop_reason="unique_limit_page_deferred",
+            )
+            return attach_checkpoint(
+                result,
+                items=items,
+                first_seen=first_seen,
+                item_identity_conflicts=item_identity_conflicts,
+                reconciliation_conflicts=reconciliation_conflicts,
+                already_emitted=already_emitted,
+                provider_cursor=incoming,
             )
         items = candidate_items
         first_seen = candidate_first_seen
@@ -271,9 +394,42 @@ def reconcile_pages(case: dict[str, object]) -> dict[str, object]:
         reconciliation_conflicts = candidate_conflicts
         raw_count = candidate_raw
         duplicate_count = candidate_duplicates
-        if candidate["unique_task_count"] == 50 or not page.get("has_next"):
-            return candidate
-    raise AssertionError("fixture must terminate with exhaustion, limit, or error")
+        if (
+            not completeness_required
+            and candidate["unique_task_count"] == 50
+        ) or not page.get("has_next"):
+            return attach_checkpoint(
+                candidate,
+                items=items,
+                first_seen=first_seen,
+                item_identity_conflicts=item_identity_conflicts,
+                reconciliation_conflicts=reconciliation_conflicts,
+                already_emitted=already_emitted,
+                provider_cursor=page.get("outgoing_cursor"),
+            )
+    result = envelope(
+        items=items,
+        first_seen=first_seen,
+        raw_count=raw_count,
+        duplicate_count=duplicate_count,
+        item_identity_conflicts=item_identity_conflicts,
+        reconciliation_conflicts=reconciliation_conflicts,
+        already_emitted=already_emitted,
+        requested_filter=requested_filter,
+        continuation=case["pages"][-1].get("outgoing_cursor"),
+        completeness="partial",
+        truncated=False,
+        stop_reason="page_input_incomplete",
+    )
+    return attach_checkpoint(
+        result,
+        items=items,
+        first_seen=first_seen,
+        item_identity_conflicts=item_identity_conflicts,
+        reconciliation_conflicts=reconciliation_conflicts,
+        already_emitted=already_emitted,
+        provider_cursor=case["pages"][-1].get("outgoing_cursor"),
+    )
 
 
 def reconcile_fixture_item_state(case: dict[str, object]) -> dict[str, object]:
@@ -339,9 +495,14 @@ def parse_capability_matrix(text: str) -> dict[str, dict[str, frozenset[str]]]:
     }
 
 
-def parse_retry_side_matrix(text: str) -> dict[str, frozenset[str]]:
+def parse_retry_side_matrix(
+    text: str,
+) -> dict[str, dict[str, frozenset[str]]]:
     return {
-        row[0]: capability_cell(row[1])
+        row[0]: {
+            "read": capability_cell(row[1]),
+            "write": capability_cell(row[2]),
+        }
         for row in parse_table(text, "## Retry side capability matrix")
     }
 
@@ -357,37 +518,61 @@ EXPECTED_CAPABILITIES = {
         "write": set(),
     },
     "create": {
-        "read": {"duplicate_discovery", "target_repository_read", "target_project_read", "project_schema_read"},
+        "read": {"duplicate_discovery", "target_repository_read", "target_project_read", "project_schema_read", "protected_native_metadata_read"},
         "write": {"issue_create", "project_item_add", "requested_field_update"},
     },
     "register_existing_issue": {
-        "read": {"issue_read", "duplicate_membership_discovery", "target_project_read", "project_schema_read"},
+        "read": {"issue_read", "duplicate_membership_discovery", "target_project_read", "project_schema_read", "protected_native_metadata_read"},
         "write": {"project_item_add", "requested_field_update"},
     },
-    "title_body_edit": {"read": {"issue_read"}, "write": {"issue_title_body_update"}},
-    "comment": {"read": {"issue_read"}, "write": {"issue_comment_create"}},
+    "title_body_edit": {
+        "read": {"issue_read", "protected_native_metadata_read"},
+        "write": {"issue_title_body_update"},
+    },
+    "comment": {
+        "read": {"issue_read", "protected_native_metadata_read"},
+        "write": {"issue_comment_create"},
+    },
     "status_priority_due_date": {
-        "read": {"project_item_read", "requested_field_read"},
+        "read": {"project_item_read", "requested_field_read", "protected_native_metadata_read"},
         "write": {"requested_field_update"},
     },
     "done_cancelled": {
-        "read": {"issue_state_reason_read", "project_status_read"},
+        "read": {"issue_state_reason_read", "project_status_read", "protected_native_metadata_read"},
         "write": {"issue_close", "project_status_update"},
     },
     "reopen": {
-        "read": {"issue_state_read", "project_status_read"},
+        "read": {"issue_state_reason_read", "project_status_read", "protected_native_metadata_read"},
         "write": {"issue_reopen", "project_status_update"},
     },
 }
 
 
 EXPECTED_RETRY_SIDES = {
-    "issue_create": {"issue_create"},
-    "project_item_add": {"project_item_add"},
-    "requested_fields": {"requested_field_update"},
-    "issue_terminal": {"issue_close"},
-    "project_status": {"project_status_update"},
-    "issue_reopen": {"issue_reopen"},
+    "issue_create": {
+        "read": {"protected_native_metadata_read"},
+        "write": {"issue_create"},
+    },
+    "project_item_add": {
+        "read": {"protected_native_metadata_read"},
+        "write": {"project_item_add"},
+    },
+    "requested_fields": {
+        "read": {"protected_native_metadata_read"},
+        "write": {"requested_field_update"},
+    },
+    "issue_terminal": {
+        "read": {"protected_native_metadata_read"},
+        "write": {"issue_close"},
+    },
+    "project_status": {
+        "read": {"protected_native_metadata_read"},
+        "write": {"project_status_update"},
+    },
+    "issue_reopen": {
+        "read": {"protected_native_metadata_read"},
+        "write": {"issue_reopen"},
+    },
 }
 
 STATUS_WORDING = {
@@ -434,7 +619,10 @@ def run_transition(case: dict[str, object]) -> dict[str, object]:
             "final_remaining_sides": [],
         }
     sides = []
-    if case["initial_issue"] != target_issue:
+    if (
+        case["initial_issue"] != target_issue
+        or case.get("initial_close_reason") != target_reason
+    ):
         sides.append("issue")
     if case["initial_status"] != target_status:
         sides.append("project_status")
@@ -468,7 +656,6 @@ def duplicate_decision(
 ) -> dict[str, object]:
     complete = (
         envelope_value["completeness"] == "complete"
-        and not bool(envelope_value.get("truncated", False))
         and envelope_value.get("stop_reason") == "source_exhausted"
     )
     if discovery_outcome not in {
@@ -504,6 +691,79 @@ def status_schema_decision(schema_match_count: int) -> str:
     return "proceed" if schema_match_count == 1 else "stop_schema_ambiguity"
 
 
+def normalize_status(value: str) -> object:
+    for canonical, wording in STATUS_WORDING.items():
+        if value in wording:
+            return canonical
+    return None
+
+
+def canonical_issue_identity(observation: dict[str, object]) -> object:
+    stable_id = observation.get("stable_issue_id")
+    if stable_id:
+        return str(stable_id)
+
+    issue_url = observation.get("issue_url")
+    if issue_url:
+        parsed = urlsplit(str(issue_url))
+        match = re.fullmatch(
+            r"/([^/]+)/([^/]+)/issues/([0-9]+)/?",
+            parsed.path,
+            flags=re.IGNORECASE,
+        )
+        if parsed.scheme != "https" or parsed.netloc.casefold() != "github.com":
+            return None
+        if match is None:
+            return None
+        owner, repository, number_text = match.groups()
+        number = int(number_text)
+        if number < 1:
+            return None
+        return (
+            "https://github.com/"
+            f"{owner.casefold()}/{repository.casefold()}/issues/{number}"
+        )
+
+    owner = observation.get("owner")
+    repository = observation.get("repository")
+    number_value = observation.get("number")
+    if not isinstance(owner, str) or not owner.strip():
+        return None
+    if not isinstance(repository, str) or not repository.strip():
+        return None
+    if isinstance(number_value, bool):
+        return None
+    try:
+        number = int(str(number_value))
+    except (TypeError, ValueError):
+        return None
+    if number < 1 or str(number_value).strip().lstrip("0") not in {
+        str(number),
+        "",
+    }:
+        return None
+    return f"{owner.casefold()}/{repository.casefold()}#{number}"
+
+
+def write_target_decision(memberships: list[str]) -> dict[str, object]:
+    unique_memberships = list(dict.fromkeys(memberships))
+    if len(unique_memberships) != 1:
+        return {
+            "decision": "blocked",
+            "canonical_project_item_identity": None,
+            "conflict_memberships": unique_memberships,
+        }
+    return {
+        "decision": "proceed",
+        "canonical_project_item_identity": unique_memberships[0],
+        "conflict_memberships": [],
+    }
+
+
+def completeness_required_traversal(case: dict[str, object]) -> dict[str, object]:
+    return reconcile_pages(case)
+
+
 def field_options(text: str, field: str) -> list[str]:
     """Parse the backtick option names in one Project field subsection."""
     next_field = {
@@ -521,6 +781,317 @@ def field_options(text: str, field: str) -> list[str]:
 
 
 class TaskManagementContractTests(unittest.TestCase):
+    def test_requested_status_filter_controls_reconciled_matches(self) -> None:
+        cases = {
+            case["name"]: case
+            for case in fixture("pagination-cases.json")["cases"]
+        }
+        backlog = reconcile_pages(
+            cases["status_and_priority_freshness_are_independent"]
+        )
+        self.assertEqual(["I-FIELDS"], backlog["_returned_task_identities"])
+        self.assertEqual(1, backlog["unique_task_count"])
+
+        ready_then_backlog = {
+            "filter": "Ready",
+            "pages": [
+                {
+                    "incoming_cursor": None,
+                    "outgoing_cursor": None,
+                    "has_next": False,
+                    "items": [
+                        {
+                            "item_identity": "PVTI-STATUS",
+                            "task_identity": "I-STATUS",
+                            "status": "Ready",
+                            "updated_at": "2026-07-31T00:00:00Z",
+                        },
+                        {
+                            "item_identity": "PVTI-STATUS",
+                            "task_identity": "I-STATUS",
+                            "status": "Backlog",
+                            "updated_at": "2026-07-31T01:00:00Z",
+                        },
+                    ],
+                }
+            ],
+        }
+        self.assertEqual(
+            [],
+            reconcile_pages(ready_then_backlog)["_returned_task_identities"],
+        )
+
+    def test_resume_checkpoint_is_lossless_across_identity_and_field_changes(self) -> None:
+        source = next(
+            case
+            for case in fixture("pagination-cases.json")["cases"]
+            if case["name"] == "page_would_create_51"
+        )
+        first = reconcile_pages(source)
+        self.assertIn("checkpoint", first)
+        checkpoint = first["checkpoint"]
+        self.assertIsInstance(checkpoint, dict)
+        self.assertIn("items", checkpoint)
+        self.assertIn("field_freshness", checkpoint)
+        self.assertIn("already_emitted_task_identities", checkpoint)
+
+        resumed_identity_change = {
+            "filter": "Ready",
+            "resume_checkpoint": checkpoint,
+            "pages": [
+                {
+                    "incoming_cursor": first["continuation"],
+                    "outgoing_cursor": None,
+                    "has_next": False,
+                    "items": [
+                        {
+                            "item_identity": "PVTI-1",
+                            "task_identity": "I-NEW",
+                            "status": "Ready",
+                            "updated_at": "2026-08-01T00:00:00Z",
+                        }
+                    ],
+                }
+            ],
+        }
+        identity_result = reconcile_pages(resumed_identity_change)
+        self.assertEqual("partial", identity_result["completeness"])
+        self.assertEqual(1, identity_result["identity_conflict_count"])
+        self.assertNotIn(
+            "I-NEW",
+            identity_result["_returned_task_identities"],
+        )
+
+        field_source = {
+            "filter": "Ready",
+            "pages": [
+                {
+                    "incoming_cursor": None,
+                    "outgoing_cursor": "cursor-field",
+                    "has_next": True,
+                    "items": [
+                        {
+                            "item_identity": "PVTI-FIELD-RESUME",
+                            "task_identity": "I-FIELD-RESUME",
+                            "status": "Ready",
+                            "priority": "P2",
+                            "due_date": "2026-08-10",
+                            "updated_at": "2026-07-31T00:00:00Z",
+                        }
+                    ],
+                },
+                {
+                    "incoming_cursor": "cursor-field",
+                    "outgoing_cursor": "cursor-after-field",
+                    "has_next": True,
+                    "generated_unique": {"start": 100, "count": 50},
+                },
+            ],
+        }
+        field_first = reconcile_pages(field_source)
+        field_resume = {
+            "filter": "Ready",
+            "resume_checkpoint": field_first["checkpoint"],
+            "pages": [
+                {
+                    "incoming_cursor": field_first["continuation"],
+                    "outgoing_cursor": None,
+                    "has_next": False,
+                    "items": [
+                        {
+                            "item_identity": "PVTI-FIELD-RESUME",
+                            "task_identity": "I-FIELD-RESUME",
+                            "status": None,
+                            "priority": "P1",
+                            "due_date": None,
+                            "explicit_clear": ["due_date"],
+                            "updated_at": "2026-08-01T00:00:00Z",
+                        }
+                    ],
+                }
+            ],
+        }
+        field_result = reconcile_pages(field_resume)
+        resumed_item = field_result["checkpoint"]["items"]["PVTI-FIELD-RESUME"]
+        self.assertEqual("Ready", resumed_item["status"])
+        self.assertEqual("P1", resumed_item["priority"])
+        self.assertIsNone(resumed_item["due_date"])
+
+    def test_due_date_reconciliation_is_independent_and_lossless(self) -> None:
+        cases = {
+            case["name"]: case
+            for case in fixture("pagination-cases.json")["cases"]
+        }
+        self.assertEqual(
+            {
+                "PVTI-DUE": {
+                    "task_identity": "I-DUE",
+                    "status": "Ready",
+                    "priority": "P2",
+                    "due_date": None,
+                }
+            },
+            reconcile_fixture_item_state(cases["due_date_update_preserve_clear"]),
+        )
+        due_conflict = reconcile_pages(cases["due_date_unorderable_conflict"])
+        self.assertEqual("partial", due_conflict["completeness"])
+        self.assertEqual(1, due_conflict["reconciliation_conflict_count"])
+        self.assertEqual(0, due_conflict["unique_task_count"])
+
+    def test_ambiguous_project_membership_blocks_project_writes(self) -> None:
+        decision = write_target_decision(["PVTI-A", "PVTI-B"])
+        self.assertEqual("blocked", decision["decision"])
+        self.assertIsNone(decision["canonical_project_item_identity"])
+        self.assertEqual(
+            ["PVTI-A", "PVTI-B"],
+            decision["conflict_memberships"],
+        )
+        operative = (
+            section(read(SKILL), "## Operation routing")
+            + section(read(PROJECTS), "## Project item model")
+        )
+        for operation in ("field", "terminal", "reopen"):
+            self.assertIn(operation, operative.lower())
+        self.assertIn(
+            "all Project field, terminal, and reopen writes stop",
+            " ".join(operative.split()),
+        )
+
+    def test_completeness_required_traversal_executes_all_pages(self) -> None:
+        cases = {
+            case["name"]: case
+            for case in fixture("pagination-cases.json")["cases"]
+        }
+        for name in (
+            "completeness_required_over_50_exhausted",
+            "completeness_required_post_50_hard_stop",
+        ):
+            with self.subTest(case=name):
+                case = cases[name]
+                actual = completeness_required_traversal(case)
+                returned = actual.pop("_returned_task_identities")
+                checkpoint = actual.pop("checkpoint")
+                self.assertEqual(case["expected"], actual)
+                self.assertEqual(
+                    case["expected_returned"],
+                    {"first": returned[0], "last": returned[-1]},
+                )
+                self.assertLessEqual(len(returned), 50)
+                self.assertEqual(
+                    case["expected_create_allowed"],
+                    duplicate_decision(actual, "none")["create_allowed"],
+                )
+                self.assertEqual(
+                    case["expected_checkpoint_cursor"],
+                    checkpoint["provider_cursor"],
+                )
+
+    def test_skill_declares_portable_inputs_outputs_and_capabilities(self) -> None:
+        text = read(SKILL)
+        inputs = section(text, "## Inputs")
+        outputs = section(text, "## Outputs")
+        capabilities = section(text, "## Required Capabilities")
+        for required in (
+            "project_url",
+            "inbox_repository",
+            "operation",
+            "Status filter",
+            "continuation",
+            "checkpoint",
+        ):
+            self.assertIn(required, inputs)
+        for required in (
+            "`complete`",
+            "`partial`",
+            "`blocked`",
+            "remaining",
+            "recovery",
+        ):
+            self.assertIn(required, outputs)
+        for required in (
+            "operation-scoped",
+            "semantic",
+            "exact readback",
+            "protected native metadata",
+        ):
+            self.assertIn(required, capabilities)
+
+    def test_execution_ledger_exists_and_is_discoverable(self) -> None:
+        self.assertTrue(HERMES_READINESS_LEDGER.is_file())
+        ledger = read(HERMES_READINESS_LEDGER)
+        for required in (
+            "338e0c1e192949c352a1fdd6deec1231ad495f19b68729e2aff3f330356ced4f",
+            "088b91669813649363ddda28ea3d45387b92dbc3",
+            "Execution Plan Gate",
+            "whole-branch",
+            "Task 6",
+            "merged revision",
+            "push",
+            "PR",
+            "Companies",
+            "live",
+        ):
+            self.assertIn(required, ledger)
+        self.assertIn(
+            "task-management-hermes-readiness/issues",
+            read(REPO_ROOT / "knowledge" / "index.md"),
+        )
+
+    def test_canonical_issue_identity_normalizes_case_and_decimal_number(self) -> None:
+        self.assertEqual(
+            "https://github.com/octocat/tasks/issues/7",
+            canonical_issue_identity(
+                {
+                    "issue_url": (
+                        "https://github.com/OctoCat/Tasks/issues/0007/"
+                        "?notification=1#discussion"
+                    )
+                }
+            ),
+        )
+        self.assertEqual(
+            "octocat/tasks#7",
+            canonical_issue_identity(
+                {
+                    "owner": "OctoCat",
+                    "repository": "TASKS",
+                    "number": "0007",
+                }
+            ),
+        )
+        self.assertEqual(
+            "ISSUE_kwDOStable",
+            canonical_issue_identity(
+                {
+                    "stable_issue_id": "ISSUE_kwDOStable",
+                    "issue_url": "https://github.com/other/repo/issues/2",
+                }
+            ),
+        )
+        for incomplete in (
+            {"owner": "octocat", "number": 7},
+            {"repository": "tasks", "number": 7},
+            {"owner": "octocat", "repository": "tasks", "number": "seven"},
+            {"issue_url": "https://example.com/octocat/tasks/issues/7"},
+            {"title": "mutable display identity"},
+        ):
+            with self.subTest(incomplete=incomplete):
+                self.assertIsNone(canonical_issue_identity(incomplete))
+
+        contract = " ".join(
+            section(read(CORE), "## Canonical identity").lower().split()
+        )
+        for required in (
+            "casefold",
+            "decimal integer representation",
+            "partial",
+            "do not deduplicate",
+            "do not write",
+            "title",
+            "mutable display",
+        ):
+            self.assertIn(required.lower(), contract)
+
     def test_every_supported_mutation_preserves_native_metadata(self) -> None:
         expected_operations = {
             "register_existing_issue",
@@ -742,6 +1313,7 @@ class TaskManagementContractTests(unittest.TestCase):
             with self.subTest(case=case["name"]):
                 actual = reconcile_pages(case)
                 actual.pop("_returned_task_identities")
+                actual.pop("checkpoint")
                 self.assertEqual(case["expected"], actual)
                 if "expected_item_state" in case:
                     self.assertEqual(
@@ -786,6 +1358,7 @@ class TaskManagementContractTests(unittest.TestCase):
         )
         first = reconcile_pages(source)
         first_identities = first.pop("_returned_task_identities")
+        checkpoint = first.pop("checkpoint")
         self.assertEqual([f"I-{number}" for number in range(1, 50)], first_identities)
         self.assertEqual(52, first["raw_observation_count"])
         self.assertEqual(49, first["unique_task_count"])
@@ -794,16 +1367,17 @@ class TaskManagementContractTests(unittest.TestCase):
 
         second_case = {
             "filter": "Ready",
-            "already_emitted_task_identities": first_identities,
+            "resume_checkpoint": checkpoint,
             "pages": [source["pages"][1]],
         }
         second = reconcile_pages(second_case)
         second_identities = second.pop("_returned_task_identities")
+        second.pop("checkpoint")
         self.assertEqual(["I-50", "I-51"], second_identities)
         self.assertEqual(
             {
                 "raw_observation_count": 3,
-                "deduplicated_observation_count": 0,
+                "deduplicated_observation_count": 1,
                 "identity_conflict_count": 0,
                 "reconciliation_conflict_count": 0,
                 "unique_task_count": 2,
@@ -822,7 +1396,7 @@ class TaskManagementContractTests(unittest.TestCase):
         self.assertEqual(1, combined.count("I-1"))
 
     def test_identity_and_lossless_page_boundary_are_explicit(self) -> None:
-        text = read(CORE) + "\n" + read(PROJECTS)
+        text = " ".join((read(CORE) + "\n" + read(PROJECTS)).split())
         for required in (
             "canonical_task_identity",
             "canonical_project_item_identity",
@@ -1184,7 +1758,15 @@ class TaskManagementContractTests(unittest.TestCase):
         self.assertEqual(EXPECTED_CAPABILITIES, normalized)
         self.assertEqual(
             EXPECTED_RETRY_SIDES,
-            {name: set(values) for name, values in parse_retry_side_matrix(read(PROJECTS)).items()},
+            {
+                side: {
+                    group: set(values)
+                    for group, values in requirements.items()
+                }
+                for side, requirements in parse_retry_side_matrix(
+                    read(PROJECTS)
+                ).items()
+            },
         )
 
     def test_issue_only_operations_require_only_their_resolved_targets(self) -> None:
@@ -1198,8 +1780,14 @@ class TaskManagementContractTests(unittest.TestCase):
             "Require access only to the targets resolved by that operation.",
             capability_check,
         )
-        self.assertEqual({"issue_read"}, set(matrix["comment"]["read"]))
-        self.assertEqual({"issue_read"}, set(matrix["title_body_edit"]["read"]))
+        self.assertEqual(
+            {"issue_read", "protected_native_metadata_read"},
+            set(matrix["comment"]["read"]),
+        )
+        self.assertEqual(
+            {"issue_read", "protected_native_metadata_read"},
+            set(matrix["title_body_edit"]["read"]),
+        )
         self.assertIn("project_item_read", matrix["status_priority_due_date"]["read"])
         self.assertIn("target_project_read", matrix["create"]["read"])
 
@@ -1212,7 +1800,8 @@ class TaskManagementContractTests(unittest.TestCase):
                 required = set(operation["read"])
                 if case["remaining_sides"]:
                     for side in case["remaining_sides"]:
-                        required.update(retry[side])
+                        required.update(retry[side]["read"])
+                        required.update(retry[side]["write"])
                 else:
                     required.update(operation["write"])
                 missing = sorted(required - set(case["available"]))

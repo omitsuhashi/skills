@@ -11,26 +11,31 @@ Resolve the requested operation first. Before it runs, require its exact read an
 | read | `target_issue_or_project_item_read` | none |
 | search | `issue_search`, `project_item_read`, `project_item_list` | none |
 | status_filtered_list | `project_item_read`, `project_item_list`, `status_field_read` | none |
-| create | `duplicate_discovery`, `target_repository_read`, `target_project_read`, `project_schema_read` | `issue_create`, `project_item_add`, `requested_field_update` |
-| register_existing_issue | `issue_read`, `duplicate_membership_discovery`, `target_project_read`, `project_schema_read` | `project_item_add`, `requested_field_update` |
-| title_body_edit | `issue_read` | `issue_title_body_update` |
-| comment | `issue_read` | `issue_comment_create` |
-| status_priority_due_date | `project_item_read`, `requested_field_read` | `requested_field_update` |
-| done_cancelled | `issue_state_reason_read`, `project_status_read` | `issue_close`, `project_status_update` |
-| reopen | `issue_state_read`, `project_status_read` | `issue_reopen`, `project_status_update` |
+| create | `duplicate_discovery`, `target_repository_read`, `target_project_read`, `project_schema_read`, `protected_native_metadata_read` | `issue_create`, `project_item_add`, `requested_field_update` |
+| register_existing_issue | `issue_read`, `duplicate_membership_discovery`, `target_project_read`, `project_schema_read`, `protected_native_metadata_read` | `project_item_add`, `requested_field_update` |
+| title_body_edit | `issue_read`, `protected_native_metadata_read` | `issue_title_body_update` |
+| comment | `issue_read`, `protected_native_metadata_read` | `issue_comment_create` |
+| status_priority_due_date | `project_item_read`, `requested_field_read`, `protected_native_metadata_read` | `requested_field_update` |
+| done_cancelled | `issue_state_reason_read`, `project_status_read`, `protected_native_metadata_read` | `issue_close`, `project_status_update` |
+| reopen | `issue_state_reason_read`, `project_status_read`, `protected_native_metadata_read` | `issue_reopen`, `project_status_update` |
 
 ## Retry side capability matrix
 
-| Remaining side | Required write capabilities |
-| --- | --- |
-| issue_create | `issue_create` |
-| project_item_add | `project_item_add` |
-| requested_fields | `requested_field_update` |
-| issue_terminal | `issue_close` |
-| project_status | `project_status_update` |
-| issue_reopen | `issue_reopen` |
+| Remaining side | Required read capabilities | Required write capabilities |
+| --- | --- | --- |
+| issue_create | `protected_native_metadata_read` | `issue_create` |
+| project_item_add | `protected_native_metadata_read` | `project_item_add` |
+| requested_fields | `protected_native_metadata_read` | `requested_field_update` |
+| issue_terminal | `protected_native_metadata_read` | `issue_close` |
+| project_status | `protected_native_metadata_read` | `project_status_update` |
+| issue_reopen | `protected_native_metadata_read` | `issue_reopen` |
 
-For a partial-failure retry, exact-read the current sides first. Then check only the operation's read set plus the write capabilities for the named remaining sides; do not require completed-side writes again.
+For a partial-failure retry, exact-read the current sides first. Then check only
+the operation's read set plus the readback and write capabilities for the named
+remaining sides; do not require completed-side writes again. The
+`protected_native_metadata_read` capability is semantic exact readback, not an
+unrelated metadata write. It applies to every supported mutation and retry, but
+never to read-only search/list routes.
 
 Tool names may differ by host integration. Match semantic capabilities, but use only GitHub MCP. Do not fall back to a CLI, direct API client, browser automation, or local backend.
 
@@ -40,6 +45,11 @@ Tool names may differ by host integration. Match semantic capabilities, but use 
 - Do not use a Project-native draft item as the task source of truth.
 - Keep completed and cancelled items in the Project for history.
 - Do not create a Project, repository, field, option, view, or workflow as a side effect of normal task operations.
+- When one canonical task resolves to multiple Project-item memberships, all
+  Project field, terminal, and reopen writes stop. Return the canonical task
+  identity and every conflicting Project-item identity, and remain blocked until
+  exact membership readback proves one write target. A `partial` list result is
+  evidence of the conflict, not permission to guess a membership.
 
 ### Native metadata preservation
 
@@ -84,11 +94,25 @@ For a repeated Project item:
 
 - Count every observation after the first as deduplicated.
 - If its task identity changes, isolate that item as an identity conflict. Do not choose either task identity or return the item.
-- Merge `Status` and `Priority` independently. A field that is missing or ordinary `null` preserves the last known value. Clear a value only when the provider explicitly declares that field in an explicit-clear signal.
+- Merge `Status`, `Priority`, and `Due date` independently. Each field owns its
+  own authoritative freshness timestamp. A field that is missing or ordinary
+  `null` preserves the last known value. Clear a value only when the provider
+  explicitly declares that field in an explicit-clear signal.
 - When both the old and new non-null values have timestamps, the newest timestamp wins; equal timestamps use the later provider observation.
+- A same-value observation advances only that field's freshness, including Due
+  date; it cannot make another field stale. Due date update, missing/null
+  preservation, and provider explicit clear follow the same rules.
 - When conflicting non-null values cannot be ordered because a timestamp is missing, isolate that item as a reconciliation conflict instead of guessing.
 
-Apply the requested filter only after reconciliation. Exclude isolated item conflicts. If multiple valid Project items resolve to the same task, return the canonical task once in its first-valid order, count an identity conflict, and mark the result partial. Other unambiguous results remain usable. A same-item/different-task conflict or reconciliation conflict likewise marks the result partial without discarding unrelated results.
+Normalize and retain the requested Status filter for the entire traversal and
+apply that filter only after reconciliation; never substitute a fixed Status.
+Exclude isolated item conflicts. If an updated observation ceases matching, remove
+the earlier match; if it starts matching, add the canonical task once in its
+first-valid order. If multiple valid Project items resolve to the same task,
+return the canonical task once in its first-valid order, count an identity
+conflict, and mark the result partial. Other unambiguous results remain usable.
+A same-item/different-task conflict or reconciliation conflict likewise marks
+the result partial without discarding unrelated results.
 
 The result envelope reports `raw_observation_count`, `deduplicated_observation_count`, `identity_conflict_count`, `reconciliation_conflict_count`, `unique_task_count`, `returned_count`, `task_order`, `completeness`, `truncated`, `continuation`, and `stop_reason`. `raw_observation_count` counts all raw observations fetched and inspected during the call, including observations in an overshoot page that is deferred rather than committed.
 
@@ -102,12 +126,32 @@ state:
 - If accepting it yields exactly 50, commit it and stop with `unique_limit_reached`.
 - If accepting it would exceed 50, do not consume or commit any part of that page. Return the page's unchanged provider-supplied incoming cursor, the reconciliation state from before that page, and `unique_limit_page_deferred`, even though this can return fewer than 50 tasks.
 
-`ContinuationState` contains the opaque `provider_cursor` unchanged plus the exact `already_emitted_task_identities`. The resumed call supplies that incoming cursor and identity set, suppresses already emitted canonical tasks, and may then reconcile the formerly deferred whole page. It must not synthesize an intra-page offset, replacement cursor, item identity, or task identity. Provider intra-page resume is outside this contract because a later observation in the same page may revise an earlier one.
+`ContinuationState` contains the opaque `provider_cursor` unchanged plus a
+caller-held, lossless reconciliation checkpoint. The checkpoint contains the
+reconciled Project-item observations, field-by-field freshness for Status,
+Priority, and Due date, stable first-valid task order, item-identity and
+reconciliation conflict sets, and exact
+`already_emitted_task_identities`. The resumed call supplies that unchanged
+incoming cursor and checkpoint, suppresses already emitted canonical tasks, and
+may then reconcile the formerly deferred whole page.
+
+This checkpoint is portable state, not a credential. It must not contain a
+credential, secret, authentication-token value, or raw provider session. The
+provider cursor remains opaque and unchanged; the skill must not synthesize an
+intra-page offset, replacement cursor, item identity, or task identity.
+Provider intra-page resume is outside this contract because a later observation
+in the same page may revise an earlier one. Preserving only a cursor and emitted
+identity set is insufficient because a resumed observation may change task
+identity, field value, explicit-clear state, freshness, or Project membership.
 
 An opaque provider continuation token is permitted only as pagination state and
 must be returned unchanged.
 
-When the source is exhausted, return `source_exhausted`; when a later page fails, preserve previously reconciled results, return that page's incoming cursor, and use the failure as `stop_reason`. Any continuation is partial; exhaustion is complete only when no conflict prevents completeness.
+When the source is exhausted, return `source_exhausted`; when a later page
+fails, preserve previously reconciled results, return that page's unchanged
+incoming cursor and the checkpoint from immediately before the failed fetch,
+and use the failure as `stop_reason`. Any continuation is partial; exhaustion
+is complete only when no conflict prevents completeness.
 
 Completeness-required mode overrides the standard display call's
 `unique_limit_reached` stop. Keep a display/return buffer containing at most the
@@ -120,6 +164,16 @@ conflicts, and stop reason cover the full investigated extent even when
 If the loop hits a hard stop, preserve its current buffer and aggregate state,
 return `partial`, and expose the unchanged provider continuation when one is
 available.
+
+The completeness-required executor, rather than a caller-supplied boolean,
+drives every page fetch until exhaustion or a hard stop. It commits whole pages
+to one aggregate reconciliation checkpoint even after 50 matches, retains at
+most the first 50 tasks in the display buffer, and derives duplicate decisions
+only from the final aggregate envelope. On exhaustion it may be `complete` with
+display `truncated=true`; on permission, page, or tool failure it returns
+`partial`, preserves the current display and aggregate checkpoint, and exposes
+the failed page's unchanged incoming continuation. It never sets
+`create_allowed=true` before conflict-free source exhaustion.
 
 ## Completeness envelope
 
@@ -185,7 +239,10 @@ Creation defaults are `Status=Inbox`, `Priority=P2`, and no due date. Apply them
 - `Done` targets Issue state `closed`, close reason `completed`, and Project Status `Done`.
 - `Cancelled` targets Issue state `closed`, close reason `not planned`, and Project Status `Cancelled`.
 - Treat the Project Status and Issue close as two sides of one logical transition.
-- Read the current Issue state, close reason, and Project Status first. Attempt only sides that differ from the target.
+- Read the current Issue state, close reason, and Project Status first. The Issue
+  side is already complete only when both state and close reason equal their
+  target. A closed Issue with the wrong close reason still leaves `issue` in
+  `first_remaining_sides`.
 - An explicit terminal instruction needs no second confirmation. An inferred terminal transition still requires confirmation before mutation.
 - Keep the item in the Project; do not remove or archive it.
 - When an externally closed Issue has a reliable close reason, reconcile the Project Status as a safe non-destructive update.
@@ -194,12 +251,16 @@ Creation defaults are `Status=Inbox`, `Priority=P2`, and no due date. Apply them
 
 ## Reopen
 
-Issue state and Project Status are two sides of one logical operation. Reopen targets Issue state `open`, no close reason, and a non-terminal Project Status.
+Issue state and Project Status are two sides of one logical operation; the Issue
+side includes close reason. Reopen targets Issue state `open`, an exactly
+cleared close reason, and a non-terminal Project Status.
 
 - Normalize an explicit target and allow only `Inbox`, `Backlog`, `Ready`, `In progress`, and `Blocked`. A bare reopen defaults to `Backlog`.
 - Block `Done`, `Cancelled`, every unknown or non-normalizable value, and a schema-ambiguous target before either side is attempted.
-- Read the current Issue state and Project Status first. Attempt only sides that differ from the target.
-- If both sides read back at their targets, return `complete`. If one side succeeds and the other does not, return `partial`, name the completed side and `first_remaining_sides`, and include the current Issue state and Status as exact readback.
+- Read current Issue state, close reason, and Project Status first. The Issue
+  side remains unfinished when state is not `open` or provider readback has not
+  cleared close reason to its exact open-state representation.
+- If both sides read back at their targets, return `complete`. If one side succeeds and the other does not, return `partial`, name the completed side and `first_remaining_sides`, and include the current Issue state, close reason, and Status as exact readback.
 - When the other side fails, do not roll back a successful side. Keep its exact readback as the resume basis.
 - On retry, read both sides again and put the remaining side only in `retry_attempted_sides`. Never reopen an Issue already confirmed open, rewrite a Status already confirmed correct, or reset a successful explicit Status to the bare-reopen default.
 

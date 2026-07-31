@@ -65,7 +65,7 @@
         ]}
       ],
       "expected_item_state": {"PVTI-FIELDS": {"task_identity": "I-FIELDS", "status": "Backlog", "priority": "P2"}},
-      "expected": {"raw_observation_count": 3, "deduplicated_observation_count": 2, "identity_conflict_count": 0, "reconciliation_conflict_count": 0, "unique_task_count": 0, "returned_count": 0, "task_order": [], "completeness": "complete", "truncated": false, "continuation": null, "stop_reason": "source_exhausted"}
+      "expected": {"raw_observation_count": 3, "deduplicated_observation_count": 2, "identity_conflict_count": 0, "reconciliation_conflict_count": 0, "unique_task_count": 1, "returned_count": 1, "task_order": ["I-FIELDS"], "completeness": "complete", "truncated": false, "continuation": null, "stop_reason": "source_exhausted"}
     },
     {
       "name": "same_task_multiple_items",
@@ -123,6 +123,58 @@
         {"incoming_cursor": "cursor-f", "error": "permission_failure"}
       ],
       "expected": {"raw_observation_count": 3, "deduplicated_observation_count": 0, "identity_conflict_count": 0, "reconciliation_conflict_count": 0, "unique_task_count": 3, "returned_count": 3, "task_order": ["I-1", "I-2", "I-3"], "completeness": "partial", "truncated": false, "continuation": "cursor-f", "stop_reason": "permission_failure"}
+    },
+    {
+      "name": "due_date_update_preserve_clear",
+      "filter": "Ready",
+      "pages": [
+        {"incoming_cursor": null, "outgoing_cursor": null, "has_next": false, "items": [
+          {"item_identity": "PVTI-DUE", "task_identity": "I-DUE", "status": "Ready", "priority": "P2", "due_date": "2026-08-01", "updated_at": "2026-07-31T00:00:00Z"},
+          {"item_identity": "PVTI-DUE", "task_identity": "I-DUE", "due_date": "2026-08-15", "updated_at": "2026-07-31T02:00:00Z"},
+          {"item_identity": "PVTI-DUE", "task_identity": "I-DUE", "status": null, "priority": null, "due_date": null, "updated_at": "2026-07-31T03:00:00Z"},
+          {"item_identity": "PVTI-DUE", "task_identity": "I-DUE", "due_date": "2026-08-15", "updated_at": "2026-07-31T04:00:00Z"},
+          {"item_identity": "PVTI-DUE", "task_identity": "I-DUE", "due_date": null, "explicit_clear": ["due_date"], "updated_at": "2026-07-31T05:00:00Z"}
+        ]}
+      ],
+      "expected_item_state": {"PVTI-DUE": {"task_identity": "I-DUE", "status": "Ready", "priority": "P2", "due_date": null}},
+      "expected": {"raw_observation_count": 5, "deduplicated_observation_count": 4, "identity_conflict_count": 0, "reconciliation_conflict_count": 0, "unique_task_count": 1, "returned_count": 1, "task_order": ["I-DUE"], "completeness": "complete", "truncated": false, "continuation": null, "stop_reason": "source_exhausted"}
+    },
+    {
+      "name": "due_date_unorderable_conflict",
+      "filter": "Ready",
+      "pages": [
+        {"incoming_cursor": null, "outgoing_cursor": null, "has_next": false, "items": [
+          {"item_identity": "PVTI-DUE-CONFLICT", "task_identity": "I-DUE-CONFLICT", "status": "Ready", "due_date": "2026-08-01", "updated_at": null},
+          {"item_identity": "PVTI-DUE-CONFLICT", "task_identity": "I-DUE-CONFLICT", "due_date": "2026-08-02", "updated_at": null}
+        ]}
+      ],
+      "expected": {"raw_observation_count": 2, "deduplicated_observation_count": 1, "identity_conflict_count": 0, "reconciliation_conflict_count": 1, "unique_task_count": 0, "returned_count": 0, "task_order": [], "completeness": "partial", "truncated": false, "continuation": null, "stop_reason": "reconciliation_conflict"}
+    },
+    {
+      "name": "completeness_required_over_50_exhausted",
+      "mode": "completeness_required",
+      "filter": "Ready",
+      "pages": [
+        {"incoming_cursor": null, "outgoing_cursor": "cursor-55", "has_next": true, "generated_unique": {"start": 1, "count": 55}},
+        {"incoming_cursor": "cursor-55", "outgoing_cursor": null, "has_next": false, "generated_unique": {"start": 56, "count": 5}}
+      ],
+      "expected_returned": {"first": "I-1", "last": "I-50"},
+      "expected_create_allowed": true,
+      "expected_checkpoint_cursor": null,
+      "expected": {"raw_observation_count": 60, "deduplicated_observation_count": 0, "identity_conflict_count": 0, "reconciliation_conflict_count": 0, "unique_task_count": 60, "returned_count": 50, "task_order": {"first": "I-1", "last": "I-50"}, "completeness": "complete", "truncated": true, "continuation": null, "stop_reason": "source_exhausted"}
+    },
+    {
+      "name": "completeness_required_post_50_hard_stop",
+      "mode": "completeness_required",
+      "filter": "Ready",
+      "pages": [
+        {"incoming_cursor": null, "outgoing_cursor": "cursor-55", "has_next": true, "generated_unique": {"start": 1, "count": 55}},
+        {"incoming_cursor": "cursor-55", "error": "permission_failure"}
+      ],
+      "expected_returned": {"first": "I-1", "last": "I-50"},
+      "expected_create_allowed": false,
+      "expected_checkpoint_cursor": "cursor-55",
+      "expected": {"raw_observation_count": 55, "deduplicated_observation_count": 0, "identity_conflict_count": 0, "reconciliation_conflict_count": 0, "unique_task_count": 55, "returned_count": 50, "task_order": {"first": "I-1", "last": "I-50"}, "completeness": "partial", "truncated": true, "continuation": "cursor-55", "stop_reason": "permission_failure"}
     }
   ]
 }

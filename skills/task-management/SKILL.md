@@ -7,6 +7,47 @@ description: Use when creating, finding, updating, prioritizing, commenting on, 
 
 Manage task content as GitHub Issues and portfolio state as Project items. Use available GitHub MCP capabilities directly.
 
+## Inputs
+
+- `operation`: one MVP operation: read, search, list, create, register, title/body
+  edit, comment, Status/Priority/Due date update, Done/Cancelled, or reopen.
+- `project_url`: optional caller-selected Project URL. When omitted, resolve the
+  caller default or established session Project through `references/core.md`.
+- `inbox_repository`: optional caller-owned repository for genuinely
+  repository-independent or unclassified create operations. It has no skill-owned
+  default.
+- Operation payload: the target Issue or query, requested mutation values, and
+  optional Status filter. A bare reopen defaults only its target Status to
+  `Backlog`.
+- Resume input: optional opaque provider continuation plus the caller-held,
+  non-secret reconciliation checkpoint defined in
+  `references/github-projects.md`. A new traversal has neither.
+
+## Outputs
+
+- A result envelope with the resolved target and one of `complete`, `partial`,
+  or `blocked`.
+- Read/list results include counts, conflicts, display truncation, stop reason,
+  opaque continuation, and the lossless caller-held checkpoint.
+- Mutation results include requested-field and protected-native-metadata exact
+  readback, completed sides, remaining sides, and recovery instructions.
+- A `partial` or `blocked` result identifies missing semantic capability,
+  permission, schema, identity, or readback evidence. Recovery resumes only
+  unfinished work and never guesses a target or silently changes transport.
+
+## Required Capabilities
+
+- Resolve semantic GitHub Issue, Project-item, field, search/list, and write
+  capabilities operation-scoped through the matrices in
+  `references/github-projects.md`.
+- Exact readback of every requested mutation and protected native metadata;
+  retries require readback plus only the remaining-side write capabilities.
+- Preserve opaque provider continuation and caller-held reconciliation state
+  without storing credentials, secrets, or authentication-token values.
+- Fail closed when identity, target membership, capability, permission, schema,
+  or exact readback is ambiguous. Exact live tool names are runtime-resolved and
+  are not part of this portable contract.
+
 ## References
 
 - Read `references/core.md` before resolving the caller's Project or Issue repository.
@@ -31,6 +72,10 @@ Manage task content as GitHub Issues and portfolio state as Project items. Use a
 3. For read, search, and list, require only the read capabilities because these routes perform no write.
 4. For every operation, complete the operation-scoped capability and target-permission preflight in `references/github-projects.md` before mutation.
 5. Follow exactly one operation flow below. Combine flows only when the user explicitly requests each operation.
+6. If one canonical task has multiple Project-item memberships, all Project
+   field, terminal, and reopen writes stop until exact readback proves one
+   canonical Project-item identity. Return every conflicting membership; never
+   choose by order, title, or mutable display fields.
 
 ### Read, search, and list
 
