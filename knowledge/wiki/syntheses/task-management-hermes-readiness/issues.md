@@ -8,7 +8,7 @@ tags:
   - hermes
   - schedule-secretary
   - implementation-ledger
-status: review-pending
+status: local-portable-review-complete
 aliases:
   - Task Management Hermes Readiness Issues
   - Schedule Secretary Task Management MVP Issue Ledger
@@ -20,13 +20,17 @@ aliases:
 
 本台帳は `task-management-hermes-readiness` の local-first durable execution
 ledger である。portable Skills Tasks 1〜5と、5回のwhole-branch review指摘への
-修正実装は完了している。ただし第5 fix後のwhole-branch再reviewはpendingであり、現時点では
-`LOCAL_COMPLETE`またはremote publish可能とは判定しない。
+修正実装、および第5 fix後の独立whole-branch再reviewは完了した。review対象のexact
+headは`50da5a9ab7e888d11e634a1fde88ddb3602a9730`で、判定は`PASS`、
+Critical 0 / Important 0 / Minor 0である。したがってTasks 1〜5は
+`local portable implementation/review complete`とする。ただしこれはoverall / live
+readinessまたはremote publication readinessの判定ではない。
 
 Task 6 cross-repository handoffは、修正済みSkills revisionが`origin/main`へmergeされた
 証拠、すなわちmerged revisionのexact identityを得るまで`blocked`である。
-Companies、install、Schedule Secretary、
-live Hermes / GitHub MCPの状態は本台帳から推定しない。
+このexact current Skills revisionはまだ`origin/main`へmergeされておらず、handoffも
+作成していない。Companies、install、Schedule Secretary、live Hermes / GitHub MCPの
+状態は本台帳から推定しない。
 
 ## Authority と binding
 
@@ -59,7 +63,7 @@ gateを事後にdurable化する。
 | Whole-branch checkpoint hardening fix | reviewed / follow-up fixed | `dfb3b79d61e8ea66bbff670ef1234b396bc3375b` | 第2回reviewのImportant 5 / Minor 2を修正後、第3回reviewはFAIL: Critical 0 / Important 3 / Minor 0 | bound continuation fix参照 |
 | Whole-branch bound continuation fix | reviewed / follow-up fixed | `57076755bf27e95cfdd44beafc4dcfc8b30bbead` | 第3回reviewのImportant 3を修正後、第4回reviewはFAIL: Critical 0 / Important 2 / Minor 2 | trusted continuation fix参照 |
 | Whole-branch trusted continuation fix | reviewed / follow-up fixed | `8a4469cbec9bf5ed6069a5d17b0ed1d7aefd97e5` | 第4回reviewのImportant 2 / Minor 2を修正後、第5回reviewはFAIL: Critical 0 / Important 1 / Minor 1 | terminal pagination fix参照 |
-| Whole-branch terminal pagination fix | implemented / review pending | `42bdfb27d5aa008741ec7e7fdff0a15f77e75290` | exact-bool `has_next`とterminal outgoing cursor schema、unresumable partial、SKILL trusted-runtime wordingをadversarial TDDで修正 | fresh whole-branch再review |
+| Whole-branch terminal pagination fix | verified | `42bdfb27d5aa008741ec7e7fdff0a15f77e75290` | exact-bool `has_next`とterminal outgoing cursor schema、unresumable partial、SKILL trusted-runtime wordingをadversarial TDDで修正。exact reviewed head `50da5a9ab7e888d11e634a1fde88ddb3602a9730`でwhole-branch review `PASS`、Critical 0 / Important 0 / Minor 0 | なし |
 | Task 6 cross-repository handoff | blocked | なし | 未着手 | 修正済みSkills revisionが`origin/main`へmergeされたexact evidence |
 
 ## Portable acceptance mapping
@@ -196,8 +200,15 @@ Minor 1）だった。terminal pagination fix
 
 追加1件を含むtask-management contract testは48/48 GREENである。fresh verificationは
 skill CI contract 3/3、repository scripts 19/19、llm-wiki 21/21、architecture
-validator、quick validatorもpassした。ただし第5 fix後のwhole-branch再review前に
-review completeとは扱わない。
+validator、quick validatorもpassした。
+
+第5 fix後の独立whole-branch再reviewはexact head
+`50da5a9ab7e888d11e634a1fde88ddb3602a9730`を対象に`PASS`、Critical 0 /
+Important 0 / Minor 0だった。task-managementはPython 3.9と3.12の双方で48/48、
+skill CI 3/3、repository scripts 19/19、llm-wiki 21/21、architecture validator、
+quick validator、negative probes、diff checksもすべてpassした。これによりTasks 1〜5は
+local portable implementation/review completeである。上記5回の`FAIL`と各fix commitは
+review履歴として保持し、この最終`PASS`で削除または遡及変更しない。
 
 ## Remote / external boundary
 
@@ -216,7 +227,9 @@ review completeとは扱わない。
 
 ## Next gate
 
-1. fresh repository verificationを完了する。
-2. `282fa44a9fe97d9d0feb2e8d6733a6ae47f00f78..HEAD`のwhole-branch再reviewを行う。
-3. review findingがあればbounded fixとscoped re-reviewを行う。
-4. 修正済みrevisionが`origin/main`へmergeされた後だけTask 6 handoffを作る。
+1. exact current Skills revisionが`origin/main`へmergeされた証拠を得る。
+2. merged revisionのexact identityを入力として、別承認の下でTask 6
+   cross-repository handoffを作る。
+3. Companies、install/discovery/defaults、same-runtime live implementation、
+   permission/schema/configuration、live task mutationは、それぞれのownerと承認Gateで
+   別途実行・検証する。
