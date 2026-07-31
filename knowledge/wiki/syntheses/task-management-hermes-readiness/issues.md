@@ -26,6 +26,13 @@ Critical 0 / Important 0 / Minor 0である。したがってTasks 1〜5は
 `local portable implementation/review complete`とする。ただしこれはoverall / live
 readinessまたはremote publication readinessの判定ではない。
 
+本branchは`origin/main`の`820357017300ed32605f8eec4e1541f7fe54cace`を
+merge commit `05c17aa0d1eb406d8a7b74425a7aa27052ac5c86`で統合し、
+`codex/task-management-hermes-readiness-planning`としてpush済みである。
+Draft PR [#47](https://github.com/omitsuhashi/skills/pull/47) は`main`向けにopenで、
+初回公開headのGitHub Actions（Python 3.9 / 3.12）は成功し、GitHub readbackでは
+mergeableである。ただしDraftのReady化、merge、releaseは行っていない。
+
 Task 6 cross-repository handoffは、修正済みSkills revisionが`origin/main`へmergeされた
 証拠、すなわちmerged revisionのexact identityを得るまで`blocked`である。
 このexact current Skills revisionはまだ`origin/main`へmergeされておらず、handoffも
@@ -212,10 +219,10 @@ review履歴として保持し、この最終`PASS`で削除または遡及変�
 
 ## Remote / external boundary
 
-本台帳とcommitは`local_only`である。次は未承認かつ未実施であり、本branchの完了状態へ
-含めない。
+portable実装の公開範囲はbranch pushとDraft PR #47の作成までである。次は未承認かつ
+未実施であり、本branchの完了状態へ含めない。
 
-- push、PR作成、merge、release。
+- Draft PRのReady化、merge、release。
 - Companies repositoryの変更とTask 6 handoffのpublication。
 - managed-native install / reinstall、profile/default変更、restart。
 - Schedule Secretary discovery/readinessのlive確認。

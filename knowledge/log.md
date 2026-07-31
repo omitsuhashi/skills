@@ -1958,3 +1958,9 @@ append-only で使います。すべての entry は予測しやすい header �
 
 - append-only recordとして、直前の`human-ruling-correction` eventにある「canonical final reviewはこの訂正commit後にあらためて行い」という wording を supersede する。このcorrection commitはTask 4のscoped re-reviewを受け、その完了後にcontrollerがTask 4 closeout後のsingle canonical final whole-branch reviewを初回として一度だけ実行する。
 - canonical final whole-branch reviewはまだ実行しておらず、full reviewのrepeatは発生していない。remote publicationは承認・実施していない。
+
+## [2026-07-31] draft-pr-published | Task Management Hermes Schedule Secretary Readiness
+
+- `origin/main`の`820357017300ed32605f8eec4e1541f7fe54cace`をTask Management planning branchへ統合した。append-onlyな`knowledge/log.md`の競合ではTask ManagementとSDD first-write worktree migrationの両履歴を保持し、merge commitは`05c17aa0d1eb406d8a7b74425a7aa27052ac5c86`である。統合時点でbranchは`origin/main`に対してbehind 0だった。
+- `codex/task-management-hermes-readiness-planning`をpushし、`main`向けDraft PR [#47](https://github.com/omitsuhashi/skills/pull/47)を作成した。初回公開headに対するGitHub Actions `Skill Architecture`のPython 3.9 / 3.12 jobは成功し、GitHub readbackではPRはopen / draft / mergeableである。
+- DraftのReady化、merge、releaseは実施していない。Task 6 cross-repository handoffはPRが`origin/main`へmergeされ、exact merged revisionを取得するまで`blocked`を維持する。Companies repository、managed-native install、Schedule Secretary live discovery、GitHub MCP permission / schema / configuration、live Issue / Project mutationは未実施である。
