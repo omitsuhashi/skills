@@ -1878,3 +1878,10 @@ append-only で使います。すべての entry は予測しやすい header �
 - Tasks 1〜4の独立task reviewはspec / qualityともに`PASS`で、各findingは修正・再review済みである。Task 5の独立task review、Task 6 cross-repository handoff、controller-owned knowledge closeout review、whole-branch reviewとcompletion判定はpendingであり、overall readinessやlive readinessは主張しない。
 - このfollow-up用の新規Issue ledgerはbranch内に存在しないため、approved planと`.superpowers/sdd/implementation-plan/progress.md`をexecution recordとした。保護対象の[[wiki/syntheses/direct-github-projects-task-management/issues|既存Direct GitHub Projects Issue台帳]]は変更していない。
 - Companies delivery、install、Schedule Secretary discovery/defaults、live readiness/configuration/permission/schema work、live mutation、push、PR、mergeはすべて未実施である。
+
+## [2026-07-31] issue-ledger-and-whole-branch-fix-candidate | Task Management Hermes Schedule Secretary Readiness
+
+- [[wiki/syntheses/task-management-hermes-readiness/issues|local Issue台帳]]を作成し、approved spec path / SHA-256 `338e0c1e192949c352a1fdd6deec1231ad495f19b68729e2aff3f330356ced4f` / approval commit `088b91669813649363ddda28ea3d45387b92dbc3`、Human-approved [[wiki/syntheses/task-management-hermes-readiness/implementation-plan|implementation plan]]、Tasks 1〜5のexact commit chain、独立review、portable acceptance criterionとnamed testのmappingをdurable化した。
+- 先行`implementation-closeout-candidate` entryの「新規Issue ledgerはbranch内に存在しない」は当時の事実としてappend-onlyに保持するが、current execution recordについては本entryと新規台帳がsupersedeする。Execution Plan Gate承認時に本fileが存在したとは主張せず、承認が対象としたexact Tasks 1〜5 scopeだけを記録した。
+- initial whole-branch reviewはCritical 0 / Important 9 / Minor 1で`FAIL`だった。fix wave `836c80bebbea0820803c76cf29056eadb9a7a07b`はrequested Status filter、lossless reconciliation checkpoint、Due date freshness、protected metadata readback capability、close reason、ambiguous membership write stop、page-driven completeness-required traversal、portable shared declarations、identity normalizationをTDDで修正した。
+- portable implementationとfix waveはimplementedであるが、fresh full verificationと修正後whole-branch reviewはpendingである。Task 6は修正済みSkills revisionのmerged evidence待ちで`blocked`。Companies、install、live readiness/configuration/permission/schema work、live mutation、push、PR、mergeは未実施である。
