@@ -828,6 +828,34 @@ def mark_result_blocked(
     return result
 
 
+def pagination_terminal_error(page: dict[str, object]) -> object:
+    if "has_next" not in page or type(page["has_next"]) is not bool:
+        return "pagination_schema_ambiguity"
+    outgoing = page.get("outgoing_cursor")
+    if page["has_next"] is True:
+        if type(outgoing) is not str or not outgoing:
+            return "continuation_unavailable"
+    elif outgoing is not None:
+        return "pagination_terminal_cursor_mismatch"
+    return None
+
+
+def mark_result_unresumable(
+    result: dict[str, object],
+    stop_reason: str,
+) -> dict[str, object]:
+    result["completeness"] = "partial"
+    result["stop_reason"] = stop_reason
+    result["continuation"] = None
+    result["recovery"] = (
+        "Provider pagination state is invalid; resume unsupported, "
+        "restart from source."
+    )
+    result["create_allowed"] = False
+    result.pop("continuation_state", None)
+    return result
+
+
 def attach_checkpoint(
     result: dict[str, object],
     *,
@@ -1104,6 +1132,13 @@ def reconcile_pages(case: dict[str, object]) -> dict[str, object]:
             truncated=bool(page.get("has_next")),
             stop_reason="unique_limit_reached" if page.get("has_next") else "source_exhausted",
         )
+        terminal_error = pagination_terminal_error(page)
+        if terminal_error is not None:
+            candidate["truncated"] = page.get("has_next") is True
+            return mark_result_unresumable(
+                candidate,
+                terminal_error,
+            )
         _, _, candidate_matching = matching_state(
             items=candidate_items,
             first_seen=candidate_first_seen,
@@ -1551,6 +1586,142 @@ def field_options(text: str, field: str) -> list[str]:
 
 
 class TaskManagementContractTests(unittest.TestCase):
+    def test_terminal_pagination_cursor_schema_is_fail_closed(self) -> None:
+        invalid_cases = (
+            (
+                "true_without_cursor",
+                {
+                    "incoming_cursor": None,
+                    "outgoing_cursor": None,
+                    "has_next": True,
+                    "generated_unique": {"start": 1, "count": 1},
+                },
+                "continuation_unavailable",
+            ),
+            (
+                "false_with_cursor",
+                {
+                    "incoming_cursor": None,
+                    "outgoing_cursor": "cursor-UNEXPECTED",
+                    "has_next": False,
+                    "generated_unique": {"start": 1, "count": 1},
+                },
+                "pagination_terminal_cursor_mismatch",
+            ),
+            (
+                "integer_has_next",
+                {
+                    "incoming_cursor": None,
+                    "outgoing_cursor": "cursor-1",
+                    "has_next": 1,
+                    "generated_unique": {"start": 1, "count": 1},
+                },
+                "pagination_schema_ambiguity",
+            ),
+            (
+                "string_has_next",
+                {
+                    "incoming_cursor": None,
+                    "outgoing_cursor": None,
+                    "has_next": "false",
+                    "generated_unique": {"start": 1, "count": 1},
+                },
+                "pagination_schema_ambiguity",
+            ),
+            (
+                "missing_has_next",
+                {
+                    "incoming_cursor": None,
+                    "outgoing_cursor": None,
+                    "generated_unique": {"start": 1, "count": 1},
+                },
+                "pagination_schema_ambiguity",
+            ),
+        )
+        for name, page, expected_reason in invalid_cases:
+            with self.subTest(case=name):
+                result = completeness_required_traversal(
+                    {
+                        "mode": "completeness_required",
+                        "filter": "Ready",
+                        "pages": [page],
+                    }
+                )
+                self.assertEqual("partial", result["completeness"])
+                self.assertEqual(expected_reason, result["stop_reason"])
+                self.assertEqual(1, result["raw_observation_count"])
+                self.assertEqual(
+                    ["I-1"],
+                    result["_returned_task_identities"],
+                )
+                self.assertFalse(result["create_allowed"])
+                self.assertNotIn("continuation_state", result)
+                self.assertIn("resume unsupported", result["recovery"])
+
+        terminal = completeness_required_traversal(
+            {
+                "mode": "completeness_required",
+                "filter": "Ready",
+                "pages": [
+                    {
+                        "incoming_cursor": None,
+                        "outgoing_cursor": None,
+                        "has_next": False,
+                        "generated_unique": {"start": 1, "count": 1},
+                    }
+                ],
+            }
+        )
+        self.assertEqual("complete", terminal["completeness"])
+        self.assertEqual("source_exhausted", terminal["stop_reason"])
+
+        continuing = completeness_required_traversal(
+            {
+                "mode": "completeness_required",
+                "filter": "Ready",
+                "pages": [
+                    {
+                        "incoming_cursor": None,
+                        "outgoing_cursor": "cursor-EXPECTED",
+                        "has_next": True,
+                        "generated_unique": {"start": 1, "count": 1},
+                    },
+                    {
+                        "incoming_cursor": "cursor-EXPECTED",
+                        "outgoing_cursor": None,
+                        "has_next": False,
+                        "generated_unique": {"start": 2, "count": 1},
+                    },
+                ],
+            }
+        )
+        self.assertEqual("complete", continuing["completeness"])
+        self.assertEqual(2, continuing["raw_observation_count"])
+        self.assertEqual(["I-1", "I-2"], continuing["_returned_task_identities"])
+        project_contract = read(PROJECTS)
+        for required in (
+            "`has_next` must be an exact boolean",
+            "`continuation_unavailable`",
+            "Only exact `has_next=false` with an absent or null outgoing cursor",
+        ):
+            self.assertIn(required, project_contract)
+        portable_declaration = "\n".join(
+            (
+                section(read(SKILL), "## Inputs"),
+                section(read(SKILL), "## Outputs"),
+                section(read(SKILL), "## Required Capabilities"),
+            )
+        )
+        self.assertNotIn("caller-held", portable_declaration)
+        self.assertIn(
+            "same trusted runtime-held opaque state",
+            portable_declaration,
+        )
+        self.assertIn(
+            "user/transcript/artifact serialization is unsupported",
+            portable_declaration,
+        )
+
     def test_continuation_state_trust_boundary_blocks_reconstructed_state(
         self,
     ) -> None:

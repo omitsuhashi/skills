@@ -151,6 +151,17 @@ state:
   the next page's incoming cursor. A mismatch returns a structured `blocked`
   envelope from the last committed page, with `create_allowed=false` and
   restart-from-source guidance; do not consume the mismatched page.
+- For every successfully fetched page, `has_next` must be an exact boolean;
+  missing values, strings, and integer `0`/`1` are pagination schema ambiguity.
+  When `has_next=true`, require a non-null, non-empty, resumable opaque outgoing
+  cursor. If it is unavailable, preserve the fetched/reconciled results, return
+  `partial` with `continuation_unavailable`, `create_allowed=false`, no trusted
+  continuation state, and resume-unsupported guidance. When `has_next=false`,
+  the outgoing cursor must be absent or null; a non-null value is
+  `pagination_terminal_cursor_mismatch` and likewise returns an unresumable
+  partial result. Only exact `has_next=false` with an absent or null outgoing cursor
+  proves source exhaustion. Validate this terminal schema before declaring
+  completeness or permitting duplicate creation.
 
 `ContinuationState` is one indivisible runtime-held value containing the opaque
 provider continuation unchanged, a lossless reconciliation checkpoint, and a

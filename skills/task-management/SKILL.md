@@ -19,19 +19,19 @@ Manage task content as GitHub Issues and portfolio state as Project items. Use a
 - Operation payload: the target Issue or query, requested mutation values, and
   optional Status filter. A bare reopen defaults only its target Status to
   `Backlog`.
-- `resume_continuation_state`: optional single runtime-held value returned by a
-  prior operation in the same trusted caller/runtime execution context, as
+- `resume_continuation_state`: optional same trusted runtime-held opaque state
+  returned by a prior operation in one caller/runtime execution context, as
   defined in `references/github-projects.md`. It contains the opaque provider
   continuation, non-secret reconciliation checkpoint, and their accidental-mix
   association. A new traversal omits it. Never accept a separately supplied
-  cursor/checkpoint or user-/artifact-reconstructed state.
+  cursor/checkpoint; user/transcript/artifact serialization is unsupported.
 
 ## Outputs
 
 - A result envelope with the resolved target and one of `complete`, `partial`,
   or `blocked`.
 - Read/list results include counts, conflicts, display truncation, stop reason,
-  opaque continuation, and one lossless caller-held `ContinuationState`.
+  opaque continuation, and one lossless same trusted runtime-held opaque state.
 - Mutation results include requested-field and protected-native-metadata exact
   readback, completed sides, remaining sides, and recovery instructions.
 - A `partial` or `blocked` result identifies missing semantic capability,
