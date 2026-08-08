@@ -1898,3 +1898,9 @@ append-only で使います。すべての entry は予測しやすい header �
 - independent plan reviewのImportant findingに従い、[[wiki/syntheses/llm-wiki-authoring-discovery-diagnostics-implementation-plan|implementation plan candidate]]のTask 1へ`writing-skills` / TDDのexplicit RED-GREEN contractを追加した。
 - pre-editは同一pressure scenarioをno-guidance controlとcurrent unmodified llm-wiki contractで各fresh contextに適用し、post-editはchanged `SKILL.md` / `core.md`を明示的に渡した別fresh contextで再実行する。semantic `obsidian` profile、differently named `obsidian-markdown`、current wikilink contract、2 fields missingとrelative Markdown link復元へのpressure、discovery unavailable branchを同じmanual scorecardで比較する。
 - prompt、verbatim result、manual scorecardはplan-owned gitignored SDD workspaceだけに置く。repository test / validator、runtime resolver、code、sidecar、runtime metadata、context-contract operation read-set、production contractはこのplan correctionで変更していない。HumanのPlan Gate承認、implementation、remote writeは引き続き未実施である。
+
+## [2026-08-08] plan-gate-approved | llm-wiki Authoring Discovery Diagnostics
+
+- Humanは明示message `承認`により、[[wiki/syntheses/llm-wiki-authoring-discovery-diagnostics-implementation-plan|llm-wiki Authoring Discovery Diagnostics 実装計画]]をrepository-required Plan Gateとして承認した。本計画はHuman-approved / currentである。
+- approved plan candidate commit `0b99c98872661c84a789580d6bae78dad5691ba3`を、approved focused Written Spec commit `f3126d8ec2f740be228640d22215f9d1f1a52175`へbindingし、[[index|durable catalog]]を同じ承認状態へ同期した。
+- この承認checkpointはplan、catalog、append-only logだけを更新する。production contract、test、validator、runtime resolver、code、runtime metadataは変更せず、implementation、task review、durable implementation closeout、final whole-branch review、remote writeは未実施である。

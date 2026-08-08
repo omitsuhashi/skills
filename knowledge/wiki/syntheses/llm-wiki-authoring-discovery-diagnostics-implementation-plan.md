@@ -16,12 +16,13 @@ aliases:
 
 ## 状態
 
-2026-08-08時点で、本計画はrepository reviewとHuman approvalを待つimplementation-plan candidateである。
-Human-approved / currentなWritten Specは
+2026-08-08、Humanは明示message `承認`により本計画をrepository-required Plan Gateとして承認した。
+本計画はHuman-approved / currentな実行計画であり、plan candidate commit
+`0b99c98872661c84a789580d6bae78dad5691ba3`にbindingされる。要件の正本はHuman-approved / currentなWritten Spec
 [[llm-wiki-authoring-responsibility-separation-spec|llm-wiki authoring 責務分離仕様]]の
-「Authoring discovery diagnostics focused revision」であり、approval commitは
-`f3126d8ec2f740be228640d22215f9d1f1a52175`である。Humanが本計画をPlan Gateとして
-承認するまでimplementationを開始しない。
+「Authoring discovery diagnostics focused revision」であり、そのapproval commitは
+`f3126d8ec2f740be228640d22215f9d1f1a52175`である。production implementation、
+task review、durable implementation closeout、final whole-branch review、remote writeは未実施である。
 
 **Goal:** `llm-wiki`のportable documentation contractに、Authoring Profileのsemantic-selector規則、evidence-bearing discovery `BLOCKED`、current-state precedence guardを追加し、repository-specificな`obsidian` / `obsidian-markdown` mappingとlink behaviorをgeneric contractの外に保つ。
 
