@@ -1867,3 +1867,16 @@ append-only で使います。すべての entry は予測しやすい header �
 
 - append-only recordとして、直前の`human-ruling-correction` eventにある「canonical final reviewはこの訂正commit後にあらためて行い」という wording を supersede する。このcorrection commitはTask 4のscoped re-reviewを受け、その完了後にcontrollerがTask 4 closeout後のsingle canonical final whole-branch reviewを初回として一度だけ実行する。
 - canonical final whole-branch reviewはまだ実行しておらず、full reviewのrepeatは発生していない。remote publicationは承認・実施していない。
+
+## [2026-08-08] written-spec-review-candidate | llm-wiki Authoring Discovery Diagnostics
+
+- Humanは、Authoring Profileをsemantic selectorとしskill IDとのname mismatchだけをfailureにしないこと、discovery起因の`BLOCKED`にprofile、Compatibility Requirement、candidateまたはdiscovery unavailable、exact causeと具体的理由を要求するshared understandingを承認した。
+- local-contract mutationの提案前にcurrent local contract、current approved spec、current checkoutを比較し、historical spec、old memory、append-only history、siblingまたはolder worktreeをcurrent ruleのoverride根拠にしない。
+- current repository evidenceである`obsidian`からdiscovered `obsidian-markdown`へのmappingとwikilink behaviorはrepository-specificに保ち、generic portable selectorへhardcodeしない。
+- [[wiki/syntheses/llm-wiki-authoring-responsibility-separation-spec|canonical Written Spec]]、[[index|durable catalog]]、append-only logを文書レビュー候補へ同期した。scopeはdocs-onlyで、validator、test、runtime resolver、code、新runtime metadata、visual artifactを含まない。Humanの更新Written Spec review、Plan Stage、production contract変更、remote writeは未実施である。
+
+## [2026-08-08] correction | llm-wiki Authoring Discovery Diagnostics Written Spec Candidate
+
+- fresh independent spec reviewの指摘に従い、`discovery unavailable`を`missing`、`ambiguous`、`incompatible`、`unreadable`のcandidate outcomeとは別のdiagnostic conditionとして明確化した。result statusは`BLOCKED`のまま維持し、candidate setを`unobserved`、exact causeをdiscovery実行不能の具体的理由として報告し、candidate outcomeを推論しない。
+- canonical specにRetained baselineの時間的scopeを追加し、2026-07-30のpre-migration problem、decision、migration contract、implementation historyがhistorical baselineであり、2026-08-08のcurrent contract interpretationをoverrideしないことを明記した。
+- [[wiki/syntheses/llm-wiki-authoring-responsibility-separation-spec|Written Spec candidate]]と[[index|durable catalog]]を同じcorrectionへ同期した。docs-only scope、Open Decisionsなし、Human Written Spec review pending、production contractとremote stateの未変更は維持する。
