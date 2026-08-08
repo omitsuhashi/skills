@@ -1886,3 +1886,15 @@ append-only で使います。すべての entry は予測しやすい header �
 - Humanは、commit `fc398b54492ccfc3f4ec14161d84bd7a2546f058`に記録されたrecurrence-prevention deltaを、[[wiki/syntheses/llm-wiki-authoring-responsibility-separation-spec|llm-wiki authoring 責務分離仕様]]のfocused revisionとしてWritten Spec承認した。focused revisionはHuman-approved / currentである。
 - [[index|durable catalog]]を同じ承認状態へ同期した。既承認のauthoring責務分離decisionとhistorical baselineは維持する。
 - Plan Stage、production contract変更、remote writeはこのWritten Spec承認に含まれず未実施である。
+
+## [2026-08-08] implementation-plan-review-candidate | llm-wiki Authoring Discovery Diagnostics
+
+- [[wiki/syntheses/llm-wiki-authoring-discovery-diagnostics-implementation-plan|llm-wiki Authoring Discovery Diagnostics 実装計画]]を、approval commit `f3126d8ec2f740be228640d22215f9d1f1a52175`のHuman-approved focused Written Specにbindingしたrepository review candidateとして作成した。
+- 計画は`skills/llm-wiki/SKILL.md`と`skills/llm-wiki/references/core.md`だけをproduction contract write setとし、focused semantic selector、evidence-bearing `BLOCKED`、current-state precedenceを実装する。durable closeoutはcurrent spec、本plan、[[index|durable catalog]]、append-only logだけに限定する。
+- tests、validators、runtime resolver、code、sidecar、runtime metadata、context-contract operation read-sets、repository-specific mappingのportable hardcodeはscope外である。HumanのPlan Gate承認、implementation、remote writeは未実施である。
+
+## [2026-08-08] implementation-plan-review-correction | llm-wiki Authoring Discovery Diagnostics
+
+- independent plan reviewのImportant findingに従い、[[wiki/syntheses/llm-wiki-authoring-discovery-diagnostics-implementation-plan|implementation plan candidate]]のTask 1へ`writing-skills` / TDDのexplicit RED-GREEN contractを追加した。
+- pre-editは同一pressure scenarioをno-guidance controlとcurrent unmodified llm-wiki contractで各fresh contextに適用し、post-editはchanged `SKILL.md` / `core.md`を明示的に渡した別fresh contextで再実行する。semantic `obsidian` profile、differently named `obsidian-markdown`、current wikilink contract、2 fields missingとrelative Markdown link復元へのpressure、discovery unavailable branchを同じmanual scorecardで比較する。
+- prompt、verbatim result、manual scorecardはplan-owned gitignored SDD workspaceだけに置く。repository test / validator、runtime resolver、code、sidecar、runtime metadata、context-contract operation read-set、production contractはこのplan correctionで変更していない。HumanのPlan Gate承認、implementation、remote writeは引き続き未実施である。
