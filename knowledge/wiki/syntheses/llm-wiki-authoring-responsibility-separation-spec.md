@@ -18,11 +18,11 @@ aliases:
 2026-07-30にHumanは基礎となるauthoring責務分離をWritten Specとして承認し、
 その実装は同日のcloseoutまで完了した。この既承認decisionと実装履歴は維持する。
 
-2026-08-08にHumanはauthoring discovery diagnosticsのfocused revisionについて
-shared understandingを承認した。本書の「Authoring discovery diagnostics focused revision」は
-Written Specの文書レビュー待ちであり、Humanが更新本文を確認するまでPlan Stageへ進まない。
-このfocused revisionは承認前にはnon-executableであり、`skills/llm-wiki/SKILL.md`、
-`skills/llm-wiki/references/core.md`、validator、test、runtime stateを変更しない。
+2026-08-08にHumanはauthoring discovery diagnosticsのfocused revisionをWritten Specとして承認した。
+本書の「Authoring discovery diagnostics focused revision」はHuman-approved / currentである。
+Plan Stage、production contract変更、remote writeは別の承認まで未実施であり、
+`skills/llm-wiki/SKILL.md`、`skills/llm-wiki/references/core.md`、validator、test、runtime stateは
+この承認記録では変更しない。
 
 ### Retained baselineの時間的scope
 
@@ -32,7 +32,8 @@ migration contract、implementation historyを当時の意味のまま保持す�
 その中の「現行」「このmigration」「本仕様作成時点」という表現は2026-07-30時点を指し、
 2026-08-08のcurrent checkoutまたはcurrent contractを記述しない。current interpretationは、
 同じcheckoutのlocal contract、current production contract、current approved specを照合して決める。
-今回のfocused revisionだけがpendingなoperative deltaであり、Human承認まではnon-executableである。
+今回のfocused revisionだけがHuman-approved / currentなoperative deltaである。Plan Stageへは
+別のHuman承認まで進まない。
 
 ## 問題
 

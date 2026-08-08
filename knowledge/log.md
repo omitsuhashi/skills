@@ -1880,3 +1880,9 @@ append-only で使います。すべての entry は予測しやすい header �
 - fresh independent spec reviewの指摘に従い、`discovery unavailable`を`missing`、`ambiguous`、`incompatible`、`unreadable`のcandidate outcomeとは別のdiagnostic conditionとして明確化した。result statusは`BLOCKED`のまま維持し、candidate setを`unobserved`、exact causeをdiscovery実行不能の具体的理由として報告し、candidate outcomeを推論しない。
 - canonical specにRetained baselineの時間的scopeを追加し、2026-07-30のpre-migration problem、decision、migration contract、implementation historyがhistorical baselineであり、2026-08-08のcurrent contract interpretationをoverrideしないことを明記した。
 - [[wiki/syntheses/llm-wiki-authoring-responsibility-separation-spec|Written Spec candidate]]と[[index|durable catalog]]を同じcorrectionへ同期した。docs-only scope、Open Decisionsなし、Human Written Spec review pending、production contractとremote stateの未変更は維持する。
+
+## [2026-08-08] spec-gate-approved | llm-wiki Authoring Discovery Diagnostics
+
+- Humanは、commit `fc398b54492ccfc3f4ec14161d84bd7a2546f058`に記録されたrecurrence-prevention deltaを、[[wiki/syntheses/llm-wiki-authoring-responsibility-separation-spec|llm-wiki authoring 責務分離仕様]]のfocused revisionとしてWritten Spec承認した。focused revisionはHuman-approved / currentである。
+- [[index|durable catalog]]を同じ承認状態へ同期した。既承認のauthoring責務分離decisionとhistorical baselineは維持する。
+- Plan Stage、production contract変更、remote writeはこのWritten Spec承認に含まれず未実施である。
