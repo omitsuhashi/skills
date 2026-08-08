@@ -1909,3 +1909,9 @@ append-only で使います。すべての entry は予測しやすい header �
 
 - reviewed production commit `f40a164e4c4fac1988b1ff98929fc829713fc572`により、`skills/llm-wiki/SKILL.md`と`skills/llm-wiki/references/core.md`だけのdocs-only contractがlandedした。semantic selector、evidence-bearing `BLOCKED`、current-state precedenceを確認し、pre-edit REDを観測してpost-edit GREENを満たした。prompt / result本文は記録せず、ignored execution evidenceのままとする。
 - focused current [[wiki/syntheses/llm-wiki-authoring-responsibility-separation-spec|Written Spec]]、[[wiki/syntheses/llm-wiki-authoring-discovery-diagnostics-implementation-plan|implementation plan]]、[[index|durable catalog]]をimplementation closeout candidateへ同期した。fresh verification resultsはcommit前に利用可能であり、final whole-branch reviewはpendingである。`knowledge/raw/**`はuntouchedで、remote writeは行っていない。
+
+## [2026-08-08] final-review-evidence-exception | llm-wiki Authoring Discovery Diagnostics
+
+- このeventは、直前の`implementation-closeout-candidate` eventにあるtemporalな「pre-edit RED」evidence claimだけをcorrect / supersedeし、その他のhistoryをrewriteしない。original before-edit current-control evidenceはprompt embedding defectによりinvalidatedされた。production commit `f40a164e4c4fac1988b1ff98929fc829713fc572`後、byte-exactな`ac67fde` sourceを使う5回のfresh runがREDを再現したが、これはpost-hoc old-contract replay evidenceである。5回のpost-edit runはGREENである。
+- Humanは2026-08-08に、このchronologyを一回限りのevidence exceptionとして明示承認した。このexceptionは一般のtemporal pre-edit RED gateを満たすものでも弱めるものでもなく、future skill workのoriginal gateを変更しない。two-file production contract（`skills/llm-wiki/SKILL.md`、`skills/llm-wiki/references/core.md`）とfour durable closeout filesからなるsix-file total scopeは不変であり、[[wiki/syntheses/llm-wiki-authoring-responsibility-separation-spec|Written Spec]]、[[wiki/syntheses/llm-wiki-authoring-discovery-diagnostics-implementation-plan|implementation plan]]、[[index|durable catalog]]を訂正へ同期した。
+- scoped final-fix re-reviewはpendingである。`knowledge/raw/**`はuntouchedで、remote writeは行っていない。

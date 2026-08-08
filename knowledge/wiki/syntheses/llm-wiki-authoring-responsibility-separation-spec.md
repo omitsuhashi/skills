@@ -82,9 +82,14 @@ final whole-branch reviewの3件のImportant findingに対する一回のfix wav
 `f40a164e4c4fac1988b1ff98929fc829713fc572`により、`skills/llm-wiki/SKILL.md`と
 `skills/llm-wiki/references/core.md`の二つだけからなるdocs-only contractがlandedした。
 Authoring Profileのsemantic selector、evidence-bearing discovery `BLOCKED`、current-state
-precedenceを確認し、pre-edit REDとpost-edit GREENのpressure gateは完了した。prompt / resultは
-ignored execution evidenceのままとし、repository-specificなmappingはgeneric contractの外に保つ。
-final whole-branch reviewはpendingである。
+precedenceを確認した。以前のcloseout wordingにあるtemporalな「pre-edit RED」は、current-control
+promptのembedding defectによりoriginal before-edit evidenceがinvalidatedされたため訂正する。
+`f40a164`後にbyte-exactな`ac67fde` sourceを用いた5回のfresh runはREDを再現したが、これは
+post-hoc old-contract replay evidenceであり、post-editの5回のGREENとともにignored execution
+evidenceとして保持する。Humanは2026-08-08にこの一回限りのevidence exceptionを承認したが、
+これは一般のtemporal pre-edit RED gateを満たすものでも弱めるものでもない。prior closeout wordingは
+この範囲でcorrected / supersededとし、repository-specificなmappingはgeneric contractの外に保つ。
+scoped final-fix re-reviewはpendingであり、`LOCAL_COMPLETE`は宣言しない。
 
 ## Authoring discovery diagnostics focused revision
 

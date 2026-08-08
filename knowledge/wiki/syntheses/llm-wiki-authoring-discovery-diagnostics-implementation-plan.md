@@ -23,8 +23,14 @@ aliases:
 「Authoring discovery diagnostics focused revision」であり、そのapproval commitは
 `f3126d8ec2f740be228640d22215f9d1f1a52175`である。reviewed Task 1 commit
 `f40a164e4c4fac1988b1ff98929fc829713fc572`でtwo-file docs-only production contractがlandedし、
-pre-edit REDからpost-edit GREENへのpressure-gate completionを確認した。prompt / resultはignored
-execution evidenceのままとし、final whole-branch reviewとremote writeは未実施である。
+canonical final reviewは、surviving current-control RED evidenceがproduction commit後にregenerate
+されたため、temporalなpre-edit RED claimをsupportしないと指摘した。original before-edit evidenceは
+prompt embedding defectでinvalidatedされ、`f40a164`後のbyte-exact `ac67fde` sourceによる5回の
+fresh REDはpost-hoc old-contract replay evidence、5回のpost-edit runはGREENである。Humanは
+2026-08-08にこの一回限りのevidence exceptionを明示承認した。これはこのplanのapproved task
+contract/checklistを変更せず、future skill workがoriginal temporal pre-edit RED gateを満たす要件を
+弱めない。prompt / resultはignored execution evidenceのままとし、scoped final-fix re-reviewは
+pending、remote writeは未実施である。
 
 **Goal:** `llm-wiki`のportable documentation contractに、Authoring Profileのsemantic-selector規則、evidence-bearing discovery `BLOCKED`、current-state precedence guardを追加し、repository-specificな`obsidian` / `obsidian-markdown` mappingとlink behaviorをgeneric contractの外に保つ。
 
