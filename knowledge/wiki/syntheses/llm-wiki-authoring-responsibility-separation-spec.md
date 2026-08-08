@@ -78,6 +78,14 @@ migration contract、implementation historyを当時の意味のまま保持す�
 
 final whole-branch reviewの3件のImportant findingに対する一回のfix waveでは、portable output / recovery stateとauthority-scoped edit capability、5つのlegacy templateのcreation / last-update semantic identity、adapter-resolved cross-root target identityのsyntax-neutral ownershipを補完した。product boundaryとacceptance criteriaは変更していない。focused RED/GREENとfull fresh verificationは完了したが、Step 7のfresh whole-branch re-reviewはcontroller-owned gateとしてpendingであり、`LOCAL_COMPLETE`は宣言しない。
 
+2026-08-08、Authoring discovery diagnostics focused revisionのreviewed Task 1 commit
+`f40a164e4c4fac1988b1ff98929fc829713fc572`により、`skills/llm-wiki/SKILL.md`と
+`skills/llm-wiki/references/core.md`の二つだけからなるdocs-only contractがlandedした。
+Authoring Profileのsemantic selector、evidence-bearing discovery `BLOCKED`、current-state
+precedenceを確認し、pre-edit REDとpost-edit GREENのpressure gateは完了した。prompt / resultは
+ignored execution evidenceのままとし、repository-specificなmappingはgeneric contractの外に保つ。
+final whole-branch reviewはpendingである。
+
 ## Authoring discovery diagnostics focused revision
 
 ### 問題設定

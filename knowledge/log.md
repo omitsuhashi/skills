@@ -1904,3 +1904,8 @@ append-only で使います。すべての entry は予測しやすい header �
 - Humanは明示message `承認`により、[[wiki/syntheses/llm-wiki-authoring-discovery-diagnostics-implementation-plan|llm-wiki Authoring Discovery Diagnostics 実装計画]]をrepository-required Plan Gateとして承認した。本計画はHuman-approved / currentである。
 - approved plan candidate commit `0b99c98872661c84a789580d6bae78dad5691ba3`を、approved focused Written Spec commit `f3126d8ec2f740be228640d22215f9d1f1a52175`へbindingし、[[index|durable catalog]]を同じ承認状態へ同期した。
 - この承認checkpointはplan、catalog、append-only logだけを更新する。production contract、test、validator、runtime resolver、code、runtime metadataは変更せず、implementation、task review、durable implementation closeout、final whole-branch review、remote writeは未実施である。
+
+## [2026-08-08] implementation-closeout-candidate | llm-wiki Authoring Discovery Diagnostics
+
+- reviewed production commit `f40a164e4c4fac1988b1ff98929fc829713fc572`により、`skills/llm-wiki/SKILL.md`と`skills/llm-wiki/references/core.md`だけのdocs-only contractがlandedした。semantic selector、evidence-bearing `BLOCKED`、current-state precedenceを確認し、pre-edit REDを観測してpost-edit GREENを満たした。prompt / result本文は記録せず、ignored execution evidenceのままとする。
+- focused current [[wiki/syntheses/llm-wiki-authoring-responsibility-separation-spec|Written Spec]]、[[wiki/syntheses/llm-wiki-authoring-discovery-diagnostics-implementation-plan|implementation plan]]、[[index|durable catalog]]をimplementation closeout candidateへ同期した。fresh verification resultsはcommit前に利用可能であり、final whole-branch reviewはpendingである。`knowledge/raw/**`はuntouchedで、remote writeは行っていない。
