@@ -22,7 +22,11 @@ The local contract must declare:
 - Authoring Profile; and
 - Compatibility Requirement.
 
-The selected Authoring Profile identifies exactly one applicable authoring skill through existing skill discovery. The Compatibility Requirement defines the semantic preservation the selected skill must support. Missing, ambiguous, incompatible, or unreadable selection returns `BLOCKED` before a page, index, or log write.
+Treat Authoring Profile as a semantic selector unless the local contract explicitly declares exact ID semantics; a profile / skill-ID name mismatch alone is not missing or incompatible. The Compatibility Requirement defines the semantic preservation the selected skill must support. Determine candidate applicability by comparing the profile, Compatibility Requirement, and requested operation with each discovered readable candidate's documented scope and procedure.
+
+If executed discovery cannot resolve exactly one applicable readable candidate, return `BLOCKED` before a page, index, or log write with the extracted profile, Compatibility Requirement, observed candidate identities, exactly one of `missing`, `ambiguous`, `incompatible`, or `unreadable`, and a candidate-specific reason. If discovery cannot execute, return `BLOCKED` with the extracted profile, Compatibility Requirement, diagnostic condition `discovery unavailable`, candidate set `unobserved`, and the concrete execution failure as the exact cause; do not infer any candidate outcome.
+
+Before proposing a local-contract mutation, compare the same current checkout's current local contract, current approved spec when present, and current target file state. Historical evidence cannot override those current sources.
 
 ## Draft Contract
 
