@@ -85,3 +85,59 @@ Applicable full verification, run once after focused GREEN:
 ## Concerns
 
 None.
+
+## Fix Round 1: Execution Handoff Override And Exact Routing
+
+### Findings Addressed
+
+- Added a local override in `references/planning-context.md` that explicitly
+  skips the upstream `superpowers:writing-plans` `## Execution Handoff`, offers
+  no Subagent-Driven/Inline choice, asks no Human execution-method question,
+  and sends independently reviewed `ready` directly to the Implementation Stage
+  through `superpowers:subagent-driven-development`.
+- Replaced vocabulary-only representative checks with an exact routing matrix
+  covering ready, four named plan repairs, serialized-integration repair,
+  material spec conflict, non-decision blocker, and missing remote publication
+  authorization.
+- Added invariant assertions that only `ready` enters implementation, only
+  `needs_decision` carries exactly one decision request, and every
+  `needs_repair` route dispatches a fresh Plan Author followed by a fresh
+  independent Plan Reviewer.
+
+### RED Evidence
+
+`PYTHONPYCACHEPREFIX=/private/tmp/sdd-poa2-fix1-red python3 -m unittest skills/sdd-implementation/tests/test_preimplementation_context.py -v`
+ran 22 tests and failed 2 as intended: the local Execution Handoff override and
+the representative routing matrix were absent.
+
+### GREEN Evidence
+
+Focused verification:
+
+- `PYTHONPYCACHEPREFIX=/private/tmp/sdd-poa2-fix1-focused python3 -m unittest skills/sdd-implementation/tests/test_plan_contract.py -v`
+  — 12 tests, OK.
+- `PYTHONPYCACHEPREFIX=/private/tmp/sdd-poa2-fix1-focused python3 -m unittest discover -s skills/sdd-implementation/tests -p 'test_preimplementation_context.py' -v`
+  — 22 tests, OK.
+- `PYTHONPYCACHEPREFIX=/private/tmp/sdd-poa2-fix1-focused python3 -m unittest discover -s skills/sdd-implementation/tests -p 'test_skill_contract.py' -v`
+  — 29 tests, OK.
+
+Required full verification:
+
+- `PYTHONPYCACHEPREFIX=/private/tmp/sdd-poa2-fix1-full python3 -m unittest discover -s skills/sdd-implementation/tests -v`
+  — 69 tests, OK.
+- `PYTHONPYCACHEPREFIX=/private/tmp/sdd-poa2-fix1-full python3 scripts/validate_skill_architecture.py --all`
+  — `OK: validated skill architecture policy (repository-change-loop)`.
+- `PYTHONPYCACHEPREFIX=/private/tmp/sdd-poa2-fix1-full python3 /Users/omitsuhashi/.codex/skills/.system/skill-creator/scripts/quick_validate.py skills/sdd-implementation`
+  — `Skill is valid!`.
+- `git diff --check` — exit 0.
+
+### Files Changed
+
+- `skills/sdd-implementation/references/planning-context.md`
+- `skills/sdd-implementation/prompts/plan-reviewer.md`
+- `skills/sdd-implementation/tests/test_preimplementation_context.py`
+- `.superpowers/sdd/sdd-plan-ownership-alignment-implementation-plan/task-2-report.md`
+
+### Concerns
+
+None.

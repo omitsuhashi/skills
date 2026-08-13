@@ -96,6 +96,12 @@ return, dispatch a fresh independent Plan Reviewer using
 spec path, trusted bounded paths, local overlay path, authored plan path, Plan
 Author result, and current-tree evidence required for buildability review.
 
+Local override: skip the upstream `superpowers:writing-plans`
+`## Execution Handoff`. Do not offer Subagent-Driven or Inline Execution. Do
+not ask the Human which execution approach to use. After independent review,
+reviewed `ready` deterministically enters the Implementation Stage through
+`superpowers:subagent-driven-development`.
+
 The Planning Controller evaluates only the Plan Author Control Return, Plan
 Reviewer verdict and disposition, plan path, spec binding, and readiness
 disposition. A review verdict of `ready` maps to the existing Control Return `status: complete`

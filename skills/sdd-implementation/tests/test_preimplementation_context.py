@@ -18,6 +18,22 @@ def read_or_empty(path: Path) -> str:
     return path.read_text(encoding="utf-8") if path.is_file() else ""
 
 
+def routing_cases(text: str) -> dict[str, tuple[str, str, str, str]]:
+    if "## Representative Routing Cases" not in text:
+        return {}
+    body = text.split("## Representative Routing Cases", 1)[1].split("## ", 1)[0]
+    rows = []
+    for line in body.splitlines():
+        if not line.startswith("|") or set(line.replace("|", "").replace(" ", "")) <= {"-", ":"}:
+            continue
+        rows.append([cell.strip().strip("`") for cell in line.strip().strip("|").split("|")])
+    return {
+        row[0]: (row[1], row[2], row[3], row[4])
+        for row in rows
+        if len(row) == 5 and row[0] != "Case"
+    }
+
+
 class PreImplementationContextContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -136,6 +152,18 @@ class PreImplementationContextContractTests(unittest.TestCase):
             self.assertIn(value, normalized)
         self.assertLess(normalized.index("author self-review"), normalized.index("fresh independent Plan Reviewer"))
 
+    def test_local_overlay_suppresses_upstream_execution_handoff(self) -> None:
+        section = self.planning_text.split("## Plan Authoring", 1)[1].split("## Failure Boundary", 1)[0]
+        normalized = " ".join(section.split())
+        for value in (
+            "Local override: skip the upstream `superpowers:writing-plans` `## Execution Handoff`.",
+            "Do not offer Subagent-Driven or Inline Execution",
+            "Do not ask the Human which execution approach to use",
+            "reviewed `ready` deterministically enters the Implementation Stage",
+            "`superpowers:subagent-driven-development`",
+        ):
+            self.assertIn(value, normalized)
+
     def test_plan_review_routes_only_ready_to_implementation(self) -> None:
         section = self.planning_text.split("## Plan Authoring", 1)[1].split("## Failure Boundary", 1)[0]
         for value in (
@@ -152,23 +180,29 @@ class PreImplementationContextContractTests(unittest.TestCase):
         self.assertIn("only an evidenced material spec conflict", section)
         self.assertIn("Do not make missing remote publication authorization a plan blocker", section)
 
-    def test_plan_reviewer_classifies_representative_findings(self) -> None:
-        normalized = " ".join(self.plan_reviewer_text.split())
-        for value in (
-            "Plan Reviewer",
-            "Do not inherit the parent conversation.",
-            "unassigned acceptance",
-            "prospective body",
-            "dependency cycle",
-            "current-tree method correction",
-            "material spec conflict",
-            "remote publication authorization",
-            "`needs_repair`",
-            "`needs_decision`",
-            "`blocked`",
-            "`ready`",
-        ):
-            self.assertIn(value, normalized)
+    def test_plan_reviewer_maps_each_representative_case_exactly(self) -> None:
+        self.assertEqual(
+            {
+                "ready plan": ("ready", "ready", "none", "status: complete -> Implementation Stage entry"),
+                "unassigned acceptance": ("issues_found", "needs_repair", "none", "fresh Plan Author -> fresh independent Plan Reviewer"),
+                "prospective body": ("issues_found", "needs_repair", "none", "fresh Plan Author -> fresh independent Plan Reviewer"),
+                "dependency cycle": ("issues_found", "needs_repair", "none", "fresh Plan Author -> fresh independent Plan Reviewer"),
+                "current-tree method correction": ("issues_found", "needs_repair", "none", "fresh Plan Author -> fresh independent Plan Reviewer"),
+                "serialized integration defect": ("issues_found", "needs_repair", "none", "fresh Plan Author -> fresh independent Plan Reviewer"),
+                "material spec conflict": ("issues_found", "needs_decision", "one", "one Human decision request"),
+                "non-decision blocker": ("issues_found", "blocked", "none", "Control Return status: blocked"),
+                "missing remote publication authorization": ("ready", "ready", "none", "status: complete -> Implementation Stage entry"),
+            },
+            routing_cases(self.plan_reviewer_text),
+        )
+
+    def test_only_ready_transitions_and_repairs_never_leave_the_agent_loop(self) -> None:
+        cases = routing_cases(self.plan_reviewer_text)
+        for _, disposition, decisions, route in cases.values():
+            self.assertEqual(disposition == "ready", "Implementation Stage entry" in route)
+            self.assertEqual(disposition == "needs_decision", decisions == "one")
+            if disposition == "needs_repair":
+                self.assertEqual("fresh Plan Author -> fresh independent Plan Reviewer", route)
 
     def test_missing_fresh_dispatch_never_falls_back_to_controller_exploration(self) -> None:
         self.assertIn(
@@ -209,6 +243,8 @@ class PreImplementationContextContractTests(unittest.TestCase):
                 self.assertIn(field, prompt_text)
 
     def test_plan_reviewer_returns_a_bounded_verdict_before_control_mapping(self) -> None:
+        self.assertIn("Do not inherit the parent conversation.", self.plan_reviewer_text)
+        self.assertIn("advisory-only", self.plan_reviewer_text)
         for field in (
             "`verdict`",
             "`disposition`",

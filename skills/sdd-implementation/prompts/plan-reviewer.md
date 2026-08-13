@@ -33,6 +33,22 @@ Missing remote publication authorization is not a plan deficiency and does not
 change local `ready` status. Keep implementation code, scripts, patches, and
 command bodies out of the plan and review artifact.
 
+## Representative Routing Cases
+
+Treat each case as otherwise satisfying the plan contract.
+
+| Case | Verdict | Disposition | Decision requests | Controller route |
+| --- | --- | --- | --- | --- |
+| ready plan | `ready` | `ready` | `none` | status: complete -> Implementation Stage entry |
+| unassigned acceptance | `issues_found` | `needs_repair` | `none` | fresh Plan Author -> fresh independent Plan Reviewer |
+| prospective body | `issues_found` | `needs_repair` | `none` | fresh Plan Author -> fresh independent Plan Reviewer |
+| dependency cycle | `issues_found` | `needs_repair` | `none` | fresh Plan Author -> fresh independent Plan Reviewer |
+| current-tree method correction | `issues_found` | `needs_repair` | `none` | fresh Plan Author -> fresh independent Plan Reviewer |
+| serialized integration defect | `issues_found` | `needs_repair` | `none` | fresh Plan Author -> fresh independent Plan Reviewer |
+| material spec conflict | `issues_found` | `needs_decision` | `one` | one Human decision request |
+| non-decision blocker | `issues_found` | `blocked` | `none` | Control Return status: blocked |
+| missing remote publication authorization | `ready` | `ready` | `none` | status: complete -> Implementation Stage entry |
+
 ## Review Result
 
 Write detailed findings to the review artifact. Return only these bounded
