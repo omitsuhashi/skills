@@ -43,10 +43,39 @@ class SddImplementationSkillContractTests(unittest.TestCase):
         for state in (
             "Change request or incomplete specification",
             "Human-approved current specification",
-            "Approved plan bound to the current specification",
+            "Reviewed plan bound to the current specification",
         ):
             self.assertIn(state, self.skill_text)
         self.assertIn("Do not repeat a completed stage.", self.skill_text)
+
+    def test_human_approval_is_limited_to_north_star_and_written_spec(self) -> None:
+        self.assertIn("Human North Star and Written Spec authority", self.skill_text)
+        lower = self.skill_text.lower()
+        self.assertNotIn("repository-approved", lower)
+        self.assertNotIn("approved plan", lower)
+        for forbidden in (
+            "human-approved issue plan",
+            "human plan approval",
+            "human approval of the plan",
+            "human approval for the plan",
+        ):
+            self.assertNotIn(forbidden, lower)
+
+    def test_plan_stage_routes_reviewed_readiness_without_remote_authorization(self) -> None:
+        section = self.skill_text.split("## Plan Stage", 1)[1].split("## Implementation Stage", 1)[0]
+        normalized = " ".join(section.split())
+        for value in (
+            "`references/plan-contract.md`",
+            "fresh Plan Author",
+            "fresh independent Plan Reviewer",
+            "`needs_repair`",
+            "`needs_decision`",
+            "`blocked`",
+            "`ready`",
+            "Implementation Stage",
+            "remote publication authorization",
+        ):
+            self.assertIn(value, normalized)
 
     def test_incomplete_spec_preserves_settled_portions(self) -> None:
         self.assertIn(
@@ -74,7 +103,7 @@ class SddImplementationSkillContractTests(unittest.TestCase):
         self.assertIn("REQUIRED SUB-SKILL: Use llm-wiki", self.skill_text)
         for checkpoint in (
             "Human-approved written specification",
-            "Repository-approved implementation plan",
+            "Reviewed implementation plan",
             "Implementation closeout",
         ):
             self.assertIn(checkpoint, self.skill_text)
@@ -249,6 +278,7 @@ class SddImplementationSkillContractTests(unittest.TestCase):
             {
                 "repository-researcher.md",
                 "spec-synthesizer.md",
+                "plan-reviewer.md",
                 "spec-reviewer.md",
             },
             {path.name for path in (SKILL_DIR / "prompts").iterdir()},
@@ -281,7 +311,7 @@ class SddImplementationSkillContractTests(unittest.TestCase):
 
     def test_parallel_eligibility_is_fail_closed(self) -> None:
         section = self.skill_text.split("## Epic Parallel Issue Adapter", 1)[1].split("## Runtime Model", 1)[0]
-        for value in ("explicit Human opt-in", "Human-approved issue plan", "one branch/worktree/session/plan/artifact workspace", "expected write overlap", "shared mutable resource", "pinned-base ancestry", "unknown", "sequential handling or Human decision"):
+        for value in ("explicit Human opt-in", "reviewed issue plan", "one branch/worktree/session/plan/artifact workspace", "expected write overlap", "shared mutable resource", "pinned-base ancestry", "unknown", "sequential handling or Human decision"):
             self.assertIn(value, section)
 
     def test_actual_result_revalidation_is_required(self) -> None:

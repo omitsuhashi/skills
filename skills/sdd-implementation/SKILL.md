@@ -33,7 +33,7 @@ or authoring into the Planning Controller.
 
 For a change request or incomplete specification, read
 `references/research-stage.md` before repository investigation. Research,
-Spec Synthesis, Spec Review, and Plan Authoring must each use a fresh worker.
+Spec Synthesis, Spec Review, Plan Authoring, and Plan Review must each use a fresh worker.
 Do not require context telemetry, manual compaction, or a strict word-count validator.
 
 Read `references/planning-context.md` only when entering a pre-implementation
@@ -66,7 +66,7 @@ Do not repeat a completed stage.
 - **Human-approved current specification:** verify authority, applicability,
   requirements, and acceptance criteria, then use `superpowers:writing-plans`.
   Return to the Spec Stage only for a material conflict.
-- **Approved plan bound to the current specification:** verify its binding,
+- **Reviewed plan bound to the current specification:** verify its binding,
   current-tree compatibility, and verification scope, then use
   `superpowers:subagent-driven-development`.
 
@@ -96,7 +96,7 @@ brainstorming contract. Require Human approval before planning.
 Use the repository topology and write boundary for these checkpoints:
 
 1. Human-approved written specification.
-2. Repository-approved implementation plan.
+2. Reviewed implementation plan.
 3. Implementation closeout.
 
 Keep canonical pages, `knowledge/index.md`, and `knowledge/log.md` synchronized.
@@ -113,9 +113,15 @@ index/log sync, or validation is `BLOCKED`.
 **REQUIRED SUB-SKILL: Use superpowers:writing-plans.**
 
 Create an executable plan from the approved specification. Apply any
-repository-required plan review or Human approval. Persist the approved plan
-through the Durable Knowledge contract. Do not dispatch implementation from an
-unapproved plan.
+repository-required fields from `references/plan-contract.md` without copying
+the upstream methodology. The Planning Controller dispatches a fresh Plan
+Author, then a fresh independent Plan Reviewer. Route `needs_repair` back to a
+fresh author/reviewer loop, route only an evidenced material spec conflict as
+`needs_decision`, and route a non-decision blocker as `blocked`. Only `ready`
+enters the Implementation Stage. Missing remote publication authorization does
+not affect local plan readiness. Human North Star and Written Spec authority is
+preserved; the implementation plan is agent-authored and independently reviewed.
+Persist the reviewed plan through the Durable Knowledge contract.
 
 ## Implementation Stage
 
@@ -139,7 +145,7 @@ All implementation tasks and task reviews must be complete before closeout.
 
 ## Epic Parallel Issue Adapter
 
-Default execution remains sequential canonical SDD. This migration itself runs sequentially in its existing Epic planning worktree; the adapter is available only to a later Epic with explicit Human opt-in and a Human-approved issue plan. Each issue execution unit has exactly one branch/worktree/session/plan/artifact workspace and exactly one writer. Within an issue, never dispatch concurrent implementers. Do not advance to the next task until its task review and any canonical fix are complete.
+Default execution remains sequential canonical SDD. This migration itself runs sequentially in its existing Epic planning worktree; the adapter is available only to a later Epic with explicit Human opt-in and a reviewed issue plan. Each issue execution unit has exactly one branch/worktree/session/plan/artifact workspace and exactly one writer. Within an issue, never dispatch concurrent implementers. Do not advance to the next task until its task review and any canonical fix are complete.
 
 The adapter owns readiness/dependency/conflict verdicts, allocation/wait/result routing, actual-result revalidation, and single-writer serialized integration; it does not schedule issue-internal tasks or alter canonical task/review/fix/ledger/recovery authority. Unknown expected write overlap, dependency, shared mutable resource, pinned-base ancestry, or integration assumption returns to sequential handling or Human decision.
 
@@ -199,7 +205,7 @@ Validate the wiki before final review.
 ## Final Whole-Branch Review
 
 After closeout, run the Superpowers final whole-branch review over code, tests,
-the approved specification and plan, and knowledge artifacts. Return
+the approved specification, reviewed plan, and knowledge artifacts. Return
 `LOCAL_COMPLETE` only after reviewed tasks, fresh verification, scoped commits,
 applicable closeout, and final approval.
 

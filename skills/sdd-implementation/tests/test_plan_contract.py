@@ -244,7 +244,7 @@ class PlanContractTests(unittest.TestCase):
         with temporary_directory:
             inventory = section(load_plan(copy), "Requirement And Acceptance Inventory")
             self.assertIn("AC-14", inventory)
-            copy.write_text(load_plan(copy).replace("AC-14", "AC-14 omitted", 1), encoding="utf-8")
+            copy.write_text(load_plan(copy).replace("AC-14", "omitted acceptance", 1), encoding="utf-8")
             self.assertIn("inventory missing ID: AC-14", plan_errors(load_plan(copy)))
 
     def test_rejects_an_unassigned_acceptance(self) -> None:

@@ -11,6 +11,7 @@ RESEARCH_STAGE = SKILL_DIR / "references" / "research-stage.md"
 RESEARCHER_PROMPT = SKILL_DIR / "prompts" / "repository-researcher.md"
 SYNTHESIZER_PROMPT = SKILL_DIR / "prompts" / "spec-synthesizer.md"
 REVIEWER_PROMPT = SKILL_DIR / "prompts" / "spec-reviewer.md"
+PLAN_REVIEWER_PROMPT = SKILL_DIR / "prompts" / "plan-reviewer.md"
 
 
 def read_or_empty(path: Path) -> str:
@@ -26,6 +27,7 @@ class PreImplementationContextContractTests(unittest.TestCase):
         cls.researcher_text = read_or_empty(RESEARCHER_PROMPT)
         cls.synthesizer_text = read_or_empty(SYNTHESIZER_PROMPT)
         cls.reviewer_text = read_or_empty(REVIEWER_PROMPT)
+        cls.plan_reviewer_text = read_or_empty(PLAN_REVIEWER_PROMPT)
 
     def test_entrypoint_limits_main_session_to_planning_controller(self) -> None:
         self.assertIn("## Planning Controller", self.skill_text)
@@ -111,10 +113,62 @@ class PreImplementationContextContractTests(unittest.TestCase):
         self.assertIn("superpowers:writing-plans", self.planning_text)
         self.assertIn("Do not inherit the parent conversation.", self.planning_text)
         self.assertIn(
-            "The Planning Controller evaluates only the Control Return, plan path, "
-            "spec binding, and repository-required approval.",
+            "The Planning Controller evaluates only the Plan Author Control Return, "
+            "Plan Reviewer verdict and disposition, plan path, spec binding, and readiness disposition.",
             normalized,
         )
+        self.assertIn(
+            "It does not repeat repository file mapping or code exploration.",
+            normalized,
+        )
+
+    def test_plan_author_self_review_precedes_fresh_independent_review(self) -> None:
+        section = self.planning_text.split("## Plan Authoring", 1)[1].split("## Failure Boundary", 1)[0]
+        normalized = " ".join(section.split())
+        for value in (
+            "author self-review",
+            "fresh independent Plan Reviewer",
+            "`prompts/plan-reviewer.md`",
+            "approved spec path",
+            "local overlay path",
+            "Plan Author result",
+        ):
+            self.assertIn(value, normalized)
+        self.assertLess(normalized.index("author self-review"), normalized.index("fresh independent Plan Reviewer"))
+
+    def test_plan_review_routes_only_ready_to_implementation(self) -> None:
+        section = self.planning_text.split("## Plan Authoring", 1)[1].split("## Failure Boundary", 1)[0]
+        for value in (
+            "`ready`",
+            "`issues_found`",
+            "`needs_repair`",
+            "`needs_decision`",
+            "`blocked`",
+            "Implementation Stage entry",
+            "status: complete",
+        ):
+            self.assertIn(value, section)
+        self.assertIn("`needs_repair` remains inside the agent-owned Plan Stage", section)
+        self.assertIn("only an evidenced material spec conflict", section)
+        self.assertIn("Do not make missing remote publication authorization a plan blocker", section)
+
+    def test_plan_reviewer_classifies_representative_findings(self) -> None:
+        normalized = " ".join(self.plan_reviewer_text.split())
+        for value in (
+            "Plan Reviewer",
+            "Do not inherit the parent conversation.",
+            "unassigned acceptance",
+            "prospective body",
+            "dependency cycle",
+            "current-tree method correction",
+            "material spec conflict",
+            "remote publication authorization",
+            "`needs_repair`",
+            "`needs_decision`",
+            "`blocked`",
+            "`ready`",
+        ):
+            self.assertIn(value, normalized)
 
     def test_missing_fresh_dispatch_never_falls_back_to_controller_exploration(self) -> None:
         self.assertIn(
@@ -138,7 +192,7 @@ class PreImplementationContextContractTests(unittest.TestCase):
         for category in ("confirmed facts", "material conflicts", "unknowns"):
             self.assertIn(category, self.research_text)
 
-    def test_every_worker_prompt_is_advisory_and_returns_control_fields(self) -> None:
+    def test_non_plan_review_worker_prompts_are_advisory_and_return_control_fields(self) -> None:
         for prompt_text in (
             self.researcher_text,
             self.synthesizer_text,
@@ -153,6 +207,17 @@ class PreImplementationContextContractTests(unittest.TestCase):
                 "`material_risks`",
             ):
                 self.assertIn(field, prompt_text)
+
+    def test_plan_reviewer_returns_a_bounded_verdict_before_control_mapping(self) -> None:
+        for field in (
+            "`verdict`",
+            "`disposition`",
+            "`artifact_path`",
+            "`decision_requests`",
+            "`material_risks`",
+        ):
+            self.assertIn(field, self.plan_reviewer_text)
+        self.assertNotIn("- `status`:", self.plan_reviewer_text)
 
     def test_research_prompt_requires_path_and_line_evidence(self) -> None:
         for category in (
@@ -197,6 +262,7 @@ class PreImplementationContextContractTests(unittest.TestCase):
             {
                 "repository-researcher.md",
                 "spec-synthesizer.md",
+                "plan-reviewer.md",
                 "spec-reviewer.md",
             },
             prompts,
@@ -219,6 +285,7 @@ class PreImplementationContextContractTests(unittest.TestCase):
                 self.researcher_text,
                 self.synthesizer_text,
                 self.reviewer_text,
+                self.plan_reviewer_text,
             )
         )
         self.assertIn(
@@ -251,9 +318,10 @@ class PreImplementationContextContractTests(unittest.TestCase):
 
     def test_plan_author_uses_only_bound_planning_paths(self) -> None:
         section = self.planning_text.split("## Plan Authoring", 1)[1].split("## Failure Boundary", 1)[0]
+        normalized = " ".join(section.split())
         for value in ("resolved planning worktree root", "bound CWD", "writable plan artifact path", "original checkout metadata (read-only)", "Plan Author Worker"):
-            self.assertIn(value, section)
-        self.assertNotIn("repository root, baseline commit", section)
+            self.assertIn(value, normalized)
+        self.assertNotIn("repository root, baseline commit", normalized)
 
 
 if __name__ == "__main__":

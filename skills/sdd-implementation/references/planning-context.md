@@ -82,15 +82,34 @@ advisory-only. The Human must approve the Written Spec before Plan Stage.
 ## Plan Authoring
 
 For a Human-approved current specification, dispatch a fresh Plan Author Worker.
-Do not inherit the parent conversation. Pass the resolved planning worktree root, bound CWD, writable plan artifact path contained by that root, original checkout metadata (read-only), baseline commit, approved spec path, applicable repository rules, and current `superpowers:writing-plans` skill path to a fresh Plan Author Worker. Reject a stale, sibling, original-checkout, or escaping writable plan artifact path before authoring.
-The worker maps current files
-and tests, writes an executable TDD plan, performs the upstream plan
-self-review, and returns only a Control Return.
+Do not inherit the parent conversation. Pass the resolved planning worktree root,
+bound CWD, writable plan artifact path contained by that root, original checkout
+metadata (read-only), baseline commit, approved spec path, applicable repository
+rules, current `superpowers:writing-plans` skill path, and local overlay path
+`references/plan-contract.md`. Reject a stale, sibling, original-checkout, or
+escaping writable plan artifact path before authoring.
 
-The Planning Controller evaluates only the Control Return, plan path, spec
-binding, and repository-required approval. It does not repeat repository file
-mapping or code exploration. Do not begin Implementation Stage until the plan
-is repository-approved.
+The worker maps current files and tests, writes an executable TDD plan, performs
+the upstream author self-review, and returns only a Control Return. After that
+return, dispatch a fresh independent Plan Reviewer using
+`prompts/plan-reviewer.md`; do not inherit the author context. Pass the approved
+spec path, trusted bounded paths, local overlay path, authored plan path, Plan
+Author result, and current-tree evidence required for buildability review.
+
+The Planning Controller evaluates only the Plan Author Control Return, Plan
+Reviewer verdict and disposition, plan path, spec binding, and readiness
+disposition. A review verdict of `ready` maps to the existing Control Return `status: complete`
+and permits Implementation Stage entry. Classify `issues_found`
+deterministically: `needs_repair` for agent-repairable plan deficiencies,
+`needs_decision` only for an evidenced material spec conflict, and `blocked` for
+a non-decision capability, trust, path, or evidence blocker.
+It does not repeat repository file mapping or code exploration.
+
+`needs_repair` remains inside the agent-owned Plan Stage: dispatch a fresh Plan
+Author with the review artifact and then a fresh independent Plan Reviewer.
+Return only an evidenced material spec conflict as one Human decision request.
+Do not make missing remote publication authorization a plan blocker; remote
+authorization is evaluated only when the later remote action is requested.
 
 ## Failure Boundary
 
