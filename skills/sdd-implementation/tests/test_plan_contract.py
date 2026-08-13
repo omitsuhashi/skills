@@ -52,6 +52,23 @@ def task_sections(text: str) -> dict[str, str]:
 
 def plan_errors(text: str) -> list[str]:
     errors: list[str] = []
+    spec_identity = section(text, "Approved Written Spec Identity")
+    for field in (
+        "- Approved spec path:",
+        "- Approved spec SHA-256:",
+        "- Approval state: approved",
+    ):
+        if field not in spec_identity:
+            errors.append(f"missing approved-spec identity field: {field[2:]}")
+
+    inventory = section(text, "Requirement And Acceptance Inventory")
+    inventory_ids = set(re.findall(r"\b(?:R|AC)-\d{2}\b", inventory))
+    for item_id in sorted(REQUIREMENT_IDS | ACCEPTANCE_IDS):
+        if item_id not in inventory_ids:
+            errors.append(f"inventory missing ID: {item_id}")
+    for item_id in sorted(inventory_ids - (REQUIREMENT_IDS | ACCEPTANCE_IDS)):
+        errors.append(f"inventory has unknown ID: {item_id}")
+
     coverage = coverage_rows(text)
     seen_coverage: set[str] = set()
     primary_owner: dict[str, str] = {}
@@ -206,6 +223,29 @@ class PlanContractTests(unittest.TestCase):
             f"representative ready-plan fixture is missing: {READY_PLAN}",
         )
         self.assertEqual([], plan_errors(load_plan(READY_PLAN)))
+
+    def test_rejects_missing_approved_spec_identity(self) -> None:
+        temporary_directory, copy = self.copy_ready_plan()
+        with temporary_directory:
+            copy.write_text(
+                load_plan(copy).replace(
+                    "- Approval state: approved",
+                    "- Approval state: pending",
+                ),
+                encoding="utf-8",
+            )
+            self.assertIn(
+                "missing approved-spec identity field: Approval state: approved",
+                plan_errors(load_plan(copy)),
+            )
+
+    def test_rejects_an_incomplete_requirement_acceptance_inventory(self) -> None:
+        temporary_directory, copy = self.copy_ready_plan()
+        with temporary_directory:
+            inventory = section(load_plan(copy), "Requirement And Acceptance Inventory")
+            self.assertIn("AC-14", inventory)
+            copy.write_text(load_plan(copy).replace("AC-14", "AC-14 omitted", 1), encoding="utf-8")
+            self.assertIn("inventory missing ID: AC-14", plan_errors(load_plan(copy)))
 
     def test_rejects_an_unassigned_acceptance(self) -> None:
         temporary_directory, copy = self.copy_ready_plan()
