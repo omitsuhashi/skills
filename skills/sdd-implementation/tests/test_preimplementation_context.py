@@ -190,7 +190,7 @@ class PreImplementationContextContractTests(unittest.TestCase):
             path.name for path in (SKILL_DIR / "prompts").iterdir()
         }
         self.assertEqual(
-            {"planning-context.md", "research-stage.md"},
+            {"plan-contract.md", "planning-context.md", "research-stage.md"},
             references,
         )
         self.assertEqual(

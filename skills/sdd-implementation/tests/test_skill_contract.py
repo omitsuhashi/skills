@@ -242,7 +242,7 @@ class SddImplementationSkillContractTests(unittest.TestCase):
             children,
         )
         self.assertEqual(
-            {"planning-context.md", "research-stage.md"},
+            {"plan-contract.md", "planning-context.md", "research-stage.md"},
             {path.name for path in (SKILL_DIR / "references").iterdir()},
         )
         self.assertEqual(
