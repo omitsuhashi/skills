@@ -345,9 +345,12 @@ class PreImplementationContextContractTests(unittest.TestCase):
 
     def test_bound_paths_and_first_report_are_required(self) -> None:
         for text in (self.researcher_text, self.synthesizer_text, self.reviewer_text):
-            for value in ("resolved planning worktree root", "CWD", "writable artifact path", "original checkout"):
+            for value in ("resolved planning worktree root", "CWD", "original checkout"):
                 self.assertIn(value, text)
             self.assertNotIn("- repository root;", text)
+        self.assertIn("writable artifact path", self.synthesizer_text)
+        self.assertNotIn("- writable artifact path;", self.researcher_text)
+        self.assertNotIn("- writable artifact path;", self.reviewer_text)
         for value in ("first transient Research Report", "relative", "absolute", "stale path", "escape", RAW_HANDOFF_DEFAULT):
             self.assertIn(value, self.research_text)
         for value in ("original checkout metadata (read-only)", "baseline commit", "epic ID and current research question", "applicable repository and knowledge constraints", "current spec path when one exists"):

@@ -58,6 +58,7 @@ class SkillCiWorkflowTests(unittest.TestCase):
         self.assertIn("python3 scripts/test_validate_sdd_transient_artifacts.py", text)
         self.assertIn("Validate SDD transient artifacts", text)
         self.assertIn("python3 scripts/validate_sdd_transient_artifacts.py", text)
+        self.assertNotIn("--migration-baseline", text)
 
 
 if __name__ == "__main__":

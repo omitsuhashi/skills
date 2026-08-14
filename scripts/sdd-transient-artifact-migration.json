@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "migration_baseline": "f07aebce7bbf854cd64184311d204cf04055fd28",
+  "allowed_entries": [
+    {
+      "mode": "100644",
+      "blob": "b50ed8e434725cb70bc0f1d2c6daa1a053e0ccc1",
+      "path": ".superpowers/sdd/sdd-plan-ownership-alignment-implementation-plan/approved-residual-fix-report.md"
+    },
+    {
+      "mode": "100644",
+      "blob": "c884197bf566cc93f319f3c2a1b6d2ad1563d10e",
+      "path": ".superpowers/sdd/sdd-plan-ownership-alignment-implementation-plan/final-fix-report.md"
+    },
+    {
+      "mode": "100644",
+      "blob": "da22b7580961fb9a2087ab1eb034fb34000711f8",
+      "path": ".superpowers/sdd/sdd-plan-ownership-alignment-implementation-plan/task-2-report.md"
+    }
+  ]
+}

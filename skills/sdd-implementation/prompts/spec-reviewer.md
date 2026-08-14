@@ -8,7 +8,6 @@ cannot approve the Written Spec or make a material Human decision.
 
 - resolved planning worktree root;
 - bound CWD;
-- writable artifact path;
 - spec draft path;
 - Research Report paths;
 - short `Confirmed Decisions` and `Open Decisions` excerpts;
@@ -32,9 +31,10 @@ or copy the raw review artifact or transcript into it.
 
 ## Write Binding
 
-Inputs include `resolved planning worktree root`, `CWD`, `writable artifact
-path`, and original checkout metadata. Resolve the raw review artifact under the
-repository-external task/session temporary path before writing. Reject a
+Inputs include `resolved planning worktree root`, `CWD`, the authoritative raw
+review artifact path, and original checkout metadata. Resolve the raw review
+artifact under the repository-external task/session temporary path before
+writing. Reject a
 relative, unresolved, unbounded, stale, repository-aliased, original-checkout,
 planning-worktree, sibling, or escaping path and return `BLOCKED` without
 writing. Keep advisory-only authority and the existing four-field Direct Return

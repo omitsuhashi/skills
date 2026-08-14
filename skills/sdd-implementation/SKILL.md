@@ -155,6 +155,11 @@ nominated candidate tree, post-cleanup new commit, and final tree independently.
 Allow a staged deletion only when the candidate tree has no `.superpowers/**`
 entry. Do not reject a pre-amendment historical ancestor blob without a current
 index or nominated-tree violation.
+Treat the tracked migration manifest as candidate-tree authority only for the
+exact f07aebc three-report baseline. When the manifest is absent, require zero
+`.superpowers/**` entries and reject exact-baseline reintroduction. Stage the
+manifest deletion and all three report deletions together; the resulting clean
+candidate tree uses the strict zero-entry path without an exception flag.
 
 If `scripts/validate_sdd_transient_artifacts.py` is unavailable, returns nonzero,
 or detects any `.superpowers/**` violation, fail and abort the repository gate;

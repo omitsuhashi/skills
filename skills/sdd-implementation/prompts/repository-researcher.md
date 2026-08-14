@@ -7,7 +7,6 @@ Do not inherit the parent conversation. Your authority is advisory-only.
 
 - resolved planning worktree root;
 - bound CWD;
-- writable artifact path;
 - baseline commit;
 - epic ID;
 - one research question;
@@ -39,9 +38,10 @@ question. Do not modify canonical artifacts.
 
 ## Write Binding
 
-Inputs include `resolved planning worktree root`, `CWD`, `writable artifact
-path`, and original checkout metadata. Resolve the Research Report under the
-repository-external task/session temporary path before writing. If the path is
+Inputs include `resolved planning worktree root`, `CWD`, the authoritative
+repository-external report path, and original checkout metadata. Resolve the
+Research Report under the repository-external task/session temporary path
+before writing. If the path is
 relative, unresolved, unbounded, stale, repository-aliased, inside the original
 checkout or planning worktree, a planning or issue sibling, or escapes the
 task/session temporary root, return `BLOCKED` without writing. Keep advisory-only

@@ -12,6 +12,7 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 VALIDATOR = REPOSITORY_ROOT / "scripts" / "validate_sdd_transient_artifacts.py"
 VALIDATION_FAILURE_EXIT = 1
 AMENDMENT_MIGRATION_BASELINE = "f07aebce7bbf854cd64184311d204cf04055fd28"
+MIGRATION_MARKER = "scripts/sdd-transient-artifact-migration.json"
 MIGRATION_PATHS = (
     ".superpowers/sdd/sdd-plan-ownership-alignment-implementation-plan/approved-residual-fix-report.md",
     ".superpowers/sdd/sdd-plan-ownership-alignment-implementation-plan/final-fix-report.md",
@@ -22,6 +23,28 @@ EXPECTED_BASELINE_ENTRIES = (
     "100644 blob c884197bf566cc93f319f3c2a1b6d2ad1563d10e\t" + MIGRATION_PATHS[1],
     "100644 blob da22b7580961fb9a2087ab1eb034fb34000711f8\t" + MIGRATION_PATHS[2],
 )
+MIGRATION_MARKER_CONTENT = """{
+  "schema_version": 1,
+  "migration_baseline": "f07aebce7bbf854cd64184311d204cf04055fd28",
+  "allowed_entries": [
+    {
+      "mode": "100644",
+      "blob": "b50ed8e434725cb70bc0f1d2c6daa1a053e0ccc1",
+      "path": ".superpowers/sdd/sdd-plan-ownership-alignment-implementation-plan/approved-residual-fix-report.md"
+    },
+    {
+      "mode": "100644",
+      "blob": "c884197bf566cc93f319f3c2a1b6d2ad1563d10e",
+      "path": ".superpowers/sdd/sdd-plan-ownership-alignment-implementation-plan/final-fix-report.md"
+    },
+    {
+      "mode": "100644",
+      "blob": "da22b7580961fb9a2087ab1eb034fb34000711f8",
+      "path": ".superpowers/sdd/sdd-plan-ownership-alignment-implementation-plan/task-2-report.md"
+    }
+  ]
+}
+"""
 
 
 def run_git(repository: Path, *args: str) -> str:
@@ -114,6 +137,30 @@ class AuthorizedRepositoryFixture:
 
     def close(self) -> None:
         self.temporary_directory.cleanup()
+
+    def install_migration_marker(self, content: str = MIGRATION_MARKER_CONTENT) -> None:
+        marker = self.root / MIGRATION_MARKER
+        marker.parent.mkdir(parents=True, exist_ok=True)
+        marker.write_text(content, encoding="utf-8")
+        run_git(self.root, "add", MIGRATION_MARKER)
+        if run_git(self.root, "status", "--porcelain=v1", "--", MIGRATION_MARKER):
+            run_git(self.root, "commit", "-m", "add bounded migration marker")
+
+    def stage_cleanup(self) -> None:
+        run_git(self.root, "rm", MIGRATION_MARKER)
+        run_git(self.root, "rm", "--cached", *MIGRATION_PATHS)
+
+    def reintroduce_exact_reports(self) -> None:
+        for entry in EXPECTED_BASELINE_ENTRIES:
+            mode, _, blob_and_path = entry.partition(" blob ")
+            blob, _, path = blob_and_path.partition("\t")
+            run_git(
+                self.root,
+                "update-index",
+                "--add",
+                "--cacheinfo",
+                f"{mode},{blob},{path}",
+            )
 
     def install_counterfeit_baseline(self, mutation: str) -> tuple[str, ...]:
         run_git(self.root, "read-tree", f"{AMENDMENT_MIGRATION_BASELINE}^{{tree}}")
@@ -268,20 +315,78 @@ class TransientArtifactValidatorTests(unittest.TestCase):
         )
         self.assertEqual(EXPECTED_BASELINE_ENTRIES, actual)
 
-    def test_only_the_immutable_authorized_baseline_can_enable_precleanup_migration(self) -> None:
+    def test_precleanup_candidate_with_tracked_marker_and_exact_reports_passes(self) -> None:
         authorized = AuthorizedRepositoryFixture()
         try:
-            self.assert_validator_accepts(
-                "--migration-baseline",
-                AMENDMENT_MIGRATION_BASELINE,
-                repository=authorized.root,
+            authorized.install_migration_marker()
+            self.assert_validator_accepts(repository=authorized.root)
+        finally:
+            authorized.close()
+
+    def test_staged_report_and_marker_cleanup_passes_strict_zero_candidate(self) -> None:
+        authorized = AuthorizedRepositoryFixture()
+        try:
+            authorized.install_migration_marker()
+            authorized.stage_cleanup()
+            self.assertEqual(
+                "",
+                run_git(authorized.root, "ls-files", "--stage", "--", ".superpowers"),
             )
-            alternate = run_git(authorized.root, "rev-parse", "HEAD^").strip()
-            self.assertNotEqual(AMENDMENT_MIGRATION_BASELINE, alternate)
+            self.assertEqual(
+                "", run_git(authorized.root, "ls-files", "--stage", "--", MIGRATION_MARKER)
+            )
+            self.assert_validator_accepts(repository=authorized.root)
+        finally:
+            authorized.close()
+
+    def test_postcleanup_commit_without_marker_passes(self) -> None:
+        authorized = AuthorizedRepositoryFixture()
+        try:
+            authorized.install_migration_marker()
+            authorized.stage_cleanup()
+            run_git(authorized.root, "commit", "-m", "remove migration state")
+            self.assert_validator_accepts(repository=authorized.root)
+        finally:
+            authorized.close()
+
+    def test_exact_report_reintroduction_without_marker_fails_permanently(self) -> None:
+        authorized = AuthorizedRepositoryFixture()
+        try:
+            authorized.install_migration_marker()
+            authorized.stage_cleanup()
+            run_git(authorized.root, "commit", "-m", "remove migration state")
+            authorized.reintroduce_exact_reports()
+            self.assert_validator_rejects("index_entry", repository=authorized.root)
+        finally:
+            authorized.close()
+
+    def test_marker_and_exact_report_reintroduction_after_cleanup_fails_permanently(self) -> None:
+        authorized = AuthorizedRepositoryFixture()
+        try:
+            authorized.install_migration_marker()
+            authorized.stage_cleanup()
+            run_git(authorized.root, "commit", "-m", "remove migration state")
+            marker = authorized.root / MIGRATION_MARKER
+            marker.write_text(MIGRATION_MARKER_CONTENT, encoding="utf-8")
+            run_git(authorized.root, "add", MIGRATION_MARKER)
+            authorized.reintroduce_exact_reports()
             self.assert_validator_rejects(
-                "migration_baseline_unauthorized",
-                "--migration-baseline",
-                alternate,
+                "migration_marker_reintroduced", repository=authorized.root
+            )
+        finally:
+            authorized.close()
+
+    def test_marker_with_wrong_baseline_is_rejected(self) -> None:
+        authorized = AuthorizedRepositoryFixture()
+        try:
+            authorized.install_migration_marker(
+                MIGRATION_MARKER_CONTENT.replace(
+                    AMENDMENT_MIGRATION_BASELINE,
+                    "0" * 40,
+                )
+            )
+            self.assert_validator_rejects(
+                "migration_marker_mismatch",
                 repository=authorized.root,
             )
         finally:
@@ -292,12 +397,11 @@ class TransientArtifactValidatorTests(unittest.TestCase):
             with self.subTest(mutation=mutation):
                 authorized = AuthorizedRepositoryFixture()
                 try:
+                    authorized.install_migration_marker()
                     counterfeit = authorized.install_counterfeit_baseline(mutation)
                     self.assertNotEqual(EXPECTED_BASELINE_ENTRIES, counterfeit)
                     self.assert_validator_rejects(
                         "migration_baseline_mismatch",
-                        "--migration-baseline",
-                        AMENDMENT_MIGRATION_BASELINE,
                         repository=authorized.root,
                     )
                 finally:
@@ -306,13 +410,12 @@ class TransientArtifactValidatorTests(unittest.TestCase):
     def test_authorized_baseline_rejects_additional_current_index_entry(self) -> None:
         authorized = AuthorizedRepositoryFixture()
         try:
+            authorized.install_migration_marker()
             additional = authorized.root / ".superpowers" / "additional.md"
             additional.write_text("additional\n", encoding="utf-8")
             run_git(authorized.root, "add", "-f", ".superpowers/additional.md")
             self.assert_validator_rejects(
                 "migration_baseline_mismatch",
-                "--migration-baseline",
-                AMENDMENT_MIGRATION_BASELINE,
                 repository=authorized.root,
             )
         finally:
@@ -321,13 +424,12 @@ class TransientArtifactValidatorTests(unittest.TestCase):
     def test_authorized_baseline_rejects_changed_staged_report(self) -> None:
         authorized = AuthorizedRepositoryFixture()
         try:
+            authorized.install_migration_marker()
             changed = authorized.root / MIGRATION_PATHS[0]
             changed.write_text("changed report\n", encoding="utf-8")
             run_git(authorized.root, "add", "-f", MIGRATION_PATHS[0])
             self.assert_validator_rejects(
                 "migration_baseline_mismatch",
-                "--migration-baseline",
-                AMENDMENT_MIGRATION_BASELINE,
                 repository=authorized.root,
             )
         finally:
@@ -362,6 +464,21 @@ class TransientArtifactValidatorTests(unittest.TestCase):
             "--scratch-reason",
             "tool requires a repository-local cache",
         )
+
+    def test_tracked_baseline_report_cannot_be_nominated_as_scratch(self) -> None:
+        authorized = AuthorizedRepositoryFixture()
+        try:
+            authorized.install_migration_marker()
+            self.assert_validator_rejects(
+                "scratch_state_invalid",
+                "--scratch-path",
+                MIGRATION_PATHS[0],
+                "--scratch-reason",
+                "tool requires a repository-local cache",
+                repository=authorized.root,
+            )
+        finally:
+            authorized.close()
 
     def test_current_index_entry_is_rejected_without_other_contaminated_surfaces(self) -> None:
         tracked = self.fixture.root / ".superpowers" / "tracked.md"

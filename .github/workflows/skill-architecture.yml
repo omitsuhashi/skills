@@ -46,7 +46,7 @@ jobs:
         run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 scripts/test_validate_sdd_transient_artifacts.py
 
       - name: Validate SDD transient artifacts
-        run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 scripts/validate_sdd_transient_artifacts.py --migration-baseline f07aebce7bbf854cd64184311d204cf04055fd28
+        run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 scripts/validate_sdd_transient_artifacts.py
 
       - name: Write context report
         run: |

@@ -138,6 +138,10 @@ class SddImplementationSkillContractTests(unittest.TestCase):
             "`.superpowers/**` entry.",
             "Do not reject a pre-amendment historical ancestor blob without a "
             "current index or nominated-tree violation.",
+            "Treat the tracked migration manifest as candidate-tree authority "
+            "only for the exact f07aebc three-report baseline.",
+            "When the manifest is absent, require zero `.superpowers/**` entries "
+            "and reject exact-baseline reintroduction.",
         )
         normalized = " ".join(self.skill_text.split())
         for statement in expected_contract:
