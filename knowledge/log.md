@@ -1884,3 +1884,11 @@ append-only で使います。すべての entry は予測しやすい header �
 - Authority result: `Read: allowed`、`Write Boundary: owned`、Canonical OwnerのHuman承認、およびselected authoring profile `obsidian` の手順を満たし、direct canonical updateを許可した。
 - Lifecycle effect: draftを`promoted`として保持し、canonical targetを`accepted` / `active` implementation planとして作成した。[[index|active catalog]]にはcanonical targetを1件だけ登録し、draftは登録していない。
 - Evidence: Humanのimplementation plan明示承認（2026-08-14）、[[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|承認済み仕様]]、昇格元draftのapproved plan content、および`knowledge/AGENTS.md`のsingle-root owner/write-boundary contract。guard activation、active install、remote publicationは実施していない。
+
+## [2026-08-14] ingest | SDD fail-closed worktree gate scope reduction
+
+- Actor: repository maintainer-delegated actor。Canonical OwnerであるHuman / repository maintainerの2026-08-14 owner decisionに基づくdirect canonical update。
+- Decision: original requirement全体を最小scopeとしてaccepted revisionへ更新した。repository workは`sdd-implementation`から開始し、original `main`をtask workでread-onlyに保ち、first content/artifact write前にverified task-linked worktreeへall-write/commit bindingを確立し、allocation・permission・path・ownership・capability・dependency・binding failureはzero-write `BLOCKED`、fallbackなしとする。
+- Withdrawn: layered defense、Git commit guard、`--no-verify` defense、hook/config inventory、activation transaction、rollback machinery、lifecycle split、one-time guard bootstrap、exact tuple authority、external cache treatmentをcurrent requirementからHumanが撤回した。raw Git-level manual shell commit prohibitionは保証範囲外である。
+- Affected canonical pages: [[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|SDD fail-closed worktree gate 仕様]] と [[wiki/syntheses/sdd-fail-closed-worktree-gate-implementation-plan|SDD fail-closed worktree gate 実装計画]]。promoted draftsはhistorical proposal evidenceとして変更していない。
+- Index effect: [[index|durable catalog]] をminimal gateのsummaryへ同期した。source implementationは `in progress` であり、implementation complete、activation、install、remote stateは主張しない。

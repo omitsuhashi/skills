@@ -24,11 +24,11 @@ _現在なし。_
 - [[wiki/syntheses/sdd-first-write-worktree-migration-spec.md|SDD first-write worktree migration 仕様]] — 最初のrepository write前にEpic planning worktreeをallocate/reuseしてbindingを証明し、original checkoutを保全すること、ならびにHuman opt-inのparallel issueをsingle-writer integrationへ限定するHuman承認済みcurrent仕様。
   検索語: sdd-implementation, first write, planning worktree, original checkout, starting_branch, starting_head_sha, binding tuple, integration_branch, parallel issue, Epic adapter, fail closed, 作業ツリー, 最初の書込み, 保全, 並列実行, 統合
 
-- [[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|SDD fail-closed worktree gate 仕様]] — repository changeを`sdd-implementation`のfirst entryへ固定し、First-Write Gateのno-fallback停止、guard preflight/activation境界、primary checkout commit拒否を既存migration仕様へ加えるHuman承認済みnormative addendum。
-  検索語: sdd-implementation, fail closed, worktree gate, first entry, no fallback, git commit guard, prepare-commit-msg, primary checkout, registered linked worktree, guard activation, rollback, zero write, bootstrap authority, 作業ツリー, 停止条件, コミットガード, 承認済み仕様
+- [[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|SDD fail-closed worktree gate 仕様]] — repository workを`sdd-implementation`から開始し、original `main`をread-onlyに保ち、verified task-linked worktreeへのall-write/commit bindingとfailure時zero-write `BLOCKED`・no fallbackだけを定めるHuman承認済みminimal specification。
+  検索語: sdd-implementation, fail closed, worktree gate, first entry, original main, read-only, linked worktree, write binding, zero write, blocked, no fallback, 作業ツリー, 停止条件, 最小仕様, 承認済み仕様
 
-- [[wiki/syntheses/sdd-fail-closed-worktree-gate-implementation-plan|SDD fail-closed worktree gate 実装計画]] — Human承認済みのcurrent implementation plan。SDD-first entry、First-Write Gateのzero-write fail-closed、primary checkout commit guard、read-only preflight、transactional activation boundaryを、タスク順・exact commands・acceptance criteriaとともに定義する。
-  検索語: sdd-implementation, fail closed, worktree gate, implementation plan, Plan Gate, first entry, no fallback, zero write, git commit guard, prepare-commit-msg, preflight, activation, rollback, bootstrap authority, 作業ツリー, 実装計画, 承認
+- [[wiki/syntheses/sdd-fail-closed-worktree-gate-implementation-plan|SDD fail-closed worktree gate 実装計画]] — Human承認済みのcurrent minimal plan。scope-reduction sync、guard/activation over-designの削除、simplified First-Write Gateのvalidation、one whole-branch reviewを定義し、source implementationはin progressとする。
+  検索語: sdd-implementation, fail closed, worktree gate, implementation plan, first entry, original main, linked worktree, zero write, blocked, no fallback, guard removal, activation removal, 作業ツリー, 実装計画, 承認
 
 - [[wiki/syntheses/sdd-first-write-worktree-migration-implementation-plan.md|SDD first-write worktree migration 実装計画]] — Human承認済みのcurrent implementation plan。captured-SHA Epic planning worktreeへのfirst-write binding、sequential SDD、後続Epicだけのthin opt-in parallel adapter、single-writer integration、final verificationを実行順に定義する。
   検索語: sdd-implementation, implementation plan, Plan Gate, first write, planning worktree, captured SHA, integration branch, sequential SDD, parallel issue adapter, single writer, final review, 実装計画, 作業ツリー, 最初の書込み, 承認
