@@ -8,6 +8,7 @@ import unittest
 
 SKILL_DIR = Path(__file__).resolve().parents[1]
 SKILL = SKILL_DIR / "SKILL.md"
+PLANNING_CONTEXT = SKILL_DIR / "references" / "planning-context.md"
 RESEARCH_STAGE = SKILL_DIR / "references" / "research-stage.md"
 RESEARCHER_PROMPT = SKILL_DIR / "prompts" / "repository-researcher.md"
 SYNTHESIZER_PROMPT = SKILL_DIR / "prompts" / "spec-synthesizer.md"
@@ -309,6 +310,44 @@ class TransientArtifactContractTests(unittest.TestCase):
 
     def test_repository_validation_has_exactly_three_unambiguous_gate_moments(self) -> None:
         self.assertEqual([], validation_gate_errors(read(SKILL)))
+
+    def test_stage_resources_reference_one_common_guard_without_copying_path_algorithms(self) -> None:
+        stage_resources = (
+            PLANNING_CONTEXT,
+            RESEARCH_STAGE,
+            RESEARCHER_PROMPT,
+            SYNTHESIZER_PROMPT,
+            SPEC_REVIEWER_PROMPT,
+            PLAN_REVIEWER_PROMPT,
+        )
+        for path in stage_resources:
+            text = read(path)
+            with self.subTest(path=path.name):
+                self.assertIn("Common Runtime Capability Guard", text)
+                for duplicated_guard in (
+                    "git worktree registration",
+                    "task-owner capability identity",
+                    "relative, unresolved, unbounded, stale",
+                    "Do not allocate, select a fallback root",
+                    "Synchronous dispatch that returns a completed result",
+                    "Asynchronous dispatch requires both wait and resume",
+                ):
+                    self.assertNotIn(duplicated_guard, text)
+
+    def test_direct_git_gate_algorithms_remain_owned_only_by_the_public_contract(self) -> None:
+        stage_resources = (
+            PLANNING_CONTEXT,
+            RESEARCH_STAGE,
+            RESEARCHER_PROMPT,
+            SYNTHESIZER_PROMPT,
+            SPEC_REVIEWER_PROMPT,
+            PLAN_REVIEWER_PROMPT,
+        )
+        for path in stage_resources:
+            text = read(path)
+            with self.subTest(path=path.name):
+                for command in ("git check-ignore --no-index", "git write-tree", "git ls-tree", "git cat-file"):
+                    self.assertNotIn(command, text)
 
 
 if __name__ == "__main__":

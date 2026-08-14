@@ -6,35 +6,20 @@ material conflict that requires repository evidence.
 ## Dispatch
 
 Create an isolated fresh-context Research Worker using
-`prompts/repository-researcher.md`. Do not inherit the parent conversation. Pass
-only:
+`prompts/repository-researcher.md`. Do not inherit the parent conversation.
+Apply the `SKILL.md` Common Runtime Capability Guard, then pass only these
+Research-specific inputs in addition to its common inputs:
 
-- resolved planning worktree root;
-- bound CWD;
-- explicit single writer ownership;
-- original-checkout preservation evidence;
-- writable artifact path using the repository-external task/session temporary route;
-- original checkout metadata (read-only): canonical path, `starting_branch`, `starting_head_sha`, and captured starting status;
+- report path using the repository-external task/session temporary route;
 - baseline commit;
 - epic ID and current research question;
 - applicable repository and knowledge constraints;
 - current spec path when one exists.
 
-The first transient Research Report must use a task/session-bounded directory
-under the runtime/OS temporary root and outside the repository root, resolved
-planning worktree, original checkout, and every sibling worktree. Before report
-creation, reject a relative path, an unbounded absolute root, a stale path,
-repository alias, sibling path, or escape path, and return `BLOCKED`.
-
-If the bound root/CWD, external path, writer ownership, or original preservation proof is
-missing or mismatched, return the existing four-field `blocked` Control Return.
-The worker must not allocate, select a
-fallback root, continue in the current/original checkout, or write outside the
-binding.
-
-Required isolated dispatch and explicit-model capability are fail-closed. If
-they are unavailable, return `BLOCKED`. Do not fall back to Planning Controller
-exploration or artifact authoring.
+The first transient Research Report uses that repository-external route. The
+Common Runtime Capability Guard must prove its bounded destination and all
+common dispatch, ownership, worktree, CWD, and preservation inputs before the
+report write; otherwise return its four-field blocked result with zero writes.
 
 ## Worker Scope
 

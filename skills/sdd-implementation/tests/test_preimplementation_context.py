@@ -19,6 +19,12 @@ def read_or_empty(path: Path) -> str:
     return path.read_text(encoding="utf-8") if path.is_file() else ""
 
 
+def markdown_section(text: str, heading: str, next_heading: str) -> str:
+    if heading not in text:
+        return ""
+    return text.split(heading, 1)[1].split(next_heading, 1)[0]
+
+
 def routing_cases(text: str) -> dict[str, tuple[str, str, str, str]]:
     if "## Representative Routing Cases" not in text:
         return {}
@@ -95,34 +101,38 @@ class PreImplementationContextContractTests(unittest.TestCase):
         )
 
     def test_control_return_has_only_bounded_semantic_fields(self) -> None:
-        self.assertIn("## Control Return", self.planning_text)
+        guard = markdown_section(
+            self.skill_text,
+            "## Common Runtime Capability Guard",
+            "## Route By Input Maturity",
+        )
         for field in (
-            "`status`",
-            "`artifact_path`",
-            "`decision_requests`",
+            "`status: blocked`",
+            "`artifact_path: none`",
+            "`decision_requests: none`",
             "`material_risks`",
         ):
-            self.assertIn(field, self.planning_text)
-        self.assertIn("Keep detailed findings in the artifact.", self.planning_text)
-        self.assertIn(
-            "Aim for about 200 words; do not add a word-count validator.",
-            self.planning_text,
-        )
+            self.assertIn(field, guard)
+        self.assertIn("role or phase", guard)
+        self.assertIn("failed capability or path", guard)
+        self.assertIn("underlying error", guard)
 
-    def test_stage_capsule_carries_only_current_control_state(self) -> None:
-        self.assertIn("## Stage Capsule", self.planning_text)
-        for field in (
-            "current result",
-            "canonical paths",
-            "open decisions",
-            "approval state",
-            "material risks",
-        ):
-            self.assertIn(field, self.planning_text)
-        self.assertIn(
-            "Aim for about 400 words; do not copy raw discussion or tool output.",
-            self.planning_text,
-        )
+    def test_stage_resources_reference_the_common_guard_without_reimplementing_it(self) -> None:
+        resources = {
+            "planning": self.planning_text,
+            "research": self.research_text,
+            "researcher": self.researcher_text,
+            "synthesizer": self.synthesizer_text,
+            "spec reviewer": self.reviewer_text,
+            "plan reviewer": self.plan_reviewer_text,
+        }
+        for name, text in resources.items():
+            with self.subTest(resource=name):
+                self.assertIn("Common Runtime Capability Guard", text)
+                self.assertNotIn("## Write Binding", text)
+                self.assertNotIn("fresh-context dispatch is unavailable", text)
+                self.assertNotIn("Do not allocate, select a fallback root", text)
+                self.assertNotIn("relative, unresolved, unbounded, stale", text)
 
     def test_plan_author_is_fresh_and_uses_upstream_writing_plans(self) -> None:
         normalized = " ".join(self.planning_text.split())
@@ -207,12 +217,14 @@ class PreImplementationContextContractTests(unittest.TestCase):
 
     def test_missing_fresh_dispatch_never_falls_back_to_controller_exploration(self) -> None:
         self.assertIn(
-            "If isolated fresh-context dispatch is unavailable, return `BLOCKED`.",
-            self.planning_text,
+            "If neither synchronous result collection nor asynchronous wait/resume "
+            "is available, block before the first affected mutation.",
+            " ".join(self.skill_text.split()),
         )
         self.assertIn(
-            "Do not fall back to Planning Controller exploration or artifact authoring.",
-            self.planning_text,
+            "Do not infer an unverified substitute, move the work into the controller, "
+            "or use an old loop.",
+            " ".join(self.skill_text.split()),
         )
 
     def test_research_stage_routes_only_fresh_repository_exploration(self) -> None:
@@ -332,35 +344,39 @@ class PreImplementationContextContractTests(unittest.TestCase):
             combined,
         )
         self.assertIn(
-            "Do not fall back to Planning Controller exploration or artifact authoring.",
-            combined,
+            "Do not infer an unverified substitute, move the work into the controller, "
+            "or use an old loop.",
+            " ".join(combined.split()),
         )
 
-    def test_worktree_binding_is_reverified_before_writable_stages(self) -> None:
-        section = self.planning_text.split("## Stage Capsule", 1)[1].split("## Spec Synthesis And Review", 1)[0]
+    def test_common_guard_revalidates_binding_before_writable_stages(self) -> None:
+        section = markdown_section(
+            self.skill_text,
+            "## Common Runtime Capability Guard",
+            "## Route By Input Maturity",
+        )
         for value in (
-            "bound planning root",
+            "owned worktree",
             "bound CWD",
-            "contained writable path",
-            "single writer owner",
+            "write destinations",
+            "task-owner capability identity",
             "original-checkout preservation evidence",
-            "task-linked worktree binding",
-            "current Git facts",
-            "`BLOCKED`",
+            "before the first affected mutation",
         ):
             self.assertIn(value, section)
 
     def test_bound_paths_and_first_report_are_required(self) -> None:
         for text in (self.researcher_text, self.synthesizer_text, self.reviewer_text):
-            for value in ("resolved planning worktree root", "CWD", "original checkout"):
-                self.assertIn(value, text)
-            self.assertNotIn("- repository root;", text)
+            self.assertIn("Common Runtime Capability Guard", text)
+            self.assertNotIn("- resolved planning worktree root;", text)
+            self.assertNotIn("- bound CWD;", text)
+            self.assertNotIn("- explicit single writer ownership;", text)
         self.assertIn("writable artifact path", self.synthesizer_text)
-        self.assertNotIn("- writable artifact path;", self.researcher_text)
-        self.assertNotIn("- writable artifact path;", self.reviewer_text)
-        for value in ("first transient Research Report", "relative", "absolute", "stale path", "escape", RAW_HANDOFF_DEFAULT):
+        self.assertIn("report path", self.researcher_text)
+        self.assertIn("raw review artifact path", self.reviewer_text)
+        for value in ("first transient Research Report", RAW_HANDOFF_DEFAULT):
             self.assertIn(value, self.research_text)
-        for value in ("original checkout metadata (read-only)", "baseline commit", "epic ID and current research question", "applicable repository and knowledge constraints", "current spec path when one exists"):
+        for value in ("baseline commit", "epic ID and current research question", "applicable repository and knowledge constraints", "current spec path when one exists"):
             self.assertIn(value, self.research_text)
         self.assertNotIn("- repository root and current baseline commit;", self.research_text)
 
@@ -382,62 +398,51 @@ class PreImplementationContextContractTests(unittest.TestCase):
     def test_plan_author_uses_only_bound_planning_paths(self) -> None:
         section = self.planning_text.split("## Plan Authoring", 1)[1].split("## Failure Boundary", 1)[0]
         normalized = " ".join(section.split())
-        for value in ("resolved planning worktree root", "bound CWD", "writable plan artifact path", "original checkout metadata (read-only)", "Plan Author Worker"):
+        for value in ("writable plan artifact path", "approved spec path", "Plan Author Worker", "Common Runtime Capability Guard"):
             self.assertIn(value, normalized)
-        self.assertNotIn("repository root, baseline commit", normalized)
+        for duplicated_guard_input in ("- bound CWD", "- single writer ownership", "- original checkout metadata"):
+            self.assertNotIn(duplicated_guard_input, section)
 
     def test_kis_dependency_path_and_full_read_reach_only_the_seven_required_roles(self) -> None:
         canonical_path = "keep-implementation-simple/SKILL.md"
         full_read_instruction = "read it fully before work"
         role_owners = {
-            "Spec Synthesizer": (
-                (PLANNING_CONTEXT, self.planning_text.split("## Spec Synthesis And Review", 1)[1].split("## Plan Authoring", 1)[0]),
-                (SYNTHESIZER_PROMPT, self.synthesizer_text),
-            ),
-            "Spec Reviewer": (
-                (PLANNING_CONTEXT, self.planning_text.split("## Spec Synthesis And Review", 1)[1].split("## Plan Authoring", 1)[0]),
-                (REVIEWER_PROMPT, self.reviewer_text),
-            ),
-            "Plan Author": (
-                (PLANNING_CONTEXT, self.planning_text.split("## Plan Authoring", 1)[1].split("## Failure Boundary", 1)[0]),
-            ),
-            "Plan Reviewer": (
-                (PLANNING_CONTEXT, self.planning_text.split("## Plan Authoring", 1)[1].split("## Failure Boundary", 1)[0]),
-                (PLAN_REVIEWER_PROMPT, self.plan_reviewer_text),
-            ),
-            "Implementer": (
-                (SKILL, self.skill_text.split("## Implementation Stage", 1)[1].split("## Epic Parallel Issue Adapter", 1)[0]),
-            ),
-            "Task Reviewer": (
-                (SKILL, self.skill_text.split("## Implementation Stage", 1)[1].split("## Epic Parallel Issue Adapter", 1)[0]),
-            ),
-            "Final Reviewer": (
-                (SKILL, self.skill_text.split("## Final Whole-Branch Review", 1)[1]),
-            ),
+            "Spec Synthesizer",
+            "Spec Reviewer",
+            "Plan Author",
+            "Plan Reviewer",
+            "Implementer",
+            "Task Reviewer",
+            "Final Reviewer",
         }
         excluded_roles = {"Research Worker", "knowledge closeout worker"}
 
-        self.assertIn("Check `keep-implementation-simple`", self.skill_text)
+        wiring = markdown_section(
+            self.skill_text,
+            "## Keep Implementation Simple Wiring",
+            "## Route By Input Maturity",
+        )
+        self.assertIn("Check `keep-implementation-simple`", wiring)
         self.assertIn(
             "`BLOCKED: missing keep-implementation-simple dependency`",
-            self.skill_text,
+            wiring,
         )
-        self.assertIn(canonical_path, self.skill_text)
-        self.assertIn(full_read_instruction, self.skill_text)
+        self.assertIn(canonical_path, wiring)
+        self.assertIn(full_read_instruction, wiring)
         self.assertEqual(set(role_owners).intersection(excluded_roles), set())
-        self.assertNotIn(canonical_path, self.research_text)
-        self.assertNotIn(canonical_path, self.researcher_text)
-        closeout = self.skill_text.split("## Implementation Closeout", 1)[1].split(
-            "## Final Whole-Branch Review", 1
-        )[0]
-        self.assertNotIn(canonical_path, closeout)
-        for role, owner_texts in role_owners.items():
+        for role in role_owners:
             with self.subTest(role=role):
-                for owner_path, owner_text in owner_texts:
-                    self.assertTrue(owner_path.is_file())
-                    self.assertIn(role, owner_text)
-                    self.assertIn(canonical_path, owner_text)
-                    self.assertIn(full_read_instruction, " ".join(owner_text.split()))
+                self.assertEqual(1, wiring.count(f"- {role}\n"))
+        for stage_text in (
+            self.planning_text,
+            self.research_text,
+            self.researcher_text,
+            self.synthesizer_text,
+            self.reviewer_text,
+            self.plan_reviewer_text,
+        ):
+            self.assertNotIn(canonical_path, stage_text)
+            self.assertNotIn(full_read_instruction, " ".join(stage_text.split()))
 
 
 if __name__ == "__main__":
