@@ -15,14 +15,16 @@
 - Approved North Star path: `knowledge/wiki/syntheses/keep-implementation-simple-spec.md`
 - Approved North Star anchor: `North Star`
 - Approved snapshot identity: `KIS-SPEC-2026-08-14-V2`
-- Approval-snapshot content SHA-256: `1a99024e9f04791a4194304d01a50c42a29b516c4c2887b144079239f09dcfbd`
+- Historical approval-snapshot content SHA-256: `1a99024e9f04791a4194304d01a50c42a29b516c4c2887b144079239f09dcfbd`
+- Current approved amendment content SHA-256: `0c9570f9d3d54821d3ce6302c0a46824192b0d5c05c3b2e03e6923a0565d4aa4`
 - Approval state: approved
 
 ## Approved Written Spec Identity
 
 - Approved spec path: `knowledge/wiki/syntheses/keep-implementation-simple-spec.md`
 - Approved spec snapshot identity: `KIS-SPEC-2026-08-14-V2`
-- Approved-spec content SHA-256: `1a99024e9f04791a4194304d01a50c42a29b516c4c2887b144079239f09dcfbd`
+- Historical approval-snapshot content SHA-256: `1a99024e9f04791a4194304d01a50c42a29b516c4c2887b144079239f09dcfbd`
+- Current approved-spec content SHA-256: `0c9570f9d3d54821d3ce6302c0a46824192b0d5c05c3b2e03e6923a0565d4aa4`
 - Approval state: approved
 
 ## Plan Binding
@@ -35,8 +37,9 @@
 - Independent review verdict: ready
 - Repository checks: passed
 - Readiness evidence state: current
+- Current amendment binding state: Human-approved; scoped re-review pending
 
-Authoring checks established that the baseline is an ancestor of the current planning branch, all named owner surfaces exist, the spec digest matches both approval declarations, and current KIS SHA-256 is `2c2361f04ca6d2dd7433d2dfa80ff173a14f68ef401df0e98e7d4366d1d23b3f`. Initial independent review returned `issues_found` for two execution-order gaps; both are repaired below, and the fresh independent re-review returned `ready`, completing the local Plan Stage gate for Implementation Stage entry.
+Authoring checks established that the baseline is an ancestor of the current planning branch, all named owner surfaces exist, and current KIS SHA-256 is `2c2361f04ca6d2dd7433d2dfa80ff173a14f68ef401df0e98e7d4366d1d23b3f`. The historical Human approval snapshot remains `1a99024e9f04791a4194304d01a50c42a29b516c4c2887b144079239f09dcfbd`; Human subsequently approved the path-only amendment whose current spec digest is `0c9570f9d3d54821d3ce6302c0a46824192b0d5c05c3b2e03e6923a0565d4aa4`, and the current North Star and Written Spec declarations bind that amended digest. Initial independent review returned `issues_found` for two execution-order gaps; both were repaired and the fresh independent re-review returned `ready`, preserving that historical Plan Stage result. This approval-binding correction remains pending scoped re-review and does not authorize `LOCAL_COMPLETE`.
 
 ## Global Constraints
 
@@ -203,7 +206,7 @@ Authoring checks established that the baseline is an ancestor of the current pla
 - Buildability: every named production/test/durable file exists, and the existing test module already loads all affected SDD surfaces.
 - TDD and review order: KIS-1 requires focused RED before production edits, minimal GREEN, full suite, index/candidate gates, scoped commit/new-commit validation, then independent Task Review over the committed range before I-1. KIS-2 produces fresh combined evidence before durable recording, validates wiki and the scoped closeout commit/final tree, then dispatches Final Review.
 - Scope scan: no prospective code/test body, placeholder implementation, KIS edit, new prompt/test file/fixture/resolver/schema/runtime machinery/metadata, duplicated policy, parallel issue adapter, or remote mutation is planned.
-- Identity and dependency consistency: `KIS-PLAN-2026-08-14-V2`, `KIS-SPEC-2026-08-14-V2`, baseline SHA, KIS digest, task IDs KIS-1/KIS-2, and I-1/I-2 are consistent.
+- Identity and dependency consistency: `KIS-PLAN-2026-08-14-V2`, `KIS-SPEC-2026-08-14-V2`, historical approval snapshot `1a99024e9f04791a4194304d01a50c42a29b516c4c2887b144079239f09dcfbd`, current Human-approved amendment `0c9570f9d3d54821d3ce6302c0a46824192b0d5c05c3b2e03e6923a0565d4aa4`, baseline SHA, KIS digest, task IDs KIS-1/KIS-2, and I-1/I-2 are consistent.
 
 ## Readiness Result
 
