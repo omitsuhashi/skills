@@ -379,6 +379,36 @@ class PreImplementationContextContractTests(unittest.TestCase):
             self.assertIn(value, normalized)
         self.assertNotIn("repository root, baseline commit", normalized)
 
+    def test_kis_dependency_path_and_full_read_reach_only_the_seven_required_roles(self) -> None:
+        canonical_path = "keep-implementation-simple/SKILL.md"
+        full_read_instruction = "read it fully before work"
+        role_owners = {
+            "Spec Synthesizer": (self.planning_text, self.synthesizer_text),
+            "Spec Reviewer": (self.planning_text, self.reviewer_text),
+            "Plan Author": (self.planning_text,),
+            "Plan Reviewer": (self.planning_text, self.plan_reviewer_text),
+            "Implementer": (self.skill_text,),
+            "Task Reviewer": (self.skill_text,),
+            "Final Reviewer": (self.skill_text,),
+        }
+        excluded_roles = {"Research Worker", "knowledge closeout worker"}
+
+        self.assertIn("Check `keep-implementation-simple`", self.skill_text)
+        self.assertIn(canonical_path, self.skill_text)
+        self.assertIn(full_read_instruction, self.skill_text)
+        self.assertEqual(set(role_owners).intersection(excluded_roles), set())
+        self.assertNotIn(canonical_path, self.research_text)
+        self.assertNotIn(canonical_path, self.researcher_text)
+        closeout = self.skill_text.split("## Implementation Closeout", 1)[1].split(
+            "## Final Whole-Branch Review", 1
+        )[0]
+        self.assertNotIn(canonical_path, closeout)
+        for role, owner_texts in role_owners.items():
+            with self.subTest(role=role):
+                for owner_text in owner_texts:
+                    self.assertIn(canonical_path, owner_text)
+                    self.assertIn(full_read_instruction, " ".join(owner_text.split()))
+
 
 if __name__ == "__main__":
     unittest.main()

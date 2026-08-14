@@ -13,11 +13,15 @@ approve product scope or risk.
 - authored plan path and Plan Author result;
 - current `superpowers:writing-plans` skill path;
 - local `references/plan-contract.md` overlay path;
+- resolved canonical `keep-implementation-simple/SKILL.md` path;
 - applicable repository rules and current-tree file/test evidence.
 
 Reject a relative, unresolved, unbounded, stale, repository-aliased,
 planning-worktree, sibling, original-checkout, or escaping writable artifact
 path before write.
+Read the resolved canonical `keep-implementation-simple/SKILL.md` path; read it
+fully before work. If that read prevents completion, return `BLOCKED` with your role
+or phase, path, and underlying error.
 
 ## Review
 
