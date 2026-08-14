@@ -5,11 +5,14 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+from typing import Optional
 import unittest
+from unittest.mock import patch
 
 SKILL_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SKILL_DIR))
 
+from tests.harnesses import fail_closed_scenario as scenario  # noqa: E402
 from tests.harnesses.fail_closed_scenario import (  # noqa: E402
     BootstrapContext,
     ControlReturn,
@@ -106,7 +109,27 @@ class FailClosedEntryBehaviorTests(unittest.TestCase):
         self.assertEqual(0, self.runner_calls)
         self.assert_no_repository_artifacts()
 
+    def trusted_bootstrap(
+        self,
+        *,
+        requested_scope: str = "source",
+        branch: Optional[str] = None,
+        worktree: Optional[Path] = None,
+        starting_head_sha: Optional[str] = None,
+    ) -> BootstrapContext:
+        return BootstrapContext(
+            epic=BOOTSTRAP.epic,
+            branch=branch or f"codex/scenario/planning-{self.allocation_calls + 1}",
+            worktree=worktree or self.planning,
+            starting_head_sha=starting_head_sha or self.head,
+            same_controller=True,
+            tuple_trusted=True,
+            lifecycle="bootstrap",
+            requested_scope=requested_scope,
+        )
+
     def call(self, **overrides):
+        approved_bootstrap = overrides.pop("approved_bootstrap", None)
         arguments = {
             "original": self.original,
             "entry_skill": "sdd-implementation",
@@ -118,7 +141,16 @@ class FailClosedEntryBehaviorTests(unittest.TestCase):
             "command_runner": self.run_command,
         }
         arguments.update(overrides)
-        return run_repository_change(**arguments)
+        if approved_bootstrap is None:
+            return run_repository_change(**arguments)
+        with patch.multiple(
+            scenario,
+            BOOTSTRAP_EPIC=approved_bootstrap.epic,
+            BOOTSTRAP_BRANCH=approved_bootstrap.branch,
+            BOOTSTRAP_WORKTREE=approved_bootstrap.worktree,
+            BOOTSTRAP_STARTING_HEAD_SHA=approved_bootstrap.starting_head_sha,
+        ):
+            return run_repository_change(**arguments)
 
     def test_sdd_is_the_only_allowed_first_entry(self) -> None:
         result = self.call(writer=self.no_op_writer)
@@ -153,6 +185,64 @@ class FailClosedEntryBehaviorTests(unittest.TestCase):
         )
         self.assertFalse(marker.exists())
 
+    def test_bootstrap_observed_allocation_identity_mismatch_is_blocked(self) -> None:
+        fixture = SKILL_DIR / "tests" / "fixtures" / "unsafe_downstream.py"
+        alternate_base = run_git(
+            self.original,
+            "commit-tree",
+            "HEAD^{tree}",
+            "-p",
+            self.head,
+            "-m",
+            "alternate allocation base",
+        ).strip()
+        for mismatch in ("path", "branch", "base"):
+            with self.subTest(mismatch=mismatch):
+                actual_path = self.root / f"planning-{mismatch}"
+                actual_branch = f"codex/scenario/{mismatch}-actual"
+                allocation_base = alternate_base if mismatch == "base" else self.head
+                trusted = self.trusted_bootstrap(
+                    branch=(
+                        f"codex/scenario/{mismatch}-expected"
+                        if mismatch == "branch"
+                        else actual_branch
+                    ),
+                    worktree=(
+                        self.root / "planning-path-expected"
+                        if mismatch == "path"
+                        else actual_path
+                    ),
+                )
+                marker = self.root / f"bootstrap-{mismatch}-mismatch-marker"
+                command = (sys.executable, str(fixture), str(marker))
+
+                def allocate() -> Path:
+                    run_git(
+                        self.original,
+                        "worktree",
+                        "add",
+                        "-b",
+                        actual_branch,
+                        str(actual_path),
+                        allocation_base,
+                    )
+                    return actual_path
+
+                self.planning = actual_path
+                result = self.call(
+                    guard_status="guard_missing",
+                    bootstrap=trusted,
+                    approved_bootstrap=trusted,
+                    allocator=allocate,
+                    downstream_command=command,
+                )
+                self.assert_blocked(
+                    result,
+                    "worktree bootstrap identity mismatch",
+                    attempted=(command,),
+                )
+                self.assertFalse(marker.exists())
+
     def test_guard_failure_blocks_ordinary_task_without_writer(self) -> None:
         for guard_status in ("guard_missing", "guard_unconfigured", "guard_damaged"):
             with self.subTest(guard_status=guard_status):
@@ -162,9 +252,11 @@ class FailClosedEntryBehaviorTests(unittest.TestCase):
     def test_exact_bootstrap_tuple_allows_only_source_test_spec_plan(self) -> None:
         for scope in ("source", "test", "spec", "plan"):
             with self.subTest(scope=scope):
+                trusted = self.trusted_bootstrap(requested_scope=scope)
                 result = self.call(
                     guard_status="guard_missing",
-                    bootstrap=replace(BOOTSTRAP, requested_scope=scope),
+                    bootstrap=trusted,
+                    approved_bootstrap=trusted,
                     writer=self.no_op_writer,
                 )
                 self.assertEqual(
@@ -179,27 +271,34 @@ class FailClosedEntryBehaviorTests(unittest.TestCase):
 
         self.planning = self.root / "planning-activation"
         self.writer_calls = 0
+        trusted = self.trusted_bootstrap()
         blocked = self.call(
             guard_status="guard_missing",
-            bootstrap=replace(BOOTSTRAP, requested_scope="activation"),
+            bootstrap=replace(trusted, requested_scope="activation"),
+            approved_bootstrap=trusted,
         )
         self.assert_blocked(blocked, "guard_missing")
 
     def test_bootstrap_cannot_be_reused_or_reconstructed(self) -> None:
+        trusted = self.trusted_bootstrap()
         mismatch_cases = {
-            "epic": replace(BOOTSTRAP, epic="another-epic"),
-            "branch": replace(BOOTSTRAP, branch="codex/another/planning"),
-            "worktree": replace(BOOTSTRAP, worktree=Path("/tmp/another-worktree")),
-            "starting_head_sha": replace(BOOTSTRAP, starting_head_sha="0" * 40),
-            "different_controller": replace(BOOTSTRAP, same_controller=False),
-            "untrusted_tuple": replace(BOOTSTRAP, tuple_trusted=False),
-            "later_task": replace(BOOTSTRAP, lifecycle="later_task"),
-            "activation_scope": replace(BOOTSTRAP, requested_scope="activation"),
+            "epic": replace(trusted, epic="another-epic"),
+            "branch": replace(trusted, branch="codex/another/planning"),
+            "worktree": replace(trusted, worktree=Path("/tmp/another-worktree")),
+            "starting_head_sha": replace(trusted, starting_head_sha="0" * 40),
+            "different_controller": replace(trusted, same_controller=False),
+            "untrusted_tuple": replace(trusted, tuple_trusted=False),
+            "later_task": replace(trusted, lifecycle="later_task"),
+            "activation_scope": replace(trusted, requested_scope="activation"),
             "tuple_loss": None,
         }
         for name, bootstrap in mismatch_cases.items():
             with self.subTest(name=name):
-                result = self.call(guard_status="guard_missing", bootstrap=bootstrap)
+                result = self.call(
+                    guard_status="guard_missing",
+                    bootstrap=bootstrap,
+                    approved_bootstrap=trusted,
+                )
                 self.assert_blocked(result, "guard_missing")
 
 

@@ -135,6 +135,25 @@ def _allocation_is_bound(original: Path, planning: Path) -> bool:
         return False
 
 
+def _bootstrap_matches_allocation(
+    original: Path,
+    planning: Path,
+    bootstrap: BootstrapContext,
+) -> bool:
+    try:
+        return bool(
+            planning.resolve(strict=True) == bootstrap.worktree.resolve(strict=True)
+            and _git(planning, "branch", "--show-current").decode("utf-8").strip()
+            == bootstrap.branch
+            and _git(original, "rev-parse", "HEAD").decode("ascii").strip()
+            == bootstrap.starting_head_sha
+            and _git(planning, "rev-parse", "HEAD").decode("ascii").strip()
+            == bootstrap.starting_head_sha
+        )
+    except (OSError, subprocess.CalledProcessError, UnicodeError):
+        return False
+
+
 def run_repository_change(
     *,
     original: Path,
@@ -166,8 +185,11 @@ def run_repository_change(
     if entry_skill != "sdd-implementation":
         return blocked("SDD First-Write Worktree Gate required")
 
-    if guard_status != "active" and not _bootstrap_is_exact(bootstrap):
-        return blocked(guard_status)
+    bootstrap_authorized = guard_status != "active"
+    if bootstrap_authorized:
+        if not _bootstrap_is_exact(bootstrap):
+            return blocked(guard_status)
+        assert bootstrap is not None
 
     try:
         planning = allocator()
@@ -180,6 +202,13 @@ def run_repository_change(
 
     if not _allocation_is_bound(original, planning):
         return blocked("worktree registration/ownership/containment not proven")
+
+    if bootstrap_authorized and not _bootstrap_matches_allocation(
+        original,
+        planning,
+        bootstrap,
+    ):
+        return blocked("worktree bootstrap identity mismatch")
 
     if downstream_command is not None:
         return blocked("downstream incompatible with SDD containment")
