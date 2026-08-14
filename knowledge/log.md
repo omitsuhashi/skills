@@ -2474,3 +2474,7 @@ append-only で使います。すべての entry は予測しやすい header �
 ## [2026-08-15] closeout-state-correction | SDD portable validation fixture-minimization amendment
 
 - Phase-one self-reviewで[[wiki/syntheses/sdd-portable-validation-simplification-implementation-plan|current plan]]に残った「AM-1 / AM-2 pending」summaryとAM-1 completion fieldのunchecked stateを訂正した。AM-1はreviewed complete、AM-2は`implemented-pending-final-review`のphase one complete、canonical whole-branch reviewとdependent final status transitionだけがpendingという既存stateを明確化した。spec、index、approved scope、Human authority、historical SPV records、source/tests、remote stateは変更していない。
+
+## [2026-08-15] frontmatter-state-correction | SDD portable validation fixture-minimization amendment
+
+- [[wiki/syntheses/sdd-portable-validation-simplification-implementation-plan|current plan]]のfrontmatterに残ったpre-implementation statusを、body、current spec、active index、phase-one closeout eventと一致する`implemented-pending-final-review`へ訂正した。これはAM-1 reviewed completionとAM-2 phase-one verification/knowledge completionを表すだけであり、exactly one controller-owned canonical whole-branch reviewとdependent final status transitionはpendingのままである。`LOCAL_COMPLETE`、approved scope、Human authority、source/tests、remote stateは変更していない。

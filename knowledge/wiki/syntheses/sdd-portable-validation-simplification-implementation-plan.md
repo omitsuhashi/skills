@@ -1,7 +1,7 @@
 ---
 title: SDD portable validation と責務単純化 実装計画
 date: 2026-08-15
-status: amendment-plan-ready-pending-implementation
+status: implemented-pending-final-review
 review_state: independent-plan-review-ready
 plan_readiness: ready
 tags:
