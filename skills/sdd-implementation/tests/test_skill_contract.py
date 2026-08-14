@@ -238,9 +238,12 @@ class SddImplementationSkillContractTests(unittest.TestCase):
     def test_skill_has_only_the_internal_stage_resource_shape(self) -> None:
         children = {path.name for path in SKILL_DIR.iterdir()} if SKILL_DIR.is_dir() else set()
         self.assertEqual(
-            {"SKILL.md", "agents", "prompts", "references", "tests"},
+            {"SKILL.md", "agents", "prompts", "references", "scripts", "tests"},
             children,
         )
+        guard = SKILL_DIR / "scripts" / "prepare-commit-msg"
+        self.assertTrue(guard.is_file())
+        self.assertTrue(guard.stat().st_mode & 0o111)
         self.assertEqual(
             {"planning-context.md", "research-stage.md"},
             {path.name for path in (SKILL_DIR / "references").iterdir()},
@@ -255,6 +258,29 @@ class SddImplementationSkillContractTests(unittest.TestCase):
         )
         self.assertFalse((SKILL_DIR / "description.md").exists())
         self.assertFalse((SKILL_DIR / "context-contract.toml").exists())
+
+    def test_fail_closed_lifecycle_states_are_separate(self) -> None:
+        gate = self.skill_text.split("## First-Write Worktree Gate", 1)[1].split(
+            "## Planning Controller", 1
+        )[0]
+        self.assertIn("guard preflight", gate)
+        self.assertIn("Do not activate, install, repair, replace, or reconfigure", gate)
+        self.assertIn("Guard activation belongs to a separate Human-authorized setup.", gate)
+        for verdict in ("guard_missing", "guard_unconfigured", "guard_damaged"):
+            self.assertIn(verdict, gate)
+
+        portable_documents = [
+            SKILL,
+            *sorted((SKILL_DIR / "prompts").glob("*.md")),
+            *sorted((SKILL_DIR / "references").glob("*.md")),
+        ]
+        portable_text = "\n".join(read_or_empty(path) for path in portable_documents)
+        for forbidden in (
+            ".codex/plugins/cache",
+            "openai-curated-remote",
+            "superpowers/6.2.0",
+        ):
+            self.assertNotIn(forbidden, portable_text)
 
     def test_openai_metadata_matches_the_skill(self) -> None:
         self.assertIn('display_name: "SDD Implementation"', self.openai_text)
