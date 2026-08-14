@@ -252,3 +252,48 @@ The required combined gate was run once after the complete round-3 behavioral/du
 - Shell logic, singleton validation, approved North Star / Written Spec authority, agent-owned plan readiness/execution, separate remote authorization, and prior authority evidence remain unchanged.
 - No remote publication or live mutation was performed.
 - Open material concern within round-3 scope: none identified by the parser-backed regressions and fresh verification.
+
+## Approved Residual Fix Loop Round 4
+
+### Status And Commit
+
+- Result: `ROUND_4_FIX_COMPLETE`.
+- Remaining independent-review finding addressed: exactly 1 Important finding.
+- Scoped fix commit: `126646a` (`fix: parse complete prospective Python functions`).
+
+### Complete Parser Candidate Detection
+
+The Python prospective-body path now treats a line-anchored `def` or `async def` only as a candidate start. From that start, it expands candidate prefixes and asks Python's parser whether a complete function definition exists. It no longer requires a single-line signature and no longer stops candidate collection at a comment or other line whose indentation is not deeper than the header.
+
+The new RED regressions close both reported bypasses:
+
+- a valid function with an unindented comment between its header and indented body;
+- a valid function with a multiline signature and indented body.
+
+The same adversarial group retains the prior `import`, `await`, `self.normalize(...)`, `self.plan = ...`, and docstring / comment / blank-line cases. The exact prose interface `def build_plan(spec): returns a normalized plan in the proposed interface.` and existing normal plan prose remain accepted because they do not parse as complete Python function definitions. JavaScript, shell, command, singleton, authority, readiness, and coverage validation were not changed.
+
+### TDD And Verification Evidence
+
+RED ran the expanded Python adversarial test. Exactly the two new subcases failed for the reported bypasses; the prior parser-backed cases remained green.
+
+GREEN results:
+
+- targeted Python / docstring / prose regression group: 5 tests passed;
+- focused Plan Contract suite: 23 tests passed, 0 failures, 0 errors;
+- full SDD implementation suite: 81 tests passed, 0 failures, 0 errors;
+- repository script suite: 19 tests passed, 0 failures, 0 errors;
+- LLM Wiki suite: 21 tests passed, 0 failures, 0 errors;
+- skill architecture validator: exit 0;
+- skill context validator: exit 0, 1 contract validated;
+- context report: exit 0, 1 skill, 12 operations, warnings `[]`;
+- skill-creator validator: exit 0, `Skill is valid!`;
+- working and staged whitespace gates: exit 0.
+
+The full required verification used isolated `/private/tmp/sdd-poa-round4-*` bytecode cache roots.
+
+### Boundaries And Concerns
+
+- Changed behavioral scope is limited to the Python candidate collector, its adversarial tests, and the Plan Contract Overlay; this report is the only closeout artifact change.
+- The parser remains the authority for whether a candidate is an actual Python function definition; no executable-statement whitelist was added.
+- No remote publication or live mutation was performed.
+- Open material concern within round-4 scope: none identified by the adversarial and full regression sets.
