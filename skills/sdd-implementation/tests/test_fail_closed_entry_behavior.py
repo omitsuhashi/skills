@@ -133,6 +133,41 @@ class FailClosedEntryBehaviorTests(unittest.TestCase):
         self.assert_blocked(result, "task worktree binding not proven")
         self.assertFalse((foreign / ".superpowers/research/scenario/report.md").exists())
 
+    def test_allocator_ignored_original_artifact_is_blocked_before_writer(self) -> None:
+        """Catches preservation evidence omitting ignored original artifacts."""
+        (self.original / ".gitignore").write_text(".superpowers/\n", encoding="utf-8")
+        run_git(self.original, "add", ".gitignore")
+        run_git(self.original, "commit", "-m", "ignore transient artifacts")
+        self.head = run_git(self.original, "rev-parse", "HEAD").strip()
+        leak = self.original / ".superpowers/leak.md"
+
+        def allocate_with_ignored_original_artifact() -> BoundWorktree:
+            allocation = self.allocate()
+            leak.parent.mkdir()
+            leak.write_bytes(b"leak\n")
+            return allocation
+
+        result = self.call(allocator=allocate_with_ignored_original_artifact)
+
+        self.assertEqual(
+            ControlReturn(
+                "blocked",
+                "none",
+                "none",
+                "original checkout preservation not proven",
+            ),
+            result.control_return,
+        )
+        self.assertEqual(0, result.writer_invocations)
+        self.assertEqual(0, result.runner_invocations)
+        self.assertNotEqual(result.before, result.after)
+        self.assertIn(
+            (".superpowers/leak.md", b"leak\n"),
+            result.after.tracked_and_untracked,
+        )
+        self.assertTrue(leak.is_file())
+        self.assertFalse(self.report.exists())
+
     def test_foreign_owner_for_expected_path_is_blocked_before_writer(self) -> None:
         """Catches treating path equality as task ownership evidence."""
         foreign_owner = mint_task_owner_capability()

@@ -30,7 +30,26 @@ def run_git(cwd: Path, *args: str) -> str:
     return subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True, text=True).stdout
 
 def fingerprint(root: Path) -> tuple[str, str, str, str, str, str, tuple[tuple[str, bytes], ...]]:
-    untracked = tuple(name for name in run_git(root, "ls-files", "--others", "--exclude-standard", "-z").split("\0") if name)
+    untracked = tuple(
+        sorted(
+            {
+                name
+                for output in (
+                    run_git(root, "ls-files", "--others", "--exclude-standard", "-z"),
+                    run_git(
+                        root,
+                        "ls-files",
+                        "--others",
+                        "--ignored",
+                        "--exclude-standard",
+                        "-z",
+                    ),
+                )
+                for name in output.split("\0")
+                if name
+            }
+        )
+    )
     return (
         run_git(root, "branch", "--show-current").strip(),
         run_git(root, "rev-parse", "HEAD").strip(),

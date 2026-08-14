@@ -99,9 +99,24 @@ def _canonical_git_path(root: Path, value: bytes) -> Path:
 
 def fingerprint_repository(root: Path) -> RepositoryFingerprint:
     names = tuple(
-        name.decode("utf-8", errors="surrogateescape")
-        for name in _git(root, "ls-files", "-co", "--exclude-standard", "-z").split(b"\0")
-        if name
+        sorted(
+            {
+                name.decode("utf-8", errors="surrogateescape")
+                for output in (
+                    _git(root, "ls-files", "-co", "--exclude-standard", "-z"),
+                    _git(
+                        root,
+                        "ls-files",
+                        "--others",
+                        "--ignored",
+                        "--exclude-standard",
+                        "-z",
+                    ),
+                )
+                for name in output.split(b"\0")
+                if name
+            }
+        )
     )
     return RepositoryFingerprint(
         branch=_git(root, "branch", "--show-current").decode("utf-8").strip(),
@@ -312,6 +327,9 @@ def run_repository_change(
 
     if not _allocation_is_bound(original, planning, expected_worktree):
         return blocked("task worktree binding not proven")
+
+    if fingerprint_repository(original) != before:
+        return blocked("original checkout preservation not proven")
 
     if command_plan is not None:
         if (
