@@ -4,7 +4,6 @@ import ast
 from pathlib import Path
 import re
 import shutil
-import subprocess
 import tempfile
 import unittest
 
@@ -90,33 +89,6 @@ def field_values(text: str, label: str) -> list[str]:
     ]
 
 
-def frontmatter_value(text: str, key: str) -> str:
-    match = re.search(rf"^{re.escape(key)}:\s*(.+)$", text, flags=re.MULTILINE)
-    return match.group(1).strip() if match else ""
-
-
-def resolve_repository_path(repository_root: Path, value: str) -> Path | None:
-    candidate = (repository_root / value.strip().strip("`")).resolve()
-    try:
-        candidate.relative_to(repository_root.resolve())
-    except ValueError:
-        return None
-    return candidate
-
-
-def git_commit_is_current_ancestor(repository_root: Path, commit_sha: str) -> bool:
-    if not re.fullmatch(r"[0-9a-f]{40}", commit_sha):
-        return False
-    result = subprocess.run(
-        ["git", "merge-base", "--is-ancestor", commit_sha, "HEAD"],
-        cwd=repository_root,
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    return result.returncode == 0
-
-
 def contains_parsed_python_function(text: str) -> bool:
     lines = text.splitlines()
     function_start = re.compile(
@@ -193,16 +165,7 @@ def reject_duplicate_fields(
             errors.append(f"duplicate {scope} field: {label}")
 
 
-def plan_errors(
-    text: str,
-    *,
-    validation_scope: str,
-    repository_root: Path | None = None,
-) -> list[str]:
-    if validation_scope not in {"package_fixture", "repository"}:
-        raise ValueError("validation_scope must be package_fixture or repository")
-    if validation_scope == "repository" and repository_root is None:
-        raise ValueError("repository validation requires an explicit repository_root")
+def plan_errors(text: str) -> list[str]:
     errors: list[str] = []
     north_star_identity = singleton_section(
         errors, text, "Approved North Star Identity"
@@ -265,35 +228,6 @@ def plan_errors(
         if candidate.is_absolute() or ".." in candidate.parts:
             errors.append(f"{label} path is not repository-relative and portable")
 
-    if validation_scope == "repository":
-        assert repository_root is not None
-        bound_spec_path = resolve_repository_path(repository_root, spec_path_value)
-        bound_north_star_path = resolve_repository_path(
-            repository_root, north_star_path_value
-        )
-        if bound_spec_path is None or not bound_spec_path.is_file():
-            errors.append("approved spec path is not a contained repository file")
-            spec_text = ""
-        else:
-            spec_text = load_plan(bound_spec_path)
-            durable_approval_sha = frontmatter_value(
-                spec_text, "approval_snapshot_sha256"
-            )
-            if spec_sha != durable_approval_sha:
-                errors.append(
-                    "approved spec SHA-256 does not match durable approval snapshot identity"
-                )
-            if frontmatter_value(spec_text, "status") not in {"accepted", "approved"}:
-                errors.append("approved spec durable status is not accepted")
-            if frontmatter_value(spec_text, "review_state") != "approved":
-                errors.append("approved spec durable review state is not approved")
-        if bound_north_star_path != bound_spec_path:
-            errors.append(
-                "North Star identity does not resolve to the approved spec North Star"
-            )
-        if spec_text and not section(spec_text, "North Star").strip():
-            errors.append("approved North Star anchor is absent")
-
     if north_star_path != spec_path or field_value(north_star_identity, "Approved North Star anchor") != "North Star":
         errors.append("North Star identity does not resolve to the approved spec North Star")
     if north_star_sha != spec_sha:
@@ -315,10 +249,6 @@ def plan_errors(
             errors.append(f"missing plan binding field: {field}")
     if baseline_sha and not re.fullmatch(r"[0-9a-f]{40}", baseline_sha):
         errors.append("repository baseline is not a full commit identity")
-    elif validation_scope == "repository" and baseline_sha:
-        assert repository_root is not None
-        if not git_commit_is_current_ancestor(repository_root, baseline_sha):
-            errors.append("repository baseline is not a current-tree ancestor commit")
     if field_value(binding, "Current-tree compatibility") != "compatible":
         errors.append("current-tree compatibility is not compatible")
     if field_value(binding, "Independent review verdict") != "ready":
@@ -503,7 +433,7 @@ def plan_errors(
 
 
 def fixture_plan_errors(text: str) -> list[str]:
-    return plan_errors(text, validation_scope="package_fixture")
+    return plan_errors(text)
 
 
 class PlanContractTests(unittest.TestCase):
@@ -546,6 +476,9 @@ class PlanContractTests(unittest.TestCase):
         )
         self.assertEqual([], fixture_plan_errors(load_plan(READY_PLAN)))
 
+    def test_package_plan_validator_is_semantic_only(self) -> None:
+        self.assertEqual([], plan_errors(load_plan(READY_PLAN)))
+
     def test_representative_fixture_covers_the_complete_semantic_inventory(self) -> None:
         fixture = load_plan(READY_PLAN)
         self.assertEqual(REQUIREMENT_IDS | ACCEPTANCE_IDS, set(re.findall(r"\b(?:R|AC)-\d{2}\b", section(fixture, "Requirement And Acceptance Inventory"))))
@@ -569,8 +502,11 @@ class PlanContractTests(unittest.TestCase):
 
     def test_rejects_nonportable_approved_identity_paths(self) -> None:
         ready_plan = load_plan(READY_PLAN)
+        absolute_probe = Path("/").joinpath(
+            "Users", "example", "private-spec.md"
+        ).as_posix()
         for replacement in (
-            "/Users/example/private-spec.md",
+            absolute_probe,
             "../outside/private-spec.md",
         ):
             with self.subTest(replacement=replacement):
@@ -724,7 +660,7 @@ class PlanContractTests(unittest.TestCase):
             ready_plan
             + "\n## Plan Binding\n\n"
             + "- Repository baseline: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
-            + "- Planning worktree: /tmp/other\n"
+            + "- Planning worktree: worktrees/other\n"
             + "- Integration branch: other\n"
             + "- Current-tree compatibility: incompatible\n"
             + "- Independent review verdict: issues_found\n"

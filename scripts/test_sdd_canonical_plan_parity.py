@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
-import sys
+import subprocess
 import unittest
 
 
@@ -21,12 +21,6 @@ ROOT_FIXTURE = (
     / "sdd-plan-contract"
     / "ready-plan.md"
 )
-PACKAGE_TESTS = REPOSITORY_ROOT / "skills" / "sdd-implementation" / "tests"
-sys.path.insert(0, str(PACKAGE_TESTS))
-
-from test_plan_contract import plan_errors as package_plan_errors  # noqa: E402
-
-
 def load(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
@@ -38,6 +32,102 @@ def section(text: str, heading: str) -> str:
         flags=re.MULTILINE | re.DOTALL,
     )
     return match.group(1) if match else ""
+
+
+def field_value(text: str, label: str) -> str:
+    match = re.search(
+        rf"^(?:- |\*\*){re.escape(label)}(?:\*\*)?:[ \t]*([^\r\n]+)$",
+        text,
+        flags=re.MULTILINE,
+    )
+    return match.group(1).strip() if match else ""
+
+
+def frontmatter_value(text: str, key: str) -> str:
+    match = re.search(rf"^{re.escape(key)}:\s*(.+)$", text, flags=re.MULTILINE)
+    return match.group(1).strip() if match else ""
+
+
+def resolve_repository_path(repository_root: Path, value: str) -> Path | None:
+    candidate = (repository_root / value.strip().strip("`")).resolve()
+    try:
+        candidate.relative_to(repository_root.resolve())
+    except ValueError:
+        return None
+    return candidate
+
+
+def git_commit_is_current_ancestor(repository_root: Path, commit_sha: str) -> bool:
+    if not re.fullmatch(r"[0-9a-f]{40}", commit_sha):
+        return False
+    result = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", commit_sha, "HEAD"],
+        cwd=repository_root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    return result.returncode == 0
+
+
+def repository_bound_plan_errors(text: str, repository_root: Path) -> list[str]:
+    errors: list[str] = []
+    north_star_identity = section(text, "Approved North Star Identity")
+    spec_identity = section(text, "Approved Written Spec Identity")
+    binding = section(text, "Plan Binding")
+
+    north_star_sha = field_value(
+        north_star_identity, "Approved snapshot SHA-256"
+    )
+    spec_sha = field_value(spec_identity, "Approved spec SHA-256")
+    if not re.fullmatch(r"[0-9a-f]{64}", north_star_sha):
+        errors.append("invalid North Star approval snapshot SHA-256")
+    if not re.fullmatch(r"[0-9a-f]{64}", spec_sha):
+        errors.append("invalid approved spec SHA-256")
+    if field_value(north_star_identity, "Approval state") != "approved":
+        errors.append("North Star is not in approved state")
+    if field_value(spec_identity, "Approval state") != "approved":
+        errors.append("approved spec is not in approved state")
+    if north_star_sha != spec_sha:
+        errors.append("North Star and Written Spec approval snapshots differ")
+
+    north_star_path_value = field_value(
+        north_star_identity, "Approved North Star path"
+    )
+    spec_path_value = field_value(spec_identity, "Approved spec path")
+    north_star_path = resolve_repository_path(
+        repository_root, north_star_path_value
+    )
+    spec_path = resolve_repository_path(repository_root, spec_path_value)
+    if spec_path is None or not spec_path.is_file():
+        errors.append("approved spec path is not a contained repository file")
+        spec_text = ""
+    else:
+        spec_text = load(spec_path)
+        if spec_sha != frontmatter_value(spec_text, "approval_snapshot_sha256"):
+            errors.append(
+                "approved spec SHA-256 does not match durable approval snapshot identity"
+            )
+        if frontmatter_value(spec_text, "status") not in {"accepted", "approved"}:
+            errors.append("approved spec durable status is not accepted")
+        if frontmatter_value(spec_text, "review_state") != "approved":
+            errors.append("approved spec durable review state is not approved")
+
+    if (
+        north_star_path != spec_path
+        or field_value(north_star_identity, "Approved North Star anchor")
+        != "North Star"
+    ):
+        errors.append(
+            "North Star identity does not resolve to the approved spec North Star"
+        )
+    if spec_text and not section(spec_text, "North Star").strip():
+        errors.append("approved North Star anchor is absent")
+
+    baseline_sha = field_value(binding, "Repository baseline")
+    if not git_commit_is_current_ancestor(repository_root, baseline_sha):
+        errors.append("repository baseline is not a current-tree ancestor commit")
+    return errors
 
 
 def table_rows(text: str) -> list[tuple[str, ...]]:
@@ -112,11 +202,40 @@ class CanonicalPlanParityTests(unittest.TestCase):
     def test_canonical_plan_satisfies_the_repository_bound_contract(self) -> None:
         self.assertEqual(
             [],
-            package_plan_errors(
+            repository_bound_plan_errors(
                 self.canonical,
-                validation_scope="repository",
                 repository_root=REPOSITORY_ROOT,
             ),
+        )
+
+    def test_repository_bound_contract_rejects_approval_and_git_drift(self) -> None:
+        wrong_spec = self.canonical.replace(
+            "- Approved spec path: knowledge/wiki/syntheses/sdd-plan-ownership-alignment.md",
+            "- Approved spec path: knowledge/wiki/syntheses/missing-approved-spec.md",
+            1,
+        )
+        wrong_snapshot = self.canonical.replace(
+            "- Approved spec SHA-256: 1f9a7dc5f740c51addfabde96bac6fe3fbf5036003d1783cde60ac58e5ae7559",
+            "- Approved spec SHA-256: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+            1,
+        )
+        wrong_baseline = self.canonical.replace(
+            "- Repository baseline: c370fe14de1641aa5ee30b3fa001f4d857078091",
+            "- Repository baseline: 0000000000000000000000000000000000000000",
+            1,
+        )
+
+        self.assertIn(
+            "approved spec path is not a contained repository file",
+            repository_bound_plan_errors(wrong_spec, REPOSITORY_ROOT),
+        )
+        self.assertIn(
+            "approved spec SHA-256 does not match durable approval snapshot identity",
+            repository_bound_plan_errors(wrong_snapshot, REPOSITORY_ROOT),
+        )
+        self.assertIn(
+            "repository baseline is not a current-tree ancestor commit",
+            repository_bound_plan_errors(wrong_baseline, REPOSITORY_ROOT),
         )
 
     def test_inventory_and_complete_coverage_are_identical(self) -> None:

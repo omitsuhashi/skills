@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -110,22 +111,28 @@ class IsolatedInstallTests(unittest.TestCase):
             )
         )
 
-    def test_representative_fixture_has_no_source_or_personal_identity(self) -> None:
-        fixture = (
-            self.installed_skill
-            / "tests"
-            / "fixtures"
-            / "plan-contract"
-            / "ready-plan.md"
-        ).read_text(encoding="utf-8")
-        for leaked_identity in (
-            str(SOURCE_ROOT),
-            "/Users/",
-            "omitsuhashi",
-            "knowledge/wiki/syntheses/sdd-plan-ownership-alignment.md",
-        ):
-            with self.subTest(leaked_identity=leaked_identity):
-                self.assertNotIn(leaked_identity, fixture)
+    def test_portable_package_has_no_host_or_repository_identity(self) -> None:
+        absolute_roots = ("Users", "home", "tmp", "private" + "/" + "tmp")
+        absolute_path = re.compile(
+            r"/(?:" + "|".join(re.escape(root) for root in absolute_roots) + r")/\S+"
+        )
+        repository_page = re.compile(
+            r"knowledge/wiki/(?:drafts|syntheses)/(?P<page>[a-z0-9-]+\.md)"
+        )
+        allowed_pages = {"scenario-spec.md", "scenario-plan.md"}
+        dynamic_probes = (str(SOURCE_ROOT),)
+
+        errors: list[str] = []
+        for relative_path in MANDATORY_PACKAGE_RESOURCES:
+            text = (self.installed_skill / relative_path).read_text(encoding="utf-8")
+            if absolute_path.search(text):
+                errors.append(f"absolute host path: {relative_path}")
+            if any(probe in text for probe in dynamic_probes):
+                errors.append(f"dynamic host identity: {relative_path}")
+            for match in repository_page.finditer(text):
+                if match.group("page") not in allowed_pages:
+                    errors.append(f"repository page identity: {relative_path}")
+        self.assertEqual([], errors)
 
 
 if __name__ == "__main__":

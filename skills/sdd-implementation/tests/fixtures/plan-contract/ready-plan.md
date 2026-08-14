@@ -16,7 +16,7 @@
 ## Plan Binding
 
 - Repository baseline: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-- Planning worktree: /tmp/portable-sdd-planning-worktree
+- Planning worktree: worktrees/portable-sdd-planning-worktree
 - Integration branch: feature/portable-sdd-plan
 - Current-tree compatibility: compatible
 - Independent review verdict: ready
