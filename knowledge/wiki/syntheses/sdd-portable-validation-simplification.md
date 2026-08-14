@@ -9,7 +9,7 @@ historical_approval_snapshot_sha256: 1a8d209ca01e73828043b19c8bfe22d35bd1afa6460
 amended_on: 2026-08-15
 amendment_authority: human-directed-fixture-minimization-amendment-20260815
 amendment_baseline_sha: 4d67bed6d297ba4e9a0f44559d3ca45c9a035976
-implementation_state: amendment-approved-pending-implementation
+implementation_state: implemented-pending-final-review
 north_star_identity: sdd-portable-validation-simplification#目標@2026-08-14
 tags:
   - sdd-implementation
@@ -24,6 +24,12 @@ aliases:
 
 > [!success] Human-approved Written Spec
 > Human は2026-08-14に本仕様全体をWritten Specとして承認し、その後current `origin/main`を取り込んで重複を整合した上で修正を継続するbounded amendmentを直接指示した。さらに2026-08-15、根拠付き設計を受けて、copied root fixtureの削除、canonical documentへのdirect validation、thin root-specific check、runtime/test resource分離を承認し、不要なfixture/scriptの削除を指示した。現行承認identityは`human-directed-fixture-minimization-amendment-20260815`であり、statusは`accepted`、review stateは`approved`のままとする。portable direct-Git goal、First-Write、KIS、remote-action boundaryは変更しない。
+
+## 現行追補の実装状態
+
+現行のHuman-approved amendmentは、`implemented-pending-final-review`である。AM-1はreviewed implementation commit `1c38acd5120c5bdf391c94a39e12f76e6a4649a7`とreview fix `254ab5199398c55dd60390e58cdcccc52ffba632`で完了し、root copied fixture / parity runnerの削除、canonical documentへのdirect validation、single semantic parser、execution-time resourceとtest evidenceの分離を既存ownerへ収束した。AM-1前提のnon-force `ours` merge `56ab95608af5281a6767696f86f56b9522c4835f`は、第一parent `30e2ad6a13addcc2ee1fdc7ee14eab666dd42ad8`とcurrent main第二parent `5e68f5c466b7efcd6e8b3ebb1daf1e6f76682684`の両lineageを保持し、そのtreeはpre-merge feature treeと等しい。
+
+AM-2 phase oneはfresh combined verificationとこのspec/plan/index/logの同期を完了した。current source bytesに対するverificationでmaterial residual riskは検出されず、remote writeは実施していない。次の唯一のactionはcontrollerが実施するexactly one canonical whole-branch reviewであり、そのverdictと必要なら一回のbounded reviewed fix waveの後にだけ、dependent final local-completion status transitionを判断する。歴史的SPV-1〜SPV-5の`LOCAL_COMPLETE`記録はそのまま保持し、このcurrent amendmentの完了根拠にはしない。
 
 ## 問題
 

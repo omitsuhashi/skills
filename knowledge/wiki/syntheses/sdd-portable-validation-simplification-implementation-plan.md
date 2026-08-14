@@ -28,13 +28,13 @@ aliases:
 - Approved North Star path: knowledge/wiki/syntheses/sdd-portable-validation-simplification.md
 - Approved North Star anchor: 目標
 - Approved North Star identity: sdd-portable-validation-simplification#目標@2026-08-14
-- Approved snapshot SHA-256: d701b2087983cbe5ef715d866f923c0f8da39ec23ed11c713b28f8d9c33993db
+- Approved snapshot SHA-256: e78e2d153a4360bdfaddf2f6c0bbe909c879254e49ffa67fb1bb0a0f44cc3c11
 - Approval state: approved
 
 ## Approved Written Spec Identity
 
 - Approved spec path: knowledge/wiki/syntheses/sdd-portable-validation-simplification.md
-- Approved spec SHA-256: d701b2087983cbe5ef715d866f923c0f8da39ec23ed11c713b28f8d9c33993db
+- Approved spec SHA-256: e78e2d153a4360bdfaddf2f6c0bbe909c879254e49ffa67fb1bb0a0f44cc3c11
 - Approval state: approved
 
 ## Plan Binding
@@ -532,7 +532,7 @@ SPV-1〜SPV-5 の完了記録は上記の歴史的証跡として保持する。
 
 ### Task 6: AM-1 — Existing-owner canonical direct validation and resource split
 
-- [ ] **Implementation status:** pending; implementation begins only after the exact preconditioned current-main-second-parent `ours` no-ff merge and its tree/reachability proof succeed.
+- [x] **Implementation status:** reviewed and complete. The exact-condition `ours` merge `56ab956` preserved `30e2ad6` and current main `5e68f5c` as reachable parents while retaining the pre-merge feature tree; implementation `1c38acd` and its single review fix `254ab51` are reachable from current HEAD. The copied root fixture / parity runner are deleted, existing owners perform canonical direct validation, and runtime/test resource evidence is separated.
 - [ ] **Deliverable:** delete the copied root fixture and parity runner; make the existing root CI contract test direct-validate the canonical plan and consume the existing package semantic parser; split runtime inventory from isolated test evidence without changing direct Git, strict-zero, First-Write, or KIS behavior.
 - [ ] **Requirement coverage:** R-01, R-02, R-03, R-04, R-05, R-06, R-07, R-08, R-09, R-10, R-11, R-13, R-14, R-15.
 - [ ] **Acceptance coverage:** AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07, AC-08, AC-09, AC-10, AC-12, AC-13, AC-14, AC-15, AC-16, AC-17.
@@ -546,7 +546,8 @@ SPV-1〜SPV-5 の完了記録は上記の歴史的証跡として保持する。
 
 ### Task 7: AM-2 — Amendment closeout and fresh combined verification
 
-- [ ] **Implementation status:** pending.
+- [x] **Phase one status:** `implemented-pending-final-review`. Fresh combined verification and the existing spec/plan/index/log synchronization are complete after reviewed AM-1; no residual material risk was found and no remote write was performed.
+- [ ] **Phase two status:** pending controller-owned exactly-one canonical whole-branch review, any bounded reviewed fix wave it requires, then the dependent final-local-completion status transition and its scoped verification/review.
 - [ ] **Deliverable:** AM-1 review/integration後、existing spec/plan/index/logへreviewed implementationとfresh combined verificationを`implemented-pending-final-review`として同期する。次にexactly one canonical whole-branch reviewを行い、必要なら一回のreviewed fix waveを統合する。clean final verdict後だけ、同じ四artifactsをfinal local completionへ移し、lifecycle logをappendし、fresh closeout gatesとstatus-only scoped verification/reviewを完了する。
 - [ ] **Requirement coverage:** R-12.
 - [ ] **Acceptance coverage:** AC-11.
@@ -567,16 +568,15 @@ SPV-1〜SPV-5 の完了記録は上記の歴史的証跡として保持する。
 
 ## Execution Order
 
-1. AM-1: content edit前にexact factsを再検証し、feature treeを明示的に保つcurrent-main-second-parent Git `ours` no-ff mergeを作る。両parent/lineage reachabilityとmerge-tree equalityを確認してから、single TDD implementationとindependent task reviewを行う。rebase、history rewrite、force、manual conflict resolution、generic fallbackは行わない。
-2. AM-2 phase one: serially integrate AM-1, perform fresh combined verification, and synchronize the existing spec/plan/index/log to `implemented-pending-final-review`.
-3. AM-2 phase two: run exactly one canonical whole-branch review, integrate any bounded reviewed fix wave, then after a clean verdict synchronize the same four artifacts to final local completion, append the lifecycle log, rerun fresh closeout gates, and scoped-review the status-only transition.
+1. AM-1: exact factsを再検証したcurrent-main-second-parent Git `ours` no-ff merge、single TDD implementation、independent task reviewを完了した。rebase、history rewrite、force、manual conflict resolution、generic fallbackは実施していない。
+2. AM-2: phase oneとしてAM-1をserially integrateし、fresh combined verificationとexisting spec/plan/index/logの`implemented-pending-final-review`同期を完了した。次にcontrollerがexactly one canonical whole-branch reviewを実施し、必要なら一回のbounded reviewed fix waveを統合する。clean verdict後にだけ同じ四artifactsをfinal local completionへ移し、append-only lifecycle event、fresh closeout gates、status-only scoped verification/reviewを完了する。
 
 ## Serialized Integration
 
 | Step | Task | Preconditions | Combined-state expectation |
 | --- | --- | --- | --- |
-| I-AM-1 | AM-1 | content edit前にspecified SHA/tree/merge-base、target/original fingerprints、non-planning divergence absenceを再検証し、feature treeを保持するcurrent-main-second-parent Git `ours` no-ff mergeが完了している。両parent/lineage reachability、merge-tree equality、changed paths、RED evidenceが記録済みである。unknown ancestry、identity/tree drift、non-planning divergence、branch/original mismatch、content conflict、rebase、rewrite、force、manual resolution、fallbackはnot eligible。 | deleted root snapshot/runner are absent; root direct check, package single parser, runtime/test split, CI regression, isolated copy, and all preserved boundaries are green together. |
-| I-AM-2 | AM-2 | AM-1 review is accepted and reachable from the verified target. Phase one four-document `implemented-pending-final-review` state and fresh combined evidence are integrated before review. | exactly one canonical whole-branch review evaluates implementation plus phase-one knowledge; after a clean verdict and any reviewed fix wave, the same spec/plan/index/log reach final local completion, append-only lifecycle evidence and fresh gates agree, and only the controller-dependent status transition receives scoped review. |
+| I-AM-1 | AM-1 | **completed** — exact `ours` merge `56ab956` retained the feature tree and both parents; reviewed implementation `1c38acd` plus fix `254ab51` are reachable. | deleted root snapshot/runner are absent; root direct check, package single parser, runtime/test split, CI regression, isolated copy, and all preserved boundaries are green together. |
+| I-AM-2 | AM-2 | **phase one completed** — AM-1 review is accepted and reachable, fresh combined evidence is current, and the four-document `implemented-pending-final-review` state is integrated before review. | exactly one controller-owned canonical whole-branch review remains pending; after its clean verdict and any reviewed fix wave, the same spec/plan/index/log can reach final local completion, append-only lifecycle evidence and fresh gates agree, and only the dependent status transition receives scoped review. |
 
 ## Post-Integration Combined Verification
 
@@ -594,7 +594,7 @@ SPV-1〜SPV-5 の完了記録は上記の歴史的証跡として保持する。
 - Control Return status: complete
 - Implementation Stage entry: allowed
 - Review vocabulary: ready, issues_found, needs_repair, needs_decision, blocked.
-- Current disposition: Task 7 closeout repair independently reviewed and ready; exact-condition `ours` merge prerequisite, AM-1, and AM-2 durable implementation states remain pending.
+- Current disposition: AM-1 and AM-2 phase one are reviewed/implemented with current fresh evidence. The current amendment is `implemented-pending-final-review`; exactly one canonical whole-branch review and its dependent status transition remain pending and controller-owned.
 - Material decision request: none
 - Material risk: none. The exact `ours` merge predicates and two-phase closeout remain execution-time stop conditions.
 - Remote publication state: not authorized and not required for plan authoring.
