@@ -54,13 +54,14 @@ aliases:
 
 ## Independent Plan Review Summary
 
-- Review date: 2026-08-14
-- Prior verdict: ready before `origin/main` integration; historical only
+- Prior review date: 2026-08-14; historical only
+- Current review date: 2026-08-14
+- Prior verdict: ready before the current serialized-integration repair; historical only
 - Current verdict: ready
 - Disposition: ready
 - Decision requests: none
 - Material risks: none
-- Durable finding summary: fresh post-origin independent review は repairable deficiency、material spec conflict、capability/path/evidence blocker を検出せず `ready` と判定した。review は approved amended spec と baseline `0ed5f358979ae9281fb7dde8fe47647175720ca8`、R-01〜R-15 / AC-01〜AC-14 の一意な primary ownership、Task 1 の completion/fix/rereview、SPV-2 を next とする five-task acyclic chain、current strict-zero root owner、First-Write Worktree Gate、exact seven-role KIS wiring、prohibited durable content と追加 mechanism の不在を確認した。decision request と material risk はない。raw review artifact、path、transcript は durable plan へ複製していない。
+- Durable finding summary: prior post-origin `ready` verdict はpre-repair bytesのhistorical evidenceである。fresh independent reviewは、root-owned parity replacementを先にGREENにしてからpackage dependencyを除去し、root parity/package semantic/isolated closureを同じSPV-2 commit/review boundaryでGREENにするatomic cutover repairを`ready`と判定した。five-task chain、R-01〜R-15 / AC-01〜AC-14のunique primary ownership、Task 1 completion、Task 2 next、strict-zero/First-Write/KIS preservationは不変で、decision requestとmaterial riskはない。raw review artifact、path、transcriptはdurable planへ複製していない。
 
 ## Global Constraints
 
@@ -69,7 +70,7 @@ aliases:
 - generic mechanical validation は `exceptional-local-scratch-pre-write`、`pre-commit-candidate`、`final-closeout` の三点だけとし、同じ explicit target に対する direct Git probe だけを使う。
 - standalone/bundled validator、repository validation adapter、hook registry、scheduler、persistent state、telemetry、追加 protocol、evidence cache、exactly-once machinery を新設しない。
 - `scripts/validate_sdd_transient_artifacts.py` とその root regression、`--post-policy-history` CI invocation は repository owner の既存 surface として保持する。current authority は index、nominated candidate tree、repository policy boundary 以後の reachable new commits、final tree の strict-zero contract であり、completed marker や過去の exact path/mode/blob/lineage ではない。policy-root identity と actual-parent relationship は root owner にだけ保持し、portable package から参照しない。
-- canonical-plan parity は package test から root-owned fixture/regression へ移すが、coverage を削除、optional 化、または quick shape check へ縮退させない。
+- canonical-plan parity は package test から root-owned fixture/regression へ移すが、root replacementを先にGREENにしてからpackage dependencyを除去し、同じSPV-2 commit/review boundaryでcutoverする。coverage を削除、optional 化、または quick shape check へ縮退させない。
 - Superpowers が generic lifecycle、worktree allocation、TDD、dispatch、review/fix、branch finishing を所有する。SDD はそれらの algorithm や fallback を再記述しない。
 - SDD-owned First-Write Worktree Gate の repository-change first entry、task-owner identity、Git worktree registration、bound CWD/path、single writer、exactly one absent artifactの atomic publish、separate commit plan、zero-write/no-fallback、original-checkout preservation を削除・緩和しない。
 - `keep-implementation-simple` は dependency preflight で同じ canonical path を一度 resolve し、Spec Synthesizer、Spec Reviewer、Plan Author、Plan Reviewer、Implementer、Task Reviewer、Final Reviewer の exact seven roles が作業前に全文 read する。discovery/read failure は affected role の work 前に bounded failure とし、fallback protocol を作らない。
@@ -93,8 +94,8 @@ aliases:
 | `skills/sdd-implementation/tests/test_plan_contract.py` | Modify in SPV-2 | portable plan semantic validator と package-relative representative fixture のみを検証し、root canonical plan を読まない owner |
 | `skills/sdd-implementation/tests/fixtures/plan-contract/ready-plan.md` | Replace in SPV-2 | repository identity、canonical path、個人 path を含まない package-local representative ready-plan fixture |
 | `skills/sdd-implementation/references/plan-contract.md` | Modify in SPV-2 | portable plan schema/prohibition/readiness contract。package fixture と root canonical parity の owner 分離を明示する owner |
-| `scripts/fixtures/sdd-plan-contract/ready-plan.md` | Create in SPV-3 | 現行 canonical SDD plan parity の repository-owned expected fixture |
-| `scripts/test_sdd_canonical_plan_parity.py` | Create in SPV-3 | canonical SDD plan と root fixture の inventory/coverage/graph/order parity を固定する repository regression owner |
+| `scripts/fixtures/sdd-plan-contract/ready-plan.md` | Create in SPV-2; consume and preserve in SPV-3/SPV-5 | package dependency removal前に現行 canonical SDD plan parity を引き継ぐ repository-owned expected fixture |
+| `scripts/test_sdd_canonical_plan_parity.py` | Create and GREEN in SPV-2; consume and preserve in SPV-3/SPV-5 | package dependency removal前に canonical SDD plan と root fixture の inventory/coverage/graph/order parity を固定する repository regression owner |
 | `scripts/validate_sdd_transient_artifacts.py` | Preserve and verify in SPV-3/SPV-5 | explicit repository root の current index、nominated candidate tree、repository policy boundary 以後の reachable new commits、final tree を strict-zero で fail closed にする root-only owner。policy-root identity と actual parent の解釈はここから portable package へ漏らさない |
 | `scripts/test_validate_sdd_transient_artifacts.py` | Preserve and verify in SPV-3/SPV-5 | one exact diagnostic category、marker非 authorization、index/candidate/new-commit/final-tree strict-zero、staged deletion、pre-policy historical ancestor blob の current root regression owner |
 | `.github/workflows/skill-architecture.yml` | Modify in SPV-3 | `--post-policy-history` root validation、root regressions、canonical parity、isolated package closure、package tests を full-history source checkout で fresh 実行する CI owner |
@@ -161,7 +162,7 @@ aliases:
 | R-02 | SPV-1 | SPV-2, SPV-4 |
 | R-03 | SPV-1 | SPV-2 |
 | R-04 | SPV-2 | SPV-1, SPV-4 |
-| R-05 | SPV-3 | SPV-5 |
+| R-05 | SPV-3 | SPV-2, SPV-5 |
 | R-06 | SPV-1 | SPV-2 |
 | R-07 | SPV-2 | SPV-5 |
 | R-08 | SPV-4 | SPV-1 |
@@ -176,7 +177,7 @@ aliases:
 | AC-02 | SPV-1 | SPV-2, SPV-4 |
 | AC-03 | SPV-1 | SPV-2 |
 | AC-04 | SPV-2 | SPV-1, SPV-4 |
-| AC-05 | SPV-3 | SPV-5 |
+| AC-05 | SPV-3 | SPV-2, SPV-5 |
 | AC-06 | SPV-1 | SPV-2 |
 | AC-07 | SPV-2 | SPV-5 |
 | AC-08 | SPV-4 | SPV-1 |
@@ -209,37 +210,38 @@ aliases:
 
 ### Task 2: SPV-2 — Isolated installed-folder closure と portable fixture
 
-- [ ] **Deliverable:** skill folder の isolated copy が source repository/parent を read path に持たず package tests と direct Git validation を完結し、package resources/fixture/plan validator から root canonical dependency と個人/repository identity が消える。
+- [ ] **Deliverable:** package dependency removal前に root-owned canonical parity fixture/regression を作成して GREEN にし、その replacement coverage を保持したまま skill folder の isolated copy が source repository/parent を read path に持たず package tests と direct Git validation を完結し、package resources/fixture/plan validator から root canonical dependency と個人/repository identity が消える。この順序全体を一つの commit/review boundaryで扱う。
 - [ ] **Requirement coverage:** R-01, R-04, R-07, R-11。
 - [ ] **Acceptance coverage:** AC-01, AC-04, AC-07。
 - [ ] **Dependencies:** SPV-1 reviewed and integrated。
-- [ ] **Files:** create `skills/sdd-implementation/tests/test_isolated_install.py`; modify `skills/sdd-implementation/tests/test_plan_contract.py`, `skills/sdd-implementation/tests/fixtures/plan-contract/ready-plan.md`, `skills/sdd-implementation/references/plan-contract.md`; include current `SKILL.md`, prompts, references, tests, existing fixtures, and existing harnesses in closure discovery without planning content changes to those resources in this task。
+- [ ] **Contributing coverage:** R-05, AC-05 の canonical parity replacement surfaceを package-side removal前に root ownerへ確立する。R-05 / AC-05 の primary owner は SPV-3 のままとする。
+- [ ] **Files:** create `scripts/fixtures/sdd-plan-contract/ready-plan.md`, `scripts/test_sdd_canonical_plan_parity.py`, `skills/sdd-implementation/tests/test_isolated_install.py`; modify `skills/sdd-implementation/tests/test_plan_contract.py`, `skills/sdd-implementation/tests/fixtures/plan-contract/ready-plan.md`, `skills/sdd-implementation/references/plan-contract.md`; include current `SKILL.md`, prompts, references, tests, existing fixtures, and existing harnesses in closure discovery without planning content changes to those resources in this task。
 - [ ] **Behavioral interface — Consumes:** copied installed skill directory、mandatory resource inventory derived from the current public contract and actual package tree without a new manifest executable、source/parent outside the allowed read closure、one synthetic explicit target。
-- [ ] **Behavioral interface — Produces:** isolated package test result、mandatory resource closure verdict、package-outside reference/leakage verdict、`broken skill installation` versus target/runtime failure evidence、portable representative plan semantic result。
-- [ ] **Behavioral interface — Invariants:** installed copy は original checkout path、parent topology、root canonical plan、root scripts を利用しない。package fixture は semantic plan contract の representative であり repository canonical parity の source ではない。
-- [ ] **RED intent:** existing package test の canonical plan read、source-relative topology dependency、missing mandatory resource、outside-package reference、forbidden repository identity を個別 failure として観測する isolated-copy tests を先に追加する。
-- [ ] **GREEN intent:** package plan validator を package-relative semantic validation に限定し、representative fixture を portable identity に置換し、overlay の parity statement を package fixture validation と root-owned canonical parity に分離する。origin/main で追加された prompts/references/First-Write tests/harnesses/fixture は actual package closure として検査するだけとし、新しい manifest executable、loader、validator、adapter、fixture system を追加しない。
-- [ ] **Focused verification:** isolated copy で package test discovery と synthetic target cases が成功し、mandatory resource を一件欠かした copy と package 外参照を混入した copy がそれぞれ intended category で失敗する。
-- [ ] **Integration placement:** I-2。SPV-1 public interface を consume し、SPV-3 が移管する repository-specific canonical parity の package-side removalを完了する。
-- [ ] **Failure owner:** SPV-2 implementer が closure harness/resource identity/fixture portability defect を修復し、独立 task reviewer が hidden source dependency と standalone validator の不在を判定する。
-- [ ] **Commit boundary:** isolated closure test、portable fixture/validator、overlay owner separation だけを一つの reviewed task commit に含める。
+- [ ] **Behavioral interface — Produces:** root canonical parity replacement の GREEN verdict、isolated package test result、mandatory resource closure verdict、package-outside reference/leakage verdict、`broken skill installation` versus target/runtime failure evidence、portable representative plan semantic result。
+- [ ] **Behavioral interface — Invariants:** root-owned parity fixture/regression が current canonical coverageを引き継いで GREEN になるまで package test の canonical-plan dependencyを除去しない。replacement GREEN後の package removal、portable fixture transition、isolated closure GREENまでを同じ reviewed task commitに含め、coverageのない intermediate integration stateを作らない。installed copy は original checkout path、parent topology、root canonical plan、root scripts を利用しない。package fixture は semantic plan contract の representative であり repository canonical parity の source ではない。
+- [ ] **RED intent:** 最初に root-owned fixture/regression が absentまたはcanonical inventory/coverage/graph/orderと不一致なら失敗する replacement expectationを置き、existing package canonical parity coverageを残した状態で intended REDを観測する。root replacementをGREENにした後にだけ、existing package test の canonical plan read、source-relative topology dependency、missing mandatory resource、outside-package reference、forbidden repository identity を個別 failure として観測する isolated-copy expectationsへ進む。
+- [ ] **GREEN intent:** root-owned fixture/regressionを先に current canonical plan parityへ一致させてGREENにする。そのGREENを保持したまま package plan validator を package-relative semantic validation に限定し、representative fixture を portable identity に置換し、overlay の parity statement を package fixture validation と reviewed root-owned canonical parity に分離する。最後にisolated closureをGREENにする。origin/main で追加された prompts/references/First-Write tests/harnesses/fixture は actual package closure として検査するだけとし、新しい manifest executable、loader、validator、adapter、fixture system を追加しない。
+- [ ] **Focused verification:** package dependency removal前に root canonical parity regressionがGREENであることを確認し、removal後もそのroot parityとpackage semantic suiteをGREENに保つ。続いて isolated copy で package test discovery と synthetic target cases が成功し、mandatory resource を一件欠かした copy と package 外参照を混入した copy がそれぞれ intended category で失敗する。
+- [ ] **Integration placement:** I-2。SPV-1 public interface を consumeし、root-owned parity replacement GREEN、package-side canonical dependency removal、isolated closure GREENをこの順で一つの atomic cutoverとして統合する。replacementだけまたはremovalだけのpartial stateはintegration-readyとしない。
+- [ ] **Failure owner:** SPV-2 implementer が root parity replacement、closure harness/resource identity、fixture portability defectを修復し、独立 task reviewerが replacement GREENがremovalに先行すること、canonical parity coverage、hidden source dependencyとstandalone validatorの不在を判定する。
+- [ ] **Commit boundary:** root parity fixture/regression、isolated closure test、portable fixture/validator、overlay owner separationを一つの reviewed task commitに含める。root replacement GREEN前の package dependency removal、または片側だけのcommit/reviewは許可しない。
 
 ### Task 3: SPV-3 — Repository-owned strict-zero/canonical parity と CI
 
-- [ ] **Deliverable:** canonical-plan parity を root fixture/regression へ移し、current root validator/regression の strict-zero index/candidate/post-policy-history/final-tree authority を保持し、CI とその contract test が `--post-policy-history`、root regression/parity、isolated closure、package tests を fresh に呼ぶ。
+- [ ] **Deliverable:** SPV-2で作成・review済みの root canonical parity fixture/regressionをconsumeして再検証し、current root validator/regression の strict-zero index/candidate/post-policy-history/final-tree authority を保持し、CI とその contract test が `--post-policy-history`、root regression/parity、isolated closure、package tests を fresh に呼ぶ。root parity surfaceはこのtaskで再作成しない。
 - [ ] **Requirement coverage:** R-05。
 - [ ] **Acceptance coverage:** AC-05。
 - [ ] **Dependencies:** SPV-2 reviewed and integrated。
-- [ ] **Files:** create `scripts/fixtures/sdd-plan-contract/ready-plan.md`, `scripts/test_sdd_canonical_plan_parity.py`; modify `.github/workflows/skill-architecture.yml`, `scripts/test_skill_ci_workflow.py`; preserve and verify `scripts/validate_sdd_transient_artifacts.py`, `scripts/test_validate_sdd_transient_artifacts.py`。
-- [ ] **Behavioral interface — Consumes:** root canonical SDD plan、repository-owned expected parity fixture、explicit repository root、current index、nominated candidate tree、full reachable Git history、repository-only policy-root identity and actual-parent relationship、final tree、CI workflow text。
+- [ ] **Files:** modify `.github/workflows/skill-architecture.yml`, `scripts/test_skill_ci_workflow.py`; consume and preserve `scripts/fixtures/sdd-plan-contract/ready-plan.md`, `scripts/test_sdd_canonical_plan_parity.py`; preserve and verify `scripts/validate_sdd_transient_artifacts.py`, `scripts/test_validate_sdd_transient_artifacts.py`。
+- [ ] **Behavioral interface — Consumes:** SPV-2 reviewed commitに含まれるGREENのroot canonical parity fixture/regression、root canonical SDD plan、explicit repository root、current index、nominated candidate tree、full reachable Git history、repository-only policy-root identity and actual-parent relationship、final tree、CI workflow text。
 - [ ] **Behavioral interface — Produces:** root canonical parity verdict、strict-zero index/candidate/post-policy-new-commit/final-tree verdict、one exact diagnostic category on rejection、CI invocation-set verdict、clean-clone/no-`origin/main` behavior、isolated closure/package suite invocation evidence。
 - [ ] **Behavioral interface — Invariants:** package tests は root fixture/canonical page、policy-root identity、actual parent、root validator を読まない。completed marker と pre-amendment exact path/mode/blob/lineage は historical evidence であり current executable authority ではない。root validator は current strict-zero surfaces だけを検査し、staged deletion と pre-policy historical ancestor blob を current violation としない。CI path は reachable clean clone から実行でき、`origin/main` ref を必須にしない。
-- [ ] **RED intent:** current GREEN の root strict-zero regression と workflow contract を baseline とし、CI contract に canonical parity regression と isolated closure invocation の欠落を失敗させる expectations を先に追加する。intended RED はその新 invocation と root parity fixture の欠落に限定し、current validator、`--post-policy-history`、clean-clone/no-`origin/main`、shallow-history rejection、add-then-delete rejection の回帰は受理しない。
-- [ ] **GREEN intent:** repository-specific former package parity fixture を root fixture に移し、root parity regression とその CI invocation だけを追加する。origin/main から landed した current root validator/regression と `--post-policy-history` workflow behavior は preserve-and-verify とし、marker/lineage authority へ戻さない。
+- [ ] **RED intent:** SPV-2 reviewed root parity regression、current root strict-zero regression、`--post-policy-history` workflow behaviorをpre-change GREEN preservation baselineとし、CI contract に canonical parity regression と isolated closure invocation の欠落だけを失敗させる expectations を先に追加する。root fixture/regressionの欠落をこのtaskのintended REDにせず、current validator、clean-clone/no-`origin/main`、shallow-history rejection、add-then-delete rejection の回帰は受理しない。
+- [ ] **GREEN intent:** reviewed root parity regressionとisolated closureのCI invocation、および対応するworkflow contract expectationだけを追加する。SPV-2のroot fixture/regressionを再作成・再移管せず、origin/main から landed した current root validator/regression と `--post-policy-history` workflow behavior は preserve-and-verify とし、marker/lineage authority へ戻さない。
 - [ ] **Focused verification:** root canonical parity、strict-zero root regression、root validator の current-tree invocation、CI workflow contract、isolated closure/package suite invocation が成功する。workflow contract は full reachable clone、`origin/main` ref 不在、post-policy add-then-delete、shallow history をそれぞれ期待通り判定する。
-- [ ] **Integration placement:** I-3。package-side separation後に repository coverage を接続し、coverage gap のない cutover を成立させる。
-- [ ] **Failure owner:** SPV-3 implementer が root fixture/parity/CI wiring defect を修復し、independent task reviewer が current strict-zero authority、root-only policy identities、canonical parity、clean-clone/no-`origin/main` coverage の削除・optional化・quick-check化がないことを判定する。
-- [ ] **Commit boundary:** root parity fixture/regression、parity/isolated CI invocation、CI contract expectation だけを一つの reviewed task commit に含める。current root validator/regression の preserve-only surface は差分に含めない。
+- [ ] **Integration placement:** I-3。SPV-2のatomic cutoverで既に成立した package/root owner separationをconsumeし、reviewed root parityとisolated closureをcurrent strict-zero checksとともにCIへ接続する。
+- [ ] **Failure owner:** SPV-3 implementer が current strict-zero preservationまたはCI/invocation wiring defectを修復する。SPV-2 reviewed root fixture/regression自体のdefectはcontributing owner SPV-2へ戻す。independent task reviewer は current strict-zero authority、root-only policy identities、canonical parity、clean-clone/no-`origin/main` coverage の削除・optional化・quick-check化がないことを判定する。
+- [ ] **Commit boundary:** parity/isolated CI invocationとCI contract expectationだけを一つの reviewed task commitに含める。SPV-2 reviewed root parity fixture/regressionとcurrent root validator/regressionのpreserve-only surfaceは差分に含めない。
 
 ### Task 4: SPV-4 — Superpowers ownership deduplication と authority A
 
@@ -280,8 +282,8 @@ aliases:
 | Task | Dependencies | Reason |
 | --- | --- | --- |
 | SPV-1 | none | normative public Git gate interface は `9a4e155` + `481d424` で implemented/reviewed/integrated 済み |
-| SPV-2 | SPV-1 | installed closure は確定した public gate interface を isolation対象にする |
-| SPV-3 | SPV-2 | packageからcanonical parityを外した直後にroot ownerへcoverageを接続する |
+| SPV-2 | SPV-1 | 確定した public gate interfaceをisolation対象にし、root parity replacement GREENからpackage dependency removal/isolated closure GREENまでをatomic cutoverする |
+| SPV-3 | SPV-2 | SPV-2 reviewed root parity/isolated closure surfacesをconsumeし、current root strict-zero checksとともにCIへ接続する |
 | SPV-4 | SPV-3 | shared `SKILL.md`/tests を最終形へ収束し、owner cutover後のcontractをdeduplicateする |
 | SPV-5 | SPV-4 | 全 reviewed implementation とserialized integration後にcloseout/combined verificationを行う |
 
@@ -290,8 +292,8 @@ Cycle check: chain は `SPV-1 -> SPV-2 -> SPV-3 -> SPV-4 -> SPV-5` の単方向�
 ## Execution Order
 
 1. SPV-1 complete: direct Git gate contract と synthetic forward tests を `9a4e155` で実装し、one review fix `481d424` 後の scoped rereview は clean。
-2. Execute SPV-2 next: isolated package closure と portable fixture/validator separation を RED→GREEN にし、independent task review を完了する。
-3. Execute SPV-3: root canonical parity を移管し、current strict-zero/post-policy-history/clean-clone/no-`origin/main` owner を保って RED→GREEN/task review を完了する。
+2. Execute SPV-2 next: existing package canonical parity coverageを保持したままroot-owned parity replacementをRED→GREENにし、その後だけpackage dependency removal/portable fixture transitionを行い、root parityとisolated package closureをともにGREENにして一つのindependent task reviewを完了する。
+3. Execute SPV-3: SPV-2 reviewed root parity/isolated closure surfacesをconsumeし、current strict-zero/post-policy-history/clean-clone/no-`origin/main` ownerを保ってCI invocation contractだけをRED→GREEN/task reviewする。
 4. Execute SPV-4: generic prose/common guard/authority を deduplicate しつつ First-Write Worktree Gate と exact seven-role KIS wiring を保持し、RED→GREEN/task review を完了する。
 5. Execute SPV-5: durable closeout、fresh combined verification、final whole-branch reviewを完了する。
 
@@ -302,8 +304,8 @@ Cycle check: chain は `SPV-1 -> SPV-2 -> SPV-3 -> SPV-4 -> SPV-5` の単方向�
 | Step | Task | Preconditions | Expected combined state |
 | --- | --- | --- | --- |
 | I-1 | SPV-1 | implementation `9a4e155`、fix `481d424`、clean scoped rereview、current baseline reachability を確認済み | public contract は explicit target と三 direct Git gate を所有し、synthetic gate suite GREEN。origin/main integration 後の current root validator/tests と両立 |
-| I-2 | SPV-2 | current HEAD `0ed5f358979ae9281fb7dde8fe47647175720ca8` から I-1 の両 commit が reachable、SPV-2 isolated RED が source dependency/resource leak に限定、task review ready | installed copy self-contained、origin/main-added package resources/harnesses を含む closure が完全、package fixture portable、package plan validator は root canonical page 非依存 |
-| I-3 | SPV-3 | I-2 reachable、new root parity/isolated CI RED 確認、current strict-zero root regression と `--post-policy-history` workflow contract GREEN、task review ready | canonical parity は root regression owner、index/candidate/post-policy/final-tree strict-zero、root-only policy identities、clean-clone/no-`origin/main` behavior、package isolation を維持 |
+| I-2 | SPV-2 | current HEAD `0ed5f358979ae9281fb7dde8fe47647175720ca8` から I-1 の両 commit が reachable、existing package canonical parity coverageがGREEN、root replacement REDがその欠落/不一致に限定されることを確認済み。package dependency removal前にroot replacementをGREENにし、removal後にroot parity/package semantic/isolated closureをすべてGREENにした一つのtask commitがreview ready | root canonical parity replacementがreviewed root ownerに存在し、installed copyはself-contained、origin/main-added package resources/harnessesを含むclosureが完全、package fixtureはportable、package plan validatorはroot canonical page非依存。replacement/removal片側だけのpartial integrated stateはない |
+| I-3 | SPV-3 | I-2 atomic cutover commit reachable、reviewed root parity fixture/regression GREEN、canonical parity/isolated closure CI invocationのREDだけを確認、current strict-zero root regressionと`--post-policy-history` workflow contract GREEN、task review ready | SPV-2 root parity ownerを再作成せずCIがroot parity/isolated closureをfresh実行し、index/candidate/post-policy/final-tree strict-zero、root-only policy identities、clean-clone/no-`origin/main` behavior、package isolationを維持 |
 | I-4 | SPV-4 | I-1〜I-3 reachable、shared file overlap再評価、current First-Write/KIS preservation baseline GREEN、task review ready | thin SDD composition、single common guard、Authority A、unknown→sequential、First-Write entry/containment/zero-write/no-fallback/original preservation、exact seven-role KIS wiring、全 focused suites GREEN |
 | I-5 | SPV-5 | I-1〜I-4の全required task commit reachable、全task review complete、target HEAD ancestry current | canonical knowledge/index/log同期、all acceptance evidence current、final combined verification/whole-branch review ready |
 
@@ -322,7 +324,7 @@ Integration owner は各 step 前に actual commit range、changed paths、seman
 ### Pass criteria
 
 1. AC-01〜AC-14 の各 primary owner evidence が一件ずつあり、contributing evidence と矛盾しない。
-2. package source tests と isolated installed-copy tests が成功し、isolated copy は source checkout/parent/root scriptsを読まない。
+2. SPV-2 evidenceがroot-owned canonical parity replacementのGREENをpackage dependency removalより先に示し、そのremoval後もroot parityとpackage semantic testsがGREENである。package source tests と isolated installed-copy tests が成功し、isolated copy は source checkout/parent/root scriptsを読まない。
 3. synthetic Git tests が ignored scratch、force-add、unmerged index、staged deletion、add-then-delete、baseline non-ancestor、state mutationによるevidence失効とre-runを期待通り判定する。
 4. root canonical parity、root strict-zero regression、root validator、CI invocation contract が成功する。workflow は `--post-policy-history` を含み、full reachable clean clone と `origin/main` ref 不在で成功、post-policy add-then-delete と shallow history で fail closed となる。marker/legacy exact lineage は current authority に戻らない。
 5. First-Write contract/entry/allocation suites が repository-change entry、owner/worktree/path/CWD binding、single writer、one atomic artifact、separate commit plan、zero-write/no-fallback、original-checkout preservation を成功させ、exact seven-role KIS test が同じ canonical path/full-read と affected-work-before failure を固定する。
@@ -332,7 +334,7 @@ Integration owner は各 step 前に actual commit range、changed paths、seman
 
 ### Required evidence
 
-- focused task RED/GREEN result と independent task review verdict。
+- focused task RED/GREEN result と independent task review verdict。SPV-2はroot parity replacement GREEN、続くpackage dependency removal、final root parity/package semantic/isolated closure GREENが同じcommit/review boundaryにある順序 evidenceを含む。
 - task commit IDs と integration branch reachability。
 - isolated-copy root identity/read-closure evidence と synthetic target case summary。
 - root strict-zero validator/regression/parity、`--post-policy-history` CI contract、clean-clone/no-`origin/main` の fresh result summary。
@@ -348,7 +350,7 @@ Integration owner は各 step 前に actual commit range、changed paths、seman
 | AC-02 | SPV-1 |
 | AC-03 | SPV-1 |
 | AC-04 | SPV-2 |
-| AC-05 | SPV-3 |
+| AC-05 | SPV-3; SPV-2 atomic root parity replacement defect returns to SPV-2 as contributing owner |
 | AC-06 | SPV-1 |
 | AC-07 | SPV-2 |
 | AC-08 | SPV-4 |
@@ -365,7 +367,7 @@ Integration owner は各 step 前に actual commit range、changed paths、seman
 - Control Return status: complete
 - Implementation Stage entry: allowed
 - Repository-ready disposition: resume with SPV-2, then sequential SPV-3、SPV-4、SPV-5 through `superpowers:subagent-driven-development`, serialized integration I-2〜I-5, then one fresh combined verification and whole-branch review。
-- Controller transition: fresh independent verdict `ready` を Plan Binding、frontmatter readiness、Plan readiness disposition、Implementation Stage entry へ同期済み。
+- Controller transition: fresh independent atomic-cutover verdict `ready` を Plan Binding、frontmatter readiness、Plan readiness disposition、Control Return、Implementation Stage entryへ同期済み。prior `ready` reviewはpre-repair bytesのhistorical evidenceに限る。
 - Material decision request: none
 - Material risk: none
 - Remote publication state: not authorized and not required for local readiness
