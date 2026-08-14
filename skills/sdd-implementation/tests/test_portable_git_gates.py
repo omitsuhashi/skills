@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import os
 from pathlib import Path, PurePosixPath
 import subprocess
 import tempfile
@@ -25,19 +26,22 @@ class GateEvidence:
 
 
 def git_result(repository: Path, *args: str, input_text: str | None = None) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        ["git", "-C", str(repository), *args],
-        check=False,
-        capture_output=True,
-        text=True,
-        input=input_text,
-    )
+    try:
+        return subprocess.run(
+            ["git", "-C", str(repository), *args],
+            check=False,
+            capture_output=True,
+            text=True,
+            input=input_text,
+        )
+    except OSError as error:
+        raise GateFailure("target_runtime", f"Git capability unavailable: {error}") from error
 
 
 def git(repository: Path, *args: str, input_text: str | None = None) -> str:
     result = git_result(repository, *args, input_text=input_text)
     if result.returncode != 0:
-        raise RuntimeError(result.stderr or result.stdout)
+        raise GateFailure("target_runtime", result.stderr or result.stdout)
     return result.stdout
 
 
@@ -46,8 +50,13 @@ def fail(gate: str, detail: str) -> None:
 
 
 def bind_target(target: Path, installed_skill_dir: Path = SKILL_DIR) -> Path:
-    if not (installed_skill_dir / "SKILL.md").is_file():
-        raise GateFailure("skill_package", "installed SKILL.md is unavailable")
+    skill = installed_skill_dir / "SKILL.md"
+    try:
+        content = skill.read_bytes()
+    except OSError as error:
+        raise GateFailure("skill_package", f"installed SKILL.md is unreadable: {error}") from error
+    if not content:
+        raise GateFailure("skill_package", "installed SKILL.md is empty")
     supplied = Path(target)
     try:
         resolved = supplied.resolve(strict=True)
@@ -64,14 +73,85 @@ def bind_target(target: Path, installed_skill_dir: Path = SKILL_DIR) -> Path:
     return resolved
 
 
+def repository_identity(repository: Path) -> tuple[str, str, str]:
+    common_dir_value = git(repository, "rev-parse", "--git-common-dir").strip()
+    common_dir = Path(common_dir_value)
+    if not common_dir.is_absolute():
+        common_dir = repository / common_dir
+    try:
+        common_dir = common_dir.resolve(strict=True)
+        stat = common_dir.stat()
+    except OSError as error:
+        raise GateFailure("target_runtime", f"Git common directory is unreadable: {error}") from error
+    return (str(common_dir), str(stat.st_dev), str(stat.st_ino))
+
+
+def require_object(repository: Path, object_spec: str) -> None:
+    result = git_result(repository, "cat-file", "-e", object_spec)
+    if result.returncode != 0:
+        raise GateFailure(
+            "target_runtime",
+            f"Git object is unavailable or unreadable: {object_spec}",
+        )
+
+
 def current_head(repository: Path, gate: str) -> str:
     result = git_result(repository, "rev-parse", "--verify", "HEAD^{commit}")
     if result.returncode != 0:
-        fail(gate, "HEAD commit is unavailable")
+        raise GateFailure("target_runtime", "HEAD commit is unavailable")
     return result.stdout.strip()
 
 
-def full_state(repository: Path) -> tuple[str, str]:
+def content_identity(repository: Path, path: Path) -> str:
+    if path.is_symlink():
+        try:
+            return f"symlink:{os.readlink(path)}"
+        except OSError as error:
+            raise GateFailure("target_runtime", f"cannot read symlink {path}: {error}") from error
+    if not path.exists():
+        return "missing"
+    if not path.is_file():
+        return "non-file"
+    result = git_result(repository, "hash-object", "--no-filters", str(path))
+    if result.returncode != 0:
+        raise GateFailure("target_runtime", f"cannot hash working path: {path}")
+    return result.stdout.strip()
+
+
+def working_tree_content_state(repository: Path) -> tuple[str, ...]:
+    paths: set[str] = set()
+    for args in (
+        ("ls-files", "-z"),
+        ("ls-files", "--others", "--exclude-standard", "-z"),
+        ("ls-files", "--others", "--ignored", "--exclude-standard", "-z"),
+    ):
+        paths.update(path for path in git(repository, *args).split("\0") if path)
+    return tuple(
+        f"{path}\0{content_identity(repository, repository / path)}"
+        for path in sorted(paths)
+    )
+
+
+def ignore_content_state(repository: Path) -> tuple[str, ...]:
+    records: list[str] = []
+    info_exclude_value = git(repository, "rev-parse", "--git-path", "info/exclude").strip()
+    info_exclude = Path(info_exclude_value)
+    if not info_exclude.is_absolute():
+        info_exclude = repository / info_exclude
+    records.append(f"info/exclude\0{content_identity(repository, info_exclude)}")
+
+    excludes = git_result(repository, "config", "--path", "--get-all", "core.excludesFile")
+    if excludes.returncode not in (0, 1):
+        raise GateFailure("target_runtime", excludes.stderr or excludes.stdout)
+    for value in sorted(path for path in excludes.stdout.splitlines() if path):
+        exclude_path = Path(value).expanduser()
+        if not exclude_path.is_absolute():
+            exclude_path = repository / exclude_path
+        records.append(f"core.excludesFile:{value}\0{content_identity(repository, exclude_path)}")
+    return tuple(records)
+
+
+def full_state(repository: Path) -> tuple[str, ...]:
     return (
         git(repository, "ls-files", "--stage", "-z"),
         git(
@@ -82,6 +162,8 @@ def full_state(repository: Path) -> tuple[str, str]:
             "--untracked-files=all",
             "--ignored=matching",
         ),
+        *working_tree_content_state(repository),
+        *ignore_content_state(repository),
     )
 
 
@@ -96,7 +178,7 @@ def superpowers_entries(repository: Path, treeish: str, gate: str) -> tuple[str,
         SUPERPOWERS_PREFIX,
     )
     if result.returncode != 0:
-        fail(gate, f"cannot inspect tree {treeish}")
+        raise GateFailure("target_runtime", f"cannot inspect tree {treeish}")
     return tuple(path for path in result.stdout.splitlines() if path)
 
 
@@ -128,31 +210,32 @@ def exceptional_scratch_gate(
         fail(gate, "scratch leaf is a symlink")
     if current_head(repository, gate) != starting_head_sha:
         fail(gate, "HEAD no longer matches starting_head_sha")
-    if git_result(repository, "cat-file", "-e", f"{starting_head_sha}^{{commit}}").returncode:
-        fail(gate, "starting_head_sha is not a commit")
+    require_object(repository, f"{starting_head_sha}^{{commit}}")
     ignored = git_result(
         repository, "check-ignore", "--no-index", "-v", "--", relative_path
     )
-    if ignored.returncode != 0:
+    if ignored.returncode == 1:
         fail(gate, "scratch path is not ignored")
+    if ignored.returncode != 0:
+        raise GateFailure("target_runtime", ignored.stderr or ignored.stdout)
     if git(repository, "ls-files", "--stage", "--", relative_path):
         fail(gate, "scratch path is present in the index")
     if superpowers_entries(repository, "HEAD", gate) and git(
         repository, "ls-tree", "-r", "--name-only", "HEAD", "--", relative_path
     ):
         fail(gate, "scratch path is present in HEAD")
-    index_state, working_state = full_state(repository)
+    state = full_state(repository)
     return GateEvidence(
         gate,
         str(repository),
         (
+            *repository_identity(repository),
             relative_path,
             str(resolved_leaf),
             reason,
             starting_head_sha,
             ignored.stdout,
-            index_state,
-            working_state,
+            *state,
         ),
     )
 
@@ -164,7 +247,11 @@ def pre_commit_gate(
     repository = bind_target(target, installed_skill_dir)
     candidate_result = git_result(repository, "write-tree")
     if candidate_result.returncode != 0:
-        fail(gate, "index cannot produce a candidate tree")
+        if git(repository, "ls-files", "--unmerged"):
+            fail(gate, "index cannot produce a candidate tree")
+        raise GateFailure(
+            "target_runtime", candidate_result.stderr or candidate_result.stdout
+        )
     candidate = candidate_result.stdout.strip()
     if superpowers_entries(repository, candidate, gate):
         fail(gate, "candidate tree contains .superpowers")
@@ -180,11 +267,11 @@ def pre_commit_gate(
     )
     if unignored:
         fail(gate, "working tree contains unignored .superpowers paths")
-    index_state, working_state = full_state(repository)
+    state = full_state(repository)
     return GateEvidence(
         gate,
         str(repository),
-        (candidate, index_state, working_state, unignored),
+        (*repository_identity(repository), candidate, *state, unignored),
     )
 
 
@@ -202,15 +289,16 @@ def final_closeout_gate(
             fail(gate, str(error))
         raise
     head = current_head(repository, gate)
-    if git_result(repository, "cat-file", "-e", f"{starting_head_sha}^{{commit}}").returncode:
-        fail(gate, "starting_head_sha is not a commit")
-    if git_result(
+    require_object(repository, f"{starting_head_sha}^{{commit}}")
+    ancestry = git_result(
         repository, "merge-base", "--is-ancestor", starting_head_sha, head
-    ).returncode:
+    )
+    if ancestry.returncode == 1:
         fail(gate, "starting_head_sha is not an ancestor of HEAD")
+    if ancestry.returncode != 0:
+        raise GateFailure("target_runtime", ancestry.stderr or ancestry.stdout)
     head_tree = git(repository, "rev-parse", "HEAD^{tree}").strip()
-    if git_result(repository, "cat-file", "-e", f"{head_tree}^{{tree}}").returncode:
-        fail(gate, "HEAD tree object is unavailable")
+    require_object(repository, f"{head_tree}^{{tree}}")
     if superpowers_entries(repository, head_tree, gate):
         fail(gate, "HEAD tree contains .superpowers")
     commits = tuple(
@@ -222,11 +310,9 @@ def final_closeout_gate(
     )
     trees: list[str] = []
     for commit in commits:
-        if git_result(repository, "cat-file", "-e", f"{commit}^{{commit}}").returncode:
-            fail(gate, f"commit object is unavailable: {commit}")
+        require_object(repository, f"{commit}^{{commit}}")
         tree = git(repository, "rev-parse", f"{commit}^{{tree}}").strip()
-        if git_result(repository, "cat-file", "-e", f"{tree}^{{tree}}").returncode:
-            fail(gate, f"tree object is unavailable: {tree}")
+        require_object(repository, f"{tree}^{{tree}}")
         if superpowers_entries(repository, tree, gate):
             fail(gate, f"commit tree contains .superpowers: {commit}")
         trees.append(tree)
@@ -237,11 +323,8 @@ def final_closeout_gate(
     )
 
 
-def evidence_is_fresh(evidence: GateEvidence, probe) -> bool:
-    try:
-        return probe() == evidence
-    except GateFailure:
-        return False
+def recompute_gate(probe) -> GateEvidence:
+    return probe()
 
 
 class GitFixture:
@@ -350,15 +433,21 @@ class PortableGitGateTests(unittest.TestCase):
         evidence = probe()
         self.fixture.write("staged.txt")
         git(self.fixture.root, "add", "staged.txt")
-        self.assertFalse(evidence_is_fresh(evidence, probe))
+        refreshed = recompute_gate(probe)
+        self.assertIsNot(evidence, refreshed)
+        self.assertNotEqual(evidence.binding, refreshed.binding)
 
         git(self.fixture.root, "reset", "HEAD", "staged.txt")
         (self.fixture.root / ".gitignore").write_text("# no scratch ignore\n", encoding="utf-8")
-        self.assertFalse(evidence_is_fresh(evidence, probe))
+        self.assert_gate_failure(
+            "gate_exceptional_local_scratch_pre_write", lambda: recompute_gate(probe)
+        )
 
         (self.fixture.root / ".gitignore").write_text(".superpowers/\n", encoding="utf-8")
         self.fixture.commit_regular_change()
-        self.assertFalse(evidence_is_fresh(evidence, probe))
+        self.assert_gate_failure(
+            "gate_exceptional_local_scratch_pre_write", lambda: recompute_gate(probe)
+        )
 
         outside = self.fixture.root.parent / "outside"
         outside.mkdir()
@@ -401,17 +490,23 @@ class PortableGitGateTests(unittest.TestCase):
         evidence = probe()
         self.fixture.write("staged.txt")
         git(self.fixture.root, "add", "staged.txt")
-        self.assertFalse(evidence_is_fresh(evidence, probe))
+        refreshed = recompute_gate(probe)
+        self.assertIsNot(evidence, refreshed)
+        self.assertNotEqual(evidence.binding, refreshed.binding)
 
         git(self.fixture.root, "reset", "--hard", "HEAD")
         evidence = probe()
         self.fixture.write("untracked.txt")
-        self.assertFalse(evidence_is_fresh(evidence, probe))
+        refreshed = recompute_gate(probe)
+        self.assertIsNot(evidence, refreshed)
+        self.assertNotEqual(evidence.binding, refreshed.binding)
 
         (self.fixture.root / "untracked.txt").unlink()
         evidence = probe()
         (self.fixture.root / ".gitignore").write_text("# no ignore\n", encoding="utf-8")
-        self.assertFalse(evidence_is_fresh(evidence, probe))
+        refreshed = recompute_gate(probe)
+        self.assertIsNot(evidence, refreshed)
+        self.assertNotEqual(evidence.binding, refreshed.binding)
 
     def test_final_closeout_checks_candidate_head_and_every_new_commit_tree(self) -> None:
         self.fixture.commit_regular_change()
@@ -431,17 +526,23 @@ class PortableGitGateTests(unittest.TestCase):
         evidence = probe()
         self.fixture.write("staged.txt")
         git(self.fixture.root, "add", "staged.txt")
-        self.assertFalse(evidence_is_fresh(evidence, probe))
+        refreshed = recompute_gate(probe)
+        self.assertIsNot(evidence, refreshed)
+        self.assertNotEqual(evidence.binding, refreshed.binding)
 
         git(self.fixture.root, "reset", "--hard", "HEAD")
         evidence = probe()
         self.fixture.write("untracked.txt")
-        self.assertFalse(evidence_is_fresh(evidence, probe))
+        refreshed = recompute_gate(probe)
+        self.assertIsNot(evidence, refreshed)
+        self.assertNotEqual(evidence.binding, refreshed.binding)
 
         (self.fixture.root / "untracked.txt").unlink()
         evidence = probe()
         (self.fixture.root / ".gitignore").write_text("# no ignore\n", encoding="utf-8")
-        self.assertFalse(evidence_is_fresh(evidence, probe))
+        refreshed = recompute_gate(probe)
+        self.assertIsNot(evidence, refreshed)
+        self.assertNotEqual(evidence.binding, refreshed.binding)
 
         git(self.fixture.root, "reset", "--hard", "HEAD")
         self.fixture.commit_contamination()
@@ -453,12 +554,11 @@ class PortableGitGateTests(unittest.TestCase):
 
         git(self.fixture.root, "reset", "--hard", "HEAD^")
         wrong_baseline = git(self.fixture.root, "rev-parse", "HEAD").strip()
-        self.assertFalse(
-            evidence_is_fresh(
-                evidence,
-                lambda: final_closeout_gate(self.fixture.root, wrong_baseline),
-            )
+        refreshed = recompute_gate(
+            lambda: final_closeout_gate(self.fixture.root, wrong_baseline)
         )
+        self.assertIsNot(evidence, refreshed)
+        self.assertNotEqual(evidence.binding, refreshed.binding)
 
     def test_final_closeout_classifies_candidate_contamination_as_final_failure(self) -> None:
         scratch = ".superpowers/sdd/task/report.md"
@@ -467,6 +567,118 @@ class PortableGitGateTests(unittest.TestCase):
         self.assert_gate_failure(
             "gate_final_closeout",
             lambda: final_closeout_gate(self.fixture.root, self.fixture.starting_head),
+        )
+
+    def test_dirty_to_dirty_worktree_and_ignore_mutations_invalidate_evidence(self) -> None:
+        probe = lambda: pre_commit_gate(self.fixture.root)
+        self.fixture.write("untracked.txt", "first\n")
+        worktree_evidence = probe()
+        self.fixture.write("untracked.txt", "second\n")
+        refreshed = recompute_gate(probe)
+        self.assertIsNot(worktree_evidence, refreshed)
+        self.assertNotEqual(worktree_evidence.binding, refreshed.binding)
+
+        (self.fixture.root / "untracked.txt").unlink()
+        (self.fixture.root / ".gitignore").write_text(
+            ".superpowers/\n# first rule revision\n", encoding="utf-8"
+        )
+        ignore_evidence = probe()
+        (self.fixture.root / ".gitignore").write_text(
+            ".superpowers/\n# second rule revision\n", encoding="utf-8"
+        )
+        refreshed = recompute_gate(probe)
+        self.assertIsNot(ignore_evidence, refreshed)
+        self.assertNotEqual(ignore_evidence.binding, refreshed.binding)
+
+    def test_same_path_repository_replacement_invalidates_target_evidence(self) -> None:
+        evidence = pre_commit_gate(self.fixture.root)
+        original = self.fixture.root.parent / "original-repository"
+        self.fixture.root.rename(original)
+        git(
+            self.fixture.root.parent,
+            "clone",
+            "--quiet",
+            "--no-hardlinks",
+            str(original),
+            str(self.fixture.root),
+        )
+        refreshed = recompute_gate(lambda: pre_commit_gate(self.fixture.root))
+        self.assertIsNot(evidence, refreshed)
+        self.assertNotEqual(evidence.binding, refreshed.binding)
+
+    def test_scratch_path_and_symlink_ownership_mutations_invalidate_evidence(self) -> None:
+        first = ".superpowers/first/report.md"
+        second = ".superpowers/second/report.md"
+        evidence = exceptional_scratch_gate(
+            self.fixture.root,
+            first,
+            "runtime cannot use external temp",
+            self.fixture.starting_head,
+        )
+        refreshed = recompute_gate(
+            lambda: exceptional_scratch_gate(
+                self.fixture.root,
+                second,
+                "runtime cannot use external temp",
+                self.fixture.starting_head,
+            )
+        )
+        self.assertIsNot(evidence, refreshed)
+        self.assertNotEqual(evidence.binding, refreshed.binding)
+
+        owned_path = ".superpowers/owned/report.md"
+        owned_probe = lambda: exceptional_scratch_gate(
+            self.fixture.root,
+            owned_path,
+            "runtime cannot use external temp",
+            self.fixture.starting_head,
+        )
+        owned_evidence = owned_probe()
+        self.assertEqual("exceptional-local-scratch-pre-write", owned_evidence.gate)
+        link = self.fixture.root / ".superpowers" / "owned"
+        link.parent.mkdir()
+        outside = self.fixture.root.parent / "owned-outside"
+        outside.mkdir()
+        link.symlink_to(outside, target_is_directory=True)
+        self.assert_gate_failure(
+            "gate_exceptional_local_scratch_pre_write",
+            lambda: recompute_gate(owned_probe),
+        )
+
+    def test_failure_taxonomy_rejects_unreadable_package_content(self) -> None:
+        package = self.fixture.root.parent / "installed-skill"
+        package.mkdir()
+        skill = package / "SKILL.md"
+        skill.write_text("package content\n", encoding="utf-8")
+        skill.chmod(0)
+        try:
+            self.assert_gate_failure(
+                "skill_package",
+                lambda: pre_commit_gate(
+                    self.fixture.root, installed_skill_dir=package
+                ),
+            )
+        finally:
+            skill.chmod(0o600)
+
+    def test_failure_taxonomy_rejects_unavailable_git_capability(self) -> None:
+        original_path = os.environ.get("PATH")
+        os.environ["PATH"] = ""
+        try:
+            self.assert_gate_failure(
+                "target_runtime", lambda: pre_commit_gate(self.fixture.root)
+            )
+        finally:
+            if original_path is None:
+                os.environ.pop("PATH", None)
+            else:
+                os.environ["PATH"] = original_path
+
+    def test_failure_taxonomy_classifies_missing_objects_as_target_runtime(self) -> None:
+        missing_commit = "0" * 40
+        self.assert_gate_failure(
+            "target_runtime",
+            lambda: final_closeout_gate(self.fixture.root, missing_commit),
         )
 
 
