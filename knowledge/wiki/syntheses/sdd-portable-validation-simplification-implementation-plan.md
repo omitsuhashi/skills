@@ -62,7 +62,7 @@ aliases:
 - Disposition: ready
 - Decision requests: none
 - Material risks: none
-- Durable finding summary: Task 7 now owns existing canonical spec state together with plan/index/log and uses the reviewed two-phase `implemented-pending-final-review` then final-local-completion transition. Exactly one canonical whole-branch review precedes the controller-dependent status-only scoped verification/review; Task 6 and Task 7 implementation remain pending.
+- Durable finding summary: Task 7 owns existing canonical spec state together with plan/index/log and uses the reviewed two-phase `implemented-pending-final-review` then final-local-completion transition. AM-1 and AM-2 phase one are complete; exactly one canonical whole-branch review precedes the controller-dependent status-only scoped verification/review.
 
 ## Historical Independent Plan Review Summary
 
@@ -533,16 +533,16 @@ SPV-1〜SPV-5 の完了記録は上記の歴史的証跡として保持する。
 ### Task 6: AM-1 — Existing-owner canonical direct validation and resource split
 
 - [x] **Implementation status:** reviewed and complete. The exact-condition `ours` merge `56ab956` preserved `30e2ad6` and current main `5e68f5c` as reachable parents while retaining the pre-merge feature tree; implementation `1c38acd` and its single review fix `254ab51` are reachable from current HEAD. The copied root fixture / parity runner are deleted, existing owners perform canonical direct validation, and runtime/test resource evidence is separated.
-- [ ] **Deliverable:** delete the copied root fixture and parity runner; make the existing root CI contract test direct-validate the canonical plan and consume the existing package semantic parser; split runtime inventory from isolated test evidence without changing direct Git, strict-zero, First-Write, or KIS behavior.
-- [ ] **Requirement coverage:** R-01, R-02, R-03, R-04, R-05, R-06, R-07, R-08, R-09, R-10, R-11, R-13, R-14, R-15.
-- [ ] **Acceptance coverage:** AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07, AC-08, AC-09, AC-10, AC-12, AC-13, AC-14, AC-15, AC-16, AC-17.
-- [ ] **Dependencies:** content edit前のexact-identity `ours` no-ff merge prerequisite; no prior amendment task.
-- [ ] **Behavioral interface:**
+- [x] **Deliverable:** deleted the copied root fixture and parity runner; the existing root CI contract test direct-validates the canonical plan and consumes the existing package semantic parser; runtime inventory and isolated test evidence are split without changing direct Git, strict-zero, First-Write, or KIS behavior.
+- [x] **Requirement coverage:** R-01, R-02, R-03, R-04, R-05, R-06, R-07, R-08, R-09, R-10, R-11, R-13, R-14, R-15.
+- [x] **Acceptance coverage:** AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07, AC-08, AC-09, AC-10, AC-12, AC-13, AC-14, AC-15, AC-16, AC-17.
+- [x] **Dependencies:** exact-identity `ours` no-ff merge prerequisite was satisfied; no prior amendment task.
+- [x] **Behavioral interface:**
   - **Consumes:** exact precondition evidence: planning/spec commit `8b433806af6835bbf859bea7a7e30a0752d6d294`、feature tip `e5b6b77e790d8d89952b84cfbb04886546e8e8e5`、current main `5e68f5c466b7efcd6e8b3ebb1daf1e6f76682684`、shared pre-amendment tree `8f995222eef73ab5d56a9fb227f367bf8b44c634`、merge base `15152126fe0785bcf789a9ecbfe752b9e368fc4e`、original checkout/target-branch fingerprints、non-planning divergence absence、and the post-merge parent/lineage/tree proof. It also consumes `scripts/test_skill_ci_workflow.py` のcurrent amendment block text、current approved spec bytes、workflow text、existing `plan_errors` semantic-parser interface、portable fixture、isolated skill copy、synthetic explicit Git target、First-Write/KIS/root strict-zero contracts。
   - **Produces:** feature treeを保持しcurrent mainをsecond parentとするnon-force no-ff `ours` merge verdict、両parent/lineage reachability、merge-tree/pre-merge-feature-tree equality、then root CI contract testだけがownerとなるcanonical direct repository-bound verdictと`plan_errors`だけがownerとなるcurrent amendment semantic verdict。root copied snapshot/runner/workflow stepはなく、execution-time-only runtime inventory、isolated test copy-set、classified missing-resource behaviorを残す。
-- [ ] **Verification intent:** RED first proves that current-amendment selectorを外してhistorical SPV blockを渡す場合、またはcurrent expected inventory/task schemaと三repository-bound negative mutationのいずれかを変える場合に、既存ownerのCI contractがfailureとなることを示す。各removed root artifact、duplicate parser、missing execution-time resource、source/root/canonical read dependencyもowner contract違反として観測する。GREENはcurrent-amendment blockを同一 `plan_errors` interfaceでsemantic passさせ、package fixture mutation coverageとsource-independent package suiteを維持し、CI regression failure、isolated package independence、approved specが要求するdirect Git / strict-zero / First-Write / KIS preservation suitesを保持する。
-- [ ] **Integration placement:** I-AM-1; content edit前にexact-condition `ours` no-ff mergeでcurrent mainをsecond parentにし、両parent/lineage reachabilityとmerge tree equalityを確認してから、deletionとreplacement coverageがgreenの一reviewed changeだけをintegrateする。
-- [ ] **Failure owner:** AM-1 implementer; root identity/CI failures remain in `scripts/test_skill_ci_workflow.py`, package semantic/resource failures remain in the existing package tests, and strict-zero/First-Write/KIS regressions return to their existing owners.
+- [x] **Verification intent:** RED first proved the current-amendment schema and runtime/test split gaps; GREEN passed canonical direct validation, the single `plan_errors` semantic owner, isolated package independence, and preserved direct Git / strict-zero / First-Write / KIS suites.
+- [x] **Integration placement:** I-AM-1 completed after the exact-condition `ours` merge retained current main as second parent, both parent/lineage reachability and merge-tree equality were proven, and the reviewed deletion/replacement change was integrated.
+- [x] **Failure owner:** AM-1 implementer completed the bounded repair; root identity/CI remains in `scripts/test_skill_ci_workflow.py`, package semantic/resource remains in the existing package tests, and strict-zero/First-Write/KIS retain their existing owners.
 
 ### Task 7: AM-2 — Amendment closeout and fresh combined verification
 
