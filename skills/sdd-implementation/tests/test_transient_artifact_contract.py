@@ -70,6 +70,14 @@ COMPLIANT_BOUNDARY = """## Transient Artifact Boundary
 | Knowledge closeout | repository-external task/session temporary | knowledge/log.md |
 """
 
+VALIDATION_GATE_ROWS = {
+    "exceptional-local-scratch-pre-write": (
+        "before each exceptional repository-local scratch leaf's first write"
+    ),
+    "pre-commit-candidate": "immediately before each commit creation",
+    "final-closeout": "after cleanup and immediately before local completion",
+}
+
 
 def read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
@@ -145,6 +153,31 @@ def transient_boundary_errors(text: str) -> list[str]:
     unknown_stages = set(stage_counts) - set(STAGE_DURABLE_ROUTES)
     for stage in sorted(unknown_stages):
         errors.append(f"unknown stage row: {stage}")
+    return errors
+
+
+def validation_gate_errors(text: str) -> list[str]:
+    validation = section(text, "Repository Validation Gate")
+    if not validation:
+        return ["missing Repository Validation Gate section"]
+    rows = [row for row in table_rows(validation) if row and row[0] != "Gate"]
+    counts = Counter(row[0].strip("`") for row in rows)
+    errors: list[str] = []
+    for gate, moment in VALIDATION_GATE_ROWS.items():
+        if counts[gate] != 1:
+            errors.append(f"gate row count must be one: {gate}")
+            continue
+        row = next(row for row in rows if row[0].strip("`") == gate)
+        if len(row) != 3:
+            errors.append(f"malformed validation gate row: {gate}")
+            continue
+        if row[1] != moment:
+            errors.append(f"gate moment mismatch: {gate}")
+        if not row[2]:
+            errors.append(f"missing direct Git verdict: {gate}")
+    unknown = set(counts) - set(VALIDATION_GATE_ROWS)
+    for gate in sorted(unknown):
+        errors.append(f"unknown validation gate row: {gate}")
     return errors
 
 
@@ -273,6 +306,9 @@ class TransientArtifactContractTests(unittest.TestCase):
 
     def test_compliant_fixture_has_no_contract_errors(self) -> None:
         self.assertEqual([], transient_boundary_errors(COMPLIANT_BOUNDARY))
+
+    def test_repository_validation_has_exactly_three_unambiguous_gate_moments(self) -> None:
+        self.assertEqual([], validation_gate_errors(read(SKILL)))
 
 
 if __name__ == "__main__":

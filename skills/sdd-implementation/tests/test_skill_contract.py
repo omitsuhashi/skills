@@ -127,41 +127,72 @@ class SddImplementationSkillContractTests(unittest.TestCase):
         self.assertIn("Do not create parallel `CONTEXT.md` or `docs/adr/` stores.", self.skill_text)
         self.assertIn("not_applicable", self.skill_text)
 
-    def test_public_contract_invokes_transient_validator_for_each_exact_git_surface(self) -> None:
-        expected_contract = (
-            "Invoke `scripts/validate_sdd_transient_artifacts.py` for every "
-            "repository validation gate.",
-            "Validate the current Git index and staging area independently.",
-            "Validate each nominated candidate tree, post-cleanup new commit, "
-            "and final tree independently.",
-            "Allow a staged deletion only when the candidate tree has no "
-            "`.superpowers/**` entry.",
-            "Do not reject a pre-amendment historical ancestor blob without a "
-            "current index or nominated-tree violation.",
-            "Treat the tracked migration manifest as candidate-tree authority "
-            "only for the exact f07aebc three-report baseline.",
-            "Accept that authority only when the planned pre-marker parent and "
-            "authorized introduction are ancestors of HEAD, the introduction "
-            "is the sole marker add, no marker deletion exists in that ancestry, "
-            "and the current HEAD marker mode, blob, and path match exactly.",
-            "A divergent or pre-marker HEAD cannot gain authority by staging the "
-            "manifest.",
-            "When the manifest is absent, require zero `.superpowers/**` entries "
-            "and reject exact-baseline reintroduction.",
-        )
-        normalized = " ".join(self.skill_text.split())
-        for statement in expected_contract:
+    def test_public_contract_binds_every_git_probe_to_one_explicit_target(self) -> None:
+        section = self.skill_text.split("## Repository Validation Gate", 1)[1].split(
+            "## Plan Stage", 1
+        )[0]
+        normalized = " ".join(section.split())
+        for statement in (
+            "caller-supplied canonical absolute target",
+            "installed skill directory",
+            "`git -C <target> rev-parse --show-toplevel`",
+            "`git -C <target> rev-parse --is-inside-work-tree`",
+            "exactly equals the canonical target",
+            "Every probe in all three gates uses that same target binding",
+            "Never infer the target from the skill package, process CWD, or ambient checkout",
+        ):
             with self.subTest(statement=statement):
                 self.assertIn(statement, normalized)
 
-    def test_public_contract_aborts_on_transient_validator_failure_without_continuation(self) -> None:
-        expected = (
-            "If `scripts/validate_sdd_transient_artifacts.py` is unavailable, "
-            "returns nonzero, or detects any `.superpowers/**` violation, fail "
-            "and abort the repository gate; do not continue to any stage "
-            "transition, commit creation, or closeout."
+    def test_public_contract_owns_three_direct_git_gates_once(self) -> None:
+        section = self.skill_text.split("## Repository Validation Gate", 1)[1].split(
+            "## Plan Stage", 1
+        )[0]
+        for gate in (
+            "exceptional-local-scratch-pre-write",
+            "pre-commit-candidate",
+            "final-closeout",
+        ):
+            with self.subTest(gate=gate):
+                self.assertEqual(1, section.count(f"| `{gate}` |"))
+        self.assertIn("`git check-ignore --no-index`", section)
+        self.assertIn("`git write-tree`", section)
+        self.assertIn("`git ls-tree`", section)
+        self.assertIn("`git cat-file`", section)
+        self.assertIn("every commit in `starting_head_sha..HEAD`", section)
+
+    def test_public_contract_rejects_repository_specific_or_ambiguous_gate_owners(self) -> None:
+        section = self.skill_text.split("## Repository Validation Gate", 1)[1].split(
+            "## Plan Stage", 1
+        )[0]
+        for forbidden in (
+            "scripts/validate_sdd_transient_artifacts.py",
+            "migration manifest",
+            "f07aebc",
+            "nominated candidate tree",
+            "for every repository validation gate",
+        ):
+            with self.subTest(forbidden=forbidden):
+                self.assertNotIn(forbidden, section)
+
+    def test_public_contract_fails_closed_by_failure_owner(self) -> None:
+        section = self.skill_text.split("## Repository Validation Gate", 1)[1].split(
+            "## Plan Stage", 1
+        )[0]
+        normalized = " ".join(section.split())
+        for classification in (
+            "`BLOCKED: skill/package unavailable`",
+            "`BLOCKED: target/runtime unavailable`",
+            "`FAIL: exceptional-local-scratch-pre-write`",
+            "`FAIL: pre-commit-candidate`",
+            "`FAIL: final-closeout`",
+        ):
+            with self.subTest(classification=classification):
+                self.assertIn(classification, normalized)
+        self.assertIn(
+            "Evidence is single-use: recompute the selected gate from current Git objects and state",
+            normalized,
         )
-        self.assertIn(expected, " ".join(self.skill_text.split()))
 
     def test_upstream_owns_model_tiers_and_local_contract_only_adds_effort(self) -> None:
         self.assertIn("Follow the current Superpowers SDD Model Selection contract.", self.skill_text)

@@ -152,26 +152,34 @@ commit the scratch.
 
 ## Repository Validation Gate
 
-Invoke `scripts/validate_sdd_transient_artifacts.py` for every repository validation gate.
-Validate the current Git index and staging area independently. Validate each
-nominated candidate tree, post-cleanup new commit, and final tree independently.
-Allow a staged deletion only when the candidate tree has no `.superpowers/**`
-entry. Do not reject a pre-amendment historical ancestor blob without a current
-index or nominated-tree violation.
-Treat the tracked migration manifest as candidate-tree authority only for the
-exact f07aebc three-report baseline. Accept that authority only when the planned
-pre-marker parent and authorized introduction are ancestors of HEAD, the
-introduction is the sole marker add, no marker deletion exists in that ancestry,
-and the current HEAD marker mode, blob, and path match exactly. A divergent or
-pre-marker HEAD cannot gain authority by staging the manifest. When the manifest
-is absent, require zero `.superpowers/**` entries and reject exact-baseline
-reintroduction. Stage the manifest deletion and all three report deletions
-together; the resulting clean candidate tree uses the strict zero-entry path
-without an exception flag.
+Consume a caller-supplied canonical absolute target and the installed skill
+directory as distinct identities. Require readable package content. Run
+`git -C <target> rev-parse --show-toplevel` and
+`git -C <target> rev-parse --is-inside-work-tree`; require `true` and require
+that the returned top level exactly equals the canonical target. Every probe in
+all three gates uses that same target binding. Never infer the target from the
+skill package, process CWD, or ambient checkout.
 
-If `scripts/validate_sdd_transient_artifacts.py` is unavailable, returns nonzero,
-or detects any `.superpowers/**` violation, fail and abort the repository gate;
-do not continue to any stage transition, commit creation, or closeout.
+| Gate | Required moment | Fresh direct Git verdict |
+| --- | --- | --- |
+| `exceptional-local-scratch-pre-write` | before each exceptional repository-local scratch leaf's first write | Require a non-empty exceptional reason and a normalized target-relative path whose resolved path and symlink ownership remain inside the target; use `git check-ignore --no-index` for the exact path and require it to be ignored, absent from the index, and absent from HEAD, so the leaf is ignored, untracked, unstaged, and uncommitted. |
+| `pre-commit-candidate` | immediately before each commit creation | Derive the candidate with `git write-tree`; require the candidate tree, current index, and every unignored working-tree path to contain zero `.superpowers/**` entries. An unmerged index or unreadable candidate fails. A staged deletion passes only when the fresh candidate and index are clean; a force-add fails, while an add-then-delete is judged by its fresh final index and candidate. |
+| `final-closeout` | after cleanup and immediately before local completion | Re-run the candidate/index/unignored-working-tree checks; require `HEAD^{tree}` to contain zero `.superpowers/**` entries; prove trusted immutable `starting_head_sha` is a commit and ancestor of HEAD; derive every commit in `starting_head_sha..HEAD` from the current object graph and use `git cat-file` and `git ls-tree` to require each commit tree to contain zero `.superpowers/**` entries. |
+
+Evidence is single-use: recompute the selected gate from current Git objects and
+state at its required moment. Scratch evidence is invalid after any target,
+path, resolved ownership, ignore, HEAD, or index mutation. Pre-commit evidence
+is invalid after any index, working-tree, or ignore mutation. Final evidence is
+invalid after any HEAD, index, working-tree, ignore, or baseline-binding
+mutation. Do not create an exactly-once mechanism, cache, state file, bundled
+validator, adapter, scheduler, telemetry, or protocol.
+
+Fail closed and stop the affected write, commit, transition, or closeout. A
+missing or unreadable installed skill is
+`BLOCKED: skill/package unavailable`; a target identity, Git capability, or
+object-read failure is `BLOCKED: target/runtime unavailable`; a dirty or stale
+gate verdict is respectively `FAIL: exceptional-local-scratch-pre-write`,
+`FAIL: pre-commit-candidate`, or `FAIL: final-closeout`.
 
 ## Plan Stage
 
