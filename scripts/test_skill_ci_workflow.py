@@ -59,6 +59,17 @@ def field_value(text: str, label: str) -> str:
     return match.group(1).strip() if match else ""
 
 
+def first_frontmatter(text: str) -> str | None:
+    lines = text.splitlines()
+    if not lines or lines[0] != "---":
+        return None
+    try:
+        end = lines.index("---", 1)
+    except ValueError:
+        return None
+    return "\n".join(lines[1:end])
+
+
 def canonical_plan_identity_errors(text: str) -> list[str]:
     errors: list[str] = []
     north_star_identity = section(text, "Approved North Star Identity")
@@ -66,6 +77,8 @@ def canonical_plan_identity_errors(text: str) -> list[str]:
     binding = section(text, "Plan Binding")
     expected_path = "knowledge/wiki/syntheses/sdd-portable-validation-simplification.md"
     expected_digest = sha256(APPROVED_SPEC.read_bytes()).hexdigest()
+    approved_spec_text = APPROVED_SPEC.read_text(encoding="utf-8")
+    frontmatter = first_frontmatter(approved_spec_text)
 
     if field_value(north_star_identity, "Approved North Star path") != expected_path:
         errors.append("approved North Star path does not identify the approved spec")
@@ -81,11 +94,26 @@ def canonical_plan_identity_errors(text: str) -> list[str]:
         errors.append("North Star is not in approved state")
     if field_value(spec_identity, "Approval state") != "approved":
         errors.append("approved spec is not in approved state")
-    if not re.search(r"^status:\s*(?:accepted|approved)\s*$", APPROVED_SPEC.read_text(encoding="utf-8"), re.MULTILINE):
-        errors.append("approved spec durable status is not accepted")
-    if not re.search(r"^review_state:\s*approved\s*$", APPROVED_SPEC.read_text(encoding="utf-8"), re.MULTILINE):
-        errors.append("approved spec durable review state is not approved")
-    if not section(APPROVED_SPEC.read_text(encoding="utf-8"), "目標").strip():
+    if frontmatter is None:
+        errors.append("approved spec first YAML frontmatter block is missing or malformed")
+        status_values: list[str] = []
+        review_state_values: list[str] = []
+    else:
+        status_values = re.findall(
+            r"^status:[ \t]*([^\r\n]+)$", frontmatter, re.MULTILINE
+        )
+        review_state_values = re.findall(
+            r"^review_state:[ \t]*([^\r\n]+)$", frontmatter, re.MULTILINE
+        )
+    if len(status_values) != 1 or status_values[0] not in {"accepted", "approved"}:
+        errors.append(
+            "approved spec durable status must occur exactly once as accepted or approved"
+        )
+    if len(review_state_values) != 1 or review_state_values[0] != "approved":
+        errors.append(
+            "approved spec durable review_state must occur exactly once as approved"
+        )
+    if not section(approved_spec_text, "目標").strip():
         errors.append("approved North Star anchor is absent")
 
     baseline_sha = field_value(binding, "Repository baseline")
@@ -231,47 +259,105 @@ class SkillCiWorkflowTests(unittest.TestCase):
                 "## Current Fixture-Minimization Amendment\n" + current_amendment,
             )
         )
-        self.assertEqual(
-            [],
-            plan_errors(
-                semantic_text,
-                requirement_ids=tuple(f"R-{number:02d}" for number in range(1, 16)),
-                acceptance_ids=tuple(f"AC-{number:02d}" for number in range(1, 18)),
-                task_ids=("AM-1", "AM-2"),
-                integration_ids=("AM-1", "AM-2"),
-                north_star_anchor="目標",
-                external_dependencies=(
-                    "content edit前のexact-identity `ours` no-ff merge prerequisite",
-                ),
+        semantic_options = {
+            "requirement_ids": tuple(
+                f"R-{number:02d}" for number in range(1, 16)
             ),
-        )
-        for heading, expected_error in (
-            ("### Task 8: AM-3 — unexpected task", "unknown task ID: AM-3"),
-            ("### Task 8: AM-1 — duplicate task", "duplicate task ID: AM-1"),
-        ):
-            with self.subTest(heading=heading):
-                mutated = semantic_text.replace(
+            "acceptance_ids": tuple(
+                f"AC-{number:02d}" for number in range(1, 18)
+            ),
+            "task_ids": ("AM-1", "AM-2"),
+            "integration_ids": ("AM-1", "AM-2"),
+            "north_star_anchor": "目標",
+            "external_dependencies": (
+                "content edit前のexact-identity `ours` no-ff merge prerequisite",
+            ),
+        }
+        self.assertEqual([], plan_errors(semantic_text, **semantic_options))
+        structural_mutations = tuple(
+            (
+                semantic_text.replace(
                     "\n## Dependency Graph\n",
                     f"\n{heading}\n\n## Dependency Graph\n",
                     1,
-                )
+                ),
+                expected_error,
+            )
+            for heading, expected_error in (
+                ("### Task 8: AM-3 — unexpected task", "unknown task ID: AM-3"),
+                ("### Task 8: AM-1 — duplicate task", "duplicate task ID: AM-1"),
+            )
+        ) + (
+            (
+                semantic_text.replace(
+                    "- R-01: isolated installed skill",
+                    "- R-01: R-01 isolated installed skill",
+                    1,
+                ),
+                "duplicate inventory ID: R-01",
+            ),
+            (
+                semantic_text.replace(
+                    "| AM-2 | AM-1 | closeout",
+                    "| AM-2 | AM-1 | closeout\n| AM-2 | AM-1 | duplicate",
+                    1,
+                ),
+                "duplicate dependency graph task: AM-2",
+            ),
+            (
+                semantic_text.replace(
+                    "| AM-2 | AM-1 | closeout",
+                    "| AM-2 | AM-1 | closeout\n| AM-3 | none | unexpected",
+                    1,
+                ),
+                "unknown dependency graph task: AM-3",
+            ),
+            (
+                semantic_text.replace(
+                    "2. AM-2:",
+                    "2. AM-2:\n3. AM-3:",
+                    1,
+                ),
+                "unknown execution-order task: AM-3",
+            ),
+            (
+                semantic_text.replace(
+                    "2. AM-2:",
+                    "2. AM-2:\n3. AM-2:",
+                    1,
+                ),
+                "duplicate execution-order task: AM-2",
+            ),
+            (
+                semantic_text.replace(
+                    "| I-AM-2 | AM-2 |",
+                    "| I-AM-2 | AM-2 |\n| I-AM-2 | AM-2 |",
+                    1,
+                ),
+                "duplicate serialized integration: I-AM-2 -> AM-2",
+            ),
+            (
+                semantic_text.replace(
+                    "| I-AM-2 | AM-2 |",
+                    "| I-AM-2 | AM-2 |\n| I-AM-3 | AM-3 |",
+                    1,
+                ),
+                "unknown serialized integration: I-AM-3 -> AM-3",
+            ),
+            (
+                semantic_text.replace(
+                    "**Dependencies:** AM-1 reviewed and integrated",
+                    "**Dependencies:** none; review is recorded separately",
+                    1,
+                ),
+                "task dependency declaration disagrees with graph: AM-2",
+            ),
+        )
+        for mutated, expected_error in structural_mutations:
+            with self.subTest(expected_error=expected_error):
                 self.assertIn(
                     expected_error,
-                    plan_errors(
-                        mutated,
-                        requirement_ids=tuple(
-                            f"R-{number:02d}" for number in range(1, 16)
-                        ),
-                        acceptance_ids=tuple(
-                            f"AC-{number:02d}" for number in range(1, 18)
-                        ),
-                        task_ids=("AM-1", "AM-2"),
-                        integration_ids=("AM-1", "AM-2"),
-                        north_star_anchor="目標",
-                        external_dependencies=(
-                            "content edit前のexact-identity `ours` no-ff merge prerequisite",
-                        ),
-                    ),
+                    plan_errors(mutated, **semantic_options),
                 )
 
     def test_canonical_plan_direct_check_rejects_path_digest_and_baseline_mutations(self) -> None:
@@ -303,6 +389,57 @@ class SkillCiWorkflowTests(unittest.TestCase):
             "repository baseline is not a current-tree ancestor commit",
             canonical_plan_identity_errors(wrong_baseline),
         )
+
+    def test_canonical_plan_direct_check_reads_only_the_first_spec_frontmatter(self) -> None:
+        canonical = CANONICAL_PLAN.read_text(encoding="utf-8")
+        approved_spec = APPROVED_SPEC.read_text(encoding="utf-8")
+        probes = (
+            (
+                approved_spec.replace("status: accepted", "status: draft", 1)
+                .replace("review_state: approved", "review_state: draft", 1)
+                + "\nstatus: accepted\nreview_state: approved\n",
+                (
+                    "approved spec durable status must occur exactly once as accepted or approved",
+                    "approved spec durable review_state must occur exactly once as approved",
+                ),
+            ),
+            (
+                approved_spec.replace(
+                    "status: accepted\nreview_state: approved",
+                    "status: accepted\nstatus: approved\nreview_state: approved\nreview_state: approved",
+                    1,
+                ),
+                (
+                    "approved spec durable status must occur exactly once as accepted or approved",
+                    "approved spec durable review_state must occur exactly once as approved",
+                ),
+            ),
+            (
+                approved_spec.replace("---\n", "", 1),
+                (
+                    "approved spec first YAML frontmatter block is missing or malformed",
+                ),
+            ),
+            (
+                approved_spec.replace("\n---\n", "\n", 1),
+                (
+                    "approved spec first YAML frontmatter block is missing or malformed",
+                ),
+            ),
+        )
+        original_spec = APPROVED_SPEC
+        with tempfile.TemporaryDirectory() as directory:
+            temporary_spec = Path(directory) / original_spec.name
+            try:
+                globals()["APPROVED_SPEC"] = temporary_spec
+                for mutated_spec, expected_errors in probes:
+                    with self.subTest(expected_errors=expected_errors):
+                        temporary_spec.write_text(mutated_spec, encoding="utf-8")
+                        errors = canonical_plan_identity_errors(canonical)
+                        for expected_error in expected_errors:
+                            self.assertIn(expected_error, errors)
+            finally:
+                globals()["APPROVED_SPEC"] = original_spec
 
     def test_historical_plan_block_cannot_satisfy_current_amendment_semantics(self) -> None:
         historical = CANONICAL_PLAN.read_text(encoding="utf-8").split(

@@ -280,11 +280,14 @@ def plan_errors(
         errors.append("global constraints are incomplete")
 
     inventory = section(text, "Requirement And Acceptance Inventory")
-    inventory_ids = set(re.findall(r"\b(?:R|AC)-\d{2}\b", inventory))
+    inventory_ids = re.findall(r"\b(?:R|AC)-\d{2}\b", inventory)
     for item_id in sorted(expected_ids):
-        if item_id not in inventory_ids:
+        count = inventory_ids.count(item_id)
+        if count == 0:
             errors.append(f"inventory missing ID: {item_id}")
-    for item_id in sorted(inventory_ids - expected_ids):
+        elif count > 1:
+            errors.append(f"duplicate inventory ID: {item_id}")
+    for item_id in sorted(set(inventory_ids) - expected_ids):
         errors.append(f"inventory has unknown ID: {item_id}")
 
     coverage = coverage_rows(text)
@@ -349,11 +352,21 @@ def plan_errors(
             if owner == task_id and item_id not in task:
                 errors.append(f"primary owner {task_id} does not declare {item_id}")
 
-    graph = {
-        row[0]: row[1]
-        for row in table_rows(section(text, "Dependency Graph"))
-        if len(row) >= 2 and row[0] != "Task"
-    }
+    graph: dict[str, str] = {}
+    for row in table_rows(section(text, "Dependency Graph")):
+        if row[0] == "Task":
+            continue
+        if len(row) < 2:
+            errors.append("dependency graph rows must contain task and dependencies")
+            continue
+        task_id, declared = row[:2]
+        if task_id not in task_ids:
+            errors.append(f"unknown dependency graph task: {task_id}")
+            continue
+        if task_id in graph:
+            errors.append(f"duplicate dependency graph task: {task_id}")
+            continue
+        graph[task_id] = declared
     if set(graph) != set(task_ids):
         errors.append("dependency graph must define every task")
     dependencies: dict[str, list[str]] = {}
@@ -363,11 +376,29 @@ def plan_errors(
             if dependency not in task_ids and dependency not in external_dependencies:
                 errors.append(f"undefined dependency: {task_id} -> {dependency}")
 
+    for task_id, task in tasks.items():
+        declared_task_dependencies = re.findall(
+            rf"\b(?:{'|'.join(re.escape(candidate) for candidate in task_ids)})\b",
+            field_value(task, "Dependencies"),
+        )
+        graph_task_dependencies = [
+            dependency
+            for dependency in dependencies.get(task_id, [])
+            if dependency in task_ids
+        ]
+        if declared_task_dependencies != graph_task_dependencies:
+            errors.append(f"task dependency declaration disagrees with graph: {task_id}")
+
     execution = re.findall(
-        rf"^\d+\. (?:Execute )?({'|'.join(re.escape(task_id) for task_id in task_ids)})(?!\d)",
+        r"^\d+\. (?:Execute )?([^\s:]+)",
         section(text, "Execution Order"),
         flags=re.MULTILINE,
     )
+    for task_id in sorted(set(execution) - set(task_ids)):
+        errors.append(f"unknown execution-order task: {task_id}")
+    for task_id in task_ids:
+        if execution.count(task_id) > 1:
+            errors.append(f"duplicate execution-order task: {task_id}")
     if set(execution) != set(task_ids) or len(execution) != len(task_ids):
         errors.append("execution order must list every task exactly once")
     else:
@@ -393,14 +424,32 @@ def plan_errors(
             pending.pop(task_id)
 
     integration = section(text, "Serialized Integration")
-    if len(expected_integration_ids) != len(task_ids) or not all(
-        re.search(
-            rf"(?:I-{re.escape(integration_id)}:\s*{re.escape(task_id)}|"
-            rf"\|\s*I-{re.escape(integration_id)}\s*\|\s*{re.escape(task_id)}\s*\|)",
-            integration,
-        )
-        for integration_id, task_id in zip(expected_integration_ids, task_ids)
+    integration_rows: list[tuple[str, str]] = []
+    for match in re.finditer(
+        r"^(?:-\s+I-(?P<list_id>[^\s:]+):\s*"
+        r"(?P<list_task>[^\s.]+)|"
+        r"\|\s*I-(?P<table_id>[^|\s]+)\s*\|\s*"
+        r"(?P<table_task>[^|\s]+)\s*\|)",
+        integration,
+        flags=re.MULTILINE,
     ):
+        integration_rows.append(
+            (
+                match.group("list_id") or match.group("table_id"),
+                match.group("list_task") or match.group("table_task"),
+            )
+        )
+    expected_integration_rows = list(zip(expected_integration_ids, task_ids))
+    for integration_id, task_id in integration_rows:
+        if integration_id not in expected_integration_ids or task_id not in task_ids:
+            errors.append(
+                f"unknown serialized integration: I-{integration_id} -> {task_id}"
+            )
+        if integration_rows.count((integration_id, task_id)) > 1:
+            error = f"duplicate serialized integration: I-{integration_id} -> {task_id}"
+            if error not in errors:
+                errors.append(error)
+    if integration_rows != expected_integration_rows:
         errors.append("missing serialized integration order")
     if not all(value in integration for value in ("Preconditions", "Combined-state expectation")):
         errors.append("serialized integration lacks preconditions or combined-state expectation")

@@ -128,39 +128,69 @@ class IsolatedInstallTests(unittest.TestCase):
         )
 
     def test_portable_package_has_no_host_or_repository_identity(self) -> None:
-        absolute_roots = ("Users", "home", "tmp", "private" + "/" + "tmp")
         absolute_path = re.compile(
-            r"/(?:" + "|".join(re.escape(root) for root in absolute_roots) + r")/\S+"
+            r"(?<![A-Za-z0-9_.~])/(?:[A-Za-z0-9_.-]+/)+[A-Za-z0-9_.-]+"
         )
+        repository_only_roots = ("scr" + "ipts", "." + "github")
         repository_only_path = re.compile(
-            r"(?<![A-Za-z0-9_./])(?:scripts|[.]github)/"
+            r"(?<![A-Za-z0-9_./])(?:"
+            + "|".join(re.escape(root) for root in repository_only_roots)
+            + r")/"
             r"[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*"
         )
         literal_hash_identity = re.compile(r"\b[0-9a-f]{7,64}\b")
+        repository_page_root = "/".join(("knowledge", "wiki"))
         repository_page = re.compile(
-            r"knowledge/wiki/(?:drafts|syntheses)/(?P<page>[a-z0-9-]+\.md)"
+            re.escape(repository_page_root)
+            + r"/(?:drafts|syntheses)/(?P<page>[a-z0-9-]+\.md)"
         )
         allowed_pages = {"scenario-spec.md", "scenario-plan.md"}
         dynamic_probes = (str(SOURCE_ROOT),)
 
-        errors: list[str] = []
-        for relative_path in MANDATORY_PACKAGE_RESOURCES:
-            text = (self.installed_skill / relative_path).read_text(encoding="utf-8")
-            if absolute_path.search(text):
-                errors.append(f"absolute host path: {relative_path}")
-            if any(probe in text for probe in dynamic_probes):
-                errors.append(f"dynamic host identity: {relative_path}")
-            if repository_only_path.search(text):
-                errors.append(f"repository-only resource path: {relative_path}")
-            if any(
-                len(set(match.group(0))) > 1
-                for match in literal_hash_identity.finditer(text)
-            ):
-                errors.append(f"literal Git/hash identity: {relative_path}")
-            for match in repository_page.finditer(text):
-                if match.group("page") not in allowed_pages:
-                    errors.append(f"repository page identity: {relative_path}")
-        self.assertEqual([], errors)
+        expected_results = (
+            [],
+            [
+                "absolute host path: agents/openai.yaml",
+                "dynamic host identity: agents/openai.yaml",
+            ],
+        )
+
+        for expected_errors in expected_results:
+            if expected_errors:
+                mutation_target = self.installed_skill / "agents" / "openai.yaml"
+                mutation_target.write_text(
+                    mutation_target.read_text(encoding="utf-8")
+                    + "\n# source identity probe: "
+                    + dynamic_probes[0]
+                    + "\n",
+                    encoding="utf-8",
+                )
+            errors: list[str] = []
+            package_files = sorted(
+                path
+                for path in self.installed_skill.rglob("*")
+                if path.is_file() and path.suffix in {".md", ".py", ".yaml"}
+            )
+            for package_file in package_files:
+                relative_path = package_file.relative_to(
+                    self.installed_skill
+                ).as_posix()
+                text = package_file.read_text(encoding="utf-8")
+                if absolute_path.search(text):
+                    errors.append(f"absolute host path: {relative_path}")
+                if any(probe in text for probe in dynamic_probes):
+                    errors.append(f"dynamic host identity: {relative_path}")
+                if repository_only_path.search(text):
+                    errors.append(f"repository-only resource path: {relative_path}")
+                if any(
+                    len(set(match.group(0))) > 1
+                    for match in literal_hash_identity.finditer(text)
+                ):
+                    errors.append(f"literal Git/hash identity: {relative_path}")
+                for match in repository_page.finditer(text):
+                    if match.group("page") not in allowed_pages:
+                        errors.append(f"repository page identity: {relative_path}")
+            self.assertEqual(expected_errors, errors)
 
 
 if __name__ == "__main__":
