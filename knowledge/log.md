@@ -1915,3 +1915,28 @@ append-only で使います。すべての entry は予測しやすい header �
 - このeventは、直前の`implementation-closeout-candidate` eventにあるtemporalな「pre-edit RED」evidence claimだけをcorrect / supersedeし、その他のhistoryをrewriteしない。original before-edit current-control evidenceはprompt embedding defectによりinvalidatedされた。production commit `f40a164e4c4fac1988b1ff98929fc829713fc572`後、byte-exactな`ac67fde` sourceを使う5回のfresh runがREDを再現したが、これはpost-hoc old-contract replay evidenceである。5回のpost-edit runはGREENである。
 - Humanは2026-08-08に、このchronologyを一回限りのevidence exceptionとして明示承認した。このexceptionは一般のtemporal pre-edit RED gateを満たすものでも弱めるものでもなく、future skill workのoriginal gateを変更しない。two-file production contract（`skills/llm-wiki/SKILL.md`、`skills/llm-wiki/references/core.md`）とfour durable closeout filesからなるsix-file total scopeは不変であり、[[wiki/syntheses/llm-wiki-authoring-responsibility-separation-spec|Written Spec]]、[[wiki/syntheses/llm-wiki-authoring-discovery-diagnostics-implementation-plan|implementation plan]]、[[index|durable catalog]]を訂正へ同期した。
 - scoped final-fix re-reviewはpendingである。`knowledge/raw/**`はuntouchedで、remote writeは行っていない。
+
+## [2026-08-14] plan-authoring | global skill fallback and simple implementation
+
+- Actor: repository maintainer-delegated Plan Author Worker。Human-approved requirementsとbaseline `c370fe14de1641aa5ee30b3fa001f4d857078091`に基づき、[[wiki/syntheses/global-skill-fallback-and-simple-implementation-plan|Global Skill Fallback And Simple Implementation Plan]]をactive canonical proposed implementation planとして作成した。
+- Lifecycle effect: active runtime discoveryの後にruntime-exposed global rootsとaccess可能な`~/.agents/skills`を確認するSDD fallback、および独立`keep-implementation-simple` Skillを、2 implementation taskのTDD planへ固定した。plan自体のHuman approvalとImplementation Stageは未実施である。
+- Scope boundary: resolver、classifier、provenance/evidence model、dependency closure、trace、cache、dedup、cycle model、test-only runtime、schema、protocol、live install、remote write、push、PRはplan対象外とした。
+- Index effect: proposed planをreader-facing discovery entryとして1件追加した。raw sourceは変更していない。
+
+## [2026-08-14] plan-review-correction | global skill fallback and simple implementation
+
+- Independent reviewに従い、[[wiki/syntheses/global-skill-fallback-and-simple-implementation-plan|plan]]を2 task / persistent prose assertion / 14-run pressure ritualから、2つの`SKILL.md`だけを変更するone-task planへ縮小した。
+- current conversationとrejected branchをobserved REDとして扱い、GREENは単純化とglobal fallbackのfresh-agent scenario各1件、既存focused SDD tests、architecture validator、changed Skillsのskill-creator validator、diff checkだけとした。
+- 新しいdecision gate、test-only runtime/helper/resolver/classifier/schema/protocol、追加review gate、別closeout artifactは作成しない。plan approval、implementation、live install、remote writeは未実施である。
+
+## [2026-08-14] plan-gate-approved | global skill fallback and simple implementation
+
+- Humanはcorrected minimal scopeのlocal implementationを明示承認し、independent repository plan reviewはmaterial requirement/scope defectなしと判定した。残るobservationはmandatory repository closeoutに関するもので、追加review gateではないとadjudicateされた。
+- [[wiki/syntheses/global-skill-fallback-and-simple-implementation-plan|plan]]を`accepted` / `approved-for-local-implementation`へ更新し、既存index entryを同じlifecycle stateへ同期した。plan contentとone-task scopeは変更していない。
+- live install、remote write、push、PR、merge、releaseは承認・実施していない。
+
+## [2026-08-14] implementation-closeout-candidate | global skill fallback and simple implementation
+
+- [[wiki/syntheses/global-skill-fallback-and-simple-implementation-plan|canonical plan]]のlocal implementationは`e40fa348db056be005a254c1e5a84b51d7447629`（`feat: keep skill discovery fallback simple`）で完了し、approved task reviewはopen material findingなしである。planと[[index|durable catalog]]を`implemented-task-reviewed-pending-final-review`へ同期した。
+- fresh-agent behavior GREENは2件ともPASSである。`keep-implementation-simple`はexisting configuration owner/surfaceを選び、unmapped resolver/classifier/cache/provenance traceを除外し、review blockerをrequirement gap・repository rule violation・observable regression・concrete current riskに限定した。SDD Dependency Preflightはreadableな`~/.agents/skills/llm-wiki/SKILL.md`をread/useして継続し、complete no-matchだけをmissing、incomplete discovery/candidate readをconcreteな`BLOCKED: dependency preflight failed`として扱った。
+- focused validationはSDD unittest 49件、`scripts/validate_skill_architecture.py --all`、両Skillの`quick_validate.py`、`git diff --check`がすべてGREENである。`c370fe14de1641aa5ee30b3fa001f4d857078091..HEAD`のfinal diff checkとfresh final whole-branch reviewは未実施のままであり、`LOCAL_COMPLETE`は宣言しない。push、PR、merge、release、remote write、live installは未実施である。
