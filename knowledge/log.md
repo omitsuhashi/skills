@@ -2344,3 +2344,9 @@ append-only で使います。すべての entry は予測しやすい header �
 - Human-approved PR #51 CI simplificationにより、直前2件のpost-merge eventがcurrent authorityとしていたexact migration state、marker lineage、semantic cleanup transition、`refs/remotes/origin/main` bindingをsupersedeする。completed migration markerはhistorical evidenceであり、current validation authorityではない。
 - current ruleは一つのfail-closed strict-zero invariantである。current Git index / staging area、nominated candidate tree、known policy rootとpre-policy tipでboundedされたpost-policy reachable commit、final treeの各surfaceは`.superpowers/**` entry zeroでなければならず、marker、blob、remote-tracking ref、fallbackで例外化しない。pre-policy historical ancestor blobだけではfailureにしない。
 - root-owned validator / regression / CI contractとportable `sdd-implementation` contractをこの単一ruleへ同期した。reachable-only clean cloneと`refs/remotes/origin/main`不在のcheckoutをself-containedに検証し、canonical wiki pageと[[index|active catalog]]はauthorityまたはdiscoverability変更がないため更新しない。raw test output、push、PR、install、activation、remote publicationはscope外である。
+
+## [2026-08-14] evidence-correction | SDD strict-zero clean-clone regression
+
+- 直前の`SDD strict-zero CI validation` eventにあるreachable-only clean-clone evidence claimは、fixtureがclone済みの同一validatorをcopyして無条件にinstallation commitしようとしたためinvalidである。committed `649d1e75f2812ae5899aa40b061569e1a86574f1`ではfocused testがそのno-op commitでerrorとなり、synthetic add/delete historyまで到達していなかった。
+- fixtureからvalidator copyとinstallation commit assumptionを除き、reachable-only cloneのcommitted validatorをそのまま使ってpost-policy add/delete historyを作るself-contained regressionへ訂正した。focused workflow 8/8、validator 10/10、full SDD 113/113、repository scripts 34/34、LLM Wiki 21/21とarchitecture / context / skill-creator / diff checksはGREENである。
+- strict-zero product rule、policy-root / pre-policy-tip history bound、canonical wiki page、[[index|active catalog]]は変更しない。raw output、fallback、fetch、unreachable object、push、PR、install、activation、remote publicationは追加していない。

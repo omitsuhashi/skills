@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
-import shutil
 import subprocess
 import tempfile
 import unittest
@@ -19,7 +18,6 @@ TASK_MANAGEMENT_TEST = (
     / "tests"
     / "test_task_management_contract.py"
 )
-TRANSIENT_VALIDATOR = REPO_ROOT / "scripts" / "validate_sdd_transient_artifacts.py"
 
 
 def run_git(repository: Path, *args: str) -> str:
@@ -78,13 +76,6 @@ def run_ci_validation(repository: Path) -> subprocess.CompletedProcess[str]:
     )
 
 
-def install_current_validator(repository: Path) -> None:
-    shutil.copyfile(
-        TRANSIENT_VALIDATOR,
-        repository / "scripts" / TRANSIENT_VALIDATOR.name,
-    )
-
-
 class SkillCiWorkflowTests(unittest.TestCase):
     def test_python_matrix_runs_standalone_skill_contracts(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
@@ -136,7 +127,6 @@ class SkillCiWorkflowTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             repository = Path(directory) / "repository"
             clone_reachable_repository(repository)
-            install_current_validator(repository)
 
             result = run_ci_validation(repository)
 
@@ -146,7 +136,6 @@ class SkillCiWorkflowTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             repository = Path(directory) / "repository"
             clone_reachable_repository(repository)
-            install_current_validator(repository)
             run_git(repository, "update-ref", "-d", "refs/remotes/origin/main")
             with self.assertRaises(subprocess.CalledProcessError):
                 run_git(repository, "rev-parse", "--verify", "refs/remotes/origin/main")
@@ -161,9 +150,6 @@ class SkillCiWorkflowTests(unittest.TestCase):
             clone_reachable_repository(repository)
             run_git(repository, "config", "user.name", "Test User")
             run_git(repository, "config", "user.email", "test@example.invalid")
-            install_current_validator(repository)
-            run_git(repository, "add", "scripts/validate_sdd_transient_artifacts.py")
-            run_git(repository, "commit", "-m", "install current strict policy")
             transient = repository / ".superpowers" / "smuggled.md"
             transient.parent.mkdir(parents=True, exist_ok=True)
             transient.write_text("must be rejected\n", encoding="utf-8")
@@ -185,7 +171,6 @@ class SkillCiWorkflowTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             repository = Path(directory) / "repository"
             clone_reachable_repository(repository, depth=1)
-            install_current_validator(repository)
             self.assertEqual(
                 "true",
                 run_git(repository, "rev-parse", "--is-shallow-repository").strip(),

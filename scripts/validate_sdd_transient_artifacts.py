@@ -25,14 +25,13 @@ class ValidationFailure(Exception):
         self.message = message
 
 
-def run_git(repository: Path, *args: str, input_text: Optional[str] = None) -> str:
+def run_git(repository: Path, *args: str) -> str:
     result = subprocess.run(
         ["git", *args],
         cwd=str(repository),
         check=False,
         capture_output=True,
         text=True,
-        input=input_text,
     )
     if result.returncode != 0:
         detail = result.stderr.strip() or result.stdout.strip() or "git command failed"
