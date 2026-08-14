@@ -12,7 +12,12 @@ cannot approve the Written Spec or make a material Human decision.
 - Research Report paths;
 - short `Confirmed Decisions` and `Open Decisions` excerpts;
 - raw review artifact path using the repository-external task/session temporary route;
+- resolved canonical `keep-implementation-simple/SKILL.md` path;
 - applicable review constraints.
+
+Read the resolved canonical `keep-implementation-simple/SKILL.md` path; read it
+fully before work. If that read prevents completion, return `BLOCKED` with your role
+or phase, path, and underlying error.
 
 Review the spec against:
 

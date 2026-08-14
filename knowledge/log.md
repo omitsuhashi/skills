@@ -2284,3 +2284,53 @@ append-only で使います。すべての entry は予測しやすい header �
 - [[wiki/syntheses/global-skill-fallback-and-simple-implementation-plan|canonical plan]]のlocal implementationは`e40fa348db056be005a254c1e5a84b51d7447629`（`feat: keep skill discovery fallback simple`）で完了し、approved task reviewはopen material findingなしである。planと[[index|durable catalog]]を`implemented-task-reviewed-pending-final-review`へ同期した。
 - fresh-agent behavior GREENは2件ともPASSである。`keep-implementation-simple`はexisting configuration owner/surfaceを選び、unmapped resolver/classifier/cache/provenance traceを除外し、review blockerをrequirement gap・repository rule violation・observable regression・concrete current riskに限定した。SDD Dependency Preflightはreadableな`~/.agents/skills/llm-wiki/SKILL.md`をread/useして継続し、complete no-matchだけをmissing、incomplete discovery/candidate readをconcreteな`BLOCKED: dependency preflight failed`として扱った。
 - focused validationはSDD unittest 49件、`scripts/validate_skill_architecture.py --all`、両Skillの`quick_validate.py`、`git diff --check`がすべてGREENである。`c370fe14de1641aa5ee30b3fa001f4d857078091..HEAD`のfinal diff checkとfresh final whole-branch reviewは未実施のままであり、`LOCAL_COMPLETE`は宣言しない。push、PR、merge、release、remote write、live installは未実施である。
+
+## [2026-08-14] ingest | Keep Implementation Simple Written Spec
+
+- Actor: repository maintainer-delegated Spec Synthesis Worker。Canonical OwnerであるHumanがcurrent conversationで明示承認した10件のConfirmed Decisionsを、approval snapshot `KIS-SPEC-2026-08-14-V1`として[[wiki/syntheses/keep-implementation-simple-spec|Keep Implementation Simple 仕様]]へ転記した。authority resultはowner-approved direct canonical update、lifecycle effectは`accepted` / active synthesisの新規作成である。
+- 本specはminimum coherent current change、削除test、test / fixture / guardrail contract、required validation preservationをsupporting Skillのsingle sourceとし、`sdd-implementation`をsole/default user-facing routeに維持したまま、Spec Synthesizer、Spec Reviewer、Plan Author、Plan Reviewer、Implementer、Task Reviewer、Final Reviewerへread-before-workを要求する。Open Decisionsはない。
+- [[index|durable catalog]]へactive canonical recordを1件追加した。実装、remote write、push、PR、merge、release、live installはこのingestで実施または承認していない。`knowledge/raw/**`は変更していない。
+
+## [2026-08-14] spec-review-repair | Keep Implementation Simple Written Spec
+
+- Actorはrepository maintainer-delegated Spec Synthesis repair worker。fresh independent reviewの`needs_revision` verdictにある3件のagent-repairable findingを[[wiki/syntheses/keep-implementation-simple-spec|canonical Written Spec]]へ反映した。Implementation PlanはHuman-approvedではなくagent-authoredかつfresh independent review `ready`をImplementation Stageへのgateとし、approval snapshot `KIS-SPEC-2026-08-14-V1`とHuman authorityは維持した。
+- 根拠のないmandatory UI metadataをscope、write set、acceptanceから除き、required portable artifactを最小`SKILL.md` contractへ限定した。過剰test、speculative fixture、duplicate / speculative guardrailを一つのcombined pressure scenarioで変更前RED・変更後GREEN評価しながら、既存SDD suiteとtransient-artifact boundaryを保持するacceptance、およびcurrent architecture / context / Skill / SDD / transient-artifact / diff gateを追加した。
+- [[index|durable catalog]]の既存recordはcanonical identity、accepted state、scope summaryがcurrent specと一致するため変更していない。repair dispositionは`repaired-pending-independent-re-review`であり、raw review / research / transcript / test outputはrepository外temporary inputのまま保持した。実装、remote write、push、PR、merge、release、live installは実施または承認していない。
+
+## [2026-08-14] independent-spec-re-review | Keep Implementation Simple Written Spec
+
+- Actorはrepository maintainer-delegated independent review worker。[[wiki/syntheses/keep-implementation-simple-spec|canonical Written Spec]]はapproval snapshot `KIS-SPEC-2026-08-14-V1`、10件のConfirmed Decisions、`Open Decisions: なし`と整合し、material / agent-repairable specification defectなしの`ready_for_plan` verdictとなった。
+- Human-approved Written Specの内容とsnapshotは変更していない。[[index|durable catalog]]のactive canonical recordはcurrent specと一致するため変更していない。raw review本文、research、transcript、test outputはdurable wikiへcopyしていない。Implementation PlanのHuman承認、実装、remote write、push、PR、merge、release、live installはこのreviewで承認または実施していない。
+
+## [2026-08-14] independent-plan-re-review-complete | Keep Implementation Simple
+
+- Actorはrepository maintainer-delegated plan finalization worker。[[wiki/syntheses/keep-implementation-simple-plan|canonical implementation plan]]をapproved snapshot `KIS-SPEC-2026-08-14-V1`へbindingしたfresh independent re-reviewが、prior KIS-1 repairとsubstantive plan contractを確認して`ready`と判定した。decision requestとmaterial riskはない。
+- Lifecycle effectはplan readiness `ready`、Control Return `complete`、local Implementation Stage entry `allowed`である。[[index|durable catalog]]へ同planのactive canonical recordを追加した。raw review本文、transcript、command outputはrepository-external temporary rootに留め、durable surfaceにはコピーしていない。
+- このreview completionはHuman plan approval、実装、remote write、push、PR、merge、release、live installを実施または承認しない。
+
+## [2026-08-14] decision | Keep Implementation Simple V2 scope correction
+
+- Human authorityにより[[wiki/syntheses/keep-implementation-simple-spec|canonical Written Spec]]を`KIS-SPEC-2026-08-14-V2`へ更新し、baseline `82dcd32157ff9690ae038f982f3916009e449f80`へbindingした。no-guidance 5/5 GREENとunchanged KIS 5/5 GREENでRED未成立のため、KIS本文は変更せずSDD-onlyの7-role read-before-workへscopeを縮小した。
+- V2は同じresolved canonical pathをSpec Synthesizer、Spec Reviewer、Plan Author、Plan Reviewer、Implementer、Task Reviewer、Final Reviewerへ既存surfaceから渡し、Research / knowledge closeoutを除外する。一つのinline-data regression以外のprompt、fixture、resolver / schema / runtime machinery、optional metadata、policy duplicateは追加しない。
+- [[index|durable catalog]]をV2へ同期し、V1-bound [[wiki/syntheses/keep-implementation-simple-plan|implementation plan]]をcurrent implementation entryから外した。plan、Skill実装、test、remote writeはこのdecision eventでは変更または実施していない。
+
+## [2026-08-14] plan-authoring | Keep Implementation Simple V2
+
+- [[wiki/syntheses/keep-implementation-simple-plan|`KIS-PLAN-2026-08-14-V2`]]をapproved `KIS-SPEC-2026-08-14-V2`とbaseline `82dcd32157ff9690ae038f982f3916009e449f80`へbindingし、SDD wiring/test-reviewとdurable closeout/combined verificationの2 taskへ再authorした。KIS edit/behavioral evaluation、新規prompt/fixture/resolver/schema/runtime machinery、Research/knowledge-closeoutへのKIS deliveryは含めない。author self-reviewは完了し、fresh independent Plan Review、Implementation Stage、remote writeは未実施である。
+
+## [2026-08-14] plan-repair | Keep Implementation Simple V2 execution order
+
+- Fresh independent Plan Reviewの`issues_found` 2件に従い、[[wiki/syntheses/keep-implementation-simple-plan|V2 plan]]のKIS-1をindex/candidate gate、scoped commit、新commit validation、committed-range Task Reviewの順へ修復し、KIS-2をfresh combined verification、actual evidence closeout、wiki validation、closeout commit/new/final-tree validation、Final Reviewの順へ修復した。2 task、exact V2 coverage、unchanged KIS、one inline-data regression、seven roles、既存surfaceだけのscopeは維持し、[[index|catalog]]をfresh independent re-review pendingへ同期した。spec、Skill、test、transient artifact、remote stateは変更していない。
+
+## [2026-08-14] independent-plan-re-review | Keep Implementation Simple V2
+
+- Independent re-reviewは[[wiki/syntheses/keep-implementation-simple-plan|`KIS-PLAN-2026-08-14-V2`]]を`ready`と判定し、decision requestとmaterial riskはない。plan readinessは`ready`、Control Returnは`complete`、local Implementation Stage entryは`allowed`へ同期した。[[index|durable catalog]]も同じcurrent lifecycleへ更新し、実装、remote write、push、PR、merge、release、live installは実施または承認していない。
+
+## [2026-08-14] readiness-correction | Keep Implementation Simple V2
+
+- [[wiki/syntheses/keep-implementation-simple-plan|`KIS-PLAN-2026-08-14-V2`]]のPlan Bindingとreadiness narrativeに残っていたstale `pending` / re-review-required statementsを、記録済みのindependent re-review `ready` verdictへ訂正した。index recordはすでに同じcurrent lifecycleを示しているため変更していない。
+
+## [2026-08-14] implementation-closeout-candidate | Keep Implementation Simple V2
+
+- [[wiki/syntheses/keep-implementation-simple-plan|`KIS-PLAN-2026-08-14-V2`]]のKIS-1は`099c1df3cd35a75d838e7c66279293723f4dbbc0`と修正`e3815157b8af151d6fc5683e851eec3108dd69c3`で完了し、initial Task Reviewの2件のImportant findingはscoped re-reviewでaddressed、new Critical/Important breakageなしとなった。fresh combined verificationはSDD unittest 94/94、sole/default SDD architecture、one context contract、両Skillのquick validation、KIS-1 transient-artifact、working/range diff checkを通過した。
+- baseline/current KIS SHA-256はともに`2c2361f04ca6d2dd7433d2dfa80ff173a14f68ef401df0e98e7d4366d1d23b3f`でbaseline-to-tip diffは空である。plan、[[index|durable catalog]]、append-only logをcloseout candidateへ同期し、KIS-2 Steps 6–7を完了した。closeout candidate/commit/final-tree validationとFinal Reviewはpendingのため`LOCAL_COMPLETE`は宣言しない。push、PR、merge、release、live install、Issue/comment/projectを含むremote actionは未実施かつ未承認である。

@@ -12,6 +12,7 @@ Spec approval.
 - current spec draft path;
 - repository-external Research Report paths;
 - short `Confirmed Decisions` and `Open Decisions` excerpts;
+- resolved canonical `keep-implementation-simple/SKILL.md` path;
 - applicable repository and knowledge authoring rules.
 
 Read only these paths and the minimum applicable authoring instructions. Update
@@ -19,6 +20,9 @@ the spec draft with problem, goals, non-goals, architecture, interfaces, control
 flow, failure handling, testing, acceptance criteria, migration, and stop
 conditions. Preserve every accepted decision. Do not reopen a resolved question.
 Do not fill an unresolved decision with an assumption.
+Read the resolved canonical `keep-implementation-simple/SKILL.md` path; read it
+fully before work. If that read prevents completion, return `BLOCKED` with your role
+or phase, path, and underlying error.
 
 Keep `Confirmed Decisions` and `Open Decisions` in the spec draft as the only
 Decision Record. Do not create another ledger, `CONTEXT.md`, or `docs/adr/`.
