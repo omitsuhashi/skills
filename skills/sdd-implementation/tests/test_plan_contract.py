@@ -60,14 +60,13 @@ def coverage_rows(text: str) -> list[list[str]]:
     return [row for row in table_rows(section(text, "Coverage Matrix")) if row[0] != "ID"]
 
 
-def task_sections(text: str, task_ids: tuple[str, ...] = TASK_IDS) -> dict[str, str]:
-    task_id_pattern = "|".join(re.escape(task_id) for task_id in task_ids)
+def task_sections(text: str) -> list[tuple[str, str]]:
     matches = re.finditer(
-        rf"^### Task (?:\d+: )?({task_id_pattern})(?::|\s+—).*?$(.*?)(?=^### Task |^## |\Z)",
+        r"^### Task (?:\d+: )?([A-Z][A-Z0-9]*-\d+)(?::|\s+—).*?$(.*?)(?=^### Task |^## |\Z)",
         section(text, "Tasks"),
         flags=re.MULTILINE | re.DOTALL,
     )
-    return {match.group(1): match.group(2) for match in matches}
+    return [(match.group(1), match.group(2)) for match in matches]
 
 
 def field_value(text: str, label: str) -> str:
@@ -314,7 +313,15 @@ def plan_errors(
         if item_id not in primary_owner:
             errors.append(f"unassigned coverage ID: {item_id}")
 
-    tasks = task_sections(text, task_ids)
+    tasks: dict[str, str] = {}
+    for parsed_task_id, parsed_task in task_sections(text):
+        if parsed_task_id not in task_ids:
+            errors.append(f"unknown task ID: {parsed_task_id}")
+            continue
+        if parsed_task_id in tasks:
+            errors.append(f"duplicate task ID: {parsed_task_id}")
+            continue
+        tasks[parsed_task_id] = parsed_task
     if set(tasks) != set(task_ids):
         errors.append("task inventory must define the expected tasks exactly once")
     for task_id in task_ids:
@@ -526,7 +533,9 @@ class PlanContractTests(unittest.TestCase):
     def test_representative_fixture_covers_the_complete_semantic_inventory(self) -> None:
         fixture = load_plan(READY_PLAN)
         self.assertEqual(REQUIREMENT_IDS | ACCEPTANCE_IDS, set(re.findall(r"\b(?:R|AC)-\d{2}\b", section(fixture, "Requirement And Acceptance Inventory"))))
-        self.assertEqual(set(TASK_IDS), set(task_sections(fixture)))
+        self.assertEqual(
+            set(TASK_IDS), {task_id for task_id, _ in task_sections(fixture)}
+        )
 
     def test_rejects_missing_approved_spec_identity(self) -> None:
         temporary_directory, copy = self.copy_ready_plan()

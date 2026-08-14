@@ -245,6 +245,34 @@ class SkillCiWorkflowTests(unittest.TestCase):
                 ),
             ),
         )
+        for heading, expected_error in (
+            ("### Task 8: AM-3 — unexpected task", "unknown task ID: AM-3"),
+            ("### Task 8: AM-1 — duplicate task", "duplicate task ID: AM-1"),
+        ):
+            with self.subTest(heading=heading):
+                mutated = semantic_text.replace(
+                    "\n## Dependency Graph\n",
+                    f"\n{heading}\n\n## Dependency Graph\n",
+                    1,
+                )
+                self.assertIn(
+                    expected_error,
+                    plan_errors(
+                        mutated,
+                        requirement_ids=tuple(
+                            f"R-{number:02d}" for number in range(1, 16)
+                        ),
+                        acceptance_ids=tuple(
+                            f"AC-{number:02d}" for number in range(1, 18)
+                        ),
+                        task_ids=("AM-1", "AM-2"),
+                        integration_ids=("AM-1", "AM-2"),
+                        north_star_anchor="目標",
+                        external_dependencies=(
+                            "content edit前のexact-identity `ours` no-ff merge prerequisite",
+                        ),
+                    ),
+                )
 
     def test_canonical_plan_direct_check_rejects_path_digest_and_baseline_mutations(self) -> None:
         canonical = CANONICAL_PLAN.read_text(encoding="utf-8")
