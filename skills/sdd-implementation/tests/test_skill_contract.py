@@ -144,6 +144,15 @@ class SddImplementationSkillContractTests(unittest.TestCase):
             with self.subTest(statement=statement):
                 self.assertIn(statement, normalized)
 
+    def test_public_contract_aborts_on_transient_validator_failure_without_continuation(self) -> None:
+        expected = (
+            "If `scripts/validate_sdd_transient_artifacts.py` is unavailable, "
+            "returns nonzero, or detects any `.superpowers/**` violation, fail "
+            "and abort the repository gate; do not continue to any stage "
+            "transition, commit creation, or closeout."
+        )
+        self.assertIn(expected, " ".join(self.skill_text.split()))
+
     def test_upstream_owns_model_tiers_and_local_contract_only_adds_effort(self) -> None:
         self.assertIn("Follow the current Superpowers SDD Model Selection contract.", self.skill_text)
         self.assertIn("Every subagent dispatch must state its model.", self.skill_text)

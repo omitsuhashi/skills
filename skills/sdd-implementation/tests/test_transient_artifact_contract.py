@@ -96,11 +96,20 @@ def field_values(text: str, label: str) -> list[str]:
 
 
 def table_rows(text: str) -> list[list[str]]:
-    return [
-        [cell.strip() for cell in line.strip().strip("|").split("|")]
-        for line in text.splitlines()
-        if line.startswith("|") and not re.fullmatch(r"[| :\-]+", line)
-    ]
+    rows: list[list[str]] = []
+    for line in text.splitlines():
+        indent = len(line) - len(line.lstrip(" "))
+        candidate = line.strip()
+        if indent > 3 or "|" not in candidate:
+            continue
+        if re.fullmatch(r"[| :\-]+", candidate):
+            continue
+        if candidate.startswith("|"):
+            candidate = candidate[1:]
+        if candidate.endswith("|"):
+            candidate = candidate[:-1]
+        rows.append([cell.strip() for cell in candidate.split("|")])
+    return rows
 
 
 def transient_boundary_errors(text: str) -> list[str]:
@@ -187,6 +196,23 @@ class TransientArtifactContractTests(unittest.TestCase):
         errors = transient_boundary_errors(valid_plus_four_cell)
         self.assertIn("malformed stage row: Research", errors)
         self.assertIn("stage row count must be one: Research", errors)
+
+    def test_stage_contract_rejects_gfm_rows_with_optional_outer_pipes_and_indent(self) -> None:
+        canonical = (
+            "| Research | repository-external task/session temporary | "
+            "canonical specification |"
+        )
+        contradictory_rows = (
+            "Research | .superpowers/research/<epic-id>/ | canonical specification",
+            "  | Research | .superpowers/research/<epic-id>/ | canonical specification |",
+        )
+        for contradictory in contradictory_rows:
+            with self.subTest(row=contradictory):
+                mutated = COMPLIANT_BOUNDARY.replace(canonical, contradictory)
+                self.assertIn(
+                    "repository-external default mismatch: Research",
+                    transient_boundary_errors(mutated),
+                )
 
     def test_stage_contract_rejects_raw_artifacts_in_durable_spec_plan_or_log(self) -> None:
         mutations = {
