@@ -40,16 +40,17 @@ authorityとscopeは`amended_on`、`approved_amendments`、`Confirmed Decisions`
 2026-08-14にTask POA-1のreviewed intentional RED contractとTask POA-2のreviewed combined GREENが
 current branchへlandedした。Task POA-3は本仕様、broader current design、focused context specification、
 canonical catalog、append-only logを同じlanded semanticsへ同期し、fresh combined verificationを行う。
-このstateはcanonical final whole-branch review前のcloseout candidateであり、`LOCAL_COMPLETE`、remote action、
-またはHuman plan approvalを宣言しない。
+このPOA-3時点のstateはcanonical final whole-branch review前のcloseout candidateであり、当時は
+`LOCAL_COMPLETE`、remote action、またはHuman plan approvalを宣言しなかった。
 
 Human-approved transient-artifact amendmentのPOA-5 migration / validator、POA-6 exact cleanup、および
 cleanup fixture correctionは2026-08-14にreview済みでlandedした。POA-7はそのactual Git / file / test evidenceを
 本仕様、broader current design、reviewed plan、catalog、append-only logへ同期するdurable closeoutである。
 POA-7 lifecycle correction commit `664dbd15923d7cf395095d810038125a10b727f8`へのfresh scoped re-reviewは、
 prior Important 2件が解消され、新規Critical / Importantがないため`ready`となった。POA-7はreviewed / landedで、
-残るPOA-8のfresh combined verification、canonical whole-branch review、authorized remote branch updateはpendingで
-ある。本closeoutは`LOCAL_COMPLETE`またはpublicationを宣言しない。
+POA-8のfresh combined verificationとcanonical whole-branch reviewもbounded fix / scoped re-reviewを経て完了した。
+本alignmentのlocal workは`LOCAL_COMPLETE`である。authorized non-force remote branch updateはpending / unpublishedで、
+merge、release、live installは未承認のままである。
 
 [[sdd-plan-ownership-alignment-implementation-plan|agent-authored implementation plan]]のapproved spec
 SHA-256 `1f9a7dc5f740c51addfabde96bac6fe3fbf5036003d1783cde60ac58e5ae7559`は、Plan Authorがconsumeした
@@ -703,9 +704,19 @@ separate authorizationがない場合は、Plan StageのStop Conditionではな�
   candidate tree、post-cleanup commits `7b4a8e6` / `74eb79a`、HEAD final treeに対するrepository validator passである。
   Raw worker / reviewer reports、test output、transcriptsはrepository外temporary evidenceのままdurable knowledgeへ
   copyしていない。
-- Remaining lifecycleはPOA-7のindependent task review、その完了後のPOA-8 fresh combined verification、canonical
-  whole-branch review、authorized remote branch updateの順である。いずれも未実施であり、North Star、original
-  approval snapshot、remote authorization boundaryを変更しない。
+- final local evidence tip `e18088893737099d45e446e06a476c68c79ea25f`では、combined suitesがSDD `93/93`、
+  scripts `46/46`、llm-wiki `21/21`、decide-in-order `7/7`、task-management `11/11`でpassした。skill
+  architecture / context / warning-free report (`warnings: []`) / skill-creator / transient-artifact / diff checksもpassし、
+  current candidate / final treeの`.superpowers/**` entryはzeroである。3 local copiesはignored / untrackedのまま、
+  migration baselineとancestor historyはrewriteせず保持する。
+- canonical whole-branch reviewのfixed pointは`c370fe14de1641aa5ee30b3fa001f4d857078091`である。reviewはSpec
+  ImportantとしてCIのintermediate post-cleanup commit detection、Standards Minorとしてduplicate responsibility rowを
+  検出した。bounded fix `bbfd06eecf2fec0e45697257b3edf545fecdb4b6`が両方を修正し、Spec scoped re-reviewは
+  `READY`となった。append-only correction `e18088893737099d45e446e06a476c68c79ea25f`が残るStandards log
+  findingを解消し、final Standards verdictも`READY`となった。
+- POA-1〜POA-8のlocal workは完了し、本alignmentは`LOCAL_COMPLETE`である。authorized non-force remote branch
+  updateはpending / unpublishedで、North Star、original approval snapshot、remote authorization boundary、merge /
+  release / live-install authorizationを変更しない。
 
 - durable research evidence summary: baseline `c370fe14de1641aa5ee30b3fa001f4d857078091` のcurrent
   SDD lifecycle、planning-context、upstream `writing-plans` v6.2.0、既存contract testsを比較し、Human

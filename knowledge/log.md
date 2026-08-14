@@ -2192,3 +2192,22 @@ append-only で使います。すべての entry は予測しやすい header �
   regressionを実装した。scoped Spec-axis re-reviewはcanonical plan correctionを`READY`とした。
 - canonical identityとcatalog summaryは変わらないため[[index|knowledge/index.md]]へのeffectはnoneである。final
   Standards dispositionとauthorized pushはpendingであり、`LOCAL_COMPLETE`またはpublicationを宣言しない。
+
+## [2026-08-14] local-closeout | SDD plan ownership alignment POA-8
+
+- Actorはrepository maintainer-delegated final local-closeout knowledge workerであり、single-root `owned` /
+  `Read: allowed` authorityとObsidian authoring profileの下で、既存のbroader design、focused context spec、
+  [[wiki/syntheses/sdd-plan-ownership-alignment|alignment spec]]、
+  [[wiki/syntheses/sdd-plan-ownership-alignment-implementation-plan|canonical plan]]、[[index|active catalog]]だけを
+  `LOCAL_COMPLETE` stateへ同期した。新しいspec、plan、report、ledgerは作成していない。
+- evidence tip `e18088893737099d45e446e06a476c68c79ea25f`のfresh combined resultsはSDD `93/93`、
+  scripts `46/46`、llm-wiki `21/21`、decide-in-order `7/7`、task-management `11/11`である。skill architecture /
+  context / warning-free report (`warnings: []`) / skill-creator / transient-artifact / diff checksもpassした。candidate /
+  final treeの`.superpowers/**` entryはzero、3 local copiesはignored / untracked、ancestor historyはrewriteしていない。
+- fixed point `c370fe14de1641aa5ee30b3fa001f4d857078091`からのcanonical whole-branch reviewは、Spec Importantの
+  CI intermediate-commit detection gapとStandards Minorのduplicate responsibility rowを検出した。bounded fix
+  `bbfd06eecf2fec0e45697257b3edf545fecdb4b6`が両方を修正してSpec scoped re-reviewは`READY`となり、
+  append-only evidence correction `e18088893737099d45e446e06a476c68c79ea25f`が残るStandards log findingを
+  解消してfinal Standards verdictも`READY`となった。
+- POA-1〜POA-8 local workはcompleteで、current dispositionは`LOCAL_COMPLETE`である。authorized non-force remote
+  branch updateはpending / unpublishedであり、push、merge、release、live installを実施または承認済みと扱わない。

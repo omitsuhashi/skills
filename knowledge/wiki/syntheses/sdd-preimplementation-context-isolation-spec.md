@@ -11,8 +11,9 @@ Research Report destinationと全pre-implementation raw handoff write bindingも
 repository-external migration / validatorとPOA-6のexact three-report cleanupはreview済みでlandedし、POA-7で
 canonical closeoutを同期した。POA-7 lifecycle correction後のfresh scoped re-reviewはprior Important 2件の解消と
 新規Critical / Importantなしを確認して`ready`となった。Planning Controller / fresh worker isolation、source /
-durable worktree boundary、Human Written Spec authorityは維持する。POA-8のfresh whole-branch reviewとremote branch
-updateはpendingである。
+durable worktree boundary、Human Written Spec authorityは維持する。POA-8のfresh combined verificationとcanonical
+whole-branch reviewは完了し、本alignmentは`LOCAL_COMPLETE`である。authorized non-force remote branch updateは
+pending / unpublishedで、merge、release、live installは未承認である。
 
 ## Epic ID
 

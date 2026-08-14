@@ -9,7 +9,7 @@ tags:
 status: active
 review_state: independently-reviewed
 plan_readiness: ready
-implementation_state: poa-7-reviewed-landed
+implementation_state: local-complete-remote-update-pending
 aliases:
   - SDD agent-owned execution plan
   - SDD plan readiness implementation plan
@@ -38,13 +38,14 @@ prospective code、commit granularity の判断を求めない。
   限り、Plan Contract Overlayの「canonical ready planとrepresentative fixtureがcurrent executable validatorを同時に
   passする」preconditionをexact missing-schema REDへ狭く置換する。他のbinding / review / repository checkは維持する
 - Amendment follow-up author state: independently_reviewed
-- Amendment implementation state: POA-4 through POA-7 reviewed and landed
+- Amendment implementation state: POA-4 through POA-8 local work reviewed and complete
 - Amendment follow-up repository check state: passed
 - Amendment follow-up Implementation Stage entry: allowed_and_consumed
 - Amendment migration baseline commit: f07aebce7bbf854cd64184311d204cf04055fd28
 - Amendment migration exception state: consumed_and_retired
 - Current final-tree state: `.superpowers/**` entry zero
-- Remaining stage: POA-8 fresh combined verification / whole-branch review / authorized remote update
+- Local completion state: LOCAL_COMPLETE
+- Remaining remote action: authorized non-force integration-branch update; pending / unpublished
 
 ## Approved North Star Identity
 
@@ -918,20 +919,35 @@ premature POA-4 schema GREEN or POA-6 final-tree cleanup。No Human decision req
 - **Fresh evidence:** SDD focused suite `93/93`、transient validator regression `22/22`、actual candidate tree、
   post-cleanup commit trees `7b4a8e6` / `74eb79a`、HEAD final treeのrepository validatorがpassした。raw reports、
   review transcripts、test logsはdurable surfaceへcopyしていない。
-- **Lifecycle status:** POA-1〜POA-7はreviewed / landedである。POA-7 lifecycle correction
-  `664dbd15923d7cf395095d810038125a10b727f8`へのfresh scoped re-reviewはprior Important 2件の解消と新規
-  Critical / Importantなしを確認して`ready`となった。POA-8のfresh combined verification、canonical whole-branch
-  review、authorized non-force remote updateはpendingである。remote branchはまだ更新しておらず、このsectionは
-  `LOCAL_COMPLETE`またはpublicationを宣言しない。
+- **Lifecycle status:** POA-1〜POA-8のlocal workはreviewed / completeで、本planは`LOCAL_COMPLETE`である。
+  authorized non-force remote branch updateはpending / unpublishedで、merge、release、live installは未承認である。
+
+## Final Local Closeout
+
+- **Fresh combined verification:** evidence tip `e18088893737099d45e446e06a476c68c79ea25f`でSDD `93/93`、
+  scripts `46/46`、llm-wiki `21/21`、decide-in-order `7/7`、task-management `11/11`がpassした。skill architecture、
+  skill context、warning-free context report (`warnings: []`)、skill-creator、transient-artifact、complete diff checksもpassした。
+- **Git boundary:** current candidate / final treeの`.superpowers/**` entryはzeroで、cleanup後の全commit historyをCIが
+  validatorへ渡す。R-21の3 local copiesはignored / untrackedのまま保持し、baseline
+  `f07aebce7bbf854cd64184311d204cf04055fd28`とpre-amendment ancestor historyをrewriteしていない。
+- **Whole-branch review:** fixed point `c370fe14de1641aa5ee30b3fa001f4d857078091`からのcanonical reviewは、Spec
+  ImportantのCI intermediate-commit detection gapとStandards Minorのduplicate responsibility rowを検出した。bounded
+  fix `bbfd06eecf2fec0e45697257b3edf545fecdb4b6`が両方を修正し、Spec scoped re-reviewは`READY`となった。
+  append-only evidence correction `e18088893737099d45e446e06a476c68c79ea25f`が残るStandards log findingを解消し、
+  final Standards verdictも`READY`となった。
+- **Disposition:** POA-1〜POA-8のlocal execution / review / durable evidenceはcompleteで、`LOCAL_COMPLETE`である。
+  authorized non-force integration-branch updateはまだ実行していない。publication、merge、release、live installを
+  このlocal dispositionから推論しない。
 
 ## Readiness Result
 
 - Plan readiness disposition: ready
 - Control Return status: complete
 - Implementation Stage entry: allowed
-- Implementation Stage execution: completed through reviewed POA-7
-- Content integration through POA-7: reviewed and landed
-- Remaining stage: POA-8
+- Implementation Stage execution: completed through POA-8 local gates
+- Content integration and final review: complete
+- Local disposition: LOCAL_COMPLETE
+- Remaining remote action: authorized non-force branch update; pending / unpublished
 
 | Internal disposition | External Control Return | Implementation entry | Owner / next route |
 |---|---|---|---|
@@ -944,10 +960,10 @@ Reviewer `issues_found` is not an external status。It must be classified into `
 `blocked`。Remote authorization absence is none of these for Plan Readiness; it is evaluated only at the affected action。
 
 The pre-entry reviewer verdict and agent-owned formal disposition remain `ready`; the Controller consumed the exact
-baseline-bound exception once and entered POA-4 without creating a Human decision request。POA-4〜POA-7 are reviewed and
-landed。The POA-6 cleanup tree and every later commit tree remain `.superpowers/**` entry zero, and the exception cannot be
-reused。Plan readiness and POA-7 review completion do not authorize publication; POA-8 remains the last, separately authorized
-verification / publication action。
+baseline-bound exception once and entered POA-4 without creating a Human decision request。POA-4〜POA-8 local gates are
+reviewed and complete。The POA-6 cleanup tree and every later commit tree remain `.superpowers/**` entry zero, and the
+exception cannot be reused。`LOCAL_COMPLETE` does not authorize publication; the non-force remote branch update remains a
+separate pending action。
 
 ## Plan Author Self-Review
 
@@ -975,8 +991,8 @@ verification / publication action。
   evidence remains historical and unchanged。The amended POA-4 entry used the independently reviewed non-circular、single-use、
   exact baseline-bound route; POA-5 GREENとPOA-6 zero-tree cleanup / fixture correctionはscoped reviewをpassしてlandedした。
   POA-7 closeout / lifecycle correctionもfresh scoped re-reviewでprior Important 2件の解消と新規Critical / Important
-  なしを確認し、reviewed / landedとなった。POA-8 fresh combined verification / whole-branch review、
-  `LOCAL_COMPLETE`、and remote publication remain distinct later gates。
+  なしを確認し、reviewed / landedとなった。POA-8 combined verification / whole-branch review / bounded fix / scoped
+  re-reviewsも完了し、local dispositionは`LOCAL_COMPLETE`である。remote publicationはdistinct pending actionである。
 
 ## Related Pages
 
