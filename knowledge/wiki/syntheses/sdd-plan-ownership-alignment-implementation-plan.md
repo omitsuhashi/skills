@@ -44,7 +44,8 @@ prospective code、commit granularity の判断を求めない。
 - Amendment migration baseline commit: f07aebce7bbf854cd64184311d204cf04055fd28
 - Amendment migration exception state: consumed_and_retired
 - Current final-tree state: `.superpowers/**` entry zero
-- Remaining stage: POA-8 fresh combined verification / whole-branch review / authorized remote update
+- Remaining sequence: POA-7 independent task review, then POA-8 fresh combined verification / whole-branch review /
+  authorized remote update
 
 ## Approved North Star Identity
 
@@ -929,9 +930,9 @@ premature POA-4 schema GREEN or POA-6 final-tree cleanup。No Human decision req
 - Plan readiness disposition: ready
 - Control Return status: complete
 - Implementation Stage entry: allowed
-- Implementation Stage execution: completed
+- Implementation Stage execution: active; POA-7 independent task review pending
 - Content integration through POA-7: closeout candidate synchronized; task review pending
-- Remaining stage: POA-8
+- Remaining sequence: POA-7 independent task review, then POA-8
 
 | Internal disposition | External Control Return | Implementation entry | Owner / next route |
 |---|---|---|---|

@@ -349,7 +349,7 @@ test outputはtransient evidenceに留め、wikiへはcurrent behaviorだけを�
 - historical wiki source / spec / ledger と `skill-repository-optimization-v4-context-baseline.json` は、実行可能 artifact として再利用せず非実行の evidence として保持する。
 - Phase 2 の fresh coordinator verification（SDD 9、llm-wiki 5、scripts 42 tests、architecture / context / dual-host / skill validators、legacy absence / link checks）と、`8ff2bdc..804c2c7` の final review（Critical 0、Important 0、Minor 0、Ready to merge Yes）は完了済みである。
 - [SDD 実装前コンテキスト分離仕様](sdd-preimplementation-context-isolation-spec.md)と[その実装計画](sdd-preimplementation-context-isolation-implementation-plan.md)がsupersedeするのはpre-implementation context ownershipの部分だけである。historicalなloop context documentsはnon-executable evidenceとして保持し、そのruntime machineryは復元しない。
-- [[sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]]がsupersedeするのは、本書と実装前コンテキスト分離仕様に残っていたPlan StageのHuman / repository approval、artifact content、readiness、Human return semanticsだけである。broader lifecycleとfresh worker isolationは本書および同focused specificationをcurrent sourceとして維持する。
+- [[sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]]は、本書と実装前コンテキスト分離仕様に残っていたPlan StageのHuman / repository approval、artifact content、readiness、Human return semanticsをsupersedeする。さらに同仕様のHuman-approved transient-artifact amendmentは、Research、Spec、Plan、Implementation、task review、repair、integration、final review、knowledge closeoutを含むすべてのnormal SDD stageで競合するrepository-contained transient research / report / brief / handoff destinationとwrite bindingをsupersedeする。Superpowers-firstのbroader lifecycle、fresh worker isolation、trusted planning worktree内のsource code / durable knowledge write boundaryは本書および同focused specificationをcurrent sourceとして維持する。
 
 ## 非目標
 
@@ -365,8 +365,8 @@ test outputはtransient evidenceに留め、wikiへはcurrent behaviorだけを�
 
 ## 関連ページ
 
-- [[sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]] — current Plan Stage authority、artifact、review、readiness semanticsのcanonical source。
-- [[sdd-plan-ownership-alignment-implementation-plan|SDD Plan Ownership Alignment 実装計画]] — approved specへbindingしたagent-authored planとPOA-1〜3のserialized integration contract。
+- [[sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]] — current Plan Stage authority、artifact、review、readiness semanticsと、全normal SDD stageのrepository-external transient destination / Git zero-tree boundaryのcanonical source。
+- [[sdd-plan-ownership-alignment-implementation-plan|SDD Plan Ownership Alignment 実装計画]] — approved specへbindingしたagent-authored planとPOA-1〜8のserialized integration contract。
 - [SDD Compatibility Removal Follow-up Plan](sdd-compatibility-removal-follow-up-plan.md) — publish前feedbackで非要件となったcross-runtime compatibility layerを削除するcurrent follow-up plan。
 - [Superpowers SDD のモデル選択・Reasoning・Host 境界調査](sdd-superpowers-model-and-reasoning-research.md) — upstream v6.2.0 の model、effort、host、spec / plan / SDD ownership の evidence。
 - [SDD Agent-Agnostic Runtime Contract Implementation Plan](sdd-agent-agnostic-runtime-implementation-plan.md) — current runtime behaviorのdelta / closeout candidate。

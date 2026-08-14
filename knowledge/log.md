@@ -2148,3 +2148,19 @@ append-only で使います。すべての entry は予測しやすい header �
   active catalogを同期した。POA-7 independent task reviewとPOA-8のfresh combined verification、canonical
   whole-branch review、authorized remote branch updateは未実施であり、`LOCAL_COMPLETE`、publication、merge、
   release、live installを宣言しない。
+
+## [2026-08-14] review-fix | SDD transient artifact POA-7 lifecycle
+
+- POA-7 independent reviewのImportant 2件を受け、[[wiki/syntheses/sdd-implementation-skill-design|broader SDD design]]の
+  Migration / Related Pagesを修正した。alignment specがPlan Stageのauthority semanticsに加え、Researchから
+  knowledge closeoutまでのすべてのnormal SDD stageで競合するrepository-contained transient handoff destination /
+  write bindingをsupersedeすることを明記し、Superpowers-firstのbroader lifecycle、fresh worker isolation、trusted
+  planning worktree内のsource code / durable knowledge write boundaryはcurrentのまま維持した。
+- [[wiki/syntheses/sdd-plan-ownership-alignment|canonical spec]]のRemaining lifecycleと
+  [[wiki/syntheses/sdd-plan-ownership-alignment-implementation-plan|canonical plan]]のPlan Binding / Readiness Resultを、
+  POA-7 independent task review pending、Implementation Stage active、そのreview完了後にだけPOA-8へ進む順序へ同期した。
+  `Implementation Stage execution: completed`と`Remaining lifecycleはPOA-8だけ`という先行closeout wordingを
+  本eventがsupersedeする。
+- [[index|active catalog]]は既にPOA-7 independent task review pendingとPOA-8後続順序を正しく示すため変更していない。
+  このfixはまだ独立re-review前であり、POA-7 review completion、POA-8 entry、`LOCAL_COMPLETE`、publicationを
+  宣言しない。raw review artifactまたは`.superpowers/**`へのwriteは追加していない。

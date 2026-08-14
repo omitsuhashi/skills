@@ -46,8 +46,9 @@ canonical catalog、append-only logを同じlanded semanticsへ同期し、fresh
 Human-approved transient-artifact amendmentのPOA-5 migration / validator、POA-6 exact cleanup、および
 cleanup fixture correctionは2026-08-14にreview済みでlandedした。POA-7はそのactual Git / file / test evidenceを
 本仕様、broader current design、reviewed plan、catalog、append-only logへ同期するdurable closeoutである。
-POA-8のfresh combined verification、canonical whole-branch review、authorized remote branch updateはpendingであり、
-本closeoutは`LOCAL_COMPLETE`またはpublicationを宣言しない。
+POA-7のindependent task reviewはpendingであり、その完了後にだけPOA-8のfresh combined verification、canonical
+whole-branch review、authorized remote branch updateへ進む。本closeoutは`LOCAL_COMPLETE`またはpublicationを
+宣言しない。
 
 [[sdd-plan-ownership-alignment-implementation-plan|agent-authored implementation plan]]のapproved spec
 SHA-256 `1f9a7dc5f740c51addfabde96bac6fe3fbf5036003d1783cde60ac58e5ae7559`は、Plan Authorがconsumeした
@@ -701,8 +702,9 @@ separate authorizationがない場合は、Plan StageのStop Conditionではな�
   candidate tree、post-cleanup commits `7b4a8e6` / `74eb79a`、HEAD final treeに対するrepository validator passである。
   Raw worker / reviewer reports、test output、transcriptsはrepository外temporary evidenceのままdurable knowledgeへ
   copyしていない。
-- Remaining lifecycleはPOA-8だけである。fresh whole-branch reviewとauthorized remote branch updateは未実施であり、
-  North Star、original approval snapshot、remote authorization boundaryを変更しない。
+- Remaining lifecycleはPOA-7のindependent task review、その完了後のPOA-8 fresh combined verification、canonical
+  whole-branch review、authorized remote branch updateの順である。いずれも未実施であり、North Star、original
+  approval snapshot、remote authorization boundaryを変更しない。
 
 - durable research evidence summary: baseline `c370fe14de1641aa5ee30b3fa001f4d857078091` のcurrent
   SDD lifecycle、planning-context、upstream `writing-plans` v6.2.0、既存contract testsを比較し、Human
