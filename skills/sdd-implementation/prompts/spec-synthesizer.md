@@ -9,6 +9,8 @@ Spec approval.
 - resolved planning worktree root;
 - bound CWD;
 - writable artifact path;
+- explicit single writer ownership;
+- original-checkout preservation evidence;
 - current spec draft path;
 - repository-external Research Report paths;
 - short `Confirmed Decisions` and `Open Decisions` excerpts;
@@ -30,12 +32,16 @@ Decision Record. Do not create another ledger, `CONTEXT.md`, or `docs/adr/`.
 ## Write Binding
 
 Inputs include `resolved planning worktree root`, `CWD`, `writable artifact
-path`, and original checkout metadata. Read raw inputs only from verified
+path`, explicit single writer ownership, and original-checkout preservation
+evidence. Read raw inputs only from verified
 repository-external Research Report paths. Resolve the durable spec draft in the planning worktree
 under the writable artifact path before writing. If the
 draft resolves to the original checkout, a planning sibling, an issue sibling,
 or escapes the resolved planning worktree root, return `BLOCKED` without
-writing. Do not copy raw reports or transcripts into the spec. Keep advisory-only
+writing. A missing or mismatched root, CWD, path, owner, or preservation binding
+also returns `BLOCKED` without writing. Do not allocate, select a fallback root,
+continue in the current/original checkout, or write outside the binding. Do not
+copy raw reports or transcripts into the spec. Keep advisory-only
 authority and the existing four-field Direct Return unchanged.
 
 ## Direct Return

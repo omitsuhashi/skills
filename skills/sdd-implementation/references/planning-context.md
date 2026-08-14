@@ -16,6 +16,7 @@ Allowed direct reads:
 
 - applicable skill instructions and repository `AGENTS.md`;
 - repository root, branch, worktree, and status metadata;
+- writer ownership and original preservation evidence;
 - Control Return and Stage Capsule;
 - a worker-provided short excerpt for the current decision;
 - approval state and canonical artifact paths.
@@ -64,9 +65,14 @@ At each stage transition carry only:
 - approval state;
 - material risks.
 
+Carry the bound planning root, bound CWD, contained writable path, single writer owner,
+and original-checkout preservation evidence at every writable stage transition.
+
 Aim for about 400 words; do not copy raw discussion or tool output.
 
-Before approved-plan entry, the compact tuple is held only in current Stage Capsule/control context: original checkout path, `starting_branch`, `starting_head_sha`, captured starting status, `integration_branch`, and planning-worktree identity. After pre-plan compaction, if that tuple is not trusted, return `BLOCKED` and request Human restart/confirmation; do not reconstruct from Git or conversation and do not create a compatibility bridge, pre-plan reservation, snapshot, runtime state, scheduler, lock, event schema, or resume record. On normal approved-plan SDD entry transfer the trusted tuple to the ordinary plan-owned workspace/progress ledger. Post-transfer recovery compares the canonical plan ledger tuple with current Git facts.
+Before every writable stage, verify the task-linked worktree binding and the
+original checkout fingerprint from current Git facts. A missing or mismatched
+binding returns `BLOCKED` before the worker runs.
 
 ## Spec Synthesis And Review
 
@@ -94,8 +100,12 @@ metadata (read-only), baseline commit, approved spec path, applicable repository
 rules, current `superpowers:writing-plans` skill path, and local overlay path
 `references/plan-contract.md`, plus the resolved canonical
 `keep-implementation-simple/SKILL.md` path; the Plan Author must read it fully
-before work. Reject a stale, sibling, original-checkout, or escaping writable
-plan artifact path before authoring.
+before work. Also pass explicit single writer ownership and
+original-checkout preservation evidence. Reject a missing or mismatched binding,
+or a stale, sibling, original-checkout, or escaping writable plan artifact path,
+before authoring. The Plan Author Worker writes only to the bound contained plan
+path and must not allocate, select a fallback root, continue in the
+current/original checkout, or write outside the binding.
 
 The worker maps current files and tests, writes an executable TDD plan, performs
 the upstream author self-review, and returns only a Control Return. After that
@@ -132,7 +142,12 @@ authorization is evaluated only when the later remote action is requested.
 
 ## Failure Boundary
 
-If isolated fresh-context dispatch is unavailable, return `BLOCKED`. Do not fall back to Planning Controller exploration or artifact authoring. Do not add a
+If isolated fresh-context dispatch is unavailable, return `BLOCKED`.
+If a bound root/CWD/path, writer owner, or original preservation
+proof is missing or mismatched, return the existing four-field `blocked`
+Control Return. Do not fall back to Planning Controller exploration or artifact authoring.
+Do not allocate, select a fallback root, continue in the
+current/original checkout, or write outside the binding. Do not add a
 fallback matrix, retry scheduler, runtime state, packet schema, context
 telemetry, manual compaction, or strict word-count enforcement.
 If a required KIS read prevents Spec Synthesizer, Spec Reviewer, Plan Author, or

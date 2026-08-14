@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 from pathlib import Path
 import re
-import shutil
 import subprocess
 import tempfile
-from typing import Optional
 import unittest
 
 
@@ -18,8 +18,6 @@ TASK_MANAGEMENT_TEST = (
     / "tests"
     / "test_task_management_contract.py"
 )
-TRANSIENT_VALIDATOR = REPO_ROOT / "scripts" / "validate_sdd_transient_artifacts.py"
-MIGRATION_MARKER = "scripts/sdd-transient-artifact-migration.json"
 
 
 def run_git(repository: Path, *args: str) -> str:
@@ -60,65 +58,22 @@ def transient_validation_step() -> str:
     raise AssertionError("transient validation workflow command is missing")
 
 
-class CiHistoryFixture:
-    def __init__(self) -> None:
-        self.temporary_directory = tempfile.TemporaryDirectory()
-        self.root = Path(self.temporary_directory.name) / "repository"
-        self.root.mkdir()
-        run_git(self.root, "init", "-b", "main")
-        run_git(self.root, "config", "user.name", "Test User")
-        run_git(self.root, "config", "user.email", "test@example.invalid")
-        scripts = self.root / "scripts"
-        scripts.mkdir()
-        shutil.copyfile(TRANSIENT_VALIDATOR, scripts / TRANSIENT_VALIDATOR.name)
-        (self.root / ".gitignore").write_text(".superpowers/\n", encoding="utf-8")
-        (self.root / "tracked.txt").write_text("base\n", encoding="utf-8")
-        run_git(self.root, "add", ".gitignore", "scripts", "tracked.txt")
-        run_git(self.root, "commit", "-m", "base")
+def clone_reachable_repository(destination: Path, *, depth: int | None = None) -> None:
+    command = ["git", "clone", "--quiet", "--no-local"]
+    if depth is not None:
+        command.extend(("--depth", str(depth)))
+    command.extend((REPO_ROOT.as_uri(), str(destination)))
+    subprocess.run(command, check=True, capture_output=True, text=True)
 
-    def close(self) -> None:
-        self.temporary_directory.cleanup()
 
-    def commit_cleanup_boundary(self) -> str:
-        marker = self.root / MIGRATION_MARKER
-        marker.write_text("{}\n", encoding="utf-8")
-        run_git(self.root, "add", MIGRATION_MARKER)
-        run_git(self.root, "commit", "-m", "add migration marker")
-        run_git(self.root, "rm", MIGRATION_MARKER)
-        run_git(self.root, "commit", "-m", "remove migration marker")
-        return run_git(self.root, "rev-parse", "HEAD").strip()
-
-    def commit_transient_add_then_delete(self) -> tuple[str, str]:
-        transient = self.root / ".superpowers" / "post-cleanup.md"
-        transient.parent.mkdir(parents=True)
-        transient.write_text("must never enter a post-cleanup commit\n", encoding="utf-8")
-        run_git(self.root, "add", "-f", ".superpowers/post-cleanup.md")
-        run_git(self.root, "commit", "-m", "add forbidden transient artifact")
-        added = run_git(self.root, "rev-parse", "HEAD").strip()
-        run_git(self.root, "rm", ".superpowers/post-cleanup.md")
-        run_git(self.root, "commit", "-m", "delete forbidden transient artifact")
-        deleted = run_git(self.root, "rev-parse", "HEAD").strip()
-        return added, deleted
-
-    def run_ci_validation(self, repository: Optional[Path] = None) -> subprocess.CompletedProcess[str]:
-        target = repository or self.root
-        return subprocess.run(
-            ["bash", "-c", transient_validation_step()],
-            cwd=target,
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-
-    def shallow_clone(self) -> Path:
-        clone = Path(self.temporary_directory.name) / "shallow"
-        subprocess.run(
-            ["git", "clone", "--quiet", "--depth", "1", self.root.as_uri(), str(clone)],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-        return clone
+def run_ci_validation(repository: Path) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["bash", "-c", transient_validation_step()],
+        cwd=repository,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
 
 
 class SkillCiWorkflowTests(unittest.TestCase):
@@ -158,54 +113,73 @@ class SkillCiWorkflowTests(unittest.TestCase):
         self.assertNotIn("Validate repository compatibility", text)
         self.assertNotIn("scripts/validate_repository_compatibility.py", text)
 
-    def test_workflow_runs_transient_artifact_regression_and_repository_validation(self) -> None:
+    def test_workflow_runs_transient_artifact_regression_and_validation(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("Test SDD transient artifact validator", text)
         self.assertIn("python3 scripts/test_validate_sdd_transient_artifacts.py", text)
         self.assertIn("Validate SDD transient artifacts", text)
         self.assertIn("python3 scripts/validate_sdd_transient_artifacts.py", text)
+        self.assertIn("--post-policy-history", text)
+        self.assertNotIn("--post-cleanup-history", text)
         self.assertNotIn("--migration-baseline", text)
 
-    def test_transient_validation_step_accepts_clean_post_cleanup_history(self) -> None:
-        fixture = CiHistoryFixture()
-        try:
-            fixture.commit_cleanup_boundary()
-            result = fixture.run_ci_validation()
-            self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-        finally:
-            fixture.close()
+    def test_transient_validation_step_accepts_reachable_only_checkout(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory) / "repository"
+            clone_reachable_repository(repository)
 
-    def test_transient_validation_step_rejects_add_then_delete_commit_history(self) -> None:
-        fixture = CiHistoryFixture()
-        try:
-            fixture.commit_cleanup_boundary()
-            added, deleted = fixture.commit_transient_add_then_delete()
-            self.assertTrue(run_git(fixture.root, "ls-tree", "-r", added, "--", ".superpowers").strip())
-            self.assertEqual("", run_git(fixture.root, "ls-tree", "-r", deleted, "--", ".superpowers"))
-            result = fixture.run_ci_validation()
+            result = run_ci_validation(repository)
+
+            self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+    def test_transient_validation_does_not_require_origin_main(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory) / "repository"
+            clone_reachable_repository(repository)
+            run_git(repository, "update-ref", "-d", "refs/remotes/origin/main")
+            with self.assertRaises(subprocess.CalledProcessError):
+                run_git(repository, "rev-parse", "--verify", "refs/remotes/origin/main")
+
+            result = run_ci_validation(repository)
+
+            self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+    def test_transient_validation_rejects_post_policy_add_then_delete(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory) / "repository"
+            clone_reachable_repository(repository)
+            run_git(repository, "config", "user.name", "Test User")
+            run_git(repository, "config", "user.email", "test@example.invalid")
+            transient = repository / ".superpowers" / "smuggled.md"
+            transient.parent.mkdir(parents=True, exist_ok=True)
+            transient.write_text("must be rejected\n", encoding="utf-8")
+            run_git(repository, "add", "-f", ".superpowers/smuggled.md")
+            run_git(repository, "commit", "-m", "add forbidden transient artifact")
+            added = run_git(repository, "rev-parse", "HEAD").strip()
+            run_git(repository, "rm", ".superpowers/smuggled.md")
+            run_git(repository, "commit", "-m", "delete forbidden transient artifact")
+            self.assertTrue(
+                run_git(repository, "ls-tree", "-r", added, "--", ".superpowers").strip()
+            )
+
+            result = run_ci_validation(repository)
+
             self.assertNotEqual(0, result.returncode, result.stdout + result.stderr)
             self.assertIn("category=new_commit_entry", result.stdout + result.stderr)
-        finally:
-            fixture.close()
 
-    def test_transient_validation_step_rejects_missing_cleanup_boundary(self) -> None:
-        fixture = CiHistoryFixture()
-        try:
-            result = fixture.run_ci_validation()
-            self.assertNotEqual(0, result.returncode, result.stdout + result.stderr)
-        finally:
-            fixture.close()
+    def test_transient_validation_rejects_shallow_history(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory) / "repository"
+            clone_reachable_repository(repository, depth=1)
+            self.assertEqual(
+                "true",
+                run_git(repository, "rev-parse", "--is-shallow-repository").strip(),
+            )
 
-    def test_transient_validation_step_rejects_shallow_history(self) -> None:
-        fixture = CiHistoryFixture()
-        try:
-            fixture.commit_cleanup_boundary()
-            shallow = fixture.shallow_clone()
-            self.assertEqual("true", run_git(shallow, "rev-parse", "--is-shallow-repository").strip())
-            result = fixture.run_ci_validation(shallow)
+            result = run_ci_validation(repository)
+
             self.assertNotEqual(0, result.returncode, result.stdout + result.stderr)
-        finally:
-            fixture.close()
+            self.assertIn("category=history_unavailable", result.stdout + result.stderr)
 
 
 if __name__ == "__main__":

@@ -336,11 +336,18 @@ class PreImplementationContextContractTests(unittest.TestCase):
             combined,
         )
 
-    def test_binding_tuple_lifetime_and_recovery_are_required(self) -> None:
+    def test_worktree_binding_is_reverified_before_writable_stages(self) -> None:
         section = self.planning_text.split("## Stage Capsule", 1)[1].split("## Spec Synthesis And Review", 1)[0]
-        for value in ("original checkout path", "`starting_branch`", "`starting_head_sha`", "captured starting status", "`integration_branch`", "Stage Capsule/control context", "plan-owned workspace/progress ledger", "Human restart/confirmation", "`BLOCKED`"):
-            self.assertIn(value, section)
-        for value in ("reconstruct", "compatibility bridge", "pre-plan reservation", "resume record"):
+        for value in (
+            "bound planning root",
+            "bound CWD",
+            "contained writable path",
+            "single writer owner",
+            "original-checkout preservation evidence",
+            "task-linked worktree binding",
+            "current Git facts",
+            "`BLOCKED`",
+        ):
             self.assertIn(value, section)
 
     def test_bound_paths_and_first_report_are_required(self) -> None:

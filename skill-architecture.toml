@@ -4,6 +4,9 @@ schema_version = 1
 description = "Repository change workflow skills that move work from requirements through specification, planning, and local implementation."
 user_facing_skills = ["sdd-implementation"]
 default_implementation_skill = "sdd-implementation"
+first_entry_skill = "sdd-implementation"
+pre_gate_writable_subskill_action = "blocked"
+downstream_conflict_action = "blocked"
 forbidden_standalone_skill_names = [
   "context-manager",
   "dependency-graph",

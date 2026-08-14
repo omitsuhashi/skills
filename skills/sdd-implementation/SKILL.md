@@ -9,13 +9,65 @@ Superpowers is the authoritative development methodology. Compose its current
 skills; do not copy their process into a custom scheduler, worker packet schema,
 runtime snapshot, event log, or resume protocol.
 
+## Repository Change Entry
+
+Enter every repository change through `sdd-implementation` before
+brainstorming, writing-plans, using-git-worktrees, domain modeling,
+implementation, or another writable supporting skill. A direct writable
+supporting-skill entry returns exactly:
+
+- `status`: `blocked`
+- `artifact_path`: `none`
+- `decision_requests`: `none`
+- `material_risks`: `SDD First-Write Worktree Gate required`
+
+Return without invoking the supporting skill, allocating a worktree, or writing
+an artifact. Repository entry, containment, zero-write, and no-fallback rules
+override conflicting downstream instructions.
+
 ## First-Write Worktree Gate
 
-Before any content or artifact write, perform read-only discovery and capture the original checkout canonical path, named `starting_branch`, immutable `starting_head_sha`, distinguishable staged/unstaged/untracked starting status, Git common directory/worktree registration, and Epic branch/path. Detached HEAD, default-branch inference, task-relevant uncommitted original content, branch collision, path collision, allocation failure, or ownership ambiguity is fail closed: return `BLOCKED` with zero content/artifact write and no original checkout fallback.
+The primary/default checkout and its `main` branch are read-only for task work.
+Capture its canonical path, `starting_branch`, `starting_head_sha`, and status
+using read-only discovery. It receives no task content/artifact write and no task
+commit.
 
-Create the planning worktree atomically from `starting_head_sha`; only the continuing controller/chat that won atomic allocation may reuse it. If two allocators select the same Epic, the loser must not attach to the existing worktree and returns `BLOCKED`. An independent chat, stale/foreign state, or HEAD/index/tracked/untracked state not attributable to the trusted tuple is `BLOCKED`. Allocation may change shared Git metadata only; never perform original checkout switch/reset/stash/clean/add/commit or content write.
+Before the first content/artifact write, create or verify a task-linked worktree.
+Prove its Git registration, common directory, branch, canonical path, and
+separation from the original checkout. The controller mints one opaque task-owner
+capability and requires the allocator to return that same object by identity;
+path equality and branch naming are not ownership evidence. Bind the repository
+root, CWD, and every writable path to that owned worktree. Revalidate returned
+paths before accepting worker output or committing task changes.
 
-Before the first writable dispatch, prove planning registration/common directory/branch/path, captured-SHA base, and original branch/HEAD/status preservation. Source and durable writes remain inside the trusted planning worktree. Prove that repository root, CWD, and every relative or absolute durable writable artifact path resolve inside it. The first transient Research Report uses the repository-external task/session temporary route. Reject stale paths, aliases, and escape paths before either kind of write. The original checkout must not remain in a writable root, fallback root, CWD, or artifact destination.
+Source and canonical durable repository writes remain inside the owned
+task-linked worktree. Raw Research, review, worker, fix, and transcript handoff
+uses a separate bounded capability whose destination resolves to a
+repository-external task/session temporary path outside the repository root,
+original checkout, owned worktree, and sibling worktrees. Do not pass an
+external transient handoff path to the repository writer. Reject stale paths,
+aliases, and escape paths before either kind of write.
+
+One writable gate invocation materializes exactly one new artifact. Validate the
+complete data-only plan, existing parent, absent target, and containment before
+mutation; stage inside the verified worktree and atomically publish the artifact.
+A multi-output plan or pre-existing target is `BLOCKED` before the writer because
+this minimal evidence model does not claim rollback for replacements. Commit in a
+separate invocation through the gate-owned data-only `git commit` plan and native
+runner, with CWD equal to the verified worktree. Reject original or stale CWD
+before runner invocation; do not accept an arbitrary callback.
+
+A capability, dependency, path, ownership, permission, allocation, binding, or
+expected runtime failure returns the four-field Control Return with `status: blocked`,
+`artifact_path: none`, `decision_requests: none`, and the material blocker. Make
+zero content/artifact writes, invoke no writer or downstream runner, and create
+no report, spec, plan, or commit. Allocation may change shared Git metadata
+only; it must preserve the original checkout fingerprint.
+
+Never continue in the current or original checkout, select another workflow's
+worktree, choose a fallback root, or fall back to an old loop. This is a
+repository-owned SDD workflow boundary; it does not prohibit arbitrary manual
+Git use outside that workflow.
 
 ## Planning Controller
 
@@ -156,20 +208,11 @@ commit the scratch.
 
 Invoke `scripts/validate_sdd_transient_artifacts.py` for every repository validation gate.
 Validate the current Git index and staging area independently. Validate each
-nominated candidate tree, post-cleanup new commit, and final tree independently.
-Allow a staged deletion only when the candidate tree has no `.superpowers/**`
-entry. Do not reject a pre-amendment historical ancestor blob without a current
-index or nominated-tree violation.
-Treat the tracked migration manifest as candidate-tree authority only for the
-exact f07aebc three-report baseline. Accept that authority only when the planned
-pre-marker parent and authorized introduction are ancestors of HEAD, the
-introduction is the sole marker add, no marker deletion exists in that ancestry,
-and the current HEAD marker mode, blob, and path match exactly. A divergent or
-pre-marker HEAD cannot gain authority by staging the manifest. When the manifest
-is absent, require zero `.superpowers/**` entries and reject exact-baseline
-reintroduction. Stage the manifest deletion and all three report deletions
-together; the resulting clean candidate tree uses the strict zero-entry path
-without an exception flag.
+nominated candidate tree, post-boundary new commit, and final tree independently.
+Require zero `.superpowers/**` entries in every validated surface. Do not reject
+a pre-amendment historical ancestor blob without a current index or nominated-tree
+violation. The completed migration marker is historical evidence, not current
+validation authority.
 
 If `scripts/validate_sdd_transient_artifacts.py` is unavailable, returns nonzero,
 or detects any `.superpowers/**` violation, fail and abort the repository gate;

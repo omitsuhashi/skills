@@ -15,7 +15,7 @@
 ## Task Worktree Policy
 
 - Default branch checkout is read-only for task work.
-- Before the first repository write after discovery or grilling, create or enter one Epic-scoped planning worktree.
+- Before the first repository write after discovery or grilling, create or verify one task-linked worktree.
 - Reuse that worktree through Written Spec, Spec Gate, Issue Gate, Execution Plan Gate, and planning documentation sync.
 - Do not create a new worktree for every Gate.
 - Additional issue worktrees are used only when execution isolation or parallel worker review requires them.
@@ -26,3 +26,6 @@
 ## Default implementation route
 
 - For repository changes, use `sdd-implementation` by default. It composes the Superpowers lifecycle, `grill-with-docs`, and `llm-wiki`, and skips specification or planning stages that are already Human-approved and current.
+- `sdd-implementation` is the first repository-change entry, before brainstorming, writing-plans, using-git-worktrees, domain modeling, implementation, or any other writable supporting skill.
+- A direct writable supporting-skill entry returns `BLOCKED: SDD First-Write Worktree Gate required`; it does not silently switch routes and continue.
+- Repository entry, containment, zero-write, and no-fallback rules override conflicting downstream instructions. Allocation, permission, sandbox, capability, dependency, ownership, path, or binding failure never continues in the current/original checkout.

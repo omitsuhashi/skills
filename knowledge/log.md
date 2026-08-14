@@ -1868,6 +1868,47 @@ append-only で使います。すべての entry は予測しやすい header �
 - append-only recordとして、直前の`human-ruling-correction` eventにある「canonical final reviewはこの訂正commit後にあらためて行い」という wording を supersede する。このcorrection commitはTask 4のscoped re-reviewを受け、その完了後にcontrollerがTask 4 closeout後のsingle canonical final whole-branch reviewを初回として一度だけ実行する。
 - canonical final whole-branch reviewはまだ実行しておらず、full reviewのrepeatは発生していない。remote publicationは承認・実施していない。
 
+## [2026-08-14] draft-review | SDD fail-closed worktree gate 仕様
+
+- Actor: repository maintainer-delegated actor。Canonical OwnerであるHuman / repository maintainerの明示承認に基づく。
+- Decision: `promote`。proposal [[wiki/drafts/sdd-fail-closed-worktree-gate-spec|SDD fail-closed worktree gate 仕様（昇格済み draft）]] を、active canonical synthesis [[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|SDD fail-closed worktree gate 仕様]] へ昇格した。
+- Authority result: `Read: allowed`、`Write Boundary: owned`、Canonical OwnerのHuman承認、およびselected authoring profile `obsidian` の手順を満たし、direct canonical updateを許可した。
+- Lifecycle effect: draftを`promoted`として保持し、canonical targetを`accepted` / `active`として作成した。[[index|active catalog]]にはcanonical targetを1件だけ登録し、draftは登録していない。
+- Relation effect: [[wiki/syntheses/sdd-first-write-worktree-migration-spec|SDD first-write worktree migration 仕様]]をsupersedeせず、repository-change first-entry precedence、no-fallback semantics、guard preflight / activation / commit behaviorを所有するnormative fail-closed addendum relationを保持した。
+- Evidence: HumanのWritten Spec明示承認（2026-08-14）、draft内の`Confirmed Decisions`、`Open Decisions: なし`、および`knowledge/AGENTS.md`のsingle-root owner/write-boundary contract。implementation、guard activation、active install、remote publicationは実施していない。
+
+## [2026-08-14] draft-review | SDD fail-closed worktree gate 実装計画
+
+- Actor: repository maintainer-delegated actor。Canonical OwnerであるHuman / repository maintainerのimplementation plan明示承認に基づく。
+- Decision: `promote`。proposal [[wiki/drafts/sdd-fail-closed-worktree-gate-implementation-plan|SDD fail-closed worktree gate 実装計画（昇格済み draft）]] を、active canonical synthesis [[wiki/syntheses/sdd-fail-closed-worktree-gate-implementation-plan|SDD fail-closed worktree gate 実装計画]] へ昇格した。
+- Authority result: `Read: allowed`、`Write Boundary: owned`、Canonical OwnerのHuman承認、およびselected authoring profile `obsidian` の手順を満たし、direct canonical updateを許可した。
+- Lifecycle effect: draftを`promoted`として保持し、canonical targetを`accepted` / `active` implementation planとして作成した。[[index|active catalog]]にはcanonical targetを1件だけ登録し、draftは登録していない。
+- Evidence: Humanのimplementation plan明示承認（2026-08-14）、[[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|承認済み仕様]]、昇格元draftのapproved plan content、および`knowledge/AGENTS.md`のsingle-root owner/write-boundary contract。guard activation、active install、remote publicationは実施していない。
+
+## [2026-08-14] ingest | SDD fail-closed worktree gate scope reduction
+
+- Actor: repository maintainer-delegated actor。Canonical OwnerであるHuman / repository maintainerの2026-08-14 owner decisionに基づくdirect canonical update。
+- Decision: original requirement全体を最小scopeとしてaccepted revisionへ更新した。repository workは`sdd-implementation`から開始し、original `main`をtask workでread-onlyに保ち、first content/artifact write前にverified task-linked worktreeへall-write/commit bindingを確立し、allocation・permission・path・ownership・capability・dependency・binding failureはzero-write `BLOCKED`、fallbackなしとする。
+- Withdrawn: layered defense、Git commit guard、`--no-verify` defense、hook/config inventory、activation transaction、rollback machinery、lifecycle split、one-time guard bootstrap、exact tuple authority、external cache treatmentをcurrent requirementからHumanが撤回した。raw Git-level manual shell commit prohibitionは保証範囲外である。
+- Affected canonical pages: [[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|SDD fail-closed worktree gate 仕様]] と [[wiki/syntheses/sdd-fail-closed-worktree-gate-implementation-plan|SDD fail-closed worktree gate 実装計画]]。promoted draftsはhistorical proposal evidenceとして変更していない。
+- Index effect: [[index|durable catalog]] をminimal gateのsummaryへ同期した。source implementationは `in progress` であり、implementation complete、activation、install、remote stateは主張しない。
+
+## [2026-08-14] final-review-fix-wave | SDD fail-closed worktree gate
+
+- final whole-branch reviewのcomplete findings listを一回のfix waveで補正した。multi-output rollbackを削除し、opaque owner identity、single-new-artifact atomic publish、gate-owned native commit plan、expected OSError / dependency / construction failureのfour-field `BLOCKED` normalizationへ限定した。hook、commit guard、activation、bootstrap、exact tuple、general rollback subsystemは追加していない。
+- focused REDは23 tests中7 failures / 3 errorsでrequested gapsを再現し、focused GREENは23/23、fresh full SDD suiteは66/66、repository scriptsは19/19でpassした。architecture / context / warning-free context report / skill-creator validationもexit 0である。
+- [[wiki/syntheses/sdd-first-write-worktree-migration-spec|predecessor spec]]とpredecessor planはFirst-Write部分だけscoped supersedeし、影響を受けない後続Epic opt-in parallel adapter部分だけをcurrent参照範囲として[[index|catalog]]へ残した。
+- original checkoutはexternal forward update後のclean `main@82dcd32157ff9690ae038f982f3916009e449f80`としてread-onlyに保持している。fix commit、post-commit range diff、task-commit non-containment、scoped re-reviewは未実施のため、source implementationは`in progress`でありcloseoutを主張しない。
+
+## [2026-08-14] implementation-closeout | SDD fail-closed worktree gate
+
+- Actor: repository maintainer-delegated actor。Canonical Ownerのapproved minimal spec/planとcontroller adjudicationに基づき、[[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|仕様]]、[[wiki/syntheses/sdd-fail-closed-worktree-gate-implementation-plan|実装計画]]、[[index|durable catalog]]を`LOCAL_COMPLETE_WITH_PARKED_HARNESS_RISKS`へ同期した。
+- Human承認済みの5要件とraw Git boundaryは変更していない。withdrawn済みのguard、hook、activation、inventory、bootstrap、lifecycle、external-cache、exact-tuple、general rollback設計はcurrent sourceへ戻していない。
+- Task reviewはfix round 4後にclean。fresh verificationはfocused 23/23、full SDD 66/66、scripts 19/19、architecture/context/context-report/skill-creatorがすべてpassし、context reportは`warnings: []`、complete branch rangeの`git diff --check`もcleanである。
+- whole-branch reviewは4 Importantを報告した。唯一のfix wave `90acc95b33935fec82c3bf03fb39405d2bd19894` でtask-owner / commit-CWD bindingとcatalog supersessionを補正し、scoped re-reviewで確認した。
+- 2件はcontroller-parkedのnon-production harness fidelity riskである。harness modelではcheck後のconcurrent target creationを`os.replace`がclobberし得ること、cleanup `unlink` failureで`.sdd-stage-*`が残りescapeし得ることを保持する。このharnessをproduction-strength concurrent transactionとは扱わず、いずれもrepo-owned SDDからoriginal `main`へwrite/commitするpathを作らない。
+- original checkoutは開始時clean `main@c370fe14de1641aa5ee30b3fa001f4d857078091`から外部でclean `main@82dcd32157ff9690ae038f982f3916009e449f80`へforward advanceした。開始SHAはcurrent `main`のancestorで、16 task commitsはいずれも`main`に含まれない。literal HEAD preservationやintegrationは主張しない。
+- local-only closeoutである。push、PR、install、activation、`main` integrationは未実施。
 ## [2026-08-14] ingest | SDD Plan Ownership Alignment 実装計画
 
 - Planning ControllerからHuman-approved current Written Specとして渡された[[wiki/syntheses/sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]]を、baseline `c370fe14de1641aa5ee30b3fa001f4d857078091`とspec SHA-256 `d3e7915fc5e69778140f549016e4fe8ba4308612df439d137f60cbc6b2520be9`へbindingし、[[wiki/syntheses/sdd-plan-ownership-alignment-implementation-plan|agent-owned implementation plan]]としてingestした。
@@ -2284,6 +2325,31 @@ append-only で使います。すべての entry は予測しやすい header �
 - [[wiki/syntheses/global-skill-fallback-and-simple-implementation-plan|canonical plan]]のlocal implementationは`e40fa348db056be005a254c1e5a84b51d7447629`（`feat: keep skill discovery fallback simple`）で完了し、approved task reviewはopen material findingなしである。planと[[index|durable catalog]]を`implemented-task-reviewed-pending-final-review`へ同期した。
 - fresh-agent behavior GREENは2件ともPASSである。`keep-implementation-simple`はexisting configuration owner/surfaceを選び、unmapped resolver/classifier/cache/provenance traceを除外し、review blockerをrequirement gap・repository rule violation・observable regression・concrete current riskに限定した。SDD Dependency Preflightはreadableな`~/.agents/skills/llm-wiki/SKILL.md`をread/useして継続し、complete no-matchだけをmissing、incomplete discovery/candidate readをconcreteな`BLOCKED: dependency preflight failed`として扱った。
 - focused validationはSDD unittest 49件、`scripts/validate_skill_architecture.py --all`、両Skillの`quick_validate.py`、`git diff --check`がすべてGREENである。`c370fe14de1641aa5ee30b3fa001f4d857078091..HEAD`のfinal diff checkとfresh final whole-branch reviewは未実施のままであり、`LOCAL_COMPLETE`は宣言しない。push、PR、merge、release、remote write、live installは未実施である。
+
+## [2026-08-14] post-merge-fix | SDD fail-closed worktree gate and transient artifact boundary
+
+- Merge commit `523e90969d0c15499c74f0c1b8c897c3607bd53b`で、PR #51のFirst-Write gateとmain/#49のPlan authority / repository-external transient artifact contractをunionした。[[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|canonical First-Write specification]]と[[wiki/syntheses/sdd-fail-closed-worktree-gate-implementation-plan|implementation plan]]は、source / canonical durable repository writeとnative commitをtask worktreeへbindし、raw research / review / worker / fix / handoff / transcriptは[[wiki/syntheses/sdd-plan-ownership-alignment|Plan Ownership Alignment]]が所有するtask/session-bounded repository-external capabilityへrouteするcurrent relationへ同期した。
+- post-merge fixは、unsquashed historyのexact migration-state-to-zero transitionと、既知のsquash-main strict-policy root `82dcd32157ff9690ae038f982f3916009e449f80`をexclusiveなcleanup provenanceとして解決する。pre-policy first parentへmainをmergeしたintegration boundaryは、別parentのauthorized root ancestry、imported parentとmerge treeのcurrent policy entryのexact equality、両treeのstrict-zero stateから導出し、merge SHAやfuture policy blobをauthorityとして列挙しない。unknown、multiple、root-only、shallow historyはfail closedを維持し、cleanup後の全ancestry-path commit、current index / candidate tree、final treeをvalidatorへ渡す。marker deletionだけをauthorityにするfallbackは追加していない。
+- original/default checkoutはread-onlyのまま保ち、そこへのsource task write / task commitは行っていない。push、PR、install、activation、remote publicationも行っていない。このeventはmerge resolutionとpost-merge correctionのdurable lifecycle summaryであり、raw test / review report本文をrepositoryへcopyしない。
+
+## [2026-08-14] correction | SDD post-merge transient history validation
+
+- Actorはrepository maintainer-delegated Post-merge Fix Round 2 implementerである。scoped re-reviewのImportant 2件に基づき、直前の`post-merge-fix` eventのうち「authorized rootの任意descendantをintegration authorityにできる」「`--ancestry-path`で得たcommit setがcleanup後の全reachable historyを検査する」という含意だけを訂正し、First-Write / Plan Ownership Alignmentのcanonical authority splitとappend-only historyは変更しない。
+- integration formはfirst parentをknown pre-policy tip `f54c6f082ce8a1eb4dd2f8d46d2171443d143817`、second parentをlocal named `refs/remotes/origin/main`のexact tipへbindする。second parentはauthorized squash root `82dcd32157ff9690ae038f982f3916009e449f80`のdescendantで、imported parentとintegration treeのcurrent policy entryがexact一致し、両treeがstrict-zeroでなければ`BLOCKED`になる。arbitrary descendant、missing ref、stale / mismatched refへfallbackしない。
+- post-cleanup validationはcleanup root parentから`HEAD`までの全reachable commitをcollectし、reachableなexact known pre-policy tipのancestryだけを除外する。それ以外のside / intermediate commitは、最終treeがcleanでもすべてstrict validationを受ける。unsquashed exact migration-state-to-zero transition、current index / candidate tree / final tree validationは不変である。
+- TDD evidenceはfocused RED 13件中2 failure（non-`origin/main` policy importとpre-root side add→deleteの誤受理）、focused GREEN 13/13とvalidator regression 22/22、full SDD 113/113、scripts 51/51である。[[index|active catalog]]とcanonical spec / planはauthorityまたはdiscoverability変更がないため更新していない。raw review / test outputはrepositoryへcopyせず、push、PR、install、activation、remote publicationは行っていない。
+
+## [2026-08-14] correction | SDD strict-zero CI validation
+
+- Human-approved PR #51 CI simplificationにより、直前2件のpost-merge eventがcurrent authorityとしていたexact migration state、marker lineage、semantic cleanup transition、`refs/remotes/origin/main` bindingをsupersedeする。completed migration markerはhistorical evidenceであり、current validation authorityではない。
+- current ruleは一つのfail-closed strict-zero invariantである。current Git index / staging area、nominated candidate tree、known policy rootとpre-policy tipでboundedされたpost-policy reachable commit、final treeの各surfaceは`.superpowers/**` entry zeroでなければならず、marker、blob、remote-tracking ref、fallbackで例外化しない。pre-policy historical ancestor blobだけではfailureにしない。
+- root-owned validator / regression / CI contractとportable `sdd-implementation` contractをこの単一ruleへ同期した。reachable-only clean cloneと`refs/remotes/origin/main`不在のcheckoutをself-containedに検証し、canonical wiki pageと[[index|active catalog]]はauthorityまたはdiscoverability変更がないため更新しない。raw test output、push、PR、install、activation、remote publicationはscope外である。
+
+## [2026-08-14] evidence-correction | SDD strict-zero clean-clone regression
+
+- 直前の`SDD strict-zero CI validation` eventにあるreachable-only clean-clone evidence claimは、fixtureがclone済みの同一validatorをcopyして無条件にinstallation commitしようとしたためinvalidである。committed `649d1e75f2812ae5899aa40b061569e1a86574f1`ではfocused testがそのno-op commitでerrorとなり、synthetic add/delete historyまで到達していなかった。
+- fixtureからvalidator copyとinstallation commit assumptionを除き、reachable-only cloneのcommitted validatorをそのまま使ってpost-policy add/delete historyを作るself-contained regressionへ訂正した。focused workflow 8/8、validator 10/10、full SDD 113/113、repository scripts 34/34、LLM Wiki 21/21とarchitecture / context / skill-creator / diff checksはGREENである。
+- strict-zero product rule、policy-root / pre-policy-tip history bound、canonical wiki page、[[index|active catalog]]は変更しない。raw output、fallback、fetch、unreachable object、push、PR、install、activation、remote publicationは追加していない。
 
 ## [2026-08-14] ingest | Keep Implementation Simple Written Spec
 

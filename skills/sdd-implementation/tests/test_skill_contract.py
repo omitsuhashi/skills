@@ -9,7 +9,6 @@ SKILL_DIR = Path(__file__).resolve().parents[1]
 SKILL = SKILL_DIR / "SKILL.md"
 OPENAI_YAML = SKILL_DIR / "agents" / "openai.yaml"
 
-
 def read_or_empty(path: Path) -> str:
     return path.read_text(encoding="utf-8") if path.is_file() else ""
 
@@ -132,22 +131,13 @@ class SddImplementationSkillContractTests(unittest.TestCase):
             "Invoke `scripts/validate_sdd_transient_artifacts.py` for every "
             "repository validation gate.",
             "Validate the current Git index and staging area independently.",
-            "Validate each nominated candidate tree, post-cleanup new commit, "
+            "Validate each nominated candidate tree, post-boundary new commit, "
             "and final tree independently.",
-            "Allow a staged deletion only when the candidate tree has no "
-            "`.superpowers/**` entry.",
+            "Require zero `.superpowers/**` entries in every validated surface.",
             "Do not reject a pre-amendment historical ancestor blob without a "
             "current index or nominated-tree violation.",
-            "Treat the tracked migration manifest as candidate-tree authority "
-            "only for the exact f07aebc three-report baseline.",
-            "Accept that authority only when the planned pre-marker parent and "
-            "authorized introduction are ancestors of HEAD, the introduction "
-            "is the sole marker add, no marker deletion exists in that ancestry, "
-            "and the current HEAD marker mode, blob, and path match exactly.",
-            "A divergent or pre-marker HEAD cannot gain authority by staging the "
-            "manifest.",
-            "When the manifest is absent, require zero `.superpowers/**` entries "
-            "and reject exact-baseline reintroduction.",
+            "The completed migration marker is historical evidence, not current "
+            "validation authority.",
         )
         normalized = " ".join(self.skill_text.split())
         for statement in expected_contract:
@@ -316,7 +306,15 @@ class SddImplementationSkillContractTests(unittest.TestCase):
         self.assertLess(closeout, final_review)
 
     def test_skill_has_only_the_internal_stage_resource_shape(self) -> None:
-        children = {path.name for path in SKILL_DIR.iterdir()} if SKILL_DIR.is_dir() else set()
+        children = (
+            {
+                path.name
+                for path in SKILL_DIR.iterdir()
+                if path.is_file() or any(path.iterdir())
+            }
+            if SKILL_DIR.is_dir()
+            else set()
+        )
         self.assertEqual(
             {"SKILL.md", "agents", "prompts", "references", "tests"},
             children,
@@ -352,7 +350,7 @@ class SddImplementationSkillContractTests(unittest.TestCase):
     def test_first_write_gate_precedes_controller(self) -> None:
         self.assertLess(self.skill_text.index("## First-Write Worktree Gate"), self.skill_text.index("## Planning Controller"))
         gate = self.skill_text.split("## First-Write Worktree Gate", 1)[1].split("## Planning Controller", 1)[0]
-        for value in ("read-only discovery", "Detached HEAD", "default-branch inference", "`starting_branch`", "`starting_head_sha`", "Epic branch/path", "shared Git metadata", "zero content/artifact write", "original checkout fallback"):
+        for value in ("read-only discovery", "primary/default checkout", "`starting_branch`", "`starting_head_sha`", "task-linked worktree", "shared Git metadata", "zero content/artifact writes", "fallback root"):
             self.assertIn(value, gate)
 
     def test_parallel_adapter_leaves_issue_sdd_sequential(self) -> None:
