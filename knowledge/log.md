@@ -2478,3 +2478,9 @@ append-only で使います。すべての entry は予測しやすい header �
 ## [2026-08-15] frontmatter-state-correction | SDD portable validation fixture-minimization amendment
 
 - [[wiki/syntheses/sdd-portable-validation-simplification-implementation-plan|current plan]]のfrontmatterに残ったpre-implementation statusを、body、current spec、active index、phase-one closeout eventと一致する`implemented-pending-final-review`へ訂正した。これはAM-1 reviewed completionとAM-2 phase-one verification/knowledge completionを表すだけであり、exactly one controller-owned canonical whole-branch reviewとdependent final status transitionはpendingのままである。`LOCAL_COMPLETE`、approved scope、Human authority、source/tests、remote stateは変更していない。
+
+## [2026-08-15] amendment-local-completion | SDD portable validation fixture-minimization amendment
+
+- Canonical whole-branch review head `81717fd4656a26fb14936770e1bfc945a27f9f3b`はCritical 0 / Important 3 / Minor 0を返し、bounded fix `791c2c8e819f86211a69700e2f88a0488b057aff`がoriginal three findingsをaddressした。scoped re-reviewでnew Important URL false-positive 1件を確認し、Humanが一回のbounded correctionを明示承認した。`87fc8d5f82b94cc1f7bde63320d71e65c857144d`がexisting test ownerだけで修復し、final scoped reviewはresidual `ADDRESSED`、new Critical 0 / Important 0 / Minor 0、dependent status transition readyと判定した。
+- [[wiki/syntheses/sdd-portable-validation-simplification|current accepted/approved spec]]、[[wiki/syntheses/sdd-portable-validation-simplification-implementation-plan|current plan]]、[[index|active catalog]]をcurrent amendmentの`LOCAL_COMPLETE`へ同期した。Task 6/7 task reviews、exact `ours` merge ancestry/tree proof、deleted fixture/runner、existing-owner direct validation/runtime split、fresh combined verificationとfinal gatesはcurrent evidenceであり、material residual riskはない。historical SPV `LOCAL_COMPLETE` recordsはhistorical evidenceとして変更していない。
+- GitHub publicationとPR作成はHumanにより別途承認済みだが、このevent時点でremote writeは未実施である。publicationはlocal completionのimplementation evidence外であり、controllerが本transition後に実行する。

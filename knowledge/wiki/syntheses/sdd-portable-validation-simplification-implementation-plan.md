@@ -1,9 +1,9 @@
 ---
 title: SDD portable validation と責務単純化 実装計画
 date: 2026-08-15
-status: implemented-pending-final-review
-review_state: independent-plan-review-ready
-plan_readiness: ready
+status: LOCAL_COMPLETE
+review_state: final-review-clean
+plan_readiness: complete
 tags:
   - sdd-implementation
   - skill-portability
@@ -28,13 +28,13 @@ aliases:
 - Approved North Star path: knowledge/wiki/syntheses/sdd-portable-validation-simplification.md
 - Approved North Star anchor: 目標
 - Approved North Star identity: sdd-portable-validation-simplification#目標@2026-08-14
-- Approved snapshot SHA-256: e78e2d153a4360bdfaddf2f6c0bbe909c879254e49ffa67fb1bb0a0f44cc3c11
+- Approved snapshot SHA-256: 14b46a598ae1d63eb05d687dc6435967604880cbd26dbf3e8305791e93876df2
 - Approval state: approved
 
 ## Approved Written Spec Identity
 
 - Approved spec path: knowledge/wiki/syntheses/sdd-portable-validation-simplification.md
-- Approved spec SHA-256: e78e2d153a4360bdfaddf2f6c0bbe909c879254e49ffa67fb1bb0a0f44cc3c11
+- Approved spec SHA-256: 14b46a598ae1d63eb05d687dc6435967604880cbd26dbf3e8305791e93876df2
 - Approval state: approved
 
 ## Plan Binding
@@ -56,13 +56,13 @@ aliases:
 - Material risks: none
 - Durable finding summary: exact-identity `ours` no-ff merge predicate and AM-1 implementation route were ready. This verdict predates the Task 7 canonical-spec ownership and two-phase closeout repair and does not authorize Implementation Stage entry for the repaired bytes.
 
-## Current Independent Plan Review Summary
+## Current Amendment Final Review Summary
 
-- Review verdict: ready
-- Disposition: ready
+- Review verdict: final-review-clean
+- Disposition: LOCAL_COMPLETE
 - Decision requests: none
 - Material risks: none
-- Durable finding summary: Task 7 owns existing canonical spec state together with plan/index/log and uses the reviewed two-phase `implemented-pending-final-review` then final-local-completion transition. AM-1 and AM-2 phase one are complete; exactly one canonical whole-branch review precedes the controller-dependent status-only scoped verification/review.
+- Durable finding summary: canonical whole-branch review at `81717fd` returned Critical 0 / Important 3 / Minor 0. Bounded fix `791c2c8` addressed all three original findings; scoped re-review identified one new Important URL false-positive. Human explicitly authorized one bounded correction, `87fc8d5` fixed it in one existing test owner, and final scoped review returned residual `ADDRESSED`, new Critical 0 / Important 0 / Minor 0, ready for this dependent status transition. Task 6 and Task 7 task reviews are clean; remote publication is separately authorized, unperformed, and outside local-completion evidence.
 
 ## Historical Independent Plan Review Summary
 
@@ -547,17 +547,17 @@ SPV-1〜SPV-5 の完了記録は上記の歴史的証跡として保持する。
 ### Task 7: AM-2 — Amendment closeout and fresh combined verification
 
 - [x] **Phase one status:** `implemented-pending-final-review`. Fresh combined verification and the existing spec/plan/index/log synchronization are complete after reviewed AM-1; no residual material risk was found and no remote write was performed.
-- [ ] **Phase two status:** pending controller-owned exactly-one canonical whole-branch review, any bounded reviewed fix wave it requires, then the dependent final-local-completion status transition and its scoped verification/review.
-- [ ] **Deliverable:** AM-1 review/integration後、existing spec/plan/index/logへreviewed implementationとfresh combined verificationを`implemented-pending-final-review`として同期する。次にexactly one canonical whole-branch reviewを行い、必要なら一回のreviewed fix waveを統合する。clean final verdict後だけ、同じ四artifactsをfinal local completionへ移し、lifecycle logをappendし、fresh closeout gatesとstatus-only scoped verification/reviewを完了する。
-- [ ] **Requirement coverage:** R-12.
-- [ ] **Acceptance coverage:** AC-11.
-- [ ] **Dependencies:** AM-1 reviewed and integrated after the recorded exact-condition `ours` no-ff current-main-second-parent merge.
-- [ ] **Behavioral interface:**
+- [x] **Phase two status:** complete. The exactly-one canonical whole-branch review, bounded reviewed fix/correction chain, clean final scoped verdict, and dependent `LOCAL_COMPLETE` status transition are recorded; remote publication remains a separate controller-owned action.
+- [x] **Deliverable:** AM-1 review/integration後、existing spec/plan/index/logへreviewed implementationとfresh combined verificationを同期し、canonical review/fix/scoped-review chainのclean verdict後に同じ四artifactsを`LOCAL_COMPLETE`へ移した。fresh closeout gatesとstatus-transition verificationはcompleteである。
+- [x] **Requirement coverage:** R-12.
+- [x] **Acceptance coverage:** AC-11.
+- [x] **Dependencies:** AM-1 reviewed and integrated after the exact-condition `ours` merge; canonical whole-branch review、bounded fixes、clean final scoped verdictも満たした。
+- [x] **Behavioral interface:**
   - **Consumes:** accepted AM-1 commit range、exact-identity `ours` merge evidence、current accepted/approved spec identity、all acceptance mappings、existing package/root/CI/knowledge validation surfaces、original-checkout preservation evidence、and the canonical whole-branch review verdict or reviewed fix-wave result.
   - **Produces:** phase one `implemented-pending-final-review` state across the existing spec/plan/index/log; exactly one canonical whole-branch review and any bounded reviewed fix wave; phase two final local-completion state across those same four artifacts, append-only lifecycle event, fresh closeout gates, and a scoped status-transition verdict. It creates no new durable document and performs no remote write.
-- [ ] **Verification intent:** RED treats absent canonical-spec state ownership, missing AM-1 evidence, incomplete AC-01〜AC-17 evidence, premature local-complete status, or a second broad final review as failure. Phase one GREEN requires reviewed AM-1 plus fresh combined verification and consistent `implemented-pending-final-review` state. Phase two GREEN requires one clean canonical whole-branch verdict after any reviewed fix wave, final four-document synchronization, fresh closeout gates, and status-only scoped verification/review.
-- [ ] **Integration placement:** I-AM-2; integrate phase one before the canonical whole-branch review. After exactly one clean final verdict and any reviewed fix wave, integrate the controller-dependent phase-two status transition, rerun required gates, and perform only scoped review of that transition.
-- [ ] **Failure owner:** AM-2 closeout owner for freshness and knowledge evidence; any behavior failure returns to AM-1 or its named existing owner.
+- [x] **Verification intent:** Phase-one RED/GREENと、reviewed fix chain後のclean final verdict、final four-document synchronization、fresh closeout gates、status-transition verificationを完了した。second broad final reviewは行っていない。
+- [x] **Integration placement:** I-AM-2 complete; phase one was integrated before the single canonical whole-branch review, and this dependent status transition follows the clean scoped verdict.
+- [x] **Failure owner:** AM-2 closeout owner completed freshness and knowledge evidence; no open behavior failure remains.
 
 ## Dependency Graph
 
@@ -569,14 +569,14 @@ SPV-1〜SPV-5 の完了記録は上記の歴史的証跡として保持する。
 ## Execution Order
 
 1. AM-1: exact factsを再検証したcurrent-main-second-parent Git `ours` no-ff merge、single TDD implementation、independent task reviewを完了した。rebase、history rewrite、force、manual conflict resolution、generic fallbackは実施していない。
-2. AM-2: phase oneとしてAM-1をserially integrateし、fresh combined verificationとexisting spec/plan/index/logの`implemented-pending-final-review`同期を完了した。次にcontrollerがexactly one canonical whole-branch reviewを実施し、必要なら一回のbounded reviewed fix waveを統合する。clean verdict後にだけ同じ四artifactsをfinal local completionへ移し、append-only lifecycle event、fresh closeout gates、status-only scoped verification/reviewを完了する。
+2. AM-2: phase one integration、exactly one canonical whole-branch review、bounded reviewed fix/correction chain、clean final scoped verdictを順に完了し、existing spec/plan/index/logを`LOCAL_COMPLETE`へ同期した。append-only lifecycle eventとfresh closeout gatesを完了し、remote publicationはseparately authorized controller actionとして切り離した。
 
 ## Serialized Integration
 
 | Step | Task | Preconditions | Combined-state expectation |
 | --- | --- | --- | --- |
 | I-AM-1 | AM-1 | **completed** — exact `ours` merge `56ab956` retained the feature tree and both parents; reviewed implementation `1c38acd` plus fix `254ab51` are reachable. | deleted root snapshot/runner are absent; root direct check, package single parser, runtime/test split, CI regression, isolated copy, and all preserved boundaries are green together. |
-| I-AM-2 | AM-2 | **phase one completed** — AM-1 review is accepted and reachable, fresh combined evidence is current, and the four-document `implemented-pending-final-review` state is integrated before review. | exactly one controller-owned canonical whole-branch review remains pending; after its clean verdict and any reviewed fix wave, the same spec/plan/index/log can reach final local completion, append-only lifecycle evidence and fresh gates agree, and only the dependent status transition receives scoped review. |
+| I-AM-2 | AM-2 | **completed** — phase one, review head `81717fd`, bounded fix `791c2c8`, Human-authorized correction `87fc8d5`, clean final scoped verdict, and four-document status transition are integrated. | spec/plan/index/log are `LOCAL_COMPLETE`; fresh lifecycle, verification, and Git gates agree; remote publication is authorized separately, unperformed, and outside this evidence. |
 
 ## Post-Integration Combined Verification
 
@@ -594,7 +594,7 @@ SPV-1〜SPV-5 の完了記録は上記の歴史的証跡として保持する。
 - Control Return status: complete
 - Implementation Stage entry: allowed
 - Review vocabulary: ready, issues_found, needs_repair, needs_decision, blocked.
-- Current disposition: AM-1 and AM-2 phase one are reviewed/implemented with current fresh evidence. The current amendment is `implemented-pending-final-review`; exactly one canonical whole-branch review and its dependent status transition remain pending and controller-owned.
+- Current disposition: `LOCAL_COMPLETE`. AM-1 and AM-2 are reviewed/implemented; final scoped review returned residual `ADDRESSED`, new Critical 0 / Important 0 / Minor 0, and no material risk remains.
 - Material decision request: none
-- Material risk: none. The exact `ours` merge predicates and two-phase closeout remain execution-time stop conditions.
-- Remote publication state: not authorized and not required for plan authoring.
+- Material risk: none.
+- Remote publication state: separately Human-authorized but not performed; controller-owned after local completion and outside implementation evidence.
