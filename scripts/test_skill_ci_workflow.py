@@ -52,6 +52,13 @@ class SkillCiWorkflowTests(unittest.TestCase):
         self.assertNotIn("Validate repository compatibility", text)
         self.assertNotIn("scripts/validate_repository_compatibility.py", text)
 
+    def test_workflow_runs_transient_artifact_regression_and_repository_validation(self) -> None:
+        text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("Test SDD transient artifact validator", text)
+        self.assertIn("python3 scripts/test_validate_sdd_transient_artifacts.py", text)
+        self.assertIn("Validate SDD transient artifacts", text)
+        self.assertIn("python3 scripts/validate_sdd_transient_artifacts.py", text)
+
 
 if __name__ == "__main__":
     unittest.main()

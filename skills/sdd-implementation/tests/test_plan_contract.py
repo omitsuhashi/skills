@@ -15,9 +15,9 @@ PLAN_CONTRACT = SKILL_DIR / "references" / "plan-contract.md"
 READY_PLAN = SKILL_DIR / "tests" / "fixtures" / "plan-contract" / "ready-plan.md"
 CANONICAL_PLAN = REPOSITORY_ROOT / "knowledge" / "wiki" / "syntheses" / "sdd-plan-ownership-alignment-implementation-plan.md"
 
-REQUIREMENT_IDS = {f"R-{number:02d}" for number in range(1, 16)}
-ACCEPTANCE_IDS = {f"AC-{number:02d}" for number in range(1, 15)}
-TASK_IDS = ("POA-1", "POA-2", "POA-3")
+REQUIREMENT_IDS = {f"R-{number:02d}" for number in range(1, 22)}
+ACCEPTANCE_IDS = {f"AC-{number:02d}" for number in range(1, 21)}
+TASK_IDS = tuple(f"POA-{number}" for number in range(1, 9))
 
 
 def load_plan(path: Path) -> str:
@@ -335,7 +335,7 @@ def plan_errors(text: str) -> list[str]:
     tasks = task_sections(text)
     task_ids = tuple(tasks)
     if set(task_ids) != set(TASK_IDS):
-        errors.append("task inventory must define POA-1, POA-2, and POA-3 exactly once")
+        errors.append("task inventory must define POA-1 through POA-8 exactly once")
     for task_id in TASK_IDS:
         task = tasks.get(task_id)
         if task is None:
@@ -393,7 +393,9 @@ def plan_errors(text: str) -> list[str]:
             pending.pop(task_id)
 
     integration = section(text, "Serialized Integration")
-    if not all(value in integration for value in ("I-1: POA-1", "I-2: POA-2", "I-3: POA-3")):
+    if not all(
+        f"I-{number}: POA-{number}" in integration for number in range(1, 9)
+    ):
         errors.append("missing serialized integration order")
     if not all(value in integration for value in ("Preconditions", "Combined-state expectation")):
         errors.append("serialized integration lacks preconditions or combined-state expectation")
@@ -505,6 +507,28 @@ class PlanContractTests(unittest.TestCase):
             f"representative ready-plan fixture is missing: {READY_PLAN}",
         )
         self.assertEqual([], plan_errors(load_plan(READY_PLAN)))
+
+    def test_representative_fixture_covers_the_amended_inventory_and_task_graph(self) -> None:
+        fixture = load_plan(READY_PLAN)
+        canonical = load_plan(CANONICAL_PLAN)
+        self.assertEqual(REQUIREMENT_IDS | ACCEPTANCE_IDS, set(re.findall(r"\b(?:R|AC)-\d{2}\b", section(fixture, "Requirement And Acceptance Inventory"))))
+        self.assertEqual(set(TASK_IDS), set(task_sections(fixture)))
+        self.assertEqual(
+            [row[:3] for row in coverage_rows(canonical)],
+            [row[:3] for row in coverage_rows(fixture)],
+        )
+        self.assertEqual(
+            [row[:2] for row in table_rows(section(canonical, "Dependency Graph")) if row[0] != "Task"],
+            [row[:2] for row in table_rows(section(fixture, "Dependency Graph")) if row[0] != "Task"],
+        )
+        self.assertEqual(
+            re.findall(r"^\d+\. (?:Execute )?(POA-\d+)(?!\d)", section(canonical, "Execution Order"), flags=re.MULTILINE),
+            re.findall(r"^\d+\. (?:Execute )?(POA-\d+)(?!\d)", section(fixture, "Execution Order"), flags=re.MULTILINE),
+        )
+        self.assertEqual(
+            re.findall(r"I-(\d+): (POA-\d+)", section(canonical, "Serialized Integration")),
+            re.findall(r"I-(\d+): (POA-\d+)", section(fixture, "Serialized Integration")),
+        )
 
     def test_canonical_ready_plan_satisfies_the_same_executable_contract(self) -> None:
         self.assertTrue(CANONICAL_PLAN.is_file(), f"canonical plan is missing: {CANONICAL_PLAN}")

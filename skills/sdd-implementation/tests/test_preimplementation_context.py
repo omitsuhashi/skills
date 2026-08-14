@@ -216,7 +216,9 @@ class PreImplementationContextContractTests(unittest.TestCase):
 
     def test_research_stage_routes_only_fresh_repository_exploration(self) -> None:
         normalized = " ".join(self.research_text.split())
-        self.assertIn("`.superpowers/research/<epic-id>/`", self.research_text)
+        self.assertIn("repository-external", normalized)
+        self.assertIn("task / session", normalized)
+        self.assertNotIn(".superpowers/research/<epic-id>/", self.research_text)
         self.assertIn("`prompts/repository-researcher.md`", self.research_text)
         self.assertIn("Do not inherit the parent conversation.", self.research_text)
         self.assertIn(
@@ -346,11 +348,29 @@ class PreImplementationContextContractTests(unittest.TestCase):
             for value in ("resolved planning worktree root", "CWD", "writable artifact path", "original checkout"):
                 self.assertIn(value, text)
             self.assertNotIn("- repository root;", text)
-        for value in ("first transient Research Report", "relative", "absolute", "stale path", "escape"):
+        for value in ("first transient Research Report", "relative", "absolute", "stale path", "escape", "repository-external", "task / session"):
             self.assertIn(value, self.research_text)
         for value in ("original checkout metadata (read-only)", "baseline commit", "epic ID and current research question", "applicable repository and knowledge constraints", "current spec path when one exists"):
             self.assertIn(value, self.research_text)
         self.assertNotIn("- repository root and current baseline commit;", self.research_text)
+
+    def test_raw_research_and_review_handoffs_are_external_to_the_repository(self) -> None:
+        for name, text in (
+            ("research", self.researcher_text),
+            ("spec review", self.reviewer_text),
+            ("plan review", self.plan_reviewer_text),
+        ):
+            with self.subTest(stage=name):
+                normalized = " ".join(text.split()).lower()
+                self.assertIn("repository-external", normalized)
+                self.assertIn("temporary", normalized)
+                self.assertNotIn("under `.superpowers/", text)
+
+        synthesizer = " ".join(self.synthesizer_text.split()).lower()
+        self.assertIn("durable spec", synthesizer)
+        self.assertIn("planning worktree", synthesizer)
+        self.assertIn("repository-external", synthesizer)
+        self.assertIn("research", synthesizer)
 
     def test_plan_author_uses_only_bound_planning_paths(self) -> None:
         section = self.planning_text.split("## Plan Authoring", 1)[1].split("## Failure Boundary", 1)[0]
