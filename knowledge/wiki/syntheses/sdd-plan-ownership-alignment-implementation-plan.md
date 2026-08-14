@@ -9,7 +9,7 @@ tags:
 status: active
 review_state: independently-reviewed
 plan_readiness: ready
-implementation_state: poa-7-closeout-candidate
+implementation_state: poa-7-reviewed-landed
 aliases:
   - SDD agent-owned execution plan
   - SDD plan readiness implementation plan
@@ -38,14 +38,13 @@ prospective code、commit granularity の判断を求めない。
   限り、Plan Contract Overlayの「canonical ready planとrepresentative fixtureがcurrent executable validatorを同時に
   passする」preconditionをexact missing-schema REDへ狭く置換する。他のbinding / review / repository checkは維持する
 - Amendment follow-up author state: independently_reviewed
-- Amendment implementation state: POA-4 through POA-6 reviewed and landed; POA-7 closeout candidate synchronized
+- Amendment implementation state: POA-4 through POA-7 reviewed and landed
 - Amendment follow-up repository check state: passed
 - Amendment follow-up Implementation Stage entry: allowed_and_consumed
 - Amendment migration baseline commit: f07aebce7bbf854cd64184311d204cf04055fd28
 - Amendment migration exception state: consumed_and_retired
 - Current final-tree state: `.superpowers/**` entry zero
-- Remaining sequence: POA-7 independent task review, then POA-8 fresh combined verification / whole-branch review /
-  authorized remote update
+- Remaining stage: POA-8 fresh combined verification / whole-branch review / authorized remote update
 
 ## Approved North Star Identity
 
@@ -920,19 +919,20 @@ premature POA-4 schema GREEN or POA-6 final-tree cleanup。No Human decision req
 - **Fresh evidence:** SDD focused suite `93/93`、transient validator regression `22/22`、actual candidate tree、
   post-cleanup commit trees `7b4a8e6` / `74eb79a`、HEAD final treeのrepository validatorがpassした。raw reports、
   review transcripts、test logsはdurable surfaceへcopyしていない。
-- **Lifecycle status:** POA-1〜POA-6はreviewed / landedである。POA-7はdurable closeoutを同期したtask-review
-  candidateで、independent POA-7 reviewがpendingである。POA-8のfresh combined verification、canonical
-  whole-branch review、authorized non-force remote updateもpendingである。remote branchはまだ更新しておらず、
-  このsectionは`LOCAL_COMPLETE`またはpublicationを宣言しない。
+- **Lifecycle status:** POA-1〜POA-7はreviewed / landedである。POA-7 lifecycle correction
+  `664dbd15923d7cf395095d810038125a10b727f8`へのfresh scoped re-reviewはprior Important 2件の解消と新規
+  Critical / Importantなしを確認して`ready`となった。POA-8のfresh combined verification、canonical whole-branch
+  review、authorized non-force remote updateはpendingである。remote branchはまだ更新しておらず、このsectionは
+  `LOCAL_COMPLETE`またはpublicationを宣言しない。
 
 ## Readiness Result
 
 - Plan readiness disposition: ready
 - Control Return status: complete
 - Implementation Stage entry: allowed
-- Implementation Stage execution: active; POA-7 independent task review pending
-- Content integration through POA-7: closeout candidate synchronized; task review pending
-- Remaining sequence: POA-7 independent task review, then POA-8
+- Implementation Stage execution: completed through reviewed POA-7
+- Content integration through POA-7: reviewed and landed
+- Remaining stage: POA-8
 
 | Internal disposition | External Control Return | Implementation entry | Owner / next route |
 |---|---|---|---|
@@ -945,11 +945,10 @@ Reviewer `issues_found` is not an external status。It must be classified into `
 `blocked`。Remote authorization absence is none of these for Plan Readiness; it is evaluated only at the affected action。
 
 The pre-entry reviewer verdict and agent-owned formal disposition remain `ready`; the Controller consumed the exact
-baseline-bound exception once and entered POA-4 without creating a Human decision request。POA-4〜POA-6 are reviewed and
-landed; POA-7 has synchronized the durable closeout candidate and still requires its independent task review。The POA-6
-cleanup tree and every later commit tree remain `.superpowers/**` entry zero, and the exception cannot be reused。Plan
-readiness and POA-7 closeout do not authorize publication; POA-8 remains the last, separately authorized verification /
-publication action。
+baseline-bound exception once and entered POA-4 without creating a Human decision request。POA-4〜POA-7 are reviewed and
+landed。The POA-6 cleanup tree and every later commit tree remain `.superpowers/**` entry zero, and the exception cannot be
+reused。Plan readiness and POA-7 review completion do not authorize publication; POA-8 remains the last, separately authorized
+verification / publication action。
 
 ## Plan Author Self-Review
 
@@ -976,7 +975,8 @@ publication action。
 - Repair / re-review verdict: `independently_reviewed_ready`。The original POA-1〜POA-3 plan review / execution
   evidence remains historical and unchanged。The amended POA-4 entry used the independently reviewed non-circular、single-use、
   exact baseline-bound route; POA-5 GREENとPOA-6 zero-tree cleanup / fixture correctionはscoped reviewをpassしてlandedした。
-  POA-7 closeoutはcurrent task-review candidateである。POA-8 fresh combined verification / whole-branch review、
+  POA-7 closeout / lifecycle correctionもfresh scoped re-reviewでprior Important 2件の解消と新規Critical / Important
+  なしを確認し、reviewed / landedとなった。POA-8 fresh combined verification / whole-branch review、
   `LOCAL_COMPLETE`、and remote publication remain distinct later gates。
 
 ## Related Pages

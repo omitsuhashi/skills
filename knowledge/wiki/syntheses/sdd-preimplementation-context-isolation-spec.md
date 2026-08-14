@@ -9,8 +9,10 @@ current contractとして維持する。2026-08-14の[[sdd-plan-ownership-alignm
 semanticsをsupersedeする。同仕様のHuman-approved transient-artifact amendmentは、本書のrepository-contained
 Research Report destinationと全pre-implementation raw handoff write bindingも競合範囲でsupersedeする。POA-5の
 repository-external migration / validatorとPOA-6のexact three-report cleanupはreview済みでlandedし、POA-7で
-canonical closeoutを同期した。Planning Controller / fresh worker isolation、source / durable worktree boundary、
-Human Written Spec authorityは維持する。POA-8のfresh whole-branch reviewとremote branch updateはpendingである。
+canonical closeoutを同期した。POA-7 lifecycle correction後のfresh scoped re-reviewはprior Important 2件の解消と
+新規Critical / Importantなしを確認して`ready`となった。Planning Controller / fresh worker isolation、source /
+durable worktree boundary、Human Written Spec authorityは維持する。POA-8のfresh whole-branch reviewとremote branch
+updateはpendingである。
 
 ## Epic ID
 

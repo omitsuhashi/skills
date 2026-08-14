@@ -2164,3 +2164,19 @@ append-only で使います。すべての entry は予測しやすい header �
 - [[index|active catalog]]は既にPOA-7 independent task review pendingとPOA-8後続順序を正しく示すため変更していない。
   このfixはまだ独立re-review前であり、POA-7 review completion、POA-8 entry、`LOCAL_COMPLETE`、publicationを
   宣言しない。raw review artifactまたは`.superpowers/**`へのwriteは追加していない。
+
+## [2026-08-14] review-disposition | SDD transient artifact POA-7 ready
+
+- Actorはrepository maintainer-delegated POA-7 review-disposition knowledge workerであり、single-root `owned` /
+  `Read: allowed` authorityとObsidian authoring profileの下で、fresh scoped re-reviewのdurable verdictだけを既存
+  canonical identitiesへ同期した。対象は[[wiki/syntheses/sdd-implementation-skill-design|broader SDD design]]、
+  [[wiki/syntheses/sdd-preimplementation-context-isolation-spec|focused context-isolation spec]]、
+  [[wiki/syntheses/sdd-plan-ownership-alignment|alignment spec]]、
+  [[wiki/syntheses/sdd-plan-ownership-alignment-implementation-plan|canonical plan]]、[[index|active catalog]]である。
+- Fresh scoped re-reviewはPOA-7 lifecycle correction commit
+  `664dbd15923d7cf395095d810038125a10b727f8`を`ready`とし、prior Important 2件の解消と新規Critical /
+  Importantなしを確認した。fresh supporting evidenceはSDD `93/93`、llm-wiki `21/21`、transient repository
+  validator passである。raw review report、transcript、test outputはdurable surfaceへcopyしていない。
+- Lifecycle dispositionをPOA-1〜POA-7 reviewed / landed、remaining POA-8へ更新した。POA-8 fresh combined
+  verification、canonical whole-branch review、authorized remote branch updateはpendingであり、`LOCAL_COMPLETE`、
+  publication、merge、release、live installを宣言しない。新しいartifactや`.superpowers/**` writeは追加していない。

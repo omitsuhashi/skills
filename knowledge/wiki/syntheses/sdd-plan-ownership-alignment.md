@@ -46,9 +46,10 @@ canonical catalog、append-only logを同じlanded semanticsへ同期し、fresh
 Human-approved transient-artifact amendmentのPOA-5 migration / validator、POA-6 exact cleanup、および
 cleanup fixture correctionは2026-08-14にreview済みでlandedした。POA-7はそのactual Git / file / test evidenceを
 本仕様、broader current design、reviewed plan、catalog、append-only logへ同期するdurable closeoutである。
-POA-7のindependent task reviewはpendingであり、その完了後にだけPOA-8のfresh combined verification、canonical
-whole-branch review、authorized remote branch updateへ進む。本closeoutは`LOCAL_COMPLETE`またはpublicationを
-宣言しない。
+POA-7 lifecycle correction commit `664dbd15923d7cf395095d810038125a10b727f8`へのfresh scoped re-reviewは、
+prior Important 2件が解消され、新規Critical / Importantがないため`ready`となった。POA-7はreviewed / landedで、
+残るPOA-8のfresh combined verification、canonical whole-branch review、authorized remote branch updateはpendingで
+ある。本closeoutは`LOCAL_COMPLETE`またはpublicationを宣言しない。
 
 [[sdd-plan-ownership-alignment-implementation-plan|agent-authored implementation plan]]のapproved spec
 SHA-256 `1f9a7dc5f740c51addfabde96bac6fe3fbf5036003d1783cde60ac58e5ae7559`は、Plan Authorがconsumeした
