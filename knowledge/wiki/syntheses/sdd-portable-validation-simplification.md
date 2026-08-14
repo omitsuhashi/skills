@@ -31,14 +31,15 @@ aliases:
 ## 目標
 
 1. install 済み `sdd-implementation` が、この source repository を参照せず、明示された任意の target repository に対して実行可能であること。
-2. generic validation を skill-relative package に閉じ、repository 固有の Git / migration / CI policy を各 repository owner に戻すこと。
+2. generic validation を Git の既存 capability で直接実行し、standalone validator を追加せず、repository 固有の Git / migration / CI policy を各 repository owner に戻すこと。
 3. SDD を、Superpowers lifecycle と `llm-wiki` を接続する薄い repository-independent composition にすること。
-4. 必須 resource と capability、実行点、failure を一意にし、isolated package closure test で証明すること。
+4. 必須 resource と capability、実行点、failure を一意にし、isolated package test と synthetic Git repository で証明すること。
 5. Human と agent の authority を、Written Spec と remote action の境界に沿って統一すること。
 
 ## 非目標
 
 - repository validation adapter、hook registry、scheduler、永続 state、telemetry、追加 protocol を新設しない。
+- portable skill 用の standalone / bundled validator executable を新設しない。
 - target repository の branch、worktree、migration、history、CI policy を portable skill に標準化しない。
 - Superpowers の generic lifecycle、worktree allocation、TDD、worker dispatch、review、branch finishing の手法を fork または再実装しない。
 - Human-approved Written Spec の内容を agent が拡張したり、未承認の remote action を実行したりしない。
@@ -52,12 +53,11 @@ aliases:
 
 - `SKILL.md` は inputs、outputs、required capabilities、composition order、三つの validation 実行点、failure boundary だけを定義する。
 - fresh worker / model selection、repository-external handoff、path binding の共通 guard は public contract の一つの runtime capability boundary に集約し、stage reference と worker prompt はその owner を参照して worker 固有 input だけを追加する。
-- generic validator は `skills/sdd-implementation/scripts/validate_sdd_transient_artifacts.py` に bundle し、常に installed skill directory から相対解決する。
-- validator は explicit な target repository path を必須 input とし、受領後に canonical absolute path へ解決する。実行時 CWD、validator の source checkout、親 directory から target を推定しない。
-- generic validator と package fixtures は repository 名、canonical wiki page、commit / blob hash、個人の絶対 path、完了済み migration marker を含まない。
+- generic validation は caller が明示した target repository に対する direct Git probe として実行する。実行時 CWD、installed skill の source checkout、親 directory から target を推定しない。
+- public contract、package test、fixture は repository 名、canonical wiki page、commit / blob hash、個人の絶対 path、完了済み migration marker を含まない。
 - package 内 test は synthetic target repository と package-relative resource だけで完結する。
 
-validator が package に存在しない、読めない、または package contract と一致しない場合は `broken skill installation` として fail closed にする。これは target repository の deficiency ではない。
+direct Git probe は package resource を追加しない。required prompt / reference / test resource が package に存在しない、読めない、または package contract と一致しない場合は `broken skill installation` として fail closed にする。これは target repository の deficiency ではない。
 
 ### 2. Target repository owner
 
@@ -79,7 +79,7 @@ SDD は worktree の allocation algorithm、fallback、host-specific writable-ro
 
 - Human-approved Written Spec、または Written Spec 作成に必要な Human-confirmed decisions。
 - caller が明示し、実行時に canonical absolute path へ解決する target repository path。
-- installed `sdd-implementation` directory と、そこから相対解決できる bundled resources。
+- installed `sdd-implementation` directory と、そこから相対解決できる required resources。
 - target repository が宣言する applicable local instructions と remote-action policy。
 
 ### Outputs
@@ -90,43 +90,45 @@ SDD は worktree の allocation algorithm、fallback、host-specific writable-ro
 
 ### Required capabilities
 
-- installed skill directory から resource と bundled validator を相対解決できること。
+- installed skill directory から required resource を相対解決できること。
 - target repository identity、CWD、write destination を canonical absolute path として検証できること。
 - repository-external temporary report を安全に作成し、bounded handoff できること。
 - applicable Superpowers / `llm-wiki` / authoring skill を discovery し、その contract に従えること。
 - fresh worker dispatch、bounded read/write、result collection ができること。
 - target policy が要求する Git / worktree 操作と、選択 workspace への write binding ができること。
+- explicit target に対して `rev-parse`、`check-ignore`、`ls-files`、`write-tree`、`ls-tree`、`cat-file`、ancestry verification を実行し、終了状態と出力を判定できること。
 
 capability が存在しない場合、別 runtime 固有機能を推定して代用せず、最初の該当 mutation 前に fail closed にする。
 
 ## Concrete control flow
 
-1. **Resolve**: installed skill directory と explicit target repository を別 identity として解決する。bundled resource closure を確認し、validator 欠落は `broken skill installation`、target 不在・非 repository・authority 不足は target-side failure として分離する。
+1. **Resolve**: installed skill directory と explicit target repository を別 identity として解決する。required resource closure を確認し、resource 欠落は `broken skill installation`、target 不在・非 repository・authority 不足は target-side failure として分離する。
 2. **Load ownership**: target の local instructions を読み、generic lifecycle は Superpowers、repository override は repository owner、knowledge routing は対象 knowledge root に委ねる。SDD 内の重複した worktree / lifecycle 手順は参照しない。
 3. **Bind workspace**: Superpowers の methodology と target policy に従い、実行 workspace、CWD、write destination を bind する。安全な binding を証明できなければ最初の repository write 前に停止する。
 4. **Research and spec**: repository-external research report から Written Spec を作成し、material decisions は Human approval に戻す。承認済み Written Spec 内では agent が execution decomposition を行う。
 5. **Choose execution shape**: dependency と write-conflict の非存在を evidence で確認できる issue だけ parallel eligible とする。unknown な dependency / conflict は sequential execution に落とす。追加の Human execution-method approval または issue-plan approval は要求しない。
-6. **Validate at exactly three mechanical points**: 次節の normative gate contract に従う。これ以外の stage transition では generic validator を呼ばない。
+6. **Validate at three named mechanical points**: 次節の normative direct-Git gate contract に従う。relevant mutation 後は該当 gate を再実行するが、これ以外の stage transition では generic probe を追加しない。
 7. **Implement and review**: TDD、worker review/fix、whole-branch review、branch finishing は applicable Superpowers contract に従う。repository-specific validator / CI は target owner の定義した時点で別途実行する。
-8. **Close out**: package validator、target-owned checks、package closure tests、required repository tests の fresh evidence を集約する。remote action は既存の明示的 authorization がある場合だけ実行する。
+8. **Close out**: direct Git probes、target-owned checks、isolated package tests、required repository tests の fresh evidence を集約する。remote action は既存の明示的 authorization がある場合だけ実行する。
 
-### Generic validator normative gate contract
+### Direct Git normative gate contract
 
-全 gate は installed skill directory から相対解決した同一 executable を使い、共通必須 input として `--target-repository <canonical-absolute-path>` と `--gate <gate-name>` を受け取る。validator は target を Git worktree として解決し、その worktree に対応する index を Git から取得する。CWD、validator の配置 repository、親 directory、別 worktree の index を代用しない。tree input は target Git object database に存在する full tree OID とし、曖昧な ref、working-tree snapshot、別 repository の object は拒否する。
+全 gate は共通必須 input として caller が明示した canonical absolute target repository path を使う。`git -C TARGET rev-parse --show-toplevel` の canonical result が TARGET と完全一致し、`--is-inside-work-tree` が true でなければ停止する。全 probe は同じ `git -C TARGET` binding を使い、CWD、installed skill の source checkout、親 directory、別 worktree の index / object database を代用しない。
 
-| Gate | 一意な trigger と呼出回数 | point-specific mandatory inputs | 検査する exact surface | Pass condition | Failure condition / diagnostic | Block boundary |
-|---|---|---|---|---|---|---|
-| `exceptional-local-scratch-pre-write` | repository-external default を使えない具体的な operational reason があり、target 内の distinct scratch path に最初の byte を書く直前に、その path ごとに一回。target、path、ignore rule、index のいずれかが変われば evidence は失効し、次の write 前に再実行する。 | `--scratch-path <target-relative-exact-path>`、`--scratch-reason <non-empty-reason>` | canonical target 内に解決した exact path（directory の場合は subtree pathspec）、target の current `.gitignore` 判定、対応する current Git index / staging area、既存 path の working-tree state。path は `.superpowers/**` 内でなければならない。 | path が target 内の `.superpowers/**` に閉じ、exact path が `git check-ignore --no-index` 相当で ignore され、index に tracked entry がなく、staged add / modify / rename がなく、既存 entry がある場合も全て ignored・untracked・unstaged である。reason は trim 後に空でなく、local-only consumer / operation と external path では満たせない理由を記録する。 | path escape、非 `.superpowers/**`、reason が trim 後に空、ignore 不成立、tracked / staged entry、または state を証明不能なら `transient-artifact-policy violation`。reason の内容が required facts を記録していない場合も caller contract failure として同じ write を block する。 | その repository-local scratch write を block する。repository-external route が使えるならそこへ戻し、使えなければ当該 stage を停止する。この gate 自体は commit または closeout を許可しない。 |
-| `pre-commit-candidate` | final staging 後、各 `commit` または `commit --amend` attempt の直前に一回。検査後の index mutation は evidence を失効させ、commit attempt 前に再実行する。 | `--candidate-tree <full-tree-oid>`。OID は invocation 時の target worktree index に対する `git write-tree` 相当値と一致しなければならない。 | nominated candidate tree、target worktree の current index と staging area、working tree の `.superpowers/**` namespace。unstaged non-scratch path はこの generic policy の対象外。 | candidate OID が current index tree と一致し、candidate tree と index / staged diff に `.superpowers/**` entry がなく、working tree に残る `.superpowers/**` entry がある場合は全て ignored・untracked・unstaged である。 | stale / foreign / unresolved tree、candidate と index の不一致、candidate / index / staged diff 内の `.superpowers/**`、tracked または staged scratch、または state を証明不能なら `transient-artifact-policy violation`。 | 当該 commit / amend を block する。修復 write と restaging は許すが、その後は新しい candidate OID で gate を再実行する。この gate は closeout を代替しない。 |
-| `final-closeout` | 全実装 commit と scratch cleanup の後、`LOCAL_COMPLETE`、`PR_READY` その他の completion verdict を返す各 closeout attempt の直前に一回。検査後の HEAD、index、または scratch state mutation は evidence を失効させる。 | `--final-tree <full-tree-oid>`。OID は invocation 時の target worktree `HEAD^{tree}` と一致しなければならない。 | nominated final tree、target worktree の current `HEAD^{tree}`、current index / staging area、working tree の `.superpowers/**` namespace（ignored / untracked を含む）。 | nominated OID が `HEAD^{tree}` と一致し、final tree、index、staged diff、working tree のいずれにも `.superpowers/**` entry が一件もなく、scratch cleanup が完了している。 | stale / foreign / unresolved tree、HEAD tree 不一致、いずれかの inspected surface に残る `.superpowers/**` entry、または state を証明不能なら `transient-artifact-policy violation`。 | closeout verdict を block する。cleanup write は許す。cleanup が tracked tree を変える場合は pre-commit gate と commit を経てから final gate を再実行する。 |
+| Gate | Trigger / invalidation | Mandatory input と direct probe | Pass condition | Block boundary |
+|---|---|---|---|---|
+| `exceptional-local-scratch-pre-write` | repository-external default を使えない具体的 reason があり、distinct scratch leaf に最初の payload byte を書く直前。target、path、ownership、ignore rule、HEAD、index が変われば次の write 前に再実行する。 | target-relative exact path と non-empty reason。path は `.superpowers/...` 内へ normalize し、absolute、`.` / `..`、symlink escape、既存・foreign・unknown ownership を拒否する。`check-ignore --no-index --quiet -- PATH` が成功し、`ls-files --stage -- PATH` と `ls-tree -r --name-only HEAD -- PATH` が空であることを確認する。 | task/session-bound の新しい leaf が ignored、untracked、unstaged、uncommittedで、target外へescapeせず、external routeでは満たせないreasonが記録される。 | failure / state不明はそのpayload writeだけをblockする。external routeへ戻せなければ当該stageを停止する。 |
+| `pre-commit-candidate` | final staging 後、各commit / amend attempt直前。検査後のindex、`.superpowers/**` working-tree state、またはrelevant ignore ruleのmutationで失効し、commit前に再実行する。 | current indexから`git write-tree`でcandidate tree OIDを導出する。nonzeroはunmergedを含むfailureとしてblockする。`ls-tree -r --name-only CANDIDATE -- .superpowers`、`ls-files --stage -- .superpowers`、`ls-files --others --exclude-standard -- .superpowers`が空であることを確認する。 | candidate/indexに`.superpowers/**` entryがなく、unignored working pathもない。ignored・untracked・unstaged・uncommitted scratchと、candidateからentryを除くstaged deletionは許容する。 | failureは当該commit / amendをblockする。修復・restage・working-tree/ignore mutation後は再実行する。 |
+| `final-closeout` | 全task commitとcloseout write後、completion verdict直前。検査後のHEAD、index、`.superpowers/**` working-tree state、relevant ignore rule、またはtrusted baseline bindingのmutationで失効する。 | pre-commit probeをcurrent indexへ再実行する。`HEAD^{tree}`を導出し、同treeの`.superpowers/**` entryがzeroであることを確認する。trusted tupleのimmutable `starting_head_sha`をBASELINEとし、BASELINEがcommit objectかつHEADのancestorであることを確認する。`git rev-list BASELINE..HEAD`相当でpost-baseline commit setをGit object graphからfreshに全件導出し、各commit treeの`.superpowers/**` entryがzeroであることを確認する。 | current candidate、HEAD final tree、`BASELINE..HEAD`の全commit treeがzero。ignored・untracked・unstaged・uncommitted local scratchは残ってよく、destructive cleanupを要求しない。 | failure、baseline非ancestor、またはcommit range導出不能はcloseout verdictをblockする。修復mutation後はaffected gateを再実行する。 |
 
-この表だけを generic gate methodology の normative source とする。public `SKILL.md` は表の contract を保持し、prompt / reference / test は gate 名と必要 input を参照するだけで trigger、Git surface、pass / fail prose を複製しない。
+この表だけを generic gate methodology の normative source とする。public `SKILL.md` はdirect Git contractを保持し、prompt / reference / testはgate名と必要inputだけを参照する。exactly-once実行、validator state、証跡cacheを導入せず、relevant mutation後の再実行でfreshnessを保つ。
 
 ## Failure handling
 
 | Condition | Owner classification | Required behavior |
 |---|---|---|
-| bundled validator / required resource が欠落・読取不能 | skill package | `broken skill installation` として mutation 前に停止する |
+| required package resource が欠落・読取不能 | skill package | `broken skill installation` として mutation 前に停止する |
+| required Git operation が利用不能、nonzero、または状態を一意に判定不能 | runtime / target capability | 影響するscratch write、commit、またはcloseout gateだけをfail closedにする |
 | explicit target が不在、非 Git repository、または authority 外 | caller / target | target-side input / authority failure として停止する |
 | workspace binding、fresh dispatch、external temporary handoff 等の capability がない | runtime | 該当 mutation 前に不足 capability を示して停止する |
 | repository-local policy check が失敗 | target repository | generic package failure と混同せず、owner surface と evidence を示して停止する |
@@ -141,10 +143,10 @@ capability が存在しない場合、別 runtime 固有機能を推定して代
 ### Portable package tests
 
 - skill folder だけを isolated temporary directory へ copy / install し、source repository とその親を read path に含めず test を実行する。
-- isolated synthetic Git repository を explicit target に渡し、normative gate table の各 mandatory input と positive / negative state を検証する。distinct scratch path の first-write、各 commit / amend attempt、各 closeout attempt につき invocation が一回であること、および invalidating mutation 後の再実行を event fixture で直接検証する。
-- validator、prompt、reference、fixture の全 mandatory resource が package 内に存在し、skill-relative に解決されることを closure test で確認する。
+- isolated synthetic Git repository を explicit target に渡し、normative gate table の各 direct Git probe と positive / negative stateを検証する。ignored scratch、force-add、unmerged index、staged deletion、`BASELINE..HEAD`内のadd-then-delete commit、index / working-tree / ignore mutationによるstale evidence、mutation後の再実行をforward testする。
+- prompt、reference、fixture、testの全 mandatory resource が package 内に存在し、skill-relative に解決されることをclosure testで確認する。standalone validator executableは期待しない。
 - package test と fixture に repository-specific hash、canonical plan、username / absolute path がないことを regression test で固定する。
-- bundled validator 欠落が `broken skill installation`、不正 target が target-side failure として区別されることを確認する。
+- required resource欠落が`broken skill installation`、不正targetまたはGit capability failureがtarget/runtime-side failureとして区別されることを確認する。
 
 ### Repository-owned tests
 
@@ -162,12 +164,12 @@ capability が存在しない場合、別 runtime 固有機能を推定して代
 
 ## Acceptance criteria
 
-1. isolated install の `sdd-implementation` が source repository への access なしで synthetic target に対する必須 resource resolution、generic validation、package tests を完了する。
-2. bundled validator は explicit target repository を要求して canonical absolute path へ解決し、CWD や validator 所在 repository から target を推定しない。
-3. bundled validator を package から除く negative test は、target deficiency ではなく `broken skill installation` で mutation 前に失敗する。
-4. portable `SKILL.md`、validator、prompt、reference、fixture に、この repository 固有の commit / blob hash、canonical wiki path、migration marker、個人の絶対 path が存在しない。
+1. isolated install の `sdd-implementation` が source repository への access なしで synthetic target に対する必須 resource resolution、direct Git validation、package tests を完了する。
+2. standalone / bundled generic validator executableがportable packageに存在せず、public contractはexplicit target repositoryをcanonical absolute pathへ解決して同じ`git -C TARGET` bindingだけを使う。
+3. required package resource欠落はtarget deficiencyではなく`broken skill installation`、Git probeの利用不能は影響するgateのcapability failureとしてmutation前に失敗する。
+4. portable `SKILL.md`、prompt、reference、fixture に、この repository 固有の commit / blob hash、canonical wiki path、migration marker、個人の絶対 path が存在しない。
 5. `f07aebc` three-report baseline、marker parent / authorized introduction / cleanup deletion lineage、introduction 時の exact path / mode / blob、cleanup 後の再導入禁止、canonical-plan parity は portable package に存在せず、この repository の root-owned validator / regression tests / fixture に保持される。`.github/workflows/skill-architecture.yml` がそれらを fresh 実行し、`scripts/test_skill_ci_workflow.py` が invocation の欠落を失敗にする。
-6. generic validator の mechanical invocation point は normative gate table の三つだけである。各 gate の common / point-specific mandatory input、nominated tree と current index / HEAD の一致、scratch state、positive / negative result、event ごとの exactly-once invocation、mutation 後の evidence invalidation が isolated test で観測できる。
+6. mechanical validation pointはnormative gate tableの三つだけである。各gateのmandatory input、direct Git surface、scratch state、positive / negative result、mutation後のevidence invalidationがisolated testで観測でき、exactly-once stateを持たない。
 7. package closure test が mandatory resource の欠落、package 外参照、source topology 依存を検出する。
 8. SDD の public contract は generic worktree allocation / fallback / TDD / review / finishing を再定義せず、Superpowers ownership と repository-local override を参照する。
 9. required runtime capabilities と unavailable 時の pre-mutation stop が contract test で固定される。
@@ -179,9 +181,9 @@ capability が存在しない場合、別 runtime 固有機能を推定して代
 
 Human approval 後、実装は次の順序で移行する。
 
-1. generic validator を skill-relative package に追加し、explicit target interface と isolated tests を先に成立させる。
+1. public skillにdirect Git gate contractとexplicit target bindingを実装し、standalone validatorを追加せずsynthetic repository testsを先に成立させる。
 2. package tests / fixtures から repository-specific canonical plan、history、absolute path を分離し、既存 canonical-plan parity coverage と one-off migration / history regression coverage を root-owned test / fixture に移す。移動中も coverage を削除または optional 化しない。
-3. root validator から generic concern を package validator へ寄せる一方、`f07aebc` three-report baseline、marker parent / authorized introduction / cleanup deletion lineage、introduction 時の exact path / mode / blob、cleanup 後の再導入禁止は root validator に隔離して残す。root regression tests、`.github/workflows/skill-architecture.yml` の invocation、`scripts/test_skill_ci_workflow.py` の invocation contract が GREEN になるまで cutover しない。
+3. root validator、`f07aebc` three-report baseline、marker parent / authorized introduction / cleanup deletion lineage、introduction 時の exact path / mode / blob、cleanup 後の再導入禁止、および現行回帰coverageをrepository-owned surfaceとして維持する。root regression tests、`.github/workflows/skill-architecture.yml` の invocation、`scripts/test_skill_ci_workflow.py` の invocation contract が GREEN になるまでcutoverしない。
 4. `SKILL.md`、prompts、references の重複 gate と lifecycle / worktree prose を一つの portable contract へ収束する。
 5. isolated package closure と repository full suite の双方が GREEN になってから旧 package-external dependency を除去する。
 
@@ -207,7 +209,7 @@ Human approval 後、実装は次の順序で移行する。
 ## Confirmed Decisions
 
 1. install 済み `sdd-implementation` は、この source repository への hidden dependency なしに任意の明示 target repository で実行できる。repository-specific Git / migration / CI policy は各 repository owner が所有する。
-2. generic validator は skill-relative に bundle し、target repository を明示必須とする。欠落は target deficiency ではなく broken skill installation とする。one-off migration / history behavior は root-owned validator / CI に隔離し、generic validator の mechanical execution point は exceptional local scratch pre-write、pre-commit candidate、final closeout に限定する。isolated package-closure tests を追加する。
+2. standalone generic validatorはbundleしない。explicit targetへdirect Git probeを実行し、mechanical gateをexceptional local scratch pre-write、pre-commit candidate、final closeoutに限定する。required package resource欠落とGit capability failureを区別し、isolated package / synthetic repository testsでhidden source dependencyがないことを証明する。one-off migration / history behaviorはroot-owned validator / tests / CIに隔離して維持する。
 3. repository-specific hash / canonical fixture / policy の portable contract への leakage、曖昧または重複した gate、package closure gap、lifecycle / worktree ownership の重複、未宣言 runtime capability を同じ revision で修復する。既存の最小 owner / surface を使い、新しい repository validation adapter、scheduler、state、telemetry、protocol は作らない。
 4. Human-approved Written Spec 内の parallel issue eligibility は agent / repository-owned とする。dependency / conflict evidence が unknown なら sequential に戻す。Human は material Written Spec change と別途 authorization が必要な remote action を決定し、execution method または issue plan の追加承認は不要とする。
 5. generic lifecycle / worktree methodology は Superpowers が所有し、SDD は必要な local composition と repository-independent behavior だけを持つ。
@@ -218,12 +220,9 @@ Human approval 後、実装は次の順序で移行する。
 
 ## Review verdict
 
-独立再レビューの verdict は `complete/ready_for_human_review`。前回の agent-repairable finding は、(1) 三つの generic validation gate を必須 input、検査対象、pass / fail invariant、diagnostic、block boundary、exactly-once / invalidation test を持つ normative contract にしたこと、(2) root-owned の one-off migration/history validator、regression、CI invocation の保持を必須化したことで解消した。新たな decision request と material risk はない。status は引き続き `proposed` とし、Human の Written Spec approval まで activation、supersession、implementation、index / log sync は行わない。
+Human-approved direct Git amendment後のfresh independent rereviewは`ready_for_human_review`、decision requestとunresolved material riskはnoneである。reviewerは、index / working-tree / ignore / HEAD / trusted-baseline mutationによるevidence invalidation、immutable `starting_head_sha..HEAD`全commitのGit由来fresh導出、staged deletion、ignored scratch保持、add-then-delete検出、root history validator維持、isolated package closure、authority decision A、追加validator / adapter / state不在、runtime path非永続化を確認した。statusは引き続き`proposed`とし、Human Written Spec approvalまでactivation、supersession、implementation、index / log syncは行わない。
 
 ## Provenance
 
-- advisory research report: `/private/tmp/sdd-portable-validation-research.P4mhzZ/research-report.md`
 - audited baseline: `82dcd32157ff9690ae038f982f3916009e449f80`
-- planning worktree: `/private/tmp/skills-sdd-portable-validation-simplification`
-- original checkout: `/Users/omitsuhashi/repos/omitsuhashi/skills`、starting branch `main`、captured status clean
-- authority: Human-confirmed decisions を保持した advisory synthesis。raw report / transcript は durable page へ複製していない。
+- authority: Human-confirmed decisionsを保持したadvisory synthesis。2026-08-14にHumanはvalidator necessity reviewの結論を承認し、bundled standalone validator要件をdirect Git gateへ置換した。raw report / transcript / runtime pathはdurable pageへ複製していない。
