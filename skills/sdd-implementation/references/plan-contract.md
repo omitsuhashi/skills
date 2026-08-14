@@ -68,8 +68,8 @@ status: complete`, and `Implementation Stage entry: allowed`.
 The representative package fixture must satisfy the package-relative semantic
 validator in `tests/test_plan_contract.py` without reading a source checkout,
 parent repository, canonical plan, or root script. Reviewed canonical-plan
-parity is repository-owned by `scripts/test_sdd_canonical_plan_parity.py` and
-its root fixture; package fixture validation is not its parity source.
+parity belongs exclusively to the target repository's own regression and
+fixture surface; package fixture validation is not its parity source.
 
 Keep the reviewed implementation plan as the durable verdict summary. Exclude
 the raw review output and transcript from durable plan content. Reject a raw

@@ -373,6 +373,18 @@ def report_operation(name: str) -> dict[str, object]:
 
 
 class AuthoringBoundaryTests(unittest.TestCase):
+    def test_current_kis_synthesis_has_no_raw_runtime_evidence_path(self) -> None:
+        synthesis = read_repo(
+            "knowledge/wiki/syntheses/keep-implementation-simple-spec.md"
+        )
+        raw_runtime_evidence_lines = [
+            line
+            for line in synthesis.splitlines()
+            if "/private/tmp/" in line
+            and ("evidence" in line.casefold() or "report" in line.casefold())
+        ]
+        self.assertEqual([], raw_runtime_evidence_lines)
+
     def test_local_contract_selects_obsidian_without_copying_authoring_syntax(self) -> None:
         contract = read_repo("knowledge/AGENTS.md")
 

@@ -262,7 +262,7 @@ skill package, process CWD, or ambient checkout.
 
 | Gate | Required moment | Fresh direct Git verdict |
 | --- | --- | --- |
-| `exceptional-local-scratch-pre-write` | before each exceptional repository-local scratch leaf's first write | Require a non-empty exceptional reason and a normalized target-relative path whose resolved path and symlink ownership remain inside the target; use `git check-ignore --no-index` for the exact path and require it to be ignored, absent from the index, and absent from HEAD, so the leaf is ignored, untracked, unstaged, and uncommitted. |
+| `exceptional-local-scratch-pre-write` | before each exceptional repository-local scratch leaf's first write | Require a non-empty exceptional reason and a normalized target-relative `.superpowers/**` leaf whose resolved path and symlink ownership remain inside the target. Before any payload byte, reject an absolute, `.`, `..`, or symlink-escaping path, and reject a leaf that already exists or its ownership is foreign or unknown. Against current state, use `git check-ignore --no-index` for the exact path and require it to be ignored, absent from the index, and absent from the current HEAD tree, so the new leaf is ignored, untracked, unstaged, and uncommitted. |
 | `pre-commit-candidate` | immediately before each commit creation | Derive the candidate with `git write-tree`; require the candidate tree, current index, and every unignored working-tree path to contain zero `.superpowers/**` entries. An unmerged index or unreadable candidate fails. A staged deletion passes only when the fresh candidate and index are clean; a force-add fails, while an add-then-delete is judged by its fresh final index and candidate. |
 | `final-closeout` | after cleanup and immediately before local completion | Re-run the candidate/index/unignored-working-tree checks; require `HEAD^{tree}` to contain zero `.superpowers/**` entries; prove trusted immutable `starting_head_sha` is a commit and ancestor of HEAD; derive every commit in `starting_head_sha..HEAD` from the current object graph and use `git cat-file` and `git ls-tree` to require each commit tree to contain zero `.superpowers/**` entries. |
 
@@ -275,8 +275,8 @@ mutation. Do not create an exactly-once mechanism, cache, state file, bundled
 validator, adapter, scheduler, telemetry, or protocol.
 
 Fail closed and stop the affected write, commit, transition, or closeout. A
-missing or unreadable installed skill is
-`BLOCKED: skill/package unavailable`; a target identity, Git capability, or
+missing or unreadable installed skill or required package resource is
+`broken skill installation`; a target identity, Git capability, or
 object-read failure is `BLOCKED: target/runtime unavailable`; a dirty or stale
 gate verdict is respectively `FAIL: exceptional-local-scratch-pre-write`,
 `FAIL: pre-commit-candidate`, or `FAIL: final-closeout`.

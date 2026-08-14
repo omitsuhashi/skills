@@ -2447,3 +2447,9 @@ append-only で使います。すべての entry は予測しやすい header �
 
 - Review head `458a52e0f47d09964758b326e2749ec4656e0782` のTask 5 re-reviewで、[[wiki/syntheses/sdd-portable-validation-simplification-implementation-plan|current plan]]にimplementation-only tip `f29c0fd`をcurrent branch tipと扱う表現、Task 5のcompleted closeout workをuncheckedのまま残す表現、knowledge commit / post-commit gateをpendingとする表現が確認された。`f29c0fd`はreviewed implementation-only provenanceとして保持し、current knowledge-closeout tipを`458a52e`としてGitから再導出した。
 - Task 5 knowledge synchronization、fresh combined verification、commits `41c2a63..458a52e`、post-commit final direct-Git / root strict-zero gatesをcompletedへ同期した。[[index|active catalog]]の既存recordも同じcurrent stateへ一件だけ更新した。pendingなのはcontroller-dispatched fresh whole-branch reviewとそのverdictに依存するstatus transitionだけであり、`LOCAL_COMPLETE`は宣言しない。approved scope / authority、historical log、source / tests、remote stateは変更していない。
+
+## [2026-08-14] review-fix-pending-rereview | SDD portable validation final review
+
+- Actorはrepository maintainer-delegated final-fix implementerである。whole-branch reviewのImportant 4件に対し、mandatory installed resourcesのrepository-only path/hash identity除去とcategory-based leakage coverage、current-state scratch first-write contract、exact `broken skill installation` classification、[[wiki/syntheses/keep-implementation-simple-spec|KIS canonical synthesis]]のpath-free provenanceを既存ownerで修復した。
+- KIS synthesisのraw runtime locationをdurable summary identityへ置換し、再流入を既存LLM Wiki authoring-boundary regressionで拒否する。[[index|active catalog]]はcanonical identity、status、summaryにdriftがないため変更していない。approved scope、Authority A、First-Write、exact-seven KIS、root/package/CI owner separationは変更していない。
+- Lifecycle effectはfinal fix applied / scoped re-review pendingである。current final-review pending statusを維持し、`LOCAL_COMPLETE`は宣言しない。push、PR、merge、release、live install、ignored scratchのdestructive cleanupは実施していない。

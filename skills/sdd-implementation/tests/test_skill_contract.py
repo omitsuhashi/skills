@@ -188,14 +188,25 @@ class SddImplementationSkillContractTests(unittest.TestCase):
         self.assertIn("`git cat-file`", section)
         self.assertIn("every commit in `starting_head_sha..HEAD`", section)
 
+    def test_public_scratch_gate_requires_a_new_owned_superpowers_leaf(self) -> None:
+        section = self.skill_text.split("## Repository Validation Gate", 1)[1].split(
+            "## Plan Stage", 1
+        )[0]
+        scratch_row = next(
+            line
+            for line in section.splitlines()
+            if line.startswith("| `exceptional-local-scratch-pre-write` |")
+        )
+        self.assertIn("normalized target-relative `.superpowers/**` leaf", scratch_row)
+        self.assertIn("already exists or its ownership is foreign or unknown", scratch_row)
+        self.assertNotIn("starting_head_sha", scratch_row)
+
     def test_public_contract_rejects_repository_specific_or_ambiguous_gate_owners(self) -> None:
         section = self.skill_text.split("## Repository Validation Gate", 1)[1].split(
             "## Plan Stage", 1
         )[0]
         for forbidden in (
-            "scripts/validate_sdd_transient_artifacts.py",
             "migration manifest",
-            "f07aebc",
             "nominated candidate tree",
             "for every repository validation gate",
         ):
@@ -208,7 +219,7 @@ class SddImplementationSkillContractTests(unittest.TestCase):
         )[0]
         normalized = " ".join(section.split())
         for classification in (
-            "`BLOCKED: skill/package unavailable`",
+            "`broken skill installation`",
             "`BLOCKED: target/runtime unavailable`",
             "`FAIL: exceptional-local-scratch-pre-write`",
             "`FAIL: pre-commit-candidate`",
@@ -216,6 +227,8 @@ class SddImplementationSkillContractTests(unittest.TestCase):
         ):
             with self.subTest(classification=classification):
                 self.assertIn(classification, normalized)
+        legacy_package_failure = "/".join(("skill", "package")) + " unavailable"
+        self.assertNotIn(legacy_package_failure, normalized)
         self.assertIn(
             "Evidence is single-use: recompute the selected gate from current Git objects and state",
             normalized,

@@ -42,7 +42,7 @@ class IsolatedInstallTests(unittest.TestCase):
     def assert_package_failure(self, probe) -> None:
         with self.assertRaises(GateFailure) as raised:
             probe()
-        self.assertEqual("skill_package", raised.exception.category)
+        self.assertEqual("broken skill installation", raised.exception.category)
 
     def test_copied_install_discovers_and_runs_its_package_suite(self) -> None:
         environment = os.environ.copy()
@@ -116,6 +116,11 @@ class IsolatedInstallTests(unittest.TestCase):
         absolute_path = re.compile(
             r"/(?:" + "|".join(re.escape(root) for root in absolute_roots) + r")/\S+"
         )
+        repository_only_path = re.compile(
+            r"(?<![A-Za-z0-9_./])(?:scripts|[.]github)/"
+            r"[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*"
+        )
+        literal_hash_identity = re.compile(r"\b[0-9a-f]{7,64}\b")
         repository_page = re.compile(
             r"knowledge/wiki/(?:drafts|syntheses)/(?P<page>[a-z0-9-]+\.md)"
         )
@@ -129,6 +134,13 @@ class IsolatedInstallTests(unittest.TestCase):
                 errors.append(f"absolute host path: {relative_path}")
             if any(probe in text for probe in dynamic_probes):
                 errors.append(f"dynamic host identity: {relative_path}")
+            if repository_only_path.search(text):
+                errors.append(f"repository-only resource path: {relative_path}")
+            if any(
+                len(set(match.group(0))) > 1
+                for match in literal_hash_identity.finditer(text)
+            ):
+                errors.append(f"literal Git/hash identity: {relative_path}")
             for match in repository_page.finditer(text):
                 if match.group("page") not in allowed_pages:
                     errors.append(f"repository page identity: {relative_path}")

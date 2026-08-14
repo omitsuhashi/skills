@@ -77,7 +77,10 @@ def bind_target(target: Path, installed_skill_dir: Path = SKILL_DIR) -> Path:
     try:
         package = Path(installed_skill_dir).resolve(strict=True)
     except OSError as error:
-        raise GateFailure("skill_package", f"installed skill folder is unreadable: {error}") from error
+        raise GateFailure(
+            "broken skill installation",
+            f"installed skill folder is unreadable: {error}",
+        ) from error
     for relative_path in MANDATORY_PACKAGE_RESOURCES:
         resource = package / relative_path
         try:
@@ -86,17 +89,17 @@ def bind_target(target: Path, installed_skill_dir: Path = SKILL_DIR) -> Path:
             content = resource.read_bytes()
         except ValueError as error:
             raise GateFailure(
-                "skill_package",
+                "broken skill installation",
                 f"installed resource escapes package: {relative_path}",
             ) from error
         except OSError as error:
             raise GateFailure(
-                "skill_package",
+                "broken skill installation",
                 f"mandatory installed resource is unreadable: {relative_path}: {error}",
             ) from error
         if not content:
             raise GateFailure(
-                "skill_package",
+                "broken skill installation",
                 f"mandatory installed resource is empty: {relative_path}",
             )
     supplied = Path(target)
@@ -228,7 +231,6 @@ def exceptional_scratch_gate(
     target: Path,
     relative_path: str,
     reason: str,
-    starting_head_sha: str,
     installed_skill_dir: Path = SKILL_DIR,
 ) -> GateEvidence:
     gate = "exceptional-local-scratch-pre-write"
@@ -240,19 +242,22 @@ def exceptional_scratch_gate(
         or relative.is_absolute()
         or relative_path != relative.as_posix()
         or ".." in relative.parts
+        or len(relative.parts) < 2
+        or relative.parts[0] != SUPERPOWERS_PREFIX
     ):
-        fail(gate, "reason and normalized target-relative path are required")
+        fail(
+            gate,
+            "reason and normalized target-relative .superpowers leaf are required",
+        )
     leaf = repository.joinpath(*relative.parts)
     try:
         resolved_leaf = leaf.resolve(strict=False)
         resolved_leaf.relative_to(repository)
     except (OSError, ValueError) as error:
         fail(gate, f"scratch ownership is outside target: {error}")
-    if leaf.is_symlink():
-        fail(gate, "scratch leaf is a symlink")
-    if current_head(repository, gate) != starting_head_sha:
-        fail(gate, "HEAD no longer matches starting_head_sha")
-    require_object(repository, f"{starting_head_sha}^{{commit}}")
+    if leaf.is_symlink() or leaf.exists():
+        fail(gate, "scratch leaf already exists or ownership is foreign or unknown")
+    head = current_head(repository, gate)
     ignored = git_result(
         repository, "check-ignore", "--no-index", "-v", "--", relative_path
     )
@@ -262,9 +267,7 @@ def exceptional_scratch_gate(
         raise GateFailure("target_runtime", ignored.stderr or ignored.stdout)
     if git(repository, "ls-files", "--stage", "--", relative_path):
         fail(gate, "scratch path is present in the index")
-    if superpowers_entries(repository, "HEAD", gate) and git(
-        repository, "ls-tree", "-r", "--name-only", "HEAD", "--", relative_path
-    ):
+    if git(repository, "ls-tree", "-r", "--name-only", head, "--", relative_path):
         fail(gate, "scratch path is present in HEAD")
     state = full_state(repository)
     return GateEvidence(
@@ -275,7 +278,7 @@ def exceptional_scratch_gate(
             relative_path,
             str(resolved_leaf),
             reason,
-            starting_head_sha,
+            head,
             ignored.stdout,
             *state,
         ),
@@ -438,20 +441,20 @@ class PortableGitGateTests(unittest.TestCase):
             probe()
         self.assertEqual(category, raised.exception.category)
 
-    def test_target_binding_rejects_alias_and_missing_skill_package(self) -> None:
+    def test_target_binding_rejects_alias_and_missing_installation(self) -> None:
         alias = self.fixture.root.parent / "repository-alias"
         alias.symlink_to(self.fixture.root, target_is_directory=True)
         self.assert_gate_failure("target_runtime", lambda: pre_commit_gate(alias))
         missing = self.fixture.root.parent / "missing-skill"
         self.assert_gate_failure(
-            "skill_package",
+            "broken skill installation",
             lambda: pre_commit_gate(self.fixture.root, installed_skill_dir=missing),
         )
 
     def test_exceptional_scratch_requires_ignored_untracked_uncommitted_owned_leaf(self) -> None:
         scratch = ".superpowers/sdd/task/report.md"
         evidence = exceptional_scratch_gate(
-            self.fixture.root, scratch, "runtime cannot use external temp", self.fixture.starting_head
+            self.fixture.root, scratch, "runtime cannot use external temp"
         )
         self.assertEqual("exceptional-local-scratch-pre-write", evidence.gate)
 
@@ -463,14 +466,55 @@ class PortableGitGateTests(unittest.TestCase):
                 self.fixture.root,
                 scratch,
                 "runtime cannot use external temp",
-                self.fixture.starting_head,
             ),
         )
 
-    def test_exceptional_scratch_rejects_escape_and_stale_head_index_or_ignore_evidence(self) -> None:
+    def test_exceptional_scratch_rejects_paths_outside_superpowers(self) -> None:
+        (self.fixture.root / ".gitignore").write_text(
+            ".superpowers/\n.local-scratch/\n", encoding="utf-8"
+        )
+        self.assert_gate_failure(
+            "gate_exceptional_local_scratch_pre_write",
+            lambda: exceptional_scratch_gate(
+                self.fixture.root,
+                ".local-scratch/task/report.md",
+                "runtime cannot use external temp",
+            ),
+        )
+
+    def test_exceptional_scratch_rejects_an_existing_ignored_leaf(self) -> None:
+        scratch = ".superpowers/sdd/existing/report.md"
+        self.fixture.write(scratch, "foreign content\n")
+        self.assert_gate_failure(
+            "gate_exceptional_local_scratch_pre_write",
+            lambda: exceptional_scratch_gate(
+                self.fixture.root,
+                scratch,
+                "runtime cannot use external temp",
+            ),
+        )
+
+    def test_exceptional_scratch_accepts_a_distinct_leaf_after_an_ordinary_commit(self) -> None:
+        first = ".superpowers/sdd/first/report.md"
+        initial = exceptional_scratch_gate(
+            self.fixture.root,
+            first,
+            "runtime cannot use external temp",
+        )
+        self.fixture.write(first, "task-owned scratch\n")
+        self.fixture.commit_regular_change()
+        evidence = exceptional_scratch_gate(
+            self.fixture.root,
+            ".superpowers/sdd/later/report.md",
+            "runtime cannot use external temp",
+        )
+        self.assertEqual("exceptional-local-scratch-pre-write", evidence.gate)
+        self.assertNotEqual(initial.binding, evidence.binding)
+
+    def test_exceptional_scratch_rejects_escape_and_revalidates_current_state(self) -> None:
         scratch = ".superpowers/sdd/task/report.md"
         probe = lambda: exceptional_scratch_gate(
-            self.fixture.root, scratch, "runtime cannot use external temp", self.fixture.starting_head
+            self.fixture.root, scratch, "runtime cannot use external temp"
         )
         evidence = probe()
         self.fixture.write("staged.txt")
@@ -487,20 +531,21 @@ class PortableGitGateTests(unittest.TestCase):
 
         (self.fixture.root / ".gitignore").write_text(".superpowers/\n", encoding="utf-8")
         self.fixture.commit_regular_change()
-        self.assert_gate_failure(
-            "gate_exceptional_local_scratch_pre_write", lambda: recompute_gate(probe)
-        )
+        refreshed = recompute_gate(probe)
+        self.assertIsNot(evidence, refreshed)
+        self.assertNotEqual(evidence.binding, refreshed.binding)
 
         outside = self.fixture.root.parent / "outside"
         outside.mkdir()
-        (self.fixture.root / "escape").symlink_to(outside, target_is_directory=True)
+        escape = self.fixture.root / ".superpowers" / "escape"
+        escape.parent.mkdir()
+        escape.symlink_to(outside, target_is_directory=True)
         self.assert_gate_failure(
             "gate_exceptional_local_scratch_pre_write",
             lambda: exceptional_scratch_gate(
                 self.fixture.root,
-                "escape/report.md",
+                ".superpowers/escape/report.md",
                 "runtime cannot use external temp",
-                git(self.fixture.root, "rev-parse", "HEAD").strip(),
             ),
         )
 
@@ -655,14 +700,12 @@ class PortableGitGateTests(unittest.TestCase):
             self.fixture.root,
             first,
             "runtime cannot use external temp",
-            self.fixture.starting_head,
         )
         refreshed = recompute_gate(
             lambda: exceptional_scratch_gate(
                 self.fixture.root,
                 second,
                 "runtime cannot use external temp",
-                self.fixture.starting_head,
             )
         )
         self.assertIsNot(evidence, refreshed)
@@ -673,7 +716,6 @@ class PortableGitGateTests(unittest.TestCase):
             self.fixture.root,
             owned_path,
             "runtime cannot use external temp",
-            self.fixture.starting_head,
         )
         owned_evidence = owned_probe()
         self.assertEqual("exceptional-local-scratch-pre-write", owned_evidence.gate)
@@ -695,7 +737,7 @@ class PortableGitGateTests(unittest.TestCase):
         skill.chmod(0)
         try:
             self.assert_gate_failure(
-                "skill_package",
+                "broken skill installation",
                 lambda: pre_commit_gate(
                     self.fixture.root, installed_skill_dir=package
                 ),
