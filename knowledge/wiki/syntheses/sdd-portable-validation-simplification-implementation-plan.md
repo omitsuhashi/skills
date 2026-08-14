@@ -1,9 +1,9 @@
 ---
 title: SDD portable validation と責務単純化 実装計画
-date: 2026-08-14
-status: local-complete
-review_state: final-review-complete
-plan_readiness: ready
+date: 2026-08-15
+status: amendment-approved-pending-implementation
+review_state: pending-independent-plan-review
+plan_readiness: pending-independent-review
 tags:
   - sdd-implementation
   - skill-portability
@@ -17,9 +17,9 @@ aliases:
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` to implement this plan task-by-task. 各 task は checkbox で進捗を追跡し、task review を通過してから次へ進む。
 
-**Goal:** install 済み `sdd-implementation` を source repository 非依存の薄い composition にし、明示 target に対する三つの direct Git gate と package closure を、isolated install と synthetic Git repository で証明する。
+**Goal:** SPV-1〜SPV-5で完了したportable validationを維持したまま、root copied plan snapshotと重複parity runnerを既存ownerへ吸収し、canonical plan direct validationとexecution-time resource boundaryを最小差分で成立させる。
 
-**Architecture:** portable package は public contract、required resources、package tests だけを所有し、generic validation は追加 executable を介さず explicit target へ直接 Git probe する。repository 固有の strict-zero post-policy history、canonical-plan parity、CI policy は既存 root owner に残し、Superpowers は lifecycle/worktree/TDD/review/finishing、SDD はその composition と knowledge/authority seam だけを所有する。
+**Architecture:** portable packageのsingle semantic parserはpackage-relative fixtureを引き続き所有し、rootの既存CI contract testだけがcanonical durable planのrepository-bound identityを直接読む。実行時inventoryはprompt/referenceだけ、test/harness/fixtureはisolated release/CI copy-setだけに分離し、direct Git、First-Write、KISの既存behaviorは変更しない。
 
 **Tech Stack:** portable Markdown skill contract、Python 3.9+ standard-library `unittest`、Git CLI、GitHub Actions、Obsidian-compatible LLM Wiki、current Superpowers lifecycle skills。
 
@@ -28,35 +28,27 @@ aliases:
 - Approved North Star path: knowledge/wiki/syntheses/sdd-portable-validation-simplification.md
 - Approved North Star anchor: 目標
 - Approved North Star identity: sdd-portable-validation-simplification#目標@2026-08-14
-- Approved snapshot SHA-256: 1a8d209ca01e73828043b19c8bfe22d35bd1afa64603add1b7a180a20487285c
+- Approved snapshot SHA-256: d701b2087983cbe5ef715d866f923c0f8da39ec23ed11c713b28f8d9c33993db
 - Approval state: approved
 
 ## Approved Written Spec Identity
 
 - Approved spec path: knowledge/wiki/syntheses/sdd-portable-validation-simplification.md
-- Approved spec SHA-256: 1a8d209ca01e73828043b19c8bfe22d35bd1afa64603add1b7a180a20487285c
+- Approved spec SHA-256: d701b2087983cbe5ef715d866f923c0f8da39ec23ed11c713b28f8d9c33993db
 - Approval state: approved
 
 ## Plan Binding
 
-- Repository baseline: 0ed5f358979ae9281fb7dde8fe47647175720ca8
+- Repository baseline: 4d67bed6d297ba4e9a0f44559d3ca45c9a035976
 - Planning worktree: verified task-linked worktree; runtime path is not durable evidence
 - Integration branch: codex/sdd-portable-validation-simplification
-- Reviewed implementation-only tip: f29c0fde1ecd006e3f46a64ff0c8dc67d7587302
-- Final whole-branch review head: 9f4787f53155b359353250eb88d16b098eb9e91d
-- Final fix commit: e9d1bcb556f8e942b5535542d3f0b8a40546fc4e
-- Current reviewed branch tip before status transition: 3ef7564abb49b496847087f3879afa297969d8d0
-- Current-tree compatibility: compatible through final fix, Human-approved KIS binding repair, and clean scoped re-review
-- Independent review verdict: ready
-- Repository checks: passed
-- Readiness evidence state: current
-- Original checkout path: /Users/omitsuhashi/repos/omitsuhashi/skills
-- Starting branch: main
-- Starting HEAD SHA: 82dcd32157ff9690ae038f982f3916009e449f80
-- Captured starting status: clean
-- Binding evidence: Gitからrebound baseline `0ed5f358979ae9281fb7dde8fe47647175720ca8`、Task 1 tip `481d424`、Task 2 tip `42ce4df`、Task 3 tip `07a1e8d`、Task 4 implementation-only tip `f29c0fd`、Task 5 closeout/review/status chain `41c2a63..3ef7564`の到達可能性をcurrent reviewed branch tip上で再導出した。`9f4787f`のcanonical whole-branch reviewはCritical 0 / Important 4 / Minor 0、`e9d1bcb`へのscoped re-reviewはoriginal four findings addressed、new Important 1のKIS spec/plan SHA binding driftと判定した。Humanが一回のbounded KIS binding repairを明示承認し、`3ef7564`がhistorical snapshot `1a99024e9f04791a4194304d01a50c42a29b516c4c2887b144079239f09dcfbd`を保持しつつcurrent approved spec `0c9570f9d3d54821d3ce6302c0a46824192b0d5c05c3b2e03e6923a0565d4aa4`へbindingした。final scoped re-reviewはresidual finding `ADDRESSED`、new Critical 0 / Important 0とし、branchをdependent local-completion status transitionにreadyと判定した。original checkoutは`main` / starting HEAD / captured clean statusを保持している。
+- Current-tree compatibility: pending non-force integration against current main
+- Independent review verdict: pending
+- Repository checks: pending
+- Readiness evidence state: pending
+- Binding evidence: current amendmentのapproved spec digestとbaseline ancestryをauthoring時点で確認した。task branchとcurrent mainは同一treeだがdivergent ancestryのため、実装前かつcontent edit前にintegration ownerがpublished integration branchへcurrent mainをnon-force・history-preservingにmergeし、main/tree/path/target branchと、current mainおよび既存published task-branch commitsの両方がintegration tipからreachableであることを記録する。original checkoutのfingerprintを保持し、unknown ancestry、content conflict、rebase、history rewrite、またはforce pushでは停止する。
 
-## Independent Plan Review Summary
+## Historical Independent Plan Review Summary
 
 - Prior review date: 2026-08-14; historical only
 - Current review date: 2026-08-14
@@ -67,7 +59,7 @@ aliases:
 - Material risks: none
 - Durable finding summary: prior post-origin `ready` verdict はpre-repair bytesのhistorical evidenceである。fresh independent reviewは、root-owned parity replacementを先にGREENにしてからpackage dependencyを除去し、root parity/package semantic/isolated closureを同じSPV-2 commit/review boundaryでGREENにするatomic cutover repairを`ready`と判定した。当該verdictはTask 1完了時点のhistorical plan-readiness evidenceに限定し、current landed statusは下記Implementation Progressを正本とする。five-task chain、R-01〜R-15 / AC-01〜AC-14のunique primary ownership、strict-zero/First-Write/KIS preservation、decision request `none`、material risk `none`は不変である。raw review artifact、path、transcriptはdurable planへ複製していない。
 
-## Final Whole-Branch Review Summary
+## Historical Final Whole-Branch Review Summary
 
 - Canonical review head `9f4787f` returned Critical 0 / Important 4 / Minor 0.
 - One bounded final fix `e9d1bcb` addressed all four original findings. Its scoped re-review confirmed all four addressed and identified one new Important KIS spec/plan SHA binding drift.
@@ -84,7 +76,7 @@ aliases:
 | SPV-4 | `84e3940..f29c0fd`; scoped re-review clean | thin composition、Authority A、First-Write / exact-seven KIS preservation landed |
 | SPV-5 | `41c2a63..3ef7564`; closeout, canonical final review, bounded fixes, and scoped re-reviews complete | knowledge synchronization、fresh combined verification、final direct-Git / root strict-zero gates、final review、Human-approved KIS binding repair、dependent `LOCAL_COMPLETE` transition completed |
 
-## Global Constraints
+## Historical SPV-1〜SPV-5 Global Constraints
 
 - Authority A を維持する。Human authority は material Written Spec change と別途 authorization が必要な remote action に限定し、execution method、issue plan、plan 自体の追加 Human approval は要求しない。
 - target repository は caller が明示し、canonical absolute path として解決する。CWD、installed skill の source checkout、親 directory、別 worktree から target を推定しない。
@@ -103,7 +95,7 @@ aliases:
 - remote push、PR、merge、release、live install その他の remote write は本計画の local readiness に含めず、別途明示 authorization がない限り実行しない。
 - `knowledge/raw/**` は変更しない。reviewed plan と implementation closeout は `knowledge/index.md` と append-only `knowledge/log.md` を同期する。
 
-## File Responsibility Map
+## Historical SPV-1〜SPV-5 File Responsibility Map
 
 | Path | Operation | Exact responsibility |
 | --- | --- | --- |
@@ -138,7 +130,7 @@ aliases:
 | `knowledge/index.md` | Modify in SPV-5 | current spec/plan/design の active canonical discoverability owner |
 | `knowledge/log.md` | Modify in SPV-5 | reviewed plan と implementation closeout の append-only lifecycle evidence owner |
 
-## Requirement And Acceptance Inventory
+## Historical SPV-1〜SPV-5 Requirement And Acceptance Inventory
 
 ### Requirements
 
@@ -175,7 +167,7 @@ aliases:
 - AC-13: current fail-closed scenario tests が direct supporting-skill entry、allocation/binding/path/owner/preservation failure、original-checkout commit attempt を mutation 前に block し、exactly one new artifact と別 commit plan だけを許可する。
 - AC-14: KIS dependency preflight と exact seven-role wiring が current tree と一致し、各 role の full-read failure が affected work 前に bounded failure となり、SPV-4 がこの wiring または First-Write Worktree Gate を弱めない。
 
-## Coverage Matrix
+## Historical SPV-1〜SPV-5 Coverage Matrix
 
 | ID | Primary task | Contributing tasks |
 | --- | --- | --- |
@@ -209,7 +201,7 @@ aliases:
 | AC-13 | SPV-4 | SPV-2, SPV-5 |
 | AC-14 | SPV-4 | SPV-2, SPV-5 |
 
-## Tasks
+## Historical SPV-1〜SPV-5 Tasks
 
 ### Task 1: SPV-1 — Explicit target と三つの direct Git gate
 
@@ -303,7 +295,7 @@ aliases:
 - [x] **Failure owner:** behavior/test failure は coverage matrix の primary task owner、root strict-zero/parity/CI failure は SPV-3、thin contract/authority/First-Write/KIS failure は SPV-4、knowledge/index/log failure は SPV-5、baseline/commit-range/final gate failure は integration ownerとする分類を保持した。
 - [x] **Commit boundary:** initial canonical closeout / index-log sync / fresh verification identityは`41c2a63`、review-driven knowledge correctionsは`458a52e..9f4787f`、four final-review fixesは`e9d1bcb`、Human-approved KIS binding repairは`3ef7564`に分離した。本dependent status transitionは五つのapproved SDD knowledge filesだけのatomic closeout commitとする。
 
-## Dependency Graph
+## Historical SPV-1〜SPV-5 Dependency Graph
 
 | Task | Dependencies | Reason |
 | --- | --- | --- |
@@ -315,7 +307,7 @@ aliases:
 
 Cycle check: chain は `SPV-1 -> SPV-2 -> SPV-3 -> SPV-4 -> SPV-5` の単方向であり、undefined dependency と cycle はない。
 
-## Execution Order
+## Historical SPV-1〜SPV-5 Execution Order
 
 1. SPV-1 complete: direct Git gate contract と synthetic forward tests を `9a4e155` で実装し、one review fix `481d424` 後の scoped rereview は clean。
 2. SPV-2 complete: root-owned parity replacementを先にGREENにし、その後にpackage dependency removal / portable fixture transitionを行い、root parityとisolated package closureを同じreviewed boundaryでGREENにした。
@@ -325,7 +317,7 @@ Cycle check: chain は `SPV-1 -> SPV-2 -> SPV-3 -> SPV-4 -> SPV-5` の単方向�
 
 全 task は shared owners と migration cutover orderを持つため sequential execution とする。task内でも一つの public seam、一つの failing behavior、一つの最小修正を順に進め、同一 issue 内の concurrent implementer は使用しない。
 
-## Serialized Integration
+## Historical SPV-1〜SPV-5 Serialized Integration
 
 | Step | Task | Status / reviewed evidence | Landed combined state |
 | --- | --- | --- | --- |
@@ -337,7 +329,7 @@ Cycle check: chain は `SPV-1 -> SPV-2 -> SPV-3 -> SPV-4 -> SPV-5` の単方向�
 
 Integration owner は各 step 前に actual commit range、changed paths、semantic/resource assumptions、required task commit reachability を Git facts から再導出する。partial integration、unreviewed result、unknown ancestry、non-descendant target rewrite は integration-ready としない。textual clean merge だけでは成功としない。
 
-## Post-Integration Combined Verification
+## Historical SPV-1〜SPV-5 Post-Integration Combined Verification
 
 ### Scope
 
@@ -403,7 +395,7 @@ installは未実施かつ未承認である。
 | AC-13 | SPV-4 |
 | AC-14 | SPV-4 |
 
-## Readiness Result
+## Historical SPV-1〜SPV-5 Readiness Result
 
 - Plan readiness disposition: ready
 - Control Return status: complete
@@ -413,3 +405,179 @@ installは未実施かつ未承認である。
 - Material decision request: none
 - Material risk: none
 - Remote publication state: not authorized and not required for local readiness
+
+## Current Fixture-Minimization Amendment
+
+SPV-1〜SPV-5 の完了記録は上記の歴史的証跡として保持する。以下だけが、`human-directed-fixture-minimization-amendment-20260815` に対する実行前のcurrent planである。実装は pending であり、SPV-5 の `LOCAL_COMPLETE` を本追補の完了根拠にしてはならない。
+
+## Global Constraints
+
+- Human-approved Written Spec の追補だけを実装し、root fixture、新規 runner、new entrypoint、validator、adapter、manifest、loader、state、cache、protocol は追加しない。
+- `scripts/fixtures/sdd-plan-contract/ready-plan.md` と `scripts/test_sdd_canonical_plan_parity.py` は削除する。package-relative representative fixture、single semantic parser、isolated package suite、root strict-zero ownerは保存する。
+- canonical durable planは既存root CI contract test `scripts/test_skill_ci_workflow.py`が直接読み、approval path、current bytes digest、accepted-or-approved status、approved review state、North Star anchor、baseline ancestryと三negative mutationを検証する。semantic inventory、coverage、task、dependency graph、execution order、serialized integrationはexisting package parser一つだけを直接利用する。
+- execution-time runtime inventoryはnormal direct-Git gateで必要なprompt/referenceだけとする。test、harness、fixtureはisolated release/CI copy-setに残してよいが、その欠落だけを`broken skill installation`にしてはならない。
+- portable direct Git三gate、root strict-zero post-policy behavior、First-Write Worktree Gate、exact seven-role KIS wiring、Human authority、remote-action boundaryを削除、optional化、または弱体化しない。
+- task branchとcurrent mainのcommit ancestryはdivergentである。実装開始前かつcontent edit前にintegration ownerは、current mainと同一treeであること、対象path、published integration branch、original checkout fingerprintを再検証し、current mainをそのpublished integration branchへnon-force・history-preservingにmergeする。merge後はcurrent mainと既存published task-branch commitsの両方がintegration tipからreachableであることを記録する。rebase、history rewrite、force push、unknown ancestry、content conflictは停止条件であり、別routeを選ばない。
+- raw review、test transcript、temporary report、runtime pathはdurable planへ複製しない。remote writeは本追補のlocal readinessに含めない。
+
+## File Responsibility Map
+
+| Path | Operation | Exact responsibility |
+| --- | --- | --- |
+| `scripts/fixtures/sdd-plan-contract/ready-plan.md` | Delete | canonical durable planのtest-only copied snapshotを除去する。後継fixtureを作らない。 |
+| `scripts/test_sdd_canonical_plan_parity.py` | Delete | copied snapshot comparisonとroot-specific checkの重複ownerを除去する。後継runnerを作らない。 |
+| `scripts/test_skill_ci_workflow.py` | Modify | existing root CI contract ownerとしてcanonical planをdirect readし、repository-bound identity、three negative mutations、removed path/entrypointの不在、single semantic parserのdirect resultを固定する。 |
+| `.github/workflows/skill-architecture.yml` | Modify | deleted parity runner stepを除き、existing CI contract、root strict-zero regression/validation、isolated closure、package suiteを維持する。 |
+| `skills/sdd-implementation/tests/test_plan_contract.py` | Modify | package-relative fixtureのsemantic suiteを維持しつつ、root callerがcanonical plan textへ適用できるsingle semantic parserを所有する。root pathを定数、inventory、read dependencyとして持たない。 |
+| `skills/sdd-implementation/tests/fixtures/plan-contract/ready-plan.md` | Preserve | portable representative semantic fixtureとしてpackage suiteだけが読む。root canonical snapshotまたはruntime resourceにしない。 |
+| `skills/sdd-implementation/references/plan-contract.md` | Modify | package fixture、root direct check、single parser、fixture default-denyのowner boundaryをcurrent approved specへ整合する。 |
+| `skills/sdd-implementation/tests/test_portable_git_gates.py` | Modify | normal direct-Git gateのexecution-time resource inventoryと`broken skill installation` boundaryだけを所有し、test evidenceをruntime inventoryから外す。 |
+| `skills/sdd-implementation/tests/test_isolated_install.py` | Modify | isolated copy-set、missing runtime resource failure、missing test-only evidence非failure、root/canonical read dependency不在を検証する。 |
+| `knowledge/wiki/syntheses/sdd-portable-validation-simplification-implementation-plan.md`, `knowledge/index.md`, `knowledge/log.md` | Modify in AM-2 | reviewed result、fresh verification、remaining riskを同期し、historical SPV closeoutとこのamendment closeoutを混同しない。 |
+
+## Requirement And Acceptance Inventory
+
+#### Requirements
+
+- R-01: isolated installed skillがsource repositoryに依存せず、explicit targetとexecution-time resourcesでdirect Git validationを完結する。
+- R-02: standalone/bundled generic validatorを追加せず、explicit targetと三つのdirect Git gateを維持する。
+- R-03: missing execution-time resource、target/Git capability failure、test-only evidence absenceのfailure ownershipを区別する。
+- R-04: portable packageからrepository-specific canonical plan、root path、hash、history identityを排除する。
+- R-05: root ownerがstrict-zero policyとcanonical planのdirect repository-bound validationを保持する。
+- R-06: normative mechanical gateを三つに保ち、fresh direct-Git behaviorを退行させない。
+- R-07: runtime inventoryとisolated release/CI copy-setを分離し、package-external read dependencyを排除する。
+- R-08: Superpowers ownershipとthin SDD compositionを維持する。
+- R-09: current capability/binding fail-closed behaviorを維持する。
+- R-10: agent/repository-owned sequential fallbackとHuman authority boundaryを維持する。
+- R-11: isolated copyとsynthetic Git forward testsをsource checkout非依存で維持する。
+- R-12: fresh combined verification、knowledge closeout、final reviewを本追補に対して完了する。
+- R-13: existing ownerだけを変更し、新しいmechanismを増やさない。
+- R-14: First-Write Worktree Gateの全direct behaviorを維持する。
+- R-15: exact seven-role KIS wiringを維持する。
+
+#### Acceptance criteria
+
+- AC-01: isolated installがsource repositoryなしでresource resolution、direct Git validation、package testsを完了する。
+- AC-02: portable packageにgeneric validator executableはなく、explicit target bindingだけを用いる。
+- AC-03: missing execution-time resourceは`broken skill installation`、Git capability failureはgate-specific failure、test-only evidence absenceはnormal gate failureではない。
+- AC-04: portable contract、prompt、reference、fixtureにrepository-specific identityがない。
+- AC-05: root strict-zero/CI behaviorとcanonical direct repository-bound validationがroot-onlyである。
+- AC-06: three direct Git gatesだけがnormativeである。
+- AC-07: closureがruntime resource、outside reference、source topologyを検知し、test evidenceをruntime inventoryへ入れない。
+- AC-08: Superpowers ownershipとSDD First-Write boundaryが維持される。
+- AC-09: capability failureがpre-mutationでfail closedになる。
+- AC-10: parallel/sequential/Human authority boundaryが維持される。
+- AC-11: source、isolated-copy、root、CI、knowledge validatorsがfreshに成功する。
+- AC-12: changed surfaceはexisting ownersだけで、新しいmechanismがない。
+- AC-13: First-Write fail-closed scenariosが退行しない。
+- AC-14: KIS seven-role full-read/failure boundaryが退行しない。
+- AC-15: copied root fixture、parity runner、root snapshot、second semantic parserが存在しない。
+- AC-16: existing root CI contract testがcanonical planをdirect validateし、three negative mutationsとsingle semantic parserを保持する。
+- AC-17: runtime inventoryはexecution-time resourceだけで、isolated copyはroot script、root fixture、canonical durable documentをruntime/read dependencyにしない。
+
+## Coverage Matrix
+
+| ID | Primary task | Contributing tasks |
+| --- | --- | --- |
+| R-01 | AM-1 | AM-2 |
+| R-02 | AM-1 | AM-2 |
+| R-03 | AM-1 | AM-2 |
+| R-04 | AM-1 | AM-2 |
+| R-05 | AM-1 | AM-2 |
+| R-06 | AM-1 | AM-2 |
+| R-07 | AM-1 | AM-2 |
+| R-08 | AM-1 | AM-2 |
+| R-09 | AM-1 | AM-2 |
+| R-10 | AM-1 | AM-2 |
+| R-11 | AM-1 | AM-2 |
+| R-12 | AM-2 | AM-1 |
+| R-13 | AM-1 | AM-2 |
+| R-14 | AM-1 | AM-2 |
+| R-15 | AM-1 | AM-2 |
+| AC-01 | AM-1 | AM-2 |
+| AC-02 | AM-1 | AM-2 |
+| AC-03 | AM-1 | AM-2 |
+| AC-04 | AM-1 | AM-2 |
+| AC-05 | AM-1 | AM-2 |
+| AC-06 | AM-1 | AM-2 |
+| AC-07 | AM-1 | AM-2 |
+| AC-08 | AM-1 | AM-2 |
+| AC-09 | AM-1 | AM-2 |
+| AC-10 | AM-1 | AM-2 |
+| AC-11 | AM-2 | AM-1 |
+| AC-12 | AM-1 | AM-2 |
+| AC-13 | AM-1 | AM-2 |
+| AC-14 | AM-1 | AM-2 |
+| AC-15 | AM-1 | AM-2 |
+| AC-16 | AM-1 | AM-2 |
+| AC-17 | AM-1 | AM-2 |
+
+## Tasks
+
+### Task 6: AM-1 — Existing-owner canonical direct validation and resource split
+
+- [ ] **Implementation status:** pending; implementation begins only after the current mainをpublished integration branchへnon-force・history-preservingにmergeする prerequisite succeeds.
+- [ ] **Deliverable:** delete the copied root fixture and parity runner; make the existing root CI contract test direct-validate the canonical plan and consume the existing package semantic parser; split runtime inventory from isolated test evidence without changing direct Git, strict-zero, First-Write, or KIS behavior.
+- [ ] **Requirement coverage:** R-01, R-02, R-03, R-04, R-05, R-06, R-07, R-08, R-09, R-10, R-11, R-13, R-14, R-15.
+- [ ] **Acceptance coverage:** AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07, AC-08, AC-09, AC-10, AC-12, AC-13, AC-14, AC-15, AC-16, AC-17.
+- [ ] **Dependencies:** content edit前のcurrent-main non-force history-preserving merge prerequisite; no prior amendment task.
+- [ ] **Behavioral interface:**
+  - **Consumes:** `scripts/test_skill_ci_workflow.py` がcanonical planの `## Current Fixture-Minimization Amendment` blockだけをinput boundaryとして選択したtext、current approved spec bytes、workflow text、ならびに `skills/sdd-implementation/tests/test_plan_contract.py` が所有する既存 `plan_errors` semantic-parser interface。root callerはcurrent amendmentのexpected requirement inventory `R-01`〜`R-15`、acceptance inventory `AC-01`〜`AC-17`、task schema `AM-1` / `AM-2`、coverage / dependency graph / execution order / serialized-integration schemaをparser inputとして渡す。package suiteは同じinterfaceへ既存portable fixtureと既存 `POA-1`〜`POA-8` schemaを渡し続けるためsource-independentである。installed skill copy、synthetic explicit Git target、existing First-Write/KIS/root strict-zero contractsもconsumeする。
+  - **Produces:** root CI contract testだけがownerとなるcanonical direct repository-bound verdict（approval path/digest/status、North Star anchor、baseline ancestry、wrong-path/wrong-digest/non-ancestorの三negative mutation）と、`plan_errors` だけがownerとなるcurrent amendmentのfull semantic inventory / complete coverage / task / graph / order / integration verdict。parser outputはempty error listのpassまたはsemantic error listのCI failureであり、historical SPV blockだけはcurrent amendment schemaを満たせない。root copied snapshot/runner/workflow stepはなく、execution-time-only runtime inventory、isolated test copy-set、classified missing-resource behaviorを残す。
+- [ ] **Verification intent:** RED first proves that current-amendment selectorを外してhistorical SPV blockを渡す場合、またはcurrent expected inventory/task schemaと三repository-bound negative mutationのいずれかを変える場合に、既存ownerのCI contractがfailureとなることを示す。各removed root artifact、duplicate parser、missing execution-time resource、source/root/canonical read dependencyもowner contract違反として観測する。GREENはcurrent-amendment blockを同一 `plan_errors` interfaceでsemantic passさせ、package fixture mutation coverageとsource-independent package suiteを維持し、CI regression failure、isolated package independence、approved specが要求するdirect Git / strict-zero / First-Write / KIS preservation suitesを保持する。
+- [ ] **Integration placement:** I-AM-1; content edit前のnon-force history-preserving mergeでcurrent mainとexisting published task-branch commitsがintegration tipからreachableであることを確認してから、deletionとreplacement coverageがgreenの一reviewed changeだけをintegrateする。
+- [ ] **Failure owner:** AM-1 implementer; root identity/CI failures remain in `scripts/test_skill_ci_workflow.py`, package semantic/resource failures remain in the existing package tests, and strict-zero/First-Write/KIS regressions return to their existing owners.
+
+### Task 7: AM-2 — Amendment closeout and fresh combined verification
+
+- [ ] **Implementation status:** pending.
+- [ ] **Deliverable:** after AM-1 is independently reviewed and serially integrated, record only the reviewed amendment outcome and run the complete current verification set; do not reclassify SPV-1〜SPV-5 history as this amendment's completion.
+- [ ] **Requirement coverage:** R-12.
+- [ ] **Acceptance coverage:** AC-11.
+- [ ] **Dependencies:** AM-1 reviewed and integrated after the recorded non-force history-preserving current-main merge.
+- [ ] **Behavioral interface:**
+  - **Consumes:** accepted AM-1 commit range, recorded non-force history-preserving current-main merge evidence, current approved spec identity, all current acceptance mappings, existing package/root/CI/knowledge validation surfaces, and original-checkout preservation evidence.
+  - **Produces:** fresh combined result, amendment-specific knowledge closeout, final review disposition, residual-risk statement, and explicit separation of unperformed remote actions.
+- [ ] **Verification intent:** RED treats absent deletion evidence, direct-validation negatives, runtime/test separation, isolated independence, strict-zero, First-Write, KIS, plan binding, or knowledge synchronization as incomplete. GREEN requires every current acceptance criterion to have fresh evidence after the final durable edit.
+- [ ] **Integration placement:** I-AM-2; serially integrate closeout only after AM-1, then revalidate current-main and published task-branch reachability, target compatibility, original-checkout preservation, and final Git/root conditions before final review.
+- [ ] **Failure owner:** AM-2 closeout owner for freshness and knowledge evidence; any behavior failure returns to AM-1 or its named existing owner.
+
+## Dependency Graph
+
+| Task | Dependencies | Reason |
+| --- | --- | --- |
+| AM-1 | content edit前のcurrent-main non-force history-preserving merge prerequisite | all source/test deletions and replacements share owners and must begin only after current main and existing published task-branch commits are both reachable from the verified integration tip. |
+| AM-2 | AM-1 | closeout can only describe the reviewed, serially integrated implementation. |
+
+## Execution Order
+
+1. AM-1: content edit前にcurrent mainをpublished integration branchへnon-force・history-preservingにmergeし、main/tree/path/target branchと両commit-lineage reachability、original checkout fingerprintを記録してから、single TDD implementationとindependent task reviewを行う。rebase、history rewrite、force pushは行わない。
+2. AM-2: serially integrate AM-1, perform fresh combined verification, synchronize durable knowledge, and request the canonical final review.
+
+## Serialized Integration
+
+| Step | Task | Preconditions | Combined-state expectation |
+| --- | --- | --- | --- |
+| I-AM-1 | AM-1 | content edit前にcurrent mainからpublished integration branchへのnon-force history-preserving mergeが完了し、main/tree/path/target branch、current-main reachability、existing published task-branch commit reachability、original-checkout fingerprint、changed paths、RED evidenceが記録済みである。rebase、history rewrite、force push、unknown ancestry、content conflictはnot eligible。 | deleted root snapshot/runner are absent; root direct check, package single parser, runtime/test split, CI regression, isolated copy, and all preserved boundaries are green together. |
+| I-AM-2 | AM-2 | AM-1 review is accepted and reachable from the verified current-compatible target. | current canonical plan, knowledge discovery/log, fresh verification, final Git/root results, and final review all describe this amendment rather than historical SPV completion. |
+
+## Post-Integration Combined Verification
+
+**Scope:** canonical plan/spec binding, existing root CI contract and workflow, deleted root paths, package semantic parser/fixture, runtime inventory, isolated copy, three direct Git gates, strict-zero, First-Write, KIS, knowledge artifacts, and current-main integration ancestry.
+
+**Pass criteria:** AC-01 through AC-17 each have one primary-owner result; deleted paths and workflow entrypoint remain absent; canonical direct validation rejects wrong approved path, digest, and baseline ancestry; no second parser/snapshot remains; direct Git normal execution ignores absent test-only evidence but rejects missing execution-time resource; source-independent isolated suite and all preserved fail-closed/root/knowledge checks are current and green.
+
+**Required evidence:** reviewed AM-1 change range and task-review result; content edit前のnon-force history-preserving current-main mergeについてのmain/tree/path/target branch、current-main reachability、existing published task-branch commit reachability、original-checkout fingerprintのevidence; root direct positive and three negative results; selected current-amendment semantic positive and historical-block/schema-negative results; isolated-copy results; workflow/strict-zero/First-Write/KIS preservation results; final plan/spec digest and baseline ancestry; knowledge synchronization; final review disposition.
+
+**Failure owner:** AM-2 owns stale or missing combined evidence. A source behavior failure returns to AM-1; root strict-zero, First-Write, and KIS behavior retain their existing named owners.
+
+## Readiness Result
+
+- Plan readiness disposition: pending independent review
+- Control Return status: pending
+- Implementation Stage entry: not allowed
+- Review vocabulary: ready, issues_found, needs_repair, needs_decision, blocked.
+- Current disposition: amendment-approved plan authored; independent Plan Review, current-main integration prerequisite, implementation, and fresh combined verification remain pending.
+- Material decision request: none
+- Material risk: divergent current-main ancestry requires the stated content-edit前のnon-force history-preserving merge and reachability proof; no material Written Spec conflict is known.
+- Remote publication state: not authorized and not required for plan authoring.

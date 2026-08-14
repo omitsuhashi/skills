@@ -3,12 +3,13 @@ title: SDD portable validation と責務単純化仕様
 date: 2026-08-14
 status: accepted
 review_state: approved
-approved_on: 2026-08-14
-approval_snapshot_sha256: 1a8d209ca01e73828043b19c8bfe22d35bd1afa64603add1b7a180a20487285c
-amended_on: 2026-08-14
-amendment_authority: human-directed-origin-main-incorporation
+approved_on: 2026-08-15
+approval_identity: human-directed-fixture-minimization-amendment-20260815
+historical_approval_snapshot_sha256: 1a8d209ca01e73828043b19c8bfe22d35bd1afa64603add1b7a180a20487285c
+amended_on: 2026-08-15
+amendment_authority: human-directed-fixture-minimization-amendment-20260815
 amendment_baseline_sha: 4d67bed6d297ba4e9a0f44559d3ca45c9a035976
-implementation_state: local-complete
+implementation_state: amendment-approved-pending-implementation
 north_star_identity: sdd-portable-validation-simplification#目標@2026-08-14
 tags:
   - sdd-implementation
@@ -22,7 +23,7 @@ aliases:
 # SDD portable validation と責務単純化仕様
 
 > [!success] Human-approved Written Spec
-> Human は2026-08-14に本仕様全体をWritten Specとして承認し、その後current `origin/main`を取り込んで重複を整合した上で修正を継続するbounded amendmentを直接指示した。statusは`accepted`、review stateは`approved`のままとし、portable direct-Git goalと承認済みauthorityは変更しない。remote actionは別途明示承認を要する。
+> Human は2026-08-14に本仕様全体をWritten Specとして承認し、その後current `origin/main`を取り込んで重複を整合した上で修正を継続するbounded amendmentを直接指示した。さらに2026-08-15、根拠付き設計を受けて、copied root fixtureの削除、canonical documentへのdirect validation、thin root-specific check、runtime/test resource分離を承認し、不要なfixture/scriptの削除を指示した。現行承認identityは`human-directed-fixture-minimization-amendment-20260815`であり、statusは`accepted`、review stateは`approved`のままとする。portable direct-Git goal、First-Write、KIS、remote-action boundaryは変更しない。
 
 ## 問題
 
@@ -67,7 +68,7 @@ aliases:
 - public contract、package test、fixture は repository 名、canonical wiki page、commit / blob hash、個人の絶対 path、完了済み migration marker を含まない。
 - package 内 test は synthetic target repository と package-relative resource だけで完結する。
 
-direct Git probe は package resource を追加しない。required prompt / reference / test resource が package に存在しない、読めない、または package contract と一致しない場合は `broken skill installation` として fail closed にする。これは target repository の deficiency ではない。
+direct Git probe は package resource を追加しない。normal gate executionに必要なexecution-time prompt / reference resource が package に存在しない、読めない、または package contract と一致しない場合は `broken skill installation` として fail closed にする。package test、harness、fixtureはrelease / CI evidenceであり、runtime inventoryではない。それらの非存在だけでnormal gate executionを`broken skill installation`としてはならない。これは target repository の deficiency とも混同しない。
 
 ### 2. Target repository owner
 
@@ -75,7 +76,7 @@ target repository は `AGENTS.md`、root-owned validator、test、CI など既�
 
 portable skill は repository-local validator の存在を前提にせず、自動 discovery や adapter seam も追加しない。repository-local rule が Superpowers の generic default より厳しい場合、その override は repository rule にだけ置く。
 
-この source repository では、root `scripts/validate_sdd_transient_artifacts.py` がexplicit repository rootを検証し、current index、nominated candidate tree、repository固有policy boundary以後の全new commit、final treeの各surfaceに`.superpowers/**` entryがzeroであることをfail closedに検証する。ignored・untracked・unstaged・uncommitted scratchは具体的reasonとexact ignore coverageがある場合だけ許容し、staged deletionとpolicy boundaryより前のhistorical ancestor blobはcurrent strict-zero違反がなければ許容する。completed migration markerや過去のexact path / mode / blob / lineageはcurrent validation authorityではなくhistorical evidenceである。root regression test、`.github/workflows/skill-architecture.yml`からのinvocation、それを固定する`scripts/test_skill_ci_workflow.py`は継続必須とする。canonical SDD plan parityはroot-owned fixture / regression testで所有し、同じCIで実行する。
+この source repository では、root `scripts/validate_sdd_transient_artifacts.py` がexplicit repository rootを検証し、current index、nominated candidate tree、repository固有policy boundary以後の全new commit、final treeの各surfaceに`.superpowers/**` entryがzeroであることをfail closedに検証する。ignored・untracked・unstaged・uncommitted scratchは具体的reasonとexact ignore coverageがある場合だけ許容し、staged deletionとpolicy boundaryより前のhistorical ancestor blobはcurrent strict-zero違反がなければ許容する。completed migration markerや過去のexact path / mode / blob / lineageはcurrent validation authorityではなくhistorical evidenceである。root regression test、`.github/workflows/skill-architecture.yml`からのinvocation、それを固定する`scripts/test_skill_ci_workflow.py`は継続必須とする。canonical SDD planはcopied expected-planとのparityではなく、canonical durable documentそのものをdirectに検証する。root固有のapproval path / digest / status、North Star anchor、repository baseline ancestryは既存`scripts/test_skill_ci_workflow.py`のthin root-specific checkが所有し、complete inventory、coverage、task、graph、execution order、integration orderは既存`skills/sdd-implementation/tests/test_plan_contract.py`のsemantic validatorを一つだけ再利用する。root checkはこのsemantic parserを複製せず、root fixture、new runner、new entrypointを追加しない。
 
 ### 3. Superpowers と SDD
 
@@ -179,7 +180,7 @@ push、PR、remote merge、release、live installを含むremote actionは未実
 
 | Condition | Owner classification | Required behavior |
 |---|---|---|
-| required package resource が欠落・読取不能 | skill package | `broken skill installation` として mutation 前に停止する |
+| execution-time package resource が欠落・読取不能 | skill package | `broken skill installation` として mutation 前に停止する。test / harness / fixtureだけの欠落はnormal gate executionをこの分類にしない |
 | required Git operation が利用不能、nonzero、または状態を一意に判定不能 | runtime / target capability | 影響するscratch write、commit、またはcloseout gateだけをfail closedにする |
 | explicit target が不在、非 Git repository、または authority 外 | caller / target | target-side input / authority failure として停止する |
 | workspace binding、fresh dispatch、external temporary handoff 等の capability がない | runtime | 該当 mutation 前に不足 capability を示して停止する |
@@ -198,15 +199,16 @@ push、PR、remote merge、release、live installを含むremote actionは未実
 
 - skill folder だけを isolated temporary directory へ copy / install し、source repository とその親を read path に含めず test を実行する。
 - isolated synthetic Git repository を explicit target に渡し、normative gate table の各 direct Git probe と positive / negative stateを検証する。ignored scratch、force-add、unmerged index、staged deletion、`BASELINE..HEAD`内のadd-then-delete commit、index / working-tree / ignore mutationによるstale evidence、mutation後の再実行をforward testする。
-- prompt、reference、fixture、testの全 mandatory resource が package 内に存在し、skill-relative に解決されることをclosure testで確認する。standalone validator executableは期待しない。
+- runtime inventoryはnormal gate executionに必要なprompt / referenceだけで構成し、これらがpackage内に存在しskill-relativeに解決されることをclosure testで確認する。test、harness、fixtureはrelease / CI evidenceとしてisolated copyへcopy / runしてよいが、runtime inventoryへ宣言しない。これらを除いたinstalled skillでもnormal gate executionは`broken skill installation`にならない。standalone validator executableは期待しない。
 - package test と fixture に repository-specific hash、canonical plan、username / absolute path がないことを regression test で固定する。
 - required resource欠落が`broken skill installation`、不正targetまたはGit capability failureがtarget/runtime-side failureとして区別されることを確認する。
 
 ### Repository-owned tests
 
 - root `scripts/validate_sdd_transient_artifacts.py`のcurrent strict-zero behaviorを固定する。explicit repository root、current index、nominated candidate tree、repository固有policy boundary以後の到達可能な全new commit、final treeを個別に検証し、markerがnonzero indexをauthorizeしないこと、strict-zero violationを一つのexact diagnostic categoryでfail closedにすること、staged deletionとpre-policy historical ancestor blobを許容することをroot regression testで証明する。repository固有policy-root identityとそのactual parentはroot fixture / validatorだけに留める。
-- canonical SDD plan parity を repository-level fixture / regression test へ移し、installed package test からは除外する。移動後も parity coverage を削らない。
-- `.github/workflows/skill-architecture.yml` は root validator のpost-policy strict-zero history invocation、対応する root regression tests、canonical-plan parity、isolated package closure test を source checkout CI で実行する。`scripts/test_skill_ci_workflow.py` は`--post-policy-history`を含むinvocation setをcontract testとして固定する。quick shape validation の成功だけを installability evidence にしない。
+- copied expected-plan fixtureをdefaultで禁止する。canonical durable planと既存semantic validatorだけで必要behaviorを表現できない具体的なfailed simpler evidence、owner、consumer、expiryがspec / reviewed planに記録されない限りfixtureを追加しない。canonical durable planをsnapshot fixtureへ複製してはならない。
+- `scripts/fixtures/sdd-plan-contract/ready-plan.md` と `scripts/test_sdd_canonical_plan_parity.py` を削除する。前者はcanonical planの重複snapshot、後者は既存ownerへ吸収できるsemantic parserとrepository-bound checkを重複して所有するためである。root固有bindingのthree negative regressions（wrong approved path、wrong digest、non-ancestor baseline）を含むthin direct checkは既存`scripts/test_skill_ci_workflow.py`へ、semantic inventory / coverage / graph / order / integrationのdirect validationは既存`test_plan_contract.py`のsingle parserへ吸収する。
+- `.github/workflows/skill-architecture.yml` はroot validatorのpost-policy strict-zero history invocation、対応するroot regression、fixture/scriptなしを検証する既存CI contract test、isolated package closure testをsource checkout CIで実行する。専用canonical-parity stepは削除し、`scripts/test_skill_ci_workflow.py`は`--post-policy-history`を含む必要invocation、削除済みentrypointの不在、direct canonical validationをcontractとして固定する。quick shape validationの成功だけをinstallability evidenceにしない。
 
 ### Contract and integration tests
 
@@ -222,11 +224,11 @@ push、PR、remote merge、release、live installを含むremote actionは未実
 
 1. isolated install の `sdd-implementation` が source repository への access なしで synthetic target に対する必須 resource resolution、direct Git validation、package tests を完了する。
 2. standalone / bundled generic validator executableがportable packageに存在せず、public contractはexplicit target repositoryをcanonical absolute pathへ解決して同じ`git -C TARGET` bindingだけを使う。
-3. required package resource欠落はtarget deficiencyではなく`broken skill installation`、Git probeの利用不能は影響するgateのcapability failureとしてmutation前に失敗する。
+3. execution-time required package resource欠落はtarget deficiencyではなく`broken skill installation`、Git probeの利用不能は影響するgateのcapability failureとしてmutation前に失敗する。test / harness / fixtureだけの欠落はnormal gate executionの同分類にしない。
 4. portable `SKILL.md`、prompt、reference、fixture に、この repository 固有の commit / blob hash、canonical wiki path、migration marker、個人の絶対 path が存在しない。
-5. current root-owned validator / regression / CI contractは、repository固有policy boundary以後のindex、candidate、全new commit、final treeをstrict-zeroで検証し、completed markerや過去のexact path / mode / blob / lineageをcurrent executable authorityにしない。policy-root identityとそのactual parent、canonical-plan parityはportable packageに存在せず、root ownerに留まる。`.github/workflows/skill-architecture.yml`が`--post-policy-history`を含むcurrent invocationをfresh実行し、`scripts/test_skill_ci_workflow.py`が欠落を失敗にする。
+5. current root-owned validator / regression / CI contractは、repository固有policy boundary以後のindex、candidate、全new commit、final treeをstrict-zeroで検証し、completed markerや過去のexact path / mode / blob / lineageをcurrent executable authorityにしない。policy-root identityとそのactual parent、canonical planのdirect repository-bound validationはportable packageに存在せず、root ownerに留まる。`.github/workflows/skill-architecture.yml`が`--post-policy-history`を含むcurrent invocationをfresh実行し、`scripts/test_skill_ci_workflow.py`が欠落を失敗にする。
 6. mechanical validation pointはnormative gate tableの三つだけである。各gateのmandatory input、direct Git surface、scratch state、positive / negative result、mutation後のevidence invalidationがisolated testで観測でき、exactly-once stateを持たない。
-7. package closure test が mandatory resource の欠落、package 外参照、source topology 依存を検出する。
+7. package closure test がexecution-time mandatory resourceの欠落、package 外参照、source topology 依存を検出し、test evidenceをruntime inventoryに混入させない。
 8. SDDのpublic contractはgeneric allocation algorithm / TDD / review / finishingを再定義せずSuperpowers ownershipを参照する一方、repository-change entry、owned worktree binding、single-writer containment、zero-write / no-fallback、original-checkout preservationを一つのSDD-owned First-Write Worktree Gateとして保持する。
 9. required runtime capabilities と unavailable 時の pre-mutation stop が contract test で固定される。
 10. parallel eligibility の independence evidence、unknown 時の sequential fallback、Human authority boundary が contract test で固定される。
@@ -234,13 +236,16 @@ push、PR、remote merge、release、live installを含むremote actionは未実
 12. implementation diff は既存 owner / surface の修正に限定され、新しい adapter seam、scheduler、state、telemetry、protocol を追加しない。
 13. current fail-closed scenario testsが、direct supporting-skill entry、allocation/binding/path/owner/preservation failure、original-checkout commit attemptをmutation前にblockし、exactly one new artifactと別commit planだけを許可する。
 14. KIS dependency preflightとexact seven-role wiringがcurrent-tree contractと一致し、各roleのfull-read failureがaffected work前にbounded failureとなる。SPV-4の重複整理はこのwiringまたはFirst-Write Worktree Gateを削除しない。
+15. `scripts/fixtures/sdd-plan-contract/ready-plan.md`、`scripts/test_sdd_canonical_plan_parity.py`、canonical durable planを複製するroot snapshot、semantic plan parserの第二ownerが存在しない。fixtureまたはscriptを新設するには、canonical artifactとexisting ownerでは表現不能だった具体的failed simpler evidence、necessity、owner、consumerをapproved spec / reviewed planに記録する。
+16. existing `scripts/test_skill_ci_workflow.py`がcanonical planをdirectに読み、approval path / digest / accepted-or-approved status / approved review state、North Star anchor、repository baseline ancestryとthree negative regressionsを検証する。semantic inventory、complete coverage、task、dependency graph、execution order、serialized integrationはexisting `skills/sdd-implementation/tests/test_plan_contract.py`のsingle semantic parserでdirectに検証し、copied expected planとのcomparisonを行わない。
+17. runtime inventoryはexecution-time resourceだけであり、package test、harness、fixtureはrelease / CI evidenceとしてisolated copyでcopy / runできるが、normal gate executionのmandatory resourceでも`broken skill installation`判定の根拠でもない。isolated installed-copy testはroot script、root fixture、canonical durable documentをruntime inventoryまたはread dependencyとして扱わない。
 
 ## Migration と supersession
 
 Human approval 後、実装は次の順序で移行する。
 
 1. public skillにdirect Git gate contractとexplicit target bindingを実装し、standalone validatorを追加せずsynthetic repository testsを先に成立させる。
-2. package tests / fixtures から repository-specific canonical plan、history、absolute path を分離し、既存 canonical-plan parity coverage とcurrent strict-zero post-policy regression coverageをroot-owned test / fixtureに置く。移動中もcoverageを削除またはoptional化しない。
+2. package tests / fixtures から repository-specific canonical plan、history、absolute path を分離する。root copied fixtureとparity scriptを削除し、root-specific bindingはexisting CI contract test、generic semantic structureはexisting package semantic parserへ直接収束する。coverageを削除またはoptional化せず、fixture/scriptを再導入する場合はcanonical artifactとexisting ownerで失敗したより単純な代替のevidenceをrecordする。
 3. current root validatorのstrict-zero index / candidate / post-policy-new-commit / final-tree behaviorをrepository-owned surfaceとして維持する。completed markerと過去のexact lineage assertionをcurrent executable authorityへ戻さない。root regression tests、`.github/workflows/skill-architecture.yml` の `--post-policy-history` invocation、`scripts/test_skill_ci_workflow.py` の invocation contract が GREEN になるまでcutoverしない。
 4. `SKILL.md`、prompts、references の重複 gate と lifecycle / worktree prose を一つの portable contract へ収束する。ただしSPV-4はSDD-owned First-Write Worktree Gateのobservable behaviorとexact seven-role KIS wiringを削除、optional化、Superpowers generic defaultへ暗黙fallbackしてはならない。
 5. isolated package closure と repository full suite の双方が GREEN になってから旧 package-external dependency を除去する。
@@ -274,6 +279,7 @@ Human approval 後、実装は次の順序で移行する。
 4. Human-approved Written Spec 内の parallel issue eligibility は agent / repository-owned とする。dependency / conflict evidence が unknown なら sequential に戻す。Human は material Written Spec change と別途 authorization が必要な remote action を決定し、execution method または issue plan の追加承認は不要とする。
 5. generic lifecycle / worktree allocation methodologyはSuperpowersが所有する。SDDはrepository-change first entryとowned-worktree write containmentを所有し、current fail-closed、zero-write、no-fallback、original-checkout preservation behaviorを維持する。
 6. `keep-implementation-simple`はrequired supporting skillであり、dependency preflight後にSpec Synthesizer、Spec Reviewer、Plan Author、Plan Reviewer、Implementer、Task Reviewer、Final Reviewerの七roleが同じcanonical pathを全文readする。このwiringはSPV-4の削除対象ではない。
+7. Humanは2026-08-15に、root copied fixtureの削除、canonical planへのdirect validation、thin root-specific check、runtime/test resource分離を承認し、不要なfixture/scriptの削除を指示した。fixtureとnew script/test entrypointはdefault-deniedとし、current canonical artifactとexisting ownerで表現不能な具体的failed simpler evidenceがない限り追加しない。`scripts/fixtures/sdd-plan-contract/ready-plan.md`と`scripts/test_sdd_canonical_plan_parity.py`は削除し、direct canonical semantics、repository-bound approval/path/digest/status、North Star、baseline ancestry、CI regressionを既存ownerで保持する。
 
 ## Open Decisions
 
@@ -281,11 +287,12 @@ Human approval 後、実装は次の順序で移行する。
 
 ## Review verdict
 
-Human-approved direct Git amendment後のfresh independent rereviewは`ready_for_human_review`、decision requestとunresolved material riskはnoneであった。HumanはそのbytesをWritten Specとして承認し、statusを`accepted`、review stateを`approved`へ移した。その後のHuman-directed origin/main incorporation amendmentは、portable three-gate goalとauthority decision Aを変更せず、root authorityをcurrent strict-zero post-policy behaviorへ更新し、current First-Write Worktree Gateとseven-role KIS wiringをSPV-4のpreservation boundaryへ追加した。post-origin fresh independent reviewも`ready_for_human_review`、decision requestとmaterial riskはnoneであり、root validator 10/10、workflow contract 8/8、First-Write / KIS focused evidence 52/52を確認した。Humanのorigin/main incorporation指示をこのbounded amendmentのapproval authorityとし、`accepted` / `approved`を維持する。prior rereviewのroot-lineage記述は当時のhistorical review evidenceとしてのみ扱う。
+Human-approved direct Git amendment後のfresh independent rereviewは`ready_for_human_review`、decision requestとunresolved material riskはnoneであった。HumanはそのbytesをWritten Specとして承認し、statusを`accepted`、review stateを`approved`へ移した。その後のHuman-directed origin/main incorporation amendmentは、portable three-gate goalとauthority decision Aを変更せず、root authorityをcurrent strict-zero post-policy behaviorへ更新し、current First-Write Worktree Gateとseven-role KIS wiringをSPV-4のpreservation boundaryへ追加した。post-origin fresh independent reviewも`ready_for_human_review`、decision requestとmaterial riskはnoneであった。2026-08-15のfixture minimization amendmentは、evidence-backed designに基づき、root copied fixtureの削除、canonical documentへのdirect validation、thin root-specific check、runtime/test resource separationをHumanが明示承認したcurrent bounded scopeである。現行approval identityは`human-directed-fixture-minimization-amendment-20260815`であり、`accepted` / `approved`を維持する。prior snapshot hashと過去のrereview / root-lineage記述はhistorical evidenceとしてのみ扱う。
 
 ## Provenance
 
 - audited baseline: `82dcd32157ff9690ae038f982f3916009e449f80`
 - authority: Human-confirmed decisionsを保持したadvisory synthesis。2026-08-14にHumanはvalidator necessity reviewの結論を承認し、bundled standalone validator要件をdirect Git gateへ置換した。raw report / transcript / runtime pathはdurable pageへ複製していない。
-- Written Spec approval: 2026-08-14にHumanがcurrent spec全体を承認した。`approval_snapshot_sha256`はactivation metadata追加前のreview済みbytesを識別する。
-- origin/main incorporation amendment: Humanの直接指示により`origin/main` `15152126fe0785bcf789a9ecbfe752b9e368fc4e`を取り込み、planning baseline `4d67bed6d297ba4e9a0f44559d3ca45c9a035976`で重複current behaviorを整合した。root validatorのclean-clone boundary repairが参照するactual policy-root parent identityはrepository-owned evidenceであり、portable contract、prompt、reference、fixtureへ移さない。
+- historical Written Spec approval: 2026-08-14のreview済みbytesはfrontmatterの`historical_approval_snapshot_sha256`で識別する。このhashはhistorical identityであり、現行amendmentのapproval identityではない。
+- historical origin/main incorporation amendment: Humanの直接指示により`origin/main` `15152126fe0785bcf789a9ecbfe752b9e368fc4e`を取り込み、planning baseline `4d67bed6d297ba4e9a0f44559d3ca45c9a035976`で重複current behaviorを整合した。root validatorのclean-clone boundary repairが参照するactual policy-root parent identityはrepository-owned evidenceであり、portable contract、prompt、reference、fixtureへ移さない。
+- current fixture minimization amendment: 2026-08-15、Humanはroot fixtureをなくしてcanonical planをdirect validationし、thin root-specific checkとruntime/test resource separationを採用するevidence-backed designを承認し、不要なfixture/scriptの削除を指示した。current approval identityは`human-directed-fixture-minimization-amendment-20260815`である。
