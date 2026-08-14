@@ -188,7 +188,6 @@ LLM Wiki、current Superpowers lifecycle skills。
 | `skills/sdd-implementation/prompts/repository-researcher.md` | Modify in POA-5 | research report write bindingとblocked returnをrepository外 transient boundaryへ移す |
 | `skills/sdd-implementation/prompts/spec-synthesizer.md` | Modify in POA-5 | research inputとspec draftのdurable / transient destinationを分離し、raw handoffをrepository外へ限定する |
 | `skills/sdd-implementation/prompts/spec-reviewer.md` | Modify in POA-5 | raw review artifactをrepository外 temporaryへ置き、durable verdict summaryだけをcanonical surfaceへ返す |
-| `skills/sdd-implementation/prompts/plan-reviewer.md` | Modify in POA-5 | raw plan review artifactをrepository外 temporaryへ置き、durable reviewed-plan summaryとbounded resultを分離する |
 | `.superpowers/sdd/sdd-plan-ownership-alignment-implementation-plan/approved-residual-fix-report.md` | Remove from Git index / final tree in POA-6 | tracked reportをnon-destructively追跡解除し、必要ならignored / untracked local scratchとして保持する |
 | `.superpowers/sdd/sdd-plan-ownership-alignment-implementation-plan/final-fix-report.md` | Remove from Git index / final tree in POA-6 | tracked reportをnon-destructively追跡解除し、必要ならignored / untracked local scratchとして保持する |
 | `.superpowers/sdd/sdd-plan-ownership-alignment-implementation-plan/task-2-report.md` | Remove from Git index / final tree in POA-6 | tracked reportをnon-destructively追跡解除し、必要ならignored / untracked local scratchとして保持する |

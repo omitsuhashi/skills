@@ -46,7 +46,47 @@ jobs:
         run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 scripts/test_validate_sdd_transient_artifacts.py
 
       - name: Validate SDD transient artifacts
-        run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 scripts/validate_sdd_transient_artifacts.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          marker_path="scripts/sdd-transient-artifact-migration.json"
+
+          if [[ "$(git rev-parse --is-shallow-repository)" == "true" ]]; then
+            echo "ERROR category=history_unavailable message=post-cleanup validation requires complete history" >&2
+            exit 1
+          fi
+
+          mapfile -t cleanup_commits < <(
+            git log --full-history --diff-filter=D --format=%H HEAD -- "$marker_path"
+          )
+          if [[ "${#cleanup_commits[@]}" -ne 1 ]]; then
+            echo "ERROR category=cleanup_boundary_unavailable message=expected exactly one migration-marker deletion in HEAD ancestry" >&2
+            exit 1
+          fi
+          cleanup_commit="${cleanup_commits[0]}"
+          if ! git merge-base --is-ancestor "$cleanup_commit" HEAD; then
+            echo "ERROR category=cleanup_boundary_invalid message=cleanup boundary is not an ancestor of HEAD" >&2
+            exit 1
+          fi
+          if ! git rev-parse --verify "${cleanup_commit}^" >/dev/null; then
+            echo "ERROR category=history_unavailable message=cleanup boundary parent is unavailable" >&2
+            exit 1
+          fi
+
+          mapfile -t post_cleanup_commits < <(
+            git rev-list --reverse "${cleanup_commit}^..HEAD"
+          )
+          if [[ "${#post_cleanup_commits[@]}" -eq 0 ]]; then
+            echo "ERROR category=cleanup_boundary_invalid message=post-cleanup commit range is empty" >&2
+            exit 1
+          fi
+
+          candidate_tree="$(git write-tree)"
+          validator_args=(--candidate-tree "$candidate_tree" --final-tree HEAD)
+          for commit in "${post_cleanup_commits[@]}"; do
+            validator_args+=(--new-commit "$commit")
+          done
+          PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 scripts/validate_sdd_transient_artifacts.py "${validator_args[@]}"
 
       - name: Write context report
         run: |
