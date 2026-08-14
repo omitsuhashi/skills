@@ -1,8 +1,8 @@
 ---
 title: SDD portable validation と責務単純化 実装計画
 date: 2026-08-14
-status: implementation-closeout-final-review-pending
-review_state: task-reviews-complete-final-review-pending
+status: local-complete
+review_state: final-review-complete
 plan_readiness: ready
 tags:
   - sdd-implementation
@@ -43,8 +43,10 @@ aliases:
 - Planning worktree: verified task-linked worktree; runtime path is not durable evidence
 - Integration branch: codex/sdd-portable-validation-simplification
 - Reviewed implementation-only tip: f29c0fde1ecd006e3f46a64ff0c8dc67d7587302
-- Current knowledge-closeout tip at this review repair: 458a52e0f47d09964758b326e2749ec4656e0782
-- Current-tree compatibility: compatible through reviewed SPV-5 knowledge closeout
+- Final whole-branch review head: 9f4787f53155b359353250eb88d16b098eb9e91d
+- Final fix commit: e9d1bcb556f8e942b5535542d3f0b8a40546fc4e
+- Current reviewed branch tip before status transition: 3ef7564abb49b496847087f3879afa297969d8d0
+- Current-tree compatibility: compatible through final fix, Human-approved KIS binding repair, and clean scoped re-review
 - Independent review verdict: ready
 - Repository checks: passed
 - Readiness evidence state: current
@@ -52,7 +54,7 @@ aliases:
 - Starting branch: main
 - Starting HEAD SHA: 82dcd32157ff9690ae038f982f3916009e449f80
 - Captured starting status: clean
-- Binding evidence: Gitからrebound baseline `0ed5f358979ae9281fb7dde8fe47647175720ca8`、Task 1 tip `481d424`、Task 2 tip `42ce4df`、Task 3 tip `07a1e8d`、Task 4 implementation-only tip `f29c0fd`、Task 5 knowledge-closeout commits `41c2a63..458a52e`の到達可能性をcurrent knowledge-closeout tip上で再導出した。各taskのindependent reviewは修正後にopen findingなしで完了し、knowledge同期、fresh combined verification、closeout commit、post-commit final direct-Git / root strict-zero gateは完了した。original checkoutは`main` / starting HEAD / captured clean statusを保持している。pendingなのはcontrollerがexactly once dispatchするfresh independent whole-branch reviewとそのverdictに依存するstatus transitionだけである。
+- Binding evidence: Gitからrebound baseline `0ed5f358979ae9281fb7dde8fe47647175720ca8`、Task 1 tip `481d424`、Task 2 tip `42ce4df`、Task 3 tip `07a1e8d`、Task 4 implementation-only tip `f29c0fd`、Task 5 closeout/review/status chain `41c2a63..3ef7564`の到達可能性をcurrent reviewed branch tip上で再導出した。`9f4787f`のcanonical whole-branch reviewはCritical 0 / Important 4 / Minor 0、`e9d1bcb`へのscoped re-reviewはoriginal four findings addressed、new Important 1のKIS spec/plan SHA binding driftと判定した。Humanが一回のbounded KIS binding repairを明示承認し、`3ef7564`がhistorical snapshot `1a99024e9f04791a4194304d01a50c42a29b516c4c2887b144079239f09dcfbd`を保持しつつcurrent approved spec `0c9570f9d3d54821d3ce6302c0a46824192b0d5c05c3b2e03e6923a0565d4aa4`へbindingした。final scoped re-reviewはresidual finding `ADDRESSED`、new Critical 0 / Important 0とし、branchをdependent local-completion status transitionにreadyと判定した。original checkoutは`main` / starting HEAD / captured clean statusを保持している。
 
 ## Independent Plan Review Summary
 
@@ -65,6 +67,13 @@ aliases:
 - Material risks: none
 - Durable finding summary: prior post-origin `ready` verdict はpre-repair bytesのhistorical evidenceである。fresh independent reviewは、root-owned parity replacementを先にGREENにしてからpackage dependencyを除去し、root parity/package semantic/isolated closureを同じSPV-2 commit/review boundaryでGREENにするatomic cutover repairを`ready`と判定した。当該verdictはTask 1完了時点のhistorical plan-readiness evidenceに限定し、current landed statusは下記Implementation Progressを正本とする。five-task chain、R-01〜R-15 / AC-01〜AC-14のunique primary ownership、strict-zero/First-Write/KIS preservation、decision request `none`、material risk `none`は不変である。raw review artifact、path、transcriptはdurable planへ複製していない。
 
+## Final Whole-Branch Review Summary
+
+- Canonical review head `9f4787f` returned Critical 0 / Important 4 / Minor 0.
+- One bounded final fix `e9d1bcb` addressed all four original findings. Its scoped re-review confirmed all four addressed and identified one new Important KIS spec/plan SHA binding drift.
+- Human explicitly approved one bounded binding repair. Commit `3ef7564` preserved historical KIS snapshot `1a99024e9f04791a4194304d01a50c42a29b516c4c2887b144079239f09dcfbd` and bound current Human-approved KIS spec `0c9570f9d3d54821d3ce6302c0a46824192b0d5c05c3b2e03e6923a0565d4aa4`.
+- Final scoped re-review returned residual finding `ADDRESSED`, new Critical 0 / Important 0, and ready for the dependent local-completion status transition. No raw review transcript or runtime artifact identity is stored here.
+
 ## Implementation Progress
 
 | Task | Reviewed result | Current durable state |
@@ -73,7 +82,7 @@ aliases:
 | SPV-2 | `f1f5d96..42ce4df`; scoped re-review clean | root parity GREEN後のpackage cutover、portable fixture、isolated closure landed |
 | SPV-3 | `07a1e8d`; independent review clean | root parity / isolated closure CI wiring landed; strict-zero owner preserved |
 | SPV-4 | `84e3940..f29c0fd`; scoped re-review clean | thin composition、Authority A、First-Write / exact-seven KIS preservation landed |
-| SPV-5 | `41c2a63..458a52e`; knowledge closeout and review correction landed | knowledge synchronization、fresh combined verification、closeout commits、post-commit final direct-Git / root strict-zero gates completed; independent whole-branch review and dependent status transition pending |
+| SPV-5 | `41c2a63..3ef7564`; closeout, canonical final review, bounded fixes, and scoped re-reviews complete | knowledge synchronization、fresh combined verification、final direct-Git / root strict-zero gates、final review、Human-approved KIS binding repair、dependent `LOCAL_COMPLETE` transition completed |
 
 ## Global Constraints
 
@@ -278,21 +287,21 @@ aliases:
 ### Task 5: SPV-5 — Knowledge closeout と fresh combined verification
 
 - [x] **Completed deliverable scope:** 全 task commit と review の integration branch reachabilityを確認し、approved spec、current design、reviewed plan、index/logをlanded evidenceへ同期した。portable/root/CI/full repository checks、final direct-Git gate、root strict-zero gateは`41c2a63..458a52e`のcloseout / review-correction cycleでfresh GREENである。
-- [ ] **Independent whole-branch review:** controllerがexactly once dispatchするfresh reviewerのverdictだけがpendingである。
-- [ ] **Final status transition:** whole-branch reviewがreadyと判定するまで`LOCAL_COMPLETE`を宣言しない。
-- [x] **Requirement coverage:** R-12。closeout / verification / final-gate evidenceはlanded済みで、final reviewer verdictだけを待つ。
-- [x] **Acceptance coverage:** AC-11。knowledge synchronization、fresh combined verification、commit、post-commit gateは成功済みである。
-- [x] **Dependencies:** SPV-4 reviewed and integrated。`f29c0fd`はTask 5 commits `41c2a63..458a52e`のancestorとしてreachableである。
+- [x] **Independent whole-branch review:** canonical review at `9f4787f` returned Critical 0 / Important 4 / Minor 0; `e9d1bcb` addressed all four original findings; the Human-approved `3ef7564` KIS binding repair addressed the one new scoped-re-review finding; final scoped re-review returned residual `ADDRESSED`, new Critical 0 / Important 0.
+- [x] **Final status transition:** final scoped re-review found the branch ready, and the Human-approved dependent transition records `LOCAL_COMPLETE`.
+- [x] **Requirement coverage:** R-12。closeout / verification / final-gate / final-review evidenceはlanded済みである。
+- [x] **Acceptance coverage:** AC-11。knowledge synchronization、fresh combined verification、commit、post-commit gate、final review / bounded fix / scoped re-reviewは成功済みである。
+- [x] **Dependencies:** SPV-4 reviewed and integrated。`f29c0fd`はTask 5 closeout/review chain `41c2a63..3ef7564`のancestorとしてreachableである。
 - [x] **Files:** `knowledge/wiki/syntheses/sdd-portable-validation-simplification.md`, `knowledge/wiki/syntheses/sdd-implementation-skill-design.md`, this implementation plan, `knowledge/index.md`, `knowledge/log.md`のみにcloseoutを同期した。Source/test filesは変更していない。
 - [x] **Behavioral interface — Consumes:** reviewed task commits、task review verdicts、current integration branch Git facts、approved spec identity、all acceptance mappings、package/root/CI validation surfacesをcloseout evidenceとして消費した。
-- [x] **Behavioral interface — Produces:** acceptance-by-acceptance result、remaining risk、unperformed remote action、canonical discoverability、append-only log event、knowledge closeout / gate evidenceを生成した。
+- [x] **Behavioral interface — Produces:** acceptance-by-acceptance result、remaining risk、unperformed remote action、canonical discoverability、append-only log event、knowledge closeout / gate evidence、final review verdict、`LOCAL_COMPLETE`を生成した。
 - [x] **Behavioral interface — Invariants:** raw worker/review/test transcripts と runtime path は wiki に複製していない。approved scope/authority は変更せず、ignored untracked local scratchをdestructive cleanupしていない。remote authorization absenceはlocal verificationと分離した。
 - [x] **RED intent:** closeout前に complete R-01〜R-15 / AC-01〜AC-14 coverage、required task commit reachability、current root strict-zero/post-policy-history/parity、isolated closure、First-Write fail-closed behavior、exact seven-role KIS wiring、knowledge index/log effect、final gate evidence の欠落を checklist failure として列挙した。source behaviorの欠落はなかった。
-- [x] **GREEN intent:** landed behaviorとfresh evidence identitiesだけをdurable surfacesへ反映し、全verification surfaceをfreshに実行した。final reviewerの判定はcontroller dispatchの独立stepとして保持した。
-- [x] **Focused verification:** package source suite、isolated installed-copy suite、synthetic gate cases、root canonical parity、current strict-zero root validator/regression、`--post-policy-history` CI invocation contract、clean-clone/no-`origin/main` workflow cases、First-Write contract/behavior suites、exact seven-role KIS contract、repository architecture validator、skill-creator validator、knowledge lint、diff whitespace checkは成功済みである。
-- [x] **Integration placement:** I-5。code/test task review後のcloseout commit `41c2a63`、review correction `458a52e`、それぞれのpost-commit final direct-Git / root strict-zero gateは完了した。
+- [x] **GREEN intent:** landed behaviorとfresh evidence identitiesだけをdurable surfacesへ反映し、全verification surfaceをfreshに実行した。final review、one bounded final-fix wave、Human-approved one bounded KIS binding repair、scoped re-reviewsを完了した。
+- [x] **Focused verification:** package source suite 143/143、root scripts 39/39、llm-wiki 22/22、root canonical parity 4/4、repository architecture validator、one context contract / warning-free context report、`sdd-implementation` Skill validatorはstatus transition前のfresh runで成功した。isolated installed-copy / synthetic gate / First-Write / exact-seven KIS、current strict-zero / `--post-policy-history` / clean-clone / no-`origin/main`は当該suiteに含まれる。
+- [x] **Integration placement:** I-5。closeout / review-correction commits `41c2a63..9f4787f`、bounded final fix `e9d1bcb`、Human-approved KIS binding repair `3ef7564`、各required gate / reviewを完了した。
 - [x] **Failure owner:** behavior/test failure は coverage matrix の primary task owner、root strict-zero/parity/CI failure は SPV-3、thin contract/authority/First-Write/KIS failure は SPV-4、knowledge/index/log failure は SPV-5、baseline/commit-range/final gate failure は integration ownerとする分類を保持した。
-- [x] **Commit boundary:** initial canonical closeout / index-log sync / fresh verification identityは`41c2a63`に、review-driven bounded correctionは`458a52e`に、source/testを含めずminimal knowledge-only commitとして統合した。
+- [x] **Commit boundary:** initial canonical closeout / index-log sync / fresh verification identityは`41c2a63`、review-driven knowledge correctionsは`458a52e..9f4787f`、four final-review fixesは`e9d1bcb`、Human-approved KIS binding repairは`3ef7564`に分離した。本dependent status transitionは五つのapproved SDD knowledge filesだけのatomic closeout commitとする。
 
 ## Dependency Graph
 
@@ -312,7 +321,7 @@ Cycle check: chain は `SPV-1 -> SPV-2 -> SPV-3 -> SPV-4 -> SPV-5` の単方向�
 2. SPV-2 complete: root-owned parity replacementを先にGREENにし、その後にpackage dependency removal / portable fixture transitionを行い、root parityとisolated package closureを同じreviewed boundaryでGREENにした。
 3. SPV-3 complete: reviewed root parity / isolated closureをcurrent strict-zero / post-policy-history / clean-clone / no-`origin/main` ownerとともにCIへ接続し、independent reviewを完了した。
 4. SPV-4 complete: generic prose / common guard / authorityをdeduplicateし、First-Write Worktree Gateとexact seven-role KIS wiringを保持した上でscoped re-reviewを完了した。
-5. SPV-5 pending final review: durable closeout、fresh combined verification、knowledge commits `41c2a63..458a52e`、各post-commit final direct-Git/root strict-zero gateは完了した。残るのはcontroller-dispatched final whole-branch reviewとそのverdictに依存するstatus transitionだけである。
+5. SPV-5 complete: durable closeout、fresh combined verification、knowledge commits、post-commit final direct-Git/root strict-zero gates、canonical whole-branch review、bounded final fix、Human-approved KIS binding repair、scoped re-reviews、dependent `LOCAL_COMPLETE` transitionを完了した。
 
 全 task は shared owners と migration cutover orderを持つため sequential execution とする。task内でも一つの public seam、一つの failing behavior、一つの最小修正を順に進め、同一 issue 内の concurrent implementer は使用しない。
 
@@ -324,7 +333,7 @@ Cycle check: chain は `SPV-1 -> SPV-2 -> SPV-3 -> SPV-4 -> SPV-5` の単方向�
 | I-2 | SPV-2 | **completed** — `f1f5d96..42ce4df` reachable; scoped rereview clean | root canonical parity became GREEN before package dependency removal; portable fixture, package semantics, and isolated closure remained GREEN in the reviewed atomic cutover |
 | I-3 | SPV-3 | **completed** — `07a1e8d` reachable; independent review clean | reviewed root parity and isolated closure run in CI with current strict-zero / `--post-policy-history` / clean-clone / no-`origin/main` behavior preserved |
 | I-4 | SPV-4 | **completed** — `84e3940..f29c0fd` reachable; scoped rereview clean | thin composition, one common guard, Authority A, unknown-to-sequential, First-Write preservation, and exact-seven KIS wiring landed |
-| I-5 | SPV-5 | **pending final review** — `41c2a63..458a52e` reachable; knowledge synchronization, fresh combined verification, closeout/review-correction commits, and post-commit final direct-Git/root strict-zero gates completed | canonical knowledge/index/log are synchronized; only the controller-dispatched whole-branch review and dependent status transition remain |
+| I-5 | SPV-5 | **completed** — `41c2a63..3ef7564` reachable; canonical whole-branch review, `e9d1bcb` final fix, Human-approved `3ef7564` KIS binding repair, and scoped re-reviews completed | canonical knowledge/index/log are synchronized; residual finding `ADDRESSED`, new Critical 0 / Important 0, local disposition `LOCAL_COMPLETE` |
 
 Integration owner は各 step 前に actual commit range、changed paths、semantic/resource assumptions、required task commit reachability を Git facts から再導出する。partial integration、unreviewed result、unknown ancestry、non-descendant target rewrite は integration-ready としない。textual clean merge だけでは成功としない。
 
@@ -359,7 +368,7 @@ Integration owner は各 step 前に actual commit range、changed paths、seman
 - architecture/skill/knowledge/diff checks の fresh result summary。
 - final direct Git gate と whole-branch review の durable verdict summary。
 
-### Implementation closeout evidence — final review pending
+### Implementation closeout evidence — `LOCAL_COMPLETE`
 
 | Coverage | Landed / fresh result |
 | --- | --- |
@@ -367,14 +376,13 @@ Integration owner は各 step 前に actual commit range、changed paths、seman
 | R-02, R-03, R-06 / AC-02, AC-03, AC-06 | reviewed SPV-1 tip `481d424`; explicit canonical target、three direct-Git gates、synthetic state / invalidation / taxonomy cases |
 | R-05 / AC-05 | reviewed SPV-3 tip `07a1e8d`; root-only parity and strict-zero ownership、`--post-policy-history`、clean-clone / no-`origin/main`、add-then-delete / shallow-history behavior |
 | R-08, R-09, R-10, R-13, R-14, R-15 / AC-08, AC-09, AC-10, AC-12, AC-13, AC-14 | reviewed SPV-4 tip `f29c0fd`; thin composition、one common guard、Authority A、unknown-to-sequential、First-Write fail-closed containment、exact seven-role KIS |
-| R-12 / AC-11 | `41c2a63..458a52e` knowledge closeout / reviewed correction reachable; fresh package 139、root scripts 39、First-Write / KIS 29、llm-wiki 21 tests; architecture / context / warning-free context report / Skill validators GREEN; knowledge/diff/candidate checks and post-commit final direct-Git/root strict-zero gates completed |
+| R-12 / AC-11 | `41c2a63..3ef7564` reachable; fresh package 143、root scripts 39、llm-wiki 22、canonical parity 4 tests; architecture / context / warning-free context report / Skill validators GREEN; knowledge/diff/candidate/final gates completed; `9f4787f` whole-branch review findings addressed by `e9d1bcb` and Human-approved `3ef7564`; final scoped re-review residual `ADDRESSED`, new Critical 0 / Important 0 |
 
-Task 1〜4のreviewed implementationとfresh checksから新規material riskは検出されていない。
-knowledge synchronization、fresh combined verification、closeout / review-correction commits、
-post-commit final direct-Git / root strict-zero gatesは完了した。final whole-branch
-reviewはcontrollerが一度だけdispatchするためpendingであり、現時点で
-`LOCAL_COMPLETE`を宣言しない。push、PR、merge、release、live installは未実施かつ
-未承認である。
+Task 1〜4のreviewed implementation、Task 5のcloseout、fresh checks、canonical
+whole-branch review、bounded fixes、scoped re-reviewsは完了した。residual findingは
+`ADDRESSED`、new Critical 0 / Important 0で、新規material riskはない。よって
+local dispositionは`LOCAL_COMPLETE`である。push、PR、remote merge、release、live
+installは未実施かつ未承認である。
 
 ### Failure owners by acceptance criterion
 
@@ -400,8 +408,8 @@ reviewはcontrollerが一度だけdispatchするためpendingであり、現時�
 - Plan readiness disposition: ready
 - Control Return status: complete
 - Implementation Stage entry: allowed
-- Repository-ready disposition: SPV-1〜SPV-4 reviewed and integrated。SPV-5 durable closeout、fresh combined verification、knowledge commits `41c2a63..458a52e`、post-commit final direct-Git / root strict-zero gatesは完了した。one fresh whole-branch reviewとそのverdictに依存するstatus transitionだけを待つ。
-- Controller transition: exactly one fresh final reviewerをdispatchする。final review完了前は`LOCAL_COMPLETE`に移行しない。
+- Repository-ready disposition: SPV-1〜SPV-5 reviewed, fixed, re-reviewed, and integrated; local disposition is `LOCAL_COMPLETE`.
+- Controller transition: dependent local-completion status transition complete. Any remote publication, merge, release, or live installation remains a separate explicitly authorized action.
 - Material decision request: none
 - Material risk: none
 - Remote publication state: not authorized and not required for local readiness

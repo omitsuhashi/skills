@@ -8,7 +8,7 @@ approval_snapshot_sha256: 1a8d209ca01e73828043b19c8bfe22d35bd1afa64603add1b7a180
 amended_on: 2026-08-14
 amendment_authority: human-directed-origin-main-incorporation
 amendment_baseline_sha: 4d67bed6d297ba4e9a0f44559d3ca45c9a035976
-implementation_state: closeout-candidate-final-review-pending
+implementation_state: local-complete
 north_star_identity: sdd-portable-validation-simplification#目標@2026-08-14
 tags:
   - sdd-implementation
@@ -139,7 +139,7 @@ capability が存在しない場合、別 runtime 固有機能を推定して代
 
 この表だけを generic gate methodology の normative source とする。public `SKILL.md` はdirect Git contractを保持し、prompt / reference / testはgate名と必要inputだけを参照する。exactly-once実行、validator state、証跡cacheを導入せず、relevant mutation後の再実行でfreshnessを保つ。
 
-## Implementation closeout — final review pending
+## Implementation closeout — `LOCAL_COMPLETE`
 
 2026-08-14に、rebound baseline `0ed5f358979ae9281fb7dde8fe47647175720ca8`
 からのserialized implementationを現行branch上で再確認した。Task 1
@@ -159,13 +159,21 @@ scripts suiteはroot canonical parity、current strict-zero regression、CI invo
 clean clone、`origin/main` ref不在、post-policy add-then-delete、shallow historyの
 fail-closed casesを含む。
 
-reviewed implementationとfresh local checksから新しいmaterial riskは検出されていない。
-knowledge synchronization、fresh combined verification、knowledge closeout / review-correction
-commits `41c2a63..458a52e`、post-commit final direct-Git / root strict-zero gatesは
-完了した。pendingなのはcontrollerが一度だけdispatchするfresh
-whole-branch reviewとそのverdictに依存するstatus transitionだけであり、
-`LOCAL_COMPLETE`はまだ宣言しない。push、PR、merge、release、live installを含むremote actionは
-未実施かつ未承認である。
+canonical whole-branch review head `9f4787f`はCritical 0 / Important 4 / Minor 0を
+返した。bounded final fix `e9d1bcb`は全四findingをaddressし、scoped re-reviewは
+四件の解消とnew Important 1のKIS spec/plan SHA binding driftを確認した。
+Humanは一回のbounded binding repairを明示承認し、`3ef7564`は歴史的KIS
+snapshot `1a99024e9f04791a4194304d01a50c42a29b516c4c2887b144079239f09dcfbd`を
+保持しつつcurrent approved spec
+`0c9570f9d3d54821d3ce6302c0a46824192b0d5c05c3b2e03e6923a0565d4aa4`へbindingした。
+final scoped re-reviewはresidual finding `ADDRESSED`、new Critical 0 / Important 0、
+dependent local-completion transition readyと判定した。status transition前のfresh
+verificationもpackage 143/143、root scripts 39/39、llm-wiki 22/22、canonical
+parity 4/4、architecture / context / warning-free report / Skill validatorを成功させた。
+
+よって本changeのlocal dispositionは`LOCAL_COMPLETE`で、residual material riskはない。
+push、PR、remote merge、release、live installを含むremote actionは未実施かつ
+未承認である。
 
 ## Failure handling
 

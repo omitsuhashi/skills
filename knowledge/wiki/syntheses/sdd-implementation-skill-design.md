@@ -33,13 +33,17 @@ First-Write fail-closed containmentとexact seven-role KIS wiringを保持した
 verificationはpackage 139、root scripts 39、First-Write / KIS 29、llm-wiki 21
 testsとarchitecture / context / Skill validatorsを成功させている。
 
-現在はknowledge closeout / review-correction commits `41c2a63..458a52e`、fresh
-combined verification、post-commit final direct-Git / root strict-zero gatesが完了し、
-final whole-branch reviewだけがpendingである。本設計の既存のhistorical
-completion factは書き換えない。controllerのexactly-once final reviewとその
-verdictに依存するstatus transitionは別stepとして保持し、`LOCAL_COMPLETE`は
-まだ宣言しない。remote publication / merge / release / live
-installは未実施かつ未承認である。
+portable-validation changeはknowledge closeoutからcanonical whole-branch reviewまで完了した。
+review head `9f4787f`のCritical 0 / Important 4 / Minor 0はbounded final fix
+`e9d1bcb`で全件addressされ、scoped re-reviewが新たに検出したKIS
+spec/plan SHA binding driftはHuman-approved repair `3ef7564`が、歴史的snapshot
+`1a99024e9f04791a4194304d01a50c42a29b516c4c2887b144079239f09dcfbd`の保持と
+current approved spec `0c9570f9d3d54821d3ce6302c0a46824192b0d5c05c3b2e03e6923a0565d4aa4`
+へのbindingを分離して解消した。final scoped re-reviewはresidual `ADDRESSED`、
+new Critical 0 / Important 0と判定した。したがってcurrent local dispositionは
+`LOCAL_COMPLETE`で、residual material riskはない。本設計の既存のhistorical
+completion factは書き換えない。remote publication / merge / release / live installは
+未実施かつ未承認である。
 
 ## 調査で確認した前提
 
