@@ -32,14 +32,33 @@ prospective code、commit granularity の判断を求めない。
 - local precedence: approved spec の Plan Contract Overlay が、upstream の保存先、prospective body、
   Human execution-choice prompt、plan approval semantics と衝突する output / routing contract を上書きする
 
-Plan Author self-review後、fresh independent Plan Reviewとblocking finding修復後のre-reviewは
-`.superpowers/reviews/sdd-plan-ownership-alignment/plan-review.md`と
-`.superpowers/reviews/sdd-plan-ownership-alignment/plan-rereview.md`に記録され、最終re-reviewは
-`Repository readiness classification: ready`、decision request `none`、material risk `none`を返した。
-Planning Controllerはapproved spec bindingとplan pathを確認し、Plan Readiness Gateを`ready`、Control Returnを
-`status: complete`としてImplementation Stageへentryした。その後POA-1 / POA-2実装とtask review、POA-3
-closeout candidateまで進んでいる。これはHuman plan approval、canonical final whole-branch review、
-`LOCAL_COMPLETE`、remote action authorizationを意味しない。
+## Durable Plan Review Evidence
+
+- review date / stage: 2026-08-14、fresh independent Plan Review後にagent repairとfresh re-reviewを実施。
+- reviewed spec identity: `knowledge/wiki/syntheses/sdd-plan-ownership-alignment.md`、approval-state
+  SHA-256 `1f9a7dc5f740c51addfabde96bac6fe3fbf5036003d1783cde60ac58e5ae7559`、`accepted` / `approved`。
+- reviewed plan identity: 本canonical path
+  `knowledge/wiki/syntheses/sdd-plan-ownership-alignment-implementation-plan.md`、repository baseline
+  `c370fe14de1641aa5ee30b3fa001f4d857078091`、上記approved spec binding。review時のplanはplanning
+  worktree内の未commit artifactだったため、reviewed byte digestまたはreview commitが存在するとは主張しない。
+- initial review disposition: `issues_found` / `needs_repair`。blocking findingは2件で、(1) Written Specの
+  durable approval stateとplan bindingの矛盾、(2) `plan-contract.md`追加で影響する二つ目のstrict
+  reference-set expectationがPOA-1 file ownershipから漏れていたこと。decision requestは`none`。
+- repair / re-review result: approval metadata、spec digest、index / append-only log、POA-1 / POA-2 task boundaryを
+  agent repairし、fresh re-reviewは両findingをresolved、repository readiness `ready`、decision request
+  `none`、material risk `none`とした。
+- transient review integrity fingerprints: initial review SHA-256
+  `0d5ff88616ec9c8cd4496b7e5d8912a4f636f8a6b419b1937867c18069548e34`、re-review SHA-256
+  `52b6345da5321e220fc47f8aeafd307e75a8d1ae50d057d5763fed349a631822`。これらはtask-local
+  `.superpowers/reviews/...` artifactsの同一性確認用fingerprintであり、transient files自体をdurable sourceまたは
+  future cloneから読めるcommitted evidenceとは扱わない。本sectionがdurable reviewer verdict summaryである。
+- readiness / entry: Planning Controllerはapproved spec bindingとcanonical plan pathを確認し、Plan Readiness
+  Gateを`ready`、Control Returnを`status: complete`としてImplementation Stageへentryした。landed implementation
+  provenanceはPOA-1 `fa2b26c9003a5c525040cbd28bb224b004c0fdbb` / `6f1ca9fb39340c417d5afcb8784244bb69d258a7`、
+  POA-2 `6d8222d64c4a50328e3dd873abdcabb43fdf4be7` / `71889d21343efdcaafe0152ce3eb763d0857b8e5`である。
+
+このreadinessはHuman plan approval、canonical final whole-branch review、`LOCAL_COMPLETE`、remote action
+authorizationを意味しない。
 
 ## Goal
 
