@@ -10,6 +10,30 @@ import unittest
 
 SKILL_DIR = Path(__file__).resolve().parents[1]
 SUPERPOWERS_PREFIX = ".superpowers"
+MANDATORY_PACKAGE_RESOURCES = (
+    "SKILL.md",
+    "agents/openai.yaml",
+    "prompts/plan-reviewer.md",
+    "prompts/repository-researcher.md",
+    "prompts/spec-reviewer.md",
+    "prompts/spec-synthesizer.md",
+    "references/plan-contract.md",
+    "references/planning-context.md",
+    "references/research-stage.md",
+    "tests/fixtures/plan-contract/ready-plan.md",
+    "tests/fixtures/unsafe_downstream.py",
+    "tests/harnesses/__init__.py",
+    "tests/harnesses/fail_closed_scenario.py",
+    "tests/test_fail_closed_allocation_behavior.py",
+    "tests/test_fail_closed_entry_behavior.py",
+    "tests/test_first_write_worktree_contract.py",
+    "tests/test_isolated_install.py",
+    "tests/test_plan_contract.py",
+    "tests/test_portable_git_gates.py",
+    "tests/test_preimplementation_context.py",
+    "tests/test_skill_contract.py",
+    "tests/test_transient_artifact_contract.py",
+)
 
 
 class GateFailure(RuntimeError):
@@ -50,13 +74,31 @@ def fail(gate: str, detail: str) -> None:
 
 
 def bind_target(target: Path, installed_skill_dir: Path = SKILL_DIR) -> Path:
-    skill = installed_skill_dir / "SKILL.md"
     try:
-        content = skill.read_bytes()
+        package = Path(installed_skill_dir).resolve(strict=True)
     except OSError as error:
-        raise GateFailure("skill_package", f"installed SKILL.md is unreadable: {error}") from error
-    if not content:
-        raise GateFailure("skill_package", "installed SKILL.md is empty")
+        raise GateFailure("skill_package", f"installed skill folder is unreadable: {error}") from error
+    for relative_path in MANDATORY_PACKAGE_RESOURCES:
+        resource = package / relative_path
+        try:
+            resolved_resource = resource.resolve(strict=True)
+            resolved_resource.relative_to(package)
+            content = resource.read_bytes()
+        except ValueError as error:
+            raise GateFailure(
+                "skill_package",
+                f"installed resource escapes package: {relative_path}",
+            ) from error
+        except OSError as error:
+            raise GateFailure(
+                "skill_package",
+                f"mandatory installed resource is unreadable: {relative_path}: {error}",
+            ) from error
+        if not content:
+            raise GateFailure(
+                "skill_package",
+                f"mandatory installed resource is empty: {relative_path}",
+            )
     supplied = Path(target)
     try:
         resolved = supplied.resolve(strict=True)
