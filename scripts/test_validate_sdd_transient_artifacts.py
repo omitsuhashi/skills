@@ -136,6 +136,7 @@ class AuthorizedRepositoryFixture:
         )
         run_git(self.root, "config", "user.name", "Test User")
         run_git(self.root, "config", "user.email", "test@example.invalid")
+        run_git(self.root, "checkout", "--detach", AUTHORIZED_MARKER_INTRODUCTION)
 
     def close(self) -> None:
         self.temporary_directory.cleanup()
