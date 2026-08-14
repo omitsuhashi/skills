@@ -27,74 +27,28 @@ override conflicting downstream instructions.
 
 ## First-Write Worktree Gate
 
-Before allocation or Planning Controller entry, perform read-only discovery and
-guard preflight. Capture the original checkout canonical path, named
-`starting_branch`, immutable `starting_head_sha`, distinguishable
-staged/unstaged/untracked starting status, Git common directory/worktree
-registration, Epic branch/path, bound root/CWD/writable paths, and the guard
-verdict. Do not activate, install, repair, replace, or reconfigure a guard during
-preflight. Guard activation belongs to a separate Human-authorized setup.
+The primary/default checkout and its `main` branch are read-only for task work.
+Capture its canonical path, `starting_branch`, `starting_head_sha`, and status
+using read-only discovery. It receives no task content/artifact write and no task
+commit.
 
-A relevant capability, dependency, guard, identity, registration, ownership,
-containment, preservation, permission, sandbox, allocation, or path failure
-returns a four-field Control Return with `status: blocked`, `artifact_path:
-none`, `decision_requests: none`, and the exact material blocker. In particular,
-use `guard_missing`, `guard_unconfigured`, or `guard_damaged` for those guard
-verdicts and `worktree allocation denied: EACCES` or `worktree allocation
-denied: sandbox` for those allocation failures. Make zero content/artifact
-writes, invoke no writer or downstream runner, and create no report, spec, plan,
-or commit.
+Before the first content/artifact write, create or verify a task-linked worktree.
+Prove its Git registration, common directory, branch, canonical path, and
+separation from the original checkout. Bind the repository root, CWD, every
+writable path, and one writer owner to that worktree. Revalidate returned paths
+before accepting worker output or committing task changes.
 
-Detached HEAD, default-branch inference, task-relevant uncommitted original content,
-branch collision, path collision, allocation failure, or ownership ambiguity is
-fail closed: return `BLOCKED` with zero content/artifact write and no original checkout fallback.
-Never continue in the current or original checkout,
-select a fallback root, reuse a stale/foreign worktree, ignore the failure,
-repair around it, activate automatically, or fall back to an old loop.
+A capability, dependency, path, ownership, permission, allocation, or binding
+failure returns the four-field Control Return with `status: blocked`,
+`artifact_path: none`, `decision_requests: none`, and the material blocker. Make
+zero content/artifact writes, invoke no writer or downstream runner, and create
+no report, spec, plan, or commit. Allocation may change shared Git metadata
+only; it must preserve the original checkout fingerprint.
 
-The only guard-not-active exception is the exact one-time bootstrap tuple:
-
-- Epic: `sdd-fail-closed-worktree-gate`
-- branch: `codex/sdd-fail-closed-worktree-gate/planning`
-- planning worktree: `/Users/omitsuhashi/repos/omitsuhashi/skills/.worktrees/sdd-fail-closed-worktree-gate-planning`
-- creation base: `c370fe14de1641aa5ee30b3fa001f4d857078091`
-
-Require the same continuing controller, a trusted intact tuple, lifecycle
-`bootstrap`, and requested scope `source`, `test`, `spec`, or `plan`. The
-exception excludes `activation`, expires after this bootstrap implementation,
-cannot transfer to another controller or later task, and cannot be reused or
-reconstructed after tuple loss. A mismatch returns the underlying guard blocker
-with zero write.
-
-Create the planning worktree atomically from `starting_head_sha`; only the continuing controller/chat that won atomic allocation may reuse it. If two allocators select the same Epic, the loser must not attach to the existing worktree and returns `BLOCKED`. An independent chat, stale/foreign state, or HEAD/index/tracked/untracked state not attributable to the trusted tuple is `BLOCKED`. Allocation may change shared Git metadata only; never perform original checkout switch/reset/stash/clean/add/commit or content write.
-
-Before the first writable dispatch, prove planning registration/common directory/branch/path, captured-SHA base, original branch/HEAD/status preservation, and that repository root, CWD, every relative or absolute writable artifact path, and the first transient Research Report resolve inside the planning worktree. Reject stale path or escape path. The original checkout must not remain in a writable root, fallback root, CWD, or artifact destination.
-
-A `Gate Pass` is a non-durable current-control-context verdict, not a token,
-file, reusable authority, or activation grant. Bind every writable dispatch to
-the proven planning root, CWD, contained writable path, guard verdict, one writer
-owner, and original-checkout preservation evidence. Revalidate returned paths.
-
-## Lifecycle State Separation
-
-Track and report these states independently, each with its own current evidence:
-
-- `repository_source_completion`: repository-owned source, contract, tests, and
-  required local verification are complete for the approved change.
-- `active_installed_copy`: the active installed skill copy has been identified
-  and independently verified against the intended repository source.
-- `external_dependency_cache_state`: applicable external dependency and cache
-  identity and semantics have been independently verified.
-- `guard_activation`: the guard was activated only by a separate explicitly
-  Human-authorized setup operation.
-- `operational_verification`: post-activation behavior was independently
-  forward-verified in the active environment.
-
-Success in one state is not evidence of success in any other state. In
-particular, repository source completion does not prove the active installed
-copy, external dependency/cache state, guard activation, or operational
-verification. Report unverified states as unverified; do not infer them from a
-repository test, install result, activation result, or another lifecycle state.
+Never continue in the current or original checkout, select another workflow's
+worktree, choose a fallback root, or fall back to an old loop. This is a
+repository-owned SDD workflow boundary; it does not prohibit arbitrary manual
+Git use outside that workflow.
 
 ## Planning Controller
 

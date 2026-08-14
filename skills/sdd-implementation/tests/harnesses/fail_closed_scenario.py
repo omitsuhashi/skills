@@ -9,28 +9,6 @@ import subprocess
 from typing import Callable, Optional
 
 
-BOOTSTRAP_EPIC = "sdd-fail-closed-worktree-gate"
-BOOTSTRAP_BRANCH = "codex/sdd-fail-closed-worktree-gate/planning"
-BOOTSTRAP_WORKTREE = Path(
-    "/Users/omitsuhashi/repos/omitsuhashi/skills/.worktrees/"
-    "sdd-fail-closed-worktree-gate-planning"
-)
-BOOTSTRAP_STARTING_HEAD_SHA = "c370fe14de1641aa5ee30b3fa001f4d857078091"
-BOOTSTRAP_SCOPES = frozenset(("source", "test", "spec", "plan"))
-
-
-@dataclass(frozen=True)
-class BootstrapContext:
-    epic: str
-    branch: str
-    worktree: Path
-    starting_head_sha: str
-    same_controller: bool
-    tuple_trusted: bool
-    lifecycle: str
-    requested_scope: str
-
-
 @dataclass(frozen=True)
 class ControlReturn:
     status: str
@@ -100,20 +78,6 @@ def fingerprint_repository(root: Path) -> RepositoryFingerprint:
     )
 
 
-def _bootstrap_is_exact(bootstrap: Optional[BootstrapContext]) -> bool:
-    return bool(
-        bootstrap is not None
-        and bootstrap.epic == BOOTSTRAP_EPIC
-        and bootstrap.branch == BOOTSTRAP_BRANCH
-        and bootstrap.worktree == BOOTSTRAP_WORKTREE
-        and bootstrap.starting_head_sha == BOOTSTRAP_STARTING_HEAD_SHA
-        and bootstrap.same_controller
-        and bootstrap.tuple_trusted
-        and bootstrap.lifecycle == "bootstrap"
-        and bootstrap.requested_scope in BOOTSTRAP_SCOPES
-    )
-
-
 def _allocation_is_bound(original: Path, planning: Path) -> bool:
     try:
         original = original.resolve(strict=True)
@@ -135,31 +99,10 @@ def _allocation_is_bound(original: Path, planning: Path) -> bool:
         return False
 
 
-def _bootstrap_matches_allocation(
-    original: Path,
-    planning: Path,
-    bootstrap: BootstrapContext,
-) -> bool:
-    try:
-        return bool(
-            planning.resolve(strict=True) == bootstrap.worktree.resolve(strict=True)
-            and _git(planning, "branch", "--show-current").decode("utf-8").strip()
-            == bootstrap.branch
-            and _git(original, "rev-parse", "HEAD").decode("ascii").strip()
-            == bootstrap.starting_head_sha
-            and _git(planning, "rev-parse", "HEAD").decode("ascii").strip()
-            == bootstrap.starting_head_sha
-        )
-    except (OSError, subprocess.CalledProcessError, UnicodeError):
-        return False
-
-
 def run_repository_change(
     *,
     original: Path,
     entry_skill: str,
-    guard_status: str,
-    bootstrap: Optional[BootstrapContext],
     allocator: Callable[[], Path],
     writer: Callable[[Path], None],
     downstream_command: Optional[tuple[str, ...]],
@@ -185,12 +128,6 @@ def run_repository_change(
     if entry_skill != "sdd-implementation":
         return blocked("SDD First-Write Worktree Gate required")
 
-    bootstrap_authorized = guard_status != "active"
-    if bootstrap_authorized:
-        if not _bootstrap_is_exact(bootstrap):
-            return blocked(guard_status)
-        assert bootstrap is not None
-
     try:
         planning = allocator()
     except PermissionError as error:
@@ -202,13 +139,6 @@ def run_repository_change(
 
     if not _allocation_is_bound(original, planning):
         return blocked("worktree registration/ownership/containment not proven")
-
-    if bootstrap_authorized and not _bootstrap_matches_allocation(
-        original,
-        planning,
-        bootstrap,
-    ):
-        return blocked("worktree bootstrap identity mismatch")
 
     if downstream_command is not None:
         return blocked("downstream incompatible with SDD containment")

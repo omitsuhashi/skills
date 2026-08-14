@@ -52,8 +52,6 @@ class FailClosedAllocationBehaviorTests(unittest.TestCase):
         result = run_repository_change(
             original=self.original,
             entry_skill="sdd-implementation",
-            guard_status="active",
-            bootstrap=None,
             allocator=allocator,
             writer=self.writer,
             downstream_command=None,
@@ -77,6 +75,7 @@ class FailClosedAllocationBehaviorTests(unittest.TestCase):
             self.assertFalse((self.root / "planning" / relative).exists(), relative)
 
     def test_eacces_is_zero_write_blocked(self) -> None:
+        """Catches EACCES fallback to the primary checkout or any writer/runner."""
         def deny() -> Path:
             raise PermissionError(errno.EACCES, "permission denied")
 
@@ -86,6 +85,7 @@ class FailClosedAllocationBehaviorTests(unittest.TestCase):
         )
 
     def test_sandbox_denial_is_zero_write_blocked(self) -> None:
+        """Catches sandbox-denial fallback to any writable checkout."""
         def deny() -> Path:
             raise SandboxDenied("sandbox policy denied worktree allocation")
 

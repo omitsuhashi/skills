@@ -7,7 +7,6 @@ default_implementation_skill = "sdd-implementation"
 first_entry_skill = "sdd-implementation"
 pre_gate_writable_subskill_action = "blocked"
 downstream_conflict_action = "blocked"
-guard_activation_owner = "separate_human_authorized_setup"
 forbidden_standalone_skill_names = [
   "context-manager",
   "dependency-graph",
