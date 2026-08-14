@@ -6,8 +6,9 @@ tags:
   - planning
   - implementation-plan
   - skill-architecture
-status: agent-authored
-review_state: ready-for-agent-review
+status: active
+review_state: independently-reviewed
+plan_readiness: ready
 aliases:
   - SDD agent-owned execution plan
   - SDD plan readiness implementation plan
@@ -31,9 +32,14 @@ prospective code、commit granularity の判断を求めない。
 - local precedence: approved spec の Plan Contract Overlay が、upstream の保存先、prospective body、
   Human execution-choice prompt、plan approval semantics と衝突する output / routing contract を上書きする
 
-Plan Author self-review は `ready_for_independent_review` である。これは Plan Readiness Gate の
-`ready` disposition ではない。独立 Plan Reviewer の `ready` と repository checks の成功後だけ、
-gate を `ready` とし、既存 Control Return の `status: complete` へ変換できる。
+Plan Author self-review後、fresh independent Plan Reviewとblocking finding修復後のre-reviewは
+`.superpowers/reviews/sdd-plan-ownership-alignment/plan-review.md`と
+`.superpowers/reviews/sdd-plan-ownership-alignment/plan-rereview.md`に記録され、最終re-reviewは
+`Repository readiness classification: ready`、decision request `none`、material risk `none`を返した。
+Planning Controllerはapproved spec bindingとplan pathを確認し、Plan Readiness Gateを`ready`、Control Returnを
+`status: complete`としてImplementation Stageへentryした。その後POA-1 / POA-2実装とtask review、POA-3
+closeout candidateまで進んでいる。これはHuman plan approval、canonical final whole-branch review、
+`LOCAL_COMPLETE`、remote action authorizationを意味しない。
 
 ## Goal
 
@@ -385,7 +391,7 @@ Reviewer `issues_found` is not an external status。It must be classified into `
 - Prohibited-body scan: pass。This plan contains no prospective production code、test code、script body、patch body、pseudo-patch、shell commit command、or Human execution-choice prompt。
 - Scope check: pass。The plan changes only the current SDD Plan Stage contract、focused regressions、and required durable knowledge; it does not create a scheduler、runtime state、packet、event log、resume protocol、or upstream fork。
 - Current-tree applicability: pass。All modify targets exist at baseline; all create targets are contained by the bound planning worktree and have explicit single responsibilities。
-- Author verdict: `ready_for_independent_review`。Independent Plan Reviewer and repository checks remain mandatory before the Plan Readiness Gate may emit `ready`。
+- Author verdict: `ready_for_independent_review`。その後のindependent review / repair / re-reviewは完了し、最終repository readinessは`ready`、decision requestとmaterial riskは`none`である。Planning Controllerのbinding確認後にControl Return `status: complete`としてImplementation Stageへentry済みである。canonical final whole-branch reviewと`LOCAL_COMPLETE`は本plan readinessとは別のpending gateである。
 
 ## Related Pages
 

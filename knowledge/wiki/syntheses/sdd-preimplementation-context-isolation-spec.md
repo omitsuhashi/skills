@@ -253,9 +253,11 @@ dependency / capability不足として単純に停止する。
 skills/sdd-implementation/
 ├── SKILL.md
 ├── references/
-│   ├── research-stage.md
-│   └── planning-context.md
+│   ├── plan-contract.md
+│   ├── planning-context.md
+│   └── research-stage.md
 ├── prompts/
+│   ├── plan-reviewer.md
 │   ├── repository-researcher.md
 │   ├── spec-synthesizer.md
 │   └── spec-reviewer.md
