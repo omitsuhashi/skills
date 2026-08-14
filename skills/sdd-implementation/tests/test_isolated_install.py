@@ -129,7 +129,7 @@ class IsolatedInstallTests(unittest.TestCase):
 
     def test_portable_package_has_no_host_or_repository_identity(self) -> None:
         absolute_path = re.compile(
-            r"(?<![A-Za-z0-9_.~])/(?:[A-Za-z0-9_.-]+/)+[A-Za-z0-9_.-]+"
+            r"(?<![A-Za-z0-9_.~/])/(?:[A-Za-z0-9_.-]+/)+[A-Za-z0-9_.-]+"
         )
         repository_only_roots = ("scr" + "ipts", "." + "github")
         repository_only_path = re.compile(
@@ -146,7 +146,15 @@ class IsolatedInstallTests(unittest.TestCase):
         )
         allowed_pages = {"scenario-spec.md", "scenario-plan.md"}
         dynamic_probes = (str(SOURCE_ROOT),)
-
+        mutation_target = self.installed_skill / "agents" / "openai.yaml"
+        mutation_target.write_text(
+            mutation_target.read_text(encoding="utf-8")
+            + "\n# portable URL probes\n"
+            + "# https://example.com/docs/skill\n"
+            + "# http://localhost/path\n"
+            + "# //cdn.example.invalid/assets/skill\n",
+            encoding="utf-8",
+        )
         expected_results = (
             [],
             [
@@ -157,7 +165,6 @@ class IsolatedInstallTests(unittest.TestCase):
 
         for expected_errors in expected_results:
             if expected_errors:
-                mutation_target = self.installed_skill / "agents" / "openai.yaml"
                 mutation_target.write_text(
                     mutation_target.read_text(encoding="utf-8")
                     + "\n# source identity probe: "
