@@ -89,6 +89,52 @@ def git_commit_is_current_ancestor(commit_sha: str) -> bool:
     return result.returncode == 0
 
 
+def contains_unfenced_production_body(text: str) -> bool:
+    python_body = re.search(
+        r"^(?P<indent>[ \t]*)(?:async[ \t]+)?def[ \t]+[A-Za-z_]\w*"
+        r"[ \t]*\([^\n]*\)[ \t]*(?:->[ \t]*[^:\n]+)?[ \t]*:[ \t]*\n"
+        r"(?P=indent)[ \t]+(?:return|raise|yield|pass|if|for|while|with|try|"
+        r"[A-Za-z_]\w*[ \t]*=|[A-Za-z_]\w*[ \t]*\()",
+        text,
+        flags=re.MULTILINE,
+    )
+    javascript_body = re.search(
+        r"^(?P<indent>[ \t]*)(?:(?:export|async)[ \t]+)*"
+        r"(?:function[ \t]+[A-Za-z_$][\w$]*[ \t]*\([^\n]*\)|"
+        r"(?:const|let|var)[ \t]+[A-Za-z_$][\w$]*[ \t]*=[ \t]*"
+        r"(?:async[ \t]+)?(?:\([^\n]*\)|[A-Za-z_$][\w$]*))[ \t]*"
+        r"(?:=>[ \t]*)?\{[ \t]*\n(?P=indent)[ \t]+"
+        r"(?:return|throw|const|let|var|if|for|while|switch|await|"
+        r"[A-Za-z_$][\w.$]*[ \t]*\()",
+        text,
+        flags=re.MULTILINE,
+    )
+    python_inline_body = re.search(
+        r"^[ \t]*(?:async[ \t]+)?def[ \t]+[A-Za-z_]\w*[ \t]*"
+        r"\([^\n]*\)[ \t]*(?:->[ \t]*[^:\n]+)?[ \t]*:[ \t]+"
+        r"(?:return|raise|yield|pass|[A-Za-z_]\w*[ \t]*=|[A-Za-z_]\w*[ \t]*\()",
+        text,
+        flags=re.MULTILINE,
+    )
+    javascript_inline_body = re.search(
+        r"^[ \t]*(?:(?:export|async)[ \t]+)*(?:const|let|var)[ \t]+"
+        r"[A-Za-z_$][\w$]*[ \t]*=[ \t]*(?:async[ \t]+)?"
+        r"(?:\([^\n]*\)|[A-Za-z_$][\w$]*)[ \t]*=>[ \t]*"
+        r"(?:await[ \t]+|new[ \t]+|[A-Za-z_$][\w.$]*[ \t]*\()",
+        text,
+        flags=re.MULTILINE,
+    )
+    return any(
+        match is not None
+        for match in (
+            python_body,
+            javascript_body,
+            python_inline_body,
+            javascript_inline_body,
+        )
+    )
+
+
 def plan_errors(text: str) -> list[str]:
     errors: list[str] = []
     north_star_identity = section(text, "Approved North Star Identity")
@@ -149,12 +195,22 @@ def plan_errors(text: str) -> list[str]:
         "Planning worktree",
         "Integration branch",
         "Current-tree compatibility",
-        "Readiness evidence",
+        "Independent review verdict",
+        "Repository checks",
+        "Readiness evidence state",
     ):
         if not field_value(binding, field):
             errors.append(f"missing plan binding field: {field}")
     if baseline_sha and not git_commit_is_current_ancestor(baseline_sha):
         errors.append("repository baseline is not a current-tree ancestor commit")
+    if field_value(binding, "Current-tree compatibility") != "compatible":
+        errors.append("current-tree compatibility is not compatible")
+    if field_value(binding, "Independent review verdict") != "ready":
+        errors.append("independent review verdict is not ready")
+    if field_value(binding, "Repository checks") != "passed":
+        errors.append("repository checks did not pass")
+    if field_value(binding, "Readiness evidence state") != "current":
+        errors.append("readiness evidence is not current")
 
     global_constraints = section(text, "Global Constraints")
     if len(re.findall(r"^- ", global_constraints, flags=re.MULTILINE)) < 3:
@@ -274,16 +330,37 @@ def plan_errors(text: str) -> list[str]:
             errors.append(f"missing readiness vocabulary: {value}")
     if "status: complete" not in readiness or "Implementation Stage entry" not in readiness:
         errors.append("readiness mapping is incomplete")
+    if field_value(readiness, "Plan readiness disposition") != "ready":
+        errors.append("plan readiness disposition is not ready")
+    if field_value(readiness, "Control Return status") != "complete":
+        errors.append("Control Return status is not complete")
+    if field_value(readiness, "Implementation Stage entry") != "allowed":
+        errors.append("Implementation Stage entry is not allowed")
 
     if "```" in text:
         errors.append("prospective body: fenced code block")
+    if contains_unfenced_production_body(text):
+        errors.append("prospective body: production code")
     if re.search(r"^\s*(?:def test_|async def test_|assert\s+|(?:describe|it|test)\s*\(|class Test\w+)", text, flags=re.MULTILINE):
         errors.append("prospective body: test body")
     if re.search(r"^\s*(?:for\s+\w+\s+in\s+.+;\s*do\b|while\s+.+;\s*do\b)", text, flags=re.MULTILINE):
         errors.append("prospective body: shell loop")
+    if re.search(
+        r"^[ \t]*if\b[^\n]*;[ \t]*then[ \t]*\n"
+        r"(?:(?![ \t]*fi[ \t]*$)[^\n]+\n)+[ \t]*fi[ \t]*$",
+        text,
+        flags=re.MULTILINE,
+    ):
+        errors.append("prospective body: shell body")
     if re.search(r"^\s*(?:\*\*\* Begin Patch|\*\*\* Update File:|diff --git\s|@@\s+-\d|--- a/|\+\+\+ b/)", text, flags=re.MULTILINE):
         errors.append("prospective body: patch body")
-    if re.search(r"^\s*(?:\$ |git (?:add|commit)\b|(?:python\d*\s+-m\s+)?pytest\b|uv\s+run\s+pytest\b|npm\s+(?:test|run)\b)", text, flags=re.MULTILINE):
+    if re.search(
+        r"^\s*(?:\$ |git (?:add|commit)\b|python\d*\s+-m\s+unittest\b|"
+        r"(?:python\d*\s+-m\s+)?pytest\b|uv\s+run\s+pytest\b|"
+        r"npm\s+(?:test|run)\b|echo[ \t]+(?:-[neE]+\b|[\"'\$\\]))",
+        text,
+        flags=re.MULTILINE,
+    ):
         errors.append("prospective body: command body")
     if re.search(r"Human (?:plan )?approval (?:is )?required", text, flags=re.IGNORECASE):
         errors.append("Human plan-approval language")
@@ -427,6 +504,36 @@ class PlanContractTests(unittest.TestCase):
             self.assertIn("missing serialized integration order", errors)
             self.assertIn("combined verification missing Failure owner", errors)
 
+    def test_rejects_nonready_semantic_readiness_states_even_when_nonempty(self) -> None:
+        probes = {
+            "- Current-tree compatibility: compatible": (
+                "- Current-tree compatibility: incompatible",
+                "current-tree compatibility is not compatible",
+            ),
+            "- Independent review verdict: ready": (
+                "- Independent review verdict: issues_found",
+                "independent review verdict is not ready",
+            ),
+            "- Repository checks: passed": (
+                "- Repository checks: absent",
+                "repository checks did not pass",
+            ),
+            "- Readiness evidence state: current": (
+                "- Readiness evidence state: stale",
+                "readiness evidence is not current",
+            ),
+            "- Plan readiness disposition: ready": (
+                "- Plan readiness disposition: needs_repair",
+                "plan readiness disposition is not ready",
+            ),
+        }
+        ready_plan = load_plan(READY_PLAN)
+        for original, (replacement, expected_error) in probes.items():
+            with self.subTest(replacement=replacement):
+                self.assertIn(original, ready_plan)
+                mutated = ready_plan.replace(original, replacement, 1)
+                self.assertIn(expected_error, plan_errors(mutated))
+
     def test_rejects_prospective_body_and_human_plan_approval_language(self) -> None:
         temporary_directory, copy = self.copy_ready_plan()
         with temporary_directory:
@@ -446,10 +553,30 @@ class PlanContractTests(unittest.TestCase):
             with self.subTest(expected_error=expected_error):
                 self.assertIn(expected_error, plan_errors(load_plan(READY_PLAN) + body))
 
+    def test_rejects_unfenced_production_shell_and_execution_bodies(self) -> None:
+        probes = {
+            "\ndef build_plan(spec):\n    return normalize(spec)\n": "prospective body: production code",
+            "\ndef build_plan(spec): return normalize(spec)\n": "prospective body: production code",
+            "\nfunction buildPlan(spec) {\n  return normalize(spec);\n}\n": "prospective body: production code",
+            "\nconst buildPlan = (spec) => normalize(spec);\n": "prospective body: production code",
+            "\nif [ -f \"$plan\" ]; then\nvalidate \"$plan\"\nfi\n": "prospective body: shell body",
+            "\npython3 -m unittest discover -s tests\n": "prospective body: command body",
+            "\necho \"ready\"\n": "prospective body: command body",
+        }
+        for body, expected_error in probes.items():
+            with self.subTest(expected_error=expected_error, body=body):
+                self.assertIn(expected_error, plan_errors(load_plan(READY_PLAN) + body))
+
     def test_prohibition_scan_allows_intent_only_narrative(self) -> None:
         narrative = (
             "\nThe reviewer rejects an unfenced test body, shell loop, patch body, "
-            "or pytest command body and records only observable intent.\n"
+            "or pytest command body and records only observable intent. "
+            "A plan may name Python `def build_plan(spec):`, JavaScript "
+            "`function buildPlan(spec) { ... }`, shell if bodies, "
+            "`python3 -m unittest`, and `echo` as prohibited classes without "
+            "supplying their bodies or execution commands.\n"
+            "echo is also the name of a prohibited shell output command, not "
+            "an execution instruction in this sentence.\n"
         )
         self.assertNotIn("prospective body", " ".join(plan_errors(load_plan(READY_PLAN) + narrative)))
 

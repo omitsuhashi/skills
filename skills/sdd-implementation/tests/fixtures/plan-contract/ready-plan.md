@@ -18,8 +18,10 @@
 - Repository baseline: c370fe14de1641aa5ee30b3fa001f4d857078091
 - Planning worktree: /Users/omitsuhashi/repos/omitsuhashi/skills/.worktrees/sdd-plan-ownership-alignment-planning
 - Integration branch: codex/sdd-plan-ownership-alignment-planning
-- Current-tree compatibility: verified against the bound baseline and current integration branch.
-- Readiness evidence: fresh independent Plan Reviewer verdict ready with repository checks satisfied.
+- Current-tree compatibility: compatible
+- Independent review verdict: ready
+- Repository checks: passed
+- Readiness evidence state: current
 
 ## Global Constraints
 
@@ -152,4 +154,8 @@
 
 ## Readiness Result
 
-Reviewer verdict: ready. The other review vocabulary is issues_found, classified as needs_repair, needs_decision, or blocked. Only ready maps to the existing Control Return status: complete and permits Implementation Stage entry.
+- Plan readiness disposition: ready
+- Control Return status: complete
+- Implementation Stage entry: allowed
+
+Reviewer vocabulary is ready or issues_found. The latter is classified as needs_repair, needs_decision, or blocked; none permits entry.

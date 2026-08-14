@@ -1932,3 +1932,17 @@ append-only で使います。すべての entry は予測しやすい header �
   exact contract failureとなった。GREEN後のfocused plan/public contract suitesは46 tests、failure 0、error 0である。
   full combined verification、scoped commit、final-fix reportはこのcorrection後のfresh gateで確定する。remote write、
   live mutation、Human execution-choiceは実施していない。
+
+## [2026-08-14] authority-evidence-correction | SDD Plan Ownership Alignment
+
+- `implementation-closeout-candidate` と直前の `final-review-correction` にある
+  `knowledge/AGENTS.md` の `Read: allowed` を確認したという記録をsupersedeする。同fileはread stateを宣言して
+  いないため、その表現はauthority evidenceとしてunsupportedであり、本event以降は撤回済みとして扱う。
+- `knowledge/AGENTS.md` が実際に宣言するevidenceは、knowledge rootが`knowledge/`であること、Canonical Ownerが
+  repository maintainerまたはmaintainer-delegated actorであること、Write Boundaryが`owned`でowner actorだけが
+  verified claimを直接更新できること、authoring profileが`obsidian`であることである。今回のHuman-approved
+  residual fixはこの明示されたowner/write boundary内のappend-only correctionだけを行い、未宣言のread stateを
+  推論しない。
+- 先行eventはappend-only historyとして削除・変更しない。本correctionはauthority evidenceだけを修正し、approved
+  North Star / Written Spec、agent-owned plan readiness / execution、separate remote authorization、canonical page identity、
+  `knowledge/index.md`のactive catalog effectを変更しない。

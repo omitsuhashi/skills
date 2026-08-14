@@ -26,8 +26,10 @@ prospective code、commit granularity の判断を求めない。
 - Repository baseline: c370fe14de1641aa5ee30b3fa001f4d857078091
 - Planning worktree: /Users/omitsuhashi/repos/omitsuhashi/skills/.worktrees/sdd-plan-ownership-alignment-planning
 - Integration branch: codex/sdd-plan-ownership-alignment-planning
-- Current-tree compatibility: baseline commit is an ancestor of the current integration branch and all planned responsibility paths were verified in the bound planning worktree.
-- Readiness evidence: fresh independent Plan Reviewer re-review returned `ready`; repository semantic validation, current binding, coverage, dependency, integration, and prohibition checks are satisfied.
+- Current-tree compatibility: compatible
+- Independent review verdict: ready
+- Repository checks: passed
+- Readiness evidence state: current
 - upstream methodology: active discovery で解決した `superpowers:writing-plans` v6.2.0
 - local precedence: approved spec の Plan Contract Overlay が、upstream の保存先、prospective body、
   Human execution-choice prompt、plan approval semantics と衝突する output / routing contract を上書きする
@@ -419,6 +421,10 @@ Coverage result: requirements `15/15` primary-owned、acceptance criteria `14/14
 orphan task `0`、unknown ID `0`。
 
 ## Readiness Result
+
+- Plan readiness disposition: ready
+- Control Return status: complete
+- Implementation Stage entry: allowed
 
 | Internal disposition | External Control Return | Implementation entry | Owner / next route |
 |---|---|---|---|

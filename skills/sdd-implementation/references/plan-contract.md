@@ -39,8 +39,9 @@ Include these sections:
 - `Approved Written Spec Identity`: contained spec path, the same non-empty
   SHA-256 approval-snapshot identity, and approved state;
 - `Plan Binding`: full repository baseline commit, planning worktree,
-  integration branch, current-tree compatibility result, and independent
-  `ready` review evidence;
+  integration branch, `Current-tree compatibility: compatible`, `Independent
+  review verdict: ready`, `Repository checks: passed`, and `Readiness evidence
+  state: current`;
 - `Global Constraints`: authority, content, portability, local/remote, and
   integration constraints that apply to every task;
 - `Requirement And Acceptance Inventory`: every in-scope requirement and
@@ -52,7 +53,12 @@ Include these sections:
 
 The durable approval-snapshot identity must match the identity declared by the
 approved spec. The repository baseline must resolve to a current-tree ancestor.
-Empty, malformed, mismatched, absent, or stale binding evidence is not `ready`.
+Treat these Plan Binding values as closed semantic states, not non-empty prose.
+Reject `incompatible`, `issues_found`, failed or absent repository checks, stale
+or absent readiness evidence, and any unknown value. Empty, malformed,
+mismatched, absent, or stale binding evidence is not `ready`. `Readiness Result`
+must likewise declare `Plan readiness disposition: ready`, `Control Return
+status: complete`, and `Implementation Stage entry: allowed`.
 The canonical ready plan and representative fixture must satisfy the same
 executable semantic validator in `tests/test_plan_contract.py`.
 
@@ -82,12 +88,15 @@ failure owner covering every acceptance criterion.
 
 ## Prohibited Durable Plan Content
 
-Do not include prospective production or test code, fenced or unfenced test
-bodies, script or shell-loop bodies, patch bodies, pytest or other command
-bodies, scheduler/runtime machinery, worker packets, or concrete runtime model,
-provider, agent, or effort selections. Intent-only prose may name these body
-classes. Do not make the plan a Human approval subject. Human authority remains
-with the North Star and Written Spec.
+Do not include prospective production or test code, fenced or structurally
+unfenced Python / JavaScript bodies, test bodies, script or shell control-flow
+bodies, patch bodies, or execution command bodies such as test runners and
+shell output commands. Match complete structural bodies or line-anchored
+commands rather than keywords inside prose, so intent-only prose may name these
+prohibited classes. Do not include scheduler/runtime machinery, worker packets,
+or concrete runtime model, provider, agent, or effort selections. Do not make
+the plan a Human approval subject. Human authority remains with the North Star
+and Written Spec.
 
 ## Review And Readiness Vocabulary
 
