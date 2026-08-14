@@ -43,6 +43,12 @@ canonical catalog、append-only logを同じlanded semanticsへ同期し、fresh
 このstateはcanonical final whole-branch review前のcloseout candidateであり、`LOCAL_COMPLETE`、remote action、
 またはHuman plan approvalを宣言しない。
 
+Human-approved transient-artifact amendmentのPOA-5 migration / validator、POA-6 exact cleanup、および
+cleanup fixture correctionは2026-08-14にreview済みでlandedした。POA-7はそのactual Git / file / test evidenceを
+本仕様、broader current design、reviewed plan、catalog、append-only logへ同期するdurable closeoutである。
+POA-8のfresh combined verification、canonical whole-branch review、authorized remote branch updateはpendingであり、
+本closeoutは`LOCAL_COMPLETE`またはpublicationを宣言しない。
+
 [[sdd-plan-ownership-alignment-implementation-plan|agent-authored implementation plan]]のapproved spec
 SHA-256 `1f9a7dc5f740c51addfabde96bac6fe3fbf5036003d1783cde60ac58e5ae7559`は、Plan Authorがconsumeした
 承認時snapshotのbinding identityである。Task POA-3が追記するlanded stateとprovenance relationは
@@ -675,6 +681,28 @@ separate authorizationがない場合は、Plan StageのStop Conditionではな�
 成立したplan readiness、local implementation、local completionを取り消さない。
 
 ## Provenance And Relations
+
+### Transient-artifact amendment implementation closeout
+
+- POA-5は`c7aced8d7b3975f081ec8bfcd065dcaa57bb2eec`とbounded fixes
+  `91cbd5aec3d062f534937953ee8241f415d8db33` / `29dc0de8f5f721d5004e5dac253ae04a36899aad`で、
+  all-stage repository-external handoff、repository-local scratch reason / ignore gate、Git index / candidate /
+  cleanup後new-tree validator、CI invocationをGREENにした。independent scoped re-reviewは`ready`である。
+- POA-6 commit `7b4a8e6e0951e2ddd3c6020a10e00a6afe604b60`はR-21のexact three reportsとsingle-use
+  migration markerを同じcleanup treeから除いた。follow-up fixture correction
+  `74eb79a3fbb0da2d6521129cf83976a366877af4`はauthorized migration repository fixtureをcleanup前の
+  introduction commitへdetachし、cleanup後HEADからもhistorical migration behaviorを再現可能にした。scoped re-reviewは
+  cleanupとfixture correctionを`ready`とした。
+- POA-7 entry時のactual evidenceでは、current Git indexとHEAD treeの`.superpowers/**` entryはともにzeroである。
+  R-21の3 local filesはroot `.gitignore` line 1のcoverage下でignored / untrackedのまま残っており、Git provenanceには
+  含まれない。migration baseline `f07aebce7bbf854cd64184311d204cf04055fd28`はcurrent ancestryに残り、ancestor
+  commits / blobsのreset、filter、rebase rewrite、replacement、force publicationは行っていない。
+- fresh closeout-entry evidenceはSDD focused suite `93/93`、transient validator regression `22/22`、actual
+  candidate tree、post-cleanup commits `7b4a8e6` / `74eb79a`、HEAD final treeに対するrepository validator passである。
+  Raw worker / reviewer reports、test output、transcriptsはrepository外temporary evidenceのままdurable knowledgeへ
+  copyしていない。
+- Remaining lifecycleはPOA-8だけである。fresh whole-branch reviewとauthorized remote branch updateは未実施であり、
+  North Star、original approval snapshot、remote authorization boundaryを変更しない。
 
 - durable research evidence summary: baseline `c370fe14de1641aa5ee30b3fa001f4d857078091` のcurrent
   SDD lifecycle、planning-context、upstream `writing-plans` v6.2.0、既存contract testsを比較し、Human

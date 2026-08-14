@@ -20,7 +20,9 @@ Phase 2 は fresh coordinator verification と final whole-branch review を含�
 
 2026-07-28のreasoning effort risk precedence変更は`LOCAL_COMPLETE`である。Task 1を`2549892c07dc3f65c22094ca27b9208c831e65b0`で実装し、独立task reviewはapproved（material findingなし）となった。closeout candidate `ffa8339df00a5a8dfec90f572e843509516f49fe`へのfinal whole-branch reviewはknowledge discoverability / provenanceのImportant 2件を返したが、bounded fix `a7d0d294a6ccdbeec84f44c0cd6f3060967de5d1`で両方を解消し、scoped re-reviewはresolved 2/2、新規Critical / Importantなしで`APPROVED`となった。fresh verificationはSDD contract 18 tests、repository scripts 43 tests、LLM Wiki 5 tests、skill architecture / context validator、scoped dual-host compatibility、skill quick validation、`git diff --check`が成功している。push、PR、merge、release、live installその他のremote writeは実施していない。
 
-2026-08-14の[[sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]]により、current Plan Stageはagent-owned contractへ移行した。Human approvalはNorth StarとWritten Specに限定し、fresh Plan Author、fresh independent Plan Reviewer、Plan Readiness Gateがplanの作成・修復・readinessを所有する。local [Plan Contract Overlay](../../../skills/sdd-implementation/references/plan-contract.md)はupstream `writing-plans`をrequired methodologyとして保持しつつ、prospective implementation bodyとHuman plan approvalをdurable planから除外する。Task POA-1のreviewed intentional REDとTask POA-2のreviewed combined GREENはlanded済みであり、本書、focused context specification、canonical catalog、append-only logをTask POA-3 closeout candidateへ同期した。canonical final whole-branch reviewはcloseout後の独立gateとしてpendingであり、`LOCAL_COMPLETE`やremote authorizationを先取りしない。
+2026-08-14の[[sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]]により、current Plan Stageはagent-owned contractへ移行した。Human approvalはNorth StarとWritten Specに限定し、fresh Plan Author、fresh independent Plan Reviewer、Plan Readiness Gateがplanの作成・修復・readinessを所有する。local [Plan Contract Overlay](../../../skills/sdd-implementation/references/plan-contract.md)はupstream `writing-plans`をrequired methodologyとして保持しつつ、prospective implementation bodyとHuman plan approvalをdurable planから除外する。Task POA-1のreviewed intentional RED、Task POA-2のreviewed combined GREEN、Task POA-3のoriginal closeoutはlanded済みである。
+
+同仕様のHuman-approved transient-artifact amendmentは、Researchからknowledge closeoutまでのnormal SDD stageにおけるraw handoffをtask / session boundedなrepository外temporary locationへ移すcurrent contractである。POA-5のall-stage migration / fail-closed validator / CI integrationと、POA-6のexact three-report cleanupはindependent task reviewを通過してlandedした。current Git index / final treeは`.superpowers/**` entry zeroであり、必要なlocal copyはroot `.gitignore`のcoverage下でignored / untrackedのまま保持できる。pre-amendment ancestor historyはrewriteしない。POA-7は本書、focused context specification、canonical spec / plan、catalog、append-only logをこのlanded stateへ同期するcloseoutであり、POA-8のfresh whole-branch reviewとremote branch updateはまだpendingである。したがって本closeoutは`LOCAL_COMPLETE`またはpublicationを先取りしない。
 
 ## 調査で確認した前提
 
@@ -86,7 +88,7 @@ caller は change request、既存 spec、または既存 implementation plan �
 - `Grill with Docs` は spec refinement の対話技法だけを所有する。
 - `llm-wiki` は durable knowledge の query / ingest / closeout だけを所有する。
 - repo-local runtime boundary は model resolution、optional reasoning effort、dispatch capability mapping だけを所有する。
-- runtime ledger、reports、diff、test logs、agent IDs は Superpowers の transient workspace に置き、wiki へ保存しない。
+- runtime ledger、reports、diff、test logs、agent IDs はtask / session boundedなrepository外temporary locationに置き、wikiへ保存しない。repository-local `.superpowers/**`は[[sdd-plan-ownership-alignment|current alignment spec]]が定めるreason / ignore gateを満たすignored local scratchに限る。
 
 ### Review は material finding だけを扱う
 
@@ -116,8 +118,9 @@ spec draft内の`Confirmed Decisions` / `Open Decisions`、approval、stage rout
 短いControl Returnだけを所有する。source code、broad wiki / docs、full spec /
 plan、diff、test output、複数file探索は直接読まない。
 
-Change requestまたはincomplete specではfresh Research Workerがgitignoredな
-`.superpowers/research/<epic-id>/`へpath / line evidence付きreportを書く。
+Change requestまたはincomplete specではfresh Research Workerが、runtimeがtask / session用に解決した
+repository外temporary locationへpath / line evidence付きreportを書く。write前にrepository root、planning
+worktree、original checkoutの外にあるbounded pathであることを確認する。
 accepted decisionが揃った後はfresh Spec Synthesis Worker、別のfresh Spec
 Reviewer、fresh Plan Author Worker、fresh independent Plan Reviewerへ順にrouteする。workerはparent
 conversationを継承しない。Humanはmaterial decisionとWritten Spec approvalを保持し、Plan Author /
@@ -241,7 +244,7 @@ concrete model、effort、provider、availability、agent ID、run-specific reso
 2. Agent-reviewed / repository-ready implementation plan: spec binding、coverage、readiness、plan、index、log。
 3. Implementation closeout: 実装結果、material decision、verification、残課題、index、log。
 
-runtime progress ledger、worker report、review transcript、diff、test log は durable knowledge ではなく、Superpowers workspace の transient evidence とする。
+runtime progress ledger、worker report、review transcript、diff、test log は durable knowledge ではなく、task / session boundedなrepository外temporary evidenceとする。例外的なrepository-local scratchは[[sdd-plan-ownership-alignment|current alignment spec]]のconcrete-reason / pre-write ignore gateに従い、ignored / untracked / unstaged / uncommittedに限定する。
 
 すべての implementation task と task review が完了した後、final whole-branch review の前に closeout を行う。final reviewer は code、tests、spec、plan、wiki、index、log を同じ branch range で確認する。
 

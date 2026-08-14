@@ -6,8 +6,11 @@
 Humanが本書をWritten Specとして承認した。本書のfresh Planning Controller / worker isolationは
 current contractとして維持する。2026-08-14の[[sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]]が、
 本書のPlan Stageに残っていたHuman / repository plan approval、artifact content、readiness、Human return
-semanticsだけをsupersedeした。implementation closeoutとfresh verificationは完了しているが、今回の
-Plan Stage alignmentに対するcanonical final whole-branch reviewはpendingである。
+semanticsをsupersedeする。同仕様のHuman-approved transient-artifact amendmentは、本書のrepository-contained
+Research Report destinationと全pre-implementation raw handoff write bindingも競合範囲でsupersedeする。POA-5の
+repository-external migration / validatorとPOA-6のexact three-report cleanupはreview済みでlandedし、POA-7で
+canonical closeoutを同期した。Planning Controller / fresh worker isolation、source / durable worktree boundary、
+Human Written Spec authorityは維持する。POA-8のfresh whole-branch reviewとremote branch updateはpendingである。
 
 ## Epic ID
 
@@ -163,9 +166,15 @@ constraints、report pathだけを受け取る。
 
 ### Research Report
 
-Research reportはplanning worktree内のgitignoredな
-`.superpowers/research/<epic-id>/`へ置く。wiki、Git、canonical specの正本ではなく、
-task-scoped evidence cacheとして扱う。
+Research reportはruntimeがtask / session用に解決したrepository外temporary locationへ置く。write前に
+repository root、planning worktree、original checkoutの外にあるbounded pathであることを確認する。wiki、Git、
+canonical specの正本ではなく、task-scoped evidence cacheとして扱う。
+
+repository-local `.superpowers/**`は通常のhandoff destinationにしない。concreteなoperational reasonがある
+場合だけ、write前にroot `.gitignore` coverageをmechanically確認し、ignored / untracked / unstaged /
+uncommitted local scratchとして使用できる。このcurrent write bindingのauthorityは
+[[sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]]にあり、本書はworker isolationとcarry-forward
+semanticsだけを所有する。
 
 Humanが採用した判断と将来も必要な根拠だけをWritten Specへ昇格させる。raw reportを
 `knowledge/index.md`へ登録せず、implementation closeout後に不要なら削除できる。
@@ -234,6 +243,10 @@ Control Returnは200 words程度、Stage Capsuleは400 words程度を目安に�
 word-count schema、validator、script、超過時のBLOCKED処理は作らない。重要なのは
 semantic fieldを短く保ち、詳細をartifact pathへ置くことである。
 
+このtableのresearch / worker / review pathはrepository外temporary locationを指す。durable spec、reviewed plan、
+source、knowledge closeoutだけをtrusted planning worktreeへ書き、raw handoffをrepository artifact identityや
+clone-stable provenanceとして扱わない。
+
 ## Runtime And Failure Policy
 
 isolated fresh-context dispatchとexplicit model selectionは通常の前提条件とする。
@@ -280,7 +293,8 @@ current `llm-wiki` durable checkpointsを維持し、Plan checkpointのauthority
 
 Research Report、Control Return、Stage Capsule、review transcript、raw outputはwikiへ
 保存しない。durable spec / plan / closeoutを変更した時だけ`knowledge/index.md`と
-`knowledge/log.md`を同期する。
+`knowledge/log.md`を同期する。raw handoffはrepository外temporary locationへ置き、例外的なrepository-local
+scratchは[[sdd-plan-ownership-alignment|current alignment spec]]のreason / ignore gateに従う。
 
 ## Testing Strategy
 
@@ -371,7 +385,7 @@ artifact handoff、duplicate-question prevention、scope simplicityを評価す�
 
 ## 関連ページ
 
-- [[sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]] — 本書のPlan Stageにおけるapproval、artifact、readiness、Human return semanticsをsupersedeするcurrent source。
+- [[sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]] — 本書のPlan Stageにおけるapproval、artifact、readiness、Human return semanticsと、repository-contained transient destination / write bindingをsupersedeするcurrent source。
 - [[sdd-plan-ownership-alignment-implementation-plan|SDD Plan Ownership Alignment 実装計画]] — Plan Stage alignmentのagent-authored execution / integration contract。
 - [SDD Implementation Skill 設計](sdd-implementation-skill-design.md) — current lifecycle、
   ownership、runtime capability、knowledge checkpointのcanonical baseline。

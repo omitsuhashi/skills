@@ -2119,3 +2119,32 @@ append-only で使います。すべての entry は予測しやすい header �
 - [[index|knowledge/index.md]]のactive plan summaryを同じformal readiness、conditional entry、final-zero boundaryへ
   同期した。Human-approved Written Spec、original approval snapshot identity、historical POA-1〜POA-3 evidence、
   pre-amendment historyは変更していない。
+
+## [2026-08-14] implementation-closeout | SDD transient artifact amendment POA-7
+
+- Actorはrepository maintainer-delegated POA-7 knowledge workerであり、single-root `owned` / `Read: allowed`の
+  authorityとObsidian authoring profileを確認した。対象は既存の
+  [[wiki/syntheses/sdd-implementation-skill-design|broader SDD design]]、
+  [[wiki/syntheses/sdd-preimplementation-context-isolation-spec|focused context-isolation spec]]、
+  [[wiki/syntheses/sdd-plan-ownership-alignment|Human-approved alignment spec]]、
+  [[wiki/syntheses/sdd-plan-ownership-alignment-implementation-plan|reviewed canonical plan]]、
+  [[index|active catalog]]だけであり、新しいspec、plan、report、ledgerを作成していない。
+- POA-5は`c7aced8d7b3975f081ec8bfcd065dcaa57bb2eec`、`91cbd5aec3d062f534937953ee8241f415d8db33`、
+  `29dc0de8f5f721d5004e5dac253ae04a36899aad`でall-stage repository-external handoff、local scratch
+  reason / ignore gate、Git surface validator、CI integrationをGREENにし、independent scoped re-reviewは`ready`だった。
+  POA-6 `7b4a8e6e0951e2ddd3c6020a10e00a6afe604b60`はR-21 exact three reportsとmigration markerを
+  cleanup treeから除き、`74eb79a3fbb0da2d6521129cf83976a366877af4`はhistorical migration fixtureをcleanup前
+  introduction commitへanchorした。cleanup / correctionのscoped re-reviewも`ready`だった。
+- Actual Git evidenceではcurrent index / HEAD treeの`.superpowers/**` entryはzeroである。R-21の3 local copiesは
+  root `.gitignore` line 1のcoverage下でignored / untrackedのまま存在し、contentをdestructive deleteしていない。
+  migration baseline `f07aebce7bbf854cd64184311d204cf04055fd28`はcurrent ancestryに残り、ancestor commit / blobの
+  history rewrite、replacement、force publicationを行っていない。
+- Fresh closeout validationはSDD focused suite `93/93`、transient validator regression `22/22`、actual candidate
+  tree、post-cleanup commits `7b4a8e6` / `74eb79a`、HEAD final treeに対するrepository validator passである。
+  Raw worker / reviewer report、transcript、test outputはrepository外temporary evidenceのまま、wikiまたは
+  `.superpowers/**`のtracked surfaceへcopyしていない。
+- Durable lifecycle effectとしてbroader二仕様の競合するrepository-contained handoff destinationをalignment specへ
+  supersedeし、planをPOA-1〜POA-6 reviewed / landed、POA-7 closeout task-review candidate、POA-8 pendingへ更新し、
+  active catalogを同期した。POA-7 independent task reviewとPOA-8のfresh combined verification、canonical
+  whole-branch review、authorized remote branch updateは未実施であり、`LOCAL_COMPLETE`、publication、merge、
+  release、live installを宣言しない。
