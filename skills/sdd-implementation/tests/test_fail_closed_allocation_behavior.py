@@ -13,6 +13,8 @@ sys.path.insert(0, str(SKILL_DIR))
 from tests.harnesses.fail_closed_scenario import (  # noqa: E402
     ControlReturn,
     SandboxDenied,
+    bind_task_worktree,
+    mint_task_owner_capability,
     run_repository_change,
 )
 
@@ -35,20 +37,16 @@ class FailClosedAllocationBehaviorTests(unittest.TestCase):
         (self.original / "tracked.txt").write_text("base\n", encoding="utf-8")
         run_git(self.original, "add", "tracked.txt")
         run_git(self.original, "commit", "-m", "base")
-        self.runner_calls = 0
+        self.owner = mint_task_owner_capability()
 
     def tearDown(self) -> None:
         self.temporary_directory.cleanup()
-
-    def runner(self, command: tuple[str, ...]) -> int:
-        self.runner_calls += 1
-        return 0
 
     def assert_denial_is_zero_write(self, allocator, reason: str) -> None:
         result = run_repository_change(
             original=self.original,
             entry_skill="sdd-implementation",
-            task_worktree=self.root / "planning",
+            task_worktree=bind_task_worktree(self.root / "planning", self.owner),
             cwd=self.root / "planning",
             writable_paths=(
                 self.root / "planning/.superpowers/research/scenario/report.md",
@@ -63,8 +61,7 @@ class FailClosedAllocationBehaviorTests(unittest.TestCase):
                 self.root / "planning/.superpowers/research/scenario/report.md",
             ),
             allocator=allocator,
-            downstream_command=None,
-            command_runner=self.runner,
+            command_plan=None,
         )
         self.assertEqual(ControlReturn("blocked", "none", "none", reason), result.control_return)
         self.assertEqual(0, result.writer_invocations)
@@ -73,7 +70,6 @@ class FailClosedAllocationBehaviorTests(unittest.TestCase):
         self.assertEqual((), result.executed_commands)
         self.assertEqual(result.before, result.after)
         self.assertEqual(result.before.commit_count, result.after.commit_count)
-        self.assertEqual(0, self.runner_calls)
         for relative in (
             ".superpowers/research/scenario/report.md",
             "knowledge/wiki/drafts/scenario-spec.md",
@@ -100,6 +96,23 @@ class FailClosedAllocationBehaviorTests(unittest.TestCase):
         self.assert_denial_is_zero_write(
             deny,
             "worktree allocation denied: sandbox",
+        )
+
+    def test_eperm_is_zero_write_blocked(self) -> None:
+        """Catches EPERM escaping instead of returning the four-field result."""
+        def deny() -> Path:
+            raise PermissionError(errno.EPERM, "operation not permitted")
+
+        self.assert_denial_is_zero_write(deny, "worktree allocation denied: EPERM")
+
+    def test_missing_allocator_dependency_is_zero_write_blocked(self) -> None:
+        """Catches a missing allocation dependency escaping the gate."""
+        def missing() -> Path:
+            raise FileNotFoundError(errno.ENOENT, "git helper missing")
+
+        self.assert_denial_is_zero_write(
+            missing,
+            "worktree allocation failed: FileNotFoundError",
         )
 
 

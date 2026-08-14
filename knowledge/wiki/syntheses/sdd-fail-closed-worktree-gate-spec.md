@@ -27,7 +27,7 @@ provenance:
   - skills/sdd-implementation/SKILL.md
   - "[[wiki/syntheses/sdd-first-write-worktree-migration-spec|SDD first-write worktree migration 仕様]]"
 relations:
-  - "[[wiki/syntheses/sdd-first-write-worktree-migration-spec|Related predecessor: SDD first-write worktree migration 仕様]]"
+  - "[[wiki/syntheses/sdd-first-write-worktree-migration-spec|Scoped predecessor: SDD first-write worktree migration 仕様]]"
 ---
 
 # SDD fail-closed worktree gate 仕様
@@ -41,7 +41,7 @@ relations:
 - canonical identity: `knowledge/wiki/syntheses/sdd-fail-closed-worktree-gate-spec.md`
 - 決定: `accepted-scope-revision`
 - 決定権者: Human / repository maintainer（Canonical Owner）
-- source implementation: `in progress`。本改訂は実装完了を主張しない。
+- source implementation: `in progress`。final-review fix後のscoped re-review前であり、実装完了を主張しない。
 
 ## Problem and earlier evidence
 
@@ -70,6 +70,12 @@ repository change が直接のwritable supporting skillから始まると、orig
 
 本仕様はexternal plugin cache、remote publication、install、CIの新設を要求しない。promoted draftは変更せず、歴史的proposal evidenceとして残す。
 
+### Executable evidence boundary
+
+最小gateのwrite evidenceは、controllerがmintしたopaque owner capabilityをallocator resultへidentityでbindし、1 invocationにつき「既存parent配下の新規artifact 1件」だけをcomplete data planとして検証してからworktree内でstageし、atomic publishする。複数artifactとpre-existing target replacementはmutation前に`BLOCKED`とし、best-effort rollbackを保証しない。
+
+commit evidenceはwrite invocationと分離したgate-owned data-only `git commit` planをnative runnerで実行する。verified task worktreeと一致しないoriginal/stale CWDはrunner invocation前に`BLOCKED`とし、arbitrary callbackは受け取らない。このharness boundaryはraw Git一般を禁止する新規mechanismではない。
+
 ## Acceptance criteria
 
 - repository changeは `sdd-implementation` をfirst entryとする。
@@ -81,3 +87,5 @@ repository change が直接のwritable supporting skillから始まると、orig
 ## Provenance and lifecycle
 
 本書は2026-08-14のHuman Written Spec approval、同日のscope-reduction owner decision、ならびに先行researchと既存 `sdd-implementation` contractを根拠とする。source implementation、active install、remote stateの完了はこのcanonical revisionから推論しない。
+
+predecessor [[wiki/syntheses/sdd-first-write-worktree-migration-spec|SDD first-write worktree migration 仕様]]のFirst-Write規範は本書がscoped supersedeする。predecessorのうち本書が扱わない後続Epicのopt-in parallel adapter部分だけは、影響を受けない参照範囲として残る。

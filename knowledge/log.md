@@ -1892,3 +1892,10 @@ append-only で使います。すべての entry は予測しやすい header �
 - Withdrawn: layered defense、Git commit guard、`--no-verify` defense、hook/config inventory、activation transaction、rollback machinery、lifecycle split、one-time guard bootstrap、exact tuple authority、external cache treatmentをcurrent requirementからHumanが撤回した。raw Git-level manual shell commit prohibitionは保証範囲外である。
 - Affected canonical pages: [[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|SDD fail-closed worktree gate 仕様]] と [[wiki/syntheses/sdd-fail-closed-worktree-gate-implementation-plan|SDD fail-closed worktree gate 実装計画]]。promoted draftsはhistorical proposal evidenceとして変更していない。
 - Index effect: [[index|durable catalog]] をminimal gateのsummaryへ同期した。source implementationは `in progress` であり、implementation complete、activation、install、remote stateは主張しない。
+
+## [2026-08-14] final-review-fix-wave | SDD fail-closed worktree gate
+
+- final whole-branch reviewのcomplete findings listを一回のfix waveで補正した。multi-output rollbackを削除し、opaque owner identity、single-new-artifact atomic publish、gate-owned native commit plan、expected OSError / dependency / construction failureのfour-field `BLOCKED` normalizationへ限定した。hook、commit guard、activation、bootstrap、exact tuple、general rollback subsystemは追加していない。
+- focused REDは23 tests中7 failures / 3 errorsでrequested gapsを再現し、focused GREENは23/23、fresh full SDD suiteは66/66、repository scriptsは19/19でpassした。architecture / context / warning-free context report / skill-creator validationもexit 0である。
+- [[wiki/syntheses/sdd-first-write-worktree-migration-spec|predecessor spec]]とpredecessor planはFirst-Write部分だけscoped supersedeし、影響を受けない後続Epic opt-in parallel adapter部分だけをcurrent参照範囲として[[index|catalog]]へ残した。
+- original checkoutはexternal forward update後のclean `main@82dcd32157ff9690ae038f982f3916009e449f80`としてread-onlyに保持している。fix commit、post-commit range diff、task-commit non-containment、scoped re-reviewは未実施のため、source implementationは`in progress`でありcloseoutを主張しない。

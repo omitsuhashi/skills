@@ -36,7 +36,7 @@ relations:
 
 ## Status and constraints
 
-- 状態: `accepted` / `active`; source implementationは `in progress`。
+- 状態: `accepted` / `active`; source implementationは `in progress`。final-review fix後のscoped re-reviewは未実施。
 - 実装は [[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|accepted specification]] の5要件だけを満たす。
 - original checkout `/Users/omitsuhashi/repos/omitsuhashi/skills` の `main` はtask workでread-onlyであり、task commitを受けない。
 - first repository content/artifact write前にtask-linked worktreeをcreate/verifyしてbindingできなければ、writeなしの `BLOCKED` で止まる。fallbackはない。
@@ -55,6 +55,8 @@ Acceptance: canonical spec/planの規範が最小5要件だけであり、index�
 既存 `skills/sdd-implementation/tests/test_first_write_worktree_contract.py` と `skills/sdd-implementation/tests/test_skill_contract.py` を、SDD-first、original `main` unchanged、verified linked worktreeへのall-write/commit binding、failure zero-write `BLOCKED`、no fallbackだけを検査する形に簡素化する。`skills/sdd-implementation/SKILL.md` と関連router/reference proseからguard activation、hook/config inventory、rollback、one-time bootstrap、exact tuple authorityを削除する。
 
 Acceptance: raw Git-level manual-commit prohibitionを主張せず、repo-owned SDD workflowの最小boundaryだけがsourceとfocused testsに残る。
+
+Final-review fix waveでは、multi-output rollback harnessを削除し、opaque owner identity、single-new-artifact atomic publish、gate-owned native commit plan、EPERM / missing dependency / writer-construction failureのfour-field `BLOCKED` normalizationへ限定して補正する。original/stale CWDはrunner前に拒否し、pre-existing target replacementはharnessのzero-write保証対象に含めない。
 
 ## Task 2: Validate architecture, context, skill, and preservation
 
@@ -78,3 +80,5 @@ Acceptance: architecture/context/skill validationとfull SDD suiteがpassし、f
 Task 1--2 evidenceをcurrent spec/planへ同期し、source implementation completionをclaimする前にfresh whole-branch reviewを1回実施する。reviewはこのapproved minimal scopeへの適合、withdrawn guard/activation designのnon-return、original checkout preservation、verification evidenceを確認する。
 
 Acceptance: one whole-branch reviewにmaterial findingがなく、required checksとoriginal-checkout preservation evidenceが記録される。未実施のcheck、review、またはsource workがあれば `in progress` を維持し、完了を先取りしない。
+
+Final-review fix waveのfocused REDは23 tests中7 failures / 3 errorsで、requested gapを再現した。最小実装後のfocused GREENは23/23、full SDD suiteは66/66である。full repository verificationとscoped re-reviewが完了するまでsource implementationは`in progress`のままとする。

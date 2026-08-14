@@ -6,8 +6,8 @@ from dataclasses import dataclass
 import errno
 import os
 from pathlib import Path
-import stat
 import subprocess
+import tempfile
 from typing import Callable, Optional
 
 
@@ -40,6 +40,33 @@ class ScenarioResult:
     executed_commands: tuple[tuple[str, ...], ...]
     before: RepositoryFingerprint
     after: RepositoryFingerprint
+
+
+class TaskOwnerCapability:
+    """Opaque controller-minted identity for one task's worktree allocation."""
+
+    __slots__ = ()
+
+
+@dataclass(frozen=True)
+class BoundWorktree:
+    path: Path
+    owner: TaskOwnerCapability
+
+    def resolve(self, *, strict: bool = False) -> Path:
+        return self.path.resolve(strict=strict)
+
+
+def bind_task_worktree(path: Path, owner: TaskOwnerCapability) -> BoundWorktree:
+    """Bind a controller-owned capability to an allocated worktree path."""
+
+    return BoundWorktree(path=path, owner=owner)
+
+
+def mint_task_owner_capability() -> TaskOwnerCapability:
+    """Mint an unforgeable-by-value task identity for allocation comparison."""
+
+    return TaskOwnerCapability()
 
 
 class SandboxDenied(RuntimeError):
@@ -108,8 +135,7 @@ def _allocation_is_bound(
             planning, _git(planning, "rev-parse", "--git-common-dir")
         )
         planning_branch = _git(planning, "branch", "--show-current").decode("utf-8").strip()
-        original_branch = _git(original, "branch", "--show-current").decode("utf-8").strip()
-        return bool(planning_branch and planning_branch != original_branch and planning_common == original_common)
+        return bool(planning_branch and planning_common == original_common)
     except (OSError, subprocess.CalledProcessError, UnicodeError):
         return False
 
@@ -142,112 +168,54 @@ def _write_binding_is_proven(
 
 
 class ScopedWriter:
-    """Gate-owned executor for a fully validated data-only write plan."""
+    """Gate-owned executor for one validated new artifact."""
 
     def __init__(self, root: Path, writable_paths: tuple[Path, ...]) -> None:
         self._root = root.resolve(strict=True)
-        self._allowed = frozenset(
-            path.resolve(strict=False) for path in writable_paths
-        )
+        if len(writable_paths) != 1:
+            raise WriteDenied("new artifact binding not proven")
+        self._target = writable_paths[0].resolve(strict=False)
+        self._parent = self._target.parent.resolve(strict=True)
+        if (
+            not self._parent.is_dir()
+            or not _is_contained(self._root, self._target)
+            or self._target.exists()
+        ):
+            raise WriteDenied("new artifact binding not proven")
 
     def execute(
         self,
         write_plan: tuple[tuple[Path, bytes], ...],
     ) -> tuple[Path, ...]:
-        normalized = tuple(
-            (path.resolve(strict=False), content) for path, content in write_plan
-        )
-        if any(
-            not _is_contained(self._root, path) or path not in self._allowed
-            for path, _content in normalized
-        ):
-            raise WriteDenied("writer output binding not proven")
-
-        snapshots: dict[Path, Optional[tuple[bytes, int, int, int]]] = {}
+        if len(write_plan) != 1:
+            raise WriteDenied("new artifact binding not proven")
+        output, content = write_plan[0]
+        output = output.resolve(strict=False)
+        if output != self._target or not isinstance(content, bytes):
+            raise WriteDenied("new artifact binding not proven")
+        stage_path: Optional[Path] = None
         try:
-            for output, _content in normalized:
-                if output not in snapshots:
-                    try:
-                        metadata = output.stat()
-                    except FileNotFoundError:
-                        snapshots[output] = None
-                    else:
-                        if not stat.S_ISREG(metadata.st_mode):
-                            raise IsADirectoryError(
-                                errno.EISDIR,
-                                "target is not a file",
-                                output,
-                            )
-                        snapshots[output] = (
-                            output.read_bytes(),
-                            stat.S_IMODE(metadata.st_mode),
-                            metadata.st_atime_ns,
-                            metadata.st_mtime_ns,
-                        )
-                parent = output.parent
-                while parent != self._root:
-                    try:
-                        metadata = parent.stat()
-                    except FileNotFoundError:
-                        parent = parent.parent
-                        continue
-                    if not stat.S_ISDIR(metadata.st_mode):
-                        raise NotADirectoryError(
-                            errno.ENOTDIR,
-                            "parent is not a directory",
-                            parent,
-                        )
-                    break
-        except OSError as error:
-            raise WriteFailed("writer execution failed") from error
-
-        created_directories: list[Path] = []
-        touched: list[Path] = []
-        try:
-            for output, content in normalized:
-                missing_parents: list[Path] = []
-                parent = output.parent
-                while parent != self._root and not parent.exists():
-                    missing_parents.append(parent)
-                    parent = parent.parent
-                for directory in reversed(missing_parents):
-                    try:
-                        directory.mkdir()
-                    except FileExistsError:
-                        if not directory.is_dir():
-                            raise
-                    else:
-                        created_directories.append(directory)
-                touched.append(output)
-                output.write_bytes(content)
-        except OSError as error:
-            restoration_failed = False
-            for output in reversed(tuple(dict.fromkeys(touched))):
-                snapshot = snapshots[output]
-                try:
-                    if snapshot is None:
-                        output.unlink(missing_ok=True)
-                    else:
-                        content, mode, atime_ns, mtime_ns = snapshot
-                        output.write_bytes(content)
-                        os.chmod(output, mode)
-                        os.utime(output, ns=(atime_ns, mtime_ns))
-                except OSError:
-                    restoration_failed = True
-            for directory in reversed(created_directories):
-                try:
-                    directory.rmdir()
-                except FileNotFoundError:
-                    pass
-                except OSError:
-                    restoration_failed = True
-            reason = (
-                "writer restoration failed"
-                if restoration_failed
-                else "writer execution failed"
+            descriptor, stage_name = tempfile.mkstemp(
+                prefix=".sdd-stage-",
+                dir=self._parent,
             )
-            raise WriteFailed(reason) from error
-        return tuple(path for path, _content in normalized)
+            stage_path = Path(stage_name)
+            with os.fdopen(descriptor, "wb") as staged:
+                staged.write(content)
+                staged.flush()
+                os.fsync(staged.fileno())
+        except OSError as error:
+            if stage_path is not None:
+                stage_path.unlink(missing_ok=True)
+            raise WriteFailed("artifact staging failed") from error
+        try:
+            if self._target.exists():
+                raise FileExistsError(errno.EEXIST, "artifact already exists", self._target)
+            os.replace(stage_path, self._target)
+        except OSError as error:
+            stage_path.unlink(missing_ok=True)
+            raise WriteFailed("artifact publish failed") from error
+        return (self._target,)
 
 
 def _validated_write_plan(
@@ -256,7 +224,7 @@ def _validated_write_plan(
     writable_paths: tuple[Path, ...],
     write_plan: tuple[tuple[Path, bytes], ...],
     output_paths: tuple[Path, ...],
-) -> Optional[tuple[tuple[Path, bytes], ...]]:
+) -> tuple[Optional[tuple[tuple[Path, bytes], ...]], str]:
     try:
         allowed = {path.resolve(strict=False) for path in writable_paths}
         normalized = tuple(
@@ -264,35 +232,38 @@ def _validated_write_plan(
         )
         outputs = tuple(path.resolve(strict=False) for path in output_paths)
         targets = tuple(path for path, _content in normalized)
-        if not normalized or outputs != targets:
-            return None
+        if len(writable_paths) != 1 or len(normalized) != 1 or outputs != targets:
+            return None, "new artifact binding not proven"
         if any(
             not isinstance(content, bytes)
             or not _is_contained(planning, path)
             or path not in allowed
             for path, content in normalized
         ):
-            return None
-        return normalized
+            return None, "writer output binding not proven"
+        target = targets[0]
+        parent = target.parent.resolve(strict=True)
+        if not parent.is_dir() or target.exists():
+            return None, "new artifact binding not proven"
+        return normalized, "none"
     except (OSError, RuntimeError, TypeError, ValueError):
-        return None
+        return None, "new artifact binding not proven"
 
 
 def run_repository_change(
     *,
     original: Path,
     entry_skill: str,
-    task_worktree: Path,
+    task_worktree: object,
     cwd: Path,
     writable_paths: tuple[Path, ...],
     write_plan: Optional[tuple[tuple[Path, bytes], ...]],
     output_paths: tuple[Path, ...],
-    allocator: Callable[[], Path],
-    downstream_command: Optional[tuple[str, ...]],
-    command_runner: Callable[[tuple[str, ...]], int],
+    allocator: Callable[[], object],
+    command_plan: Optional[tuple[str, ...]],
 ) -> ScenarioResult:
     before = fingerprint_repository(original)
-    attempted = (downstream_command,) if downstream_command is not None else ()
+    attempted = (command_plan,) if command_plan is not None else ()
     writer_invocations = 0
     runner_invocations = 0
     executed: tuple[tuple[str, ...], ...] = ()
@@ -312,18 +283,75 @@ def run_repository_change(
         return blocked("SDD First-Write Worktree Gate required")
 
     try:
-        planning = allocator()
+        allocation = allocator()
     except PermissionError as error:
         if error.errno == errno.EACCES:
             return blocked("worktree allocation denied: EACCES")
-        raise
+        if error.errno == errno.EPERM:
+            return blocked("worktree allocation denied: EPERM")
+        return blocked("worktree allocation failed: PermissionError")
     except SandboxDenied:
         return blocked("worktree allocation denied: sandbox")
     except subprocess.CalledProcessError:
         return blocked("worktree allocation failed")
+    except FileNotFoundError:
+        return blocked("worktree allocation failed: FileNotFoundError")
+    except OSError as error:
+        return blocked(f"worktree allocation failed: {type(error).__name__}")
 
-    if not _allocation_is_bound(original, planning, task_worktree):
+    expected_owner = getattr(task_worktree, "owner", None)
+    allocation_owner = getattr(allocation, "owner", None)
+    if expected_owner is None or allocation_owner is not expected_owner:
+        return blocked("task worktree ownership not proven")
+
+    try:
+        planning = allocation.resolve(strict=True)
+        expected_worktree = task_worktree.resolve(strict=True)
+    except (OSError, RuntimeError, TypeError, ValueError):
         return blocked("task worktree binding not proven")
+
+    if not _allocation_is_bound(original, planning, expected_worktree):
+        return blocked("task worktree binding not proven")
+
+    if command_plan is not None:
+        if (
+            writable_paths
+            or write_plan is not None
+            or output_paths
+            or len(command_plan) != 4
+            or command_plan[:3] != ("git", "commit", "-m")
+            or not command_plan[3]
+        ):
+            return blocked("downstream incompatible with SDD containment")
+        try:
+            command_cwd = cwd.resolve(strict=True)
+        except (OSError, RuntimeError):
+            return blocked("commit binding not proven")
+        if command_cwd != planning:
+            return blocked("commit binding not proven")
+        runner_invocations += 1
+        try:
+            subprocess.run(
+                command_plan,
+                cwd=planning,
+                check=True,
+                capture_output=True,
+            )
+        except (OSError, subprocess.CalledProcessError):
+            return blocked("commit execution failed")
+        executed = (command_plan,)
+        after = fingerprint_repository(original)
+        if after != before:
+            return blocked("original checkout preservation not proven")
+        return ScenarioResult(
+            ControlReturn("complete", "none", "none", "none"),
+            writer_invocations,
+            runner_invocations,
+            attempted,
+            executed,
+            before,
+            after,
+        )
 
     if not _write_binding_is_proven(
         planning=planning,
@@ -335,19 +363,21 @@ def run_repository_change(
     if write_plan is None:
         return blocked("writer plan not bound")
 
-    validated_plan = _validated_write_plan(
+    validated_plan, invalid_reason = _validated_write_plan(
         planning=planning,
         writable_paths=writable_paths,
         write_plan=write_plan,
         output_paths=output_paths,
     )
     if validated_plan is None:
-        return blocked("writer output binding not proven")
+        return blocked(invalid_reason)
 
-    if downstream_command is not None:
-        return blocked("downstream incompatible with SDD containment")
-
-    scoped_writer = ScopedWriter(planning, writable_paths)
+    try:
+        scoped_writer = ScopedWriter(planning, writable_paths)
+    except WriteDenied as error:
+        return blocked(str(error))
+    except OSError:
+        return blocked("artifact writer unavailable")
     writer_invocations += 1
     try:
         outputs = scoped_writer.execute(validated_plan)

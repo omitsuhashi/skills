@@ -34,12 +34,23 @@ commit.
 
 Before the first content/artifact write, create or verify a task-linked worktree.
 Prove its Git registration, common directory, branch, canonical path, and
-separation from the original checkout. Bind the repository root, CWD, every
-writable path, and one writer owner to that worktree. Revalidate returned paths
-before accepting worker output or committing task changes.
+separation from the original checkout. The controller mints one opaque task-owner
+capability and requires the allocator to return that same object by identity;
+path equality and branch naming are not ownership evidence. Bind the repository
+root, CWD, and every writable path to that owned worktree. Revalidate returned
+paths before accepting worker output or committing task changes.
 
-A capability, dependency, path, ownership, permission, allocation, or binding
-failure returns the four-field Control Return with `status: blocked`,
+One writable gate invocation materializes exactly one new artifact. Validate the
+complete data-only plan, existing parent, absent target, and containment before
+mutation; stage inside the verified worktree and atomically publish the artifact.
+A multi-output plan or pre-existing target is `BLOCKED` before the writer because
+this minimal evidence model does not claim rollback for replacements. Commit in a
+separate invocation through the gate-owned data-only `git commit` plan and native
+runner, with CWD equal to the verified worktree. Reject original or stale CWD
+before runner invocation; do not accept an arbitrary callback.
+
+A capability, dependency, path, ownership, permission, allocation, binding, or
+expected runtime failure returns the four-field Control Return with `status: blocked`,
 `artifact_path: none`, `decision_requests: none`, and the material blocker. Make
 zero content/artifact writes, invoke no writer or downstream runner, and create
 no report, spec, plan, or commit. Allocation may change shared Git metadata

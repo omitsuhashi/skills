@@ -10,6 +10,8 @@ sys.path.insert(0, str(SKILL_DIR))
 
 from tests.harnesses.fail_closed_scenario import (  # noqa: E402
     ControlReturn,
+    bind_task_worktree,
+    mint_task_owner_capability,
     run_repository_change,
 )
 
@@ -38,7 +40,7 @@ class NativeWorktreeContractTests(unittest.TestCase):
         run_git(root, "commit", "-m", "base")
 
     def test_clean_default_branch_allocation_is_isolated(self) -> None:
-        """Catches writing or committing task work on the original main branch."""
+        """Catches bypassing the gate-owned native commit path."""
         with tempfile.TemporaryDirectory() as directory:
             original, planning = Path(directory) / "original", Path(directory) / "planning"
             original.mkdir(); self.make_repository(original)
@@ -48,15 +50,36 @@ class NativeWorktreeContractTests(unittest.TestCase):
             self.assertEqual("", before[5])
             integration_branch = "integration/default"
             run_git(original, "worktree", "add", "-b", integration_branch, str(planning), sha)
-            report = planning / ".superpowers/research/default/report.md"; report.parent.mkdir(parents=True); report.write_text("report\n", encoding="utf-8")
-            run_git(planning, "add", ".superpowers/research/default/report.md")
-            run_git(planning, "commit", "-m", "task report")
+            report = planning / "report.md"; report.write_text("report\n", encoding="utf-8")
+            run_git(planning, "add", "report.md")
+            owner = mint_task_owner_capability()
+            command = ("git", "commit", "-m", "task report")
+
+            result = run_repository_change(
+                original=original,
+                entry_skill="sdd-implementation",
+                task_worktree=bind_task_worktree(planning, owner),
+                cwd=planning,
+                writable_paths=(),
+                write_plan=None,
+                output_paths=(),
+                allocator=lambda: bind_task_worktree(planning, owner),
+                command_plan=command,
+            )
+            self.assertEqual(
+                ControlReturn("complete", "none", "none", "none"),
+                result.control_return,
+            )
+            self.assertEqual(0, result.writer_invocations)
+            self.assertEqual(1, result.runner_invocations)
+            self.assertEqual((command,), result.attempted_commands)
+            self.assertEqual((command,), result.executed_commands)
             self.assertEqual(integration_branch, run_git(planning, "branch", "--show-current").strip())
             self.assertNotEqual(branch, integration_branch)
             run_git(planning, "merge-base", "--is-ancestor", branch, integration_branch)
             self.assertNotEqual(sha, run_git(planning, "rev-parse", "HEAD").strip())
             self.assertEqual(before, fingerprint(original))
-            self.assertFalse((original / ".superpowers/research/default/report.md").exists())
+            self.assertFalse((original / "report.md").exists())
 
     def test_dirty_named_branch_preserves_all_status_categories(self) -> None:
         """Catches allocation mutating any original checkout status category."""
@@ -100,6 +123,7 @@ class NativeWorktreeContractTests(unittest.TestCase):
             self.assertNotEqual(starting_branch, integration_branch)
             run_git(first, "merge-base", "--is-ancestor", starting_branch, integration_branch)
             first_before = fingerprint(first)
+            owner = mint_task_owner_capability()
 
             def colliding_allocator() -> Path:
                 run_git(
@@ -116,7 +140,7 @@ class NativeWorktreeContractTests(unittest.TestCase):
             result = run_repository_change(
                 original=original,
                 entry_skill="sdd-implementation",
-                task_worktree=failed,
+                task_worktree=bind_task_worktree(failed, owner),
                 cwd=failed,
                 writable_paths=(failed / ".superpowers/research/failed/report.md",),
                 write_plan=(
@@ -127,8 +151,7 @@ class NativeWorktreeContractTests(unittest.TestCase):
                 ),
                 output_paths=(failed / ".superpowers/research/failed/report.md",),
                 allocator=colliding_allocator,
-                downstream_command=None,
-                command_runner=lambda command: 0,
+                command_plan=None,
             )
             self.assertEqual(
                 ControlReturn("blocked", "none", "none", "worktree allocation failed"),
