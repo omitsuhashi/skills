@@ -1,6 +1,6 @@
 ---
 title: SDD fail-closed worktree gate 実装計画
-page_type: draft-note
+page_type: synthesis
 date: 2026-08-14
 created_date: 2026-08-14
 last_updated: 2026-08-14
@@ -12,36 +12,48 @@ tags:
   - implementation-plan
 aliases:
   - SDD fail-closed worktree gate implementation plan
-status: promoted
-lifecycle_state: promoted
+status: accepted
+lifecycle_state: active
 artifact_kind: implementation-plan
-review_state: closed
-confidence: high
-target_root: knowledge
-canonical_target: "[[wiki/syntheses/sdd-fail-closed-worktree-gate-implementation-plan|SDD fail-closed worktree gate 実装計画]]"
-source_spec: "[[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|SDD fail-closed worktree gate 仕様]]"
-created_actor: fresh SDD Plan Author Worker
-requested_owner_action: promote after review
-reason_direct_update_unavailable: implementation plan は Human / repository maintainer の review と明示承認前であるため
-owner_decision: promote
-decision_actor: Human / repository maintainer
+decision: promote
+decision_actor: Human / repository maintainer (Canonical Owner)
 decision_date: 2026-08-14
 decision_reason: Human が implementation plan として明示承認したため
+source_draft: "[[wiki/drafts/sdd-fail-closed-worktree-gate-implementation-plan|SDD fail-closed worktree gate 実装計画（昇格済み draft）]]"
+source_spec: "[[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|SDD fail-closed worktree gate 仕様]]"
+provenance:
+  - Human の implementation plan 明示承認（2026-08-14）
+  - "[[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|SDD fail-closed worktree gate 仕様]]"
 relations:
   - "[[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|Implements: SDD fail-closed worktree gate 仕様]]"
   - "[[wiki/syntheses/sdd-first-write-worktree-migration-spec|Normative predecessor: SDD first-write worktree migration 仕様]]"
 ---
 
+# SDD fail-closed worktree gate 実装計画
+
+> [!success] Human-approved canonical implementation plan
+> Human / repository maintainer は 2026-08-14 に本計画を明示承認した。承認済みの
+> substantive decisions、タスク順、exact commands、acceptance criteria を変更せず、
+> active canonical synthesis として昇格した。
+
+## Status
+
+- 状態: Human承認済み / `accepted` / active canonical synthesis / implementation plan
+- 正本性: 本書は Human 承認により verified canonical implementation plan として maintained knowledge に昇格した。
+- 決定: `promote`
+- 決定権者: Human / repository maintainer（Canonical Owner）
+- 決定日: 2026-08-14
+- 決定理由: Human が implementation plan として明示承認したため
+- 昇格元: [[wiki/drafts/sdd-fail-closed-worktree-gate-implementation-plan|SDD fail-closed worktree gate 実装計画（昇格済み draft）]]
+- 昇格先: `knowledge/wiki/syntheses/sdd-fail-closed-worktree-gate-implementation-plan.md`
+- Evidence: Human の明示承認、および [[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|承認済み仕様]] と昇格元 draft の approved plan content
+
+## 承認済み本文
+
+以下は昇格元 proposal の承認済み本文を、決定内容を変更せず保持したものである。
+
+
 # SDD fail-closed worktree gate Implementation Plan
-
-## Draft Review Decision
-
-- status: `promoted`
-- owner decision: `promote`
-- decision authority: Human / repository maintainer（Canonical Owner）
-- decision date: 2026-08-14
-- destination: [[wiki/syntheses/sdd-fail-closed-worktree-gate-implementation-plan|SDD fail-closed worktree gate 実装計画]]
-- evidence: Human の implementation plan 明示承認
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -53,7 +65,7 @@ relations:
 
 ## Status and owner request
 
-- 現在状態: `promoted` / owner decision recorded。canonical plan を verified implementation plan として参照する。
+- 現在状態: `accepted` / active canonical implementation plan。Human承認済みの verified canonical plan として扱う。
 - 承認済み入力: [[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|SDD fail-closed worktree gate 仕様]]（Human-approved、2026-08-14）。
 - canonical plan destination: `knowledge/wiki/syntheses/sdd-fail-closed-worktree-gate-implementation-plan.md`。
 - owner decision: Human / repository maintainer の明示承認に基づき `promote` を記録済み。

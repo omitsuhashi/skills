@@ -1876,3 +1876,11 @@ append-only で使います。すべての entry は予測しやすい header �
 - Lifecycle effect: draftを`promoted`として保持し、canonical targetを`accepted` / `active`として作成した。[[index|active catalog]]にはcanonical targetを1件だけ登録し、draftは登録していない。
 - Relation effect: [[wiki/syntheses/sdd-first-write-worktree-migration-spec|SDD first-write worktree migration 仕様]]をsupersedeせず、repository-change first-entry precedence、no-fallback semantics、guard preflight / activation / commit behaviorを所有するnormative fail-closed addendum relationを保持した。
 - Evidence: HumanのWritten Spec明示承認（2026-08-14）、draft内の`Confirmed Decisions`、`Open Decisions: なし`、および`knowledge/AGENTS.md`のsingle-root owner/write-boundary contract。implementation、guard activation、active install、remote publicationは実施していない。
+
+## [2026-08-14] draft-review | SDD fail-closed worktree gate 実装計画
+
+- Actor: repository maintainer-delegated actor。Canonical OwnerであるHuman / repository maintainerのimplementation plan明示承認に基づく。
+- Decision: `promote`。proposal [[wiki/drafts/sdd-fail-closed-worktree-gate-implementation-plan|SDD fail-closed worktree gate 実装計画（昇格済み draft）]] を、active canonical synthesis [[wiki/syntheses/sdd-fail-closed-worktree-gate-implementation-plan|SDD fail-closed worktree gate 実装計画]] へ昇格した。
+- Authority result: `Read: allowed`、`Write Boundary: owned`、Canonical OwnerのHuman承認、およびselected authoring profile `obsidian` の手順を満たし、direct canonical updateを許可した。
+- Lifecycle effect: draftを`promoted`として保持し、canonical targetを`accepted` / `active` implementation planとして作成した。[[index|active catalog]]にはcanonical targetを1件だけ登録し、draftは登録していない。
+- Evidence: Humanのimplementation plan明示承認（2026-08-14）、[[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|承認済み仕様]]、昇格元draftのapproved plan content、および`knowledge/AGENTS.md`のsingle-root owner/write-boundary contract。guard activation、active install、remote publicationは実施していない。
