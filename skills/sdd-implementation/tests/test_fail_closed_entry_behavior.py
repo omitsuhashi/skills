@@ -302,5 +302,27 @@ class FailClosedEntryBehaviorTests(unittest.TestCase):
                 self.assert_blocked(result, "guard_missing")
 
 
+class PortableLifecycleContractTests(unittest.TestCase):
+    def test_repository_source_completion_is_independent_from_operational_states(
+        self,
+    ) -> None:
+        skill_text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+        lifecycle = skill_text.split("## Lifecycle State Separation", 1)[1].split(
+            "## Planning Controller", 1
+        )[0]
+        for state in (
+            "`repository_source_completion`",
+            "`active_installed_copy`",
+            "`external_dependency_cache_state`",
+            "`guard_activation`",
+            "`operational_verification`",
+        ):
+            self.assertIn(state, lifecycle)
+        self.assertIn(
+            "Success in one state is not evidence of success in any other state.",
+            lifecycle,
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

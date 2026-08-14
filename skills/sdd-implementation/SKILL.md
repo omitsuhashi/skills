@@ -75,6 +75,27 @@ file, reusable authority, or activation grant. Bind every writable dispatch to
 the proven planning root, CWD, contained writable path, guard verdict, one writer
 owner, and original-checkout preservation evidence. Revalidate returned paths.
 
+## Lifecycle State Separation
+
+Track and report these states independently, each with its own current evidence:
+
+- `repository_source_completion`: repository-owned source, contract, tests, and
+  required local verification are complete for the approved change.
+- `active_installed_copy`: the active installed skill copy has been identified
+  and independently verified against the intended repository source.
+- `external_dependency_cache_state`: applicable external dependency and cache
+  identity and semantics have been independently verified.
+- `guard_activation`: the guard was activated only by a separate explicitly
+  Human-authorized setup operation.
+- `operational_verification`: post-activation behavior was independently
+  forward-verified in the active environment.
+
+Success in one state is not evidence of success in any other state. In
+particular, repository source completion does not prove the active installed
+copy, external dependency/cache state, guard activation, or operational
+verification. Report unverified states as unverified; do not infer them from a
+repository test, install result, activation result, or another lifecycle state.
+
 ## Planning Controller
 
 Before the Implementation Stage, the main session is the Planning Controller.
