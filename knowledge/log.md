@@ -2180,3 +2180,15 @@ append-only で使います。すべての entry は予測しやすい header �
 - Lifecycle dispositionをPOA-1〜POA-7 reviewed / landed、remaining POA-8へ更新した。POA-8 fresh combined
   verification、canonical whole-branch review、authorized remote branch updateはpendingであり、`LOCAL_COMPLETE`、
   publication、merge、release、live installを宣言しない。新しいartifactや`.superpowers/**` writeは追加していない。
+
+## [2026-08-14] evidence-correction | SDD POA-8 responsibility map and CI history gate
+
+- Actorはrepository maintainer-delegated durable-evidence correction workerであり、single-root `owned` /
+  `Read: allowed` authorityの下で、[[wiki/syntheses/sdd-plan-ownership-alignment-implementation-plan|canonical plan]]の
+  correction timelineだけを追記した。commit `bbfd06eecf2fec0e45697257b3edf545fecdb4b6`は重複していた
+  `prompts/plan-reviewer.md` responsibility-map rowを一件へ統合し、surviving rowにPOA-2 `Create`とPOA-5
+  `modify`のownershipをともに保持した。
+- 同commitはCIがcleanup boundary以後の全commit treeをtransient-artifact validatorへ渡すhistory gateと、その
+  regressionを実装した。scoped Spec-axis re-reviewはcanonical plan correctionを`READY`とした。
+- canonical identityとcatalog summaryは変わらないため[[index|knowledge/index.md]]へのeffectはnoneである。final
+  Standards dispositionとauthorized pushはpendingであり、`LOCAL_COMPLETE`またはpublicationを宣言しない。
