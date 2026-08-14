@@ -1867,3 +1867,12 @@ append-only で使います。すべての entry は予測しやすい header �
 
 - append-only recordとして、直前の`human-ruling-correction` eventにある「canonical final reviewはこの訂正commit後にあらためて行い」という wording を supersede する。このcorrection commitはTask 4のscoped re-reviewを受け、その完了後にcontrollerがTask 4 closeout後のsingle canonical final whole-branch reviewを初回として一度だけ実行する。
 - canonical final whole-branch reviewはまだ実行しておらず、full reviewのrepeatは発生していない。remote publicationは承認・実施していない。
+
+## [2026-08-14] draft-review | SDD fail-closed worktree gate 仕様
+
+- Actor: repository maintainer-delegated actor。Canonical OwnerであるHuman / repository maintainerの明示承認に基づく。
+- Decision: `promote`。proposal [[wiki/drafts/sdd-fail-closed-worktree-gate-spec|SDD fail-closed worktree gate 仕様（昇格済み draft）]] を、active canonical synthesis [[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|SDD fail-closed worktree gate 仕様]] へ昇格した。
+- Authority result: `Read: allowed`、`Write Boundary: owned`、Canonical OwnerのHuman承認、およびselected authoring profile `obsidian` の手順を満たし、direct canonical updateを許可した。
+- Lifecycle effect: draftを`promoted`として保持し、canonical targetを`accepted` / `active`として作成した。[[index|active catalog]]にはcanonical targetを1件だけ登録し、draftは登録していない。
+- Relation effect: [[wiki/syntheses/sdd-first-write-worktree-migration-spec|SDD first-write worktree migration 仕様]]をsupersedeせず、repository-change first-entry precedence、no-fallback semantics、guard preflight / activation / commit behaviorを所有するnormative fail-closed addendum relationを保持した。
+- Evidence: HumanのWritten Spec明示承認（2026-08-14）、draft内の`Confirmed Decisions`、`Open Decisions: なし`、および`knowledge/AGENTS.md`のsingle-root owner/write-boundary contract。implementation、guard activation、active install、remote publicationは実施していない。

@@ -1,9 +1,10 @@
 ---
-title: SDD fail-closed worktree gate 仕様（昇格済み draft）
-page_type: draft-note
+title: SDD fail-closed worktree gate 仕様
+page_type: synthesis
 date: 2026-08-14
 created_date: 2026-08-14
 last_updated: 2026-08-14
+approved_on: 2026-08-14
 tags:
   - sdd-implementation
   - worktree
@@ -11,61 +12,47 @@ tags:
   - git-guard
   - specification
 aliases:
-  - SDD fail-closed worktree gate specification proposal
-status: promoted
-lifecycle_state: promoted
-review_state: closed-promoted
-confidence: high
-target_root: knowledge
-canonical_target_identity: knowledge/wiki/syntheses/sdd-fail-closed-worktree-gate-spec.md
-canonical_target: "[[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|SDD fail-closed worktree gate 仕様]]"
-proposal: SDD を全 repository change の first entry とし、First-Write Worktree Gate と repo-managed Git commit guard を fail-closed に統合する
-evidence:
-  - .superpowers/research/sdd-fail-closed-worktree-gate/research.md
-  - skills/sdd-implementation/SKILL.md
-  - "[[wiki/syntheses/sdd-first-write-worktree-migration-spec|SDD first-write worktree migration 仕様]]"
-created_actor: maintainer-delegated SDD synthesis worker
-direct_update_unavailable_reason: Written Spec approval 前は verified canonical claim を直接更新できなかったため
-requested_owner_action: promote after approval
-destination_identity: knowledge/wiki/syntheses/sdd-fail-closed-worktree-gate-spec.md
-destination: "[[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|SDD fail-closed worktree gate 仕様]]"
-owner_decision: promote
+  - SDD fail-closed worktree gate specification
+status: accepted
+lifecycle_state: active
+artifact_kind: specification
+decision: promote
 decision_actor: Human / repository maintainer (Canonical Owner)
 decision_date: 2026-08-14
 decision_reason: Human が Written Spec として明示承認したため
+source_draft: "[[wiki/drafts/sdd-fail-closed-worktree-gate-spec|SDD fail-closed worktree gate 仕様（昇格済み draft）]]"
+provenance:
+  - Human の Written Spec 明示承認（2026-08-14）
+  - .superpowers/research/sdd-fail-closed-worktree-gate/research.md
+  - skills/sdd-implementation/SKILL.md
+  - "[[wiki/syntheses/sdd-first-write-worktree-migration-spec|SDD first-write worktree migration 仕様]]"
+relations:
+  - "[[wiki/syntheses/sdd-first-write-worktree-migration-spec|Normative predecessor: SDD first-write worktree migration 仕様]]"
 ---
 
-# SDD fail-closed worktree gate 仕様（昇格済み draft）
+# SDD fail-closed worktree gate 仕様
 
-> [!success] Promoted
-> Human / repository maintainer は 2026-08-14 に Written Spec を明示承認し、
-> owner decision `promote` により本 proposal を active canonical synthesis へ
-> 昇格した。本 draft は decision history と provenance のため保持し、active
-> catalog には掲載しない。
+> [!success] Human-approved canonical specification
+> Human / repository maintainer は 2026-08-14 に本書を Written Spec として
+> 明示承認した。承認済み substantive decisions を変更せず、active canonical
+> synthesis として昇格した。
 
 ## Status
 
-- current status: `promoted`
-- review state: `closed-promoted`
-- canonical target identity:
-  `knowledge/wiki/syntheses/sdd-fail-closed-worktree-gate-spec.md`
-- proposal: repository change の入口を `sdd-implementation` に一本化し、最初の
-  repository write より前の gate と accidental commit の secondary guard を
-  ともに fail closed にする
+- current status: `accepted` / `active`
+- canonical identity: `knowledge/wiki/syntheses/sdd-fail-closed-worktree-gate-spec.md`
 - decision: `promote`
 - decision actor: Human / repository maintainer（Canonical Owner）
 - decision date: `2026-08-14`
 - decision reason: Human が Written Spec として明示承認したため
-- destination: [[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|SDD fail-closed worktree gate 仕様]]
-- evidence: Research Report
+- approved decision: repository change の入口を `sdd-implementation` に一本化し、最初の
+  repository write より前の gate と accidental commit の secondary guard を
+  ともに fail closed にする
+- provenance: Research Report
   `.superpowers/research/sdd-fail-closed-worktree-gate/research.md`、repo-owned
   `skills/sdd-implementation/`、既存の
   [[wiki/syntheses/sdd-first-write-worktree-migration-spec|SDD first-write worktree migration 仕様]]
-- created actor: maintainer-delegated SDD synthesis worker
-- created date: `2026-08-14`
-- direct canonical update unavailable reason: Written Spec approval 前は verified
-  canonical claim を直接更新できなかったため
-- requested owner action: Written Spec 承認後に `promote`
+- promoted source: [[wiki/drafts/sdd-fail-closed-worktree-gate-spec|SDD fail-closed worktree gate 仕様（昇格済み draft）]]
 
 ## Canonical relation and lifecycle boundary
 
