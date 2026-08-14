@@ -44,6 +44,10 @@ class SandboxDenied(RuntimeError):
     """An injected sandbox policy denied worktree allocation."""
 
 
+class WriteDenied(RuntimeError):
+    """A scoped writer rejected a path before filesystem mutation."""
+
+
 def _git(root: Path, *args: str) -> bytes:
     return subprocess.run(
         ["git", *args],
@@ -131,17 +135,28 @@ def _write_binding_is_proven(
         return False
 
 
-def _outputs_are_bound(
-    *,
-    planning: Path,
-    writable_paths: tuple[Path, ...],
-    outputs: tuple[Path, ...],
-) -> bool:
-    allowed = {path.resolve(strict=False) for path in writable_paths}
-    return all(
-        _is_contained(planning, output) and output.resolve(strict=False) in allowed
-        for output in outputs
-    )
+class ScopedWriter:
+    """The only filesystem write capability exposed to a scenario writer."""
+
+    def __init__(self, root: Path, writable_paths: tuple[Path, ...]) -> None:
+        self._root = root.resolve(strict=True)
+        self._allowed = frozenset(
+            path.resolve(strict=False) for path in writable_paths
+        )
+        self._outputs: list[Path] = []
+
+    def write(self, path: Path, content: bytes) -> Path:
+        output = path.resolve(strict=False)
+        if not _is_contained(self._root, output) or output not in self._allowed:
+            raise WriteDenied("writer output binding not proven")
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_bytes(content)
+        self._outputs.append(output)
+        return output
+
+    @property
+    def outputs(self) -> tuple[Path, ...]:
+        return tuple(self._outputs)
 
 
 def run_repository_change(
@@ -151,12 +166,10 @@ def run_repository_change(
     task_worktree: Path,
     cwd: Path,
     writable_paths: tuple[Path, ...],
-    bound_writer_owner: str,
-    writer_owner: str,
-    writer_requests: tuple[tuple[Path, bytes], ...],
     allocator: Callable[[], Path],
     downstream_command: Optional[tuple[str, ...]],
     command_runner: Callable[[tuple[str, ...]], int],
+    writer: Optional[Callable[[ScopedWriter], tuple[Path, ...]]] = None,
 ) -> ScenarioResult:
     before = fingerprint_repository(original)
     attempted = (downstream_command,) if downstream_command is not None else ()
@@ -199,32 +212,22 @@ def run_repository_change(
     ):
         return blocked("write binding not proven")
 
-    if not bound_writer_owner or writer_owner != bound_writer_owner:
-        return blocked("writer ownership not proven")
-
-    outputs = tuple(path for path, _content in writer_requests)
-    if not _outputs_are_bound(
-        planning=planning,
-        writable_paths=writable_paths,
-        outputs=outputs,
-    ):
-        return blocked("writer output binding not proven")
+    if writer is None:
+        return blocked("writer capability not bound")
 
     if downstream_command is not None:
         return blocked("downstream incompatible with SDD containment")
 
+    scoped_writer = ScopedWriter(planning, writable_paths)
     writer_invocations += 1
-    for output, content in writer_requests:
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_bytes(content)
+    try:
+        outputs = tuple(path.resolve(strict=False) for path in writer(scoped_writer))
+    except WriteDenied:
+        return blocked("writer output binding not proven")
     after = fingerprint_repository(original)
     if after != before:
         return blocked("original checkout preservation not proven")
-    if not _outputs_are_bound(
-        planning=planning,
-        writable_paths=writable_paths,
-        outputs=outputs,
-    ):
+    if outputs != scoped_writer.outputs:
         return blocked("writer output binding not proven")
     return ScenarioResult(
         ControlReturn("complete", "none", "none", "none"),

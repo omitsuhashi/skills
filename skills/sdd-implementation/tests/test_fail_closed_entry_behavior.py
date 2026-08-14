@@ -11,6 +11,7 @@ sys.path.insert(0, str(SKILL_DIR))
 
 from tests.harnesses.fail_closed_scenario import (  # noqa: E402
     ControlReturn,
+    ScopedWriter,
     run_repository_change,
 )
 
@@ -59,6 +60,9 @@ class FailClosedEntryBehaviorTests(unittest.TestCase):
         self.runner_calls += 1
         return subprocess.run(command, check=False).returncode
 
+    def write_report(self, writer: ScopedWriter) -> tuple[Path, ...]:
+        return (writer.write(self.report, b"report\n"),)
+
     def assert_no_repository_artifacts(self) -> None:
         for root in (self.original, self.planning):
             for relative in (
@@ -86,12 +90,10 @@ class FailClosedEntryBehaviorTests(unittest.TestCase):
             "task_worktree": self.planning,
             "cwd": self.planning,
             "writable_paths": (self.report,),
-            "bound_writer_owner": "research-worker",
-            "writer_owner": "research-worker",
-            "writer_requests": ((self.report, b"report\n"),),
             "allocator": self.allocate,
             "downstream_command": None,
             "command_runner": self.run_command,
+            "writer": self.write_report,
         }
         arguments.update(overrides)
         return run_repository_change(**arguments)
@@ -142,10 +144,14 @@ class FailClosedEntryBehaviorTests(unittest.TestCase):
         result = self.call(writable_paths=(self.root / "escaped-report.md",))
         self.assert_blocked(result, "write binding not proven")
 
-    def test_writer_attempt_to_modify_original_is_blocked_before_writer(self) -> None:
+    def test_writer_attempt_to_modify_original_is_denied_before_mutation(self) -> None:
         """Catches a writer request targeting the original checkout."""
         original_report = self.original / "report.md"
-        result = self.call(writer_requests=((original_report, b"unsafe\n"),))
+
+        def write_original(writer: ScopedWriter) -> tuple[Path, ...]:
+            return (writer.write(original_report, b"unsafe\n"),)
+
+        result = self.call(writer=write_original)
         self.assertEqual(
             ControlReturn(
                 "blocked",
@@ -155,27 +161,32 @@ class FailClosedEntryBehaviorTests(unittest.TestCase):
             ),
             result.control_return,
         )
-        self.assertEqual(0, result.writer_invocations)
+        self.assertEqual(1, result.writer_invocations)
         self.assertEqual(result.before, result.after)
         self.assertFalse(original_report.exists())
 
-    def test_mismatched_writer_owner_is_blocked_before_writer(self) -> None:
-        """Catches dispatching a writer other than the bound single owner."""
-        result = self.call(writer_owner="different-worker")
-        self.assert_blocked(result, "writer ownership not proven")
+    def test_writer_capability_is_required(self) -> None:
+        """Catches completing without a writer bound to the scoped capability."""
+        result = self.call(writer=None)
+        self.assert_blocked(result, "writer capability not bound")
 
     def test_writer_outputs_are_revalidated_before_complete(self) -> None:
         """Catches accepting an output path not present in the write binding."""
         escaped = self.root / "returned-escape.md"
 
-        result = self.call(writer_requests=((escaped, b"escaped\n"),))
+        def misreport_output(writer: ScopedWriter) -> tuple[Path, ...]:
+            writer.write(self.report, b"report\n")
+            return (escaped,)
+
+        result = self.call(writer=misreport_output)
         self.assertEqual(
             ControlReturn("blocked", "none", "none", "writer output binding not proven"),
             result.control_return,
         )
-        self.assertEqual(0, result.writer_invocations)
+        self.assertEqual(1, result.writer_invocations)
         self.assertEqual(result.before, result.after)
         self.assertFalse(escaped.exists())
+        self.assertTrue(self.report.is_file())
 
     def test_primary_main_is_blocked_before_writer_or_runner(self) -> None:
         """Catches accepting the original primary checkout as the writable root."""

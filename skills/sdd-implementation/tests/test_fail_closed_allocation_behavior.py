@@ -13,6 +13,7 @@ sys.path.insert(0, str(SKILL_DIR))
 from tests.harnesses.fail_closed_scenario import (  # noqa: E402
     ControlReturn,
     SandboxDenied,
+    ScopedWriter,
     run_repository_change,
 )
 
@@ -44,6 +45,10 @@ class FailClosedAllocationBehaviorTests(unittest.TestCase):
         self.runner_calls += 1
         return 0
 
+    def writer(self, capability: ScopedWriter) -> tuple[Path, ...]:
+        report = self.root / "planning/.superpowers/research/scenario/report.md"
+        return (capability.write(report, b"report\n"),)
+
     def assert_denial_is_zero_write(self, allocator, reason: str) -> None:
         result = run_repository_change(
             original=self.original,
@@ -53,17 +58,10 @@ class FailClosedAllocationBehaviorTests(unittest.TestCase):
             writable_paths=(
                 self.root / "planning/.superpowers/research/scenario/report.md",
             ),
-            bound_writer_owner="research-worker",
-            writer_owner="research-worker",
-            writer_requests=(
-                (
-                    self.root / "planning/.superpowers/research/scenario/report.md",
-                    b"report\n",
-                ),
-            ),
             allocator=allocator,
             downstream_command=None,
             command_runner=self.runner,
+            writer=self.writer,
         )
         self.assertEqual(ControlReturn("blocked", "none", "none", reason), result.control_return)
         self.assertEqual(0, result.writer_invocations)
