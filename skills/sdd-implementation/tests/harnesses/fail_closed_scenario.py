@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import errno
+import os
 from pathlib import Path
+import stat
 import subprocess
 from typing import Callable, Optional
 
@@ -46,6 +48,10 @@ class SandboxDenied(RuntimeError):
 
 class WriteDenied(RuntimeError):
     """A scoped writer rejected a path before filesystem mutation."""
+
+
+class WriteFailed(RuntimeError):
+    """A scoped writer could not complete its validated write plan."""
 
 
 def _git(root: Path, *args: str) -> bytes:
@@ -143,6 +149,7 @@ class ScopedWriter:
         self._allowed = frozenset(
             path.resolve(strict=False) for path in writable_paths
         )
+
     def execute(
         self,
         write_plan: tuple[tuple[Path, bytes], ...],
@@ -155,9 +162,91 @@ class ScopedWriter:
             for path, _content in normalized
         ):
             raise WriteDenied("writer output binding not proven")
-        for output, content in normalized:
-            output.parent.mkdir(parents=True, exist_ok=True)
-            output.write_bytes(content)
+
+        snapshots: dict[Path, Optional[tuple[bytes, int, int, int]]] = {}
+        try:
+            for output, _content in normalized:
+                if output not in snapshots:
+                    try:
+                        metadata = output.stat()
+                    except FileNotFoundError:
+                        snapshots[output] = None
+                    else:
+                        if not stat.S_ISREG(metadata.st_mode):
+                            raise IsADirectoryError(
+                                errno.EISDIR,
+                                "target is not a file",
+                                output,
+                            )
+                        snapshots[output] = (
+                            output.read_bytes(),
+                            stat.S_IMODE(metadata.st_mode),
+                            metadata.st_atime_ns,
+                            metadata.st_mtime_ns,
+                        )
+                parent = output.parent
+                while parent != self._root:
+                    try:
+                        metadata = parent.stat()
+                    except FileNotFoundError:
+                        parent = parent.parent
+                        continue
+                    if not stat.S_ISDIR(metadata.st_mode):
+                        raise NotADirectoryError(
+                            errno.ENOTDIR,
+                            "parent is not a directory",
+                            parent,
+                        )
+                    break
+        except OSError as error:
+            raise WriteFailed("writer execution failed") from error
+
+        created_directories: list[Path] = []
+        touched: list[Path] = []
+        try:
+            for output, content in normalized:
+                missing_parents: list[Path] = []
+                parent = output.parent
+                while parent != self._root and not parent.exists():
+                    missing_parents.append(parent)
+                    parent = parent.parent
+                for directory in reversed(missing_parents):
+                    try:
+                        directory.mkdir()
+                    except FileExistsError:
+                        if not directory.is_dir():
+                            raise
+                    else:
+                        created_directories.append(directory)
+                touched.append(output)
+                output.write_bytes(content)
+        except OSError as error:
+            restoration_failed = False
+            for output in reversed(tuple(dict.fromkeys(touched))):
+                snapshot = snapshots[output]
+                try:
+                    if snapshot is None:
+                        output.unlink(missing_ok=True)
+                    else:
+                        content, mode, atime_ns, mtime_ns = snapshot
+                        output.write_bytes(content)
+                        os.chmod(output, mode)
+                        os.utime(output, ns=(atime_ns, mtime_ns))
+                except OSError:
+                    restoration_failed = True
+            for directory in reversed(created_directories):
+                try:
+                    directory.rmdir()
+                except FileNotFoundError:
+                    pass
+                except OSError:
+                    restoration_failed = True
+            reason = (
+                "writer restoration failed"
+                if restoration_failed
+                else "writer execution failed"
+            )
+            raise WriteFailed(reason) from error
         return tuple(path for path, _content in normalized)
 
 
@@ -262,8 +351,8 @@ def run_repository_change(
     writer_invocations += 1
     try:
         outputs = scoped_writer.execute(validated_plan)
-    except WriteDenied:
-        return blocked("writer output binding not proven")
+    except (WriteDenied, WriteFailed) as error:
+        return blocked(str(error))
     after = fingerprint_repository(original)
     if after != before:
         return blocked("original checkout preservation not proven")

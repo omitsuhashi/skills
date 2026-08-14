@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import errno
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 SKILL_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SKILL_DIR))
@@ -171,6 +173,92 @@ class FailClosedEntryBehaviorTests(unittest.TestCase):
         self.assertEqual(result.before, result.after)
         self.assertFalse(self.report.exists())
         self.assertFalse(escaped.exists())
+
+    def test_runtime_failure_on_later_target_is_zero_write_blocked(self) -> None:
+        """Catches a later filesystem failure leaving an earlier target written."""
+        blocking_parent = self.planning / "blocked-parent"
+        failed_target = blocking_parent / "result.md"
+
+        def allocate_with_blocking_parent() -> Path:
+            planning = self.allocate()
+            blocking_parent.write_bytes(b"pre-existing blocker\n")
+            return planning
+
+        try:
+            result = self.call(
+                allocator=allocate_with_blocking_parent,
+                writable_paths=(self.report, failed_target),
+                write_plan=(
+                    (self.report, b"partial write\n"),
+                    (failed_target, b"must not be written\n"),
+                ),
+                output_paths=(self.report, failed_target),
+            )
+        except OSError as error:
+            self.fail(
+                "runtime filesystem failure propagated "
+                f"with partial_write={self.report.exists()}: "
+                f"{type(error).__name__}: {error}"
+            )
+
+        self.assertEqual(
+            ControlReturn("blocked", "none", "none", "writer execution failed"),
+            result.control_return,
+        )
+        self.assertEqual(1, result.writer_invocations)
+        self.assertEqual(result.before, result.after)
+        self.assertFalse(self.report.exists())
+        self.assertFalse((self.planning / ".superpowers").exists())
+        self.assertEqual(b"pre-existing blocker\n", blocking_parent.read_bytes())
+        self.assertFalse(failed_target.exists())
+
+    def test_runtime_failure_restores_preexisting_earlier_target(self) -> None:
+        """Catches cleanup replacing the prior bytes or metadata of an existing file."""
+        failed_target = self.planning / "second-report.md"
+        original_write_bytes = Path.write_bytes
+        original_metadata = None
+
+        def allocate_with_existing_report() -> Path:
+            nonlocal original_metadata
+            planning = self.allocate()
+            self.report.parent.mkdir(parents=True, exist_ok=True)
+            self.report.write_bytes(b"original report\n")
+            original_metadata = self.report.stat()
+            return planning
+
+        def fail_second_write(path: Path, content: bytes) -> int:
+            if path.resolve(strict=False) == failed_target.resolve(strict=False):
+                raise OSError(errno.EIO, "injected later-target failure", path)
+            return original_write_bytes(path, content)
+
+        with mock.patch.object(
+            Path,
+            "write_bytes",
+            autospec=True,
+            side_effect=fail_second_write,
+        ):
+            result = self.call(
+                allocator=allocate_with_existing_report,
+                writable_paths=(self.report, failed_target),
+                write_plan=(
+                    (self.report, b"replacement report\n"),
+                    (failed_target, b"must not be written\n"),
+                ),
+                output_paths=(self.report, failed_target),
+            )
+
+        self.assertEqual(
+            ControlReturn("blocked", "none", "none", "writer execution failed"),
+            result.control_return,
+        )
+        self.assertEqual(1, result.writer_invocations)
+        self.assertEqual(result.before, result.after)
+        self.assertEqual(b"original report\n", self.report.read_bytes())
+        self.assertIsNotNone(original_metadata)
+        restored_metadata = self.report.stat()
+        self.assertEqual(original_metadata.st_mode, restored_metadata.st_mode)
+        self.assertEqual(original_metadata.st_mtime_ns, restored_metadata.st_mtime_ns)
+        self.assertFalse(failed_target.exists())
 
     def test_write_plan_is_required(self) -> None:
         """Catches completing without a data-only write plan."""
