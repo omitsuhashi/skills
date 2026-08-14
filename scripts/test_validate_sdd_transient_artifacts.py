@@ -13,6 +13,8 @@ VALIDATOR = REPOSITORY_ROOT / "scripts" / "validate_sdd_transient_artifacts.py"
 VALIDATION_FAILURE_EXIT = 1
 AMENDMENT_MIGRATION_BASELINE = "f07aebce7bbf854cd64184311d204cf04055fd28"
 MIGRATION_MARKER = "scripts/sdd-transient-artifact-migration.json"
+PRE_MARKER_PARENT = "c7aced8d7b3975f081ec8bfcd065dcaa57bb2eec"
+AUTHORIZED_MARKER_INTRODUCTION = "91cbd5aec3d062f534937953ee8241f415d8db33"
 MIGRATION_PATHS = (
     ".superpowers/sdd/sdd-plan-ownership-alignment-implementation-plan/approved-residual-fix-report.md",
     ".superpowers/sdd/sdd-plan-ownership-alignment-implementation-plan/final-fix-report.md",
@@ -372,6 +374,66 @@ class TransientArtifactValidatorTests(unittest.TestCase):
             authorized.reintroduce_exact_reports()
             self.assert_validator_rejects(
                 "migration_marker_reintroduced", repository=authorized.root
+            )
+        finally:
+            authorized.close()
+
+    def test_committed_marker_and_exact_report_reintroduction_fails_default_validation(self) -> None:
+        authorized = AuthorizedRepositoryFixture()
+        try:
+            authorized.install_migration_marker()
+            authorized.stage_cleanup()
+            run_git(authorized.root, "commit", "-m", "remove migration state")
+            marker = authorized.root / MIGRATION_MARKER
+            marker.write_text(MIGRATION_MARKER_CONTENT, encoding="utf-8")
+            run_git(authorized.root, "add", MIGRATION_MARKER)
+            authorized.reintroduce_exact_reports()
+            run_git(authorized.root, "commit", "-m", "reintroduce migration state")
+            self.assert_validator_rejects(
+                "migration_marker_lineage", repository=authorized.root
+            )
+        finally:
+            authorized.close()
+
+    def test_divergent_pre_marker_head_cannot_stage_marker_authority(self) -> None:
+        authorized = AuthorizedRepositoryFixture()
+        try:
+            run_git(authorized.root, "checkout", "--detach", PRE_MARKER_PARENT)
+            divergent = authorized.root / "divergent.txt"
+            divergent.write_text("divergent pre-marker lineage\n", encoding="utf-8")
+            run_git(authorized.root, "add", "divergent.txt")
+            run_git(authorized.root, "commit", "-m", "diverge before marker")
+            divergent_head = run_git(authorized.root, "rev-parse", "HEAD").strip()
+            self.assertNotEqual(PRE_MARKER_PARENT, divergent_head)
+            self.assertNotEqual(
+                AUTHORIZED_MARKER_INTRODUCTION,
+                run_git(
+                    authorized.root,
+                    "merge-base",
+                    AUTHORIZED_MARKER_INTRODUCTION,
+                    divergent_head,
+                ).strip(),
+            )
+            marker = authorized.root / MIGRATION_MARKER
+            marker.write_text(MIGRATION_MARKER_CONTENT, encoding="utf-8")
+            run_git(authorized.root, "add", MIGRATION_MARKER)
+            self.assert_validator_rejects(
+                "migration_marker_lineage", repository=authorized.root
+            )
+        finally:
+            authorized.close()
+
+    def test_semantically_equal_but_different_marker_blob_is_rejected(self) -> None:
+        authorized = AuthorizedRepositoryFixture()
+        try:
+            reformatted = MIGRATION_MARKER_CONTENT.replace(
+                '  "schema_version": 1,',
+                '    "schema_version": 1,',
+            )
+            self.assertNotEqual(MIGRATION_MARKER_CONTENT, reformatted)
+            authorized.install_migration_marker(reformatted)
+            self.assert_validator_rejects(
+                "migration_marker_mismatch", repository=authorized.root
             )
         finally:
             authorized.close()

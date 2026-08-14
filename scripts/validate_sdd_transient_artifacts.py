@@ -15,6 +15,9 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 TRANSIENT_PATHSPEC = ".superpowers"
 MIGRATION_MARKER_PATH = "scripts/sdd-transient-artifact-migration.json"
 AUTHORIZED_MIGRATION_BASELINE = "f07aebce7bbf854cd64184311d204cf04055fd28"
+AUTHORIZED_MARKER_PARENT = "c7aced8d7b3975f081ec8bfcd065dcaa57bb2eec"
+AUTHORIZED_MARKER_INTRODUCTION = "91cbd5aec3d062f534937953ee8241f415d8db33"
+AUTHORIZED_MARKER_BLOB = "ef384328ad21f49f4c2e4834cef3d401c350d9a8"
 AUTHORIZED_MIGRATION_ENTRIES = (
     "100644 blob b50ed8e434725cb70bc0f1d2c6daa1a053e0ccc1\t"
     ".superpowers/sdd/sdd-plan-ownership-alignment-implementation-plan/"
@@ -38,6 +41,9 @@ EXPECTED_MIGRATION_MANIFEST = {
         for entry in AUTHORIZED_MIGRATION_ENTRIES
     ],
 }
+AUTHORIZED_MARKER_ENTRY = (
+    f"100644 blob {AUTHORIZED_MARKER_BLOB}\t{MIGRATION_MARKER_PATH}"
+)
 
 
 class ValidationFailure(Exception):
@@ -112,6 +118,10 @@ def index_entries(
 
 
 def marker_manifest(repository: Path, entry: str) -> Dict[str, object]:
+    if entry != AUTHORIZED_MARKER_ENTRY:
+        raise ValidationFailure(
+            "migration_marker_mismatch", "migration marker blob is not exact"
+        )
     mode, separator, blob_and_path = entry.partition(" ")
     if mode != "100644" or not separator or "\t" not in blob_and_path:
         raise ValidationFailure("migration_marker_mismatch", "malformed marker entry")
@@ -132,33 +142,105 @@ def marker_manifest(repository: Path, entry: str) -> Dict[str, object]:
     return manifest
 
 
-def require_marker_history_authority(repository: Path) -> None:
-    head_entries = tree_entries(repository, "HEAD", MIGRATION_MARKER_PATH)
-    if head_entries:
-        if len(head_entries) != 1:
-            raise ValidationFailure(
-                "migration_marker_mismatch", "HEAD must contain one migration marker"
-            )
-        marker_manifest(repository, head_entries[0])
-        return
+def require_ancestor(repository: Path, ancestor: str, descendant: str) -> None:
+    result = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", ancestor, descendant],
+        cwd=str(repository),
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode == 1:
+        raise ValidationFailure(
+            "migration_marker_lineage", "marker authority is outside planned lineage"
+        )
+    if result.returncode != 0:
+        detail = result.stderr.strip() or "cannot verify marker ancestry"
+        raise ValidationFailure("repository_error", detail)
 
-    prior_marker_commits = run_git(
-        repository,
-        "log",
-        "--format=%H",
-        "HEAD",
-        "--",
-        MIGRATION_MARKER_PATH,
-    ).strip()
-    if prior_marker_commits:
+
+def marker_history_events(
+    repository: Path, diff_filter: str
+) -> Tuple[str, ...]:
+    return tuple(
+        line
+        for line in run_git(
+            repository,
+            "log",
+            "--full-history",
+            "--ancestry-path",
+            f"--diff-filter={diff_filter}",
+            "--format=%H",
+            f"{AUTHORIZED_MARKER_PARENT}..HEAD",
+            "--",
+            MIGRATION_MARKER_PATH,
+        ).splitlines()
+        if line
+    )
+
+
+def require_marker_history_authority(repository: Path) -> None:
+    if run_git(repository, "rev-parse", "--is-shallow-repository").strip() == "true":
+        raise ValidationFailure(
+            "migration_marker_history_unavailable",
+            "marker authority requires complete repository history",
+        )
+    require_ancestor(
+        repository, AUTHORIZED_MIGRATION_BASELINE, AUTHORIZED_MARKER_PARENT
+    )
+    require_ancestor(
+        repository, AUTHORIZED_MARKER_PARENT, AUTHORIZED_MARKER_INTRODUCTION
+    )
+    require_ancestor(repository, AUTHORIZED_MARKER_INTRODUCTION, "HEAD")
+    if run_git(
+        repository, "rev-parse", f"{AUTHORIZED_MARKER_INTRODUCTION}^"
+    ).strip() != AUTHORIZED_MARKER_PARENT:
+        raise ValidationFailure(
+            "migration_marker_lineage", "marker introduction parent does not match"
+        )
+    if tree_entries(
+        repository, AUTHORIZED_MARKER_PARENT, MIGRATION_MARKER_PATH
+    ):
+        raise ValidationFailure(
+            "migration_marker_lineage", "planned marker parent already contains marker"
+        )
+    if tree_entries(
+        repository, AUTHORIZED_MARKER_PARENT
+    ) != AUTHORIZED_MIGRATION_ENTRIES:
+        raise ValidationFailure(
+            "migration_marker_lineage", "planned marker parent baseline does not match"
+        )
+    if tree_entries(
+        repository, AUTHORIZED_MARKER_INTRODUCTION, MIGRATION_MARKER_PATH
+    ) != (AUTHORIZED_MARKER_ENTRY,):
+        raise ValidationFailure(
+            "migration_marker_lineage", "authorized introduction marker does not match"
+        )
+    if tree_entries(
+        repository, AUTHORIZED_MARKER_INTRODUCTION
+    ) != AUTHORIZED_MIGRATION_ENTRIES:
+        raise ValidationFailure(
+            "migration_marker_lineage", "authorized introduction reports do not match"
+        )
+    current_marker = tree_entries(repository, "HEAD", MIGRATION_MARKER_PATH)
+    if not current_marker:
         raise ValidationFailure(
             "migration_marker_reintroduced",
             "migration marker was already removed and cannot be reintroduced",
         )
-    if run_git(repository, "rev-parse", "--is-shallow-repository").strip() == "true":
+    if current_marker != (AUTHORIZED_MARKER_ENTRY,):
         raise ValidationFailure(
-            "migration_marker_history_unavailable",
-            "initial marker authority requires complete repository history",
+            "migration_marker_lineage", "current HEAD marker is inexact"
+        )
+    if marker_history_events(repository, "A") != (
+        AUTHORIZED_MARKER_INTRODUCTION,
+    ):
+        raise ValidationFailure(
+            "migration_marker_lineage", "marker introduction history is not singular"
+        )
+    if marker_history_events(repository, "D"):
+        raise ValidationFailure(
+            "migration_marker_lineage", "marker deletion exists in current ancestry"
         )
 
 

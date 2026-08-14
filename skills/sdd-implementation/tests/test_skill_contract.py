@@ -140,6 +140,12 @@ class SddImplementationSkillContractTests(unittest.TestCase):
             "current index or nominated-tree violation.",
             "Treat the tracked migration manifest as candidate-tree authority "
             "only for the exact f07aebc three-report baseline.",
+            "Accept that authority only when the planned pre-marker parent and "
+            "authorized introduction are ancestors of HEAD, the introduction "
+            "is the sole marker add, no marker deletion exists in that ancestry, "
+            "and the current HEAD marker mode, blob, and path match exactly.",
+            "A divergent or pre-marker HEAD cannot gain authority by staging the "
+            "manifest.",
             "When the manifest is absent, require zero `.superpowers/**` entries "
             "and reject exact-baseline reintroduction.",
         )
