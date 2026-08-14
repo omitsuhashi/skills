@@ -62,6 +62,17 @@ def field_value(text: str, label: str) -> str:
     return match.group(1).strip() if match else ""
 
 
+def field_values(text: str, label: str) -> list[str]:
+    return [
+        value.strip()
+        for value in re.findall(
+            rf"^(?:- |\*\*){re.escape(label)}(?:\*\*)?:[ \t]*([^\r\n]+)$",
+            text,
+            flags=re.MULTILINE,
+        )
+    ]
+
+
 def frontmatter_value(text: str, key: str) -> str:
     match = re.search(rf"^{re.escape(key)}:\s*(.+)$", text, flags=re.MULTILINE)
     return match.group(1).strip() if match else ""
@@ -93,7 +104,7 @@ def contains_unfenced_production_body(text: str) -> bool:
     python_body = re.search(
         r"^(?P<indent>[ \t]*)(?:async[ \t]+)?def[ \t]+[A-Za-z_]\w*"
         r"[ \t]*\([^\n]*\)[ \t]*(?:->[ \t]*[^:\n]+)?[ \t]*:[ \t]*\n"
-        r"(?P=indent)[ \t]+(?:return|raise|yield|pass|if|for|while|with|try|"
+        r"(?P=indent)[ \t]+(?:return\b|raise\b|yield\b|pass\b|if\b|for\b|while\b|with\b|try\b|"
         r"[A-Za-z_]\w*[ \t]*=|[A-Za-z_]\w*[ \t]*\()",
         text,
         flags=re.MULTILINE,
@@ -112,7 +123,7 @@ def contains_unfenced_production_body(text: str) -> bool:
     python_inline_body = re.search(
         r"^[ \t]*(?:async[ \t]+)?def[ \t]+[A-Za-z_]\w*[ \t]*"
         r"\([^\n]*\)[ \t]*(?:->[ \t]*[^:\n]+)?[ \t]*:[ \t]+"
-        r"(?:return|raise|yield|pass|[A-Za-z_]\w*[ \t]*=|[A-Za-z_]\w*[ \t]*\()",
+        r"(?:return\b|raise\b|yield\b|pass\b|[A-Za-z_]\w*[ \t]*=|[A-Za-z_]\w*[ \t]*\()",
         text,
         flags=re.MULTILINE,
     )
@@ -124,6 +135,25 @@ def contains_unfenced_production_body(text: str) -> bool:
         text,
         flags=re.MULTILINE,
     )
+    python_docstring_body = re.search(
+        r"^(?P<indent>[ \t]*)(?:async[ \t]+)?def[ \t]+[A-Za-z_]\w*"
+        r"[ \t]*\([^\n]*\)[ \t]*(?:->[ \t]*[^:\n]+)?[ \t]*:[ \t]*\n"
+        r"(?P=indent)(?P<bodyindent>[ \t]+)(?:[rubfRUBF]*)"
+        r"(?P<quote>\"\"\"|''')[\s\S]*?(?P=quote)[ \t]*\n"
+        r"(?P=indent)(?P=bodyindent)(?:return\b|raise\b|yield\b|pass\b|"
+        r"if\b|for\b|while\b|with\b|try\b|[A-Za-z_]\w*[ \t]*=|"
+        r"[A-Za-z_]\w*[ \t]*\()",
+        text,
+        flags=re.MULTILINE,
+    )
+    javascript_function_inline_body = re.search(
+        r"^[ \t]*(?:(?:export|async)[ \t]+)*function[ \t]+"
+        r"[A-Za-z_$][\w$]*[ \t]*\([^\n]*\)[ \t]*\{[ \t]*"
+        r"(?:return\b|throw\b|const\b|let\b|var\b|if\b|for\b|while\b|"
+        r"switch\b|await\b|[A-Za-z_$][\w.$]*[ \t]*\()[^\n]*\}[ \t]*;?[ \t]*$",
+        text,
+        flags=re.MULTILINE,
+    )
     return any(
         match is not None
         for match in (
@@ -131,8 +161,18 @@ def contains_unfenced_production_body(text: str) -> bool:
             javascript_body,
             python_inline_body,
             javascript_inline_body,
+            python_docstring_body,
+            javascript_function_inline_body,
         )
     )
+
+
+def reject_duplicate_fields(
+    errors: list[str], text: str, labels: tuple[str, ...], scope: str
+) -> None:
+    for label in labels:
+        if len(field_values(text, label)) != 1:
+            errors.append(f"duplicate {scope} field: {label}")
 
 
 def plan_errors(text: str) -> list[str]:
@@ -140,6 +180,24 @@ def plan_errors(text: str) -> list[str]:
     north_star_identity = section(text, "Approved North Star Identity")
     spec_identity = section(text, "Approved Written Spec Identity")
     binding = section(text, "Plan Binding")
+
+    reject_duplicate_fields(
+        errors,
+        north_star_identity,
+        (
+            "Approved North Star path",
+            "Approved North Star anchor",
+            "Approved snapshot SHA-256",
+            "Approval state",
+        ),
+        "North Star identity",
+    )
+    reject_duplicate_fields(
+        errors,
+        spec_identity,
+        ("Approved spec path", "Approved spec SHA-256", "Approval state"),
+        "approved-spec identity",
+    )
 
     for field in (
         "Approved North Star path",
@@ -190,7 +248,7 @@ def plan_errors(text: str) -> list[str]:
         errors.append("approved North Star anchor is absent")
 
     baseline_sha = field_value(binding, "Repository baseline")
-    for field in (
+    binding_fields = (
         "Repository baseline",
         "Planning worktree",
         "Integration branch",
@@ -198,7 +256,9 @@ def plan_errors(text: str) -> list[str]:
         "Independent review verdict",
         "Repository checks",
         "Readiness evidence state",
-    ):
+    )
+    reject_duplicate_fields(errors, binding, binding_fields, "plan binding")
+    for field in binding_fields:
         if not field_value(binding, field):
             errors.append(f"missing plan binding field: {field}")
     if baseline_sha and not git_commit_is_current_ancestor(baseline_sha):
@@ -325,6 +385,16 @@ def plan_errors(text: str) -> list[str]:
             errors.append(f"combined verification missing {acceptance_id}")
 
     readiness = section(text, "Readiness Result")
+    reject_duplicate_fields(
+        errors,
+        readiness,
+        (
+            "Plan readiness disposition",
+            "Control Return status",
+            "Implementation Stage entry",
+        ),
+        "readiness",
+    )
     for value in ("ready", "needs_repair", "needs_decision", "blocked", "issues_found"):
         if value not in readiness:
             errors.append(f"missing readiness vocabulary: {value}")
@@ -352,12 +422,18 @@ def plan_errors(text: str) -> list[str]:
         flags=re.MULTILINE,
     ):
         errors.append("prospective body: shell body")
+    if re.search(
+        r"^[ \t]*if\b[^\n]*;[ \t]*then\b[^\n;]+;[ \t]*fi[ \t]*$",
+        text,
+        flags=re.MULTILINE,
+    ):
+        errors.append("prospective body: shell body")
     if re.search(r"^\s*(?:\*\*\* Begin Patch|\*\*\* Update File:|diff --git\s|@@\s+-\d|--- a/|\+\+\+ b/)", text, flags=re.MULTILINE):
         errors.append("prospective body: patch body")
     if re.search(
         r"^\s*(?:\$ |git (?:add|commit)\b|python\d*\s+-m\s+unittest\b|"
         r"(?:python\d*\s+-m\s+)?pytest\b|uv\s+run\s+pytest\b|"
-        r"npm\s+(?:test|run)\b|echo[ \t]+(?:-[neE]+\b|[\"'\$\\]))",
+        r"npm\s+(?:test|run)\b|echo[ \t]+(?!(?:is|was|means)\b)\S+)",
         text,
         flags=re.MULTILINE,
     ):
@@ -534,6 +610,27 @@ class PlanContractTests(unittest.TestCase):
                 mutated = ready_plan.replace(original, replacement, 1)
                 self.assertIn(expected_error, plan_errors(mutated))
 
+    def test_rejects_duplicate_contradictory_singleton_states(self) -> None:
+        ready_plan = load_plan(READY_PLAN)
+        probes = {
+            "- Independent review verdict: ready": (
+                "- Independent review verdict: ready\n- Independent review verdict: issues_found",
+                "duplicate plan binding field: Independent review verdict",
+            ),
+            "- Readiness evidence state: current": (
+                "- Readiness evidence state: current\n- Readiness evidence state: stale",
+                "duplicate plan binding field: Readiness evidence state",
+            ),
+            "- Plan readiness disposition: ready": (
+                "- Plan readiness disposition: ready\n- Plan readiness disposition: issues_found",
+                "duplicate readiness field: Plan readiness disposition",
+            ),
+        }
+        for original, (replacement, expected_error) in probes.items():
+            with self.subTest(replacement=replacement):
+                mutated = ready_plan.replace(original, replacement, 1)
+                self.assertIn(expected_error, plan_errors(mutated))
+
     def test_rejects_prospective_body_and_human_plan_approval_language(self) -> None:
         temporary_directory, copy = self.copy_ready_plan()
         with temporary_directory:
@@ -567,6 +664,20 @@ class PlanContractTests(unittest.TestCase):
             with self.subTest(expected_error=expected_error, body=body):
                 self.assertIn(expected_error, plan_errors(load_plan(READY_PLAN) + body))
 
+    def test_rejects_remaining_structural_body_and_plain_echo_forms(self) -> None:
+        probes = {
+            (
+                '\ndef build_plan(spec):\n    """Build a normalized plan."""\n'
+                "    return normalize(spec)\n"
+            ): "prospective body: production code",
+            "\nfunction buildPlan(spec) { return normalize(spec); }\n": "prospective body: production code",
+            "\nif [ -f \"$plan\" ]; then validate \"$plan\"; fi\n": "prospective body: shell body",
+            "\necho ready\n": "prospective body: command body",
+        }
+        for body, expected_error in probes.items():
+            with self.subTest(body=body):
+                self.assertIn(expected_error, plan_errors(load_plan(READY_PLAN) + body))
+
     def test_prohibition_scan_allows_intent_only_narrative(self) -> None:
         narrative = (
             "\nThe reviewer rejects an unfenced test body, shell loop, patch body, "
@@ -577,6 +688,8 @@ class PlanContractTests(unittest.TestCase):
             "supplying their bodies or execution commands.\n"
             "echo is also the name of a prohibited shell output command, not "
             "an execution instruction in this sentence.\n"
+            "The proposed interface `def build_plan(spec): returns a normalized "
+            "plan in the proposed interface.` describes intent without a body.\n"
         )
         self.assertNotIn("prospective body", " ".join(plan_errors(load_plan(READY_PLAN) + narrative)))
 

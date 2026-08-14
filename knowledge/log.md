@@ -1946,3 +1946,13 @@ append-only で使います。すべての entry は予測しやすい header �
 - 先行eventはappend-only historyとして削除・変更しない。本correctionはauthority evidenceだけを修正し、approved
   North Star / Written Spec、agent-owned plan readiness / execution、separate remote authorization、canonical page identity、
   `knowledge/index.md`のactive catalog effectを変更しない。
+
+## [2026-08-14] review-fix | SDD Plan Ownership Alignment residual round 1
+
+- 独立re-reviewのImportant 2件に対し、Plan Binding / Readiness Resultのsingleton fieldをcardinality込みで検証し、
+  valid valueの後に`issues_found`または`stale`を重ねるcontradictory duplicateをrejectするcontractへ補強した。
+- prospective-body validationはPython docstring後のbody、one-line JavaScript function、one-line shell-if、plain
+  `echo ready`をrejectし、`def build_plan(spec): returns a normalized plan in the proposed interface.`のような
+  interface proseは`return` token / executable structureを持たないため許可する。
+- authority-evidence-correctionは変更していない。Human authorityはapproved North Star / Written Spec、plan readiness /
+  executionはagent ownership、remote authorizationはaction-specificな別gateのまま維持した。

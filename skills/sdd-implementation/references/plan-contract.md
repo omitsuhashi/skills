@@ -55,7 +55,10 @@ The durable approval-snapshot identity must match the identity declared by the
 approved spec. The repository baseline must resolve to a current-tree ancestor.
 Treat these Plan Binding values as closed semantic states, not non-empty prose.
 Reject `incompatible`, `issues_found`, failed or absent repository checks, stale
-or absent readiness evidence, and any unknown value. Empty, malformed,
+or absent readiness evidence, and any unknown value. Every identity, binding,
+and Readiness Result field is a singleton; reject duplicate declarations even
+when the first value is valid, including `ready` followed by `issues_found` or
+`current` followed by `stale`. Empty, malformed,
 mismatched, absent, or stale binding evidence is not `ready`. `Readiness Result`
 must likewise declare `Plan readiness disposition: ready`, `Control Return
 status: complete`, and `Implementation Stage entry: allowed`.
@@ -91,7 +94,9 @@ failure owner covering every acceptance criterion.
 Do not include prospective production or test code, fenced or structurally
 unfenced Python / JavaScript bodies, test bodies, script or shell control-flow
 bodies, patch bodies, or execution command bodies such as test runners and
-shell output commands. Match complete structural bodies or line-anchored
+shell output commands. Structural bodies include a Python body after a
+docstring and one-line JavaScript function or shell-if bodies. Match complete
+structural bodies or line-anchored
 commands rather than keywords inside prose, so intent-only prose may name these
 prohibited classes. Do not include scheduler/runtime machinery, worker packets,
 or concrete runtime model, provider, agent, or effort selections. Do not make
