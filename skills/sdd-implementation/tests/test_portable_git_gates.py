@@ -11,8 +11,6 @@ import unittest
 SKILL_DIR = Path(__file__).resolve().parents[1]
 SUPERPOWERS_PREFIX = ".superpowers"
 MANDATORY_PACKAGE_RESOURCES = (
-    "SKILL.md",
-    "agents/openai.yaml",
     "prompts/plan-reviewer.md",
     "prompts/repository-researcher.md",
     "prompts/spec-reviewer.md",
@@ -20,19 +18,6 @@ MANDATORY_PACKAGE_RESOURCES = (
     "references/plan-contract.md",
     "references/planning-context.md",
     "references/research-stage.md",
-    "tests/fixtures/plan-contract/ready-plan.md",
-    "tests/fixtures/unsafe_downstream.py",
-    "tests/harnesses/__init__.py",
-    "tests/harnesses/fail_closed_scenario.py",
-    "tests/test_fail_closed_allocation_behavior.py",
-    "tests/test_fail_closed_entry_behavior.py",
-    "tests/test_first_write_worktree_contract.py",
-    "tests/test_isolated_install.py",
-    "tests/test_plan_contract.py",
-    "tests/test_portable_git_gates.py",
-    "tests/test_preimplementation_context.py",
-    "tests/test_skill_contract.py",
-    "tests/test_transient_artifact_contract.py",
 )
 
 

@@ -79,17 +79,33 @@ class IsolatedInstallTests(unittest.TestCase):
         self.assertEqual("pre-commit-candidate", evidence.gate)
         self.assertEqual(str(self.target.root), evidence.target)
 
-    def test_mandatory_inventory_matches_the_actual_portable_package(self) -> None:
-        actual_resources = {
-            path.relative_to(self.installed_skill).as_posix()
-            for path in self.installed_skill.rglob("*")
-            if path.is_file()
-            and "__pycache__" not in path.parts
-            and path.suffix in {".md", ".py", ".yaml"}
-        }
-        self.assertEqual(set(MANDATORY_PACKAGE_RESOURCES), actual_resources)
+    def test_runtime_inventory_contains_only_execution_time_prompt_and_reference_resources(self) -> None:
+        self.assertTrue(MANDATORY_PACKAGE_RESOURCES)
+        self.assertTrue(
+            all(
+                path.startswith(("prompts/", "references/"))
+                for path in MANDATORY_PACKAGE_RESOURCES
+            )
+        )
+        self.assertNotIn("tests/test_plan_contract.py", MANDATORY_PACKAGE_RESOURCES)
+        self.assertNotIn(
+            "tests/fixtures/plan-contract/ready-plan.md", MANDATORY_PACKAGE_RESOURCES
+        )
 
-    def test_missing_mandatory_resource_is_a_broken_installation(self) -> None:
+    def test_test_only_evidence_remains_in_the_isolated_copy_but_is_not_runtime_required(self) -> None:
+        fixture = self.installed_skill / "tests" / "fixtures" / "plan-contract" / "ready-plan.md"
+        test = self.installed_skill / "tests" / "test_plan_contract.py"
+        self.assertTrue(fixture.is_file())
+        self.assertTrue(test.is_file())
+        fixture.unlink()
+        test.unlink()
+        evidence = pre_commit_gate(
+            self.target.root,
+            installed_skill_dir=self.installed_skill,
+        )
+        self.assertEqual("pre-commit-candidate", evidence.gate)
+
+    def test_missing_execution_time_resource_is_a_broken_installation(self) -> None:
         (self.installed_skill / "prompts" / "plan-reviewer.md").unlink()
         self.assert_package_failure(
             lambda: pre_commit_gate(

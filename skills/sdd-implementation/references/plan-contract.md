@@ -67,9 +67,10 @@ must likewise declare `Plan readiness disposition: ready`, `Control Return
 status: complete`, and `Implementation Stage entry: allowed`.
 The representative package fixture must satisfy the package-relative semantic
 validator in `tests/test_plan_contract.py` without reading a source checkout,
-parent repository, canonical plan, or root script. Reviewed canonical-plan
-parity belongs exclusively to the target repository's own regression and
-fixture surface; package fixture validation is not its parity source.
+parent repository, canonical plan, or root script. A repository's existing
+root CI contract test owns direct canonical-plan identity validation and may
+pass its selected current-plan schema to this same semantic parser. Package
+fixture validation is not a canonical-plan snapshot or parity source.
 
 Keep the reviewed implementation plan as the durable verdict summary. Exclude
 the raw review output and transcript from durable plan content. Reject a raw

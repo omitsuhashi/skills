@@ -60,9 +60,10 @@ def coverage_rows(text: str) -> list[list[str]]:
     return [row for row in table_rows(section(text, "Coverage Matrix")) if row[0] != "ID"]
 
 
-def task_sections(text: str) -> dict[str, str]:
+def task_sections(text: str, task_ids: tuple[str, ...] = TASK_IDS) -> dict[str, str]:
+    task_id_pattern = "|".join(re.escape(task_id) for task_id in task_ids)
     matches = re.finditer(
-        r"^### Task (?:\d+: )?(POA-\d+)(?::|\s+—).*?$(.*?)(?=^### Task |^## |\Z)",
+        rf"^### Task (?:\d+: )?({task_id_pattern})(?::|\s+—).*?$(.*?)(?=^### Task |^## |\Z)",
         section(text, "Tasks"),
         flags=re.MULTILINE | re.DOTALL,
     )
@@ -71,7 +72,7 @@ def task_sections(text: str) -> dict[str, str]:
 
 def field_value(text: str, label: str) -> str:
     match = re.search(
-        rf"^(?:- |\*\*){re.escape(label)}(?:\*\*)?:[ \t]*([^\r\n]+)$",
+        rf"^[ \t]*(?:- (?:\[[ xX]\] )?)?(?:\*\*)?{re.escape(label)}(?:\*\*)?:[ \t]*([^\r\n]+)$",
         text,
         flags=re.MULTILINE,
     )
@@ -82,7 +83,7 @@ def field_values(text: str, label: str) -> list[str]:
     return [
         value.strip()
         for value in re.findall(
-            rf"^(?:- |\*\*){re.escape(label)}(?:\*\*)?:[ \t]*([^\r\n]+)$",
+            rf"^[ \t]*(?:- (?:\[[ xX]\] )?)?(?:\*\*)?{re.escape(label)}(?:\*\*)?:[ \t]*([^\r\n]+)$",
             text,
             flags=re.MULTILINE,
         )
@@ -165,8 +166,25 @@ def reject_duplicate_fields(
             errors.append(f"duplicate {scope} field: {label}")
 
 
-def plan_errors(text: str) -> list[str]:
+def plan_errors(
+    text: str,
+    *,
+    requirement_ids: tuple[str, ...] = tuple(sorted(REQUIREMENT_IDS)),
+    acceptance_ids: tuple[str, ...] = tuple(sorted(ACCEPTANCE_IDS)),
+    task_ids: tuple[str, ...] = TASK_IDS,
+    integration_ids: tuple[str, ...] | None = None,
+    north_star_anchor: str = "North Star",
+    external_dependencies: tuple[str, ...] = (),
+) -> list[str]:
     errors: list[str] = []
+    expected_requirement_ids = set(requirement_ids)
+    expected_acceptance_ids = set(acceptance_ids)
+    expected_ids = expected_requirement_ids | expected_acceptance_ids
+    expected_integration_ids = (
+        integration_ids
+        if integration_ids is not None
+        else tuple(str(number) for number in range(1, len(task_ids) + 1))
+    )
     north_star_identity = singleton_section(
         errors, text, "Approved North Star Identity"
     )
@@ -228,7 +246,7 @@ def plan_errors(text: str) -> list[str]:
         if candidate.is_absolute() or ".." in candidate.parts:
             errors.append(f"{label} path is not repository-relative and portable")
 
-    if north_star_path != spec_path or field_value(north_star_identity, "Approved North Star anchor") != "North Star":
+    if north_star_path != spec_path or field_value(north_star_identity, "Approved North Star anchor") != north_star_anchor:
         errors.append("North Star identity does not resolve to the approved spec North Star")
     if north_star_sha != spec_sha:
         errors.append("North Star and Written Spec approval snapshots differ")
@@ -264,10 +282,10 @@ def plan_errors(text: str) -> list[str]:
 
     inventory = section(text, "Requirement And Acceptance Inventory")
     inventory_ids = set(re.findall(r"\b(?:R|AC)-\d{2}\b", inventory))
-    for item_id in sorted(REQUIREMENT_IDS | ACCEPTANCE_IDS):
+    for item_id in sorted(expected_ids):
         if item_id not in inventory_ids:
             errors.append(f"inventory missing ID: {item_id}")
-    for item_id in sorted(inventory_ids - (REQUIREMENT_IDS | ACCEPTANCE_IDS)):
+    for item_id in sorted(inventory_ids - expected_ids):
         errors.append(f"inventory has unknown ID: {item_id}")
 
     coverage = coverage_rows(text)
@@ -279,28 +297,27 @@ def plan_errors(text: str) -> list[str]:
             errors.append("coverage rows must contain ID, primary owner, and contributing tasks")
             continue
         item_id, primary, contributing = row[:3]
-        if item_id not in REQUIREMENT_IDS | ACCEPTANCE_IDS:
+        if item_id not in expected_ids:
             errors.append(f"unknown coverage ID: {item_id}")
         if item_id in seen_coverage:
             errors.append(f"duplicate coverage ID: {item_id}")
         seen_coverage.add(item_id)
-        if primary not in TASK_IDS:
+        if primary not in task_ids:
             errors.append(f"invalid primary owner for {item_id}: {primary}")
         else:
             primary_owner[item_id] = primary
         for task_id in filter(None, (value.strip() for value in contributing.split(","))):
-            if task_id not in TASK_IDS:
+            if task_id not in task_ids:
                 errors.append(f"unknown contributing task: {task_id}")
 
-    for item_id in sorted(REQUIREMENT_IDS | ACCEPTANCE_IDS):
+    for item_id in sorted(expected_ids):
         if item_id not in primary_owner:
             errors.append(f"unassigned coverage ID: {item_id}")
 
-    tasks = task_sections(text)
-    task_ids = tuple(tasks)
-    if set(task_ids) != set(TASK_IDS):
-        errors.append("task inventory must define POA-1 through POA-8 exactly once")
-    for task_id in TASK_IDS:
+    tasks = task_sections(text, task_ids)
+    if set(tasks) != set(task_ids):
+        errors.append("task inventory must define the expected tasks exactly once")
+    for task_id in task_ids:
         task = tasks.get(task_id)
         if task is None:
             errors.append(f"orphan task: {task_id}")
@@ -309,13 +326,17 @@ def plan_errors(text: str) -> list[str]:
             if not field_value(task, label):
                 errors.append(f"missing {label} for {task_id}")
         behavioral_interface = re.search(
-            r"^\*\*Behavioral interface:\*\*\s*$(.*?)(?=^\*\*|^#### |\Z)",
+            r"^(?:- (?:\[[ xX]\] )?)?\*\*Behavioral interface:\*\*\s*$(.*?)(?=^(?:- (?:\[[ xX]\] )?)?\*\*|^#### |\Z)",
             task,
             flags=re.MULTILINE | re.DOTALL,
         )
         if not behavioral_interface or not all(field_value(behavioral_interface.group(1), label) for label in ("Consumes", "Produces")):
             errors.append(f"missing observable Behavioral interface for {task_id}")
-        if not re.search(r"^(?:\*\*|#### )Verification intent", task, flags=re.MULTILINE):
+        if not re.search(
+            r"^(?:- (?:\[[ xX]\] )?)?(?:\*\*|#### )Verification intent",
+            task,
+            flags=re.MULTILINE,
+        ):
             errors.append(f"missing Verification intent for {task_id}")
         for item_id, owner in primary_owner.items():
             if owner == task_id and item_id not in task:
@@ -326,17 +347,21 @@ def plan_errors(text: str) -> list[str]:
         for row in table_rows(section(text, "Dependency Graph"))
         if len(row) >= 2 and row[0] != "Task"
     }
-    if set(graph) != set(TASK_IDS):
+    if set(graph) != set(task_ids):
         errors.append("dependency graph must define every task")
     dependencies: dict[str, list[str]] = {}
     for task_id, declared in graph.items():
         dependencies[task_id] = [] if declared == "none" else [value.strip() for value in declared.split(",")]
         for dependency in dependencies[task_id]:
-            if dependency not in TASK_IDS:
+            if dependency not in task_ids and dependency not in external_dependencies:
                 errors.append(f"undefined dependency: {task_id} -> {dependency}")
 
-    execution = re.findall(r"^\d+\. (?:Execute )?(POA-\d+)(?!\d)", section(text, "Execution Order"), flags=re.MULTILINE)
-    if set(execution) != set(TASK_IDS) or len(execution) != len(TASK_IDS):
+    execution = re.findall(
+        rf"^\d+\. (?:Execute )?({'|'.join(re.escape(task_id) for task_id in task_ids)})(?!\d)",
+        section(text, "Execution Order"),
+        flags=re.MULTILINE,
+    )
+    if set(execution) != set(task_ids) or len(execution) != len(task_ids):
         errors.append("execution order must list every task exactly once")
     else:
         positions = {task_id: index for index, task_id in enumerate(execution)}
@@ -348,7 +373,11 @@ def plan_errors(text: str) -> list[str]:
     pending = dict(dependencies)
     resolved: set[str] = set()
     while pending:
-        ready = [task_id for task_id, values in pending.items() if set(values) <= resolved]
+        ready = [
+            task_id
+            for task_id, values in pending.items()
+            if set(values) - set(external_dependencies) <= resolved
+        ]
         if not ready:
             errors.append("dependency cycle")
             break
@@ -357,8 +386,13 @@ def plan_errors(text: str) -> list[str]:
             pending.pop(task_id)
 
     integration = section(text, "Serialized Integration")
-    if not all(
-        f"I-{number}: POA-{number}" in integration for number in range(1, 9)
+    if len(expected_integration_ids) != len(task_ids) or not all(
+        re.search(
+            rf"(?:I-{re.escape(integration_id)}:\s*{re.escape(task_id)}|"
+            rf"\|\s*I-{re.escape(integration_id)}\s*\|\s*{re.escape(task_id)}\s*\|)",
+            integration,
+        )
+        for integration_id, task_id in zip(expected_integration_ids, task_ids)
     ):
         errors.append("missing serialized integration order")
     if not all(value in integration for value in ("Preconditions", "Combined-state expectation")):
@@ -368,8 +402,18 @@ def plan_errors(text: str) -> list[str]:
     for label in ("Scope", "Pass criteria", "Required evidence", "Failure owner"):
         if not re.search(rf"^\*\*{re.escape(label)}:\*\* .+", verification, flags=re.MULTILINE):
             errors.append(f"combined verification missing {label}")
-    for acceptance_id in sorted(ACCEPTANCE_IDS):
-        if acceptance_id not in verification:
+    verification_acceptance_ids = set(re.findall(r"\bAC-\d{2}\b", verification))
+    for start, end in re.findall(
+        r"\b(AC-\d{2})\s+through\s+(AC-\d{2})\b", verification
+    ):
+        start_number = int(start.removeprefix("AC-"))
+        end_number = int(end.removeprefix("AC-"))
+        if start_number <= end_number:
+            verification_acceptance_ids.update(
+                f"AC-{number:02d}" for number in range(start_number, end_number + 1)
+            )
+    for acceptance_id in sorted(expected_acceptance_ids):
+        if acceptance_id not in verification_acceptance_ids:
             errors.append(f"combined verification missing {acceptance_id}")
 
     readiness = singleton_section(errors, text, "Readiness Result")

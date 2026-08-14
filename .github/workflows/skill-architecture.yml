@@ -42,9 +42,6 @@ jobs:
       - name: Test skill CI workflow contract
         run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 scripts/test_skill_ci_workflow.py
 
-      - name: Test SDD canonical plan parity
-        run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 scripts/test_sdd_canonical_plan_parity.py
-
       - name: Test SDD transient artifact validator
         run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 scripts/test_validate_sdd_transient_artifacts.py
 
