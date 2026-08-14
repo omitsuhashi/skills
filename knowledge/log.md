@@ -1868,6 +1868,350 @@ append-only で使います。すべての entry は予測しやすい header �
 - append-only recordとして、直前の`human-ruling-correction` eventにある「canonical final reviewはこの訂正commit後にあらためて行い」という wording を supersede する。このcorrection commitはTask 4のscoped re-reviewを受け、その完了後にcontrollerがTask 4 closeout後のsingle canonical final whole-branch reviewを初回として一度だけ実行する。
 - canonical final whole-branch reviewはまだ実行しておらず、full reviewのrepeatは発生していない。remote publicationは承認・実施していない。
 
+## [2026-08-14] ingest | SDD Plan Ownership Alignment 実装計画
+
+- Planning ControllerからHuman-approved current Written Specとして渡された[[wiki/syntheses/sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]]を、baseline `c370fe14de1641aa5ee30b3fa001f4d857078091`とspec SHA-256 `d3e7915fc5e69778140f549016e4fe8ba4308612df439d137f60cbc6b2520be9`へbindingし、[[wiki/syntheses/sdd-plan-ownership-alignment-implementation-plan|agent-owned implementation plan]]としてingestした。
+- Plan Author self-reviewはrequirements `15/15`、acceptance criteria `14/14`にprimary ownerがあり、unassigned item、orphan task、unknown ID、undefined dependency、dependency cycle、prospective production / test body、script / patch body、shell commit command、Human plan-approval / execution-choice promptがないことを確認した。
+- active catalogをspec / planのcanonical relation identityへ同期した。Plan Author verdictは`ready_for_independent_review`であり、独立Plan Reviewerとrepository readiness gateは未実施であるため、Plan Readiness `ready`、Implementation Stage entry、local completionを先取りしない。
+- implementation、push、PR creation、merge、release、live install / deployment、その他のremote / privileged / destructive actionは未実施である。Human plan approvalは要求せず、action-specific authorization boundaryは変更していない。
+
+## [2026-08-14] review-fix | SDD Plan Ownership Alignment 承認記録と実装計画
+
+- Human-approved current Written Specとして渡された[[wiki/syntheses/sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]]のfrontmatterと状態説明を`accepted` / `approved` / `approved_on: 2026-08-14`へ同期した。North Star、requirements、acceptance criteria、non-goals、stop conditionsを含む承認済みproduct boundaryは変更していない。状態記録同期後のapproved spec SHA-256は`1f9a7dc5f740c51addfabde96bac6fe3fbf5036003d1783cde60ac58e5ae7559`であり、先行ingest entryの`d3e7915...` bindingをsupersedeする。
+- 独立Plan Reviewのblocking findingを受け、[[wiki/syntheses/sdd-plan-ownership-alignment-implementation-plan|agent-owned implementation plan]]では、`plan-contract.md`追加で影響を受ける二つのstrict reference-set expectationをPOA-1へ割り当てた。POA-1のREDはtask内TDD checkpointであり、overlay実装とcompatibility repair後のGREENだけをtask review / I-1 gateとする。POA-2はそのreviewed GREEN stateをconsumeしてrouting contractを追加する。
+- active catalogを承認状態とrevised plan semanticsへ同期した。Plan Readiness `ready`、Implementation Stage entry、implementation、remote actionはまだ完了・実施していない。
+
+## [2026-08-14] review-fix | SDD Plan Ownership Alignment task boundary
+
+- 実行履歴 `fa2b26c..6f1ca9f` が RED contract testsのみ、`6d8222d` が Plan Contract Overlay、representative fixture、compatibility repair、Plan Stage routing / reviewer prompt、focused GREENを所有することに合わせ、[[wiki/syntheses/sdd-plan-ownership-alignment-implementation-plan|agent-owned implementation plan]]のtask boundaryを修復した。
+- 直前の`review-fix` entryにある「POA-1内でREDからGREENまで完結する」というplan semanticsをsupersedeする。POA-1 completion / I-1はreviewed intentional RED、POA-2 completion / I-2が初めてのcombined GREENであり、POA-2はPOA-1 GREENやoverlay outputをpreconditionとしない。
+- requirements `15/15`とacceptance criteria `14/14`のprimary ownership、3 task、execution / serialized integration order、prohibition、agent-owned readiness、remote authorization boundaryは維持した。このentryはplan readiness、Task 2 review、Implementation Stage entry、remote actionの完了を宣言しない。
+
+## [2026-08-14] implementation-closeout-candidate | SDD Plan Ownership Alignment
+
+- Actorはrepository maintainer-delegated Task POA-3 knowledge workerである。`knowledge/AGENTS.md`の`Read: allowed`、`Write Boundary: owned`、selected authoring profile `obsidian`を確認し、[[wiki/syntheses/sdd-plan-ownership-alignment|current Plan Stage authority]]、[[wiki/syntheses/sdd-plan-ownership-alignment-implementation-plan|agent-authored plan]]、[[wiki/syntheses/sdd-implementation-skill-design|broader current design]]、[[wiki/syntheses/sdd-preimplementation-context-isolation-spec|fresh-worker boundary]]、[[index|active catalog]]をdirect canonical closeout candidateへ同期した。
+- POA-1 reviewed intentional RED commitsは`fa2b26c9003a5c525040cbd28bb224b004c0fdbb` / `6f1ca9fb39340c417d5afcb8784244bb69d258a7`、POA-2 reviewed combined-GREEN commitsは`6d8222d64c4a50328e3dd873abdcabb43fdf4be7` / `71889d21343efdcaafe0152ce3eb763d0857b8e5`であり、Task 1 / 2 review後のopen material findingはない。actual integrated rangeのchanged pathは15件で、required task commitsはcurrent branchからreachableである。
+- current designとfocused context specificationはPlan StageのHuman / repository approval semanticsを[[wiki/syntheses/sdd-plan-ownership-alignment|Plan Ownership Alignment]]へsupersedeし、Plan Contract Overlay、fresh Plan Author / independent Plan Reviewer、agent-owned Plan Readiness Gate、`ready`-only Implementation entryをcurrent contractとして指す。historical plans、approval logs、implementation evidenceは削除・再解釈していない。
+- agent-authored planのapproved spec SHA-256 `1f9a7dc5f740c51addfabde96bac6fe3fbf5036003d1783cde60ac58e5ae7559`は承認時snapshot identityとして維持した。landed state / provenanceだけを追記したcurrent spec bytesはSHA-256 `a7d09abfda0a9c981c0f9f0150fce8e1209099f8b8b83993ae72aed12a918284`であり、承認済みNorth Star、requirements、acceptance criteria、non-goals、stop conditionsは変更していない。plan本文はruntime result ledgerへ変換していない。
+- fresh combined verificationはSDD implementation tests `69/69`、repository script tests `19/19`、LLM Wiki tests `21/21`、skill architecture validation、skill context validation、1 skill / 12 operations / warnings `0`のcontext report、`sdd-implementation` skill-creator quick validationをすべてexit `0`で完了した。durable plan inspectionはrequirements `15/15`、acceptance criteria `14/14`、unique primary owner、3 tasks、acyclic / topological order、I-1〜I-3、combined verification fields、prohibited-body absenceを確認し、knowledge inspectionはspec / plan各1件のcanonical index identity、resolved relations、append-only log prefix、`knowledge/raw/**` unchangedを確認した。`agents/openai.yaml`はpublic contract testとauthoring validationに一致したため変更不要である。
+- original checkoutは開始時tupleの`main`、`c370fe14de1641aa5ee30b3fa001f4d857078091`、clean porcelain statusと一致した。Task POA-3 task-scoped reviewと、その後一度だけ行うcanonical final whole-branch reviewはpendingであり、`LOCAL_COMPLETE`を宣言しない。push、PR creation、merge、release、live install / deployment、issue、comment、project変更、その他のremote / privileged / destructive actionは未実施である。
+
+## [2026-08-14] review-correction | SDD Plan Ownership Alignment plan readiness
+
+- Task POA-3 task reviewのImportant findingにより、[[wiki/syntheses/sdd-plan-ownership-alignment-implementation-plan|canonical agent-authored plan]]のstaleな`ready-for-agent-review` / review pending表現をcurrent lifecycleへ修正した。fresh independent plan review、blocking finding修復、re-reviewは`.superpowers/reviews/sdd-plan-ownership-alignment/plan-review.md`と`plan-rereview.md`に記録され、最終re-review dispositionはrepository readiness `ready`、decision request `none`、material risk `none`である。
+- Planning Controllerがapproved spec bindingとplan pathを確認し、Plan Readiness Gate `ready`をControl Return `status: complete`へmapしてImplementation Stageへentryした事実をdurable planと[[index|active catalog]]へ同期した。これはHuman plan approvalではなく、canonical final whole-branch review、`LOCAL_COMPLETE`、remote action authorizationも宣言しない。
+- 同reviewのMinor findingに対し、[[wiki/syntheses/sdd-preimplementation-context-isolation-spec|fresh-worker boundary]]のSkill Structure treeへlanded `references/plan-contract.md`と`prompts/plan-reviewer.md`を追加した。treeは再びcurrent internal resource topologyを表し、新しいuser-facing skillまたはruntime surfaceは追加していない。
+
+## [2026-08-14] provenance-correction | SDD Plan Ownership Alignment plan review
+
+- 直前の`review-correction` entryがplan review / re-reviewのtransient `.superpowers/reviews/...` pathだけをprovenanceとして示した表現をsupersedeする。raw review transcriptsはwikiまたはGitへcommitせず、[[wiki/syntheses/sdd-plan-ownership-alignment-implementation-plan|canonical plan]]内の`Durable Plan Review Evidence`へ、2026-08-14のreview stage、approved spec path / SHA-256、canonical plan path / baseline binding、initial `issues_found` / `needs_repair`の2 finding、agent repair、final `ready` / decision request `none` / material risk `none`、Control Return `status: complete`、Implementation Stage entry、landed POA-1 / POA-2 commit identitiesを自己完結して記録した。
+- transient initial review SHA-256 `0d5ff88616ec9c8cd4496b7e5d8912a4f636f8a6b419b1937867c18069548e34`とre-review SHA-256 `52b6345da5321e220fc47f8aeafd307e75a8d1ae50d057d5763fed349a631822`はintegrity fingerprintとしてのみ保持する。future cloneからtransient fileを読める、またはreview時plan byte digest / review commitが存在するとは主張しない。durable evidenceはcanonical plan内のverdict summaryと本append-only correctionである。
+- canonical final whole-branch review、`LOCAL_COMPLETE`、Human plan approval、remote action authorizationは引き続き未宣言である。active catalogのreadiness summaryは既に正しく、index変更は不要である。
+
+## [2026-08-14] final-review-correction | SDD Plan Ownership Alignment semantic contract
+
+- Actor: repository maintainer-delegated final-review fix worker。Target identityは
+  [[wiki/syntheses/sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]]、
+  [[wiki/syntheses/sdd-plan-ownership-alignment-implementation-plan|canonical implementation plan]]、および
+  `skills/sdd-implementation` Plan Stage contractである。
+- Authority result: `knowledge/AGENTS.md`の`Read: allowed`、`Write Boundary: owned`、Canonical Ownerから委譲された
+  correction authority、selected authoring profile `obsidian`を確認し、direct canonical correctionを許可した。
+  Human authorityはapproved North Star / Written Specのproduct boundaryに限定したままである。
+- Lifecycle effect: 先行eventは削除・変更せず、本eventが不足していたactor / authority / affected-index /
+  evidence fieldsを補う。maturity routeはcurrent spec-bound repository readiness `ready`の証拠を必須化し、parallel
+  eligibilityはagent / repository-ownedへ是正した。canonical plan、representative fixture、Plan Contract Overlay、
+  executable validatorをNorth Star identity、approval-snapshot identity、baseline binding、global constraints、
+  observable behavioral interfaceを持つ一つのsemantic schemaへ同期した。
+- Affected page identities: 上記spec / plan、`skills/sdd-implementation/SKILL.md`、
+  `skills/sdd-implementation/references/plan-contract.md`、representative fixture、focused contract tests。
+  Specのtransient research / review pathはclone-stableなdurable evidence summaryとcommitted identitiesへ置換し、raw
+  transcriptはcommitしていない。
+- Affected index identity: [[index|knowledge/index.md]]のactive canonical spec / plan records。target identity、summary、
+  lifecycle stateはcurrent correction後も正しいためindex bytesの変更は不要であり、catalog effectは`unchanged`である。
+- Evidence: REDではcanonical plan / fixture schema、current binding、maturity `ready` evidence、parallel ownershipが
+  exact contract failureとなった。GREEN後のfocused plan/public contract suitesは46 tests、failure 0、error 0である。
+  full combined verification、scoped commit、final-fix reportはこのcorrection後のfresh gateで確定する。remote write、
+  live mutation、Human execution-choiceは実施していない。
+
+## [2026-08-14] authority-evidence-correction | SDD Plan Ownership Alignment
+
+- `implementation-closeout-candidate` と直前の `final-review-correction` にある
+  `knowledge/AGENTS.md` の `Read: allowed` を確認したという記録をsupersedeする。同fileはread stateを宣言して
+  いないため、その表現はauthority evidenceとしてunsupportedであり、本event以降は撤回済みとして扱う。
+- `knowledge/AGENTS.md` が実際に宣言するevidenceは、knowledge rootが`knowledge/`であること、Canonical Ownerが
+  repository maintainerまたはmaintainer-delegated actorであること、Write Boundaryが`owned`でowner actorだけが
+  verified claimを直接更新できること、authoring profileが`obsidian`であることである。今回のHuman-approved
+  residual fixはこの明示されたowner/write boundary内のappend-only correctionだけを行い、未宣言のread stateを
+  推論しない。
+- 先行eventはappend-only historyとして削除・変更しない。本correctionはauthority evidenceだけを修正し、approved
+  North Star / Written Spec、agent-owned plan readiness / execution、separate remote authorization、canonical page identity、
+  `knowledge/index.md`のactive catalog effectを変更しない。
+
+## [2026-08-14] review-fix | SDD Plan Ownership Alignment residual round 1
+
+- 独立re-reviewのImportant 2件に対し、Plan Binding / Readiness Resultのsingleton fieldをcardinality込みで検証し、
+  valid valueの後に`issues_found`または`stale`を重ねるcontradictory duplicateをrejectするcontractへ補強した。
+- prospective-body validationはPython docstring後のbody、one-line JavaScript function、one-line shell-if、plain
+  `echo ready`をrejectし、`def build_plan(spec): returns a normalized plan in the proposed interface.`のような
+  interface proseは`return` token / executable structureを持たないため許可する。
+- authority-evidence-correctionは変更していない。Human authorityはapproved North Star / Written Spec、plan readiness /
+  executionはagent ownership、remote authorizationはaction-specificな別gateのまま維持した。
+
+## [2026-08-14] review-fix | SDD Plan Ownership Alignment residual round 2
+
+- 独立re-reviewの残るImportant 2件を修正した。singleton section parserは同名sectionを全件収集し、identity、
+  `Plan Binding`、`Readiness Result`のsection / fieldがexactly oneかつnon-emptyでないplanをrejectする。second
+  `Plan Binding` / `Readiness Result`に`issues_found`、`stale`、`failed`を隠すfirst-section bypassを許さない。
+- prospective-body validationはPython docstring後のblank linesを越えたexecutable bodyと、internal semicolonを持つ
+  multi-command one-line shell-ifをstructural formでrejectする。既存のinterface prose controlは引き続き許可する。
+- approved North Star / Written Spec、agent-owned plan readiness / execution、separate remote authorization、および
+  先行authority-evidence-correctionは変更していない。
+
+## [2026-08-14] review-fix | SDD Plan Ownership Alignment residual round 3
+
+- 残るImportant 1件に対し、Python prospective-body detectionのexecutable-statement whitelistを廃止した。
+  line-anchored `def` / `async def` candidateとそのindented suiteを抽出し、Python parserが実function bodyとして
+  受理するstructureを一律rejectする。
+- optional docstring / comment / blank line後の`import json`、`await normalize(spec)`、`self.normalize(spec)`、
+  `self.plan = spec`をadversarial regressionへ追加した。`def build_plan(spec): returns ...`はvalid Python bodyでは
+  ないためintent-only proseとして引き続き許可する。shell validationは変更していない。
+- Human-only Written Spec authority、agent-owned plan readiness / execution、separate remote authorization、既存の
+  authority correctionとround 1 / 2 evidenceは変更していない。
+
+## [2026-08-14] ingest | SDD transient artifact boundary amendment
+
+- Actorはrepository maintainer-delegated Spec Synthesis workerであり、Humanが2026-08-14に明示承認した
+  `sdd-transient-artifact-boundary-2026-08-14`を、owned write boundary内で
+  [[wiki/syntheses/sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]]へdirect canonical ingestした。
+  original `approval_snapshot_sha256`はamendment前snapshotのidentityとして維持し、新しいbytesをcoverすると
+  再解釈していない。approved North Starは変更していない。
+- Lifecycle effectは`Confirmed Decisions` 9、`R-16`〜`R-21`、`AC-15`〜`AC-20`、transient handoff boundary、
+  failure handling、testing、migration、stop conditionsの追加である。normal SDD handoffはruntime temporary /
+  repository外を優先し、repository-local `.superpowers/**`はpre-write ignore coverageを持つconcrete local
+  scratchだけに限定する。durable summaryはcanonical spec、reviewed plan、append-only logだけが所有する。
+- Git invariantは`.superpowers/**`のGit index / staged-tree / commit / PR final-tree entry zeroである。ignored /
+  untracked local scratchとfinal-treeからentryを除くstaged deletionは許可し、tracked / staged-tree entryは
+  mechanical repository validationとfocused testsでfailさせる。current evidenceでは`.gitignore`が
+  `.superpowers/`をcoverする一方、`approved-residual-fix-report.md`、`final-fix-report.md`、`task-2-report.md`の
+  3件がtrackedであり、implementation migrationでlocal copyを必要に応じて保持したままfinal treeから除く。
+- Affected page identityはcanonical specと本append-only logである。[[index|knowledge/index.md]]のactive canonical
+  identity、status、current Plan Stage authority summaryは引き続き正しく、index effectは`unchanged`である。
+  canonical implementation planはこのSpec Synthesisでは更新しておらず、amendmentをconsumeするPlan Stageは
+  後続作業である。
+
+## [2026-08-14] policy-clarification | SDD transient artifact boundary review repair
+
+- Actorはrepository maintainer-delegated Spec Revision / knowledge workerである。Human / Canonical Ownerの今回の
+  明示承認に基づき、`knowledge/AGENTS.md`のLocal Contractへ`Read: allowed`を追加した。既存のCanonical Owner、
+  `Write Boundary: owned`、non-owner draft routing、`raw/` immutable boundaryは変更していない。これにより
+  [[wiki/syntheses/sdd-plan-ownership-alignment|canonical spec]]、[[index|active catalog]]、本logへのdirect canonical
+  updateはread allowed / owned write / delegated owner authorityを満たす。
+- Lifecycle effectはfresh spec reviewのF1 / F2修復である。Human-approved amendmentがResearch、Spec、Plan、
+  Implementation、review、repair、integration、final review、knowledge closeoutを含むすべてのSDD stageの
+  transient destination / write bindingを統治し、競合するrepository-contained research / report / brief pathを
+  supersedeすることを明記した。normal scratch / handoffはtask / session用のboundedなrepository-external temporary
+  pathへ置き、repository-local `.superpowers/**`はconcrete operational needとpre-write ignore verificationがある
+  場合だけ、ignored / untracked / unstaged / uncommittedで使用できる。
+- Git history semanticsを分離した。tracked-report cleanup後のGit index / staging area、candidate commit tree、
+  以後のすべてのnew commit tree、PR final treeは`.superpowers/**` entry zeroであり、new commitは再導入できない。
+  pre-amendment historical ancestor commitはblobをaudit historyとして保持でき、別途の明示的なdestructive
+  authorizationなしにrewriteしない。final-tree removalのstaged deletionと必要なignored local copyは引き続き許可する。
+- 直前のingest eventがcatalog effectを`unchanged`とした記録をsupersedeする。canonical identityとstatusは不変だが、
+  amendmentが追加した全SDD stageのtransient artifact / Git boundaryはmaterial discovery scopeであるため、
+  [[index|knowledge/index.md]]のsummaryとsearch termsへrepository-external handoff、`.superpowers/**`、Git index /
+  candidate / new commit / PR final tree、history rewrite prohibition、research / review report / briefを同期した。
+  approved North Star、raw source、canonical page identityは変更していない。
+
+## [2026-08-14] plan-authoring | SDD transient artifact amendment follow-up
+
+- Actorはrepository maintainer-delegated fresh Plan Author Workerである。Human-approved
+  `sdd-transient-artifact-boundary-2026-08-14`、current upstream `superpowers:writing-plans`、repository
+  `Plan Contract Overlay`、current tree / test / Git evidenceをconsumeし、
+  [[wiki/syntheses/sdd-plan-ownership-alignment-implementation-plan|existing canonical implementation plan]]を
+  duplicate作成なしでdirect canonical updateした。
+- Follow-up sequenceはPOA-4 test-first RED contract、POA-5全SDD-stageのrepository-external transient migrationと
+  Git index / candidate / new-tree validator、POA-6のR-21 tracked report 3件のnon-destructive final-tree cleanup、
+  POA-7 spec / plan / design / index / append-only log closeout、POA-8 fresh combined verification / canonical
+  whole-branch review / separately authorized push updateである。R-16〜R-21とAC-15〜AC-20はexactly one primary
+  ownerへ割り当て、dependency、execution、serialized integration、combined verificationを明示した。
+- Current evidenceとして`.gitignore`は`.superpowers/`をcoverし、Git indexの`.superpowers/**` entryはR-21の
+  3件だけである。cleanupはworking-tree bytesを破壊せずignored / untracked local scratchとして保持でき、
+  candidate / cleanup後new commit / PR final treeはentry zeroにする。pre-amendment ancestor commitとblobはaudit
+  historyとして保持し、history rewriteを計画・実行しない。
+- Durable effectはcanonical plan、[[index|active catalog]]、本append-only eventの同期である。raw worker / review /
+  fix report、transcript、duplicate task contentは追加していない。Plan Author self-reviewはamended task graphを
+  `ready_for_independent_review`とし、fresh independent Plan Review、implementation、fresh verification、remote
+  publicationはこのeventでは未実施である。
+- Current executable plan validatorはR-01〜R-15、AC-01〜AC-14、POA-1〜POA-3を固定inventoryとしているため、
+  expanded canonical plan checkはamended IDs / tasksに対してintentional REDである。POA-4がtest-first contractを
+  更新し、POA-5がrepresentative fixture / validatorをGREENにするまでfollow-up Implementation Stage entryはpending
+  とした。このknown agent-repairable gapはHuman decision requestまたはmaterial Written Spec conflictではない。
+
+## [2026-08-14] plan-repair | SDD transient artifact amendment follow-up
+
+- Actorはrepository maintainer-delegated fresh Plan Repair Workerである。fresh independent Plan Reviewの
+  `issues_found` / `needs_repair` 2件を、Human-approved Written Specを変更せず
+  [[wiki/syntheses/sdd-plan-ownership-alignment-implementation-plan|canonical plan]]内でrepairした。decision requestは
+  `none`であり、raw review artifactはrepository外temporary pathに留めた。
+- POA-4がshared executable semantic validatorのR-01〜R-21 / AC-01〜AC-20 / POA-1〜POA-8 expansionと
+  representative ready-plan fixtureの同時transitionを所有するようfile responsibility、task interface、RED gate、
+  I-4 preconditionを同期した。これによりstale fixtureやinventory / coverage / graph / order mismatchは許可された
+  RED reasonではなく、I-4はrepository-contained destination、missing validator、missing CI invocationだけを
+  declared RED reasonにできる。POA-5からfixture / test変更権限を除き、GREEN contract / runtime / CI
+  implementationだけを所有させた。
+- current amendmentのformal fieldsを`issues_found`、repository checks `failed`、readiness evidence `stale`、
+  `needs_repair`、Control Return `not_returned`、Implementation Stage entry `forbidden`へ修正した。original
+  POA-1〜POA-3の`ready` / `complete` / `allowed`はHistorical Durable Plan Review Evidenceだけに隔離し、current
+  amendment gateへ流用しない。
+- [[index|knowledge/index.md]]はPOA-4 / POA-5 ownership splitとcurrent lifecycle stateを同期した。fresh independent
+  re-reviewとsuccessful current repository checksは未実施であり、canonical semantic checkがREDの間はPOA-4を
+  dispatchしない。no-history-rewrite、exact coverage / dependency / execution / serialized integration order、
+  tracked / staged / candidate / final-tree zero contract、repository-external transient default、prospective-body禁止、
+  Human plan approval禁止は変更していない。
+
+## [2026-08-14] plan-repair | SDD transient artifact amendment bootstrap transition
+
+- Actorはrepository maintainer-delegated fresh Plan Repair Workerである。fresh independent Plan Re-reviewの
+  circular pre-entry findingを、Human-approved Written Specを変更せず
+  [[wiki/syntheses/sdd-plan-ownership-alignment-implementation-plan|canonical plan]]内でround-2 repairした。
+  decision requestは`none`であり、repository `.superpowers/**`へ新しいartifactを書いていない。
+- governing transitionはamendment前HEAD `f07aebce7bbf854cd64184311d204cf04055fd28`、そのtree / current indexで
+  mode / blob / pathまで一致するR-21の3 tracked reports、root `.gitignore` coverage、zero staged delta、POA-4 / POA-5 /
+  POA-6 ownershipへsingle-useでbindした。additional / changed / renamed / staged path、baseline drift、ignore欠落、
+  owner欠落、retry / reuseはImplementation entry前にfail closedとする。
+- pre-entryではcurrent validator / representative fixtureに未実装のR-16〜R-21、AC-15〜AC-20、POA-4〜POA-8
+  schema transitionだけをexpected REDとして受理できる。POA-4がexpanded semantic parityとintentional REDを所有し、
+  POA-5がmigration / validator / CI GREENを所有する。POA-6 cleanupをpre-entry conditionにせず、I-6 candidate tree、
+  I-6以後のnew commit tree、PR final treeの`.superpowers/**` entry zero invariantは維持した。
+- [[index|knowledge/index.md]]をsingle-use baselineとround-2 lifecycleへ同期した。fresh independent Plan Re-reviewは
+  pendingであり、formal stateは`needs_repair`、Control Return `not_returned`、Implementation Stage entry
+  `forbidden`のままである。pre-amendment commit / blobはaudit historyとして保持し、history rewriteを行わない。
+
+## [2026-08-14] plan-readiness | SDD transient artifact amendment follow-up
+
+- Actorはrepository maintainer-delegated fresh Plan Readiness / knowledge finalizerである。round-2 repair後のfresh
+  independent Plan Re-reviewは[[wiki/syntheses/sdd-plan-ownership-alignment-implementation-plan|canonical plan]]を
+  `ready`、repository readiness `ready`、decision request `none`、material risk `none`と判定した。raw review transcriptは
+  repository外`/private/tmp`に留めてcommitせず、SHA-256
+  `f4fcb520361c7aaf191aa7c547980e3b9c72983f7575b1b90218e841d9a219f6`をintegrity fingerprintとしてだけplanへ
+  synthesisした。
+- single-use entry baselineは`f07aebce7bbf854cd64184311d204cf04055fd28`である。baseline treeとcurrent indexの
+  `.superpowers/**` tracked setは`approved-residual-fix-report.md` blob
+  `b50ed8e434725cb70bc0f1d2c6daa1a053e0ccc1`、`final-fix-report.md` blob
+  `c884197bf566cc93f319f3c2a1b6d2ad1563d10e`、`task-2-report.md` blob
+  `da22b7580961fb9a2087ab1eb034fb34000711f8`のexact 3 entryだけで、すべてmode `100644`、pathも一致する。
+  global staged deltaと`.superpowers/**` worktree deltaはzero、additional tracked / staged / changed / renamed /
+  intent-to-add / unignored pathはなく、root `.gitignore` line 1の`.superpowers/`が3 pathとoptional local scratchを
+  `--no-index`でcoverする。既存のignored / untracked local scratchはbaseline setに含めず保持する。
+- ownershipはPOA-4のshared validator / representative fixture / amended RED、POA-5のall-stage migration /
+  repository validator / CI GREEN、POA-6のexact three-report non-destructive cleanupに分離し、I-4〜I-6で直列化する。
+  exceptionが許すのはPOA-4 / POA-5 pre-cleanup treeでexact 3 entryをunchanged継承する一回だけである。POA-6の
+  I-6 candidate tree、I-6以後のnew commit tree、PR final treeは`.superpowers/**` entry zeroを維持し、additional /
+  changed / renamed / staged / reintroduced entry、baseline drift、retry / reuseはfail closedとする。
+- current suiteの81件中80件はpassし、1件の88 findingはformal pending field 6件とapproved amendment schema
+  transition 82件に限定された。fresh-ready field substitutionとR-01〜R-21 / AC-01〜AC-20 / POA-1〜POA-8への
+  validator inventory expansionではerror zeroになり、他のfailureはなかった。このbounded REDをPOA-4 inputとして
+  受理し、canonical formal stateを`independently-reviewed` / `ready`、repository checks `passed`、Control Return
+  `complete`へ同期した。single-use exceptionはまだ`available_unconsumed_ready`であり、Controllerのatomic recheck /
+  consumption前にImplementation Stageへentryしない。formal finalization後のfresh rerunは81件中80 pass / 1 intentional
+  failureで、findingはamended schema transition 82件だけとなった。implementation、POA-6 cleanup、final zero-tree
+  verification、`LOCAL_COMPLETE`、remote publicationは未完了である。
+- [[index|knowledge/index.md]]のactive plan summaryを同じformal readiness、conditional entry、final-zero boundaryへ
+  同期した。Human-approved Written Spec、original approval snapshot identity、historical POA-1〜POA-3 evidence、
+  pre-amendment historyは変更していない。
+
+## [2026-08-14] implementation-closeout | SDD transient artifact amendment POA-7
+
+- Actorはrepository maintainer-delegated POA-7 knowledge workerであり、single-root `owned` / `Read: allowed`の
+  authorityとObsidian authoring profileを確認した。対象は既存の
+  [[wiki/syntheses/sdd-implementation-skill-design|broader SDD design]]、
+  [[wiki/syntheses/sdd-preimplementation-context-isolation-spec|focused context-isolation spec]]、
+  [[wiki/syntheses/sdd-plan-ownership-alignment|Human-approved alignment spec]]、
+  [[wiki/syntheses/sdd-plan-ownership-alignment-implementation-plan|reviewed canonical plan]]、
+  [[index|active catalog]]だけであり、新しいspec、plan、report、ledgerを作成していない。
+- POA-5は`c7aced8d7b3975f081ec8bfcd065dcaa57bb2eec`、`91cbd5aec3d062f534937953ee8241f415d8db33`、
+  `29dc0de8f5f721d5004e5dac253ae04a36899aad`でall-stage repository-external handoff、local scratch
+  reason / ignore gate、Git surface validator、CI integrationをGREENにし、independent scoped re-reviewは`ready`だった。
+  POA-6 `7b4a8e6e0951e2ddd3c6020a10e00a6afe604b60`はR-21 exact three reportsとmigration markerを
+  cleanup treeから除き、`74eb79a3fbb0da2d6521129cf83976a366877af4`はhistorical migration fixtureをcleanup前
+  introduction commitへanchorした。cleanup / correctionのscoped re-reviewも`ready`だった。
+- Actual Git evidenceではcurrent index / HEAD treeの`.superpowers/**` entryはzeroである。R-21の3 local copiesは
+  root `.gitignore` line 1のcoverage下でignored / untrackedのまま存在し、contentをdestructive deleteしていない。
+  migration baseline `f07aebce7bbf854cd64184311d204cf04055fd28`はcurrent ancestryに残り、ancestor commit / blobの
+  history rewrite、replacement、force publicationを行っていない。
+- Fresh closeout validationはSDD focused suite `93/93`、transient validator regression `22/22`、actual candidate
+  tree、post-cleanup commits `7b4a8e6` / `74eb79a`、HEAD final treeに対するrepository validator passである。
+  Raw worker / reviewer report、transcript、test outputはrepository外temporary evidenceのまま、wikiまたは
+  `.superpowers/**`のtracked surfaceへcopyしていない。
+- Durable lifecycle effectとしてbroader二仕様の競合するrepository-contained handoff destinationをalignment specへ
+  supersedeし、planをPOA-1〜POA-6 reviewed / landed、POA-7 closeout task-review candidate、POA-8 pendingへ更新し、
+  active catalogを同期した。POA-7 independent task reviewとPOA-8のfresh combined verification、canonical
+  whole-branch review、authorized remote branch updateは未実施であり、`LOCAL_COMPLETE`、publication、merge、
+  release、live installを宣言しない。
+
+## [2026-08-14] review-fix | SDD transient artifact POA-7 lifecycle
+
+- POA-7 independent reviewのImportant 2件を受け、[[wiki/syntheses/sdd-implementation-skill-design|broader SDD design]]の
+  Migration / Related Pagesを修正した。alignment specがPlan Stageのauthority semanticsに加え、Researchから
+  knowledge closeoutまでのすべてのnormal SDD stageで競合するrepository-contained transient handoff destination /
+  write bindingをsupersedeすることを明記し、Superpowers-firstのbroader lifecycle、fresh worker isolation、trusted
+  planning worktree内のsource code / durable knowledge write boundaryはcurrentのまま維持した。
+- [[wiki/syntheses/sdd-plan-ownership-alignment|canonical spec]]のRemaining lifecycleと
+  [[wiki/syntheses/sdd-plan-ownership-alignment-implementation-plan|canonical plan]]のPlan Binding / Readiness Resultを、
+  POA-7 independent task review pending、Implementation Stage active、そのreview完了後にだけPOA-8へ進む順序へ同期した。
+  `Implementation Stage execution: completed`と`Remaining lifecycleはPOA-8だけ`という先行closeout wordingを
+  本eventがsupersedeする。
+- [[index|active catalog]]は既にPOA-7 independent task review pendingとPOA-8後続順序を正しく示すため変更していない。
+  このfixはまだ独立re-review前であり、POA-7 review completion、POA-8 entry、`LOCAL_COMPLETE`、publicationを
+  宣言しない。raw review artifactまたは`.superpowers/**`へのwriteは追加していない。
+
+## [2026-08-14] review-disposition | SDD transient artifact POA-7 ready
+
+- Actorはrepository maintainer-delegated POA-7 review-disposition knowledge workerであり、single-root `owned` /
+  `Read: allowed` authorityとObsidian authoring profileの下で、fresh scoped re-reviewのdurable verdictだけを既存
+  canonical identitiesへ同期した。対象は[[wiki/syntheses/sdd-implementation-skill-design|broader SDD design]]、
+  [[wiki/syntheses/sdd-preimplementation-context-isolation-spec|focused context-isolation spec]]、
+  [[wiki/syntheses/sdd-plan-ownership-alignment|alignment spec]]、
+  [[wiki/syntheses/sdd-plan-ownership-alignment-implementation-plan|canonical plan]]、[[index|active catalog]]である。
+- Fresh scoped re-reviewはPOA-7 lifecycle correction commit
+  `664dbd15923d7cf395095d810038125a10b727f8`を`ready`とし、prior Important 2件の解消と新規Critical /
+  Importantなしを確認した。fresh supporting evidenceはSDD `93/93`、llm-wiki `21/21`、transient repository
+  validator passである。raw review report、transcript、test outputはdurable surfaceへcopyしていない。
+- Lifecycle dispositionをPOA-1〜POA-7 reviewed / landed、remaining POA-8へ更新した。POA-8 fresh combined
+  verification、canonical whole-branch review、authorized remote branch updateはpendingであり、`LOCAL_COMPLETE`、
+  publication、merge、release、live installを宣言しない。新しいartifactや`.superpowers/**` writeは追加していない。
+
+## [2026-08-14] evidence-correction | SDD POA-8 responsibility map and CI history gate
+
+- Actorはrepository maintainer-delegated durable-evidence correction workerであり、single-root `owned` /
+  `Read: allowed` authorityの下で、[[wiki/syntheses/sdd-plan-ownership-alignment-implementation-plan|canonical plan]]の
+  correction timelineだけを追記した。commit `bbfd06eecf2fec0e45697257b3edf545fecdb4b6`は重複していた
+  `prompts/plan-reviewer.md` responsibility-map rowを一件へ統合し、surviving rowにPOA-2 `Create`とPOA-5
+  `modify`のownershipをともに保持した。
+- 同commitはCIがcleanup boundary以後の全commit treeをtransient-artifact validatorへ渡すhistory gateと、その
+  regressionを実装した。scoped Spec-axis re-reviewはcanonical plan correctionを`READY`とした。
+- canonical identityとcatalog summaryは変わらないため[[index|knowledge/index.md]]へのeffectはnoneである。final
+  Standards dispositionとauthorized pushはpendingであり、`LOCAL_COMPLETE`またはpublicationを宣言しない。
+
+## [2026-08-14] local-closeout | SDD plan ownership alignment POA-8
+
+- Actorはrepository maintainer-delegated final local-closeout knowledge workerであり、single-root `owned` /
+  `Read: allowed` authorityとObsidian authoring profileの下で、既存のbroader design、focused context spec、
+  [[wiki/syntheses/sdd-plan-ownership-alignment|alignment spec]]、
+  [[wiki/syntheses/sdd-plan-ownership-alignment-implementation-plan|canonical plan]]、[[index|active catalog]]だけを
+  `LOCAL_COMPLETE` stateへ同期した。新しいspec、plan、report、ledgerは作成していない。
+- evidence tip `e18088893737099d45e446e06a476c68c79ea25f`のfresh combined resultsはSDD `93/93`、
+  scripts `46/46`、llm-wiki `21/21`、decide-in-order `7/7`、task-management `11/11`である。skill architecture /
+  context / warning-free report (`warnings: []`) / skill-creator / transient-artifact / diff checksもpassした。candidate /
+  final treeの`.superpowers/**` entryはzero、3 local copiesはignored / untracked、ancestor historyはrewriteしていない。
+- fixed point `c370fe14de1641aa5ee30b3fa001f4d857078091`からのcanonical whole-branch reviewは、Spec Importantの
+  CI intermediate-commit detection gapとStandards Minorのduplicate responsibility rowを検出した。bounded fix
+  `bbfd06eecf2fec0e45697257b3edf545fecdb4b6`が両方を修正してSpec scoped re-reviewは`READY`となり、
+  append-only evidence correction `e18088893737099d45e446e06a476c68c79ea25f`が残るStandards log findingを
+  解消してfinal Standards verdictも`READY`となった。
+- POA-1〜POA-8 local workはcompleteで、current dispositionは`LOCAL_COMPLETE`である。authorized non-force remote
+  branch updateはpending / unpublishedであり、push、merge、release、live installを実施または承認済みと扱わない。
+
 ## [2026-08-08] written-spec-review-candidate | llm-wiki Authoring Discovery Diagnostics
 
 - Humanは、Authoring Profileをsemantic selectorとしskill IDとのname mismatchだけをfailureにしないこと、discovery起因の`BLOCKED`にprofile、Compatibility Requirement、candidateまたはdiscovery unavailable、exact causeと具体的理由を要求するshared understandingを承認した。

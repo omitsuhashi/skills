@@ -48,6 +48,19 @@ class FirstWriteContractTests(unittest.TestCase):
             self.contract,
         )
 
+    def test_source_and_durable_writes_stay_in_the_worktree_but_transient_reports_do_not(self) -> None:
+        gate = self.skill_text.split("## First-Write Worktree Gate", 1)[1].split("## Planning Controller", 1)[0]
+        self.assertIn(
+            "Source and durable writes remain inside the trusted planning worktree.",
+            gate,
+        )
+        self.assertIn(
+            "The first transient Research Report uses the repository-external "
+            "task/session temporary route.",
+            " ".join(gate.split()),
+        )
+        self.assertNotIn("first transient Research Report resolve inside the planning worktree", gate)
+
 class NativeWorktreeContractTests(unittest.TestCase):
     def make_repository(self, root: Path) -> None:
         run_git(root, "init", "-b", "main")
@@ -67,13 +80,14 @@ class NativeWorktreeContractTests(unittest.TestCase):
             self.assertEqual("", before[5])
             integration_branch = "integration/default"
             run_git(original, "worktree", "add", "-b", integration_branch, str(planning), sha)
-            report = planning / ".superpowers/research/default/report.md"; report.parent.mkdir(parents=True); report.write_text("report\n", encoding="utf-8")
+            report = Path(directory) / "transient" / "default" / "report.md"; report.parent.mkdir(parents=True); report.write_text("report\n", encoding="utf-8")
             self.assertEqual(integration_branch, run_git(planning, "branch", "--show-current").strip())
             self.assertNotEqual(branch, integration_branch)
             run_git(planning, "merge-base", "--is-ancestor", branch, integration_branch)
             self.assertEqual(sha, run_git(planning, "rev-parse", "HEAD").strip())
             self.assertEqual(before, fingerprint(original))
             self.assertFalse((original / ".superpowers/research/default/report.md").exists())
+            self.assertFalse(report.is_relative_to(planning))
 
     def test_dirty_named_branch_preserves_all_status_categories(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -88,13 +102,13 @@ class NativeWorktreeContractTests(unittest.TestCase):
             self.assertTrue(before[3]); self.assertTrue(before[4]); self.assertIn("?? untracked.txt", before[5])
             integration_branch = "integration/epic-42"
             run_git(original, "worktree", "add", "-b", integration_branch, str(planning), sha)
-            report = planning / ".superpowers/research/epic-42/report.md"; report.parent.mkdir(parents=True); report.write_text("report\n", encoding="utf-8")
+            report = Path(directory) / "transient" / "epic-42" / "report.md"; report.parent.mkdir(parents=True); report.write_text("report\n", encoding="utf-8")
             self.assertEqual("feature/start", branch); self.assertEqual(sha, run_git(planning, "rev-parse", "HEAD").strip())
             self.assertEqual(integration_branch, run_git(planning, "branch", "--show-current").strip())
             self.assertNotEqual(branch, integration_branch)
             run_git(planning, "merge-base", "--is-ancestor", branch, integration_branch)
             self.assertEqual(before, fingerprint(original))
-            self.assertTrue(report.is_relative_to(planning)); self.assertFalse((original / ".superpowers/research/epic-42/report.md").exists())
+            self.assertFalse(report.is_relative_to(planning)); self.assertFalse((original / ".superpowers/research/epic-42/report.md").exists())
 
     def test_failed_allocation_preserves_original_and_creates_no_report(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

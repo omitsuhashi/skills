@@ -11,10 +11,28 @@ RESEARCH_STAGE = SKILL_DIR / "references" / "research-stage.md"
 RESEARCHER_PROMPT = SKILL_DIR / "prompts" / "repository-researcher.md"
 SYNTHESIZER_PROMPT = SKILL_DIR / "prompts" / "spec-synthesizer.md"
 REVIEWER_PROMPT = SKILL_DIR / "prompts" / "spec-reviewer.md"
+PLAN_REVIEWER_PROMPT = SKILL_DIR / "prompts" / "plan-reviewer.md"
+RAW_HANDOFF_DEFAULT = "repository-external task/session temporary"
 
 
 def read_or_empty(path: Path) -> str:
     return path.read_text(encoding="utf-8") if path.is_file() else ""
+
+
+def routing_cases(text: str) -> dict[str, tuple[str, str, str, str]]:
+    if "## Representative Routing Cases" not in text:
+        return {}
+    body = text.split("## Representative Routing Cases", 1)[1].split("## ", 1)[0]
+    rows = []
+    for line in body.splitlines():
+        if not line.startswith("|") or set(line.replace("|", "").replace(" ", "")) <= {"-", ":"}:
+            continue
+        rows.append([cell.strip().strip("`") for cell in line.strip().strip("|").split("|")])
+    return {
+        row[0]: (row[1], row[2], row[3], row[4])
+        for row in rows
+        if len(row) == 5 and row[0] != "Case"
+    }
 
 
 class PreImplementationContextContractTests(unittest.TestCase):
@@ -26,6 +44,7 @@ class PreImplementationContextContractTests(unittest.TestCase):
         cls.researcher_text = read_or_empty(RESEARCHER_PROMPT)
         cls.synthesizer_text = read_or_empty(SYNTHESIZER_PROMPT)
         cls.reviewer_text = read_or_empty(REVIEWER_PROMPT)
+        cls.plan_reviewer_text = read_or_empty(PLAN_REVIEWER_PROMPT)
 
     def test_entrypoint_limits_main_session_to_planning_controller(self) -> None:
         self.assertIn("## Planning Controller", self.skill_text)
@@ -111,10 +130,80 @@ class PreImplementationContextContractTests(unittest.TestCase):
         self.assertIn("superpowers:writing-plans", self.planning_text)
         self.assertIn("Do not inherit the parent conversation.", self.planning_text)
         self.assertIn(
-            "The Planning Controller evaluates only the Control Return, plan path, "
-            "spec binding, and repository-required approval.",
+            "The Planning Controller evaluates only the Plan Author Control Return, "
+            "Plan Reviewer verdict and disposition, plan path, spec binding, and readiness disposition.",
             normalized,
         )
+        self.assertIn(
+            "It does not repeat repository file mapping or code exploration.",
+            normalized,
+        )
+
+    def test_plan_author_self_review_precedes_fresh_independent_review(self) -> None:
+        section = self.planning_text.split("## Plan Authoring", 1)[1].split("## Failure Boundary", 1)[0]
+        normalized = " ".join(section.split())
+        for value in (
+            "author self-review",
+            "fresh independent Plan Reviewer",
+            "`prompts/plan-reviewer.md`",
+            "approved spec path",
+            "local overlay path",
+            "Plan Author result",
+        ):
+            self.assertIn(value, normalized)
+        self.assertLess(normalized.index("author self-review"), normalized.index("fresh independent Plan Reviewer"))
+
+    def test_local_overlay_suppresses_upstream_execution_handoff(self) -> None:
+        section = self.planning_text.split("## Plan Authoring", 1)[1].split("## Failure Boundary", 1)[0]
+        normalized = " ".join(section.split())
+        for value in (
+            "Local override: skip the upstream `superpowers:writing-plans` `## Execution Handoff`.",
+            "Do not offer Subagent-Driven or Inline Execution",
+            "Do not ask the Human which execution approach to use",
+            "reviewed `ready` deterministically enters the Implementation Stage",
+            "`superpowers:subagent-driven-development`",
+        ):
+            self.assertIn(value, normalized)
+
+    def test_plan_review_routes_only_ready_to_implementation(self) -> None:
+        section = self.planning_text.split("## Plan Authoring", 1)[1].split("## Failure Boundary", 1)[0]
+        for value in (
+            "`ready`",
+            "`issues_found`",
+            "`needs_repair`",
+            "`needs_decision`",
+            "`blocked`",
+            "Implementation Stage entry",
+            "status: complete",
+        ):
+            self.assertIn(value, section)
+        self.assertIn("`needs_repair` remains inside the agent-owned Plan Stage", section)
+        self.assertIn("only an evidenced material spec conflict", section)
+        self.assertIn("Do not make missing remote publication authorization a plan blocker", section)
+
+    def test_plan_reviewer_maps_each_representative_case_exactly(self) -> None:
+        self.assertEqual(
+            {
+                "ready plan": ("ready", "ready", "none", "status: complete -> Implementation Stage entry"),
+                "unassigned acceptance": ("issues_found", "needs_repair", "none", "fresh Plan Author -> fresh independent Plan Reviewer"),
+                "prospective body": ("issues_found", "needs_repair", "none", "fresh Plan Author -> fresh independent Plan Reviewer"),
+                "dependency cycle": ("issues_found", "needs_repair", "none", "fresh Plan Author -> fresh independent Plan Reviewer"),
+                "current-tree method correction": ("issues_found", "needs_repair", "none", "fresh Plan Author -> fresh independent Plan Reviewer"),
+                "serialized integration defect": ("issues_found", "needs_repair", "none", "fresh Plan Author -> fresh independent Plan Reviewer"),
+                "material spec conflict": ("issues_found", "needs_decision", "one", "one Human decision request"),
+                "non-decision blocker": ("issues_found", "blocked", "none", "Control Return status: blocked"),
+                "missing remote publication authorization": ("ready", "ready", "none", "status: complete -> Implementation Stage entry"),
+            },
+            routing_cases(self.plan_reviewer_text),
+        )
+
+    def test_only_ready_transitions_and_repairs_never_leave_the_agent_loop(self) -> None:
+        cases = routing_cases(self.plan_reviewer_text)
+        for _, disposition, decisions, route in cases.values():
+            self.assertEqual(disposition == "ready", "Implementation Stage entry" in route)
+            self.assertEqual(disposition == "needs_decision", decisions == "one")
+            if disposition == "needs_repair":
+                self.assertEqual("fresh Plan Author -> fresh independent Plan Reviewer", route)
 
     def test_missing_fresh_dispatch_never_falls_back_to_controller_exploration(self) -> None:
         self.assertIn(
@@ -128,7 +217,8 @@ class PreImplementationContextContractTests(unittest.TestCase):
 
     def test_research_stage_routes_only_fresh_repository_exploration(self) -> None:
         normalized = " ".join(self.research_text.split())
-        self.assertIn("`.superpowers/research/<epic-id>/`", self.research_text)
+        self.assertIn(RAW_HANDOFF_DEFAULT, self.research_text)
+        self.assertNotIn(".superpowers/research/<epic-id>/", self.research_text)
         self.assertIn("`prompts/repository-researcher.md`", self.research_text)
         self.assertIn("Do not inherit the parent conversation.", self.research_text)
         self.assertIn(
@@ -138,7 +228,7 @@ class PreImplementationContextContractTests(unittest.TestCase):
         for category in ("confirmed facts", "material conflicts", "unknowns"):
             self.assertIn(category, self.research_text)
 
-    def test_every_worker_prompt_is_advisory_and_returns_control_fields(self) -> None:
+    def test_non_plan_review_worker_prompts_are_advisory_and_return_control_fields(self) -> None:
         for prompt_text in (
             self.researcher_text,
             self.synthesizer_text,
@@ -153,6 +243,19 @@ class PreImplementationContextContractTests(unittest.TestCase):
                 "`material_risks`",
             ):
                 self.assertIn(field, prompt_text)
+
+    def test_plan_reviewer_returns_a_bounded_verdict_before_control_mapping(self) -> None:
+        self.assertIn("Do not inherit the parent conversation.", self.plan_reviewer_text)
+        self.assertIn("advisory-only", self.plan_reviewer_text)
+        for field in (
+            "`verdict`",
+            "`disposition`",
+            "`artifact_path`",
+            "`decision_requests`",
+            "`material_risks`",
+        ):
+            self.assertIn(field, self.plan_reviewer_text)
+        self.assertNotIn("- `status`:", self.plan_reviewer_text)
 
     def test_research_prompt_requires_path_and_line_evidence(self) -> None:
         for category in (
@@ -190,13 +293,14 @@ class PreImplementationContextContractTests(unittest.TestCase):
             path.name for path in (SKILL_DIR / "prompts").iterdir()
         }
         self.assertEqual(
-            {"planning-context.md", "research-stage.md"},
+            {"plan-contract.md", "planning-context.md", "research-stage.md"},
             references,
         )
         self.assertEqual(
             {
                 "repository-researcher.md",
                 "spec-synthesizer.md",
+                "plan-reviewer.md",
                 "spec-reviewer.md",
             },
             prompts,
@@ -219,6 +323,7 @@ class PreImplementationContextContractTests(unittest.TestCase):
                 self.researcher_text,
                 self.synthesizer_text,
                 self.reviewer_text,
+                self.plan_reviewer_text,
             )
         )
         self.assertIn(
@@ -240,20 +345,39 @@ class PreImplementationContextContractTests(unittest.TestCase):
 
     def test_bound_paths_and_first_report_are_required(self) -> None:
         for text in (self.researcher_text, self.synthesizer_text, self.reviewer_text):
-            for value in ("resolved planning worktree root", "CWD", "writable artifact path", "original checkout"):
+            for value in ("resolved planning worktree root", "CWD", "original checkout"):
                 self.assertIn(value, text)
             self.assertNotIn("- repository root;", text)
-        for value in ("first transient Research Report", "relative", "absolute", "stale path", "escape"):
+        self.assertIn("writable artifact path", self.synthesizer_text)
+        self.assertNotIn("- writable artifact path;", self.researcher_text)
+        self.assertNotIn("- writable artifact path;", self.reviewer_text)
+        for value in ("first transient Research Report", "relative", "absolute", "stale path", "escape", RAW_HANDOFF_DEFAULT):
             self.assertIn(value, self.research_text)
         for value in ("original checkout metadata (read-only)", "baseline commit", "epic ID and current research question", "applicable repository and knowledge constraints", "current spec path when one exists"):
             self.assertIn(value, self.research_text)
         self.assertNotIn("- repository root and current baseline commit;", self.research_text)
 
+    def test_raw_research_and_review_handoffs_are_external_to_the_repository(self) -> None:
+        self.assertIn(RAW_HANDOFF_DEFAULT, self.researcher_text)
+        self.assertNotIn("under `.superpowers/", self.researcher_text)
+        for name, text in (
+            ("spec review", self.reviewer_text),
+            ("plan review", self.plan_reviewer_text),
+        ):
+            with self.subTest(stage=name):
+                self.assertIn(RAW_HANDOFF_DEFAULT, text)
+                self.assertIn("durable verdict summary", text)
+                self.assertNotIn("under `.superpowers/", text)
+
+        self.assertIn("repository-external Research Report paths", self.synthesizer_text)
+        self.assertIn("durable spec draft in the planning worktree", self.synthesizer_text)
+
     def test_plan_author_uses_only_bound_planning_paths(self) -> None:
         section = self.planning_text.split("## Plan Authoring", 1)[1].split("## Failure Boundary", 1)[0]
+        normalized = " ".join(section.split())
         for value in ("resolved planning worktree root", "bound CWD", "writable plan artifact path", "original checkout metadata (read-only)", "Plan Author Worker"):
-            self.assertIn(value, section)
-        self.assertNotIn("repository root, baseline commit", section)
+            self.assertIn(value, normalized)
+        self.assertNotIn("repository root, baseline commit", normalized)
 
 
 if __name__ == "__main__":

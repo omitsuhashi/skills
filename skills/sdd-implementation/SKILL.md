@@ -15,7 +15,7 @@ Before any content or artifact write, perform read-only discovery and capture th
 
 Create the planning worktree atomically from `starting_head_sha`; only the continuing controller/chat that won atomic allocation may reuse it. If two allocators select the same Epic, the loser must not attach to the existing worktree and returns `BLOCKED`. An independent chat, stale/foreign state, or HEAD/index/tracked/untracked state not attributable to the trusted tuple is `BLOCKED`. Allocation may change shared Git metadata only; never perform original checkout switch/reset/stash/clean/add/commit or content write.
 
-Before the first writable dispatch, prove planning registration/common directory/branch/path, captured-SHA base, original branch/HEAD/status preservation, and that repository root, CWD, every relative or absolute writable artifact path, and the first transient Research Report resolve inside the planning worktree. Reject stale path or escape path. The original checkout must not remain in a writable root, fallback root, CWD, or artifact destination.
+Before the first writable dispatch, prove planning registration/common directory/branch/path, captured-SHA base, and original branch/HEAD/status preservation. Source and durable writes remain inside the trusted planning worktree. Prove that repository root, CWD, and every relative or absolute durable writable artifact path resolve inside it. The first transient Research Report uses the repository-external task/session temporary route. Reject stale paths, aliases, and escape paths before either kind of write. The original checkout must not remain in a writable root, fallback root, CWD, or artifact destination.
 
 ## Planning Controller
 
@@ -33,7 +33,7 @@ or authoring into the Planning Controller.
 
 For a change request or incomplete specification, read
 `references/research-stage.md` before repository investigation. Research,
-Spec Synthesis, Spec Review, and Plan Authoring must each use a fresh worker.
+Spec Synthesis, Spec Review, Plan Authoring, and Plan Review must each use a fresh worker.
 Do not require context telemetry, manual compaction, or a strict word-count validator.
 
 Read `references/planning-context.md` only when entering a pre-implementation
@@ -69,9 +69,13 @@ Do not repeat a completed stage.
 - **Human-approved current specification:** verify authority, applicability,
   requirements, and acceptance criteria, then use `superpowers:writing-plans`.
   Return to the Spec Stage only for a material conflict.
-- **Approved plan bound to the current specification:** verify its binding,
-  current-tree compatibility, and verification scope, then use
-  `superpowers:subagent-driven-development`.
+- **Repository-ready `ready` plan bound to the current specification:** verify
+  the approved North Star identity, approved Written Spec identity, baseline
+  binding, current-tree compatibility, independent review verdict `ready`, and
+  repository validation evidence, then use
+  `superpowers:subagent-driven-development`. A plan with `issues_found`, stale
+  evidence, absent evidence, or any disposition other than `ready` must not
+  enter the Implementation Stage.
 
 ## Spec Stage
 
@@ -99,7 +103,7 @@ brainstorming contract. Require Human approval before planning.
 Use the repository topology and write boundary for these checkpoints:
 
 1. Human-approved written specification.
-2. Repository-approved implementation plan.
+2. Reviewed implementation plan.
 3. Implementation closeout.
 
 Keep canonical pages, `knowledge/index.md`, and `knowledge/log.md` synchronized.
@@ -111,14 +115,78 @@ No knowledge root is `not_applicable`; do not bootstrap one implicitly. An
 existing knowledge root with unresolved authority, target, write boundary,
 index/log sync, or validation is `BLOCKED`.
 
+## Transient Artifact Boundary
+
+- Default raw handoff route: repository-external task/session temporary
+- Repository-local scratch prerequisite: concrete operational reason and mechanical pre-write .gitignore coverage
+- Allowed scratch state: ignored, untracked, unstaged, uncommitted
+- Missing prerequisite route: fail closed to repository-external default
+- Raw artifacts excluded from durable outputs: research report, worker report, fix report, raw review output, transcript, duplicate task content
+- Durable summary fields: decision, finding, repair, verdict, evidence identity
+- Durable summary surfaces: canonical specification, reviewed implementation plan, knowledge/log.md
+
+| Stage | Raw handoff default | Durable summary route |
+| --- | --- | --- |
+| Research | repository-external task/session temporary | canonical specification |
+| Spec | repository-external task/session temporary | canonical specification |
+| Plan | repository-external task/session temporary | reviewed implementation plan |
+| Implementation | repository-external task/session temporary | reviewed implementation plan |
+| Task review | repository-external task/session temporary | reviewed implementation plan |
+| Repair | repository-external task/session temporary | reviewed implementation plan |
+| Integration | repository-external task/session temporary | reviewed implementation plan |
+| Final review | repository-external task/session temporary | reviewed implementation plan |
+| Knowledge closeout | repository-external task/session temporary | knowledge/log.md |
+
+Resolve every normal-stage raw handoff to an OS/runtime-provided, task/session-bounded
+temporary path outside the repository root, planning worktree, original checkout,
+and sibling worktrees. Reject an unresolved or broad root, relative destination,
+repository alias, stale binding, sibling path, or escape before write. Keep only
+the durable summary fields above on canonical surfaces; never copy a raw artifact
+or transcript into durable knowledge.
+
+Repository-local `.superpowers/**` scratch is exceptional. Before its first
+write, record a concrete operational reason and mechanically verify that the
+exact path is covered by `.gitignore`. If either prerequisite is missing, do
+not write locally and use the repository-external default. Never stage or
+commit the scratch.
+
+## Repository Validation Gate
+
+Invoke `scripts/validate_sdd_transient_artifacts.py` for every repository validation gate.
+Validate the current Git index and staging area independently. Validate each
+nominated candidate tree, post-cleanup new commit, and final tree independently.
+Allow a staged deletion only when the candidate tree has no `.superpowers/**`
+entry. Do not reject a pre-amendment historical ancestor blob without a current
+index or nominated-tree violation.
+Treat the tracked migration manifest as candidate-tree authority only for the
+exact f07aebc three-report baseline. Accept that authority only when the planned
+pre-marker parent and authorized introduction are ancestors of HEAD, the
+introduction is the sole marker add, no marker deletion exists in that ancestry,
+and the current HEAD marker mode, blob, and path match exactly. A divergent or
+pre-marker HEAD cannot gain authority by staging the manifest. When the manifest
+is absent, require zero `.superpowers/**` entries and reject exact-baseline
+reintroduction. Stage the manifest deletion and all three report deletions
+together; the resulting clean candidate tree uses the strict zero-entry path
+without an exception flag.
+
+If `scripts/validate_sdd_transient_artifacts.py` is unavailable, returns nonzero,
+or detects any `.superpowers/**` violation, fail and abort the repository gate;
+do not continue to any stage transition, commit creation, or closeout.
+
 ## Plan Stage
 
 **REQUIRED SUB-SKILL: Use superpowers:writing-plans.**
 
 Create an executable plan from the approved specification. Apply any
-repository-required plan review or Human approval. Persist the approved plan
-through the Durable Knowledge contract. Do not dispatch implementation from an
-unapproved plan.
+repository-required fields from `references/plan-contract.md` without copying
+the upstream methodology. The Planning Controller dispatches a fresh Plan
+Author, then a fresh independent Plan Reviewer. Route `needs_repair` back to a
+fresh author/reviewer loop, route only an evidenced material spec conflict as
+`needs_decision`, and route a non-decision blocker as `blocked`. Only `ready`
+enters the Implementation Stage. Missing remote publication authorization does
+not affect local plan readiness. Human North Star and Written Spec authority is
+preserved; the implementation plan is agent-authored and independently reviewed.
+Persist the reviewed plan through the Durable Knowledge contract.
 
 ## Implementation Stage
 
@@ -142,9 +210,9 @@ All implementation tasks and task reviews must be complete before closeout.
 
 ## Epic Parallel Issue Adapter
 
-Default execution remains sequential canonical SDD. This migration itself runs sequentially in its existing Epic planning worktree; the adapter is available only to a later Epic with explicit Human opt-in and a Human-approved issue plan. Each issue execution unit has exactly one branch/worktree/session/plan/artifact workspace and exactly one writer. Within an issue, never dispatch concurrent implementers. Do not advance to the next task until its task review and any canonical fix are complete.
+Default execution remains sequential canonical SDD. This migration itself runs sequentially in its existing Epic planning worktree. For a later Epic, adapter eligibility is an agent / repository-owned eligibility verdict based on a repository-ready issue plan, proven independent issue units, and current dependency / conflict evidence; it does not require a Human choice. Each issue execution unit has exactly one branch/worktree/session/plan/artifact workspace and exactly one writer. Within an issue, never dispatch concurrent implementers. Do not advance to the next task until its task review and any canonical fix are complete.
 
-The adapter owns readiness/dependency/conflict verdicts, allocation/wait/result routing, actual-result revalidation, and single-writer serialized integration; it does not schedule issue-internal tasks or alter canonical task/review/fix/ledger/recovery authority. Unknown expected write overlap, dependency, shared mutable resource, pinned-base ancestry, or integration assumption returns to sequential handling or Human decision.
+The adapter owns readiness/dependency/conflict verdicts, allocation/wait/result routing, actual-result revalidation, and single-writer serialized integration; it does not schedule issue-internal tasks or alter canonical task/review/fix/ledger/recovery authority. Unknown expected write overlap, dependency, shared mutable resource, pinned-base ancestry, or integration assumption returns to sequential handling. Agent-repairable evidence gaps remain agent-owned. Only an evidenced material North Star / Written Spec conflict returns to Human authority.
 
 Before integration-ready and before every serialized integration, derive actual commit range, actual changed paths, semantic/resource assumptions, and every required issue/task commit from existing Superpowers ledger and Git history; revalidate them against sibling results and current target. A blocked or unreviewed result is not integration-ready. Reject an issue tip that cannot prove every required issue/task commit reachable, including squash or selected cherry-pick loss. Integrate one ready issue at a time; clean textual merge is insufficient and partial integrated state is not completion.
 
@@ -202,7 +270,7 @@ Validate the wiki before final review.
 ## Final Whole-Branch Review
 
 After closeout, run the Superpowers final whole-branch review over code, tests,
-the approved specification and plan, and knowledge artifacts. Return
+the approved specification, reviewed plan, and knowledge artifacts. Return
 `LOCAL_COMPLETE` only after reviewed tasks, fresh verification, scoped commits,
 applicable closeout, and final approval.
 
