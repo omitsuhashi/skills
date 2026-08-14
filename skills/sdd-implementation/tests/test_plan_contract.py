@@ -121,35 +121,29 @@ def git_commit_is_current_ancestor(commit_sha: str) -> bool:
 
 def contains_parsed_python_function(text: str) -> bool:
     lines = text.splitlines()
-    header_pattern = re.compile(
-        r"^(?P<indent>[ \t]*)(?:async[ \t]+)?def[ \t]+[A-Za-z_]\w*"
-        r"[ \t]*\([^\n]*\)[ \t]*(?:->[ \t]*[^:\n]+)?[ \t]*:"
+    function_start = re.compile(
+        r"^(?P<indent>[ \t]*)(?:async[ \t]+)?def\b"
     )
     for index, line in enumerate(lines):
-        header = header_pattern.match(line)
-        if header is None:
+        start = function_start.match(line)
+        if start is None:
             continue
-        base_indent = len(header.group("indent").expandtabs(8))
-        candidate = [line[len(header.group("indent")) :]]
-        if line[header.end() :].strip():
-            pass
-        else:
-            for following in lines[index + 1 :]:
-                if not following.strip():
-                    candidate.append("")
-                    continue
-                following_indent = len(
-                    following[: len(following) - len(following.lstrip(" \t"))].expandtabs(8)
-                )
-                if following_indent <= base_indent:
-                    break
-                candidate.append(following[len(header.group("indent")) :])
-        try:
-            parsed = ast.parse("\n".join(candidate))
-        except SyntaxError:
-            continue
-        if parsed.body and isinstance(parsed.body[0], (ast.FunctionDef, ast.AsyncFunctionDef)):
-            return True
+        base_indent = start.group("indent")
+        for end in range(index + 1, len(lines) + 1):
+            candidate = [
+                candidate_line[len(base_indent) :]
+                if candidate_line.startswith(base_indent)
+                else candidate_line
+                for candidate_line in lines[index:end]
+            ]
+            try:
+                parsed = ast.parse("\n".join(candidate))
+            except SyntaxError:
+                continue
+            if parsed.body and isinstance(
+                parsed.body[0], (ast.FunctionDef, ast.AsyncFunctionDef)
+            ):
+                return True
     return False
 
 
@@ -748,6 +742,17 @@ class PlanContractTests(unittest.TestCase):
 
     def test_rejects_any_parsed_python_statement_after_optional_preamble(self) -> None:
         probes = (
+            (
+                "\ndef build_plan(spec):\n"
+                "# optional comment\n"
+                "    import json\n"
+            ),
+            (
+                "\ndef build_plan(\n"
+                "    spec,\n"
+                "):\n"
+                "    import json\n"
+            ),
             '\ndef build_plan(spec):\n    """Build the plan."""\n\n    import json\n',
             (
                 '\nasync def build_plan(spec):\n    """Build the plan."""\n\n'

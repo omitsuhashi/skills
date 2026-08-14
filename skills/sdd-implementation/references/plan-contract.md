@@ -106,10 +106,13 @@ or concrete runtime model, provider, agent, or effort selections. Do not make
 the plan a Human approval subject. Human authority remains with the North Star
 and Written Spec.
 
-For Python, extract line-anchored `def` / `async def` candidates and use the
-language parser to recognize an actual function body after optional docstrings,
-comments, and blank lines. Do not maintain an executable-statement whitelist.
-A prose interface signature that is not valid Python remains narrative intent.
+For Python, extract line-anchored `def` / `async def` candidate starts and use
+the language parser to recognize a complete function definition. Candidate
+recognition must support multiline signatures and actual bodies after optional
+docstrings, comments at any valid indentation, and blank lines; it must not use
+a single-line signature or indentation boundary to decide what reaches the
+parser. Do not maintain an executable-statement whitelist. A prose interface
+signature that is not valid Python remains narrative intent.
 
 ## Review And Readiness Vocabulary
 
