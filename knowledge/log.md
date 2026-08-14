@@ -1899,3 +1899,13 @@ append-only で使います。すべての entry は予測しやすい header �
 - focused REDは23 tests中7 failures / 3 errorsでrequested gapsを再現し、focused GREENは23/23、fresh full SDD suiteは66/66、repository scriptsは19/19でpassした。architecture / context / warning-free context report / skill-creator validationもexit 0である。
 - [[wiki/syntheses/sdd-first-write-worktree-migration-spec|predecessor spec]]とpredecessor planはFirst-Write部分だけscoped supersedeし、影響を受けない後続Epic opt-in parallel adapter部分だけをcurrent参照範囲として[[index|catalog]]へ残した。
 - original checkoutはexternal forward update後のclean `main@82dcd32157ff9690ae038f982f3916009e449f80`としてread-onlyに保持している。fix commit、post-commit range diff、task-commit non-containment、scoped re-reviewは未実施のため、source implementationは`in progress`でありcloseoutを主張しない。
+
+## [2026-08-14] implementation-closeout | SDD fail-closed worktree gate
+
+- Actor: repository maintainer-delegated actor。Canonical Ownerのapproved minimal spec/planとcontroller adjudicationに基づき、[[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|仕様]]、[[wiki/syntheses/sdd-fail-closed-worktree-gate-implementation-plan|実装計画]]、[[index|durable catalog]]を`LOCAL_COMPLETE_WITH_PARKED_HARNESS_RISKS`へ同期した。
+- Human承認済みの5要件とraw Git boundaryは変更していない。withdrawn済みのguard、hook、activation、inventory、bootstrap、lifecycle、external-cache、exact-tuple、general rollback設計はcurrent sourceへ戻していない。
+- Task reviewはfix round 4後にclean。fresh verificationはfocused 23/23、full SDD 66/66、scripts 19/19、architecture/context/context-report/skill-creatorがすべてpassし、context reportは`warnings: []`、complete branch rangeの`git diff --check`もcleanである。
+- whole-branch reviewは4 Importantを報告した。唯一のfix wave `90acc95b33935fec82c3bf03fb39405d2bd19894` でtask-owner / commit-CWD bindingとcatalog supersessionを補正し、scoped re-reviewで確認した。
+- 2件はcontroller-parkedのnon-production harness fidelity riskである。harness modelではcheck後のconcurrent target creationを`os.replace`がclobberし得ること、cleanup `unlink` failureで`.sdd-stage-*`が残りescapeし得ることを保持する。このharnessをproduction-strength concurrent transactionとは扱わず、いずれもrepo-owned SDDからoriginal `main`へwrite/commitするpathを作らない。
+- original checkoutは開始時clean `main@c370fe14de1641aa5ee30b3fa001f4d857078091`から外部でclean `main@82dcd32157ff9690ae038f982f3916009e449f80`へforward advanceした。開始SHAはcurrent `main`のancestorで、16 task commitsはいずれも`main`に含まれない。literal HEAD preservationやintegrationは主張しない。
+- local-only closeoutである。push、PR、install、activation、`main` integrationは未実施。

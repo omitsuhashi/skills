@@ -14,6 +14,7 @@ aliases:
   - SDD fail-closed worktree gate specification
 status: accepted
 lifecycle_state: active
+implementation_status: local-complete-with-parked-harness-risks
 artifact_kind: specification
 decision: accepted-scope-revision
 decision_actor: Human / repository maintainer (Canonical Owner)
@@ -41,7 +42,7 @@ relations:
 - canonical identity: `knowledge/wiki/syntheses/sdd-fail-closed-worktree-gate-spec.md`
 - 決定: `accepted-scope-revision`
 - 決定権者: Human / repository maintainer（Canonical Owner）
-- source implementation: `in progress`。final-review fix後のscoped re-review前であり、実装完了を主張しない。
+- source implementation: `LOCAL_COMPLETE_WITH_PARKED_HARNESS_RISKS`。Task review、fresh verification、whole-branch review後の唯一のfix waveとscoped re-reviewを完了した。remote publication、install、activation、`main` integrationは未実施。
 
 ## Problem and earlier evidence
 
@@ -83,6 +84,15 @@ commit evidenceはwrite invocationと分離したgate-owned data-only `git commi
 - すべてのrepository content/artifact writeとcommitは、作成または検証済みのtask-linked worktree内にある。
 - allocation、permission、path、ownership、capability、dependency、binding failureは、writeなしの `BLOCKED` になる。
 - original/current directory、他directory、direct writable subskillへのfallbackはない。direct writable subskillはrepository workを開始できず `BLOCKED` になる。
+
+## Implementation closeout
+
+- Human承認済みの5要件とraw Git boundaryは変更していない。withdrawn済みのguard、hook、activation、inventory、bootstrap、lifecycle、external-cache、exact-tuple、general rollback設計はcurrent sourceへ戻していない。
+- Task reviewはfix round 4後にclean。fresh verificationはfocused 23/23、full SDD 66/66、scripts 19/19、architecture/context/context-report/skill-creatorがすべてpassし、context reportは`warnings: []`、complete branch rangeの`git diff --check`もcleanである。
+- whole-branch reviewの4 Important findingに対する唯一のfix wave `90acc95b33935fec82c3bf03fb39405d2bd19894` はtask-owner / commit-CWD bindingとcatalog supersessionを補正し、scoped re-reviewで確認された。
+- 2件はcontroller-parkedのnon-production harness fidelity riskとして残る。harness modelではcheck後のconcurrent target creationを`os.replace`がclobberし得ること、cleanup `unlink` failureで`.sdd-stage-*`が残りescapeし得ることである。このharnessをproduction-strength concurrent transactionとは扱わない。いずれもrepo-owned SDDからoriginal `main`へwrite/commitするpathを作らない。
+- original checkoutは開始時clean `main@c370fe14de1641aa5ee30b3fa001f4d857078091`から外部でclean `main@82dcd32157ff9690ae038f982f3916009e449f80`へforward advanceした。開始SHAはcurrent `main`のancestorで、16 task commitsはいずれも`main`に含まれない。literal HEAD preservationやintegrationは主張しない。
+- resultはlocal-onlyである。push、PR、install、activation、`main` integrationは未実施。
 
 ## Provenance and lifecycle
 

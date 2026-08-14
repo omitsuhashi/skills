@@ -14,6 +14,7 @@ aliases:
   - SDD fail-closed worktree gate implementation plan
 status: accepted
 lifecycle_state: active
+implementation_status: local-complete-with-parked-harness-risks
 artifact_kind: implementation-plan
 decision: accepted-scope-revision
 decision_actor: Human / repository maintainer (Canonical Owner)
@@ -36,7 +37,7 @@ relations:
 
 ## Status and constraints
 
-- 状態: `accepted` / `active`; source implementationは `in progress`。final-review fix後のscoped re-reviewは未実施。
+- 状態: `accepted` / `active`; source implementationは `LOCAL_COMPLETE_WITH_PARKED_HARNESS_RISKS`。Task review、fresh verification、whole-branch review後の唯一のfix waveとscoped re-reviewを完了した。
 - 実装は [[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|accepted specification]] の5要件だけを満たす。
 - original checkout `/Users/omitsuhashi/repos/omitsuhashi/skills` の `main` はtask workでread-onlyであり、task commitを受けない。
 - first repository content/artifact write前にtask-linked worktreeをcreate/verifyしてbindingできなければ、writeなしの `BLOCKED` で止まる。fallbackはない。
@@ -75,10 +76,18 @@ git -C /Users/omitsuhashi/repos/omitsuhashi/skills status --short
 
 Acceptance: architecture/context/skill validationとfull SDD suiteがpassし、full branch rangeにwhitespace errorがなく、original checkoutはcleanのまま `main@c370fe14de1641aa5ee30b3fa001f4d857078091` である。
 
+Closeout evidenceでは、このliteral HEAD clauseは外部state changeにより一致しない。original checkoutは開始時clean `main@c370fe14de1641aa5ee30b3fa001f4d857078091`から外部でclean `main@82dcd32157ff9690ae038f982f3916009e449f80`へforward advanceした。開始SHAはcurrent `main`のancestorで、16 task commitsはいずれも`main`に含まれない。literal HEAD preservationまたはintegrationを主張しない。
+
 ## Task 3: Implementation closeout and one whole-branch review
 
 Task 1--2 evidenceをcurrent spec/planへ同期し、source implementation completionをclaimする前にfresh whole-branch reviewを1回実施する。reviewはこのapproved minimal scopeへの適合、withdrawn guard/activation designのnon-return、original checkout preservation、verification evidenceを確認する。
 
 Acceptance: one whole-branch reviewにmaterial findingがなく、required checksとoriginal-checkout preservation evidenceが記録される。未実施のcheck、review、またはsource workがあれば `in progress` を維持し、完了を先取りしない。
 
-Final-review fix waveのfocused REDは23 tests中7 failures / 3 errorsで、requested gapを再現した。最小実装後のfocused GREENは23/23、full SDD suiteは66/66である。full repository verificationとscoped re-reviewが完了するまでsource implementationは`in progress`のままとする。
+Final-review fix waveのfocused REDは23 tests中7 failures / 3 errorsで、requested gapを再現した。最小実装後のfocused GREENは23/23、full SDD suiteは66/66、scriptsは19/19である。architecture/context/context-report/skill-creatorはすべてpassし、context reportは`warnings: []`、complete branch rangeの`git diff --check`はcleanである。
+
+Task reviewはfix round 4後にclean。whole-branch reviewの4 Important findingに対する唯一のfix wave `90acc95b33935fec82c3bf03fb39405d2bd19894` はtask-owner / commit-CWD bindingとcatalog supersessionを補正し、scoped re-reviewで確認された。
+
+2件はcontroller-parkedのnon-production harness fidelity riskとして残る。harness modelではcheck後のconcurrent target creationを`os.replace`がclobberし得ること、cleanup `unlink` failureで`.sdd-stage-*`が残りescapeし得ることである。このharnessはproduction-strength concurrent transactionではなく、いずれのriskもrepo-owned SDDからoriginal `main`へwrite/commitするpathを作らない。
+
+このためmaterial findingなしというideal acceptanceは文字どおりには満たしていない。controller adjudicationにより、最小5要件とraw Git boundaryを満たすsource resultを`LOCAL_COMPLETE_WITH_PARKED_HARNESS_RISKS`とし、無条件の`LOCAL_COMPLETE`は主張しない。withdrawn済みのguard、hook、activation、inventory、bootstrap、lifecycle、external-cache、exact-tuple、general rollback設計は不在のままである。resultはlocal-onlyで、push、PR、install、activation、`main` integrationは未実施。

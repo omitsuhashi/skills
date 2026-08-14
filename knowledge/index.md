@@ -24,10 +24,10 @@ _現在なし。_
 - [[wiki/syntheses/sdd-first-write-worktree-migration-spec.md|SDD first-write worktree migration 仕様]] — First-Write規範はminimal gate仕様にscoped supersedeされたpredecessor。影響を受けない後続EpicのHuman opt-in parallel issue / single-writer integration部分だけをcurrent参照範囲として保持する。
   検索語: sdd-implementation, first write, planning worktree, original checkout, starting_branch, starting_head_sha, binding tuple, integration_branch, parallel issue, Epic adapter, fail closed, 作業ツリー, 最初の書込み, 保全, 並列実行, 統合
 
-- [[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|SDD fail-closed worktree gate 仕様]] — repository workを`sdd-implementation`から開始し、original `main`をread-onlyに保ち、verified task-linked worktreeへのall-write/commit bindingとfailure時zero-write `BLOCKED`・no fallbackだけを定めるHuman承認済みminimal specification。
+- [[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|SDD fail-closed worktree gate 仕様]] — repository workを`sdd-implementation`から開始し、original `main`をread-onlyに保ち、verified task-linked worktreeへのall-write/commit bindingとfailure時zero-write `BLOCKED`・no fallbackだけを定めるHuman承認済みminimal specification。sourceは2件のnon-production harness riskをparkしたlocal-only completion。
   検索語: sdd-implementation, fail closed, worktree gate, first entry, original main, read-only, linked worktree, write binding, zero write, blocked, no fallback, 作業ツリー, 停止条件, 最小仕様, 承認済み仕様
 
-- [[wiki/syntheses/sdd-fail-closed-worktree-gate-implementation-plan|SDD fail-closed worktree gate 実装計画]] — Human承認済みのcurrent minimal plan。scope-reduction sync、guard/activation over-designの削除、simplified First-Write Gateのvalidation、one whole-branch reviewを定義し、source implementationはin progressとする。
+- [[wiki/syntheses/sdd-fail-closed-worktree-gate-implementation-plan|SDD fail-closed worktree gate 実装計画]] — Human承認済みのcurrent minimal plan。Task review、fresh verification、one whole-branch review、唯一のfix wave、scoped re-reviewを完了し、2件のnon-production harness riskをparkした`LOCAL_COMPLETE_WITH_PARKED_HARNESS_RISKS` / local-only。
   検索語: sdd-implementation, fail closed, worktree gate, implementation plan, first entry, original main, linked worktree, zero write, blocked, no fallback, guard removal, activation removal, 作業ツリー, 実装計画, 承認
 
 - [[wiki/syntheses/sdd-first-write-worktree-migration-implementation-plan.md|SDD first-write worktree migration 実装計画]] — First-Write実装規範はminimal gate planにscoped supersedeされたpredecessor plan。後続Epicだけのthin opt-in parallel adapter / single-writer integrationは影響を受けない参照範囲として保持する。
