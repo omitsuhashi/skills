@@ -100,3 +100,58 @@ No approved Written Spec requirement, `knowledge/index.md`, `knowledge/raw/**`, 
 - Authority note: `knowledge/AGENTS.md` still does not declare a read state. This fix deliberately corrects the unsupported historical claim without inferring or adding that policy field.
 - Remote action: none. No push, PR, merge, release, live install, issue, comment, project write, or other remote mutation was performed.
 - Original-checkout preservation is verified separately after the report commit so the final evidence covers the complete local result.
+
+## Approved Residual Fix Loop Round 1
+
+### Status And Commit
+
+- Result: `ROUND_1_FIX_COMPLETE`.
+- Independent re-review findings addressed: exactly 2 Important findings.
+- Scoped fix commit: `261df06` (`fix: harden SDD plan validator round one`).
+- Changed set: executable plan validator/tests, Plan Contract Overlay, and one append-only `knowledge/log.md` review-fix event.
+
+### Singleton Readiness Hardening
+
+The validator now enforces cardinality one for every North Star identity, Written Spec identity, Plan Binding, and closed Readiness Result field. It rejects contradictory duplicates even when the first occurrence is valid. Adversarial regressions cover:
+
+- `Independent review verdict: ready` followed by `issues_found`;
+- `Readiness evidence state: current` followed by `stale`;
+- `Plan readiness disposition: ready` followed by `issues_found`.
+
+This closes the first-match bypass while retaining the existing exact-value, approval snapshot, contained-path, and baseline-ancestry checks.
+
+### Prospective-Body Hardening
+
+The validator now rejects these remaining production/command structures:
+
+- a Python function whose executable body follows a docstring;
+- a one-line JavaScript function body;
+- a one-line shell `if ...; then ...; fi` body;
+- plain `echo ready`.
+
+Python executable statements use token boundaries, so `return` is not inferred from the prose word `returns`. The exact interface description `def build_plan(spec): returns a normalized plan in the proposed interface.` remains allowed, as do the prior intent-only prose controls.
+
+### TDD Evidence
+
+RED ran three focused tests. The narrative control passed, while seven subcases failed for the expected gaps: three contradictory duplicate declarations and four previously missed body/command forms.
+
+GREEN results:
+
+- targeted representative/canonical/adversarial group: 5 tests passed;
+- final focused plan/public contract suite: 50 tests passed, 0 failures, 0 errors;
+- full SDD implementation suite: 78 tests passed, 0 failures, 0 errors;
+- repository script suite: 19 tests passed;
+- LLM Wiki suite: 21 tests passed;
+- skill architecture and context validators: exit 0;
+- context report: 1 skill, 12 operations, warnings `[]`;
+- skill-creator validator: exit 0, `Skill is valid!`;
+- working and staged whitespace gates: exit 0.
+
+The required combined gate was run once after the complete round-1 behavioral/durable set. Python commands used isolated `/private/tmp/sdd-poa-round1-*` bytecode cache roots.
+
+### Boundaries And Concerns
+
+- `knowledge/log.md` authority-evidence correction was not modified; the new event records only this fix wave.
+- Human-only North Star / Written Spec approval, agent-owned plan readiness/execution, and separate remote authorization remain unchanged.
+- No remote publication or live mutation was performed.
+- Open material concern within round-1 scope: none identified by the implemented regressions and fresh verification.
