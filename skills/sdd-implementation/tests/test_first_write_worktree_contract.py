@@ -50,11 +50,15 @@ class FirstWriteContractTests(unittest.TestCase):
 
     def test_source_and_durable_writes_stay_in_the_worktree_but_transient_reports_do_not(self) -> None:
         gate = self.skill_text.split("## First-Write Worktree Gate", 1)[1].split("## Planning Controller", 1)[0]
-        normalized = " ".join(gate.split()).lower()
-        self.assertIn("source and durable", normalized)
-        self.assertIn("planning worktree", normalized)
-        self.assertIn("first transient research report", normalized)
-        self.assertIn("repository-external", normalized)
+        self.assertIn(
+            "Source and durable writes remain inside the trusted planning worktree.",
+            gate,
+        )
+        self.assertIn(
+            "The first transient Research Report uses the repository-external "
+            "task/session temporary route.",
+            " ".join(gate.split()),
+        )
         self.assertNotIn("first transient Research Report resolve inside the planning worktree", gate)
 
 class NativeWorktreeContractTests(unittest.TestCase):

@@ -9,6 +9,7 @@ import unittest
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 VALIDATOR = REPOSITORY_ROOT / "scripts" / "validate_sdd_transient_artifacts.py"
+VALIDATION_FAILURE_EXIT = 1
 AMENDMENT_MIGRATION_BASELINE = "f07aebce7bbf854cd64184311d204cf04055fd28"
 MIGRATION_PATHS = (
     ".superpowers/sdd/sdd-plan-ownership-alignment-implementation-plan/approved-residual-fix-report.md",
@@ -30,6 +31,17 @@ def run_git(repository: Path, *args: str) -> str:
         capture_output=True,
         text=True,
     ).stdout
+
+
+def hash_blob(repository: Path, content: str) -> str:
+    return subprocess.run(
+        ["git", "hash-object", "-w", "--stdin"],
+        cwd=repository,
+        check=True,
+        capture_output=True,
+        text=True,
+        input=content,
+    ).stdout.strip()
 
 
 class RepositoryFixture:
@@ -56,6 +68,101 @@ class RepositoryFixture:
         run_git(self.root, "commit", "-m", "pre-amendment reports")
         return run_git(self.root, "rev-parse", "HEAD").strip()
 
+    def contaminated_tree(self, relative_path: str = ".superpowers/contaminated.md") -> str:
+        blob = hash_blob(self.root, "contaminated\n")
+        run_git(
+            self.root,
+            "update-index",
+            "--add",
+            "--cacheinfo",
+            f"100644,{blob},{relative_path}",
+        )
+        tree = run_git(self.root, "write-tree").strip()
+        run_git(self.root, "read-tree", "HEAD")
+        return tree
+
+    def contaminated_commit(self) -> str:
+        tree = self.contaminated_tree()
+        return run_git(
+            self.root,
+            "commit-tree",
+            tree,
+            "-p",
+            run_git(self.root, "rev-parse", "HEAD").strip(),
+            "-m",
+            "contaminated new commit",
+        ).strip()
+
+
+class AuthorizedRepositoryFixture:
+    def __init__(self) -> None:
+        self.temporary_directory = tempfile.TemporaryDirectory()
+        self.root = Path(self.temporary_directory.name) / "repository"
+        subprocess.run(
+            ["git", "clone", "--quiet", "--no-hardlinks", str(REPOSITORY_ROOT), str(self.root)],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        run_git(self.root, "config", "user.name", "Test User")
+        run_git(self.root, "config", "user.email", "test@example.invalid")
+
+    def close(self) -> None:
+        self.temporary_directory.cleanup()
+
+    def install_counterfeit_baseline(self, mutation: str) -> tuple[str, ...]:
+        run_git(self.root, "read-tree", f"{AMENDMENT_MIGRATION_BASELINE}^{{tree}}")
+        first_mode, _, first_blob_and_path = EXPECTED_BASELINE_ENTRIES[0].partition(" blob ")
+        first_blob, _, first_path = first_blob_and_path.partition("\t")
+        if mutation == "mode":
+            run_git(
+                self.root,
+                "update-index",
+                "--cacheinfo",
+                f"100755,{first_blob},{first_path}",
+            )
+        elif mutation == "blob":
+            wrong_blob = hash_blob(self.root, "counterfeit report\n")
+            run_git(
+                self.root,
+                "update-index",
+                "--cacheinfo",
+                f"{first_mode},{wrong_blob},{first_path}",
+            )
+        elif mutation == "path":
+            run_git(self.root, "update-index", "--force-remove", first_path)
+            run_git(
+                self.root,
+                "update-index",
+                "--add",
+                "--cacheinfo",
+                f"{first_mode},{first_blob},{first_path}.renamed",
+            )
+        else:
+            raise ValueError(f"unknown counterfeit mutation: {mutation}")
+        counterfeit_tree = run_git(self.root, "write-tree").strip()
+        counterfeit_commit = run_git(
+            self.root,
+            "commit-tree",
+            counterfeit_tree,
+            "-m",
+            f"counterfeit baseline {mutation}",
+        ).strip()
+        run_git(self.root, "read-tree", "HEAD")
+        run_git(self.root, "replace", AMENDMENT_MIGRATION_BASELINE, counterfeit_commit)
+        return tuple(
+            line
+            for line in run_git(
+                self.root,
+                "ls-tree",
+                "-r",
+                AMENDMENT_MIGRATION_BASELINE,
+                "--",
+                ".superpowers",
+            ).splitlines()
+            if line
+        )
+
 
 class TransientArtifactValidatorTests(unittest.TestCase):
     def setUp(self) -> None:
@@ -64,7 +171,9 @@ class TransientArtifactValidatorTests(unittest.TestCase):
     def tearDown(self) -> None:
         self.fixture.close()
 
-    def run_validator(self, *args: str) -> subprocess.CompletedProcess[str]:
+    def run_validator(
+        self, *args: str, repository: Path | None = None
+    ) -> subprocess.CompletedProcess[str]:
         self.assertTrue(
             VALIDATOR.is_file(),
             f"repository transient-artifact validator is missing: {VALIDATOR}",
@@ -74,7 +183,7 @@ class TransientArtifactValidatorTests(unittest.TestCase):
                 sys.executable,
                 str(VALIDATOR),
                 "--repository",
-                str(self.fixture.root),
+                str(repository or self.fixture.root),
                 *args,
             ],
             check=False,
@@ -82,13 +191,17 @@ class TransientArtifactValidatorTests(unittest.TestCase):
             text=True,
         )
 
-    def assert_validator_accepts(self, *args: str) -> None:
-        result = self.run_validator(*args)
+    def assert_validator_accepts(self, *args: str, repository: Path | None = None) -> None:
+        result = self.run_validator(*args, repository=repository)
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
 
-    def assert_validator_rejects(self, *args: str) -> None:
-        result = self.run_validator(*args)
-        self.assertNotEqual(0, result.returncode, result.stdout + result.stderr)
+    def assert_validator_rejects(
+        self, category: str, *args: str, repository: Path | None = None
+    ) -> None:
+        result = self.run_validator(*args, repository=repository)
+        output = result.stdout + result.stderr
+        self.assertEqual(VALIDATION_FAILURE_EXIT, result.returncode, output)
+        self.assertIn(f"category={category}", output)
 
     def test_single_use_baseline_commit_preserves_the_exact_three_mode_blob_path_entries(self) -> None:
         actual = tuple(
@@ -105,31 +218,84 @@ class TransientArtifactValidatorTests(unittest.TestCase):
         )
         self.assertEqual(EXPECTED_BASELINE_ENTRIES, actual)
 
-    def test_exact_inherited_three_path_migration_baseline_is_the_only_precleanup_allowance(self) -> None:
-        baseline = self.fixture.commit_migration_baseline()
-        self.assert_validator_accepts("--migration-baseline", baseline)
+    def test_only_the_immutable_authorized_baseline_can_enable_precleanup_migration(self) -> None:
+        authorized = AuthorizedRepositoryFixture()
+        try:
+            self.assert_validator_accepts(
+                "--migration-baseline",
+                AMENDMENT_MIGRATION_BASELINE,
+                repository=authorized.root,
+            )
+            alternate = run_git(authorized.root, "rev-parse", "HEAD^").strip()
+            self.assertNotEqual(AMENDMENT_MIGRATION_BASELINE, alternate)
+            self.assert_validator_rejects(
+                "migration_baseline_unauthorized",
+                "--migration-baseline",
+                alternate,
+                repository=authorized.root,
+            )
+        finally:
+            authorized.close()
 
-        additional = self.fixture.root / ".superpowers" / "additional.md"
-        additional.write_text("additional\n", encoding="utf-8")
-        run_git(self.fixture.root, "add", "-f", str(additional.relative_to(self.fixture.root)))
-        self.assert_validator_rejects("--migration-baseline", baseline)
+    def test_authorized_baseline_rejects_wrong_mode_blob_or_path(self) -> None:
+        for mutation in ("mode", "blob", "path"):
+            with self.subTest(mutation=mutation):
+                authorized = AuthorizedRepositoryFixture()
+                try:
+                    counterfeit = authorized.install_counterfeit_baseline(mutation)
+                    self.assertNotEqual(EXPECTED_BASELINE_ENTRIES, counterfeit)
+                    self.assert_validator_rejects(
+                        "migration_baseline_mismatch",
+                        "--migration-baseline",
+                        AMENDMENT_MIGRATION_BASELINE,
+                        repository=authorized.root,
+                    )
+                finally:
+                    authorized.close()
 
-    def test_changed_or_staged_migration_report_is_rejected(self) -> None:
-        baseline = self.fixture.commit_migration_baseline()
-        changed = self.fixture.root / MIGRATION_PATHS[0]
-        changed.write_text("changed report\n", encoding="utf-8")
-        run_git(self.fixture.root, "add", "-f", MIGRATION_PATHS[0])
-        self.assert_validator_rejects("--migration-baseline", baseline)
+    def test_authorized_baseline_rejects_additional_current_index_entry(self) -> None:
+        authorized = AuthorizedRepositoryFixture()
+        try:
+            additional = authorized.root / ".superpowers" / "additional.md"
+            additional.write_text("additional\n", encoding="utf-8")
+            run_git(authorized.root, "add", "-f", ".superpowers/additional.md")
+            self.assert_validator_rejects(
+                "migration_baseline_mismatch",
+                "--migration-baseline",
+                AMENDMENT_MIGRATION_BASELINE,
+                repository=authorized.root,
+            )
+        finally:
+            authorized.close()
+
+    def test_authorized_baseline_rejects_changed_staged_report(self) -> None:
+        authorized = AuthorizedRepositoryFixture()
+        try:
+            changed = authorized.root / MIGRATION_PATHS[0]
+            changed.write_text("changed report\n", encoding="utf-8")
+            run_git(authorized.root, "add", "-f", MIGRATION_PATHS[0])
+            self.assert_validator_rejects(
+                "migration_baseline_mismatch",
+                "--migration-baseline",
+                AMENDMENT_MIGRATION_BASELINE,
+                repository=authorized.root,
+            )
+        finally:
+            authorized.close()
 
     def test_repository_local_scratch_requires_ignore_coverage_and_concrete_reason(self) -> None:
         scratch = ".superpowers/local/notes.md"
         (self.fixture.root / ".gitignore").write_text("", encoding="utf-8")
         self.assert_validator_rejects(
-            "--scratch-path", scratch, "--scratch-reason", "tool requires a repository-local cache"
+            "scratch_ignore_missing",
+            "--scratch-path",
+            scratch,
+            "--scratch-reason",
+            "tool requires a repository-local cache",
         )
 
         (self.fixture.root / ".gitignore").write_text(".superpowers/\n", encoding="utf-8")
-        self.assert_validator_rejects("--scratch-path", scratch)
+        self.assert_validator_rejects("scratch_reason_missing", "--scratch-path", scratch)
 
     def test_ignored_untracked_unstaged_scratch_is_allowed(self) -> None:
         scratch = ".superpowers/local/notes.md"
@@ -141,32 +307,46 @@ class TransientArtifactValidatorTests(unittest.TestCase):
             run_git(self.fixture.root, "check-ignore", "-v", scratch).strip(),
         )
         self.assert_validator_accepts(
-            "--scratch-path", scratch, "--scratch-reason", "tool requires a repository-local cache"
+            "--scratch-path",
+            scratch,
+            "--scratch-reason",
+            "tool requires a repository-local cache",
         )
 
-    def test_tracked_and_candidate_tree_entries_are_rejected_after_cleanup(self) -> None:
+    def test_current_index_entry_is_rejected_without_other_contaminated_surfaces(self) -> None:
         tracked = self.fixture.root / ".superpowers" / "tracked.md"
         tracked.parent.mkdir(parents=True)
         tracked.write_text("tracked\n", encoding="utf-8")
         run_git(self.fixture.root, "add", "-f", ".superpowers/tracked.md")
-        candidate_tree = run_git(self.fixture.root, "write-tree").strip()
-        self.assert_validator_rejects("--treeish", candidate_tree)
+        self.assertEqual("", run_git(self.fixture.root, "ls-tree", "-r", "HEAD", "--", ".superpowers"))
+        self.assert_validator_rejects("index_entry")
+
+    def test_nominated_candidate_tree_entry_is_rejected_with_clean_current_index(self) -> None:
+        candidate_tree = self.fixture.contaminated_tree()
+        self.assertEqual("", run_git(self.fixture.root, "ls-files", "--stage", "--", ".superpowers"))
+        self.assertEqual("", run_git(self.fixture.root, "ls-tree", "-r", "HEAD", "--", ".superpowers"))
+        self.assert_validator_rejects(
+            "candidate_tree_entry", "--candidate-tree", candidate_tree
+        )
+
+    def test_post_cleanup_new_commit_entry_is_rejected_with_clean_index_and_head(self) -> None:
+        new_commit = self.fixture.contaminated_commit()
+        self.assertEqual("", run_git(self.fixture.root, "ls-files", "--stage", "--", ".superpowers"))
+        self.assertEqual("", run_git(self.fixture.root, "ls-tree", "-r", "HEAD", "--", ".superpowers"))
+        self.assert_validator_rejects("new_commit_entry", "--new-commit", new_commit)
+
+    def test_final_tree_entry_is_rejected_with_clean_index_and_head(self) -> None:
+        final_tree = self.fixture.contaminated_tree()
+        self.assertEqual("", run_git(self.fixture.root, "ls-files", "--stage", "--", ".superpowers"))
+        self.assertEqual("", run_git(self.fixture.root, "ls-tree", "-r", "HEAD", "--", ".superpowers"))
+        self.assert_validator_rejects("final_tree_entry", "--final-tree", final_tree)
 
     def test_staged_deletion_and_historical_ancestor_blob_are_allowed(self) -> None:
         baseline = self.fixture.commit_migration_baseline()
         run_git(self.fixture.root, "rm", "--cached", *MIGRATION_PATHS)
-        self.assert_validator_accepts()
+        self.assertEqual("", run_git(self.fixture.root, "ls-files", "--stage", "--", ".superpowers"))
         self.assertTrue(run_git(self.fixture.root, "ls-tree", "-r", baseline, "--", ".superpowers").strip())
-
-    def test_cleanup_commit_reintroduction_is_rejected(self) -> None:
-        self.fixture.commit_migration_baseline()
-        run_git(self.fixture.root, "rm", "--cached", *MIGRATION_PATHS)
-        run_git(self.fixture.root, "commit", "-m", "remove reports from final tree")
-        reintroduced = self.fixture.root / ".superpowers" / "reintroduced.md"
-        reintroduced.write_text("reintroduced\n", encoding="utf-8")
-        run_git(self.fixture.root, "add", "-f", ".superpowers/reintroduced.md")
-        run_git(self.fixture.root, "commit", "-m", "reintroduce transient artifact")
-        self.assert_validator_rejects("--treeish", "HEAD")
+        self.assert_validator_accepts()
 
 
 if __name__ == "__main__":
