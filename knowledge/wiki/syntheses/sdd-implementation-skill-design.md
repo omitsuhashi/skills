@@ -24,6 +24,21 @@ Phase 2 は fresh coordinator verification と final whole-branch review を含�
 
 同仕様のHuman-approved transient-artifact amendmentは、Researchからknowledge closeoutまでのnormal SDD stageにおけるraw handoffをtask / session boundedなrepository外temporary locationへ移すcurrent contractである。POA-5のall-stage migration / fail-closed validator / CI integrationと、POA-6のexact three-report cleanupはindependent task reviewを通過してlandedした。current Git index / final treeは`.superpowers/**` entry zeroであり、必要なlocal copyはroot `.gitignore`のcoverage下でignored / untrackedのまま保持できる。pre-amendment ancestor historyはrewriteしない。POA-7は本書、focused context specification、canonical spec / plan、catalog、append-only logをこのlanded stateへ同期し、lifecycle correction後のfresh scoped re-reviewはprior Important 2件の解消、新規Critical / Importantなしで`ready`となった。POA-8のfresh combined verificationとcanonical whole-branch reviewもbounded fix / scoped re-reviewを経て完了し、本amendmentは`LOCAL_COMPLETE`である。authorized non-force remote branch updateはpending / unpublishedで、merge、release、live installは未承認のままである。
 
+2026-08-14の[[sdd-portable-validation-simplification|portable validation仕様]]と
+[[sdd-portable-validation-simplification-implementation-plan|reviewed implementation plan]]は、
+本設計のvalidation / execution ownership seamのcurrent successorである。reviewed
+Task 1〜4は、explicit target向け三direct-Git gate、root-only strict-zero / canonical
+parity / CI ownership、isolated package closure、thin Superpowers compositionをlandさせ、
+First-Write fail-closed containmentとexact seven-role KIS wiringを保持した。fresh local
+verificationはpackage 139、root scripts 39、First-Write / KIS 29、llm-wiki 21
+testsとarchitecture / context / Skill validatorsを成功させている。
+
+現在はimplementation closeout candidateであり、本設計の既存のhistorical completion
+factは書き換えない。当該portable-validation changeのfinal direct-Git gateとfresh
+whole-branch reviewはknowledge commit後に別のcontroller stepとして行うため、
+`LOCAL_COMPLETE`はまだ宣言しない。remote publication / merge / release / live
+installは未実施かつ未承認である。
+
 ## 調査で確認した前提
 
 Superpowers v6.2.0 では、開発フローの責任が次のように分かれている。

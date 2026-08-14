@@ -1,8 +1,8 @@
 ---
 title: SDD portable validation と責務単純化 実装計画
 date: 2026-08-14
-status: active
-review_state: independently-reviewed
+status: implementation-closeout-candidate
+review_state: task-reviews-complete-final-review-pending
 plan_readiness: ready
 tags:
   - sdd-implementation
@@ -40,9 +40,10 @@ aliases:
 ## Plan Binding
 
 - Repository baseline: 0ed5f358979ae9281fb7dde8fe47647175720ca8
-- Planning worktree: /private/tmp/skills-sdd-portable-validation-simplification
+- Planning worktree: verified task-linked worktree; runtime path is not durable evidence
 - Integration branch: codex/sdd-portable-validation-simplification
-- Current-tree compatibility: compatible
+- Current implementation tip: f29c0fde1ecd006e3f46a64ff0c8dc67d7587302
+- Current-tree compatibility: compatible through reviewed SPV-4
 - Independent review verdict: ready
 - Repository checks: passed
 - Readiness evidence state: current
@@ -50,7 +51,7 @@ aliases:
 - Starting branch: main
 - Starting HEAD SHA: 82dcd32157ff9690ae038f982f3916009e449f80
 - Captured starting status: clean
-- Binding evidence: current `HEAD` は `0ed5f358979ae9281fb7dde8fe47647175720ca8`。Task 1 reviewed implementation `9a4e155` と one-fix-round commit `481d424`、`origin/main` `15152126fe0785bcf789a9ecbfe752b9e368fc4e` の integration merge `4d67bed6d297ba4e9a0f44559d3ca45c9a035976`、approved bounded spec amendment がすべて current HEAD へ reachable であり、remaining execution はこの HEAD から開始する。original checkout は `main` / starting HEAD / clean status を保持している。
+- Binding evidence: Gitからrebound baseline `0ed5f358979ae9281fb7dde8fe47647175720ca8`、Task 1 tip `481d424`、Task 2 tip `42ce4df`、Task 3 tip `07a1e8d`、Task 4 tip `f29c0fd`の到達可能性をcurrent implementation tip上で再導出した。各taskのindependent reviewは修正後にopen findingなしで完了し、original checkoutは`main` / starting HEAD / captured clean statusを保持している。knowledge commit後のfinal direct-Git gateとfresh whole-branch reviewはpendingである。
 
 ## Independent Plan Review Summary
 
@@ -62,6 +63,16 @@ aliases:
 - Decision requests: none
 - Material risks: none
 - Durable finding summary: prior post-origin `ready` verdict はpre-repair bytesのhistorical evidenceである。fresh independent reviewは、root-owned parity replacementを先にGREENにしてからpackage dependencyを除去し、root parity/package semantic/isolated closureを同じSPV-2 commit/review boundaryでGREENにするatomic cutover repairを`ready`と判定した。five-task chain、R-01〜R-15 / AC-01〜AC-14のunique primary ownership、Task 1 completion、Task 2 next、strict-zero/First-Write/KIS preservationは不変で、decision requestとmaterial riskはない。raw review artifact、path、transcriptはdurable planへ複製していない。
+
+## Implementation Progress
+
+| Task | Reviewed result | Current durable state |
+| --- | --- | --- |
+| SPV-1 | `9a4e155..481d424`; scoped re-review clean | explicit target、three direct-Git gates、fresh recomputation、failure taxonomy landed |
+| SPV-2 | `f1f5d96..42ce4df`; scoped re-review clean | root parity GREEN後のpackage cutover、portable fixture、isolated closure landed |
+| SPV-3 | `07a1e8d`; independent review clean | root parity / isolated closure CI wiring landed; strict-zero owner preserved |
+| SPV-4 | `84e3940..f29c0fd`; scoped re-review clean | thin composition、Authority A、First-Write / exact-seven KIS preservation landed |
+| SPV-5 | knowledge closeout candidate | fresh combined verification GREEN; closeout commit、post-commit final gate、whole-branch review pending |
 
 ## Global Constraints
 
@@ -292,10 +303,10 @@ Cycle check: chain は `SPV-1 -> SPV-2 -> SPV-3 -> SPV-4 -> SPV-5` の単方向�
 ## Execution Order
 
 1. SPV-1 complete: direct Git gate contract と synthetic forward tests を `9a4e155` で実装し、one review fix `481d424` 後の scoped rereview は clean。
-2. Execute SPV-2 next: existing package canonical parity coverageを保持したままroot-owned parity replacementをRED→GREENにし、その後だけpackage dependency removal/portable fixture transitionを行い、root parityとisolated package closureをともにGREENにして一つのindependent task reviewを完了する。
-3. Execute SPV-3: SPV-2 reviewed root parity/isolated closure surfacesをconsumeし、current strict-zero/post-policy-history/clean-clone/no-`origin/main` ownerを保ってCI invocation contractだけをRED→GREEN/task reviewする。
-4. Execute SPV-4: generic prose/common guard/authority を deduplicate しつつ First-Write Worktree Gate と exact seven-role KIS wiring を保持し、RED→GREEN/task review を完了する。
-5. Execute SPV-5: durable closeout、fresh combined verification、final whole-branch reviewを完了する。
+2. SPV-2 complete: root-owned parity replacementを先にGREENにし、その後にpackage dependency removal / portable fixture transitionを行い、root parityとisolated package closureを同じreviewed boundaryでGREENにした。
+3. SPV-3 complete: reviewed root parity / isolated closureをcurrent strict-zero / post-policy-history / clean-clone / no-`origin/main` ownerとともにCIへ接続し、independent reviewを完了した。
+4. SPV-4 complete: generic prose / common guard / authorityをdeduplicateし、First-Write Worktree Gateとexact seven-role KIS wiringを保持した上でscoped re-reviewを完了した。
+5. SPV-5 in progress: durable closeoutとfresh combined verificationは完了し、knowledge commit、post-commit final direct-Git gate、controller-dispatched final whole-branch reviewを待つ。
 
 全 task は shared owners と migration cutover orderを持つため sequential execution とする。task内でも一つの public seam、一つの failing behavior、一つの最小修正を順に進め、同一 issue 内の concurrent implementer は使用しない。
 
@@ -342,6 +353,23 @@ Integration owner は各 step 前に actual commit range、changed paths、seman
 - architecture/skill/knowledge/diff checks の fresh result summary。
 - final direct Git gate と whole-branch review の durable verdict summary。
 
+### Implementation closeout candidate evidence
+
+| Coverage | Landed / fresh result |
+| --- | --- |
+| R-01, R-04, R-07 / AC-01, AC-04, AC-07 | reviewed SPV-2 tip `42ce4df`; root parity-first atomic cutover、portable package identity、isolated installed-folder closure |
+| R-02, R-03, R-06, R-11 / AC-02, AC-03, AC-06 | reviewed SPV-1 tip `481d424`; explicit canonical target、three direct-Git gates、synthetic state / invalidation / taxonomy cases |
+| R-05 / AC-05 | reviewed SPV-3 tip `07a1e8d`; root-only parity and strict-zero ownership、`--post-policy-history`、clean-clone / no-`origin/main`、add-then-delete / shallow-history behavior |
+| R-08, R-09, R-10, R-13, R-14, R-15 / AC-08, AC-09, AC-10, AC-12, AC-13, AC-14 | reviewed SPV-4 tip `f29c0fd`; thin composition、one common guard、Authority A、unknown-to-sequential、First-Write fail-closed containment、exact seven-role KIS |
+| R-12 / AC-11 | fresh package 139、root scripts 39、First-Write / KIS 29、llm-wiki 21 tests; architecture / context / warning-free context report / Skill validators GREEN; knowledge/diff/candidate checks run immediately before the closeout commit |
+
+Task 1〜4のreviewed implementationとfresh checksから新規material riskは検出されていない。
+closeout commitとpost-commit final direct-Git gateはこのplanを追加編集せずcontrollerへ
+報告する。final whole-branch reviewはcontrollerがこのknowledge commitとfresh
+combined verification後に一度だけdispatchするためpendingであり、現時点で
+`LOCAL_COMPLETE`を宣言しない。push、PR、merge、release、live installは未実施かつ
+未承認である。
+
 ### Failure owners by acceptance criterion
 
 | Acceptance | Failure owner |
@@ -366,8 +394,8 @@ Integration owner は各 step 前に actual commit range、changed paths、seman
 - Plan readiness disposition: ready
 - Control Return status: complete
 - Implementation Stage entry: allowed
-- Repository-ready disposition: resume with SPV-2, then sequential SPV-3、SPV-4、SPV-5 through `superpowers:subagent-driven-development`, serialized integration I-2〜I-5, then one fresh combined verification and whole-branch review。
-- Controller transition: fresh independent atomic-cutover verdict `ready` を Plan Binding、frontmatter readiness、Plan readiness disposition、Control Return、Implementation Stage entryへ同期済み。prior `ready` reviewはpre-repair bytesのhistorical evidenceに限る。
+- Repository-ready disposition: SPV-1〜SPV-4 reviewed and integrated。SPV-5 durable closeoutとfresh combined verificationはknowledge commit candidateまで完了し、post-commit final direct-Git gateとone fresh whole-branch reviewを待つ。
+- Controller transition: knowledge commit後のfinal direct-Git / root strict-zero gate結果を受け取り、その後にexactly one fresh final reviewerをdispatchする。final review完了前は`LOCAL_COMPLETE`に移行しない。
 - Material decision request: none
 - Material risk: none
 - Remote publication state: not authorized and not required for local readiness

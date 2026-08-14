@@ -8,6 +8,7 @@ approval_snapshot_sha256: 1a8d209ca01e73828043b19c8bfe22d35bd1afa64603add1b7a180
 amended_on: 2026-08-14
 amendment_authority: human-directed-origin-main-incorporation
 amendment_baseline_sha: 4d67bed6d297ba4e9a0f44559d3ca45c9a035976
+implementation_state: closeout-candidate-final-review-pending
 north_star_identity: sdd-portable-validation-simplification#目標@2026-08-14
 tags:
   - sdd-implementation
@@ -137,6 +138,32 @@ capability が存在しない場合、別 runtime 固有機能を推定して代
 | `final-closeout` | 全task commitとcloseout write後、completion verdict直前。検査後のHEAD、index、`.superpowers/**` working-tree state、relevant ignore rule、またはtrusted baseline bindingのmutationで失効する。 | pre-commit probeをcurrent indexへ再実行する。`HEAD^{tree}`を導出し、同treeの`.superpowers/**` entryがzeroであることを確認する。trusted tupleのimmutable `starting_head_sha`をBASELINEとし、BASELINEがcommit objectかつHEADのancestorであることを確認する。`git rev-list BASELINE..HEAD`相当でpost-baseline commit setをGit object graphからfreshに全件導出し、各commit treeの`.superpowers/**` entryがzeroであることを確認する。 | current candidate、HEAD final tree、`BASELINE..HEAD`の全commit treeがzero。ignored・untracked・unstaged・uncommitted local scratchは残ってよく、destructive cleanupを要求しない。 | failure、baseline非ancestor、またはcommit range導出不能はcloseout verdictをblockする。修復mutation後はaffected gateを再実行する。 |
 
 この表だけを generic gate methodology の normative source とする。public `SKILL.md` はdirect Git contractを保持し、prompt / reference / testはgate名と必要inputだけを参照する。exactly-once実行、validator state、証跡cacheを導入せず、relevant mutation後の再実行でfreshnessを保つ。
+
+## Implementation closeout candidate
+
+2026-08-14に、rebound baseline `0ed5f358979ae9281fb7dde8fe47647175720ca8`
+からのserialized implementationを現行branch上で再確認した。Task 1
+`481d424`、Task 2 `42ce4df`、Task 3 `07a1e8d`、Task 4 `f29c0fd`
+はすべてcurrent HEADからreachableで、各taskのindependent reviewは修正後に
+open findingなしで完了している。landed ownershipは次の通りである。
+
+- Task 1: explicit targetと三つのdirect Git gate、fresh recomputation、failure taxonomy。
+- Task 2: root canonical parityを先にGREENにした後のpackage dependency removal、portable fixture、isolated installed-folder closure。
+- Task 3: root parityとisolated closureのCI接続、current strict-zero / `--post-policy-history` / clean-clone / no-`origin/main` contractの維持。
+- Task 4: thin composition、single common runtime guard、Authority A、unknown-to-sequential、First-Write fail-closed containment、exact seven-role KIS wiring。
+
+closeout candidate作成前のfresh combined verificationは、package 139 tests、root
+scripts 39 tests、First-Write / fail-closed / exact-seven KIS 29 tests、llm-wiki
+21 tests、architecture / context / warning-free context report / Skill validatorを成功させた。
+scripts suiteはroot canonical parity、current strict-zero regression、CI invocation、reachable
+clean clone、`origin/main` ref不在、post-policy add-then-delete、shallow historyの
+fail-closed casesを含む。
+
+reviewed implementationとfresh local checksから新しいmaterial riskは検出されていない。
+ただし、本更新は`LOCAL_COMPLETE`を宣言しない。knowledge commit後の
+final direct-Git gateと、controllerが一度だけdispatchするfresh whole-branch reviewは
+pendingである。push、PR、merge、release、live installを含むremote actionは
+未実施かつ未承認である。
 
 ## Failure handling
 
