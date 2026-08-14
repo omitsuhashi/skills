@@ -139,7 +139,7 @@ capability が存在しない場合、別 runtime 固有機能を推定して代
 
 この表だけを generic gate methodology の normative source とする。public `SKILL.md` はdirect Git contractを保持し、prompt / reference / testはgate名と必要inputだけを参照する。exactly-once実行、validator state、証跡cacheを導入せず、relevant mutation後の再実行でfreshnessを保つ。
 
-## Implementation closeout candidate
+## Implementation closeout — final review pending
 
 2026-08-14に、rebound baseline `0ed5f358979ae9281fb7dde8fe47647175720ca8`
 からのserialized implementationを現行branch上で再確認した。Task 1
@@ -160,9 +160,11 @@ clean clone、`origin/main` ref不在、post-policy add-then-delete、shallow hi
 fail-closed casesを含む。
 
 reviewed implementationとfresh local checksから新しいmaterial riskは検出されていない。
-ただし、本更新は`LOCAL_COMPLETE`を宣言しない。knowledge commit後の
-final direct-Git gateと、controllerが一度だけdispatchするfresh whole-branch reviewは
-pendingである。push、PR、merge、release、live installを含むremote actionは
+knowledge synchronization、fresh combined verification、knowledge closeout / review-correction
+commits `41c2a63..458a52e`、post-commit final direct-Git / root strict-zero gatesは
+完了した。pendingなのはcontrollerが一度だけdispatchするfresh
+whole-branch reviewとそのverdictに依存するstatus transitionだけであり、
+`LOCAL_COMPLETE`はまだ宣言しない。push、PR、merge、release、live installを含むremote actionは
 未実施かつ未承認である。
 
 ## Failure handling

@@ -33,10 +33,12 @@ First-Write fail-closed containmentとexact seven-role KIS wiringを保持した
 verificationはpackage 139、root scripts 39、First-Write / KIS 29、llm-wiki 21
 testsとarchitecture / context / Skill validatorsを成功させている。
 
-現在はimplementation closeout candidateであり、本設計の既存のhistorical completion
-factは書き換えない。当該portable-validation changeのfinal direct-Git gateとfresh
-whole-branch reviewはknowledge commit後に別のcontroller stepとして行うため、
-`LOCAL_COMPLETE`はまだ宣言しない。remote publication / merge / release / live
+現在はknowledge closeout / review-correction commits `41c2a63..458a52e`、fresh
+combined verification、post-commit final direct-Git / root strict-zero gatesが完了し、
+final whole-branch reviewだけがpendingである。本設計の既存のhistorical
+completion factは書き換えない。controllerのexactly-once final reviewとその
+verdictに依存するstatus transitionは別stepとして保持し、`LOCAL_COMPLETE`は
+まだ宣言しない。remote publication / merge / release / live
 installは未実施かつ未承認である。
 
 ## 調査で確認した前提

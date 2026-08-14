@@ -2442,3 +2442,8 @@ append-only で使います。すべての entry は予測しやすい header �
 
 - Review head `41c2a6359de3e7710fa1cbe13879114ac747957d` のTask 5 reviewで、[[wiki/syntheses/sdd-portable-validation-simplification-implementation-plan|current plan]]にR-11 primary-owner evidenceの不一致とpre-implementation statusの残存が確認された。R-11をSPV-2のsource-independent installed-folder / synthetic-repository evidenceへ戻し、SPV-2〜SPV-4のtask checklistとI-2〜I-4をreviewed completionへ同期した。I-5はfinal whole-branch reviewだけをpendingとして保持する。
 - [[index|active catalog]]はすでにTask 1〜4 landed / final review pendingを一件だけ示し、canonical identityとsummaryにdriftがないため変更していない。approved scope、authority、historical log、source、tests、`knowledge/raw/**`は変更していない。`LOCAL_COMPLETE`は宣言せず、push、PR、merge、release、live installは未実施かつ未承認のままである。
+
+## [2026-08-14] review-correction | SDD portable validation final-review boundary
+
+- Review head `458a52e0f47d09964758b326e2749ec4656e0782` のTask 5 re-reviewで、[[wiki/syntheses/sdd-portable-validation-simplification-implementation-plan|current plan]]にimplementation-only tip `f29c0fd`をcurrent branch tipと扱う表現、Task 5のcompleted closeout workをuncheckedのまま残す表現、knowledge commit / post-commit gateをpendingとする表現が確認された。`f29c0fd`はreviewed implementation-only provenanceとして保持し、current knowledge-closeout tipを`458a52e`としてGitから再導出した。
+- Task 5 knowledge synchronization、fresh combined verification、commits `41c2a63..458a52e`、post-commit final direct-Git / root strict-zero gatesをcompletedへ同期した。[[index|active catalog]]の既存recordも同じcurrent stateへ一件だけ更新した。pendingなのはcontroller-dispatched fresh whole-branch reviewとそのverdictに依存するstatus transitionだけであり、`LOCAL_COMPLETE`は宣言しない。approved scope / authority、historical log、source / tests、remote stateは変更していない。
