@@ -22,6 +22,7 @@ TRANSIENT_VALIDATOR = REPO_ROOT / "scripts" / "validate_sdd_transient_artifacts.
 MIGRATION_MARKER = "scripts/sdd-transient-artifact-migration.json"
 AUTHORIZED_MARKER_BLOB = "ef384328ad21f49f4c2e4834cef3d401c350d9a8"
 AUTHORIZED_SQUASH_POLICY_ROOT = "82dcd32157ff9690ae038f982f3916009e449f80"
+AUTHORIZED_PRE_POLICY_TIP = "f54c6f082ce8a1eb4dd2f8d46d2171443d143817"
 AUTHORIZED_MIGRATION_ENTRIES = (
     (
         "b50ed8e434725cb70bc0f1d2c6daa1a053e0ccc1",
@@ -290,16 +291,19 @@ class SkillCiWorkflowTests(unittest.TestCase):
             run_git(repository, "add", "scripts/validate_sdd_transient_artifacts.py")
             run_git(repository, "commit", "-m", "update strict policy on main")
             updated_main = run_git(repository, "rev-parse", "HEAD").strip()
-            pre_policy_task = run_git(
-                REPO_ROOT, "rev-parse", "523e90969d0c15499c74f0c1b8c897c3607bd53b^1"
-            ).strip()
+            run_git(
+                repository,
+                "update-ref",
+                "refs/remotes/origin/main",
+                updated_main,
+            )
             merge_tree = run_git(repository, "rev-parse", f"{updated_main}^{{tree}}").strip()
             integration = run_git(
                 repository,
                 "commit-tree",
                 merge_tree,
                 "-p",
-                pre_policy_task,
+                AUTHORIZED_PRE_POLICY_TIP,
                 "-p",
                 updated_main,
                 "-m",
@@ -314,6 +318,154 @@ class SkillCiWorkflowTests(unittest.TestCase):
                 text=True,
             )
             self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+    def test_transient_validation_step_rejects_non_origin_main_policy_import(self) -> None:
+        """Catches accepting an arbitrary descendant of the authorized root."""
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory) / "arbitrary-policy-integration"
+            subprocess.run(
+                [
+                    "git",
+                    "clone",
+                    "--quiet",
+                    "--no-hardlinks",
+                    str(REPO_ROOT),
+                    str(repository),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            run_git(repository, "config", "user.name", "Test User")
+            run_git(repository, "config", "user.email", "test@example.invalid")
+            run_git(repository, "checkout", "--detach", AUTHORIZED_SQUASH_POLICY_ROOT)
+            shutil.copyfile(
+                TRANSIENT_VALIDATOR,
+                repository / "scripts" / TRANSIENT_VALIDATOR.name,
+            )
+            run_git(repository, "add", "scripts/validate_sdd_transient_artifacts.py")
+            run_git(repository, "commit", "-m", "arbitrary policy descendant")
+            arbitrary_parent = run_git(repository, "rev-parse", "HEAD").strip()
+            self.assertNotEqual(
+                arbitrary_parent,
+                run_git(repository, "rev-parse", "refs/remotes/origin/main").strip(),
+            )
+            merge_tree = run_git(
+                repository, "rev-parse", f"{arbitrary_parent}^{{tree}}"
+            ).strip()
+            integration = run_git(
+                repository,
+                "commit-tree",
+                merge_tree,
+                "-p",
+                AUTHORIZED_PRE_POLICY_TIP,
+                "-p",
+                arbitrary_parent,
+                "-m",
+                "integrate arbitrary policy descendant",
+            ).strip()
+            run_git(repository, "checkout", "--detach", integration)
+            result = subprocess.run(
+                ["bash", "-c", transient_validation_step()],
+                cwd=repository,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertNotEqual(0, result.returncode, result.stdout + result.stderr)
+
+    def test_transient_validation_step_rejects_pre_root_side_add_then_delete(self) -> None:
+        """Catches ancestry-path filtering that hides a reachable side history."""
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory) / "pre-root-side-history"
+            subprocess.run(
+                [
+                    "git",
+                    "clone",
+                    "--quiet",
+                    "--no-hardlinks",
+                    str(REPO_ROOT),
+                    str(repository),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            run_git(repository, "config", "user.name", "Test User")
+            run_git(repository, "config", "user.email", "test@example.invalid")
+            run_git(repository, "checkout", "--detach", AUTHORIZED_PRE_POLICY_TIP)
+            transient = repository / ".superpowers" / "smuggled.md"
+            transient.parent.mkdir(parents=True, exist_ok=True)
+            transient.write_text(
+                "must not be hidden by ancestry filtering\n", encoding="utf-8"
+            )
+            run_git(repository, "add", "-f", ".superpowers/smuggled.md")
+            run_git(repository, "commit", "-m", "add hidden transient artifact")
+            added = run_git(repository, "rev-parse", "HEAD").strip()
+            run_git(repository, "rm", ".superpowers/smuggled.md")
+            run_git(repository, "commit", "-m", "delete hidden transient artifact")
+            clean_side_tip = run_git(repository, "rev-parse", "HEAD").strip()
+            self.assertTrue(
+                run_git(
+                    repository, "ls-tree", "-r", added, "--", ".superpowers"
+                ).strip()
+            )
+            self.assertEqual(
+                "",
+                run_git(
+                    repository,
+                    "ls-tree",
+                    "-r",
+                    clean_side_tip,
+                    "--",
+                    ".superpowers",
+                ),
+            )
+            run_git(repository, "checkout", "--detach", AUTHORIZED_SQUASH_POLICY_ROOT)
+            shutil.copyfile(
+                TRANSIENT_VALIDATOR,
+                repository / "scripts" / TRANSIENT_VALIDATOR.name,
+            )
+            run_git(repository, "add", "scripts/validate_sdd_transient_artifacts.py")
+            clean_tree = run_git(repository, "write-tree").strip()
+            updated_main = run_git(
+                repository,
+                "commit-tree",
+                clean_tree,
+                "-p",
+                AUTHORIZED_SQUASH_POLICY_ROOT,
+                "-p",
+                clean_side_tip,
+                "-m",
+                "merge clean side tip into main",
+            ).strip()
+            run_git(
+                repository,
+                "update-ref",
+                "refs/remotes/origin/main",
+                updated_main,
+            )
+            integration = run_git(
+                repository,
+                "commit-tree",
+                clean_tree,
+                "-p",
+                AUTHORIZED_PRE_POLICY_TIP,
+                "-p",
+                updated_main,
+                "-m",
+                "integrate main after hidden side history",
+            ).strip()
+            run_git(repository, "checkout", "--detach", integration)
+            result = subprocess.run(
+                ["bash", "-c", transient_validation_step()],
+                cwd=repository,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertNotEqual(0, result.returncode, result.stdout + result.stderr)
+            self.assertIn("category=new_commit_entry", result.stdout + result.stderr)
 
     def test_transient_validation_step_rejects_add_then_delete_commit_history(self) -> None:
         fixture = CiHistoryFixture()

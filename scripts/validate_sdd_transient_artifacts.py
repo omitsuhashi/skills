@@ -21,6 +21,8 @@ AUTHORIZED_MARKER_INTRODUCTION = "91cbd5aec3d062f534937953ee8241f415d8db33"
 AUTHORIZED_MARKER_BLOB = "ef384328ad21f49f4c2e4834cef3d401c350d9a8"
 AUTHORIZED_STRICT_POLICY_BLOB = "7ee1a07f030aaa77edcb0051a2d656ec07162ab3"
 AUTHORIZED_SQUASH_POLICY_ROOT = "82dcd32157ff9690ae038f982f3916009e449f80"
+AUTHORIZED_PRE_POLICY_TIP = "f54c6f082ce8a1eb4dd2f8d46d2171443d143817"
+ORIGIN_MAIN_REF = "refs/remotes/origin/main"
 AUTHORIZED_MIGRATION_ENTRIES = (
     "100644 blob b50ed8e434725cb70bc0f1d2c6daa1a053e0ccc1\t"
     ".superpowers/sdd/sdd-plan-ownership-alignment-implementation-plan/"
@@ -260,6 +262,42 @@ def is_ancestor(repository: Path, ancestor: str, descendant: str) -> bool:
     raise ValidationFailure("history_unavailable", detail)
 
 
+def required_ref_tip(repository: Path, ref: str) -> str:
+    result = subprocess.run(
+        ["git", "rev-parse", "--verify", f"{ref}^{{commit}}"],
+        cwd=str(repository),
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise ValidationFailure(
+            "history_unavailable", f"required cleanup authority ref is unavailable: {ref}"
+        )
+    return result.stdout.strip()
+
+
+def commit_exists(repository: Path, commit: str) -> bool:
+    result = subprocess.run(
+        ["git", "cat-file", "-e", f"{commit}^{{commit}}"],
+        cwd=str(repository),
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    return result.returncode == 0
+
+
+def revision_range(repository: Path, start: str, end: str) -> Tuple[str, ...]:
+    return tuple(
+        line
+        for line in run_git(
+            repository, "rev-list", "--reverse", f"{start}..{end}"
+        ).splitlines()
+        if line
+    )
+
+
 def policy_history_root(repository: Path, commit: str) -> Optional[str]:
     parents = commit_parents(repository, commit)
     if (
@@ -280,6 +318,13 @@ def policy_history_root(repository: Path, commit: str) -> Optional[str]:
     if len(parents) != 2:
         return None
     imported_parent = parents[1]
+    if parents[0] != AUTHORIZED_PRE_POLICY_TIP:
+        return None
+    if imported_parent != required_ref_tip(repository, ORIGIN_MAIN_REF):
+        raise ValidationFailure(
+            "cleanup_boundary_invalid",
+            f"integration parent does not match {ORIGIN_MAIN_REF}",
+        )
     if not is_ancestor(repository, AUTHORIZED_SQUASH_POLICY_ROOT, imported_parent):
         return None
     if (
@@ -356,17 +401,18 @@ def post_cleanup_commits(repository: Path) -> Tuple[str, ...]:
         raise ValidationFailure(
             "history_unavailable", "cleanup boundary parent is unavailable"
         )
-    commits = tuple(
-        line
-        for line in run_git(
-            repository,
-            "rev-list",
-            "--reverse",
-            "--ancestry-path",
-            f"{parents[0]}..HEAD",
-        ).splitlines()
-        if line
-    )
+    commits = revision_range(repository, parents[0], "HEAD")
+    if (
+        history_root == AUTHORIZED_SQUASH_POLICY_ROOT
+        and commit_exists(repository, AUTHORIZED_PRE_POLICY_TIP)
+        and is_ancestor(repository, AUTHORIZED_PRE_POLICY_TIP, "HEAD")
+    ):
+        authorized_pre_policy_history = set(
+            revision_range(repository, parents[0], AUTHORIZED_PRE_POLICY_TIP)
+        )
+        commits = tuple(
+            commit for commit in commits if commit not in authorized_pre_policy_history
+        )
     if boundary not in commits:
         raise ValidationFailure(
             "cleanup_boundary_invalid",
