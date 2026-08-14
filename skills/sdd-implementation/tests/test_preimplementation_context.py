@@ -383,17 +383,38 @@ class PreImplementationContextContractTests(unittest.TestCase):
         canonical_path = "keep-implementation-simple/SKILL.md"
         full_read_instruction = "read it fully before work"
         role_owners = {
-            "Spec Synthesizer": (self.planning_text, self.synthesizer_text),
-            "Spec Reviewer": (self.planning_text, self.reviewer_text),
-            "Plan Author": (self.planning_text,),
-            "Plan Reviewer": (self.planning_text, self.plan_reviewer_text),
-            "Implementer": (self.skill_text,),
-            "Task Reviewer": (self.skill_text,),
-            "Final Reviewer": (self.skill_text,),
+            "Spec Synthesizer": (
+                (PLANNING_CONTEXT, self.planning_text.split("## Spec Synthesis And Review", 1)[1].split("## Plan Authoring", 1)[0]),
+                (SYNTHESIZER_PROMPT, self.synthesizer_text),
+            ),
+            "Spec Reviewer": (
+                (PLANNING_CONTEXT, self.planning_text.split("## Spec Synthesis And Review", 1)[1].split("## Plan Authoring", 1)[0]),
+                (REVIEWER_PROMPT, self.reviewer_text),
+            ),
+            "Plan Author": (
+                (PLANNING_CONTEXT, self.planning_text.split("## Plan Authoring", 1)[1].split("## Failure Boundary", 1)[0]),
+            ),
+            "Plan Reviewer": (
+                (PLANNING_CONTEXT, self.planning_text.split("## Plan Authoring", 1)[1].split("## Failure Boundary", 1)[0]),
+                (PLAN_REVIEWER_PROMPT, self.plan_reviewer_text),
+            ),
+            "Implementer": (
+                (SKILL, self.skill_text.split("## Implementation Stage", 1)[1].split("## Epic Parallel Issue Adapter", 1)[0]),
+            ),
+            "Task Reviewer": (
+                (SKILL, self.skill_text.split("## Implementation Stage", 1)[1].split("## Epic Parallel Issue Adapter", 1)[0]),
+            ),
+            "Final Reviewer": (
+                (SKILL, self.skill_text.split("## Final Whole-Branch Review", 1)[1]),
+            ),
         }
         excluded_roles = {"Research Worker", "knowledge closeout worker"}
 
         self.assertIn("Check `keep-implementation-simple`", self.skill_text)
+        self.assertIn(
+            "`BLOCKED: missing keep-implementation-simple dependency`",
+            self.skill_text,
+        )
         self.assertIn(canonical_path, self.skill_text)
         self.assertIn(full_read_instruction, self.skill_text)
         self.assertEqual(set(role_owners).intersection(excluded_roles), set())
@@ -405,7 +426,9 @@ class PreImplementationContextContractTests(unittest.TestCase):
         self.assertNotIn(canonical_path, closeout)
         for role, owner_texts in role_owners.items():
             with self.subTest(role=role):
-                for owner_text in owner_texts:
+                for owner_path, owner_text in owner_texts:
+                    self.assertTrue(owner_path.is_file())
+                    self.assertIn(role, owner_text)
                     self.assertIn(canonical_path, owner_text)
                     self.assertIn(full_read_instruction, " ".join(owner_text.split()))
 

@@ -56,6 +56,7 @@ If a required family is missing, return the matching result:
 - `BLOCKED: missing Superpowers lifecycle dependency`
 - `BLOCKED: missing grill-with-docs dependency`
 - `BLOCKED: missing llm-wiki dependency`
+- `BLOCKED: missing keep-implementation-simple dependency`
 
 ## Route By Input Maturity
 
