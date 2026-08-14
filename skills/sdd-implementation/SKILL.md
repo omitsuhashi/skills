@@ -206,20 +206,11 @@ commit the scratch.
 
 Invoke `scripts/validate_sdd_transient_artifacts.py` for every repository validation gate.
 Validate the current Git index and staging area independently. Validate each
-nominated candidate tree, post-cleanup new commit, and final tree independently.
-Allow a staged deletion only when the candidate tree has no `.superpowers/**`
-entry. Do not reject a pre-amendment historical ancestor blob without a current
-index or nominated-tree violation.
-Treat the tracked migration manifest as candidate-tree authority only for the
-exact f07aebc three-report baseline. Accept that authority only when the planned
-pre-marker parent and authorized introduction are ancestors of HEAD, the
-introduction is the sole marker add, no marker deletion exists in that ancestry,
-and the current HEAD marker mode, blob, and path match exactly. A divergent or
-pre-marker HEAD cannot gain authority by staging the manifest. When the manifest
-is absent, require zero `.superpowers/**` entries and reject exact-baseline
-reintroduction. Stage the manifest deletion and all three report deletions
-together; the resulting clean candidate tree uses the strict zero-entry path
-without an exception flag.
+nominated candidate tree, post-boundary new commit, and final tree independently.
+Require zero `.superpowers/**` entries in every validated surface. Do not reject
+a pre-amendment historical ancestor blob without a current index or nominated-tree
+violation. The completed migration marker is historical evidence, not current
+validation authority.
 
 If `scripts/validate_sdd_transient_artifacts.py` is unavailable, returns nonzero,
 or detects any `.superpowers/**` violation, fail and abort the repository gate;

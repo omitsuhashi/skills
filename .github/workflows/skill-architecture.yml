@@ -51,7 +51,7 @@ jobs:
           set -euo pipefail
           candidate_tree="$(git write-tree)"
           PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 scripts/validate_sdd_transient_artifacts.py \
-            --post-cleanup-history \
+            --post-policy-history \
             --candidate-tree "$candidate_tree" \
             --final-tree HEAD
 

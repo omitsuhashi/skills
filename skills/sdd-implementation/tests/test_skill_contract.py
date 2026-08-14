@@ -131,22 +131,13 @@ class SddImplementationSkillContractTests(unittest.TestCase):
             "Invoke `scripts/validate_sdd_transient_artifacts.py` for every "
             "repository validation gate.",
             "Validate the current Git index and staging area independently.",
-            "Validate each nominated candidate tree, post-cleanup new commit, "
+            "Validate each nominated candidate tree, post-boundary new commit, "
             "and final tree independently.",
-            "Allow a staged deletion only when the candidate tree has no "
-            "`.superpowers/**` entry.",
+            "Require zero `.superpowers/**` entries in every validated surface.",
             "Do not reject a pre-amendment historical ancestor blob without a "
             "current index or nominated-tree violation.",
-            "Treat the tracked migration manifest as candidate-tree authority "
-            "only for the exact f07aebc three-report baseline.",
-            "Accept that authority only when the planned pre-marker parent and "
-            "authorized introduction are ancestors of HEAD, the introduction "
-            "is the sole marker add, no marker deletion exists in that ancestry, "
-            "and the current HEAD marker mode, blob, and path match exactly.",
-            "A divergent or pre-marker HEAD cannot gain authority by staging the "
-            "manifest.",
-            "When the manifest is absent, require zero `.superpowers/**` entries "
-            "and reject exact-baseline reintroduction.",
+            "The completed migration marker is historical evidence, not current "
+            "validation authority.",
         )
         normalized = " ".join(self.skill_text.split())
         for statement in expected_contract:
