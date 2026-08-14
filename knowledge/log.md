@@ -2290,3 +2290,9 @@ append-only で使います。すべての entry は予測しやすい header �
 - approved contractはstandalone / bundled generic validatorを追加せず、explicit targetへ三つのdirect Git gateを適用する。immutable `starting_head_sha..HEAD`の全commit treeをfinal gateでfresh検査し、ignored local scratchとstaged deletionを許容する。このrepository固有のmigration/history validator、regression tests、CI invocationはroot-owned surfaceとして維持する。
 - [[index|durable catalog]]を同じapprovalとsupersession stateへ同期した。parallel issue eligibilityはagent / repository-owned、unknownなdependency / conflictはsequential fallback、Human authorityはmaterial Written Spec changeと別途承認が必要なremote actionに保持する。
 - Plan Stage、implementation、push、PR、merge、release、live installはこのapproval eventでは未実施である。
+
+## [2026-08-14] plan-gate-ready | SDD portable validation と責務単純化
+
+- Fresh Plan Authorは、Human-approved [[wiki/syntheses/sdd-portable-validation-simplification|Written Spec]]を[[wiki/syntheses/sdd-portable-validation-simplification-implementation-plan|5 taskの実装計画]]へ変換した。planはapproved snapshot `1a8d209ca01e73828043b19c8bfe22d35bd1afa64603add1b7a180a20487285c`、repository baseline `0eb5d97717d644c95ad2e52c9721c6e8c29391ef`、integration branch `codex/sdd-portable-validation-simplification`へbindingされている。
+- Fresh independent Plan Reviewは`ready` / `ready`、decision request `none`、material risk `none`である。R-01〜R-13とAC-01〜AC-12の一意なprimary ownership、SPV-1〜SPV-5のacyclic dependencyとserialized integration、current-tree buildability、root migration/history ownerの維持、prohibited bodyと追加validator/adapter/state/protocolの不在を確認した。raw review artifactとtranscriptはdurable knowledgeへ複製していない。
+- [[index|durable catalog]]へrepository-ready plan entryを1件追加した。Implementation Stage entryはallowedだが、このeventではimplementation、push、PR、merge、release、live install、その他のremote writeを実施していない。
