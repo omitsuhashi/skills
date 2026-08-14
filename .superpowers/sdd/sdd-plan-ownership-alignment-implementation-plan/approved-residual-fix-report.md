@@ -155,3 +155,54 @@ The required combined gate was run once after the complete round-1 behavioral/du
 - Human-only North Star / Written Spec approval, agent-owned plan readiness/execution, and separate remote authorization remain unchanged.
 - No remote publication or live mutation was performed.
 - Open material concern within round-1 scope: none identified by the implemented regressions and fresh verification.
+
+## Approved Residual Fix Loop Round 2
+
+### Status And Commit
+
+- Result: `ROUND_2_FIX_COMPLETE`.
+- Independent re-review findings addressed: exactly 2 Important findings.
+- Scoped fix commit: `adf2038` (`fix: close SDD validator round two gaps`).
+
+### All-Section Singleton Validation
+
+The plan validator no longer obtains singleton authority/readiness data from only the first matching section. It collects every matching `Approved North Star Identity`, `Approved Written Spec Identity`, `Plan Binding`, and `Readiness Result` section, requires exactly one section, then validates all field declarations within that collected content.
+
+The new adversarial cases reject:
+
+- an empty `Repository checks` declaration;
+- a second `Plan Binding` section containing `incompatible`, `issues_found`, `failed`, and `stale` evidence;
+- a second `Readiness Result` section containing `issues_found`, `blocked`, and forbidden entry.
+
+This preserves the exact singleton-value checks from round 1 while closing the duplicate-section first-match bypass.
+
+### Remaining Structural Bodies
+
+The Python docstring detector now permits blank lines between the closing docstring and the indented executable statement before recognizing the production body. The one-line shell-if detector now recognizes a non-empty command sequence through the final `; fi`, including multiple commands separated by internal semicolons.
+
+Both checks remain anchored to complete language structures. Existing narrative controls—including the `def build_plan(spec): returns ...` interface prose—remain accepted.
+
+### TDD And Verification Evidence
+
+RED ran two new behavioral tests plus the existing prose control. Four subcases failed for the intended gaps: duplicate `Plan Binding`, duplicate `Readiness Result`, blank-line docstring body, and multi-command inline shell-if. The empty-field case and prose control already passed, proving the existing boundary rather than inventing a new expectation.
+
+GREEN results:
+
+- targeted representative/canonical/adversarial group: 5 tests passed;
+- final focused plan/public contract suite: 52 tests passed, 0 failures, 0 errors;
+- full SDD implementation suite: 80 tests passed, 0 failures, 0 errors;
+- repository script suite: 19 tests passed;
+- LLM Wiki suite: 21 tests passed;
+- skill architecture and context validators: exit 0;
+- context report: 1 skill, 12 operations, warnings `[]`;
+- skill-creator validator: exit 0, `Skill is valid!`;
+- working and staged whitespace gates: exit 0.
+
+The required combined gate was run once after the complete round-2 behavioral/durable set. Python commands used isolated `/private/tmp/sdd-poa-round2-*` bytecode cache roots.
+
+### Boundaries And Concerns
+
+- Only the validator/tests, Plan Contract Overlay, and one append-only round-2 log event changed.
+- Approved North Star / Written Spec authority, agent-owned plan readiness/execution, separate remote authorization, and the prior authority-evidence correction remain unchanged.
+- No remote publication or live mutation was performed.
+- Open material concern within round-2 scope: none identified by the regression set and fresh verification.
