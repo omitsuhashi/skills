@@ -10,7 +10,6 @@ sys.path.insert(0, str(SKILL_DIR))
 
 from tests.harnesses.fail_closed_scenario import (  # noqa: E402
     ControlReturn,
-    ScopedWriter,
     run_repository_change,
 )
 
@@ -114,20 +113,22 @@ class NativeWorktreeContractTests(unittest.TestCase):
                 )
                 return failed
 
-            def writer(capability: ScopedWriter) -> tuple[Path, ...]:
-                report = failed / ".superpowers/research/failed/report.md"
-                return (capability.write(report, b"unexpected fallback\n"),)
-
             result = run_repository_change(
                 original=original,
                 entry_skill="sdd-implementation",
                 task_worktree=failed,
                 cwd=failed,
                 writable_paths=(failed / ".superpowers/research/failed/report.md",),
+                write_plan=(
+                    (
+                        failed / ".superpowers/research/failed/report.md",
+                        b"unexpected fallback\n",
+                    ),
+                ),
+                output_paths=(failed / ".superpowers/research/failed/report.md",),
                 allocator=colliding_allocator,
                 downstream_command=None,
                 command_runner=lambda command: 0,
-                writer=writer,
             )
             self.assertEqual(
                 ControlReturn("blocked", "none", "none", "worktree allocation failed"),

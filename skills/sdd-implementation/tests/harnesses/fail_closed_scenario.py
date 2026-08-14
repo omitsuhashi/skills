@@ -136,27 +136,57 @@ def _write_binding_is_proven(
 
 
 class ScopedWriter:
-    """The only filesystem write capability exposed to a scenario writer."""
+    """Gate-owned executor for a fully validated data-only write plan."""
 
     def __init__(self, root: Path, writable_paths: tuple[Path, ...]) -> None:
         self._root = root.resolve(strict=True)
         self._allowed = frozenset(
             path.resolve(strict=False) for path in writable_paths
         )
-        self._outputs: list[Path] = []
-
-    def write(self, path: Path, content: bytes) -> Path:
-        output = path.resolve(strict=False)
-        if not _is_contained(self._root, output) or output not in self._allowed:
+    def execute(
+        self,
+        write_plan: tuple[tuple[Path, bytes], ...],
+    ) -> tuple[Path, ...]:
+        normalized = tuple(
+            (path.resolve(strict=False), content) for path, content in write_plan
+        )
+        if any(
+            not _is_contained(self._root, path) or path not in self._allowed
+            for path, _content in normalized
+        ):
             raise WriteDenied("writer output binding not proven")
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_bytes(content)
-        self._outputs.append(output)
-        return output
+        for output, content in normalized:
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_bytes(content)
+        return tuple(path for path, _content in normalized)
 
-    @property
-    def outputs(self) -> tuple[Path, ...]:
-        return tuple(self._outputs)
+
+def _validated_write_plan(
+    *,
+    planning: Path,
+    writable_paths: tuple[Path, ...],
+    write_plan: tuple[tuple[Path, bytes], ...],
+    output_paths: tuple[Path, ...],
+) -> Optional[tuple[tuple[Path, bytes], ...]]:
+    try:
+        allowed = {path.resolve(strict=False) for path in writable_paths}
+        normalized = tuple(
+            (path.resolve(strict=False), content) for path, content in write_plan
+        )
+        outputs = tuple(path.resolve(strict=False) for path in output_paths)
+        targets = tuple(path for path, _content in normalized)
+        if not normalized or outputs != targets:
+            return None
+        if any(
+            not isinstance(content, bytes)
+            or not _is_contained(planning, path)
+            or path not in allowed
+            for path, content in normalized
+        ):
+            return None
+        return normalized
+    except (OSError, RuntimeError, TypeError, ValueError):
+        return None
 
 
 def run_repository_change(
@@ -166,10 +196,11 @@ def run_repository_change(
     task_worktree: Path,
     cwd: Path,
     writable_paths: tuple[Path, ...],
+    write_plan: Optional[tuple[tuple[Path, bytes], ...]],
+    output_paths: tuple[Path, ...],
     allocator: Callable[[], Path],
     downstream_command: Optional[tuple[str, ...]],
     command_runner: Callable[[tuple[str, ...]], int],
-    writer: Optional[Callable[[ScopedWriter], tuple[Path, ...]]] = None,
 ) -> ScenarioResult:
     before = fingerprint_repository(original)
     attempted = (downstream_command,) if downstream_command is not None else ()
@@ -212,8 +243,17 @@ def run_repository_change(
     ):
         return blocked("write binding not proven")
 
-    if writer is None:
-        return blocked("writer capability not bound")
+    if write_plan is None:
+        return blocked("writer plan not bound")
+
+    validated_plan = _validated_write_plan(
+        planning=planning,
+        writable_paths=writable_paths,
+        write_plan=write_plan,
+        output_paths=output_paths,
+    )
+    if validated_plan is None:
+        return blocked("writer output binding not proven")
 
     if downstream_command is not None:
         return blocked("downstream incompatible with SDD containment")
@@ -221,13 +261,13 @@ def run_repository_change(
     scoped_writer = ScopedWriter(planning, writable_paths)
     writer_invocations += 1
     try:
-        outputs = tuple(path.resolve(strict=False) for path in writer(scoped_writer))
+        outputs = scoped_writer.execute(validated_plan)
     except WriteDenied:
         return blocked("writer output binding not proven")
     after = fingerprint_repository(original)
     if after != before:
         return blocked("original checkout preservation not proven")
-    if outputs != scoped_writer.outputs:
+    if outputs != tuple(path.resolve(strict=False) for path in output_paths):
         return blocked("writer output binding not proven")
     return ScenarioResult(
         ControlReturn("complete", "none", "none", "none"),
