@@ -2325,3 +2325,7 @@ append-only で使います。すべての entry は予測しやすい header �
 ## [2026-08-14] independent-plan-re-review | Keep Implementation Simple V2
 
 - Independent re-reviewは[[wiki/syntheses/keep-implementation-simple-plan|`KIS-PLAN-2026-08-14-V2`]]を`ready`と判定し、decision requestとmaterial riskはない。plan readinessは`ready`、Control Returnは`complete`、local Implementation Stage entryは`allowed`へ同期した。[[index|durable catalog]]も同じcurrent lifecycleへ更新し、実装、remote write、push、PR、merge、release、live installは実施または承認していない。
+
+## [2026-08-14] readiness-correction | Keep Implementation Simple V2
+
+- [[wiki/syntheses/keep-implementation-simple-plan|`KIS-PLAN-2026-08-14-V2`]]のPlan Bindingとreadiness narrativeに残っていたstale `pending` / re-review-required statementsを、記録済みのindependent re-review `ready` verdictへ訂正した。index recordはすでに同じcurrent lifecycleを示しているため変更していない。
