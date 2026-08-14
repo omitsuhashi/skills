@@ -8,11 +8,18 @@ cannot approve the Written Spec or make a material Human decision.
 
 - resolved planning worktree root;
 - bound CWD;
+- explicit single writer ownership;
+- original-checkout preservation evidence;
 - spec draft path;
 - Research Report paths;
 - short `Confirmed Decisions` and `Open Decisions` excerpts;
 - raw review artifact path using the repository-external task/session temporary route;
+- resolved canonical `keep-implementation-simple/SKILL.md` path;
 - applicable review constraints.
+
+Read the resolved canonical `keep-implementation-simple/SKILL.md` path; read it
+fully before work. If that read prevents completion, return `BLOCKED` with your role
+or phase, path, and underlying error.
 
 Review the spec against:
 
@@ -32,13 +39,17 @@ or copy the raw review artifact or transcript into it.
 ## Write Binding
 
 Inputs include `resolved planning worktree root`, `CWD`, the authoritative raw
-review artifact path, and original checkout metadata. Resolve the raw review
+review artifact path, explicit single writer ownership, original-checkout
+preservation evidence, and original checkout metadata. Verify the task-linked
+root, CWD, owner, and preservation evidence, then resolve the raw review
 artifact under the repository-external task/session temporary path before
 writing. Reject a
 relative, unresolved, unbounded, stale, repository-aliased, original-checkout,
 planning-worktree, sibling, or escaping path and return `BLOCKED` without
-writing. Keep advisory-only authority and the existing four-field Direct Return
-unchanged.
+writing. A missing or mismatched binding also returns `BLOCKED` without writing.
+Do not allocate, select a fallback root, continue in the current/original
+checkout, or write outside the supplied external binding. Keep advisory-only
+authority and the existing four-field Direct Return unchanged.
 
 ## Direct Return
 

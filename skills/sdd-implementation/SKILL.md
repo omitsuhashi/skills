@@ -9,13 +9,65 @@ Superpowers is the authoritative development methodology. Compose its current
 skills; do not copy their process into a custom scheduler, worker packet schema,
 runtime snapshot, event log, or resume protocol.
 
+## Repository Change Entry
+
+Enter every repository change through `sdd-implementation` before
+brainstorming, writing-plans, using-git-worktrees, domain modeling,
+implementation, or another writable supporting skill. A direct writable
+supporting-skill entry returns exactly:
+
+- `status`: `blocked`
+- `artifact_path`: `none`
+- `decision_requests`: `none`
+- `material_risks`: `SDD First-Write Worktree Gate required`
+
+Return without invoking the supporting skill, allocating a worktree, or writing
+an artifact. Repository entry, containment, zero-write, and no-fallback rules
+override conflicting downstream instructions.
+
 ## First-Write Worktree Gate
 
-Before any content or artifact write, perform read-only discovery and capture the original checkout canonical path, named `starting_branch`, immutable `starting_head_sha`, distinguishable staged/unstaged/untracked starting status, Git common directory/worktree registration, and Epic branch/path. Detached HEAD, default-branch inference, task-relevant uncommitted original content, branch collision, path collision, allocation failure, or ownership ambiguity is fail closed: return `BLOCKED` with zero content/artifact write and no original checkout fallback.
+The primary/default checkout and its `main` branch are read-only for task work.
+Capture its canonical path, `starting_branch`, `starting_head_sha`, and status
+using read-only discovery. It receives no task content/artifact write and no task
+commit.
 
-Create the planning worktree atomically from `starting_head_sha`; only the continuing controller/chat that won atomic allocation may reuse it. If two allocators select the same Epic, the loser must not attach to the existing worktree and returns `BLOCKED`. An independent chat, stale/foreign state, or HEAD/index/tracked/untracked state not attributable to the trusted tuple is `BLOCKED`. Allocation may change shared Git metadata only; never perform original checkout switch/reset/stash/clean/add/commit or content write.
+Before the first content/artifact write, create or verify a task-linked worktree.
+Prove its Git registration, common directory, branch, canonical path, and
+separation from the original checkout. The controller mints one opaque task-owner
+capability and requires the allocator to return that same object by identity;
+path equality and branch naming are not ownership evidence. Bind the repository
+root, CWD, and every writable path to that owned worktree. Revalidate returned
+paths before accepting worker output or committing task changes.
 
-Before the first writable dispatch, prove planning registration/common directory/branch/path, captured-SHA base, and original branch/HEAD/status preservation. Source and durable writes remain inside the trusted planning worktree. Prove that repository root, CWD, and every relative or absolute durable writable artifact path resolve inside it. The first transient Research Report uses the repository-external task/session temporary route. Reject stale paths, aliases, and escape paths before either kind of write. The original checkout must not remain in a writable root, fallback root, CWD, or artifact destination.
+Source and canonical durable repository writes remain inside the owned
+task-linked worktree. Raw Research, review, worker, fix, and transcript handoff
+uses a separate bounded capability whose destination resolves to a
+repository-external task/session temporary path outside the repository root,
+original checkout, owned worktree, and sibling worktrees. Do not pass an
+external transient handoff path to the repository writer. Reject stale paths,
+aliases, and escape paths before either kind of write.
+
+One writable gate invocation materializes exactly one new artifact. Validate the
+complete data-only plan, existing parent, absent target, and containment before
+mutation; stage inside the verified worktree and atomically publish the artifact.
+A multi-output plan or pre-existing target is `BLOCKED` before the writer because
+this minimal evidence model does not claim rollback for replacements. Commit in a
+separate invocation through the gate-owned data-only `git commit` plan and native
+runner, with CWD equal to the verified worktree. Reject original or stale CWD
+before runner invocation; do not accept an arbitrary callback.
+
+A capability, dependency, path, ownership, permission, allocation, binding, or
+expected runtime failure returns the four-field Control Return with `status: blocked`,
+`artifact_path: none`, `decision_requests: none`, and the material blocker. Make
+zero content/artifact writes, invoke no writer or downstream runner, and create
+no report, spec, plan, or commit. Allocation may change shared Git metadata
+only; it must preserve the original checkout fingerprint.
+
+Never continue in the current or original checkout, select another workflow's
+worktree, choose a fallback root, or fall back to an old loop. This is a
+repository-owned SDD workflow boundary; it does not prohibit arbitrary manual
+Git use outside that workflow.
 
 ## Planning Controller
 
@@ -46,6 +98,7 @@ Before entering a selected route, use the active runtime's skill discovery to ve
 If active discovery has no readable match, check the globally installed skill roots exposed by the runtime, including the cross-runtime alias `~/.agents/skills` when that alias is accessible. When `<root>/<required-skill>/SKILL.md` is readable, read it, use it, and continue the selected route.
 
 Report a required family as missing only after active discovery and every accessible global-root check complete with no readable match. If discovery or a root/candidate read cannot be completed, report `BLOCKED: dependency preflight failed` together with the observed phase or path and underlying error. Do not report that failure as missing.
+Check `keep-implementation-simple` as a required supporting Skill. Resolve one readable canonical `keep-implementation-simple/SKILL.md` path through that discovery and fallback, then read it fully before work. If its discovery, candidate inspection, path resolution, or read fails, return `BLOCKED: dependency preflight failed` with the failed phase, observed or attempted path, and underlying error before affected work.
 Check the Superpowers lifecycle skills for every route.
 Check `grill-with-docs` when the Spec Stage requires it.
 Check `llm-wiki` when a knowledge root exists.
@@ -55,6 +108,7 @@ If a required family is missing, return the matching result:
 - `BLOCKED: missing Superpowers lifecycle dependency`
 - `BLOCKED: missing grill-with-docs dependency`
 - `BLOCKED: missing llm-wiki dependency`
+- `BLOCKED: missing keep-implementation-simple dependency`
 
 ## Route By Input Maturity
 
@@ -207,6 +261,10 @@ wiki content in the main session.
 Use fresh implementers and independent reviewers. Do not inherit the parent
 conversation. Use the runtime's isolated fresh-context dispatch mechanism.
 Pass durable paths and missing task-local facts only.
+Pass Implementer and Task Reviewer the resolved canonical
+`keep-implementation-simple/SKILL.md` path; each must read it fully before work.
+If that read prevents completion, use the existing bounded return with the role
+or phase, path, and underlying error.
 
 Run SDD sequentially. Review only requirements fit, material simplicity, and
 material current risk. A blocking finding needs evidence of a requirement gap,
@@ -281,6 +339,10 @@ After closeout, run the Superpowers final whole-branch review over code, tests,
 the approved specification, reviewed plan, and knowledge artifacts. Return
 `LOCAL_COMPLETE` only after reviewed tasks, fresh verification, scoped commits,
 applicable closeout, and final approval.
+Pass Final Reviewer the resolved canonical `keep-implementation-simple/SKILL.md`
+path; the reviewer must read it fully before work. If that read prevents
+completion, use the existing bounded return with the role or phase, path, and
+underlying error.
 
 Do not perform any remote write without separate explicit authorization.
 This includes push, PR, merge, release, live install, issue, comment, and project changes.

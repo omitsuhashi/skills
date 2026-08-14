@@ -9,7 +9,6 @@ SKILL_DIR = Path(__file__).resolve().parents[1]
 SKILL = SKILL_DIR / "SKILL.md"
 OPENAI_YAML = SKILL_DIR / "agents" / "openai.yaml"
 
-
 def read_or_empty(path: Path) -> str:
     return path.read_text(encoding="utf-8") if path.is_file() else ""
 
@@ -347,7 +346,15 @@ class SddImplementationSkillContractTests(unittest.TestCase):
         self.assertLess(closeout, final_review)
 
     def test_skill_has_only_the_internal_stage_resource_shape(self) -> None:
-        children = {path.name for path in SKILL_DIR.iterdir()} if SKILL_DIR.is_dir() else set()
+        children = (
+            {
+                path.name
+                for path in SKILL_DIR.iterdir()
+                if path.is_file() or any(path.iterdir())
+            }
+            if SKILL_DIR.is_dir()
+            else set()
+        )
         self.assertEqual(
             {"SKILL.md", "agents", "prompts", "references", "tests"},
             children,
@@ -383,7 +390,7 @@ class SddImplementationSkillContractTests(unittest.TestCase):
     def test_first_write_gate_precedes_controller(self) -> None:
         self.assertLess(self.skill_text.index("## First-Write Worktree Gate"), self.skill_text.index("## Planning Controller"))
         gate = self.skill_text.split("## First-Write Worktree Gate", 1)[1].split("## Planning Controller", 1)[0]
-        for value in ("read-only discovery", "Detached HEAD", "default-branch inference", "`starting_branch`", "`starting_head_sha`", "Epic branch/path", "shared Git metadata", "zero content/artifact write", "original checkout fallback"):
+        for value in ("read-only discovery", "primary/default checkout", "`starting_branch`", "`starting_head_sha`", "task-linked worktree", "shared Git metadata", "zero content/artifact writes", "fallback root"):
             self.assertIn(value, gate)
 
     def test_parallel_adapter_leaves_issue_sdd_sequential(self) -> None:

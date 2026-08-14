@@ -11,6 +11,8 @@ only:
 
 - resolved planning worktree root;
 - bound CWD;
+- explicit single writer ownership;
+- original-checkout preservation evidence;
 - writable artifact path using the repository-external task/session temporary route;
 - original checkout metadata (read-only): canonical path, `starting_branch`, `starting_head_sha`, and captured starting status;
 - baseline commit;
@@ -23,6 +25,12 @@ under the runtime/OS temporary root and outside the repository root, resolved
 planning worktree, original checkout, and every sibling worktree. Before report
 creation, reject a relative path, an unbounded absolute root, a stale path,
 repository alias, sibling path, or escape path, and return `BLOCKED`.
+
+If the bound root/CWD, external path, writer ownership, or original preservation proof is
+missing or mismatched, return the existing four-field `blocked` Control Return.
+The worker must not allocate, select a
+fallback root, continue in the current/original checkout, or write outside the
+binding.
 
 Required isolated dispatch and explicit-model capability are fail-closed. If
 they are unavailable, return `BLOCKED`. Do not fall back to Planning Controller
