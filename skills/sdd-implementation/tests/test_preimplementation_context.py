@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 import unittest
 
@@ -429,10 +430,12 @@ class PreImplementationContextContractTests(unittest.TestCase):
         )
         self.assertIn(canonical_path, wiring)
         self.assertIn(full_read_instruction, wiring)
+        self.assertIn("exactly these seven roles and no others", wiring)
         self.assertEqual(set(role_owners).intersection(excluded_roles), set())
-        for role in role_owners:
-            with self.subTest(role=role):
-                self.assertEqual(1, wiring.count(f"- {role}\n"))
+        wired_roles = re.findall(r"^- ([^\n]+)$", wiring, flags=re.MULTILINE)
+        self.assertEqual(role_owners, set(wired_roles))
+        self.assertEqual(len(role_owners), len(wired_roles))
+        self.assertTrue(excluded_roles.isdisjoint(wired_roles))
         for stage_text in (
             self.planning_text,
             self.research_text,

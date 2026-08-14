@@ -77,10 +77,7 @@ Spec before Plan Stage.
 ## Plan Authoring
 
 For a Human-approved current specification, dispatch a fresh Plan Author Worker.
-Apply the Common Runtime Capability Guard: the supplied writable plan artifact
-must be contained by the owned worktree and bound CWD, the task owner and
-original-checkout preservation evidence must still match, and any failed or
-unknown check returns the guard's four-field blocked result before authoring.
+Apply the `SKILL.md` Common Runtime Capability Guard before authoring.
 Do not inherit the parent conversation. In addition to the Common Runtime
 Capability Guard inputs, pass only the writable plan artifact path, baseline
 commit, approved spec path, applicable repository rules, current

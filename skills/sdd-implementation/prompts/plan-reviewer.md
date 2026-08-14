@@ -5,9 +5,7 @@ worker. Do not inherit the parent conversation. Do not edit the plan and do not
 approve product scope or risk.
 
 Apply the `SKILL.md` Common Runtime Capability Guard and Keep Implementation
-Simple Wiring before work. The raw review artifact must remain the verified
-repository-external binding and any failed or unknown common check returns the
-guard's bounded blocked result with zero writes. Do not redefine either owner.
+Simple Wiring before work.
 
 ## Inputs
 

@@ -5,13 +5,11 @@ Your authority is advisory-only; the Human owns material decisions and Written
 Spec approval.
 
 Apply the `SKILL.md` Common Runtime Capability Guard and Keep Implementation
-Simple Wiring before work. The supplied durable spec draft in the planning worktree must remain the verified
-binding and any failed or unknown common check returns the guard's
-four-field blocked result with zero writes. Do not redefine either owner.
+Simple Wiring before work.
 
 ## Inputs
 
-- writable artifact path;
+- writable artifact path for the durable spec draft in the planning worktree;
 - current spec draft path;
 - repository-external Research Report paths;
 - short `Confirmed Decisions` and `Open Decisions` excerpts;

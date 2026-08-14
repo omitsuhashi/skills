@@ -141,8 +141,8 @@ writes and invoke no downstream worker, writer, runner, or fallback.
 
 Check `keep-implementation-simple` as a required supporting Skill during
 Dependency Preflight. Resolve one readable canonical
-`keep-implementation-simple/SKILL.md` path, then pass that same path to exactly
-these roles:
+`keep-implementation-simple/SKILL.md` path, then pass that same path to
+exactly these seven roles and no others:
 
 - Spec Synthesizer
 - Spec Reviewer
@@ -310,8 +310,8 @@ Pass durable paths and missing task-local facts only.
 Apply the Common Runtime Capability Guard and Keep Implementation Simple Wiring
 before either role begins affected work.
 
-Run SDD sequentially. Review only requirements fit, material simplicity, and
-material current risk. A blocking finding needs evidence of a requirement gap,
+Within one selected execution unit, run SDD tasks sequentially. Review only
+requirements fit, material simplicity, and material current risk. A blocking finding needs evidence of a requirement gap,
 scope excess, observable regression, or concrete current risk. Do not block on
 style, formatting, future-only concerns, scope-external hardening, or equivalent
 preferences. Do not reduce mechanical validation or required test coverage.
@@ -320,65 +320,29 @@ All implementation tasks and task reviews must be complete before closeout.
 
 ## Execution Shape And Authority
 
-Execution is sequential unless an agent / repository-owned verdict has current
-evidence that candidate units are independent: dependency evidence, write-conflict evidence,
-shared-resource evidence, and ancestry evidence must all be known. If any is unknown, use sequential
-execution. Parallel eligibility does not require a Human execution-method or
-issue-plan approval. Every selected unit still follows the current Superpowers
-lifecycle and the First-Write single-writer boundary.
+Superpowers owns the allocation, dispatch, review, repair, integration, and
+branch-completion methods. Parallel eligibility is agent / repository-owned and
+requires current dependency evidence, write-conflict evidence, shared-resource
+evidence, and ancestry evidence. If any required fact is unknown, use
+sequential execution; no Human execution-method or issue-plan approval is required.
 
-Before an eligible unit is accepted or integrated, apply the applicable
-Superpowers execution and branch-completion contracts to current repository
-facts. Those owners must establish that the result is reviewed, all required
-task commits are present, the target relationship is still valid, and combined
-verification succeeds. If any result, reachability, target, or verification
-fact is absent or unknown, do not integrate it and use sequential execution or
-return the owning bounded blocker.
+The observable SDD outcomes remain fail closed: one writer owns each unit and
+integration (one unit per issue/task), and no unit contains concurrent
+implementers; blocked or unreviewed results are ineligible. Before serialized integration, the applicable
+Superpowers contract revalidates actual commit ranges, changed paths,
+dependencies, conflicts, the captured target or a verified compatible advance,
+and reachability of every required task commit. The accepted tip retains those
+commits despite any history transformation. Integrate ready units serially;
+never treat a clean textual merge or partial integrated state as completion.
 
-The observable SDD boundary remains fail closed: one writer owns each unit and
-integration; no unit contains concurrent implementers; blocked or unreviewed
-results are ineligible; actual commit ranges, changed paths, dependencies, and
-conflicts are revalidated before acceptance; and the accepted tip must retain
-every required task commit despite any history transformation. Integrate ready
-units serially. Never treat a clean textual merge or partial integrated state as
-completion.
-
-The integration target must remain the captured target or a verified compatible
-advance under the applicable Superpowers branch contract. Divergence, rewrite,
-or uncertainty blocks without retargeting. Completion requires fresh combined
-verification, the upstream whole-branch review/fix contract, reachability of all
-required task commits, and original-checkout preservation.
+The integration target must remain the captured target. Divergence, rewrite, or
+uncertainty blocks without retargeting. Completion requires fresh combined
+verification and original-checkout preservation.
 `starting_branch` is PR base and `integration_branch` is PR head and integration target.
 
 Agent-repairable evidence gaps remain agent-owned. Return to Human authority
-only for an evidenced material North Star or Written Spec conflict. A remote action always requires its own separate explicit authorization and valid remote base.
-
-## Superpowers-Owned Parallel Safety Outcomes
-
-The Execution Shape And Authority contract above owns SDD's observable
-eligibility, sequential fallback, one-writer, reviewed-result, and Human
-authority outcomes. Superpowers owns the allocation, dispatch, wait, review,
-repair, and completion methods that satisfy them.
-
-Apply those upstream methods without restating them here. Missing or unknown
-dependency, write-conflict, shared-resource, ancestry, result, or integration
-evidence selects sequential execution or the owning bounded blocker; it never
-creates a Human execution-method decision.
-
-Before acceptance or serial integration, the applicable Superpowers contract
-must revalidate the actual commit range, changed paths, semantic and resource
-assumptions, sibling results, current target, and reachability of every required
-task commit. Blocked, unreviewed, or incomplete results remain ineligible; a
-clean textual merge or partial integrated state is not completion. SDD does not
-redefine the upstream verification method.
-
-Keep the captured branch as the integration target. An unchanged or compatible
-advance is usable only after the applicable Superpowers branch contract
-revalidates it; rewrite, divergence, or uncertainty blocks without retargeting.
-After all required task commits are reachable, require fresh combined
-verification and the upstream whole-branch review and repair contract. Return
-`LOCAL_COMPLETE` only after original-checkout preservation. Remote publication
-still requires separate explicit authorization and a valid remote base.
+only for an evidenced material Written Spec change. A remote action always
+requires its own separate explicit authorization and a valid remote base.
 
 ## Implementation Closeout
 
@@ -387,8 +351,9 @@ Validate the wiki before final review.
 
 ## Final Whole-Branch Review
 
-After closeout, run the Superpowers final whole-branch review over code, tests,
-the approved specification, reviewed plan, and knowledge artifacts. Return
+After Implementation Closeout, run exactly one canonical whole-branch review
+through the Superpowers review contract. Cover code, tests, the approved
+specification, reviewed plan, and knowledge artifacts. Return
 `LOCAL_COMPLETE` only after reviewed tasks, fresh verification, scoped commits,
 applicable closeout, and final approval.
 Apply the Common Runtime Capability Guard and Keep Implementation Simple Wiring

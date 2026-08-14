@@ -333,6 +333,48 @@ class TransientArtifactContractTests(unittest.TestCase):
                     "Asynchronous dispatch requires both wait and resume",
                 ):
                     self.assertNotIn(duplicated_guard, text)
+        prompts = (
+            RESEARCHER_PROMPT,
+            SYNTHESIZER_PROMPT,
+            SPEC_REVIEWER_PROMPT,
+            PLAN_REVIEWER_PROMPT,
+        )
+        bare_guard_references = {
+            "Apply the `SKILL.md` Common Runtime Capability Guard before work.",
+            (
+                "Apply the `SKILL.md` Common Runtime Capability Guard and Keep "
+                "Implementation Simple Wiring before work."
+            ),
+        }
+        for path in prompts:
+            prefix = read(path).split("## Inputs", 1)[0]
+            with self.subTest(path=path.name):
+                self.assertEqual(1, prefix.count("Common Runtime Capability Guard"))
+                paragraphs = [
+                    " ".join(paragraph.split())
+                    for paragraph in prefix.strip().split("\n\n")
+                ]
+                self.assertEqual(3, len(paragraphs))
+                self.assertIn(paragraphs[-1], bare_guard_references)
+        planning = read(PLANNING_CONTEXT)
+        plan_author_guard = planning.split("## Plan Authoring", 1)[1].split(
+            "Do not inherit the parent conversation.", 1
+        )[0]
+        research_dispatch = section(read(RESEARCH_STAGE), "Dispatch")
+        self.assertEqual(
+            "For a Human-approved current specification, dispatch a fresh Plan "
+            "Author Worker. Apply the `SKILL.md` Common Runtime Capability Guard "
+            "before authoring.",
+            " ".join(plan_author_guard.split()),
+        )
+        self.assertEqual(1, research_dispatch.count("Common Runtime Capability Guard"))
+        research_tail = research_dispatch.split(
+            "- current spec path when one exists.", 1
+        )[1]
+        self.assertEqual(
+            "The first transient Research Report uses that repository-external route.",
+            " ".join(research_tail.split()),
+        )
 
     def test_direct_git_gate_algorithms_remain_owned_only_by_the_public_contract(self) -> None:
         stage_resources = (

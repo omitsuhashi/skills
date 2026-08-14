@@ -48,6 +48,7 @@ class SddImplementationSkillContractTests(unittest.TestCase):
         for forbidden_heading in (
             "## Epic Parallel Issue Adapter",
             "## Runtime Model And Effort",
+            "## Superpowers-Owned Parallel Safety Outcomes",
         ):
             self.assertNotIn(forbidden_heading, self.skill_text)
         for leaked_algorithm in (
@@ -356,6 +357,17 @@ class SddImplementationSkillContractTests(unittest.TestCase):
         final_review = self.skill_text.index("## Final Whole-Branch Review")
         self.assertLess(task_review, closeout)
         self.assertLess(closeout, final_review)
+        final_section = self.skill_text[final_review:]
+        normalized = " ".join(final_section.split())
+        canonical_review = (
+            "After Implementation Closeout, run exactly one canonical whole-branch "
+            "review through the Superpowers review contract."
+        )
+        self.assertEqual(1, normalized.count(canonical_review))
+        self.assertEqual(
+            0,
+            self.skill_text[:final_review].lower().count("whole-branch review"),
+        )
 
     def test_skill_has_only_the_internal_stage_resource_shape(self) -> None:
         children = (
@@ -417,11 +429,12 @@ class SddImplementationSkillContractTests(unittest.TestCase):
             "write-conflict evidence",
             "unknown",
             "sequential execution",
-            "material North Star or Written Spec conflict",
+            "material Written Spec change",
             "remote action",
             "Agent-repairable evidence gaps",
         ):
             self.assertIn(value, section)
+        self.assertNotIn("North Star", section)
         for forbidden in (
             "explicit Human opt-in",
             "Human-approved issue plan",
@@ -429,6 +442,16 @@ class SddImplementationSkillContractTests(unittest.TestCase):
             "sequential execution or Human decision",
         ):
             self.assertNotIn(forbidden, section)
+        implementation = markdown_section(
+            self.skill_text,
+            "## Implementation Stage",
+            "## Execution Shape And Authority",
+        )
+        self.assertIn(
+            "Within one selected execution unit, run SDD tasks sequentially.",
+            implementation,
+        )
+        self.assertNotIn("Run SDD sequentially.", implementation)
 
     def test_parallel_units_retain_single_writer_and_reviewed_result_boundaries(self) -> None:
         section = markdown_section(
@@ -475,10 +498,10 @@ class SddImplementationSkillContractTests(unittest.TestCase):
             "verified compatible advance",
             "Divergence, rewrite, or uncertainty blocks without retargeting",
             "fresh combined verification",
-            "whole-branch review/fix contract",
             "original-checkout preservation",
         ):
             self.assertIn(outcome, normalized)
+        self.assertNotIn("whole-branch review", normalized.lower())
 
     def test_upstream_model_contract_preserves_override_and_optional_effort(self) -> None:
         guard = markdown_section(

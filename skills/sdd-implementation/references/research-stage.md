@@ -16,10 +16,7 @@ Research-specific inputs in addition to its common inputs:
 - applicable repository and knowledge constraints;
 - current spec path when one exists.
 
-The first transient Research Report uses that repository-external route. The
-Common Runtime Capability Guard must prove its bounded destination and all
-common dispatch, ownership, worktree, CWD, and preservation inputs before the
-report write; otherwise return its four-field blocked result with zero writes.
+The first transient Research Report uses that repository-external route.
 
 ## Worker Scope
 
