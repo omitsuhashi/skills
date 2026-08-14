@@ -10,6 +10,9 @@ status: accepted
 review_state: approved
 approved_on: 2026-08-14
 approval_snapshot_sha256: 1f9a7dc5f740c51addfabde96bac6fe3fbf5036003d1783cde60ac58e5ae7559
+amended_on: 2026-08-14
+approved_amendments:
+  - sdd-transient-artifact-boundary-2026-08-14
 north_star_identity: sdd-plan-ownership-alignment#north-star@2026-08-14
 aliases:
   - SDD execution plan ownership specification
@@ -26,6 +29,14 @@ Written Spec として明示承認した。本仕様は `accepted` / `approved` 
 完了、または push / PR creation / live install / deployment を含む remote / privileged / destructive
 action の authorization を意味しない。
 
+Human は 2026-08-14 に `sdd-transient-artifact-boundary-2026-08-14` amendment を明示承認した。
+この amendment は、repository の `.superpowers/**` を durable artifact surface にせず、通常時の
+worker handoff を runtime temporary / repository 外へ置き、例外的な local scratch と Git index の
+境界を fail closed にする。frontmatter の `approval_snapshot_sha256` は amendment 前の original
+Written Spec snapshot identityだけを表し、この amendment後のbytesをcoverするとは扱わない。amendmentの
+authorityとscopeは`amended_on`、`approved_amendments`、`Confirmed Decisions` 9、および `R-16`〜`R-21`
+で追跡する。North Starと既存のHuman / agent ownership boundaryは変更しない。
+
 2026-08-14にTask POA-1のreviewed intentional RED contractとTask POA-2のreviewed combined GREENが
 current branchへlandedした。Task POA-3は本仕様、broader current design、focused context specification、
 canonical catalog、append-only logを同じlanded semanticsへ同期し、fresh combined verificationを行う。
@@ -39,11 +50,15 @@ post-approval lifecycle metadataであり、承認済みNorth Star、requirement
 stop conditionsを変更しない。
 
 本仕様は [[sdd-implementation-skill-design|SDD Implementation Skill 設計]] と
-[[sdd-preimplementation-context-isolation-spec|SDD 実装前コンテキスト分離仕様]]のうち、
-Plan Stage の ownership、approval、artifact content、readiness、Human return 条件だけを
-supersede する。Superpowers-first lifecycle、Planning Controller / fresh worker 分離、
-worktree safety、implementation review、knowledge closeout、remote authorization boundary は
-変更しない。
+[[sdd-preimplementation-context-isolation-spec|SDD 実装前コンテキスト分離仕様]]のうち、Plan Stage の
+ownership、approval、artifact content、readiness、Human return 条件をsupersedeする。さらに
+`sdd-transient-artifact-boundary-2026-08-14` amendmentは、Research、Spec、Plan、Implementation、
+task review、repair、integration、final review、knowledge closeoutを含む**すべてのSDD stage**のtransient
+artifact destination / write bindingを統一し、repository内の`.superpowers/**`へresearch report、review
+report、brief、worker packet、transcriptその他のraw handoffを要求する既存repository contractを、競合する
+範囲で明示的にsupersedeする。これはsource codeとdurable knowledgeのwriteをtrusted planning worktree内に
+閉じ込める規則、original checkout safety、Superpowers-first lifecycle、Planning Controller / fresh worker分離、
+implementation review、knowledge closeout、remote authorization boundaryを変更しない。
 
 ## 問題
 
@@ -106,6 +121,7 @@ repository が implementation を安全に開始するための agent-owned exec
 - remote write、credential、permission、billing、production、destructive action に必要な
   separate authorization を plan readiness から推論すること。
 - historical plan の過去の approval / execution evidence を書き換えること。
+- amendment前のhistorical commitから`.superpowers/**` blobを除くためにGit historyを書き換えること。
 - concrete runtime、tool name、model、provider、agent ID を portable skill contract に固定すること。
 
 ## Confirmed Decisions
@@ -126,6 +142,17 @@ repository が implementation を安全に開始するための agent-owned exec
    overlay で適応する。
 8. Human plan approval、prospective-code prohibition、complete coverage、ordering / integration
    contract を regression tests で固定する。
+9. repository の `.superpowers/**` は transient scratch 専用であり、すべての通常の SDD stage は
+   spec、plan、task content、worker / fix report、raw review output、transcript のduplicateをそこへ
+   作らない。handoffはruntime temporary / repository外を使う。concreteなoperational reasonで
+   repository-local scratchが必要な場合だけ、対象pathをwrite前に`.gitignore`でcoverし、Git index / staged
+   tree / committed treeへentryを作らず、ignored / untracked / unstaged / uncommitted stateに留める。durable
+   summaryはcanonical spec、reviewed plan、knowledge logだけへ統合する。current PRのtracked report 3件は
+   final treeから除き、必要なlocal scratchは削除せずignored / untracked stateで保持できるようにする。
+   cleanup後のcandidate / final PR tree、Git index / staging area、以後のすべてのnew commit treeは
+   `.superpowers/**` entry zeroとする。amendment前のhistorical ancestor commitはrewriteせず、そのblobを
+   audit historyとして保持できるが、new commitが再導入してはならない。このinvariantはmechanical
+   validationとtestsで固定する。
 
 ## Open Decisions
 
@@ -235,6 +262,39 @@ deficiency ではなく Human authority へ戻す。
 - **R-15:** portable skill contract は runtime identity ではなく inputs、outputs、required
   capabilities で定義し、missing capability は fail closed にする。
 
+### Transient artifact and Git boundary
+
+- **R-16:** Research、Spec、Plan、Implementation、task review、repair、integration、final review、knowledge
+  closeoutを含むすべてのnormal SDD stageは、spec、plan、task content、research / worker / fix / review report、
+  brief、raw review output、transcriptのduplicateをrepositoryの`.superpowers/**`へ作らない。stage間のtransient
+  handoff / scratchはruntime temporaryまたはrepository外のtransient locationへ置き、durable artifact identity
+  として`.superpowers/**`を参照しない。repository内のresearch / report / brief runtime pathを要求する既存の
+  skill、reference、prompt、template、test contractは、このdestination / write-bindingについて本requirementが
+  supersedeする。
+- **R-17:** concreteなoperational reasonによりrepository-local `.superpowers/**` scratchが必要な場合だけ
+  writeを許す。その場合、最初のwriteより前に`.gitignore`がrelevant pathをcoverすることをmechanically
+  確認し、scratchはignored / untracked / unstaged / uncommittedのlocal stateに限定する。理由またはpre-write
+  ignore coverageを証明できなければrepository-local writeを行わず、runtime temporary routeへ戻す。
+- **R-18:** tracked-report cleanup後は、`.superpowers/**`のfile / directory entryがcurrent Git index
+  （staging area）、そのindexから作るcandidate commit tree、以後に作るすべてのnew commit tree、およびPR final
+  treeのいずれにも存在してはならない。ここで`tracked`はindex entryが存在する状態、`staged-tree entry`は
+  indexが表すcandidate treeにcontentが存在する状態を指す。final treeからentryを除くstaged deletionは、削除後の
+  index / candidate treeにcontent entryがないため許可する。amendment前のhistorical ancestor commitはaudit
+  historyとして`.superpowers/**` blobを保持でき、別途の明示的なdestructive authorizationなしにrewriteしない。
+  ただしcleanup後のnew commitはhistorical blobを新しいtreeへ再導入してはならない。
+- **R-19:** durable review / worker / fix evidenceはraw reportやtranscriptを保存せず、必要なdecision、finding、
+  repair、verdict、evidence identityだけをcanonical spec、reviewed plan、append-only `knowledge/log.md`へ
+  synthesisする。同じspec / plan / task contentを複数surfaceに保存しない。
+- **R-20:** repository validationとtestsは、cleanup後のGit index / staging area、candidate commit tree、new
+  commit tree、PR final treeに`.superpowers/**` entryを検出したら失敗し、ignored / untracked / unstaged /
+  uncommitted local scratchとfinal-tree removalのstaged deletionは許可する。checkはworking-tree pathの存在や
+  pre-amendment historical ancestor commitのblobだけで失敗してはならず、new commitによる再導入は拒否する。
+- **R-21:** current PRは次のtracked reportsをPR final treeから除く。operationally必要なlocal copyは、既存または
+  write前に成立したignore coverageの下でworking treeに残してよく、追跡解除のために内容を破壊してはならない。
+  - `.superpowers/sdd/sdd-plan-ownership-alignment-implementation-plan/approved-residual-fix-report.md`
+  - `.superpowers/sdd/sdd-plan-ownership-alignment-implementation-plan/final-fix-report.md`
+  - `.superpowers/sdd/sdd-plan-ownership-alignment-implementation-plan/task-2-report.md`
+
 ## Architecture And Boundaries
 
 ```mermaid
@@ -306,6 +366,25 @@ readiness result を持つ。
 file responsibility map は agent の decomposition 補助として持てるが、path list は Human approval
 subject ではない。exact commands、line ranges、snippets、commit commands は durable plan の必須
 content ではなく、executor が current tree に対して実行時に解決する。
+
+### Transient handoff boundary
+
+Canonical spec、reviewed plan、knowledge logはdurable summaryを所有する。runtime temporary / repository外の
+handoff locationはraw worker outputのtransient transportを所有し、retentionまたはclone-stable provenanceを
+保証しない。`.superpowers/**`はconcreteなruntime needがある場合のignored local scratchだけを所有し、
+durable plan、task packet、review record、fix reportの第二の正本にはならない。
+
+repository外のtransient locationは、runtimeが当該task / session用に解決したbounded pathであり、repository
+root、planning worktree、original checkoutの外にあることをwrite前に確認する。そこへrepository sourceまたは
+canonical knowledgeを書かず、raw handoffのtemporary transportとしてだけbindする。後続stageはそのpathの永続性を
+前提にせず、必要なsummaryをcanonical destinationへ同期する。accessとcleanupはruntime / OS temporary storageの
+境界に従い、未解決path、repository tree内へaliasするpath、またはtask scope外のbroad pathにはwriteしない。
+
+SDD stageはtransient outputから後続stageに必要なdecision、finding、evidence identity、verdictだけを抽出する。
+再現に必要なcontractはcanonical specまたはreviewed planへ、durable lifecycle effectは`knowledge/log.md`へ
+統合した後、raw report / transcriptをGit provenanceとして要求しない。validatorはworking treeではなくGit
+index / staged treeとcommit treeのentryを検査するため、ignored local scratchを壊さずrepository invariantを
+強制できる。
 
 ### Review boundary
 
@@ -380,23 +459,32 @@ content、current-tree material conflict のいずれかに結び付ける。
    verification を作成する。
 7. Plan Author が upstream の self-review primitive と local overlay checks を実行し、deficiency を
    inline repair する。
-8. independent fresh Plan Reviewer が complete plan と approved spec を確認する。
-9. `issues_found` は Plan Author / repair worker へ戻す。Written Spec の変更が不要なら Human へ
+8. すべてのSDD stage間のraw research / worker / review / repair handoffはruntime temporary / repository外へ
+   routeする。write前にtask / session用のbounded pathでありrepository root、planning worktree、original
+   checkoutの外であることを確認し、durableに必要な
+   summaryだけをcanonical spec、reviewed plan、knowledge logへ統合する。repository-local
+   `.superpowers/**` scratchが不可避なら、concrete reasonとpre-write ignore coverageを確認する。
+9. independent fresh Plan Reviewer が complete plan と approved spec を確認する。
+10. `issues_found` は Plan Author / repair worker へ戻す。Written Spec の変更が不要なら Human へ
    route しない。
-10. reviewer が `ready` を返し、repository checks と durable knowledge sync が成功したら Plan
+11. reviewer が `ready` を返し、repository checks と durable knowledge sync が成功したら Plan
     Readiness Gate を `ready` とし、Planning Controller へ `status: complete` を返す。Human approval は
     要求しない。Planning Controller がこの Control Return、current spec binding、plan artifact path を
     確認した場合だけ Implementation Stage に entry する。
-11. implementation は ready plan の dependency / execution order に従い、各 task の implementation
+12. implementation は ready plan の dependency / execution order に従い、各 task の implementation
     と task review を完了する。
-12. integration は plan の serialized integration order に従い、全 required result が reachable で
+13. integration は plan の serialized integration order に従い、全 required result が reachable で
     review済みであることを確認する。
-13. integration 後に combined verification を実行し、approved Written Spec の全 acceptance を
+14. integration 後に combined verification を実行し、approved Written Spec の全 acceptance を
     integrated state で確認する。
-14. material spec conflict が判明した場合だけ `needs_decision` で停止し、prior approved statement、
+15. tracked-report cleanup後、commit / PR final-tree gateの前に`.superpowers/**`のGit index / staging area、
+    candidate commit tree、以後のnew commit tree、PR final-tree entryがzeroであることをmechanically確認する。
+    tracked reportsのmigrationはcontentをindexから除き、必要なignored local scratchをworking treeに保持する。
+    pre-amendment historical ancestor commitはrewriteせず、new commitへの再導入だけをrejectする。
+16. material spec conflict が判明した場合だけ `needs_decision` で停止し、prior approved statement、
     conflicting evidence、impact、必要な一件の Human decision を返す。capability、binding、authority
     failure は decision request なしの `blocked` とする。
-15. local implementation / integration / combined verification の完了後に push、PR creation、live
+17. local implementation / integration / combined verification の完了後に push、PR creation、live
     install / deployment を含む remote / privileged / destructive action が必要になった場合だけ、
     その action 固有の authorization gate を評価する。
     未承認なら当該 action だけを実行せず、plan readiness や local completion を遡って無効にしない。
@@ -419,6 +507,19 @@ content、current-tree material conflict のいずれかに結び付ける。
   `needs_decision` として Human の Written Spec decision へ戻す。
 - index/log sync または authoring check が失敗した場合は ready / complete を宣言せず、exact changed
   set と failed check を保持して agent が修復する。
+- concrete operational reasonまたはpre-write `.gitignore` coverageを確認できないrepository-local
+  `.superpowers/**` writeは行わず、runtime temporary / repository外のhandoffへrouteする。
+- repository外のtransient pathがtask / session用にboundedされていない、またはrepository root、planning
+  worktree、original checkoutの外であることを確認できない場合はwriteせず、安全なruntime temporary bindingを
+  再解決する。
+- cleanup後に`.superpowers/**` entryがtrackedまたはGit index / staging area / candidate treeに存在する場合は、commit、PR
+  finalization、`LOCAL_COMPLETE`を停止する。ignore coverageを先に確認し、必要なworking-tree copyを
+  保存したままindex entryを除去してvalidationを再実行する。
+- raw report / transcriptだけがdurable decisionまたはrequired evidenceを保持している場合は、追跡解除前に
+  必要なsummaryをcanonical spec、reviewed plan、knowledge logへsynthesisする。raw text自体をdurable
+  artifactへcopyしない。
+- validatorがignored / untracked scratchまたはfinal-tree removalのstaged deletionを誤って拒否する場合は、
+  scratchを削除して回避せずvalidator semanticsを修正し、tracked / staged-tree entry検出と再検証を行う。
 - combined verification failure は implementation / integration defect として agent fix pathへ戻す。
   spec changeが必要というevidenceがない限りHuman decisionへ変換しない。
 
@@ -447,6 +548,16 @@ content、current-tree material conflict のいずれかに結び付ける。
 9. **Action authorization isolation:** push、PR creation、live install / deployment を含む remote /
    privileged / destructive authorization 不足が当該 action だけを止め、plan `ready`、Control Return
    `complete`、local implementation / completion をblockしないことを検査する。
+10. **Transient artifact containment:** 全SDD stageのfixtureがrepository `.superpowers/**`へduplicate
+    spec / plan / task content、research / worker / fix / review report、brief、raw transcriptを生成せず、transient
+    handoffをtask / session用のboundedなruntime temporary / repository外pathへrouteすることを検査する。
+11. **Git index invariant:** cleanup後の`.superpowers/**`のindex / staging-area entry、candidate / new commit
+    tree entryをmechanical validationがrejectし、ignored / untracked / unstaged / uncommitted local scratchと、
+    post-index treeからentryを除くstaged deletionをacceptすることをtemporary Git fixtureで検査する。
+    pre-amendment ancestor blobはhistory rewriteを要求せず、cleanup後のnew commitへの再導入はrejectする。
+12. **Durable-summary routing:** durable evidenceがcanonical spec、reviewed plan、knowledge logだけに
+    synthesisされ、raw report / transcriptまたはduplicate task packetがdurable output setに含まれないことを
+    contract testで検査する。
 
 ### Forward scenarios
 
@@ -459,6 +570,9 @@ content、current-tree material conflict のいずれかに結び付ける。
 6. repository evidenceがapproved acceptanceと両立しない場合だけ、material spec conflictとしてHumanへ戻す。
 7. ready planのtask実装後、serialized integrationとcombined verificationで全acceptanceを確認する。
 8. remote publicationがplan-readyでも、separate authorizationなしではremote writeを行わない。
+9. `.gitignore`でcoveredされたrepository-local scratchがworking treeに存在してもvalidationはpassし、同じ
+   pathをindexへ追加するとfailする。tracked reportをindexから除くmigrationではlocal copyを必要に応じて
+   保持し、PR final treeは`.superpowers/**` entry zeroになる。
 
 ## Acceptance Criteria
 
@@ -480,6 +594,21 @@ content、current-tree material conflict のいずれかに結び付ける。
   destructive authorization boundaryは変更されず、plan readinessから推論されない。authorization不足は
   対象actionだけを止め、plan readiness、local implementation、local completionをblockしない。
 - **AC-14:** focused regression、skill architecture validation、applicable authoring / knowledge validationがfreshに成功する。
+- **AC-15:** すべてのnormal SDD stageがduplicate spec / plan / task content、research / worker / fix / review
+  report、brief、raw review output、transcriptをrepository `.superpowers/**`へ作らず、transient handoffを
+  task / session用のboundedなruntime temporary / repository外pathへ置く。競合する既存repository-contained
+  destination / write-binding contractは本requirementにsupersedeされる。
+- **AC-16:** repository-local `.superpowers/**` scratchはconcrete operational reasonがある場合だけ、
+  relevant `.gitignore` coverageの確認後にwriteされ、ignored / untracked / unstaged / uncommitted local stateに留まる。
+- **AC-17:** cleanup後のGit index / staging area、candidate / final PR tree、以後のすべてのnew commit treeで
+  `.superpowers/**` entryがzeroであり、mechanical validation / testsが再導入をrejectする一方、ignored local
+  scratchとstaged deletionをacceptする。pre-amendment historical ancestor commitはrewrite対象にしない。
+- **AC-18:** durable summaryはcanonical spec、reviewed plan、append-only knowledge logだけに存在し、raw
+  worker / review / fix report、transcript、duplicate task contentがtracked durable artifactに存在しない。
+- **AC-19:** `R-21`のtracked report 3件がPR final treeから除かれ、operationally必要なlocal copyは
+  destructive deletionなしにignored / untracked stateで保持できる。
+- **AC-20:** transient-artifact validatorのfocused regression、repository checks、Git index / final-tree
+  inspection、applicable knowledge validationがfreshに成功する。
 
 ## Migration
 
@@ -496,11 +625,24 @@ content、current-tree material conflict のいずれかに結び付ける。
 6. existing contract testsのHuman plan approval literalsをremove / replaceし、本仕様の4つのrequired
    regression familyを追加する。
 7. historical approved plan、approval log、implementation evidenceはhistorical identityのまま保持し、
-   current execution entrypointとして再解釈しない。
+   current execution entrypointとして再解釈しない。pre-amendment historical commitの`.superpowers/**` blobも
+   audit historyとして保持し、別途の明示的なdestructive authorizationなしにhistory rewriteしない。
 8. [[sdd-implementation-skill-design]] と [[sdd-preimplementation-context-isolation-spec]] はbroader
-   lifecycleのcanonical sourceとして残し、Plan Stageの競合箇所だけ本仕様が優先する。
+   lifecycleのcanonical sourceとして残す。Plan Stageのownership / approval / readiness conflictに加え、全SDD
+   stageのtransient artifact destination / write-binding conflictでは本amendmentが優先する。planning worktreeの
+   source / durable write containmentとoriginal checkout safetyは維持する。
 9. implementation closeoutで本仕様、current SDD designのsupersession relation、index、append-only log、
    tests、validation evidenceを同期する。
+10. 全SDD stageのresearch / worker / review / repair handoffをtask / session用のboundedなruntime temporary /
+    repository外pathへ移し、`.superpowers/**`をreport / brief / worker packetのruntime destination、durable output
+    destination、required provenance pathとして扱うskill、reference、prompt、template、test expectationを除く。
+11. current `.gitignore`の`.superpowers/` coverageをtracked-report migration前に確認する。`R-21`の3 entryを
+    Git indexとPR final treeから除き、まだconcrete operational needがあるlocal copyは同じignored pathへ
+    保持する。required summaryがraw reportだけに残る場合は先にcanonical destinationへsynthesisする。
+12. cleanup後の`.superpowers/**` index / staging-area / candidate-tree / new-commit-tree entryをfailさせ、ignored /
+    untracked / unstaged / uncommitted scratchとstaged deletionを許すrepository validatorとfocused regressionを
+    導入する。fresh validationでcandidate / PR final-tree entry zeroを確認するまでmigrationを完了扱いにせず、
+    pre-amendment historical ancestor commitをrewriteしない。
 
 ## Stop Conditions
 
@@ -513,6 +655,15 @@ content、current-tree material conflict のいずれかに結び付ける。
 - dependency cycle、integration conflict、combined verification gapをagent repairで解消できない。
 - current repository evidenceがapproved North Star / Written Specとmaterialに矛盾する。
 - plan、index、log、authoring、repository validationのfailureが残る。
+- repository-local `.superpowers/**` writeにconcrete operational reasonまたはpre-write ignore coverageがない。
+- repository外のtransient write先がtask / session用のbounded pathではない、またはrepository root、planning
+  worktree、original checkoutの外であると確認できない。
+- cleanup後の`.superpowers/**` entryがGit index / staging area、candidate commit tree、new commit tree、PR final
+  treeのいずれかに残る、またはnew commitへ再導入される。
+- tracked reportをindexから除く前に、そこだけにあるrequired durable summaryのcanonical destinationを
+  特定できない。
+- required local scratchを保持する必要があるのに、追跡解除がdestructive content deletionを要求する。
+- transient-artifact validationがignored / untracked scratchとtracked / staged-tree entryを区別できない。
 
 停止時、plan deficiencyはexact findingとartifact pathをagent repair routeへ返す。Humanへ返す場合は、
 material conflictのあるNorth Star / Written Spec statement、repository evidence、impact、必要な一件の
@@ -535,6 +686,13 @@ separate authorizationがない場合は、Plan StageのStop Conditionではな�
   Written Spec明示承認後に本pageを`accepted` / `approved`とした。approval snapshot identityはfrontmatterの
   `approval_snapshot_sha256`、decision authorityは`approved_on`と本書の状態節、実装へのbindingは
   [[sdd-plan-ownership-alignment-implementation-plan|canonical implementation plan]]で追跡する。
+- Human-approved amendment provenance: 2026-08-14にHumanが
+  `sdd-transient-artifact-boundary-2026-08-14`を明示承認した。original `approval_snapshot_sha256`は
+  amendment前snapshotのidentityとして維持し、新しいbytesのdigestとは扱わない。amendmentはNorth Starを
+  変更せず、`Confirmed Decisions` 9、`R-16`〜`R-21`、`AC-15`〜`AC-20`、failure handling、testing、
+  migration、stop conditionsへ全SDD stageの`.superpowers/**` transient / Git boundaryを追加した。conflicting
+  repository-contained research / report / brief destinationをsupersedeし、pre-amendment historyをrewriteせず
+  cleanup後のindex / candidate / new commit / final PR treeをentry zeroにする。
 - current broader lifecycle: [[sdd-implementation-skill-design]]
 - current pre-implementation worker boundary: [[sdd-preimplementation-context-isolation-spec]]
 - worktree and original-checkout boundary: [[sdd-first-write-worktree-migration-spec]]
