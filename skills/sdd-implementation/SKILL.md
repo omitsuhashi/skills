@@ -43,6 +43,9 @@ this entrypoint.
 ## Dependency Preflight
 
 Before entering a selected route, use the active runtime's skill discovery to verify applicable dependencies and required capabilities.
+If active discovery has no readable match, check the globally installed skill roots exposed by the runtime, including the cross-runtime alias `~/.agents/skills` when that alias is accessible. When `<root>/<required-skill>/SKILL.md` is readable, read it, use it, and continue the selected route.
+
+Report a required family as missing only after active discovery and every accessible global-root check complete with no readable match. If discovery or a root/candidate read cannot be completed, report `BLOCKED: dependency preflight failed` together with the observed phase or path and underlying error. Do not report that failure as missing.
 Check the Superpowers lifecycle skills for every route.
 Check `grill-with-docs` when the Spec Stage requires it.
 Check `llm-wiki` when a knowledge root exists.
