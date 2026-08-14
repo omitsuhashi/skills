@@ -12,6 +12,8 @@ only:
 - resolved planning worktree root;
 - bound CWD;
 - writable artifact path under that root: `.superpowers/research/<epic-id>/`.
+- read-only guard verdict and explicit single writer ownership;
+- original-checkout preservation evidence;
 - original checkout metadata (read-only): canonical path, `starting_branch`, `starting_head_sha`, and captured starting status;
 - baseline commit;
 - epic ID and current research question;
@@ -19,6 +21,12 @@ only:
 - current spec path when one exists.
 
 The first transient Research Report must resolve under the resolved planning worktree root. Before report creation, reject a relative, absolute, stale path, or escape path that resolves outside it, including the original checkout or any sibling worktree, and return `BLOCKED`.
+
+If the bound root/CWD/path, guard verdict, writer ownership, or original
+preservation proof is missing or mismatched, return the existing four-field
+`blocked` Control Return. The worker must not allocate, activate, select a
+fallback root, continue in the current/original checkout, or write outside the
+binding.
 
 Required isolated dispatch and explicit-model capability are fail-closed. If
 they are unavailable, return `BLOCKED`. Do not fall back to Planning Controller

@@ -9,13 +9,71 @@ Superpowers is the authoritative development methodology. Compose its current
 skills; do not copy their process into a custom scheduler, worker packet schema,
 runtime snapshot, event log, or resume protocol.
 
+## Repository Change Entry
+
+Enter every repository change through `sdd-implementation` before
+brainstorming, writing-plans, using-git-worktrees, domain modeling,
+implementation, or another writable supporting skill. A direct writable
+supporting-skill entry returns exactly:
+
+- `status`: `blocked`
+- `artifact_path`: `none`
+- `decision_requests`: `none`
+- `material_risks`: `SDD First-Write Worktree Gate required`
+
+Return without invoking the supporting skill, allocating a worktree, or writing
+an artifact. Repository entry, containment, zero-write, and no-fallback rules
+override conflicting downstream instructions.
+
 ## First-Write Worktree Gate
 
-Before any content or artifact write, perform read-only discovery and capture the original checkout canonical path, named `starting_branch`, immutable `starting_head_sha`, distinguishable staged/unstaged/untracked starting status, Git common directory/worktree registration, and Epic branch/path. Detached HEAD, default-branch inference, task-relevant uncommitted original content, branch collision, path collision, allocation failure, or ownership ambiguity is fail closed: return `BLOCKED` with zero content/artifact write and no original checkout fallback.
+Before allocation or Planning Controller entry, perform read-only discovery and
+guard preflight. Capture the original checkout canonical path, named
+`starting_branch`, immutable `starting_head_sha`, distinguishable
+staged/unstaged/untracked starting status, Git common directory/worktree
+registration, Epic branch/path, bound root/CWD/writable paths, and the guard
+verdict. Do not activate, install, repair, replace, or reconfigure a guard during
+preflight. Guard activation belongs to a separate Human-authorized setup.
+
+A relevant capability, dependency, guard, identity, registration, ownership,
+containment, preservation, permission, sandbox, allocation, or path failure
+returns a four-field Control Return with `status: blocked`, `artifact_path:
+none`, `decision_requests: none`, and the exact material blocker. In particular,
+use `guard_missing`, `guard_unconfigured`, or `guard_damaged` for those guard
+verdicts and `worktree allocation denied: EACCES` or `worktree allocation
+denied: sandbox` for those allocation failures. Make zero content/artifact
+writes, invoke no writer or downstream runner, and create no report, spec, plan,
+or commit.
+
+Detached HEAD, default-branch inference, task-relevant uncommitted original content,
+branch collision, path collision, allocation failure, or ownership ambiguity is
+fail closed: return `BLOCKED` with zero content/artifact write and no original checkout fallback.
+Never continue in the current or original checkout,
+select a fallback root, reuse a stale/foreign worktree, ignore the failure,
+repair around it, activate automatically, or fall back to an old loop.
+
+The only guard-not-active exception is the exact one-time bootstrap tuple:
+
+- Epic: `sdd-fail-closed-worktree-gate`
+- branch: `codex/sdd-fail-closed-worktree-gate/planning`
+- planning worktree: `/Users/omitsuhashi/repos/omitsuhashi/skills/.worktrees/sdd-fail-closed-worktree-gate-planning`
+- creation base: `c370fe14de1641aa5ee30b3fa001f4d857078091`
+
+Require the same continuing controller, a trusted intact tuple, lifecycle
+`bootstrap`, and requested scope `source`, `test`, `spec`, or `plan`. The
+exception excludes `activation`, expires after this bootstrap implementation,
+cannot transfer to another controller or later task, and cannot be reused or
+reconstructed after tuple loss. A mismatch returns the underlying guard blocker
+with zero write.
 
 Create the planning worktree atomically from `starting_head_sha`; only the continuing controller/chat that won atomic allocation may reuse it. If two allocators select the same Epic, the loser must not attach to the existing worktree and returns `BLOCKED`. An independent chat, stale/foreign state, or HEAD/index/tracked/untracked state not attributable to the trusted tuple is `BLOCKED`. Allocation may change shared Git metadata only; never perform original checkout switch/reset/stash/clean/add/commit or content write.
 
 Before the first writable dispatch, prove planning registration/common directory/branch/path, captured-SHA base, original branch/HEAD/status preservation, and that repository root, CWD, every relative or absolute writable artifact path, and the first transient Research Report resolve inside the planning worktree. Reject stale path or escape path. The original checkout must not remain in a writable root, fallback root, CWD, or artifact destination.
+
+A `Gate Pass` is a non-durable current-control-context verdict, not a token,
+file, reusable authority, or activation grant. Bind every writable dispatch to
+the proven planning root, CWD, contained writable path, guard verdict, one writer
+owner, and original-checkout preservation evidence. Revalidate returned paths.
 
 ## Planning Controller
 

@@ -26,3 +26,6 @@
 ## Default implementation route
 
 - For repository changes, use `sdd-implementation` by default. It composes the Superpowers lifecycle, `grill-with-docs`, and `llm-wiki`, and skips specification or planning stages that are already Human-approved and current.
+- `sdd-implementation` is the first repository-change entry, before brainstorming, writing-plans, using-git-worktrees, domain modeling, implementation, or any other writable supporting skill.
+- A direct writable supporting-skill entry returns `BLOCKED: SDD First-Write Worktree Gate required`; it does not silently switch routes and continue.
+- Repository entry, containment, zero-write, and no-fallback rules override conflicting downstream instructions. Allocation, permission, sandbox, capability, dependency, guard, identity, or path failure never continues in the current/original checkout.
