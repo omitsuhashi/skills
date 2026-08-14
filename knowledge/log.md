@@ -1966,3 +1966,14 @@ append-only で使います。すべての entry は予測しやすい header �
   multi-command one-line shell-ifをstructural formでrejectする。既存のinterface prose controlは引き続き許可する。
 - approved North Star / Written Spec、agent-owned plan readiness / execution、separate remote authorization、および
   先行authority-evidence-correctionは変更していない。
+
+## [2026-08-14] review-fix | SDD Plan Ownership Alignment residual round 3
+
+- 残るImportant 1件に対し、Python prospective-body detectionのexecutable-statement whitelistを廃止した。
+  line-anchored `def` / `async def` candidateとそのindented suiteを抽出し、Python parserが実function bodyとして
+  受理するstructureを一律rejectする。
+- optional docstring / comment / blank line後の`import json`、`await normalize(spec)`、`self.normalize(spec)`、
+  `self.plan = spec`をadversarial regressionへ追加した。`def build_plan(spec): returns ...`はvalid Python bodyでは
+  ないためintent-only proseとして引き続き許可する。shell validationは変更していない。
+- Human-only Written Spec authority、agent-owned plan readiness / execution、separate remote authorization、既存の
+  authority correctionとround 1 / 2 evidenceは変更していない。

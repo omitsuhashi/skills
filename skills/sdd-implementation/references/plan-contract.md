@@ -106,6 +106,11 @@ or concrete runtime model, provider, agent, or effort selections. Do not make
 the plan a Human approval subject. Human authority remains with the North Star
 and Written Spec.
 
+For Python, extract line-anchored `def` / `async def` candidates and use the
+language parser to recognize an actual function body after optional docstrings,
+comments, and blank lines. Do not maintain an executable-statement whitelist.
+A prose interface signature that is not valid Python remains narrative intent.
+
 ## Review And Readiness Vocabulary
 
 The independent Plan Reviewer returns `ready` or `issues_found`. The Planning

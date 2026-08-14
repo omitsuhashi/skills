@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 from pathlib import Path
 import re
 import shutil
@@ -118,15 +119,43 @@ def git_commit_is_current_ancestor(commit_sha: str) -> bool:
     return result.returncode == 0
 
 
-def contains_unfenced_production_body(text: str) -> bool:
-    python_body = re.search(
+def contains_parsed_python_function(text: str) -> bool:
+    lines = text.splitlines()
+    header_pattern = re.compile(
         r"^(?P<indent>[ \t]*)(?:async[ \t]+)?def[ \t]+[A-Za-z_]\w*"
-        r"[ \t]*\([^\n]*\)[ \t]*(?:->[ \t]*[^:\n]+)?[ \t]*:[ \t]*\n"
-        r"(?P=indent)[ \t]+(?:return\b|raise\b|yield\b|pass\b|if\b|for\b|while\b|with\b|try\b|"
-        r"[A-Za-z_]\w*[ \t]*=|[A-Za-z_]\w*[ \t]*\()",
-        text,
-        flags=re.MULTILINE,
+        r"[ \t]*\([^\n]*\)[ \t]*(?:->[ \t]*[^:\n]+)?[ \t]*:"
     )
+    for index, line in enumerate(lines):
+        header = header_pattern.match(line)
+        if header is None:
+            continue
+        base_indent = len(header.group("indent").expandtabs(8))
+        candidate = [line[len(header.group("indent")) :]]
+        if line[header.end() :].strip():
+            pass
+        else:
+            for following in lines[index + 1 :]:
+                if not following.strip():
+                    candidate.append("")
+                    continue
+                following_indent = len(
+                    following[: len(following) - len(following.lstrip(" \t"))].expandtabs(8)
+                )
+                if following_indent <= base_indent:
+                    break
+                candidate.append(following[len(header.group("indent")) :])
+        try:
+            parsed = ast.parse("\n".join(candidate))
+        except SyntaxError:
+            continue
+        if parsed.body and isinstance(parsed.body[0], (ast.FunctionDef, ast.AsyncFunctionDef)):
+            return True
+    return False
+
+
+def contains_unfenced_production_body(text: str) -> bool:
+    if contains_parsed_python_function(text):
+        return True
     javascript_body = re.search(
         r"^(?P<indent>[ \t]*)(?:(?:export|async)[ \t]+)*"
         r"(?:function[ \t]+[A-Za-z_$][\w$]*[ \t]*\([^\n]*\)|"
@@ -138,30 +167,11 @@ def contains_unfenced_production_body(text: str) -> bool:
         text,
         flags=re.MULTILINE,
     )
-    python_inline_body = re.search(
-        r"^[ \t]*(?:async[ \t]+)?def[ \t]+[A-Za-z_]\w*[ \t]*"
-        r"\([^\n]*\)[ \t]*(?:->[ \t]*[^:\n]+)?[ \t]*:[ \t]+"
-        r"(?:return\b|raise\b|yield\b|pass\b|[A-Za-z_]\w*[ \t]*=|[A-Za-z_]\w*[ \t]*\()",
-        text,
-        flags=re.MULTILINE,
-    )
     javascript_inline_body = re.search(
         r"^[ \t]*(?:(?:export|async)[ \t]+)*(?:const|let|var)[ \t]+"
         r"[A-Za-z_$][\w$]*[ \t]*=[ \t]*(?:async[ \t]+)?"
         r"(?:\([^\n]*\)|[A-Za-z_$][\w$]*)[ \t]*=>[ \t]*"
         r"(?:await[ \t]+|new[ \t]+|[A-Za-z_$][\w.$]*[ \t]*\()",
-        text,
-        flags=re.MULTILINE,
-    )
-    python_docstring_body = re.search(
-        r"^(?P<indent>[ \t]*)(?:async[ \t]+)?def[ \t]+[A-Za-z_]\w*"
-        r"[ \t]*\([^\n]*\)[ \t]*(?:->[ \t]*[^:\n]+)?[ \t]*:[ \t]*\n"
-        r"(?P=indent)(?P<bodyindent>[ \t]+)(?:[rubfRUBF]*)"
-        r"(?P<quote>\"\"\"|''')[\s\S]*?(?P=quote)[ \t]*\n"
-        r"(?:[ \t]*\n)*"
-        r"(?P=indent)(?P=bodyindent)(?:return\b|raise\b|yield\b|pass\b|"
-        r"if\b|for\b|while\b|with\b|try\b|[A-Za-z_]\w*[ \t]*=|"
-        r"[A-Za-z_]\w*[ \t]*\()",
         text,
         flags=re.MULTILINE,
     )
@@ -176,11 +186,8 @@ def contains_unfenced_production_body(text: str) -> bool:
     return any(
         match is not None
         for match in (
-            python_body,
             javascript_body,
-            python_inline_body,
             javascript_inline_body,
-            python_docstring_body,
             javascript_function_inline_body,
         )
     )
@@ -738,6 +745,29 @@ class PlanContractTests(unittest.TestCase):
         for body, expected_error in probes.items():
             with self.subTest(body=body):
                 self.assertIn(expected_error, plan_errors(load_plan(READY_PLAN) + body))
+
+    def test_rejects_any_parsed_python_statement_after_optional_preamble(self) -> None:
+        probes = (
+            '\ndef build_plan(spec):\n    """Build the plan."""\n\n    import json\n',
+            (
+                '\nasync def build_plan(spec):\n    """Build the plan."""\n\n'
+                "    await normalize(spec)\n"
+            ),
+            (
+                '\ndef build_plan(spec):\n    """Build the plan."""\n'
+                "    # implementation follows\n\n    self.normalize(spec)\n"
+            ),
+            (
+                '\ndef build_plan(spec):\n    """Build the plan."""\n\n'
+                "    self.plan = spec\n"
+            ),
+        )
+        for body in probes:
+            with self.subTest(body=body):
+                self.assertIn(
+                    "prospective body: production code",
+                    plan_errors(load_plan(READY_PLAN) + body),
+                )
 
     def test_prohibition_scan_allows_intent_only_narrative(self) -> None:
         narrative = (
