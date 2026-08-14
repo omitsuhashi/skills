@@ -42,10 +42,54 @@ class SddImplementationSkillContractTests(unittest.TestCase):
         for state in (
             "Change request or incomplete specification",
             "Human-approved current specification",
-            "Approved plan bound to the current specification",
+            "Repository-ready `ready` plan bound to the current specification",
         ):
             self.assertIn(state, self.skill_text)
         self.assertIn("Do not repeat a completed stage.", self.skill_text)
+
+    def test_implementation_entry_requires_current_ready_evidence(self) -> None:
+        maturity = self.skill_text.split("## Route By Input Maturity", 1)[1].split("## Spec Stage", 1)[0]
+        normalized = " ".join(maturity.split())
+        for required in (
+            "approved North Star identity",
+            "approved Written Spec identity",
+            "baseline binding",
+            "independent review verdict `ready`",
+            "repository validation evidence",
+        ):
+            self.assertIn(required, normalized)
+        for rejected in ("`issues_found`", "stale", "absent"):
+            self.assertIn(rejected, normalized)
+        self.assertIn("must not enter the Implementation Stage", normalized)
+
+    def test_human_approval_is_limited_to_north_star_and_written_spec(self) -> None:
+        self.assertIn("Human North Star and Written Spec authority", self.skill_text)
+        lower = self.skill_text.lower()
+        self.assertNotIn("repository-approved", lower)
+        self.assertNotIn("approved plan", lower)
+        for forbidden in (
+            "human-approved issue plan",
+            "human plan approval",
+            "human approval of the plan",
+            "human approval for the plan",
+        ):
+            self.assertNotIn(forbidden, lower)
+
+    def test_plan_stage_routes_reviewed_readiness_without_remote_authorization(self) -> None:
+        section = self.skill_text.split("## Plan Stage", 1)[1].split("## Implementation Stage", 1)[0]
+        normalized = " ".join(section.split())
+        for value in (
+            "`references/plan-contract.md`",
+            "fresh Plan Author",
+            "fresh independent Plan Reviewer",
+            "`needs_repair`",
+            "`needs_decision`",
+            "`blocked`",
+            "`ready`",
+            "Implementation Stage",
+            "remote publication authorization",
+        ):
+            self.assertIn(value, normalized)
 
     def test_incomplete_spec_preserves_settled_portions(self) -> None:
         self.assertIn(
@@ -73,7 +117,7 @@ class SddImplementationSkillContractTests(unittest.TestCase):
         self.assertIn("REQUIRED SUB-SKILL: Use llm-wiki", self.skill_text)
         for checkpoint in (
             "Human-approved written specification",
-            "Repository-approved implementation plan",
+            "Reviewed implementation plan",
             "Implementation closeout",
         ):
             self.assertIn(checkpoint, self.skill_text)
@@ -81,6 +125,42 @@ class SddImplementationSkillContractTests(unittest.TestCase):
         self.assertIn("knowledge/log.md", self.skill_text)
         self.assertIn("Do not create parallel `CONTEXT.md` or `docs/adr/` stores.", self.skill_text)
         self.assertIn("not_applicable", self.skill_text)
+
+    def test_public_contract_invokes_transient_validator_for_each_exact_git_surface(self) -> None:
+        expected_contract = (
+            "Invoke `scripts/validate_sdd_transient_artifacts.py` for every "
+            "repository validation gate.",
+            "Validate the current Git index and staging area independently.",
+            "Validate each nominated candidate tree, post-cleanup new commit, "
+            "and final tree independently.",
+            "Allow a staged deletion only when the candidate tree has no "
+            "`.superpowers/**` entry.",
+            "Do not reject a pre-amendment historical ancestor blob without a "
+            "current index or nominated-tree violation.",
+            "Treat the tracked migration manifest as candidate-tree authority "
+            "only for the exact f07aebc three-report baseline.",
+            "Accept that authority only when the planned pre-marker parent and "
+            "authorized introduction are ancestors of HEAD, the introduction "
+            "is the sole marker add, no marker deletion exists in that ancestry, "
+            "and the current HEAD marker mode, blob, and path match exactly.",
+            "A divergent or pre-marker HEAD cannot gain authority by staging the "
+            "manifest.",
+            "When the manifest is absent, require zero `.superpowers/**` entries "
+            "and reject exact-baseline reintroduction.",
+        )
+        normalized = " ".join(self.skill_text.split())
+        for statement in expected_contract:
+            with self.subTest(statement=statement):
+                self.assertIn(statement, normalized)
+
+    def test_public_contract_aborts_on_transient_validator_failure_without_continuation(self) -> None:
+        expected = (
+            "If `scripts/validate_sdd_transient_artifacts.py` is unavailable, "
+            "returns nonzero, or detects any `.superpowers/**` violation, fail "
+            "and abort the repository gate; do not continue to any stage "
+            "transition, commit creation, or closeout."
+        )
+        self.assertIn(expected, " ".join(self.skill_text.split()))
 
     def test_upstream_owns_model_tiers_and_local_contract_only_adds_effort(self) -> None:
         self.assertIn("Follow the current Superpowers SDD Model Selection contract.", self.skill_text)
@@ -249,13 +329,14 @@ class SddImplementationSkillContractTests(unittest.TestCase):
             children,
         )
         self.assertEqual(
-            {"planning-context.md", "research-stage.md"},
+            {"plan-contract.md", "planning-context.md", "research-stage.md"},
             {path.name for path in (SKILL_DIR / "references").iterdir()},
         )
         self.assertEqual(
             {
                 "repository-researcher.md",
                 "spec-synthesizer.md",
+                "plan-reviewer.md",
                 "spec-reviewer.md",
             },
             {path.name for path in (SKILL_DIR / "prompts").iterdir()},
@@ -288,8 +369,14 @@ class SddImplementationSkillContractTests(unittest.TestCase):
 
     def test_parallel_eligibility_is_fail_closed(self) -> None:
         section = self.skill_text.split("## Epic Parallel Issue Adapter", 1)[1].split("## Runtime Model", 1)[0]
-        for value in ("explicit Human opt-in", "Human-approved issue plan", "one branch/worktree/session/plan/artifact workspace", "expected write overlap", "shared mutable resource", "pinned-base ancestry", "unknown", "sequential handling or Human decision"):
+        for value in ("agent / repository-owned eligibility", "repository-ready issue plan", "one branch/worktree/session/plan/artifact workspace", "expected write overlap", "shared mutable resource", "pinned-base ancestry", "unknown", "sequential handling"):
             self.assertIn(value, section)
+        for forbidden in ("explicit Human opt-in", "Human-approved issue plan", "Human execution-method choice", "sequential handling or Human decision"):
+            self.assertNotIn(forbidden, section)
+        self.assertIn(
+            "Only an evidenced material North Star / Written Spec conflict returns to Human authority.",
+            section,
+        )
 
     def test_actual_result_revalidation_is_required(self) -> None:
         section = self.skill_text.split("## Epic Parallel Issue Adapter", 1)[1].split("## Runtime Model", 1)[0]

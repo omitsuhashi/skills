@@ -20,6 +20,10 @@ Phase 2 は fresh coordinator verification と final whole-branch review を含�
 
 2026-07-28のreasoning effort risk precedence変更は`LOCAL_COMPLETE`である。Task 1を`2549892c07dc3f65c22094ca27b9208c831e65b0`で実装し、独立task reviewはapproved（material findingなし）となった。closeout candidate `ffa8339df00a5a8dfec90f572e843509516f49fe`へのfinal whole-branch reviewはknowledge discoverability / provenanceのImportant 2件を返したが、bounded fix `a7d0d294a6ccdbeec84f44c0cd6f3060967de5d1`で両方を解消し、scoped re-reviewはresolved 2/2、新規Critical / Importantなしで`APPROVED`となった。fresh verificationはSDD contract 18 tests、repository scripts 43 tests、LLM Wiki 5 tests、skill architecture / context validator、scoped dual-host compatibility、skill quick validation、`git diff --check`が成功している。push、PR、merge、release、live installその他のremote writeは実施していない。
 
+2026-08-14の[[sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]]により、current Plan Stageはagent-owned contractへ移行した。Human approvalはNorth StarとWritten Specに限定し、fresh Plan Author、fresh independent Plan Reviewer、Plan Readiness Gateがplanの作成・修復・readinessを所有する。local [Plan Contract Overlay](../../../skills/sdd-implementation/references/plan-contract.md)はupstream `writing-plans`をrequired methodologyとして保持しつつ、prospective implementation bodyとHuman plan approvalをdurable planから除外する。Task POA-1のreviewed intentional RED、Task POA-2のreviewed combined GREEN、Task POA-3のoriginal closeoutはlanded済みである。
+
+同仕様のHuman-approved transient-artifact amendmentは、Researchからknowledge closeoutまでのnormal SDD stageにおけるraw handoffをtask / session boundedなrepository外temporary locationへ移すcurrent contractである。POA-5のall-stage migration / fail-closed validator / CI integrationと、POA-6のexact three-report cleanupはindependent task reviewを通過してlandedした。current Git index / final treeは`.superpowers/**` entry zeroであり、必要なlocal copyはroot `.gitignore`のcoverage下でignored / untrackedのまま保持できる。pre-amendment ancestor historyはrewriteしない。POA-7は本書、focused context specification、canonical spec / plan、catalog、append-only logをこのlanded stateへ同期し、lifecycle correction後のfresh scoped re-reviewはprior Important 2件の解消、新規Critical / Importantなしで`ready`となった。POA-8のfresh combined verificationとcanonical whole-branch reviewもbounded fix / scoped re-reviewを経て完了し、本amendmentは`LOCAL_COMPLETE`である。authorized non-force remote branch updateはpending / unpublishedで、merge、release、live installは未承認のままである。
+
 ## 調査で確認した前提
 
 Superpowers v6.2.0 では、開発フローの責任が次のように分かれている。
@@ -55,7 +59,9 @@ requirements
        -> Human-approved written spec
        -> llm-wiki durable spec sync
   -> Superpowers writing-plans
-       -> repository-required plan review / approval
+       -> repository Plan Contract Overlay
+       -> fresh Plan Author self-review / independent Plan Reviewer
+       -> agent-owned Plan Readiness Gate
        -> llm-wiki durable plan sync
   -> Superpowers subagent-driven-development
        -> upstream per-dispatch model selection
@@ -82,7 +88,7 @@ caller は change request、既存 spec、または既存 implementation plan �
 - `Grill with Docs` は spec refinement の対話技法だけを所有する。
 - `llm-wiki` は durable knowledge の query / ingest / closeout だけを所有する。
 - repo-local runtime boundary は model resolution、optional reasoning effort、dispatch capability mapping だけを所有する。
-- runtime ledger、reports、diff、test logs、agent IDs は Superpowers の transient workspace に置き、wiki へ保存しない。
+- runtime ledger、reports、diff、test logs、agent IDs はtask / session boundedなrepository外temporary locationに置き、wikiへ保存しない。repository-local `.superpowers/**`は[[sdd-plan-ownership-alignment|current alignment spec]]が定めるreason / ignore gateを満たすignored local scratchに限る。
 
 ### Review は material finding だけを扱う
 
@@ -97,7 +103,7 @@ style preference、具体的 failure path のない将来懸念、scope 外 refa
 | requirements / design / written spec | Superpowers `brainstorming` + Human | `Grill with Docs` と `llm-wiki` を stage 内で呼ぶ |
 | ambiguity resolution / domain sharpening | `Grill with Docs` | 一問一答、decision ごとの合意、用語の明確化 |
 | durable knowledge | `llm-wiki` | repository topology、write boundary、index / log に従う |
-| executable implementation plan | Superpowers `writing-plans` | repository-required approval と wiki sync を加える |
+| executable implementation plan | Superpowers `writing-plans` + fresh Plan Author / independent Plan Reviewer | local Plan Contract Overlay、agent-owned readiness、wiki syncを加える |
 | implementation / TDD / task review / fix loop | Superpowers SDD | upstream template と lifecycle をそのまま使う |
 | dispatch model tier | Superpowers SDD | host の concrete model へ解決するだけ |
 | reasoning effort | repo-local host adapter | host が独立制御を提供する場合だけ適用 |
@@ -112,12 +118,13 @@ spec draft内の`Confirmed Decisions` / `Open Decisions`、approval、stage rout
 短いControl Returnだけを所有する。source code、broad wiki / docs、full spec /
 plan、diff、test output、複数file探索は直接読まない。
 
-Change requestまたはincomplete specではfresh Research Workerがgitignoredな
-`.superpowers/research/<epic-id>/`へpath / line evidence付きreportを書く。
+Change requestまたはincomplete specではfresh Research Workerが、runtimeがtask / session用に解決した
+repository外temporary locationへpath / line evidence付きreportを書く。write前にrepository root、planning
+worktree、original checkoutの外にあるbounded pathであることを確認する。
 accepted decisionが揃った後はfresh Spec Synthesis Worker、別のfresh Spec
-Reviewer、fresh Plan Author Workerへ順にrouteする。workerはparent conversationを
-継承せずadvisory-onlyであり、Humanがmaterial decision、Written Spec approval、
-repository-required Plan approvalを保持する。
+Reviewer、fresh Plan Author Worker、fresh independent Plan Reviewerへ順にrouteする。workerはparent
+conversationを継承しない。Humanはmaterial decisionとWritten Spec approvalを保持し、Plan Author /
+Reviewerはplan method、repair、readinessを所有する。
 
 workerの直接returnは`status`、`artifact_path`、`decision_requests`、
 `material_risks`へ限定し、詳細はartifact pathへ置く。stage transitionはcurrent
@@ -144,7 +151,7 @@ fallback matrix、main-session exploration fallbackは追加しない。Superpow
 
 spec の authority、current applicability、requirements / acceptance criteria の充足を確認する。問題がなければ `Grill with Docs` を再実行せず、`writing-plans` へ進む。material conflict を発見した場合だけ spec stage へ戻す。
 
-### Current spec に binding された承認済み plan がある
+### Current spec に binding されたreview済み repository-ready planがある
 
 spec digest または同等の binding、current tree との compatibility、verification scope を確認する。問題がなければ brainstorming と plan writing を再実行せず、SDD preflight へ進む。
 
@@ -176,11 +183,22 @@ Human が Written Spec を明示承認するまで `writing-plans` を開始し�
 
 ## Plan Stage
 
-承認済み spec を Superpowers `writing-plans` に渡し、exact paths、interfaces、test-first steps、verification、commit boundaries を含む executable plan を作る。
+承認済み spec を Superpowers `writing-plans` に渡し、repositoryの
+[Plan Contract Overlay](../../../skills/sdd-implementation/references/plan-contract.md)を適用する。
+upstream methodologyはrequired dependencyとして保持するが、durable planにはrequired plan/task fields、
+complete coverage、acyclic dependency、execution order、serialized integration、combined verification、
+readiness evidenceだけを保存し、prospective production / test body、script / patch body、commit command bodyを
+保存しない。
 
-Superpowers 自体が要求する spec coverage self-review に加え、repository policy が Execution Plan Gate や Human approval を要求する場合はそれを満たす。承認前の plan を SDD に渡さない。
+fresh Plan Authorのself-review後にfresh independent Plan Reviewerがplanを確認する。`needs_repair`はfresh
+author / reviewer loopに閉じ、approved North Star / Written Specとのmaterial conflictだけを一件の
+`needs_decision`としてHumanへ戻す。capability、binding、authority不足はdecision requestなしの`blocked`である。
+`ready`だけをControl Return `status: complete`へmapし、Implementation Stage entryを許可する。Humanにplan
+approvalやexecution methodの選択を求めず、remote authorization不足をplan readiness blockerにしない。
 
-knowledge root がある場合、承認済み plan を durable page として同期する。plan に concrete model 名、reasoning effort 値、provider、agent ID、run ごとの availability を固定しない。
+knowledge root がある場合、agent-reviewed / repository-ready planとspec binding、coverage、readiness evidenceを
+durable pageとして同期する。planにconcrete model名、reasoning effort値、provider、agent ID、runごとの
+availabilityを固定しない。
 
 ## SDD Stage
 
@@ -223,10 +241,10 @@ concrete model、effort、provider、availability、agent ID、run-specific reso
 `llm-wiki` は三つの durable checkpoint を所有する。
 
 1. Human-approved Written Spec: canonical spec、related terminology / ADR、index、log。
-2. Repository policy により承認された implementation plan: spec binding、plan、index、log。
+2. Agent-reviewed / repository-ready implementation plan: spec binding、coverage、readiness、plan、index、log。
 3. Implementation closeout: 実装結果、material decision、verification、残課題、index、log。
 
-runtime progress ledger、worker report、review transcript、diff、test log は durable knowledge ではなく、Superpowers workspace の transient evidence とする。
+runtime progress ledger、worker report、review transcript、diff、test log は durable knowledge ではなく、task / session boundedなrepository外temporary evidenceとする。例外的なrepository-local scratchは[[sdd-plan-ownership-alignment|current alignment spec]]のconcrete-reason / pre-write ignore gateに従い、ignored / untracked / unstaged / uncommittedに限定する。
 
 すべての implementation task と task review が完了した後、final whole-branch review の前に closeout を行う。final reviewer は code、tests、spec、plan、wiki、index、log を同じ branch range で確認する。
 
@@ -237,7 +255,8 @@ knowledge root が存在するのに authority、canonical target、write bounda
 - material ambiguity が残る場合は `Grill with Docs` を継続し、暗黙の assumption で spec を確定しない。
 - Written Spec の Human approval がなければ plan stage へ進まない。
 - plan と spec の binding が失われていれば SDD へ進まず、plan stage へ戻す。
-- current tree と spec / plan が material に不一致なら evidence を保存し、Human に decision を戻す。
+- plan deficiencyはfresh Plan Author / Reviewerのrepair loopへ戻し、Humanへplan reviewやmethod choiceを求めない。
+- current tree とapproved North Star / Written Specがmaterialに不一致なら、conflict evidenceと一件のdecision requestだけをHumanに戻す。
 - SDD、isolated implementer、independent reviewer、required worktree、必要な domain skill が利用不能なら停止する。
 - reviewer finding と approved spec / plan が衝突する場合、authority-bearing decision は Human に戻す。
 - requirement または material current risk に紐づかない observation は fix loop に入れない。
@@ -247,9 +266,9 @@ knowledge root が存在するのに authority、canonical target、write bounda
 
 - change request から Human-approved Written Spec、implementation plan、SDD、knowledge closeout までの一貫した route が定義される。
 - spec authoring または material な仕様精緻化では `Grill with Docs` が必須になる。
-- complete な Human-approved spec / plan がある場合は、完了済み stage を重複実行しない。
+- complete なHuman-approved specまたはreview済みrepository-ready planがある場合は、完了済みstageを重複実行しない。
 - Superpowers が lifecycle、plan、TDD、dispatch、review、model tier の正本であり、repo-local skill がそれらを再実装しない。
-- `llm-wiki` が relevant knowledge query と、approved spec / plan / closeout の durable storage を所有する。
+- `llm-wiki` がrelevant knowledge queryと、approved spec / agent-reviewed repository-ready plan / closeoutのdurable storageを所有する。
 - Grill / Domain Modeling の既定出力を使って `CONTEXT.md` や repo-root `docs/adr/` という並行正本を作らない。
 - repo-local model logic は upstream tier の active-runtime resolution に限定される。
 - reasoning effort は `low` / `medium` / `high` の runtime-only overlay として選択され、capabilityがない場合はmodel routingのみで継続できる。
@@ -264,7 +283,7 @@ knowledge root が存在するのに authority、canonical target、write bounda
 
 ### Contract tests
 
-- entry input を change request / incomplete spec / approved spec / approved plan に分類できる。
+- entry inputをchange request / incomplete spec / approved spec / reviewed repository-ready planに分類できる。
 - spec 不在または material ambiguity ありでは `Grill with Docs` が required になる。
 - approved current spec では Grill が `not_needed` になり、plan stage へ進む。
 - Written Spec approval なしでは plan / implementation に進めない。
@@ -284,7 +303,7 @@ knowledge root が存在するのに authority、canonical target、write bounda
 1. rough change request を wiki query と Grill に通し、Human-approved spec、plan、SDD へ進める。
 2. incomplete spec の未確定 decision だけを一問一答で詰める。
 3. approved spec を再 grilling せず plan 化する。
-4. current spec に binding された approved plan を直接 SDD へ渡す。
+4. current specにbindingされたreview済みrepository-ready planを直接SDDへ渡す。
 5. mechanical / integration / high-risk dispatch で upstream model tier と local effort overlay が独立して解決される。
 6. architecture-sensitive / high-risk task review で role default より risk classification が優先され、high が選ばれる。
 7. effort capabilityがないruntimeでupstream model selectionにより正常継続する。
@@ -313,8 +332,8 @@ test outputはtransient evidenceに留め、wikiへはcurrent behaviorだけを�
 `LOCAL_COMPLETE` は次をすべて満たす場合だけ返す。
 
 - Human-approved Written Spec に current implementation が binding されている。
-- repository policy が要求する plan review / approval を満たしている。
-- approved plan の全 task が Superpowers SDD の task review を通過している。
+- repository Plan Contract Overlayとfresh independent Plan Reviewを満たし、readinessが`ready`である。
+- reviewed planの全taskがSuperpowers SDDのtask reviewを通過している。
 - required verification が fresh に成功している。
 - scoped commits が current branch に含まれる。
 - knowledge root がある場合、spec / plan / closeout、index、log、validation が完了している。
@@ -330,6 +349,7 @@ test outputはtransient evidenceに留め、wikiへはcurrent behaviorだけを�
 - historical wiki source / spec / ledger と `skill-repository-optimization-v4-context-baseline.json` は、実行可能 artifact として再利用せず非実行の evidence として保持する。
 - Phase 2 の fresh coordinator verification（SDD 9、llm-wiki 5、scripts 42 tests、architecture / context / dual-host / skill validators、legacy absence / link checks）と、`8ff2bdc..804c2c7` の final review（Critical 0、Important 0、Minor 0、Ready to merge Yes）は完了済みである。
 - [SDD 実装前コンテキスト分離仕様](sdd-preimplementation-context-isolation-spec.md)と[その実装計画](sdd-preimplementation-context-isolation-implementation-plan.md)がsupersedeするのはpre-implementation context ownershipの部分だけである。historicalなloop context documentsはnon-executable evidenceとして保持し、そのruntime machineryは復元しない。
+- [[sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]]は、本書と実装前コンテキスト分離仕様に残っていたPlan StageのHuman / repository approval、artifact content、readiness、Human return semanticsをsupersedeする。さらに同仕様のHuman-approved transient-artifact amendmentは、Research、Spec、Plan、Implementation、task review、repair、integration、final review、knowledge closeoutを含むすべてのnormal SDD stageで競合するrepository-contained transient research / report / brief / handoff destinationとwrite bindingをsupersedeする。Superpowers-firstのbroader lifecycle、fresh worker isolation、trusted planning worktree内のsource code / durable knowledge write boundaryは本書および同focused specificationをcurrent sourceとして維持する。
 
 ## 非目標
 
@@ -345,6 +365,8 @@ test outputはtransient evidenceに留め、wikiへはcurrent behaviorだけを�
 
 ## 関連ページ
 
+- [[sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]] — current Plan Stage authority、artifact、review、readiness semanticsと、全normal SDD stageのrepository-external transient destination / Git zero-tree boundaryのcanonical source。
+- [[sdd-plan-ownership-alignment-implementation-plan|SDD Plan Ownership Alignment 実装計画]] — approved specへbindingしたagent-authored planとPOA-1〜8のserialized integration contract。
 - [SDD Compatibility Removal Follow-up Plan](sdd-compatibility-removal-follow-up-plan.md) — publish前feedbackで非要件となったcross-runtime compatibility layerを削除するcurrent follow-up plan。
 - [Superpowers SDD のモデル選択・Reasoning・Host 境界調査](sdd-superpowers-model-and-reasoning-research.md) — upstream v6.2.0 の model、effort、host、spec / plan / SDD ownership の evidence。
 - [SDD Agent-Agnostic Runtime Contract Implementation Plan](sdd-agent-agnostic-runtime-implementation-plan.md) — current runtime behaviorのdelta / closeout candidate。

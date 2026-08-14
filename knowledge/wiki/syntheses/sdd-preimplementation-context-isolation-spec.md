@@ -3,8 +3,17 @@
 ## 状態
 
 2026-07-29にHumanとのGrand Design上のshared understandingを確認し、同日に
-Humanが本書をWritten Specとして承認した。Implementation planの作成・review・承認は
-未実施である。
+Humanが本書をWritten Specとして承認した。本書のfresh Planning Controller / worker isolationは
+current contractとして維持する。2026-08-14の[[sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]]が、
+本書のPlan Stageに残っていたHuman / repository plan approval、artifact content、readiness、Human return
+semanticsをsupersedeする。同仕様のHuman-approved transient-artifact amendmentは、本書のrepository-contained
+Research Report destinationと全pre-implementation raw handoff write bindingも競合範囲でsupersedeする。POA-5の
+repository-external migration / validatorとPOA-6のexact three-report cleanupはreview済みでlandedし、POA-7で
+canonical closeoutを同期した。POA-7 lifecycle correction後のfresh scoped re-reviewはprior Important 2件の解消と
+新規Critical / Importantなしを確認して`ready`となった。Planning Controller / fresh worker isolation、source /
+durable worktree boundary、Human Written Spec authorityは維持する。POA-8のfresh combined verificationとcanonical
+whole-branch reviewは完了し、本alignmentは`LOCAL_COMPLETE`である。authorized non-force remote branch updateは
+pending / unpublishedで、merge、release、live installは未承認である。
 
 ## Epic ID
 
@@ -87,7 +96,7 @@ planning worktree上のspec draftに置く`Confirmed Decisions`と`Open Decision
 ## Grand Design
 
 ```text
-Change Request / Incomplete Spec / Approved Spec / Approved Plan
+Change Request / Incomplete Spec / Approved Spec / Reviewed Repository-Ready Plan
   -> Planning Controller
        -> Research Worker
        -> Human Decision Loop with Grill with Docs
@@ -95,13 +104,15 @@ Change Request / Incomplete Spec / Approved Spec / Approved Plan
        -> Spec Reviewer
        -> Human Written Spec Approval
        -> Plan Author Worker using Superpowers writing-plans
-       -> Repository-required Plan Approval
+       -> Repository Plan Contract Overlay
+       -> Independent Plan Reviewer
+       -> Agent-owned Plan Readiness Gate
   -> Superpowers subagent-driven-development
   -> Knowledge Closeout Worker
   -> Final Whole-Branch Review
 ```
 
-入力がapproved current specまたはapproved planの場合は、現行のinput maturity routingに
+入力がapproved current specまたはreview済みrepository-ready planの場合は、現行のinput maturity routingに
 従って完了済みstageを再実行しない。
 
 ## Planning Controller Contract
@@ -158,9 +169,15 @@ constraints、report pathだけを受け取る。
 
 ### Research Report
 
-Research reportはplanning worktree内のgitignoredな
-`.superpowers/research/<epic-id>/`へ置く。wiki、Git、canonical specの正本ではなく、
-task-scoped evidence cacheとして扱う。
+Research reportはruntimeがtask / session用に解決したrepository外temporary locationへ置く。write前に
+repository root、planning worktree、original checkoutの外にあるbounded pathであることを確認する。wiki、Git、
+canonical specの正本ではなく、task-scoped evidence cacheとして扱う。
+
+repository-local `.superpowers/**`は通常のhandoff destinationにしない。concreteなoperational reasonがある
+場合だけ、write前にroot `.gitignore` coverageをmechanically確認し、ignored / untracked / unstaged /
+uncommitted local scratchとして使用できる。このcurrent write bindingのauthorityは
+[[sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]]にあり、本書はworker isolationとcarry-forward
+semanticsだけを所有する。
 
 Humanが採用した判断と将来も必要な根拠だけをWritten Specへ昇格させる。raw reportを
 `knowledge/index.md`へ登録せず、implementation closeout後に不要なら削除できる。
@@ -200,12 +217,17 @@ HumanがWritten Specを確認し承認するまでPlan Stageへ進まない。
 ## Plan Stage
 
 Plan Author Workerはfresh contextでSuperpowers `writing-plans`を使い、approved specと
-必要なcanonical pathだけからexecutable implementation planを作る。
+必要なcanonical pathだけからexecutable implementation planを作る。repository
+[Plan Contract Overlay](../../../skills/sdd-implementation/references/plan-contract.md)を適用し、
+required plan/task fields、complete coverage、dependency / execution / serialized integration order、
+combined verification、readiness evidenceを保存する。prospective implementation bodyはplanへ保存しない。
 
 Planning Controllerはrepository file mappingやcode探索を繰り返さず、Control Return、
-plan path、spec binding、repository-required approvalだけを扱う。Superpowersの
-plan self-reviewとrepository-required review / approvalを満たすまでImplementation
-Stageへ進まない。
+plan path、spec binding、readiness resultだけを扱う。fresh Plan Authorのself-review後にfresh independent
+Plan Reviewerをdispatchし、`needs_repair`をfresh author / reviewer loopへ戻す。approved North Star /
+Written Specとのmaterial conflictだけを`needs_decision`としてHumanへ返し、capability、binding、authority
+不足はdecision requestなしの`blocked`とする。`ready`だけがImplementation Stageへ進む。Human plan approval
+またはHumanによるexecution method選択は要求しない。
 
 ## Context Handoff
 
@@ -217,12 +239,16 @@ Stageへ進まない。
 | Research -> Decision | report path、confirmed fact summary、conflict、open decision |
 | Decision -> Spec | Confirmed Decisions、Open Decisions、research paths |
 | Spec -> Plan | approved spec path、binding evidence、material constraints |
-| Plan -> Implementation | approved plan path、spec path、verification scope |
+| Plan -> Implementation | reviewed repository-ready plan path、spec path、readiness evidence、verification scope |
 | Implementation -> Closeout | commits、worker reports、review / verification paths |
 
 Control Returnは200 words程度、Stage Capsuleは400 words程度を目安にする。ただし
 word-count schema、validator、script、超過時のBLOCKED処理は作らない。重要なのは
 semantic fieldを短く保ち、詳細をartifact pathへ置くことである。
+
+このtableのresearch / worker / review pathはrepository外temporary locationを指す。durable spec、reviewed plan、
+source、knowledge closeoutだけをtrusted planning worktreeへ書き、raw handoffをrepository artifact identityや
+clone-stable provenanceとして扱わない。
 
 ## Runtime And Failure Policy
 
@@ -243,9 +269,11 @@ dependency / capability不足として単純に停止する。
 skills/sdd-implementation/
 ├── SKILL.md
 ├── references/
-│   ├── research-stage.md
-│   └── planning-context.md
+│   ├── plan-contract.md
+│   ├── planning-context.md
+│   └── research-stage.md
 ├── prompts/
+│   ├── plan-reviewer.md
 │   ├── repository-researcher.md
 │   ├── spec-synthesizer.md
 │   └── spec-reviewer.md
@@ -260,15 +288,16 @@ runtime schema、event storeは追加しない。
 
 ## Knowledge Lifecycle
 
-current `llm-wiki` durable checkpointsを変更しない。
+current `llm-wiki` durable checkpointsを維持し、Plan checkpointのauthority表現だけをcurrent contractへ揃える。
 
 1. Human-approved Written Spec。
-2. Repository-approved implementation plan。
+2. Agent-reviewed / repository-ready implementation planとspec binding / readiness evidence。
 3. Implementation closeout。
 
 Research Report、Control Return、Stage Capsule、review transcript、raw outputはwikiへ
-保存しない。approved durable artifactを変更した時だけ`knowledge/index.md`と
-`knowledge/log.md`を同期する。
+保存しない。durable spec / plan / closeoutを変更した時だけ`knowledge/index.md`と
+`knowledge/log.md`を同期する。raw handoffはrepository外temporary locationへ置き、例外的なrepository-local
+scratchは[[sdd-plan-ownership-alignment|current alignment spec]]のreason / ignore gateに従う。
 
 ## Testing Strategy
 
@@ -313,6 +342,7 @@ artifact handoff、duplicate-question prevention、scope simplicityを評価す�
 - context telemetry、manual compaction、strict word validatorを追加しない。
 - new user-facing skill、custom scheduler、runtime/context schemaを追加しない。
 - current Superpowers、planning authority、llm-wiki lifecycle、remote boundaryを維持する。
+- Plan Author / independent Plan Reviewer / Plan Readiness Gateがplan method、repair、readinessを所有し、Human plan approvalを要求しない。
 
 ## 非目標
 
@@ -358,6 +388,8 @@ artifact handoff、duplicate-question prevention、scope simplicityを評価す�
 
 ## 関連ページ
 
+- [[sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]] — 本書のPlan Stageにおけるapproval、artifact、readiness、Human return semanticsと、repository-contained transient destination / write bindingをsupersedeするcurrent source。
+- [[sdd-plan-ownership-alignment-implementation-plan|SDD Plan Ownership Alignment 実装計画]] — Plan Stage alignmentのagent-authored execution / integration contract。
 - [SDD Implementation Skill 設計](sdd-implementation-skill-design.md) — current lifecycle、
   ownership、runtime capability、knowledge checkpointのcanonical baseline。
 - [Planning Authority Policy 仕様](planning-authority-policy/spec.md) — Planning Controller、

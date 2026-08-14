@@ -11,18 +11,22 @@ only:
 
 - resolved planning worktree root;
 - bound CWD;
-- writable artifact path under that root: `.superpowers/research/<epic-id>/`.
 - explicit single writer ownership;
 - original-checkout preservation evidence;
+- writable artifact path using the repository-external task/session temporary route;
 - original checkout metadata (read-only): canonical path, `starting_branch`, `starting_head_sha`, and captured starting status;
 - baseline commit;
 - epic ID and current research question;
 - applicable repository and knowledge constraints;
 - current spec path when one exists.
 
-The first transient Research Report must resolve under the resolved planning worktree root. Before report creation, reject a relative, absolute, stale path, or escape path that resolves outside it, including the original checkout or any sibling worktree, and return `BLOCKED`.
+The first transient Research Report must use a task/session-bounded directory
+under the runtime/OS temporary root and outside the repository root, resolved
+planning worktree, original checkout, and every sibling worktree. Before report
+creation, reject a relative path, an unbounded absolute root, a stale path,
+repository alias, sibling path, or escape path, and return `BLOCKED`.
 
-If the bound root/CWD/path, writer ownership, or original preservation proof is
+If the bound root/CWD, external path, writer ownership, or original preservation proof is
 missing or mismatched, return the existing four-field `blocked` Control Return.
 The worker must not allocate, select a
 fallback root, continue in the current/original checkout, or write outside the
@@ -45,10 +49,9 @@ the final Human question.
 
 ## Research Report
 
-Write detailed evidence to the supplied path under
-`.superpowers/research/<epic-id>/`. This directory is gitignored transient
-evidence. Do not add the report to the wiki, Git, `knowledge/index.md`, or
-`knowledge/log.md`.
+Write detailed evidence only to the supplied repository-external task/session
+temporary path. Do not add the report to the wiki, Git, `knowledge/index.md`,
+or `knowledge/log.md`.
 
 Return only the Control Return defined in `planning-context.md`. The Planning
 Controller reads the Control Return, not the report body. For a current material

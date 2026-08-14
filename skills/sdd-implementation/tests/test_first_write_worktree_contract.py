@@ -6,6 +6,17 @@ import tempfile
 import unittest
 
 SKILL_DIR = Path(__file__).resolve().parents[1]
+DOCUMENTS = tuple(
+    SKILL_DIR / name
+    for name in (
+        "SKILL.md",
+        "references/planning-context.md",
+        "references/research-stage.md",
+        "prompts/repository-researcher.md",
+        "prompts/spec-synthesizer.md",
+        "prompts/spec-reviewer.md",
+    )
+)
 sys.path.insert(0, str(SKILL_DIR))
 
 from tests.harnesses.fail_closed_scenario import (  # noqa: E402
@@ -30,6 +41,43 @@ def fingerprint(root: Path) -> tuple[str, str, str, str, str, str, tuple[tuple[s
         tuple((name, (root / name).read_bytes()) for name in untracked),
     )
 
+class FirstWriteContractTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.skill_text = DOCUMENTS[0].read_text(encoding="utf-8")
+        cls.planning_text = DOCUMENTS[1].read_text(encoding="utf-8")
+        cls.contract = "\n".join(path.read_text(encoding="utf-8") for path in DOCUMENTS)
+
+    def test_minimal_first_write_stop_cases(self) -> None:
+        gate = self.skill_text.split("## First-Write Worktree Gate", 1)[1].split("## Planning Controller", 1)[0]
+        for value in (
+            "primary/default checkout",
+            "task-linked worktree",
+            "opaque task-owner",
+            "zero content/artifact writes",
+            "original checkout",
+            "fallback root",
+        ):
+            self.assertIn(value, gate)
+
+    def test_starting_branch_is_pr_base_and_integration_branch_is_distinct_pr_head(self) -> None:
+        self.assertIn(
+            "`starting_branch` is PR base and `integration_branch` is PR head and integration target.",
+            self.contract,
+        )
+
+    def test_source_and_durable_writes_stay_in_the_worktree_but_transient_reports_do_not(self) -> None:
+        gate = self.skill_text.split("## First-Write Worktree Gate", 1)[1].split("## Planning Controller", 1)[0]
+        self.assertIn(
+            "Source and canonical durable repository writes remain inside the owned",
+            gate,
+        )
+        self.assertIn(
+            "repository-external task/session temporary path",
+            " ".join(gate.split()),
+        )
+        self.assertNotIn(".superpowers/research/<epic-id>/", gate)
+
 class NativeWorktreeContractTests(unittest.TestCase):
     def make_repository(self, root: Path) -> None:
         run_git(root, "init", "-b", "main")
@@ -39,8 +87,8 @@ class NativeWorktreeContractTests(unittest.TestCase):
         run_git(root, "add", "tracked.txt")
         run_git(root, "commit", "-m", "base")
 
-    def test_clean_default_branch_allocation_is_isolated(self) -> None:
-        """Catches bypassing the gate-owned native commit path."""
+    def test_clean_default_branch_allocation_supports_external_transient_report(self) -> None:
+        """Catches routing a raw report into a repository worktree."""
         with tempfile.TemporaryDirectory() as directory:
             original, planning = Path(directory) / "original", Path(directory) / "planning"
             original.mkdir(); self.make_repository(original)
@@ -49,6 +97,28 @@ class NativeWorktreeContractTests(unittest.TestCase):
             before = fingerprint(original)
             self.assertEqual("", before[5])
             integration_branch = "integration/default"
+            run_git(original, "worktree", "add", "-b", integration_branch, str(planning), sha)
+            report = Path(directory) / "transient" / "default" / "report.md"
+            report.parent.mkdir(parents=True)
+            report.write_text("report\n", encoding="utf-8")
+            self.assertEqual(integration_branch, run_git(planning, "branch", "--show-current").strip())
+            self.assertNotEqual(branch, integration_branch)
+            run_git(planning, "merge-base", "--is-ancestor", branch, integration_branch)
+            self.assertEqual(sha, run_git(planning, "rev-parse", "HEAD").strip())
+            self.assertEqual(before, fingerprint(original))
+            self.assertFalse((original / ".superpowers/research/default/report.md").exists())
+            self.assertFalse(report.is_relative_to(planning))
+
+    def test_native_commit_through_gate_stays_in_task_worktree(self) -> None:
+        """Catches bypassing the gate-owned native commit path."""
+        with tempfile.TemporaryDirectory() as directory:
+            original, planning = Path(directory) / "original", Path(directory) / "planning"
+            original.mkdir()
+            self.make_repository(original)
+            branch = run_git(original, "branch", "--show-current").strip()
+            sha = run_git(original, "rev-parse", "HEAD").strip()
+            before = fingerprint(original)
+            integration_branch = "integration/native-commit"
             run_git(original, "worktree", "add", "-b", integration_branch, str(planning), sha)
             report = planning / "report.md"; report.write_text("report\n", encoding="utf-8")
             run_git(planning, "add", "report.md")
@@ -95,13 +165,13 @@ class NativeWorktreeContractTests(unittest.TestCase):
             self.assertTrue(before[3]); self.assertTrue(before[4]); self.assertIn("?? untracked.txt", before[5])
             integration_branch = "integration/epic-42"
             run_git(original, "worktree", "add", "-b", integration_branch, str(planning), sha)
-            report = planning / ".superpowers/research/epic-42/report.md"; report.parent.mkdir(parents=True); report.write_text("report\n", encoding="utf-8")
+            report = Path(directory) / "transient" / "epic-42" / "report.md"; report.parent.mkdir(parents=True); report.write_text("report\n", encoding="utf-8")
             self.assertEqual("feature/start", branch); self.assertEqual(sha, run_git(planning, "rev-parse", "HEAD").strip())
             self.assertEqual(integration_branch, run_git(planning, "branch", "--show-current").strip())
             self.assertNotEqual(branch, integration_branch)
             run_git(planning, "merge-base", "--is-ancestor", branch, integration_branch)
             self.assertEqual(before, fingerprint(original))
-            self.assertTrue(report.is_relative_to(planning)); self.assertFalse((original / ".superpowers/research/epic-42/report.md").exists())
+            self.assertFalse(report.is_relative_to(planning)); self.assertFalse((original / ".superpowers/research/epic-42/report.md").exists())
 
     def test_failed_allocation_preserves_original_and_creates_no_report(self) -> None:
         """Catches a failed allocation falling back to either available checkout."""

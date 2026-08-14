@@ -18,14 +18,14 @@ This skill routes durable knowledge lifecycle work through a local contract. `ra
 ## Outputs
 
 - `operation success` with the authored or changed document identity, required index/log sync set, and its completion state;
-- `BLOCKED` before a durable write when a precondition is unresolved; or
+- `BLOCKED` before a durable write when a precondition is unresolved, including evidence-bearing authoring-discovery diagnostics; or
 - an incomplete result after an in-progress failure, with the exact changed-file set and failed check needed for recovery.
 
 ## Required Capabilities
 
 - read the declared structural read-set and local contract;
 - apply durable file edits only within resolved authority;
-- resolve an applicable selected authoring skill through existing skill discovery and read its `SKILL.md`;
+- use existing skill discovery to compare the local Authoring Profile, Compatibility Requirement, and requested operation with each readable candidate's documented scope and procedure, then resolve one applicable authoring skill and read its `SKILL.md`;
 - serialize the semantic schema by that skill's documented procedure; and
 - validate only semantic preservation, authority, path, bounded write set, and index/log effect.
 
@@ -34,12 +34,14 @@ This skill routes durable knowledge lifecycle work through a local contract. `ra
 Before work, choose one mode and resolve the topology. Read only the operation's structural read-set from `context-contract.toml`; do not read every reference initially.
 
 1. Resolve topology and authority.
-2. Read the local contract's selected authoring profile and compatibility requirement.
-3. Discover exactly one applicable, readable authoring `SKILL.md` through existing skill discovery.
+2. Extract the local contract's Authoring Profile and Compatibility Requirement. Treat the profile as a semantic selector unless the local contract explicitly declares exact ID semantics; name mismatch alone is neither missing nor incompatible.
+3. Through existing skill discovery, compare those fields and the requested operation with each discovered readable candidate's documented scope and procedure. Continue the existing handoff only when exactly one applicable readable `SKILL.md` resolves.
 4. Hand off serialization of the syntax-neutral semantic schema to that skill.
 5. Validate the resulting structural effect before writing.
 
-Missing, ambiguous, incompatible, or unreadable authoring discovery returns `BLOCKED` before any page, index, or log write. A read-only query may collect material until it would file back; it must return `BLOCKED` before that durable write if the gate is not satisfied.
+When executed discovery cannot resolve uniquely, return `BLOCKED` before any page, index, or log write with the extracted profile, Compatibility Requirement, observed candidate identities, exactly one of `missing`, `ambiguous`, `incompatible`, or `unreadable`, and a candidate-specific reason. When discovery is unavailable, return `BLOCKED` with the extracted profile, Compatibility Requirement, diagnostic condition `discovery unavailable`, candidate set `unobserved`, and the concrete execution failure as the exact cause; do not infer one of the four candidate outcomes. A read-only query may collect material until it would file back; it must return `BLOCKED` before that durable write if the gate is not satisfied.
+
+Before proposing a local-contract mutation, compare the same current checkout's current local contract, current approved spec when present, and current target file state. Historical evidence cannot override those current sources.
 
 If a declared reference disagrees with `context-contract.toml`, treat the contract as the source of truth and fix the mismatch before relying on the read-set.
 
@@ -70,7 +72,8 @@ If a declared reference disagrees with `context-contract.toml`, treat the contra
 - Editing immutable source material.
 - Updating a durable page without synchronizing its discovery index or change log.
 - Writing a canonical page without required authority or an allowed write boundary.
-- Continuing to a page, index, or log write when selected authoring discovery is missing, ambiguous, incompatible, or unreadable instead of returning `BLOCKED`.
+- Continuing to a page, index, or log write when authoring discovery does not resolve uniquely or is unavailable instead of returning the required evidence-bearing `BLOCKED`.
+- Treating an Authoring Profile / skill-ID name mismatch as missing or incompatible, or proposing a local-contract mutation without the required current-state comparison.
 - Treating a proposed draft as a verified claim or deleting it without a recorded decision.
 - Filing scope-specific claims into a broader or unrelated root.
 - Duplicating a canonical claim across roots instead of preserving one canonical target identity.

@@ -6,17 +6,38 @@ tags:
   - skill-architecture
   - obsidian
   - specification
-status: approved
-approved_on: 2026-07-30
 aliases:
   - llm-wiki structural-only specification
+  - llm-wiki authoring discovery diagnostics specification
 ---
 
 # llm-wiki authoring 責務分離仕様
 
+## 状態
+
+2026-07-30にHumanは基礎となるauthoring責務分離をWritten Specとして承認し、
+その実装は同日のcloseoutまで完了した。この既承認decisionと実装履歴は維持する。
+
+2026-08-08にHumanはauthoring discovery diagnosticsのfocused revisionをWritten Specとして承認した。
+本書の「Authoring discovery diagnostics focused revision」はHuman-approved / currentである。
+Plan Stage、production contract変更、remote writeは別の承認まで未実施であり、
+`skills/llm-wiki/SKILL.md`、`skills/llm-wiki/references/core.md`、validator、test、runtime stateは
+この承認記録では変更しない。
+
+### Retained baselineの時間的scope
+
+以下の「問題」から「実装状態」までと、focused revision後の「責務境界」から末尾の
+「Stop conditions」までは、2026-07-30に承認したpre-migration problem、decision、
+migration contract、implementation historyを当時の意味のまま保持するbaseline evidenceである。
+その中の「現行」「このmigration」「本仕様作成時点」という表現は2026-07-30時点を指し、
+2026-08-08のcurrent checkoutまたはcurrent contractを記述しない。current interpretationは、
+同じcheckoutのlocal contract、current production contract、current approved specを照合して決める。
+今回のfocused revisionだけがHuman-approved / currentなoperative deltaである。Plan Stageへは
+別のHuman承認まで進まない。
+
 ## 問題
 
-現行の `llm-wiki` は、durable wiki の topology、authority、routing、lifecycle と、Markdown / Obsidian の記法、frontmatter、link、見出し、表示形式を同じ contract、reference、mode、template で所有している。この混在により、authoring skill と責務が重複し、knowledge root の local rule と選択した authoring profile が衝突し、profile を切り替えても `llm-wiki` 側の syntax policy が出力を上書きできる。
+2026-07-30のmigration前の `llm-wiki` は、durable wiki の topology、authority、routing、lifecycle と、Markdown / Obsidian の記法、frontmatter、link、見出し、表示形式を同じ contract、reference、mode、template で所有していた。この混在により、authoring skill と責務が重複し、knowledge root の local rule と選択した authoring profile が衝突し、profile を切り替えても `llm-wiki` 側の syntax policy が出力を上書きできる状態だった。
 
 この仕様は `llm-wiki` を durable knowledge の structural / lifecycle coordinator に限定し、文書の serialization を knowledge root が選択した authoring skill へ委譲する。semantic template / page schema は `llm-wiki` に残し、Markdown の具体表現は残さない。
 
@@ -56,6 +77,158 @@ aliases:
 2026-07-30、[[llm-wiki-authoring-responsibility-separation-implementation-plan|llm-wiki authoring 責務分離実装計画]]は`Implemented / closeout verified`となった。実装は本仕様のauthoring responsibility boundaryを変更せず、`llm-wiki`のstructural / lifecycle coordinationとselected authoring skillのserialization責務をそのまま維持する。
 
 final whole-branch reviewの3件のImportant findingに対する一回のfix waveでは、portable output / recovery stateとauthority-scoped edit capability、5つのlegacy templateのcreation / last-update semantic identity、adapter-resolved cross-root target identityのsyntax-neutral ownershipを補完した。product boundaryとacceptance criteriaは変更していない。focused RED/GREENとfull fresh verificationは完了したが、Step 7のfresh whole-branch re-reviewはcontroller-owned gateとしてpendingであり、`LOCAL_COMPLETE`は宣言しない。
+
+2026-08-08、Authoring discovery diagnostics focused revisionのreviewed Task 1 commit
+`f40a164e4c4fac1988b1ff98929fc829713fc572`により、`skills/llm-wiki/SKILL.md`と
+`skills/llm-wiki/references/core.md`の二つだけからなるdocs-only contractがlandedした。
+Authoring Profileのsemantic selector、evidence-bearing discovery `BLOCKED`、current-state
+precedenceを確認した。以前のcloseout wordingにあるtemporalな「pre-edit RED」は、current-control
+promptのembedding defectによりoriginal before-edit evidenceがinvalidatedされたため訂正する。
+`f40a164`後にbyte-exactな`ac67fde` sourceを用いた5回のfresh runはREDを再現したが、これは
+post-hoc old-contract replay evidenceであり、post-editの5回のGREENとともにignored execution
+evidenceとして保持する。Humanは2026-08-08にこの一回限りのevidence exceptionを承認したが、
+これは一般のtemporal pre-edit RED gateを満たすものでも弱めるものでもない。prior closeout wordingは
+この範囲でcorrected / supersededとし、repository-specificなmappingはgeneric contractの外に保つ。
+scoped final-fix re-reviewはpendingであり、`LOCAL_COMPLETE`は宣言しない。
+
+## Authoring discovery diagnostics focused revision
+
+### 問題設定
+
+現行portable contractは、selected Authoring Profileからexactly one applicableかつreadableな
+authoring `SKILL.md`をexisting skill discoveryで解決すると定める。一方、Authoring Profileの
+値とskill IDの関係、およびdiscovery failure時の最小evidenceは明記していない。そのため、
+semantic profile `obsidian`をexact skill IDとして検索して、differently namedな
+`obsidian-markdown`だけが見つかった状態をmissingと誤判定したり、候補と判定根拠を示さず
+`BLOCKED`を返したりできる。
+
+また、append-only logやsuperseded specを広く検索すると、現行contractから削除済みの
+relative Markdown link ruleが見つかる。current local contractとcurrent approved specを
+同じcheckoutで確認せずにhistorical evidenceを採用すると、既に移行済みのruleを再提案できる。
+
+### Focused goals
+
+1. Authoring Profileをportableなsemantic selectorとして明文化し、profile名とskill IDの
+   text equalityをdiscovery preconditionにしない。
+2. discovery起因の`BLOCKED`を、抽出したprofile、Compatibility Requirement、候補、
+   exact causeを持つevidence-bearing resultにする。
+3. local-contract mutationの提案前に、current local contract、current approved spec、
+   current checkoutを比較するprecedence guardを明文化する。
+4. 既承認のstructural / lifecycle coordinatorとauthoring serializationの責務境界、
+   runtime-neutral discovery、fail-closed write boundaryを変更せずに再発余地だけを閉じる。
+
+### Focused non-goals
+
+- validator、test、runtime resolver、host adapter、executable codeを追加または変更すること。
+- sidecar、manifest、candidate registry、runtime state、structured discovery metadataを新設すること。
+- local contractのprofile値をexact skill IDへrenameすること。
+- `knowledge/AGENTS.md`へgeneric discovery ruleまたはauthoring syntaxを複製すること。
+- `obsidian`から`obsidian-markdown`への対応をportable selectorのhardcoded mappingにすること。
+- Obsidian wikilinkまたはexternal Markdown linkのsyntaxをportable `llm-wiki` contractが所有すること。
+- historical log、superseded spec、raw source、siblingまたはolder worktreeをcurrent ruleへ昇格すること。
+- visual artifactを作成すること。
+
+### Focused Confirmed Decisions
+
+1. Authoring Profileはsemantic selectorであり、local contractが明示的にexact ID semanticsを
+   宣言しない限り、その文字列はskill IDと一致する必要がない。name mismatchだけでは
+   missingまたはincompatibleと判定しない。
+2. applicable candidateは、抽出したAuthoring Profile、Compatibility Requirement、
+   requested authoring operationを、discoveryされたreadable `SKILL.md`のdocumented scopeと
+   手順に照合して判定する。portable contractはhost固有のdiscovery tool名やcandidate schemaを
+   規定しない。
+3. discovery起因の結果statusは常に`BLOCKED`とし、少なくとも次を報告する。
+   - local contractから抽出したAuthoring Profile。
+   - local contractから抽出したCompatibility Requirement。
+   - discoveryを実行できた場合は、観測したcandidate authoring skillのidentity一覧と、
+     `missing`、`ambiguous`、`incompatible`、`unreadable`のいずれかのcandidate outcome、
+     およびそのoutcomeを候補へ適用した具体的理由。
+   - discovery自体を実行できなかった場合は、candidate outcomeとは別のdiagnostic conditionとして
+     `discovery unavailable`を明記し、discoveryを妨げた具体的理由をexact causeとして報告する。
+     candidate setは`unobserved`とし、missing、ambiguous、incompatible、unreadableのいずれにも
+     推論または分類しない。
+
+`discovery unavailable`は新しいresult status、lifecycle state、candidate outcome、host-specific
+schemaではない。`BLOCKED`のまま、candidateを観測できなかった理由を正直に表すcause evidenceである。
+4. local contractのmutationを提案する前に、同じcurrent checkout上のlocal contract、
+   current approved specが存在する場合はそのspec、変更対象のcurrent file stateを比較する。
+   historical spec、old memory、append-only history、siblingまたはolder worktreeのruleは
+   provenanceとして参照できるが、current contractをoverrideできない。
+5. このrepositoryでは、current local contractのsemantic profile `obsidian`に対し、
+   current discoveryで得たreadable `obsidian-markdown`がdocumented scopeとCompatibility
+   Requirementを満たす。これはcurrent repository evidenceであり、portable hardcoded mappingではない。
+6. このrepositoryのinternal noteがwikilink、external URLがstandard Markdown linkとなる
+   current behaviorは、local Compatibility Requirementとdiscovered `obsidian-markdown`の
+   documented procedureによる。generic selectorへこのsyntax ruleを持ち込まない。
+
+### Focused Open Decisions
+
+なし。
+
+### Portable contract delta
+
+後続implementationは、既存のdiscovery orderとwrite前のfail-closed boundaryを維持したまま、
+次の意味だけをportable proseへ追加する。
+
+1. local contractからAuthoring ProfileとCompatibility Requirementを抽出する。
+2. Authoring Profileをsemantic selectorとして扱い、profile文字列とskill IDのequalityではなく、
+   profile、Compatibility Requirement、requested operationとcandidateのdocumented contractを照合する。
+3. applicableかつreadableなcandidateが一意なら既存handoffへ進む。
+4. discoveryを実行できたが一意に解決できなければdurable write前に停止し、観測候補、
+   4つのcandidate outcomeの一つ、具体的理由を`BLOCKED`へ含める。discoveryを実行できなければ、
+   candidateを推論せず、`discovery unavailable`、`unobserved`なcandidate set、実行不能のexact causeを
+   `BLOCKED`へ含める。
+5. local-contract mutation案を作る場合はFocused Confirmed Decision 4のcurrent-state comparisonを
+   先に行い、historical evidenceだけを根拠にcurrent ruleを置換しない。
+
+このdeltaはdiscovery engineを実装せず、active runtimeのexisting skill discoveryを引き続き利用する。
+「semantic selector」はcandidate適用判定のcontractであり、新しいresolver、registry、alias table、
+capability ID、machine-readable outputを意味しない。
+
+### Exact affected surfaces for the focused revision
+
+Written Spec承認後のimplementation対象は次のportable documentation surfaceだけとする。
+
+- `skills/llm-wiki/SKILL.md`
+- `skills/llm-wiki/references/core.md`
+
+durable lifecycle同期として、本canonical spec、[[index|durable catalog]]、append-only
+`knowledge/log.md`をimplementation stateへ更新する。`knowledge/AGENTS.md`、mode reference、
+topology reference、template、validator、test、script、workflow、runtime fileは変更対象外とする。
+追加surfaceが必要ならscopeを自動拡張せず、Written Specへ戻ってHumanの再承認を得る。
+
+### Focused acceptance criteria
+
+1. `SKILL.md`と`references/core.md`がAuthoring Profileをsemantic selectorと明記し、
+   profile / skill IDのname mismatchだけをfailureにしない。
+2. candidate applicabilityがprofile、Compatibility Requirement、requested operationとreadableな
+   documented skill contractの照合で決まり、host固有discovery metadataを正本にしない。
+3. discovery起因の全`BLOCKED`がprofileとCompatibility Requirementを持つ。discovery実行済みなら
+   candidate一覧、4つのcandidate outcomeの一つ、具体的理由を持つ。discovery実行不能なら
+   `discovery unavailable`、`unobserved`なcandidate set、実行不能のexact causeを持ち、
+   4つのcandidate outcomeへ誤分類しない。
+4. current local contract、current approved spec、current checkoutの比較がlocal-contract mutation
+   proposalより先に要求され、historical evidenceだけではcurrent ruleをoverrideできない。
+5. `obsidian`からcurrent discovered `obsidian-markdown`へのmappingとcurrent wikilink behaviorが
+   repository-specific evidenceとして残り、portable hardcoded ruleにならない。
+6. diffが2つのportable documentation surfaceとdurable spec/index/log同期だけに限定され、
+   validator、test、runtime resolver、code、新runtime metadataを含まない。
+7. Written Spec承認前にPlan Stageまたはimplementationへ進まず、production contractを変更しない。
+
+### Focused stop conditions
+
+- semantic selectorをexact-name alias tableまたはruntime resolverとして実装する必要が生じる。
+- evidence-bearing `BLOCKED`のためにhost固有schemaまたは新runtime metadataが必要になる。
+- current checkoutのlocal contract、または存在するcurrent approved specを確認できないまま
+  mutationを提案する。
+- repository-specific mappingまたはwikilink behaviorをgeneric portable ruleへ昇格する必要が生じる。
+- exact affected surfaces外のproduction file、validator、test、codeを変更する必要が生じる。
+- HumanのWritten Spec承認前にPlan Stageへ進む必要が生じる。
+
+以下の責務境界から末尾のStop conditionsまでは、冒頭の「Retained baselineの時間的scope」が
+定める2026-07-30のhistorical baselineである。その既承認decisionは維持するが、同sectionにある
+当時のaffected surfaces、test追加、migration順序を今回のfocused revisionの実装scopeとして
+再実行しない。focused revisionのscopeとacceptanceは直前のfocused sectionを正本とする。
 
 ## 責務境界
 
@@ -231,7 +404,7 @@ implementation plan は上記候補と実際の migration target を照合し、
 10. Tasks 1–3 は各 scoped check 成功後に scoped commit と independent task reviewを完了し、Task 4 は closeout edit と全 fresh check 成功後に一件のscoped closeout commitを作成する。後続SDD review loopが修正を要求した場合だけscoped review-fix commitを追加し、各fixを独立re-reviewする。これはexecution historyだけの変更でありproduct responsibility boundaryを変更せず、Task 1–3のreviewed commitsをamendまたはsquashしない。
 11. closeout commit 後、approved baseline `f23bde7` から `HEAD` までの SDD review package を作成し、fresh な most-capable reviewer に code、tests、approved spec / plan、knowledge artifacts の whole-branch review を依頼する。blocking finding が解消されるまで implementation complete を宣言しない。
 
-各段階は同じ migration branch で行い、profile declaration と authoring capability が利用可能になる前に local link policy を切り替えない。本仕様作成時点では `knowledge/index.md` と `knowledge/log.md` を更新しない。
+各段階は同じ migration branch で行い、profile declaration と authoring capability が利用可能になる前に local link policy を切り替えない。2026-07-30の基礎仕様作成時点では `knowledge/index.md` と `knowledge/log.md` を更新しない、という当時のmigration sequencingであった。
 
 ## Tests and validators
 
