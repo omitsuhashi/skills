@@ -20,6 +20,25 @@ TASK_MANAGEMENT_TEST = (
 )
 TRANSIENT_VALIDATOR = REPO_ROOT / "scripts" / "validate_sdd_transient_artifacts.py"
 MIGRATION_MARKER = "scripts/sdd-transient-artifact-migration.json"
+AUTHORIZED_MARKER_BLOB = "ef384328ad21f49f4c2e4834cef3d401c350d9a8"
+AUTHORIZED_SQUASH_POLICY_ROOT = "82dcd32157ff9690ae038f982f3916009e449f80"
+AUTHORIZED_MIGRATION_ENTRIES = (
+    (
+        "b50ed8e434725cb70bc0f1d2c6daa1a053e0ccc1",
+        ".superpowers/sdd/sdd-plan-ownership-alignment-implementation-plan/"
+        "approved-residual-fix-report.md",
+    ),
+    (
+        "c884197bf566cc93f319f3c2a1b6d2ad1563d10e",
+        ".superpowers/sdd/sdd-plan-ownership-alignment-implementation-plan/"
+        "final-fix-report.md",
+    ),
+    (
+        "da22b7580961fb9a2087ab1eb034fb34000711f8",
+        ".superpowers/sdd/sdd-plan-ownership-alignment-implementation-plan/"
+        "task-2-report.md",
+    ),
+)
 
 
 def run_git(repository: Path, *args: str) -> str:
@@ -29,6 +48,15 @@ def run_git(repository: Path, *args: str) -> str:
         check=True,
         capture_output=True,
         text=True,
+    ).stdout
+
+
+def read_blob(repository: Path, blob: str) -> bytes:
+    return subprocess.run(
+        ["git", "cat-file", "blob", blob],
+        cwd=repository,
+        check=True,
+        capture_output=True,
     ).stdout
 
 
@@ -81,16 +109,32 @@ class CiHistoryFixture:
 
     def commit_cleanup_boundary(self) -> str:
         marker = self.root / MIGRATION_MARKER
-        marker.write_text("{}\n", encoding="utf-8")
-        run_git(self.root, "add", MIGRATION_MARKER)
-        run_git(self.root, "commit", "-m", "add migration marker")
+        marker.write_bytes(read_blob(REPO_ROOT, AUTHORIZED_MARKER_BLOB))
+        for blob, relative_path in AUTHORIZED_MIGRATION_ENTRIES:
+            artifact = self.root / relative_path
+            artifact.parent.mkdir(parents=True, exist_ok=True)
+            artifact.write_bytes(read_blob(REPO_ROOT, blob))
+        run_git(
+            self.root,
+            "add",
+            "-f",
+            MIGRATION_MARKER,
+            *(path for _blob, path in AUTHORIZED_MIGRATION_ENTRIES),
+        )
+        run_git(self.root, "commit", "-m", "add exact migration state")
         run_git(self.root, "rm", MIGRATION_MARKER)
-        run_git(self.root, "commit", "-m", "remove migration marker")
+        run_git(
+            self.root,
+            "rm",
+            "--cached",
+            *(path for _blob, path in AUTHORIZED_MIGRATION_ENTRIES),
+        )
+        run_git(self.root, "commit", "-m", "remove exact migration state")
         return run_git(self.root, "rev-parse", "HEAD").strip()
 
     def commit_transient_add_then_delete(self) -> tuple[str, str]:
         transient = self.root / ".superpowers" / "post-cleanup.md"
-        transient.parent.mkdir(parents=True)
+        transient.parent.mkdir(parents=True, exist_ok=True)
         transient.write_text("must never enter a post-cleanup commit\n", encoding="utf-8")
         run_git(self.root, "add", "-f", ".superpowers/post-cleanup.md")
         run_git(self.root, "commit", "-m", "add forbidden transient artifact")
@@ -167,6 +211,7 @@ class SkillCiWorkflowTests(unittest.TestCase):
         self.assertNotIn("--migration-baseline", text)
 
     def test_transient_validation_step_accepts_clean_post_cleanup_history(self) -> None:
+        """Catches rejecting the exact unsquashed semantic cleanup transition."""
         fixture = CiHistoryFixture()
         try:
             fixture.commit_cleanup_boundary()
@@ -174,6 +219,101 @@ class SkillCiWorkflowTests(unittest.TestCase):
             self.assertEqual(0, result.returncode, result.stdout + result.stderr)
         finally:
             fixture.close()
+
+    def test_transient_validation_step_accepts_known_squash_cleanup_boundary(self) -> None:
+        """Catches skipping validation when squash removes cleanup history."""
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory) / "squash-main"
+            subprocess.run(
+                [
+                    "git",
+                    "clone",
+                    "--quiet",
+                    "--no-hardlinks",
+                    str(REPO_ROOT),
+                    str(repository),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            shutil.copyfile(
+                TRANSIENT_VALIDATOR,
+                repository / "scripts" / TRANSIENT_VALIDATOR.name,
+            )
+            self.assertEqual(
+                "",
+                run_git(
+                    repository,
+                    "log",
+                    "--full-history",
+                    "--diff-filter=D",
+                    "--format=%H",
+                    "HEAD",
+                    "--",
+                    MIGRATION_MARKER,
+                ).strip(),
+            )
+            result = subprocess.run(
+                ["bash", "-c", transient_validation_step()],
+                cwd=repository,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+    def test_transient_validation_step_accepts_updated_main_policy_import(self) -> None:
+        """Catches pinning every later main integration to the root policy blob."""
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory) / "updated-main-integration"
+            subprocess.run(
+                [
+                    "git",
+                    "clone",
+                    "--quiet",
+                    "--no-hardlinks",
+                    str(REPO_ROOT),
+                    str(repository),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            run_git(repository, "config", "user.name", "Test User")
+            run_git(repository, "config", "user.email", "test@example.invalid")
+            run_git(repository, "checkout", "--detach", AUTHORIZED_SQUASH_POLICY_ROOT)
+            shutil.copyfile(
+                TRANSIENT_VALIDATOR,
+                repository / "scripts" / TRANSIENT_VALIDATOR.name,
+            )
+            run_git(repository, "add", "scripts/validate_sdd_transient_artifacts.py")
+            run_git(repository, "commit", "-m", "update strict policy on main")
+            updated_main = run_git(repository, "rev-parse", "HEAD").strip()
+            pre_policy_task = run_git(
+                REPO_ROOT, "rev-parse", "523e90969d0c15499c74f0c1b8c897c3607bd53b^1"
+            ).strip()
+            merge_tree = run_git(repository, "rev-parse", f"{updated_main}^{{tree}}").strip()
+            integration = run_git(
+                repository,
+                "commit-tree",
+                merge_tree,
+                "-p",
+                pre_policy_task,
+                "-p",
+                updated_main,
+                "-m",
+                "integrate updated main policy",
+            ).strip()
+            run_git(repository, "checkout", "--detach", integration)
+            result = subprocess.run(
+                ["bash", "-c", transient_validation_step()],
+                cwd=repository,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(0, result.returncode, result.stdout + result.stderr)
 
     def test_transient_validation_step_rejects_add_then_delete_commit_history(self) -> None:
         fixture = CiHistoryFixture()
@@ -189,8 +329,20 @@ class SkillCiWorkflowTests(unittest.TestCase):
             fixture.close()
 
     def test_transient_validation_step_rejects_missing_cleanup_boundary(self) -> None:
+        """Catches treating an unknown clean history as an authorized boundary."""
         fixture = CiHistoryFixture()
         try:
+            result = fixture.run_ci_validation()
+            self.assertNotEqual(0, result.returncode, result.stdout + result.stderr)
+        finally:
+            fixture.close()
+
+    def test_transient_validation_step_rejects_multiple_cleanup_boundaries(self) -> None:
+        """Catches selecting one of multiple semantic cleanup transitions."""
+        fixture = CiHistoryFixture()
+        try:
+            fixture.commit_cleanup_boundary()
+            fixture.commit_cleanup_boundary()
             result = fixture.run_ci_validation()
             self.assertNotEqual(0, result.returncode, result.stdout + result.stderr)
         finally:

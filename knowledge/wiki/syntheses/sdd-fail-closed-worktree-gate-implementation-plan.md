@@ -28,6 +28,7 @@ provenance:
   - "[[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|SDD fail-closed worktree gate 仕様]]"
 relations:
   - "[[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|Implements: SDD fail-closed worktree gate 仕様]]"
+  - "[[wiki/syntheses/sdd-plan-ownership-alignment|Composes with: SDD Plan Ownership Alignment 仕様]]"
 ---
 
 # SDD fail-closed worktree gate 実装計画
@@ -40,8 +41,8 @@ relations:
 - 状態: `accepted` / `active`; source implementationは `LOCAL_COMPLETE_WITH_PARKED_HARNESS_RISKS`。Task review、fresh verification、whole-branch review後の唯一のfix waveとscoped re-reviewを完了した。
 - 実装は [[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|accepted specification]] の5要件だけを満たす。
 - original checkout `/Users/omitsuhashi/repos/omitsuhashi/skills` の `main` はtask workでread-onlyであり、task commitを受けない。
-- first repository content/artifact write前にtask-linked worktreeをcreate/verifyしてbindingできなければ、writeなしの `BLOCKED` で止まる。fallbackはない。
-- current cloneのhook/config activation、external cache、install、remote、CI変更は実施しない。hook/config/CI変更は既存over-design referenceを除去するために必要な場合だけ行う。
+- first source / canonical durable repository write前にtask-linked worktreeをcreate/verifyしてbindingできなければ、writeなしの `BLOCKED` で止まる。native commitも同じworktreeへbindし、fallbackはない。raw transient handoffは[[wiki/syntheses/sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]]が所有するrepository-external bounded capabilityへrouteする。
+- current cloneのhook/config activation、external cache、install、remote、CI新設は実施しない。main/#49由来のtransient-artifact validator / CI contractは維持し、integrationで生じたregressionだけをそのauthority内で最小修正する。
 
 ## Task 0: Scope-reduction cleanup and durable-document sync
 
@@ -53,7 +54,7 @@ Acceptance: canonical spec/planの規範が最小5要件だけであり、index�
 
 `skills/sdd-implementation/scripts/prepare-commit-msg` を削除する。guard-specific contractとtestsを削除し、少なくとも `skills/sdd-implementation/tests/test_commit_guard_behavior.py`、guard/bootstrap/lifecycle portions of `skills/sdd-implementation/tests/test_fail_closed_entry_behavior.py`、およびguard-only scenario harness contractを除去または最小gate contractへ置換する。
 
-既存 `skills/sdd-implementation/tests/test_first_write_worktree_contract.py` と `skills/sdd-implementation/tests/test_skill_contract.py` を、SDD-first、original `main` unchanged、verified linked worktreeへのall-write/commit binding、failure zero-write `BLOCKED`、no fallbackだけを検査する形に簡素化する。`skills/sdd-implementation/SKILL.md` と関連router/reference proseからguard activation、hook/config inventory、rollback、one-time bootstrap、exact tuple authorityを削除する。
+既存 `skills/sdd-implementation/tests/test_first_write_worktree_contract.py` と `skills/sdd-implementation/tests/test_skill_contract.py` を、SDD-first、original `main` unchanged、verified linked worktreeへのsource / canonical durable writeとnative commitのbinding、repository-external bounded capabilityへのraw transient handoff、failure zero-write `BLOCKED`、no fallbackを検査する形に簡素化する。`skills/sdd-implementation/SKILL.md` と関連router/reference proseからguard activation、hook/config inventory、rollback、one-time bootstrap、exact tuple authorityを削除する。
 
 Acceptance: raw Git-level manual-commit prohibitionを主張せず、repo-owned SDD workflowの最小boundaryだけがsourceとfocused testsに残る。
 

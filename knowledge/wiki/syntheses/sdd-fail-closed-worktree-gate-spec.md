@@ -29,12 +29,13 @@ provenance:
   - "[[wiki/syntheses/sdd-first-write-worktree-migration-spec|SDD first-write worktree migration 仕様]]"
 relations:
   - "[[wiki/syntheses/sdd-first-write-worktree-migration-spec|Scoped predecessor: SDD first-write worktree migration 仕様]]"
+  - "[[wiki/syntheses/sdd-plan-ownership-alignment|Composes with: SDD Plan Ownership Alignment 仕様]]"
 ---
 
 # SDD fail-closed worktree gate 仕様
 
 > [!success] Human-approved accepted revision
-> 2026-08-14 のHuman owner decisionにより、本書は最小スコープへ改訂された。promoted draftは歴史的なproposal evidenceとして保持し、currentな規範は本書だけとする。
+> 2026-08-14 のHuman owner decisionにより、本書は最小スコープへ改訂された。promoted draftは歴史的なproposal evidenceとして保持する。First-Write gateは本書、Plan authorityとraw transient artifact routeは[[wiki/syntheses/sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]]をcurrentな規範とする。
 
 ## Status
 
@@ -54,13 +55,15 @@ repository change が直接のwritable supporting skillから始まると、orig
 
 1. repository work は `sdd-implementation` から開始する。
 2. このrepositoryのoriginal primary/default checkout、すなわち `main` は task work では read-only であり、task commitを受けない。
-3. 最初のrepository content/artifact writeより前に、task-linked worktreeを作成または検証し、すべてのwriteとcommitをそのworktreeにbindする。
+3. 最初のsourceまたはcanonical durable repository writeより前に、task-linked worktreeを作成または検証し、それらのwriteとnative commitをそのworktreeへbindする。raw research、review、worker、fix、handoff、transcriptは、repository root、original checkout、task worktree、sibling worktreeの外に解決したtask/session-boundedなrepository-external capabilityだけへbindする。
 4. allocation、permission、path、ownership、capability、dependency、またはbindingを満たせない場合は、content/artifact writeなしで `BLOCKED` を返す。
 5. current/original directory、その他のdirectory、または別workflowへのfallbackは行わない。
 
 ## Boundary and non-goals
 
 この保証はrepository-owned SDD workflowのboundaryである。任意のmanual shell commitをraw Git levelで禁止するものではない。
+
+本書のworktree bindingはsourceとcanonical durable repository artifact、およびnative commitを対象にする。raw transient artifactのdestination、retention、durable summaryへのsynthesisは[[wiki/syntheses/sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]]が所有する。external destinationを解決・検証できない場合もwrite前に`BLOCKED`とし、original checkout、task worktree、sibling worktree、別workflowへfallbackしない。
 
 次はHumanによりwithdrawnであり、non-goalである。
 
@@ -81,7 +84,7 @@ commit evidenceはwrite invocationと分離したgate-owned data-only `git commi
 
 - repository changeは `sdd-implementation` をfirst entryとする。
 - original `main` checkoutはtask開始時から終了時までtask write・task commitを受けない。
-- すべてのrepository content/artifact writeとcommitは、作成または検証済みのtask-linked worktree内にある。
+- sourceとcanonical durable repository write、およびnative commitは、作成または検証済みのtask-linked worktree内にある。raw transient handoffは検証済みのtask/session-boundedなrepository-external pathだけにあり、repository worktreeへredirectされない。
 - allocation、permission、path、ownership、capability、dependency、binding failureは、writeなしの `BLOCKED` になる。
 - original/current directory、他directory、direct writable subskillへのfallbackはない。direct writable subskillはrepository workを開始できず `BLOCKED` になる。
 
@@ -96,6 +99,6 @@ commit evidenceはwrite invocationと分離したgate-owned data-only `git commi
 
 ## Provenance and lifecycle
 
-本書は2026-08-14のHuman Written Spec approval、同日のscope-reduction owner decision、ならびに先行researchと既存 `sdd-implementation` contractを根拠とする。source implementation、active install、remote stateの完了はこのcanonical revisionから推論しない。
+本書は2026-08-14のHuman Written Spec approval、同日のscope-reduction owner decision、ならびに先行researchと既存 `sdd-implementation` contractを根拠とする。source implementation、active install、remote stateの完了はこのcanonical revisionから推論しない。Plan authorityとraw transient artifact boundaryは[[wiki/syntheses/sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]]を優先し、本書はsource / canonical durable repository writeとnative commitのFirst-Write bindingだけを所有する。
 
 predecessor [[wiki/syntheses/sdd-first-write-worktree-migration-spec|SDD first-write worktree migration 仕様]]のFirst-Write規範は本書がscoped supersedeする。predecessorのうち本書が扱わない後続Epicのopt-in parallel adapter部分だけは、影響を受けない参照範囲として残る。
