@@ -3,13 +3,16 @@ from __future__ import annotations
 from pathlib import Path
 import re
 import shutil
+import subprocess
 import tempfile
 import unittest
 
 
 SKILL_DIR = Path(__file__).resolve().parents[1]
+REPOSITORY_ROOT = SKILL_DIR.parents[1]
 PLAN_CONTRACT = SKILL_DIR / "references" / "plan-contract.md"
 READY_PLAN = SKILL_DIR / "tests" / "fixtures" / "plan-contract" / "ready-plan.md"
+CANONICAL_PLAN = REPOSITORY_ROOT / "knowledge" / "wiki" / "syntheses" / "sdd-plan-ownership-alignment-implementation-plan.md"
 
 REQUIREMENT_IDS = {f"R-{number:02d}" for number in range(1, 16)}
 ACCEPTANCE_IDS = {f"AC-{number:02d}" for number in range(1, 15)}
@@ -43,23 +46,119 @@ def coverage_rows(text: str) -> list[list[str]]:
 
 def task_sections(text: str) -> dict[str, str]:
     matches = re.finditer(
-        r"^### Task (POA-\d+):.*?$(.*?)(?=^### Task |^## |\Z)",
+        r"^### Task (?:\d+: )?(POA-\d+)(?::|\s+—).*?$(.*?)(?=^### Task |^## |\Z)",
         section(text, "Tasks"),
         flags=re.MULTILINE | re.DOTALL,
     )
     return {match.group(1): match.group(2) for match in matches}
 
 
+def field_value(text: str, label: str) -> str:
+    match = re.search(
+        rf"^(?:- |\*\*){re.escape(label)}(?:\*\*)?:[ \t]*([^\r\n]+)$",
+        text,
+        flags=re.MULTILINE,
+    )
+    return match.group(1).strip() if match else ""
+
+
+def frontmatter_value(text: str, key: str) -> str:
+    match = re.search(rf"^{re.escape(key)}:\s*(.+)$", text, flags=re.MULTILINE)
+    return match.group(1).strip() if match else ""
+
+
+def resolve_repository_path(value: str) -> Path | None:
+    candidate = (REPOSITORY_ROOT / value.strip().strip("`")).resolve()
+    try:
+        candidate.relative_to(REPOSITORY_ROOT.resolve())
+    except ValueError:
+        return None
+    return candidate
+
+
+def git_commit_is_current_ancestor(commit_sha: str) -> bool:
+    if not re.fullmatch(r"[0-9a-f]{40}", commit_sha):
+        return False
+    result = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", commit_sha, "HEAD"],
+        cwd=REPOSITORY_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    return result.returncode == 0
+
+
 def plan_errors(text: str) -> list[str]:
     errors: list[str] = []
+    north_star_identity = section(text, "Approved North Star Identity")
     spec_identity = section(text, "Approved Written Spec Identity")
+    binding = section(text, "Plan Binding")
+
     for field in (
-        "- Approved spec path:",
-        "- Approved spec SHA-256:",
-        "- Approval state: approved",
+        "Approved North Star path",
+        "Approved North Star anchor",
+        "Approved snapshot SHA-256",
+        "Approval state",
     ):
-        if field not in spec_identity:
-            errors.append(f"missing approved-spec identity field: {field[2:]}")
+        if not field_value(north_star_identity, field):
+            errors.append(f"missing North Star identity field: {field}")
+
+    north_star_sha = field_value(north_star_identity, "Approved snapshot SHA-256")
+    if north_star_sha and not re.fullmatch(r"[0-9a-f]{64}", north_star_sha):
+        errors.append("invalid North Star approval snapshot SHA-256")
+
+    for field in ("Approved spec path", "Approved spec SHA-256", "Approval state"):
+        if not field_value(spec_identity, field):
+            errors.append(f"missing approved-spec identity field: {field}")
+
+    spec_sha = field_value(spec_identity, "Approved spec SHA-256")
+    if spec_sha and not re.fullmatch(r"[0-9a-f]{64}", spec_sha):
+        errors.append("invalid approved spec SHA-256")
+
+    if field_value(spec_identity, "Approval state") != "approved":
+        errors.append("approved spec is not in approved state")
+    if field_value(north_star_identity, "Approval state") != "approved":
+        errors.append("North Star is not in approved state")
+
+    spec_path = resolve_repository_path(field_value(spec_identity, "Approved spec path"))
+    north_star_path = resolve_repository_path(field_value(north_star_identity, "Approved North Star path"))
+    if spec_path is None or not spec_path.is_file():
+        errors.append("approved spec path is not a contained repository file")
+        spec_text = ""
+    else:
+        spec_text = load_plan(spec_path)
+        durable_approval_sha = frontmatter_value(spec_text, "approval_snapshot_sha256")
+        if spec_sha != durable_approval_sha:
+            errors.append("approved spec SHA-256 does not match durable approval snapshot identity")
+        if frontmatter_value(spec_text, "status") not in {"accepted", "approved"}:
+            errors.append("approved spec durable status is not accepted")
+        if frontmatter_value(spec_text, "review_state") != "approved":
+            errors.append("approved spec durable review state is not approved")
+
+    if north_star_path != spec_path or field_value(north_star_identity, "Approved North Star anchor") != "North Star":
+        errors.append("North Star identity does not resolve to the approved spec North Star")
+    if north_star_sha != spec_sha:
+        errors.append("North Star and Written Spec approval snapshots differ")
+    if spec_text and not section(spec_text, "North Star").strip():
+        errors.append("approved North Star anchor is absent")
+
+    baseline_sha = field_value(binding, "Repository baseline")
+    for field in (
+        "Repository baseline",
+        "Planning worktree",
+        "Integration branch",
+        "Current-tree compatibility",
+        "Readiness evidence",
+    ):
+        if not field_value(binding, field):
+            errors.append(f"missing plan binding field: {field}")
+    if baseline_sha and not git_commit_is_current_ancestor(baseline_sha):
+        errors.append("repository baseline is not a current-tree ancestor commit")
+
+    global_constraints = section(text, "Global Constraints")
+    if len(re.findall(r"^- ", global_constraints, flags=re.MULTILINE)) < 3:
+        errors.append("global constraints are incomplete")
 
     inventory = section(text, "Requirement And Acceptance Inventory")
     inventory_ids = set(re.findall(r"\b(?:R|AC)-\d{2}\b", inventory))
@@ -74,10 +173,10 @@ def plan_errors(text: str) -> list[str]:
     primary_owner: dict[str, str] = {}
 
     for row in coverage:
-        if len(row) != 3:
+        if len(row) < 3:
             errors.append("coverage rows must contain ID, primary owner, and contributing tasks")
             continue
-        item_id, primary, contributing = row
+        item_id, primary, contributing = row[:3]
         if item_id not in REQUIREMENT_IDS | ACCEPTANCE_IDS:
             errors.append(f"unknown coverage ID: {item_id}")
         if item_id in seen_coverage:
@@ -96,24 +195,26 @@ def plan_errors(text: str) -> list[str]:
             errors.append(f"unassigned coverage ID: {item_id}")
 
     tasks = task_sections(text)
+    task_ids = tuple(tasks)
+    if set(task_ids) != set(TASK_IDS):
+        errors.append("task inventory must define POA-1, POA-2, and POA-3 exactly once")
     for task_id in TASK_IDS:
         task = tasks.get(task_id)
         if task is None:
             errors.append(f"orphan task: {task_id}")
             continue
-        for label in (
-            "Deliverable",
-            "Requirement coverage",
-            "Acceptance coverage",
-            "Dependencies",
-            "Consumes",
-            "Produces",
-            "Verification intent",
-            "Integration placement",
-            "Failure owner",
-        ):
-            if not re.search(rf"^- {re.escape(label)}: .+", task, flags=re.MULTILINE):
+        for label in ("Deliverable", "Requirement coverage", "Acceptance coverage", "Dependencies", "Integration placement", "Failure owner"):
+            if not field_value(task, label):
                 errors.append(f"missing {label} for {task_id}")
+        behavioral_interface = re.search(
+            r"^\*\*Behavioral interface:\*\*\s*$(.*?)(?=^\*\*|^#### |\Z)",
+            task,
+            flags=re.MULTILINE | re.DOTALL,
+        )
+        if not behavioral_interface or not all(field_value(behavioral_interface.group(1), label) for label in ("Consumes", "Produces")):
+            errors.append(f"missing observable Behavioral interface for {task_id}")
+        if not re.search(r"^(?:\*\*|#### )Verification intent", task, flags=re.MULTILINE):
+            errors.append(f"missing Verification intent for {task_id}")
         for item_id, owner in primary_owner.items():
             if owner == task_id and item_id not in task:
                 errors.append(f"primary owner {task_id} does not declare {item_id}")
@@ -121,7 +222,7 @@ def plan_errors(text: str) -> list[str]:
     graph = {
         row[0]: row[1]
         for row in table_rows(section(text, "Dependency Graph"))
-        if len(row) == 2 and row[0] != "Task"
+        if len(row) >= 2 and row[0] != "Task"
     }
     if set(graph) != set(TASK_IDS):
         errors.append("dependency graph must define every task")
@@ -132,7 +233,7 @@ def plan_errors(text: str) -> list[str]:
             if dependency not in TASK_IDS:
                 errors.append(f"undefined dependency: {task_id} -> {dependency}")
 
-    execution = re.findall(r"^\d+\. (POA-\d+)$", section(text, "Execution Order"), flags=re.MULTILINE)
+    execution = re.findall(r"^\d+\. (?:Execute )?(POA-\d+)(?!\d)", section(text, "Execution Order"), flags=re.MULTILINE)
     if set(execution) != set(TASK_IDS) or len(execution) != len(TASK_IDS):
         errors.append("execution order must list every task exactly once")
     else:
@@ -176,7 +277,13 @@ def plan_errors(text: str) -> list[str]:
 
     if "```" in text:
         errors.append("prospective body: fenced code block")
-    if re.search(r"^\s*(?:\$ |git (?:add|commit)|python\d* |npm |uv )", text, flags=re.MULTILINE):
+    if re.search(r"^\s*(?:def test_|async def test_|assert\s+|(?:describe|it|test)\s*\(|class Test\w+)", text, flags=re.MULTILINE):
+        errors.append("prospective body: test body")
+    if re.search(r"^\s*(?:for\s+\w+\s+in\s+.+;\s*do\b|while\s+.+;\s*do\b)", text, flags=re.MULTILINE):
+        errors.append("prospective body: shell loop")
+    if re.search(r"^\s*(?:\*\*\* Begin Patch|\*\*\* Update File:|diff --git\s|@@\s+-\d|--- a/|\+\+\+ b/)", text, flags=re.MULTILINE):
+        errors.append("prospective body: patch body")
+    if re.search(r"^\s*(?:\$ |git (?:add|commit)\b|(?:python\d*\s+-m\s+)?pytest\b|uv\s+run\s+pytest\b|npm\s+(?:test|run)\b)", text, flags=re.MULTILINE):
         errors.append("prospective body: command body")
     if re.search(r"Human (?:plan )?approval (?:is )?required", text, flags=re.IGNORECASE):
         errors.append("Human plan-approval language")
@@ -224,6 +331,10 @@ class PlanContractTests(unittest.TestCase):
         )
         self.assertEqual([], plan_errors(load_plan(READY_PLAN)))
 
+    def test_canonical_ready_plan_satisfies_the_same_executable_contract(self) -> None:
+        self.assertTrue(CANONICAL_PLAN.is_file(), f"canonical plan is missing: {CANONICAL_PLAN}")
+        self.assertEqual([], plan_errors(load_plan(CANONICAL_PLAN)))
+
     def test_rejects_missing_approved_spec_identity(self) -> None:
         temporary_directory, copy = self.copy_ready_plan()
         with temporary_directory:
@@ -231,13 +342,38 @@ class PlanContractTests(unittest.TestCase):
                 load_plan(copy).replace(
                     "- Approval state: approved",
                     "- Approval state: pending",
+                    1,
                 ),
                 encoding="utf-8",
             )
             self.assertIn(
-                "missing approved-spec identity field: Approval state: approved",
+                "North Star is not in approved state",
                 plan_errors(load_plan(copy)),
             )
+
+    def test_rejects_empty_wrong_or_non_current_binding_hashes(self) -> None:
+        temporary_directory, copy = self.copy_ready_plan()
+        with temporary_directory:
+            copy.write_text(
+                load_plan(copy)
+                .replace(
+                    "- Approved spec SHA-256: 1f9a7dc5f740c51addfabde96bac6fe3fbf5036003d1783cde60ac58e5ae7559",
+                    "- Approved spec SHA-256:",
+                )
+                .replace(
+                    "- Approved snapshot SHA-256: 1f9a7dc5f740c51addfabde96bac6fe3fbf5036003d1783cde60ac58e5ae7559",
+                    "- Approved snapshot SHA-256: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+                )
+                .replace(
+                    "- Repository baseline: c370fe14de1641aa5ee30b3fa001f4d857078091",
+                    "- Repository baseline: 1111111111111111111111111111111111111111",
+                ),
+                encoding="utf-8",
+            )
+            errors = plan_errors(load_plan(copy))
+            self.assertIn("missing approved-spec identity field: Approved spec SHA-256", errors)
+            self.assertIn("North Star and Written Spec approval snapshots differ", errors)
+            self.assertIn("repository baseline is not a current-tree ancestor commit", errors)
 
     def test_rejects_an_incomplete_requirement_acceptance_inventory(self) -> None:
         temporary_directory, copy = self.copy_ready_plan()
@@ -298,6 +434,24 @@ class PlanContractTests(unittest.TestCase):
             errors = plan_errors(load_plan(copy))
             self.assertIn("prospective body: fenced code block", errors)
             self.assertIn("Human plan-approval language", errors)
+
+    def test_rejects_unfenced_test_shell_loop_patch_and_pytest_bodies(self) -> None:
+        probes = {
+            "\ndef test_ready_plan():\n    assert plan.ready\n": "prospective body: test body",
+            "\nfor path in files; do\n  validate $path\ndone\n": "prospective body: shell loop",
+            "\n*** Begin Patch\n*** Update File: plan.md\n": "prospective body: patch body",
+            "\npytest -q tests/test_plan.py\n": "prospective body: command body",
+        }
+        for body, expected_error in probes.items():
+            with self.subTest(expected_error=expected_error):
+                self.assertIn(expected_error, plan_errors(load_plan(READY_PLAN) + body))
+
+    def test_prohibition_scan_allows_intent_only_narrative(self) -> None:
+        narrative = (
+            "\nThe reviewer rejects an unfenced test body, shell loop, patch body, "
+            "or pytest command body and records only observable intent.\n"
+        )
+        self.assertNotIn("prospective body", " ".join(plan_errors(load_plan(READY_PLAN) + narrative)))
 
 
 if __name__ == "__main__":

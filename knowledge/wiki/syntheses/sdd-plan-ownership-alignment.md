@@ -9,6 +9,8 @@ tags:
 status: accepted
 review_state: approved
 approved_on: 2026-08-14
+approval_snapshot_sha256: 1f9a7dc5f740c51addfabde96bac6fe3fbf5036003d1783cde60ac58e5ae7559
+north_star_identity: sdd-plan-ownership-alignment#north-star@2026-08-14
 aliases:
   - SDD execution plan ownership specification
   - SDD plan readiness contract
@@ -523,8 +525,16 @@ separate authorizationがない場合は、Plan StageのStop Conditionではな�
 
 ## Provenance And Relations
 
-- research evidence: `.superpowers/research/sdd-plan-ownership-alignment/research-report.md`
-- spec review evidence: `.superpowers/reviews/sdd-plan-ownership-alignment/spec-review.md`
+- durable research evidence summary: baseline `c370fe14de1641aa5ee30b3fa001f4d857078091` のcurrent
+  SDD lifecycle、planning-context、upstream `writing-plans` v6.2.0、既存contract testsを比較し、Human
+  plan approvalとprospective-body artifact contractがNorth Star / Written Spec authorityと競合すること、
+  coverage / dependency / integrationのexecutable schemaが不足していることを確認した。この要約と以下の
+  committed current-surface identitiesがclone-stableなresearch provenanceであり、raw transcriptは正本にしない。
+- durable spec review evidence summary: 2026-08-14のfresh independent Spec ReviewはNorth Star、Confirmed
+  Decisions 8件、`R-01`〜`R-15`、`AC-01`〜`AC-14`、non-goals、stop conditionsの整合を確認し、Humanの
+  Written Spec明示承認後に本pageを`accepted` / `approved`とした。approval snapshot identityはfrontmatterの
+  `approval_snapshot_sha256`、decision authorityは`approved_on`と本書の状態節、実装へのbindingは
+  [[sdd-plan-ownership-alignment-implementation-plan|canonical implementation plan]]で追跡する。
 - current broader lifecycle: [[sdd-implementation-skill-design]]
 - current pre-implementation worker boundary: [[sdd-preimplementation-context-isolation-spec]]
 - worktree and original-checkout boundary: [[sdd-first-write-worktree-migration-spec]]

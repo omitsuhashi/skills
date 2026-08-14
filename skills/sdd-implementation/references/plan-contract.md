@@ -7,7 +7,8 @@ the Plan Contract Overlay takes precedence.
 
 ## Inputs
 
-- approved Written Spec path, SHA-256 identity, and approval state;
+- approved North Star and Written Spec paths, anchor, SHA-256 approval-snapshot
+  identity, and approval state;
 - complete requirement and acceptance-criteria inventory;
 - current upstream `superpowers:writing-plans` skill path;
 - current-tree file responsibility and verification evidence;
@@ -33,8 +34,15 @@ the Plan Contract Overlay takes precedence.
 
 Include these sections:
 
-- `Approved Written Spec Identity`: approved spec path, SHA-256, and approved
-  state;
+- `Approved North Star Identity`: contained spec path, stable `North Star`
+  anchor, SHA-256 approval-snapshot identity, and approved state;
+- `Approved Written Spec Identity`: contained spec path, the same non-empty
+  SHA-256 approval-snapshot identity, and approved state;
+- `Plan Binding`: full repository baseline commit, planning worktree,
+  integration branch, current-tree compatibility result, and independent
+  `ready` review evidence;
+- `Global Constraints`: authority, content, portability, local/remote, and
+  integration constraints that apply to every task;
 - `Requirement And Acceptance Inventory`: every in-scope requirement and
   acceptance ID exactly once;
 - `Coverage Matrix`: every inventory ID, exactly one primary task, and any
@@ -42,12 +50,19 @@ Include these sections:
 - `Tasks`, `Dependency Graph`, `Execution Order`, `Serialized Integration`,
   `Post-Integration Combined Verification`, and `Readiness Result`.
 
+The durable approval-snapshot identity must match the identity declared by the
+approved spec. The repository baseline must resolve to a current-tree ancestor.
+Empty, malformed, mismatched, absent, or stale binding evidence is not `ready`.
+The canonical ready plan and representative fixture must satisfy the same
+executable semantic validator in `tests/test_plan_contract.py`.
+
 ## Required Task Fields
 
-Each task declares a deliverable, requirement coverage, acceptance coverage,
-dependencies, consumed artifacts, produced artifacts, verification intent,
-integration placement, and failure owner. A task must name every requirement or
-acceptance criterion for which it is primary owner.
+Each task declares a deliverable, exact requirement coverage, exact acceptance
+coverage, dependencies, an observable `Behavioral interface` with `Consumes`
+and `Produces`, verification intent, integration placement, and failure owner.
+A task must name every requirement or acceptance criterion for which it is
+primary owner.
 
 ## Coverage And Dependency Invariants
 
@@ -67,10 +82,12 @@ failure owner covering every acceptance criterion.
 
 ## Prohibited Durable Plan Content
 
-Do not include prospective implementation code, scripts, command bodies,
-patches, scheduler/runtime machinery, worker packets, or concrete runtime
-model, provider, agent, or effort selections. Do not make the plan a Human
-approval subject. Human authority remains with the North Star and Written Spec.
+Do not include prospective production or test code, fenced or unfenced test
+bodies, script or shell-loop bodies, patch bodies, pytest or other command
+bodies, scheduler/runtime machinery, worker packets, or concrete runtime model,
+provider, agent, or effort selections. Intent-only prose may name these body
+classes. Do not make the plan a Human approval subject. Human authority remains
+with the North Star and Written Spec.
 
 ## Review And Readiness Vocabulary
 

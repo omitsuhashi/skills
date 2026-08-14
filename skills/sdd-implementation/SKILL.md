@@ -66,9 +66,13 @@ Do not repeat a completed stage.
 - **Human-approved current specification:** verify authority, applicability,
   requirements, and acceptance criteria, then use `superpowers:writing-plans`.
   Return to the Spec Stage only for a material conflict.
-- **Reviewed plan bound to the current specification:** verify its binding,
-  current-tree compatibility, and verification scope, then use
-  `superpowers:subagent-driven-development`.
+- **Repository-ready `ready` plan bound to the current specification:** verify
+  the approved North Star identity, approved Written Spec identity, baseline
+  binding, current-tree compatibility, independent review verdict `ready`, and
+  repository validation evidence, then use
+  `superpowers:subagent-driven-development`. A plan with `issues_found`, stale
+  evidence, absent evidence, or any disposition other than `ready` must not
+  enter the Implementation Stage.
 
 ## Spec Stage
 
@@ -145,9 +149,9 @@ All implementation tasks and task reviews must be complete before closeout.
 
 ## Epic Parallel Issue Adapter
 
-Default execution remains sequential canonical SDD. This migration itself runs sequentially in its existing Epic planning worktree; the adapter is available only to a later Epic with explicit Human opt-in and a reviewed issue plan. Each issue execution unit has exactly one branch/worktree/session/plan/artifact workspace and exactly one writer. Within an issue, never dispatch concurrent implementers. Do not advance to the next task until its task review and any canonical fix are complete.
+Default execution remains sequential canonical SDD. This migration itself runs sequentially in its existing Epic planning worktree. For a later Epic, adapter eligibility is an agent / repository-owned eligibility verdict based on a repository-ready issue plan, proven independent issue units, and current dependency / conflict evidence; it does not require a Human choice. Each issue execution unit has exactly one branch/worktree/session/plan/artifact workspace and exactly one writer. Within an issue, never dispatch concurrent implementers. Do not advance to the next task until its task review and any canonical fix are complete.
 
-The adapter owns readiness/dependency/conflict verdicts, allocation/wait/result routing, actual-result revalidation, and single-writer serialized integration; it does not schedule issue-internal tasks or alter canonical task/review/fix/ledger/recovery authority. Unknown expected write overlap, dependency, shared mutable resource, pinned-base ancestry, or integration assumption returns to sequential handling or Human decision.
+The adapter owns readiness/dependency/conflict verdicts, allocation/wait/result routing, actual-result revalidation, and single-writer serialized integration; it does not schedule issue-internal tasks or alter canonical task/review/fix/ledger/recovery authority. Unknown expected write overlap, dependency, shared mutable resource, pinned-base ancestry, or integration assumption returns to sequential handling. Agent-repairable evidence gaps remain agent-owned. Only an evidenced material North Star / Written Spec conflict returns to Human authority.
 
 Before integration-ready and before every serialized integration, derive actual commit range, actual changed paths, semantic/resource assumptions, and every required issue/task commit from existing Superpowers ledger and Git history; revalidate them against sibling results and current target. A blocked or unreviewed result is not integration-ready. Reject an issue tip that cannot prove every required issue/task commit reachable, including squash or selected cherry-pick loss. Integrate one ready issue at a time; clean textual merge is insufficient and partial integrated state is not completion.
 

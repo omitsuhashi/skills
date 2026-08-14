@@ -16,21 +16,34 @@ aliases:
 
 # SDD Plan Ownership Alignment 実装計画
 
-## 状態と binding
+## Plan Binding
 
 本計画は、Planning Controller から Human-approved current Written Spec として渡された
 [[sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]]を、agent-owned execution
 contract へ変換した Plan Author 成果物である。Human に plan approval、file choice、command choice、
 prospective code、commit granularity の判断を求めない。
 
-- planning worktree: `/Users/omitsuhashi/repos/omitsuhashi/skills/.worktrees/sdd-plan-ownership-alignment-planning`
-- integration branch: `codex/sdd-plan-ownership-alignment-planning`
-- repository baseline: `c370fe14de1641aa5ee30b3fa001f4d857078091`
-- approved spec path: `knowledge/wiki/syntheses/sdd-plan-ownership-alignment.md`
-- approved spec SHA-256: `1f9a7dc5f740c51addfabde96bac6fe3fbf5036003d1783cde60ac58e5ae7559`
+- Repository baseline: c370fe14de1641aa5ee30b3fa001f4d857078091
+- Planning worktree: /Users/omitsuhashi/repos/omitsuhashi/skills/.worktrees/sdd-plan-ownership-alignment-planning
+- Integration branch: codex/sdd-plan-ownership-alignment-planning
+- Current-tree compatibility: baseline commit is an ancestor of the current integration branch and all planned responsibility paths were verified in the bound planning worktree.
+- Readiness evidence: fresh independent Plan Reviewer re-review returned `ready`; repository semantic validation, current binding, coverage, dependency, integration, and prohibition checks are satisfied.
 - upstream methodology: active discovery で解決した `superpowers:writing-plans` v6.2.0
 - local precedence: approved spec の Plan Contract Overlay が、upstream の保存先、prospective body、
   Human execution-choice prompt、plan approval semantics と衝突する output / routing contract を上書きする
+
+## Approved North Star Identity
+
+- Approved North Star path: knowledge/wiki/syntheses/sdd-plan-ownership-alignment.md
+- Approved North Star anchor: North Star
+- Approved snapshot SHA-256: 1f9a7dc5f740c51addfabde96bac6fe3fbf5036003d1783cde60ac58e5ae7559
+- Approval state: approved
+
+## Approved Written Spec Identity
+
+- Approved spec path: knowledge/wiki/syntheses/sdd-plan-ownership-alignment.md
+- Approved spec SHA-256: 1f9a7dc5f740c51addfabde96bac6fe3fbf5036003d1783cde60ac58e5ae7559
+- Approval state: approved
 
 ## Durable Plan Review Evidence
 
@@ -124,7 +137,12 @@ LLM Wiki、current Superpowers lifecycle skills。
 | `knowledge/index.md` | Modify | current spec / plan / landed design の canonical discoverability を一意に維持 |
 | `knowledge/log.md` | Modify | plan authoring、implementation closeout、review / verification effect を append-only で追跡 |
 
-## Task Decomposition
+## Requirement And Acceptance Inventory
+
+- Requirements: R-01, R-02, R-03, R-04, R-05, R-06, R-07, R-08, R-09, R-10, R-11, R-12, R-13, R-14, R-15
+- Acceptance criteria: AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07, AC-08, AC-09, AC-10, AC-11, AC-12, AC-13, AC-14
+
+## Tasks
 
 ### Task 1: POA-1 — Plan Contract の executable RED regression
 
@@ -132,7 +150,11 @@ LLM Wiki、current Superpowers lifecycle skills。
 combined verification、prohibition、readiness vocabulary を executable tests と strict resource-shape expectations
 として固定し、未実装の overlay / representative fixture の欠落だけを原因に意図した RED になる。
 
-**Coverage:** contributing `R-02`、`R-05`〜`R-15`、`AC-02`〜`AC-12`。POA-1 はこれらの
+**Requirement coverage:** R-02, R-05, R-06, R-07, R-08, R-09, R-10, R-11, R-12, R-13, R-14, R-15.
+
+**Acceptance coverage:** AC-02, AC-03, AC-04, AC-05, AC-06, AC-07, AC-08, AC-09, AC-10, AC-11, AC-12.
+
+POA-1 はこれらの
 RED evidence contract を所有し、最終 behavior の primary owner は GREEN 化を所有する POA-2 とする。
 
 **Dependencies:** なし。approved spec と current upstream `writing-plans` を直接 consume する。
@@ -150,7 +172,7 @@ RED evidence contract を所有し、最終 behavior の primary owner は GREEN
 `tests/test_skill_contract.py` and `tests/test_preimplementation_context.py`。POA-1 は overlay / fixture / routing /
 prompt を作成しない。
 
-**TDD and verification intent:**
+**Verification intent:**
 
 1. RED contract authoring: define the representative-plan validator and mutations for approved-spec identity、
    complete inventory / coverage、unknown ID、orphan task、undefined dependency、cycle、execution order、
@@ -176,7 +198,11 @@ compatibility repair、Plan Stage routing / reviewer prompt で GREEN にする�
 bounded paths を fresh Plan Author へ渡し、author self-review 後に独立 Plan Reviewer を dispatchし、
 plan deficiency を Human へ返さず修復し、`ready` だけを Implementation Stage entry へ接続する。
 
-**Coverage:** primary `R-01`〜`R-15`、`AC-01`〜`AC-13`。contributing `AC-14`。POA-2 が
+**Requirement coverage:** R-01, R-02, R-03, R-04, R-05, R-06, R-07, R-08, R-09, R-10, R-11, R-12, R-13, R-14, R-15.
+
+**Acceptance coverage:** AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07, AC-08, AC-09, AC-10, AC-11, AC-12, AC-13.
+
+POA-2 が
 overlay / fixture / routing / prompt と、POA-1 の executable contract を GREEN にする全 compatibility / route
 test changes を所有する。
 
@@ -200,7 +226,7 @@ reviewer prompt、or routing implementation を predecessor output として要�
 files are shared sequentially: POA-2 preserves POA-1's reviewed RED intent、repairs any contract-test defect needed
 to exercise that intent、provides the missing resources、and adds only the Plan Stage routing / prompt assertions it owns。
 
-**TDD and verification intent:**
+**Verification intent:**
 
 1. Pre-implementation observation: I-1 is intentionally RED for the exact missing overlay / fixture reasons。Before
    changing the implementation、routing-focused tests also expose current literals requiring an approved /
@@ -229,7 +255,9 @@ spec conflict returns to Human authority。
 **Deliverable:** landed Plan Stage semantics、supersession relations、canonical discovery、append-only lifecycle
 recordが一致し、full integrated branch が全 acceptance と repository authoring / architecture checks を満たす。
 
-**Coverage:** primary `AC-14`。contributing `R-01`〜`R-15`、`AC-01`〜`AC-13`。
+**Requirement coverage:** R-01, R-02, R-03, R-04, R-05, R-06, R-07, R-08, R-09, R-10, R-11, R-12, R-13, R-14, R-15.
+
+**Acceptance coverage:** AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07, AC-08, AC-09, AC-10, AC-11, AC-12, AC-13, AC-14.
 
 **Dependencies:** POA-1 の reviewed RED result、POA-2 の reviewed combined-GREEN result、integrated
 changed-path revalidation がすべて完了していること。
@@ -247,7 +275,7 @@ changed-path revalidation がすべて完了していること。
 `sdd-plan-ownership-alignment.md`、`knowledge/index.md`、`knowledge/log.md`。本plan本文はruntime result ledgerへ
 変換しない。
 
-**TDD and verification intent:**
+**Verification intent:**
 
 1. Baseline observation: current catalog and current design do not yet expose the Plan Contract Overlay or its
    supersession relation; append-only log has no implementation-closeout event for this change。
@@ -277,16 +305,16 @@ The graph is acyclic。The only topological execution order is `POA-1 → POA-2 
 
 ## Execution Order
 
-1. Execute POA-1 as the test-first contract task。Record the exact overlay / fixture absence failures、prove the
+1. POA-1 — execute as the test-first contract task。Record the exact overlay / fixture absence failures、prove the
    harness and test syntax are sound、obtain independent task review of that intentional RED deliverable、then
    integrate it at I-1。Do not create the overlay / fixture or claim product GREEN in POA-1。
-2. Execute POA-2 from reviewed I-1 RED。Create the overlay / fixture、apply routing / prompt / compatibility-test
+2. POA-2 — execute from reviewed I-1 RED。Create the overlay / fixture、apply routing / prompt / compatibility-test
    changes、and require the complete focused group to turn GREEN before independent task review and I-2。
-3. Revalidate actual result paths and spec binding, then execute POA-3 durable closeout and integrated checks。
+3. POA-3 — revalidate actual result paths and spec binding, then execute durable closeout and integrated checks。
 4. Dispatch one canonical fresh whole-branch review after closeout。If it finds a material defect, use the existing one-fixer、
    one-scoped-re-review boundary; do not repeat the whole-branch review。
 
-### POA-1 → POA-2 Gate Transition
+## POA-1 → POA-2 Gate Transition
 
 POA-1 は「実装済み behavior」ではなく「実行可能な期待 failure contract」を deliver する特別な
 test-first task である。そのため task completion / dependency satisfaction と product GREEN を次のように
@@ -301,7 +329,7 @@ test-first task である。そのため task completion / dependency satisfacti
 4. GREEN release: I-2 後にだけ POA-3、Plan Readiness evaluation、その他の GREEN state consumer
    は進行できる。I-1 の intentional RED を repository-ready または implementation-ready とみなさない。
 
-## Serialized Integration Order
+## Serialized Integration
 
 Execution order describes when work is performed; this section describes when reviewed results become part of the
 integration target。
@@ -321,7 +349,9 @@ required task result is not integration completion。
 references / tests、the approved spec and this plan、current SDD design pages、`knowledge/index.md`、`knowledge/log.md`、
 repository skill architecture and knowledge contracts。
 
-**Pass criteria:**
+Acceptance scope: AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07, AC-08, AC-09, AC-10, AC-11, AC-12, AC-13, AC-14.
+
+**Pass criteria:** Every integrated outcome below must pass with fresh evidence.
 
 - SDD focused suite passes, including all nine contract regression families and eight forward scenarios from the spec。
 - all `R-01`〜`R-15` and `AC-01`〜`AC-14` retain exactly one primary owner and integrated evidence; POA-1 RED evidence and POA-2 GREEN behavior remain distinguishable、and unknown or orphan IDs are absent。
@@ -344,7 +374,7 @@ transient progress ledger and append-only closeout log, not in this plan as a ru
 failure is owned by the integration fixer。A knowledge-only failure is owned by POA-3。A material spec conflict alone
 returns one decision request to Human; capability / authority / binding failure returns `blocked` with no decision request。
 
-## Completeness Mapping
+## Coverage Matrix
 
 ### Requirements
 
@@ -388,7 +418,7 @@ returns one decision request to Human; capability / authority / binding failure 
 Coverage result: requirements `15/15` primary-owned、acceptance criteria `14/14` primary-owned、unassigned `0`、
 orphan task `0`、unknown ID `0`。
 
-## Readiness Contract
+## Readiness Result
 
 | Internal disposition | External Control Return | Implementation entry | Owner / next route |
 |---|---|---|---|
@@ -399,6 +429,9 @@ orphan task `0`、unknown ID `0`。
 
 Reviewer `issues_found` is not an external status。It must be classified into `needs_repair`、`needs_decision`、or
 `blocked`。Remote authorization absence is none of these for Plan Readiness; it is evaluated only at the affected action。
+
+Reviewer verdict: `ready`。The Planning Controller maps only this current,
+spec-bound readiness result to `status: complete` and permits Implementation Stage entry。
 
 ## Plan Author Self-Review
 

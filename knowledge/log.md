@@ -1907,3 +1907,28 @@ append-only で使います。すべての entry は予測しやすい header �
 - 直前の`review-correction` entryがplan review / re-reviewのtransient `.superpowers/reviews/...` pathだけをprovenanceとして示した表現をsupersedeする。raw review transcriptsはwikiまたはGitへcommitせず、[[wiki/syntheses/sdd-plan-ownership-alignment-implementation-plan|canonical plan]]内の`Durable Plan Review Evidence`へ、2026-08-14のreview stage、approved spec path / SHA-256、canonical plan path / baseline binding、initial `issues_found` / `needs_repair`の2 finding、agent repair、final `ready` / decision request `none` / material risk `none`、Control Return `status: complete`、Implementation Stage entry、landed POA-1 / POA-2 commit identitiesを自己完結して記録した。
 - transient initial review SHA-256 `0d5ff88616ec9c8cd4496b7e5d8912a4f636f8a6b419b1937867c18069548e34`とre-review SHA-256 `52b6345da5321e220fc47f8aeafd307e75a8d1ae50d057d5763fed349a631822`はintegrity fingerprintとしてのみ保持する。future cloneからtransient fileを読める、またはreview時plan byte digest / review commitが存在するとは主張しない。durable evidenceはcanonical plan内のverdict summaryと本append-only correctionである。
 - canonical final whole-branch review、`LOCAL_COMPLETE`、Human plan approval、remote action authorizationは引き続き未宣言である。active catalogのreadiness summaryは既に正しく、index変更は不要である。
+
+## [2026-08-14] final-review-correction | SDD Plan Ownership Alignment semantic contract
+
+- Actor: repository maintainer-delegated final-review fix worker。Target identityは
+  [[wiki/syntheses/sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]]、
+  [[wiki/syntheses/sdd-plan-ownership-alignment-implementation-plan|canonical implementation plan]]、および
+  `skills/sdd-implementation` Plan Stage contractである。
+- Authority result: `knowledge/AGENTS.md`の`Read: allowed`、`Write Boundary: owned`、Canonical Ownerから委譲された
+  correction authority、selected authoring profile `obsidian`を確認し、direct canonical correctionを許可した。
+  Human authorityはapproved North Star / Written Specのproduct boundaryに限定したままである。
+- Lifecycle effect: 先行eventは削除・変更せず、本eventが不足していたactor / authority / affected-index /
+  evidence fieldsを補う。maturity routeはcurrent spec-bound repository readiness `ready`の証拠を必須化し、parallel
+  eligibilityはagent / repository-ownedへ是正した。canonical plan、representative fixture、Plan Contract Overlay、
+  executable validatorをNorth Star identity、approval-snapshot identity、baseline binding、global constraints、
+  observable behavioral interfaceを持つ一つのsemantic schemaへ同期した。
+- Affected page identities: 上記spec / plan、`skills/sdd-implementation/SKILL.md`、
+  `skills/sdd-implementation/references/plan-contract.md`、representative fixture、focused contract tests。
+  Specのtransient research / review pathはclone-stableなdurable evidence summaryとcommitted identitiesへ置換し、raw
+  transcriptはcommitしていない。
+- Affected index identity: [[index|knowledge/index.md]]のactive canonical spec / plan records。target identity、summary、
+  lifecycle stateはcurrent correction後も正しいためindex bytesの変更は不要であり、catalog effectは`unchanged`である。
+- Evidence: REDではcanonical plan / fixture schema、current binding、maturity `ready` evidence、parallel ownershipが
+  exact contract failureとなった。GREEN後のfocused plan/public contract suitesは46 tests、failure 0、error 0である。
+  full combined verification、scoped commit、final-fix reportはこのcorrection後のfresh gateで確定する。remote write、
+  live mutation、Human execution-choiceは実施していない。

@@ -43,10 +43,25 @@ class SddImplementationSkillContractTests(unittest.TestCase):
         for state in (
             "Change request or incomplete specification",
             "Human-approved current specification",
-            "Reviewed plan bound to the current specification",
+            "Repository-ready `ready` plan bound to the current specification",
         ):
             self.assertIn(state, self.skill_text)
         self.assertIn("Do not repeat a completed stage.", self.skill_text)
+
+    def test_implementation_entry_requires_current_ready_evidence(self) -> None:
+        maturity = self.skill_text.split("## Route By Input Maturity", 1)[1].split("## Spec Stage", 1)[0]
+        normalized = " ".join(maturity.split())
+        for required in (
+            "approved North Star identity",
+            "approved Written Spec identity",
+            "baseline binding",
+            "independent review verdict `ready`",
+            "repository validation evidence",
+        ):
+            self.assertIn(required, normalized)
+        for rejected in ("`issues_found`", "stale", "absent"):
+            self.assertIn(rejected, normalized)
+        self.assertIn("must not enter the Implementation Stage", normalized)
 
     def test_human_approval_is_limited_to_north_star_and_written_spec(self) -> None:
         self.assertIn("Human North Star and Written Spec authority", self.skill_text)
@@ -311,8 +326,14 @@ class SddImplementationSkillContractTests(unittest.TestCase):
 
     def test_parallel_eligibility_is_fail_closed(self) -> None:
         section = self.skill_text.split("## Epic Parallel Issue Adapter", 1)[1].split("## Runtime Model", 1)[0]
-        for value in ("explicit Human opt-in", "reviewed issue plan", "one branch/worktree/session/plan/artifact workspace", "expected write overlap", "shared mutable resource", "pinned-base ancestry", "unknown", "sequential handling or Human decision"):
+        for value in ("agent / repository-owned eligibility", "repository-ready issue plan", "one branch/worktree/session/plan/artifact workspace", "expected write overlap", "shared mutable resource", "pinned-base ancestry", "unknown", "sequential handling"):
             self.assertIn(value, section)
+        for forbidden in ("explicit Human opt-in", "Human-approved issue plan", "Human execution-method choice", "sequential handling or Human decision"):
+            self.assertNotIn(forbidden, section)
+        self.assertIn(
+            "Only an evidenced material North Star / Written Spec conflict returns to Human authority.",
+            section,
+        )
 
     def test_actual_result_revalidation_is_required(self) -> None:
         section = self.skill_text.split("## Epic Parallel Issue Adapter", 1)[1].split("## Runtime Model", 1)[0]
