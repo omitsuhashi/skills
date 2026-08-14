@@ -35,14 +35,10 @@ class FailClosedAllocationBehaviorTests(unittest.TestCase):
         (self.original / "tracked.txt").write_text("base\n", encoding="utf-8")
         run_git(self.original, "add", "tracked.txt")
         run_git(self.original, "commit", "-m", "base")
-        self.writer_calls = 0
         self.runner_calls = 0
 
     def tearDown(self) -> None:
         self.temporary_directory.cleanup()
-
-    def writer(self, planning: Path) -> None:
-        self.writer_calls += 1
 
     def runner(self, command: tuple[str, ...]) -> int:
         self.runner_calls += 1
@@ -52,8 +48,20 @@ class FailClosedAllocationBehaviorTests(unittest.TestCase):
         result = run_repository_change(
             original=self.original,
             entry_skill="sdd-implementation",
+            task_worktree=self.root / "planning",
+            cwd=self.root / "planning",
+            writable_paths=(
+                self.root / "planning/.superpowers/research/scenario/report.md",
+            ),
+            bound_writer_owner="research-worker",
+            writer_owner="research-worker",
+            writer_requests=(
+                (
+                    self.root / "planning/.superpowers/research/scenario/report.md",
+                    b"report\n",
+                ),
+            ),
             allocator=allocator,
-            writer=self.writer,
             downstream_command=None,
             command_runner=self.runner,
         )
@@ -64,7 +72,6 @@ class FailClosedAllocationBehaviorTests(unittest.TestCase):
         self.assertEqual((), result.executed_commands)
         self.assertEqual(result.before, result.after)
         self.assertEqual(result.before.commit_count, result.after.commit_count)
-        self.assertEqual(0, self.writer_calls)
         self.assertEqual(0, self.runner_calls)
         for relative in (
             ".superpowers/research/scenario/report.md",

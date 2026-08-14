@@ -1,8 +1,17 @@
 from __future__ import annotations
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
+
+SKILL_DIR = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(SKILL_DIR))
+
+from tests.harnesses.fail_closed_scenario import (  # noqa: E402
+    ControlReturn,
+    run_repository_change,
+)
 
 def run_git(cwd: Path, *args: str) -> str:
     return subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True, text=True).stdout
@@ -90,11 +99,48 @@ class NativeWorktreeContractTests(unittest.TestCase):
             self.assertEqual(integration_branch, run_git(first, "branch", "--show-current").strip())
             self.assertNotEqual(starting_branch, integration_branch)
             run_git(first, "merge-base", "--is-ancestor", starting_branch, integration_branch)
-            result = subprocess.run(["git", "worktree", "add", "-b", "integration/existing", str(failed), sha], cwd=original, capture_output=True, text=True)
-            self.assertNotEqual(0, result.returncode)
+            first_before = fingerprint(first)
+
+            def colliding_allocator() -> Path:
+                run_git(
+                    original,
+                    "worktree",
+                    "add",
+                    "-b",
+                    "integration/existing",
+                    str(failed),
+                    sha,
+                )
+                return failed
+
+            result = run_repository_change(
+                original=original,
+                entry_skill="sdd-implementation",
+                task_worktree=failed,
+                cwd=failed,
+                writable_paths=(failed / ".superpowers/research/failed/report.md",),
+                bound_writer_owner="research-worker",
+                writer_owner="research-worker",
+                writer_requests=(
+                    (
+                        failed / ".superpowers/research/failed/report.md",
+                        b"unexpected fallback\n",
+                    ),
+                ),
+                allocator=colliding_allocator,
+                downstream_command=None,
+                command_runner=lambda command: 0,
+            )
+            self.assertEqual(
+                ControlReturn("blocked", "none", "none", "worktree allocation failed"),
+                result.control_return,
+            )
+            self.assertEqual(0, result.writer_invocations)
             self.assertEqual(before, fingerprint(original))
+            self.assertEqual(first_before, fingerprint(first))
             self.assertFalse((failed / ".superpowers/research/failed/report.md").exists())
             self.assertFalse((original / ".superpowers/research/failed/report.md").exists())
+            self.assertFalse((first / ".superpowers/research/failed/report.md").exists())
 
 if __name__ == "__main__":
     unittest.main()
