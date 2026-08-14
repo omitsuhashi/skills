@@ -1,7 +1,11 @@
 ---
 title: SDD portable validation と責務単純化仕様
 date: 2026-08-14
-status: proposed
+status: accepted
+review_state: approved
+approved_on: 2026-08-14
+approval_snapshot_sha256: 1a8d209ca01e73828043b19c8bfe22d35bd1afa64603add1b7a180a20487285c
+north_star_identity: sdd-portable-validation-simplification#目標@2026-08-14
 tags:
   - sdd-implementation
   - skill-portability
@@ -13,8 +17,8 @@ aliases:
 
 # SDD portable validation と責務単純化仕様
 
-> [!warning] Written Spec approval 待ち
-> 本仕様の status は `proposed` である。Human が Written Spec として承認するまで、既存仕様の supersession、実装、`knowledge/index.md` / `knowledge/log.md` の同期を行わない。
+> [!success] Human-approved Written Spec
+> Human は2026-08-14に本仕様全体をWritten Specとして承認した。statusは`accepted`、review stateは`approved`であり、Plan Stageへのentryを許可する。remote actionは別途明示承認を要する。
 
 ## 問題
 
@@ -194,7 +198,7 @@ Human approval 後、実装は次の順序で移行する。
 - `sdd-implementation-skill-design.md` の Superpowers ownership / thin integration を維持し、portable package と repository-local override の境界を本仕様で具体化する。
 - 現行 public skill と test に残る repository-specific migration contract、重複 lifecycle / gate prose、package-external validator dependency は、本仕様の implementation により置換する。
 
-過去の仕様、plan、migration evidence は historical record として保持し、current executable instruction としては参照しない。本仕様が `proposed` の間は既存 authority を変更しない。
+過去の仕様、plan、migration evidence は historical record として保持し、current executable instruction としては参照しない。本仕様のHuman approval以後、上記の限定されたconflictでは本仕様をcurrent authorityとする。
 
 ## Stop conditions
 
@@ -220,9 +224,10 @@ Human approval 後、実装は次の順序で移行する。
 
 ## Review verdict
 
-Human-approved direct Git amendment後のfresh independent rereviewは`ready_for_human_review`、decision requestとunresolved material riskはnoneである。reviewerは、index / working-tree / ignore / HEAD / trusted-baseline mutationによるevidence invalidation、immutable `starting_head_sha..HEAD`全commitのGit由来fresh導出、staged deletion、ignored scratch保持、add-then-delete検出、root history validator維持、isolated package closure、authority decision A、追加validator / adapter / state不在、runtime path非永続化を確認した。statusは引き続き`proposed`とし、Human Written Spec approvalまでactivation、supersession、implementation、index / log syncは行わない。
+Human-approved direct Git amendment後のfresh independent rereviewは`ready_for_human_review`、decision requestとunresolved material riskはnoneである。reviewerは、index / working-tree / ignore / HEAD / trusted-baseline mutationによるevidence invalidation、immutable `starting_head_sha..HEAD`全commitのGit由来fresh導出、staged deletion、ignored scratch保持、add-then-delete検出、root history validator維持、isolated package closure、authority decision A、追加validator / adapter / state不在、runtime path非永続化を確認した。Humanはそのcurrent bytesをWritten Specとして承認し、statusを`accepted`、review stateを`approved`へ移した。
 
 ## Provenance
 
 - audited baseline: `82dcd32157ff9690ae038f982f3916009e449f80`
 - authority: Human-confirmed decisionsを保持したadvisory synthesis。2026-08-14にHumanはvalidator necessity reviewの結論を承認し、bundled standalone validator要件をdirect Git gateへ置換した。raw report / transcript / runtime pathはdurable pageへ複製していない。
+- Written Spec approval: 2026-08-14にHumanがcurrent spec全体を承認した。`approval_snapshot_sha256`はactivation metadata追加前のreview済みbytesを識別する。
