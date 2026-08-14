@@ -206,3 +206,49 @@ The required combined gate was run once after the complete round-2 behavioral/du
 - Approved North Star / Written Spec authority, agent-owned plan readiness/execution, separate remote authorization, and the prior authority-evidence correction remain unchanged.
 - No remote publication or live mutation was performed.
 - Open material concern within round-2 scope: none identified by the regression set and fresh verification.
+
+## Approved Residual Fix Loop Round 3
+
+### Status And Commit
+
+- Result: `ROUND_3_FIX_COMPLETE`.
+- Remaining independent-review finding addressed: exactly 1 Important finding; round-2 finding 1 was not reopened.
+- Scoped fix commit: `8a2aa4b` (`fix: parse prospective Python plan bodies`).
+
+### Parser-Backed Python Body Detection
+
+The Python prospective-body path no longer maintains a list of executable statement prefixes. It extracts line-anchored `def` and `async def` candidates together with their indented suite, then uses Python's parser to decide whether the candidate is an actual function body.
+
+The new RED regressions prove that a valid body after optional docstrings, comments, and blank lines is rejected for all requested forms:
+
+- `import json`;
+- `await normalize(spec)` in an async function;
+- `self.normalize(spec)`;
+- `self.plan = spec`.
+
+The exact prose interface control `def build_plan(spec): returns a normalized plan in the proposed interface.` remains allowed because it is not a valid parsed Python function body. Prior multiline, one-line, docstring, and allowed narrative regressions remain green. Shell detection was not changed.
+
+### TDD And Verification Evidence
+
+RED ran the new four-subcase Python test with the existing prose control. All four valid Python bodies failed for the expected whitelist gap; the prose control passed.
+
+GREEN results:
+
+- targeted Python/prose regression group: 5 tests passed;
+- final focused plan/public contract suite: 53 tests passed, 0 failures, 0 errors;
+- full SDD implementation suite: 81 tests passed, 0 failures, 0 errors;
+- repository script suite: 19 tests passed;
+- LLM Wiki suite: 21 tests passed;
+- skill architecture and context validators: exit 0;
+- context report: 1 skill, 12 operations, warnings `[]`;
+- skill-creator validator: exit 0, `Skill is valid!`;
+- working and staged whitespace gates: exit 0.
+
+The required combined gate was run once after the complete round-3 behavioral/durable set. Python commands used isolated `/private/tmp/sdd-poa-round3-*` bytecode cache roots.
+
+### Boundaries And Concerns
+
+- Changed scope is limited to the Python validator/tests, Plan Contract Overlay, and one append-only round-3 log event.
+- Shell logic, singleton validation, approved North Star / Written Spec authority, agent-owned plan readiness/execution, separate remote authorization, and prior authority evidence remain unchanged.
+- No remote publication or live mutation was performed.
+- Open material concern within round-3 scope: none identified by the parser-backed regressions and fresh verification.
