@@ -75,9 +75,12 @@ Worker with research report paths, the `Confirmed Decisions` and `Open
 Decisions` excerpts, the current spec draft path, and applicable authoring
 rules. Do not inherit the parent conversation.
 
-Then dispatch a separate fresh Spec Reviewer with the spec path, research paths,
-Decision Record excerpts, and review artifact path. The reviewer is
-advisory-only. The Human must approve the Written Spec before Plan Stage.
+Then dispatch a separate fresh Spec Reviewer with the durable spec path,
+repository-external Research Report paths, Decision Record excerpts, and a raw
+review artifact path using the repository-external task/session temporary
+route. The reviewer is advisory-only. Integrate only its durable verdict
+summary into the canonical specification. The Human must approve the Written
+Spec before Plan Stage.
 
 ## Plan Authoring
 
@@ -93,8 +96,11 @@ The worker maps current files and tests, writes an executable TDD plan, performs
 the upstream author self-review, and returns only a Control Return. After that
 return, dispatch a fresh independent Plan Reviewer using
 `prompts/plan-reviewer.md`; do not inherit the author context. Pass the approved
-spec path, trusted bounded paths, local overlay path, authored plan path, Plan
+spec path, trusted bounded paths, a raw review path using the repository-external
+task/session temporary route, local overlay path, authored plan path, Plan
 Author result, and current-tree evidence required for buildability review.
+Integrate only the durable verdict summary into the reviewed implementation
+plan; do not copy the raw review artifact or transcript.
 
 Local override: skip the upstream `superpowers:writing-plans`
 `## Execution Handoff`. Do not offer Subagent-Driven or Inline Execution. Do

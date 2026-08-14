@@ -7,7 +7,7 @@ approve product scope or risk.
 ## Inputs
 
 - resolved planning worktree root and bound CWD;
-- writable artifact path for the review, contained by that worktree;
+- writable raw review artifact path using the repository-external task/session temporary route;
 - original checkout metadata (read-only) and baseline commit;
 - approved spec path and approval state;
 - authored plan path and Plan Author result;
@@ -15,7 +15,9 @@ approve product scope or risk.
 - local `references/plan-contract.md` overlay path;
 - applicable repository rules and current-tree file/test evidence.
 
-Reject a stale, sibling, original-checkout, or escaping writable artifact path.
+Reject a relative, unresolved, unbounded, stale, repository-aliased,
+planning-worktree, sibling, original-checkout, or escaping writable artifact
+path before write.
 
 ## Review
 
@@ -31,7 +33,9 @@ buildable. Otherwise record `issues_found` and classify each finding:
 
 Missing remote publication authorization is not a plan deficiency and does not
 change local `ready` status. Keep implementation code, scripts, patches, and
-command bodies out of the plan and review artifact.
+command bodies out of the plan and review artifact. Keep the raw review output
+and transcript outside the repository and return only a durable verdict summary
+for integration into the reviewed implementation plan.
 
 ## Representative Routing Cases
 
@@ -51,12 +55,13 @@ Treat each case as otherwise satisfying the plan contract.
 
 ## Review Result
 
-Write detailed findings to the review artifact. Return only these bounded
+Write detailed findings to the repository-external task/session temporary raw
+review artifact. Return only these bounded
 semantic fields:
 
 - `verdict`: `ready` or `issues_found`;
 - `disposition`: `ready`, `needs_repair`, `needs_decision`, or `blocked`;
-- `artifact_path`: the canonical review artifact path;
+- `artifact_path`: the repository-external raw review artifact path;
 - `decision_requests`: one material Human decision for a material spec conflict,
   or `none`;
 - `material_risks`: current material conflict or blocker, or `none`.

@@ -13,7 +13,7 @@ Do not inherit the parent conversation. Your authority is advisory-only.
 - one research question;
 - applicable constraints;
 - current spec path, or `none`;
-- report path under `.superpowers/research/<epic-id>/`.
+- report path using the repository-external task/session temporary route.
 
 Read the applicable repository `AGENTS.md` and knowledge router before scoped
 exploration. Inspect only the source, tests, validators, documentation, git history,
@@ -39,7 +39,13 @@ question. Do not modify canonical artifacts.
 
 ## Write Binding
 
-Inputs include `resolved planning worktree root`, `CWD`, and `writable artifact path`. Resolve the Research Report under that writable artifact path before writing. If the resolved destination is the original checkout, a planning sibling, an issue sibling, or escapes the resolved planning worktree root, return `BLOCKED` without writing. Keep advisory-only authority and the existing four-field Direct Return unchanged.
+Inputs include `resolved planning worktree root`, `CWD`, `writable artifact
+path`, and original checkout metadata. Resolve the Research Report under the
+repository-external task/session temporary path before writing. If the path is
+relative, unresolved, unbounded, stale, repository-aliased, inside the original
+checkout or planning worktree, a planning or issue sibling, or escapes the
+task/session temporary root, return `BLOCKED` without writing. Keep advisory-only
+authority and the existing four-field Direct Return unchanged.
 
 ## Direct Return
 

@@ -27,7 +27,8 @@ the Plan Contract Overlay takes precedence.
 - isolated fresh-context Plan Author and independent Plan Reviewer dispatch;
 - bounded reads of the approved spec, upstream skill, repository rules, and
   current-tree evidence;
-- writes confined to the trusted planning worktree;
+- source and durable writes confined to the trusted planning worktree;
+- raw plan-review handoff writes resolved to a repository-external task/session temporary path;
 - synchronous result collection or asynchronous wait and resume.
 
 ## Required Plan-Level Fields
@@ -66,6 +67,11 @@ must likewise declare `Plan readiness disposition: ready`, `Control Return
 status: complete`, and `Implementation Stage entry: allowed`.
 The canonical ready plan and representative fixture must satisfy the same
 executable semantic validator in `tests/test_plan_contract.py`.
+
+Keep the reviewed implementation plan as the durable verdict summary. Exclude
+the raw review output and transcript from durable plan content. Reject a raw
+review path that is unresolved, unbounded, repository-aliased, inside the
+repository or any worktree, stale, or escaping its task/session temporary root.
 
 ## Required Task Fields
 

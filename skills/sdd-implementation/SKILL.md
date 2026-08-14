@@ -15,7 +15,7 @@ Before any content or artifact write, perform read-only discovery and capture th
 
 Create the planning worktree atomically from `starting_head_sha`; only the continuing controller/chat that won atomic allocation may reuse it. If two allocators select the same Epic, the loser must not attach to the existing worktree and returns `BLOCKED`. An independent chat, stale/foreign state, or HEAD/index/tracked/untracked state not attributable to the trusted tuple is `BLOCKED`. Allocation may change shared Git metadata only; never perform original checkout switch/reset/stash/clean/add/commit or content write.
 
-Before the first writable dispatch, prove planning registration/common directory/branch/path, captured-SHA base, original branch/HEAD/status preservation, and that repository root, CWD, every relative or absolute writable artifact path, and the first transient Research Report resolve inside the planning worktree. Reject stale path or escape path. The original checkout must not remain in a writable root, fallback root, CWD, or artifact destination.
+Before the first writable dispatch, prove planning registration/common directory/branch/path, captured-SHA base, and original branch/HEAD/status preservation. Source and durable writes remain inside the trusted planning worktree. Prove that repository root, CWD, and every relative or absolute durable writable artifact path resolve inside it. The first transient Research Report uses the repository-external task/session temporary route. Reject stale paths, aliases, and escape paths before either kind of write. The original checkout must not remain in a writable root, fallback root, CWD, or artifact destination.
 
 ## Planning Controller
 
@@ -111,6 +111,54 @@ runtime routing outside the wiki.
 No knowledge root is `not_applicable`; do not bootstrap one implicitly. An
 existing knowledge root with unresolved authority, target, write boundary,
 index/log sync, or validation is `BLOCKED`.
+
+## Transient Artifact Boundary
+
+- Default raw handoff route: repository-external task/session temporary
+- Repository-local scratch prerequisite: concrete operational reason and mechanical pre-write .gitignore coverage
+- Allowed scratch state: ignored, untracked, unstaged, uncommitted
+- Missing prerequisite route: fail closed to repository-external default
+- Raw artifacts excluded from durable outputs: research report, worker report, fix report, raw review output, transcript, duplicate task content
+- Durable summary fields: decision, finding, repair, verdict, evidence identity
+- Durable summary surfaces: canonical specification, reviewed implementation plan, knowledge/log.md
+
+| Stage | Raw handoff default | Durable summary route |
+| --- | --- | --- |
+| Research | repository-external task/session temporary | canonical specification |
+| Spec | repository-external task/session temporary | canonical specification |
+| Plan | repository-external task/session temporary | reviewed implementation plan |
+| Implementation | repository-external task/session temporary | reviewed implementation plan |
+| Task review | repository-external task/session temporary | reviewed implementation plan |
+| Repair | repository-external task/session temporary | reviewed implementation plan |
+| Integration | repository-external task/session temporary | reviewed implementation plan |
+| Final review | repository-external task/session temporary | reviewed implementation plan |
+| Knowledge closeout | repository-external task/session temporary | knowledge/log.md |
+
+Resolve every normal-stage raw handoff to an OS/runtime-provided, task/session-bounded
+temporary path outside the repository root, planning worktree, original checkout,
+and sibling worktrees. Reject an unresolved or broad root, relative destination,
+repository alias, stale binding, sibling path, or escape before write. Keep only
+the durable summary fields above on canonical surfaces; never copy a raw artifact
+or transcript into durable knowledge.
+
+Repository-local `.superpowers/**` scratch is exceptional. Before its first
+write, record a concrete operational reason and mechanically verify that the
+exact path is covered by `.gitignore`. If either prerequisite is missing, do
+not write locally and use the repository-external default. Never stage or
+commit the scratch.
+
+## Repository Validation Gate
+
+Invoke `scripts/validate_sdd_transient_artifacts.py` for every repository validation gate.
+Validate the current Git index and staging area independently. Validate each
+nominated candidate tree, post-cleanup new commit, and final tree independently.
+Allow a staged deletion only when the candidate tree has no `.superpowers/**`
+entry. Do not reject a pre-amendment historical ancestor blob without a current
+index or nominated-tree violation.
+
+If `scripts/validate_sdd_transient_artifacts.py` is unavailable, returns nonzero,
+or detects any `.superpowers/**` violation, fail and abort the repository gate;
+do not continue to any stage transition, commit creation, or closeout.
 
 ## Plan Stage
 
