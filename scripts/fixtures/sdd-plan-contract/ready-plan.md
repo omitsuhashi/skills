@@ -1,23 +1,23 @@
-# Representative Portable SDD Plan
+# Representative Plan Ownership Alignment Plan
 
 ## Approved North Star Identity
 
-- Approved North Star path: specifications/representative-sdd.md
+- Approved North Star path: knowledge/wiki/syntheses/sdd-plan-ownership-alignment.md
 - Approved North Star anchor: North Star
-- Approved snapshot SHA-256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+- Approved snapshot SHA-256: 1f9a7dc5f740c51addfabde96bac6fe3fbf5036003d1783cde60ac58e5ae7559
 - Approval state: approved
 
 ## Approved Written Spec Identity
 
-- Approved spec path: specifications/representative-sdd.md
-- Approved spec SHA-256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+- Approved spec path: knowledge/wiki/syntheses/sdd-plan-ownership-alignment.md
+- Approved spec SHA-256: 1f9a7dc5f740c51addfabde96bac6fe3fbf5036003d1783cde60ac58e5ae7559
 - Approval state: approved
 
 ## Plan Binding
 
-- Repository baseline: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-- Planning worktree: worktrees/portable-sdd-planning-worktree
-- Integration branch: feature/portable-sdd-plan
+- Repository baseline: c370fe14de1641aa5ee30b3fa001f4d857078091
+- Planning worktree: /Users/omitsuhashi/repos/omitsuhashi/skills/.worktrees/sdd-plan-ownership-alignment-planning
+- Integration branch: codex/sdd-plan-ownership-alignment-planning
 - Current-tree compatibility: compatible
 - Independent review verdict: ready
 - Repository checks: passed

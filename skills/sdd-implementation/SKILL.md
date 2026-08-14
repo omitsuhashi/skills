@@ -8,6 +8,10 @@ description: Use when a repository change needs specification, planning, or loca
 Superpowers is the authoritative development methodology. Compose its current
 skills; do not copy their process into a custom scheduler, worker packet schema,
 runtime snapshot, event log, or resume protocol.
+Superpowers owns generic worktree allocation, planning methodology, TDD, worker
+dispatch, review and repair, and branch finishing. SDD owns only repository
+entry and containment, stage composition, knowledge routing, the portable Git
+gates, and the authority boundary below.
 
 ## Repository Change Entry
 
@@ -77,12 +81,6 @@ approval state, stage routing, and evaluation of each Control Return. Do not
 inspect source code, broad repository content, full artifacts, diffs, or raw
 command output.
 
-Use isolated fresh-context dispatch for every Pre-Implementation Worker. Do not
-inherit the parent conversation. Pass canonical paths, applicable constraints,
-the current question, and missing task-local facts only. If isolated dispatch
-with an explicit model is unavailable, return `BLOCKED`; do not move research
-or authoring into the Planning Controller.
-
 For a change request or incomplete specification, read
 `references/research-stage.md` before repository investigation. Research,
 Spec Synthesis, Spec Review, Plan Authoring, and Plan Review must each use a fresh worker.
@@ -98,7 +96,6 @@ Before entering a selected route, use the active runtime's skill discovery to ve
 If active discovery has no readable match, check the globally installed skill roots exposed by the runtime, including the cross-runtime alias `~/.agents/skills` when that alias is accessible. When `<root>/<required-skill>/SKILL.md` is readable, read it, use it, and continue the selected route.
 
 Report a required family as missing only after active discovery and every accessible global-root check complete with no readable match. If discovery or a root/candidate read cannot be completed, report `BLOCKED: dependency preflight failed` together with the observed phase or path and underlying error. Do not report that failure as missing.
-Check `keep-implementation-simple` as a required supporting Skill. Resolve one readable canonical `keep-implementation-simple/SKILL.md` path through that discovery and fallback, then read it fully before work. If its discovery, candidate inspection, path resolution, or read fails, return `BLOCKED: dependency preflight failed` with the failed phase, observed or attempted path, and underlying error before affected work.
 Check the Superpowers lifecycle skills for every route.
 Check `grill-with-docs` when the Spec Stage requires it.
 Check `llm-wiki` when a knowledge root exists.
@@ -109,6 +106,57 @@ If a required family is missing, return the matching result:
 - `BLOCKED: missing grill-with-docs dependency`
 - `BLOCKED: missing llm-wiki dependency`
 - `BLOCKED: missing keep-implementation-simple dependency`
+
+## Common Runtime Capability Guard
+
+Apply this guard once before dispatching a stage, and reapply it before the
+first affected mutation when any bound input changes. Consume the installed resource paths,
+explicit target repository, original checkout fingerprint,
+owned worktree, bound CWD, all durable and transient write destinations,
+task-owner capability identity, original-checkout preservation evidence, fresh isolated dispatch,
+explicit model, and result collection capabilities.
+
+Resolve every path canonically. Apply the First-Write Worktree Gate to durable
+repository writes and bind raw handoff to a bounded repository-external
+task/session temporary destination. Verify each required package resource is
+readable, each destination has the required ownership and containment, and the
+target, CWD, and write destinations remain the supplied identities. Do not
+infer an unverified substitute, move the work into the controller, or use an
+old loop.
+
+Follow the current Superpowers SDD Model Selection contract. Every worker dispatch states the resolved explicit model.
+A user model override takes precedence. Independent effort control is optional and its absence does not
+block. Synchronous dispatch that returns a completed result is a valid
+result-collection mechanism. Asynchronous dispatch requires both wait and
+resume capabilities. If neither synchronous result collection nor asynchronous
+wait/resume is available, block before the first affected mutation.
+
+Any missing, unreadable, mismatched, or unknown required capability or binding
+returns the four-field Control Return: `status: blocked`, `artifact_path: none`,
+`decision_requests: none`, and `material_risks` containing the role or phase,
+failed capability or path, and underlying error. Make zero content or artifact
+writes and invoke no downstream worker, writer, runner, or fallback.
+
+## Keep Implementation Simple Wiring
+
+Check `keep-implementation-simple` as a required supporting Skill during
+Dependency Preflight. Resolve one readable canonical
+`keep-implementation-simple/SKILL.md` path, then pass that same path to
+exactly these seven roles and no others:
+
+- Spec Synthesizer
+- Spec Reviewer
+- Plan Author
+- Plan Reviewer
+- Implementer
+- Task Reviewer
+- Final Reviewer
+
+Each listed role must read it fully before work. If discovery proves no readable
+match, return `BLOCKED: missing keep-implementation-simple dependency`. If
+discovery, candidate inspection, path resolution, or reading fails, use the
+Common Runtime Capability Guard before the affected work; do not invent an ad
+hoc simplicity protocol or test-only runtime.
 
 ## Route By Input Maturity
 
@@ -191,12 +239,10 @@ index/log sync, or validation is `BLOCKED`.
 | Final review | repository-external task/session temporary | reviewed implementation plan |
 | Knowledge closeout | repository-external task/session temporary | knowledge/log.md |
 
-Resolve every normal-stage raw handoff to an OS/runtime-provided, task/session-bounded
-temporary path outside the repository root, planning worktree, original checkout,
-and sibling worktrees. Reject an unresolved or broad root, relative destination,
-repository alias, stale binding, sibling path, or escape before write. Keep only
-the durable summary fields above on canonical surfaces; never copy a raw artifact
-or transcript into durable knowledge.
+Resolve every normal-stage raw handoff through the Common Runtime Capability
+Guard, which preserves the repository-external containment and pre-mutation
+failure boundary. Keep only the durable summary fields above on canonical
+surfaces; never copy a raw artifact or transcript into durable knowledge.
 
 Repository-local `.superpowers/**` scratch is exceptional. Before its first
 write, record a concrete operational reason and mechanically verify that the
@@ -206,17 +252,34 @@ commit the scratch.
 
 ## Repository Validation Gate
 
-Invoke `scripts/validate_sdd_transient_artifacts.py` for every repository validation gate.
-Validate the current Git index and staging area independently. Validate each
-nominated candidate tree, post-boundary new commit, and final tree independently.
-Require zero `.superpowers/**` entries in every validated surface. Do not reject
-a pre-amendment historical ancestor blob without a current index or nominated-tree
-violation. The completed migration marker is historical evidence, not current
-validation authority.
+Consume a caller-supplied canonical absolute target and the installed skill
+directory as distinct identities. Require readable package content. Run
+`git -C <target> rev-parse --show-toplevel` and
+`git -C <target> rev-parse --is-inside-work-tree`; require `true` and require
+that the returned top level exactly equals the canonical target. Every probe in
+all three gates uses that same target binding. Never infer the target from the
+skill package, process CWD, or ambient checkout.
 
-If `scripts/validate_sdd_transient_artifacts.py` is unavailable, returns nonzero,
-or detects any `.superpowers/**` violation, fail and abort the repository gate;
-do not continue to any stage transition, commit creation, or closeout.
+| Gate | Required moment | Fresh direct Git verdict |
+| --- | --- | --- |
+| `exceptional-local-scratch-pre-write` | before each exceptional repository-local scratch leaf's first write | Require a non-empty exceptional reason and a normalized target-relative `.superpowers/**` leaf whose resolved path and symlink ownership remain inside the target. Before any payload byte, reject an absolute, `.`, `..`, or symlink-escaping path, and reject a leaf that already exists or its ownership is foreign or unknown. Against current state, use `git check-ignore --no-index` for the exact path and require it to be ignored, absent from the index, and absent from the current HEAD tree, so the new leaf is ignored, untracked, unstaged, and uncommitted. |
+| `pre-commit-candidate` | immediately before each commit creation | Derive the candidate with `git write-tree`; require the candidate tree, current index, and every unignored working-tree path to contain zero `.superpowers/**` entries. An unmerged index or unreadable candidate fails. A staged deletion passes only when the fresh candidate and index are clean; a force-add fails, while an add-then-delete is judged by its fresh final index and candidate. |
+| `final-closeout` | after cleanup and immediately before local completion | Re-run the candidate/index/unignored-working-tree checks; require `HEAD^{tree}` to contain zero `.superpowers/**` entries; prove trusted immutable `starting_head_sha` is a commit and ancestor of HEAD; derive every commit in `starting_head_sha..HEAD` from the current object graph and use `git cat-file` and `git ls-tree` to require each commit tree to contain zero `.superpowers/**` entries. |
+
+Evidence is single-use: recompute the selected gate from current Git objects and
+state at its required moment. Scratch evidence is invalid after any target,
+path, resolved ownership, ignore, HEAD, or index mutation. Pre-commit evidence
+is invalid after any index, working-tree, or ignore mutation. Final evidence is
+invalid after any HEAD, index, working-tree, ignore, or baseline-binding
+mutation. Do not create an exactly-once mechanism, cache, state file, bundled
+validator, adapter, scheduler, telemetry, or protocol.
+
+Fail closed and stop the affected write, commit, transition, or closeout. A
+missing or unreadable installed skill or required package resource is
+`broken skill installation`; a target identity, Git capability, or
+object-read failure is `BLOCKED: target/runtime unavailable`; a dirty or stale
+gate verdict is respectively `FAIL: exceptional-local-scratch-pre-write`,
+`FAIL: pre-commit-candidate`, or `FAIL: final-closeout`.
 
 ## Plan Stage
 
@@ -244,72 +307,42 @@ wiki content in the main session.
 Use fresh implementers and independent reviewers. Do not inherit the parent
 conversation. Use the runtime's isolated fresh-context dispatch mechanism.
 Pass durable paths and missing task-local facts only.
-Pass Implementer and Task Reviewer the resolved canonical
-`keep-implementation-simple/SKILL.md` path; each must read it fully before work.
-If that read prevents completion, use the existing bounded return with the role
-or phase, path, and underlying error.
+Apply the Common Runtime Capability Guard and Keep Implementation Simple Wiring
+before either role begins affected work.
 
-Run SDD sequentially. Review only requirements fit, material simplicity, and
-material current risk. A blocking finding needs evidence of a requirement gap,
+Within one selected execution unit, run SDD tasks sequentially. Review only
+requirements fit, material simplicity, and material current risk. A blocking finding needs evidence of a requirement gap,
 scope excess, observable regression, or concrete current risk. Do not block on
 style, formatting, future-only concerns, scope-external hardening, or equivalent
 preferences. Do not reduce mechanical validation or required test coverage.
 
 All implementation tasks and task reviews must be complete before closeout.
 
-## Epic Parallel Issue Adapter
+## Execution Shape And Authority
 
-Default execution remains sequential canonical SDD. This migration itself runs sequentially in its existing Epic planning worktree. For a later Epic, adapter eligibility is an agent / repository-owned eligibility verdict based on a repository-ready issue plan, proven independent issue units, and current dependency / conflict evidence; it does not require a Human choice. Each issue execution unit has exactly one branch/worktree/session/plan/artifact workspace and exactly one writer. Within an issue, never dispatch concurrent implementers. Do not advance to the next task until its task review and any canonical fix are complete.
+Superpowers owns the allocation, dispatch, review, repair, integration, and
+branch-completion methods. Parallel eligibility is agent / repository-owned and
+requires current dependency evidence, write-conflict evidence, shared-resource
+evidence, and ancestry evidence. If any required fact is unknown, use
+sequential execution; no Human execution-method or issue-plan approval is required.
 
-The adapter owns readiness/dependency/conflict verdicts, allocation/wait/result routing, actual-result revalidation, and single-writer serialized integration; it does not schedule issue-internal tasks or alter canonical task/review/fix/ledger/recovery authority. Unknown expected write overlap, dependency, shared mutable resource, pinned-base ancestry, or integration assumption returns to sequential handling. Agent-repairable evidence gaps remain agent-owned. Only an evidenced material North Star / Written Spec conflict returns to Human authority.
+The observable SDD outcomes remain fail closed: one writer owns each unit and
+integration (one unit per issue/task), and no unit contains concurrent
+implementers; blocked or unreviewed results are ineligible. Before serialized integration, the applicable
+Superpowers contract revalidates actual commit ranges, changed paths,
+dependencies, conflicts, the captured target or a verified compatible advance,
+and reachability of every required task commit. The accepted tip retains those
+commits despite any history transformation. Integrate ready units serially;
+never treat a clean textual merge or partial integrated state as completion.
 
-Before integration-ready and before every serialized integration, derive actual commit range, actual changed paths, semantic/resource assumptions, and every required issue/task commit from existing Superpowers ledger and Git history; revalidate them against sibling results and current target. A blocked or unreviewed result is not integration-ready. Reject an issue tip that cannot prove every required issue/task commit reachable, including squash or selected cherry-pick loss. Integrate one ready issue at a time; clean textual merge is insufficient and partial integrated state is not completion.
+The integration target must remain the captured target. Divergence, rewrite, or
+uncertainty blocks without retargeting. Completion requires fresh combined
+verification and original-checkout preservation.
+`starting_branch` is PR base and `integration_branch` is PR head and integration target.
 
-`starting_branch` is PR base and `integration_branch` is PR head and integration target. If target head is unchanged, retain captured ancestry. On descendant advance, revalidate against the same named branch and refresh integration ancestry and combined verification. On non-descendant rewrite, material divergence, or unknown, return `BLOCKED`; never silently retarget. After every required issue/task commit is reachable, run fresh combined verification and exactly one canonical whole-branch review for `starting_branch...integration_branch`. A finding follows one fixer, exactly one scoped re-review, and adjudication/stop; no second fix wave or repeated whole-branch review. Return `LOCAL_COMPLETE` only after original-checkout preservation. Remote publication needs separate explicit authorization and a valid remote PR base.
-
-## Runtime Model And Effort
-
-Follow the current Superpowers SDD Model Selection contract. Every subagent dispatch must state its model. Let Superpowers choose the relative tier for the task and resolve that tier to a concrete model available in the active runtime.
-Do not maintain a second role-to-model table.
-
-An explicit user runtime model override takes precedence over upstream model-tier resolution.
-
-Apply reasoning effort as an independent runtime-only overlay when supported:
-
-| Superpowers task class | Reasoning effort |
-| --- | --- |
-| Mechanical task or small scoped re-review | `low` |
-| Multi-file integration, normal debugging, or task review | `medium` |
-| Architecture-sensitive or high-risk task, or final review | `high` |
-
-Task complexity and current risk take precedence over role defaults.
-A high-risk task review uses `high`, regardless of its role default.
-The shared default effort vocabulary is limited to `low`, `medium`, and `high`.
-
-An explicit user runtime effort override takes precedence over the default effort overlay.
-For a stuck fix, raise effort one available step before following Superpowers
-model escalation.
-
-When the active runtime has no independent effort control, record `not_supported` and continue with Superpowers model selection. Lack of independent effort control does not block the flow. Lack of isolated dispatch with an explicit model is `BLOCKED`.
-
-Persist no concrete model, effort, provider, availability, agent ID, or
-run-specific resolution in the specification, plan, wiki, ledger, or schema.
-
-## Runtime Capability Boundary
-
-Map isolated dispatch, explicit model, optional effort, wait, and resume to the
-active runtime's capabilities. Detect the fresh worker/reviewer dispatch
-mechanism, model selector, optional effort control, and wait/resume mechanisms
-before entering SDD. Required isolated dispatch and explicit-model capabilities
-are `BLOCKED` when absent; optional effort is `not_supported` when absent.
-Synchronous dispatch that returns a completed result is a valid
-result-collection mechanism. Asynchronous dispatch requires both wait and
-resume capabilities. If neither synchronous result collection nor asynchronous
-wait/resume is available, return `BLOCKED`.
-
-Do not hard-code host tool names or model catalogs. Do not silently fall back to
-main-session implementation or an old loop skill when required SDD capability
-is absent.
+Agent-repairable evidence gaps remain agent-owned. Return to Human authority
+only for an evidenced material Written Spec change. A remote action always
+requires its own separate explicit authorization and a valid remote base.
 
 ## Implementation Closeout
 
@@ -318,14 +351,13 @@ Validate the wiki before final review.
 
 ## Final Whole-Branch Review
 
-After closeout, run the Superpowers final whole-branch review over code, tests,
-the approved specification, reviewed plan, and knowledge artifacts. Return
+After Implementation Closeout, run exactly one canonical whole-branch review
+through the Superpowers review contract. Cover code, tests, the approved
+specification, reviewed plan, and knowledge artifacts. Return
 `LOCAL_COMPLETE` only after reviewed tasks, fresh verification, scoped commits,
 applicable closeout, and final approval.
-Pass Final Reviewer the resolved canonical `keep-implementation-simple/SKILL.md`
-path; the reviewer must read it fully before work. If that read prevents
-completion, use the existing bounded return with the role or phase, path, and
-underlying error.
+Apply the Common Runtime Capability Guard and Keep Implementation Simple Wiring
+before the Final Reviewer begins affected work.
 
 Do not perform any remote write without separate explicit authorization.
 This includes push, PR, merge, release, live install, issue, comment, and project changes.

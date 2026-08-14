@@ -13,6 +13,12 @@ def read_or_empty(path: Path) -> str:
     return path.read_text(encoding="utf-8") if path.is_file() else ""
 
 
+def markdown_section(text: str, heading: str, next_heading: str) -> str:
+    if heading not in text:
+        return ""
+    return text.split(heading, 1)[1].split(next_heading, 1)[0]
+
+
 class SddImplementationSkillContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -37,6 +43,28 @@ class SddImplementationSkillContractTests(unittest.TestCase):
         self.assertIn("Superpowers is the authoritative development methodology.", self.skill_text)
         for forbidden in ("custom scheduler", "worker packet schema", "runtime snapshot"):
             self.assertIn(forbidden, self.skill_text)
+
+    def test_public_contract_is_thin_and_does_not_reimplement_generic_methodology(self) -> None:
+        for forbidden_heading in (
+            "## Epic Parallel Issue Adapter",
+            "## Runtime Model And Effort",
+            "## Superpowers-Owned Parallel Safety Outcomes",
+        ):
+            self.assertNotIn(forbidden_heading, self.skill_text)
+        for leaked_algorithm in (
+            "descendant advance",
+            "non-descendant rewrite",
+            "selected cherry-pick",
+            "one fixer",
+            "exactly one scoped re-review",
+            "second fix wave",
+            "repeated whole-branch review",
+        ):
+            with self.subTest(leaked_algorithm=leaked_algorithm):
+                self.assertNotIn(leaked_algorithm, self.skill_text)
+        normalized = " ".join(self.skill_text.split())
+        self.assertIn("Superpowers owns generic worktree allocation", normalized)
+        self.assertIn("TDD, worker dispatch, review and repair, and branch finishing", normalized)
 
     def test_entry_maturity_skips_completed_stages(self) -> None:
         for state in (
@@ -126,69 +154,93 @@ class SddImplementationSkillContractTests(unittest.TestCase):
         self.assertIn("Do not create parallel `CONTEXT.md` or `docs/adr/` stores.", self.skill_text)
         self.assertIn("not_applicable", self.skill_text)
 
-    def test_public_contract_invokes_transient_validator_for_each_exact_git_surface(self) -> None:
-        expected_contract = (
-            "Invoke `scripts/validate_sdd_transient_artifacts.py` for every "
-            "repository validation gate.",
-            "Validate the current Git index and staging area independently.",
-            "Validate each nominated candidate tree, post-boundary new commit, "
-            "and final tree independently.",
-            "Require zero `.superpowers/**` entries in every validated surface.",
-            "Do not reject a pre-amendment historical ancestor blob without a "
-            "current index or nominated-tree violation.",
-            "The completed migration marker is historical evidence, not current "
-            "validation authority.",
-        )
-        normalized = " ".join(self.skill_text.split())
-        for statement in expected_contract:
+    def test_public_contract_binds_every_git_probe_to_one_explicit_target(self) -> None:
+        section = self.skill_text.split("## Repository Validation Gate", 1)[1].split(
+            "## Plan Stage", 1
+        )[0]
+        normalized = " ".join(section.split())
+        for statement in (
+            "caller-supplied canonical absolute target",
+            "installed skill directory",
+            "`git -C <target> rev-parse --show-toplevel`",
+            "`git -C <target> rev-parse --is-inside-work-tree`",
+            "exactly equals the canonical target",
+            "Every probe in all three gates uses that same target binding",
+            "Never infer the target from the skill package, process CWD, or ambient checkout",
+        ):
             with self.subTest(statement=statement):
                 self.assertIn(statement, normalized)
 
-    def test_public_contract_aborts_on_transient_validator_failure_without_continuation(self) -> None:
-        expected = (
-            "If `scripts/validate_sdd_transient_artifacts.py` is unavailable, "
-            "returns nonzero, or detects any `.superpowers/**` violation, fail "
-            "and abort the repository gate; do not continue to any stage "
-            "transition, commit creation, or closeout."
-        )
-        self.assertIn(expected, " ".join(self.skill_text.split()))
+    def test_public_contract_owns_three_direct_git_gates_once(self) -> None:
+        section = self.skill_text.split("## Repository Validation Gate", 1)[1].split(
+            "## Plan Stage", 1
+        )[0]
+        for gate in (
+            "exceptional-local-scratch-pre-write",
+            "pre-commit-candidate",
+            "final-closeout",
+        ):
+            with self.subTest(gate=gate):
+                self.assertEqual(1, section.count(f"| `{gate}` |"))
+        self.assertIn("`git check-ignore --no-index`", section)
+        self.assertIn("`git write-tree`", section)
+        self.assertIn("`git ls-tree`", section)
+        self.assertIn("`git cat-file`", section)
+        self.assertIn("every commit in `starting_head_sha..HEAD`", section)
 
-    def test_upstream_owns_model_tiers_and_local_contract_only_adds_effort(self) -> None:
+    def test_public_scratch_gate_requires_a_new_owned_superpowers_leaf(self) -> None:
+        section = self.skill_text.split("## Repository Validation Gate", 1)[1].split(
+            "## Plan Stage", 1
+        )[0]
+        scratch_row = next(
+            line
+            for line in section.splitlines()
+            if line.startswith("| `exceptional-local-scratch-pre-write` |")
+        )
+        self.assertIn("normalized target-relative `.superpowers/**` leaf", scratch_row)
+        self.assertIn("already exists or its ownership is foreign or unknown", scratch_row)
+        self.assertNotIn("starting_head_sha", scratch_row)
+
+    def test_public_contract_rejects_repository_specific_or_ambiguous_gate_owners(self) -> None:
+        section = self.skill_text.split("## Repository Validation Gate", 1)[1].split(
+            "## Plan Stage", 1
+        )[0]
+        for forbidden in (
+            "migration manifest",
+            "nominated candidate tree",
+            "for every repository validation gate",
+        ):
+            with self.subTest(forbidden=forbidden):
+                self.assertNotIn(forbidden, section)
+
+    def test_public_contract_fails_closed_by_failure_owner(self) -> None:
+        section = self.skill_text.split("## Repository Validation Gate", 1)[1].split(
+            "## Plan Stage", 1
+        )[0]
+        normalized = " ".join(section.split())
+        for classification in (
+            "`broken skill installation`",
+            "`BLOCKED: target/runtime unavailable`",
+            "`FAIL: exceptional-local-scratch-pre-write`",
+            "`FAIL: pre-commit-candidate`",
+            "`FAIL: final-closeout`",
+        ):
+            with self.subTest(classification=classification):
+                self.assertIn(classification, normalized)
+        legacy_package_failure = "/".join(("skill", "package")) + " unavailable"
+        self.assertNotIn(legacy_package_failure, normalized)
+        self.assertIn(
+            "Evidence is single-use: recompute the selected gate from current Git objects and state",
+            normalized,
+        )
+
+    def test_model_selection_is_owned_upstream_without_a_local_role_table(self) -> None:
         self.assertIn("Follow the current Superpowers SDD Model Selection contract.", self.skill_text)
-        self.assertIn("Every subagent dispatch must state its model.", self.skill_text)
-        self.assertIn("| Mechanical task or small scoped re-review | `low` |", self.skill_text)
-        self.assertIn("| Multi-file integration, normal debugging, or task review | `medium` |", self.skill_text)
-        self.assertIn("| Architecture-sensitive or high-risk task, or final review | `high` |", self.skill_text)
-        self.assertIn("`not_supported`", self.skill_text)
+        self.assertIn("Every worker dispatch states the resolved explicit model.", self.skill_text)
+        self.assertIn("A user model override takes precedence.", self.skill_text)
+        self.assertNotIn("| Superpowers task class |", self.skill_text)
         self.assertNotIn("| orchestrator |", self.skill_text)
-        self.assertNotIn("economical balanced", self.skill_text)
         self.assertNotRegex(self.skill_text, re.compile(r"\bgpt-[0-9]"))
-
-    def test_user_model_and_effort_overrides_have_independent_precedence(self) -> None:
-        self.assertIn(
-            "An explicit user runtime model override takes precedence over "
-            "upstream model-tier resolution.",
-            self.skill_text,
-        )
-        self.assertIn(
-            "An explicit user runtime effort override takes precedence over "
-            "the default effort overlay.",
-            self.skill_text,
-        )
-
-    def test_task_complexity_and_risk_override_role_effort_defaults(self) -> None:
-        self.assertIn(
-            "Task complexity and current risk take precedence over role defaults.",
-            self.skill_text,
-        )
-        self.assertIn(
-            "A high-risk task review uses `high`, regardless of its role default.",
-            self.skill_text,
-        )
-        self.assertIn(
-            "The shared default effort vocabulary is limited to `low`, `medium`, and `high`.",
-            self.skill_text,
-        )
 
     def test_required_skill_families_are_preflighted_in_the_active_runtime(self) -> None:
         self.assertIn(
@@ -223,29 +275,42 @@ class SddImplementationSkillContractTests(unittest.TestCase):
             self.skill_text,
         )
 
-    def test_runtime_capability_boundary_distinguishes_optional_effort_from_required_dispatch(self) -> None:
-        self.assertIn("## Runtime Capability Boundary", self.skill_text)
+    def test_common_runtime_capability_guard_is_the_single_capability_owner(self) -> None:
+        self.assertEqual(1, self.skill_text.count("## Common Runtime Capability Guard"))
+        section = markdown_section(
+            self.skill_text,
+            "## Common Runtime Capability Guard",
+            "## Route By Input Maturity",
+        )
         for capability in (
-            "isolated dispatch",
+            "installed resource paths",
+            "explicit target repository",
+            "owned worktree",
+            "bound CWD",
+            "write destinations",
+            "fresh isolated dispatch",
             "explicit model",
-            "optional effort",
-            "wait",
-            "resume",
+            "result collection",
         ):
-            self.assertIn(capability, self.skill_text)
+            self.assertIn(capability, section)
         self.assertIn(
-            "Lack of independent effort control does not block the flow.",
-            self.skill_text,
+            "before the first affected mutation",
+            section,
         )
-        self.assertIn(
-            "Lack of isolated dispatch with an explicit model is `BLOCKED`.",
-            self.skill_text,
-        )
+        for field in ("`status: blocked`", "`artifact_path: none`", "`decision_requests: none`", "`material_risks`"):
+            self.assertIn(field, section)
+        for diagnosis in ("role or phase", "failed capability or path", "underlying error"):
+            self.assertIn(diagnosis, section)
         self.assertNotIn("Codex", self.skill_text)
         self.assertNotIn("Hermes Agent", self.skill_text)
 
-    def test_result_collection_requires_sync_completion_or_async_coordination(self) -> None:
-        normalized = " ".join(self.skill_text.split())
+    def test_required_capability_absence_blocks_before_mutation(self) -> None:
+        section = markdown_section(
+            self.skill_text,
+            "## Common Runtime Capability Guard",
+            "## Route By Input Maturity",
+        )
+        normalized = " ".join(section.split())
         self.assertIn(
             "Synchronous dispatch that returns a completed result is a valid "
             "result-collection mechanism.",
@@ -257,9 +322,10 @@ class SddImplementationSkillContractTests(unittest.TestCase):
         )
         self.assertIn(
             "If neither synchronous result collection nor asynchronous wait/resume "
-            "is available, return `BLOCKED`.",
+            "is available, block before the first affected mutation.",
             normalized,
         )
+        self.assertIn("Do not infer an unverified substitute", normalized)
 
     def test_review_is_bounded_to_material_findings(self) -> None:
         for lens in ("requirements fit", "material simplicity", "material current risk"):
@@ -304,6 +370,17 @@ class SddImplementationSkillContractTests(unittest.TestCase):
         final_review = self.skill_text.index("## Final Whole-Branch Review")
         self.assertLess(task_review, closeout)
         self.assertLess(closeout, final_review)
+        final_section = self.skill_text[final_review:]
+        normalized = " ".join(final_section.split())
+        canonical_review = (
+            "After Implementation Closeout, run exactly one canonical whole-branch "
+            "review through the Superpowers review contract."
+        )
+        self.assertEqual(1, normalized.count(canonical_review))
+        self.assertEqual(
+            0,
+            self.skill_text[:final_review].lower().count("whole-branch review"),
+        )
 
     def test_skill_has_only_the_internal_stage_resource_shape(self) -> None:
         children = (
@@ -353,43 +430,105 @@ class SddImplementationSkillContractTests(unittest.TestCase):
         for value in ("read-only discovery", "primary/default checkout", "`starting_branch`", "`starting_head_sha`", "task-linked worktree", "shared Git metadata", "zero content/artifact writes", "fallback root"):
             self.assertIn(value, gate)
 
-    def test_parallel_adapter_leaves_issue_sdd_sequential(self) -> None:
-        section = self.skill_text.split("## Epic Parallel Issue Adapter", 1)[1].split("## Runtime Model", 1)[0]
-        for value in ("Within an issue, never dispatch concurrent implementers.", "Do not advance to the next task until its task review and any canonical fix are complete.", "Each issue execution unit has exactly one branch/worktree/session/plan/artifact workspace and exactly one writer.", "does not schedule issue-internal tasks"):
-            self.assertIn(value, section)
-
-    def test_parallel_eligibility_is_fail_closed(self) -> None:
-        section = self.skill_text.split("## Epic Parallel Issue Adapter", 1)[1].split("## Runtime Model", 1)[0]
-        for value in ("agent / repository-owned eligibility", "repository-ready issue plan", "one branch/worktree/session/plan/artifact workspace", "expected write overlap", "shared mutable resource", "pinned-base ancestry", "unknown", "sequential handling"):
-            self.assertIn(value, section)
-        for forbidden in ("explicit Human opt-in", "Human-approved issue plan", "Human execution-method choice", "sequential handling or Human decision"):
-            self.assertNotIn(forbidden, section)
-        self.assertIn(
-            "Only an evidenced material North Star / Written Spec conflict returns to Human authority.",
-            section,
+    def test_execution_shape_and_authority_are_observable_without_an_adapter_algorithm(self) -> None:
+        section = markdown_section(
+            self.skill_text,
+            "## Execution Shape And Authority",
+            "## Implementation Closeout",
         )
-
-    def test_actual_result_revalidation_is_required(self) -> None:
-        section = self.skill_text.split("## Epic Parallel Issue Adapter", 1)[1].split("## Runtime Model", 1)[0]
-        for value in ("actual commit range", "actual changed paths", "semantic/resource assumptions", "Before integration-ready", "before every serialized integration", "sibling results"):
+        for value in (
+            "agent / repository-owned",
+            "dependency evidence",
+            "write-conflict evidence",
+            "unknown",
+            "sequential execution",
+            "material Written Spec change",
+            "remote action",
+            "Agent-repairable evidence gaps",
+        ):
             self.assertIn(value, section)
+        self.assertNotIn("North Star", section)
+        for forbidden in (
+            "explicit Human opt-in",
+            "Human-approved issue plan",
+            "Human execution-method choice",
+            "sequential execution or Human decision",
+        ):
+            self.assertNotIn(forbidden, section)
+        implementation = markdown_section(
+            self.skill_text,
+            "## Implementation Stage",
+            "## Execution Shape And Authority",
+        )
+        self.assertIn(
+            "Within one selected execution unit, run SDD tasks sequentially.",
+            implementation,
+        )
+        self.assertNotIn("Run SDD sequentially.", implementation)
 
-    def test_every_task_commit_reachability_is_required(self) -> None:
-        section = self.skill_text.split("## Epic Parallel Issue Adapter", 1)[1].split("## Runtime Model", 1)[0]
-        for value in ("blocked or unreviewed result is not integration-ready", "every required issue/task commit", "reachable", "issue tip", "squash", "selected cherry-pick"):
-            self.assertIn(value, section)
+    def test_parallel_units_retain_single_writer_and_reviewed_result_boundaries(self) -> None:
+        section = markdown_section(
+            self.skill_text,
+            "## Execution Shape And Authority",
+            "## Implementation Closeout",
+        )
+        normalized = " ".join(section.split())
+        for outcome in (
+            "one writer owns each unit and integration",
+            "no unit contains concurrent implementers",
+            "blocked or unreviewed results are ineligible",
+            "Integrate ready units serially",
+            "partial integrated state as completion",
+        ):
+            self.assertIn(outcome, normalized)
 
-    def test_serialized_integration_and_target_drift_are_required(self) -> None:
-        section = self.skill_text.split("## Epic Parallel Issue Adapter", 1)[1].split("## Runtime Model", 1)[0]
-        for value in ("target head is unchanged", "single-writer serialized integration", "one ready issue at a time", "partial integrated state", "descendant advance", "non-descendant rewrite", "silently retarget"):
-            self.assertIn(value, section)
+    def test_parallel_results_revalidate_actual_changes_and_commit_reachability(self) -> None:
+        section = markdown_section(
+            self.skill_text,
+            "## Execution Shape And Authority",
+            "## Implementation Closeout",
+        )
+        normalized = " ".join(section.split())
+        for outcome in (
+            "actual commit ranges",
+            "changed paths",
+            "dependencies",
+            "conflicts",
+            "every required task commit",
+            "history transformation",
+        ):
+            self.assertIn(outcome, normalized)
 
-    def test_combined_gate_is_canonical_and_single_pass(self) -> None:
-        for value in ("fresh combined verification", "whole-branch review", "one fixer", "exactly one scoped re-review", "second fix wave", "repeated whole-branch review"):
-            self.assertIn(value, self.skill_text)
+    def test_parallel_target_drift_and_combined_review_remain_fail_closed(self) -> None:
+        section = markdown_section(
+            self.skill_text,
+            "## Execution Shape And Authority",
+            "## Implementation Closeout",
+        )
+        normalized = " ".join(section.split())
+        for outcome in (
+            "integration target must remain the captured target",
+            "verified compatible advance",
+            "Divergence, rewrite, or uncertainty blocks without retargeting",
+            "fresh combined verification",
+            "original-checkout preservation",
+        ):
+            self.assertIn(outcome, normalized)
+        self.assertNotIn("whole-branch review", normalized.lower())
+
+    def test_upstream_model_contract_preserves_override_and_optional_effort(self) -> None:
+        guard = markdown_section(
+            self.skill_text,
+            "## Common Runtime Capability Guard",
+            "## Route By Input Maturity",
+        )
+        normalized = " ".join(guard.split())
+        self.assertIn("A user model override takes precedence.", normalized)
+        self.assertIn("Independent effort control is optional", normalized)
+        self.assertIn("its absence does not block", normalized)
 
     def test_completion_and_publication_boundary(self) -> None:
-        for value in ("original-checkout preservation", "`LOCAL_COMPLETE`", "separate explicit authorization", "PR base", "PR head", "valid remote PR base"):
+        for value in ("original-checkout preservation", "`LOCAL_COMPLETE`", "separate explicit authorization"):
             self.assertIn(value, self.skill_text)
 
 

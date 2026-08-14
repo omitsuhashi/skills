@@ -2325,6 +2325,18 @@ append-only で使います。すべての entry は予測しやすい header �
 - [[wiki/syntheses/global-skill-fallback-and-simple-implementation-plan|canonical plan]]のlocal implementationは`e40fa348db056be005a254c1e5a84b51d7447629`（`feat: keep skill discovery fallback simple`）で完了し、approved task reviewはopen material findingなしである。planと[[index|durable catalog]]を`implemented-task-reviewed-pending-final-review`へ同期した。
 - fresh-agent behavior GREENは2件ともPASSである。`keep-implementation-simple`はexisting configuration owner/surfaceを選び、unmapped resolver/classifier/cache/provenance traceを除外し、review blockerをrequirement gap・repository rule violation・observable regression・concrete current riskに限定した。SDD Dependency Preflightはreadableな`~/.agents/skills/llm-wiki/SKILL.md`をread/useして継続し、complete no-matchだけをmissing、incomplete discovery/candidate readをconcreteな`BLOCKED: dependency preflight failed`として扱った。
 - focused validationはSDD unittest 49件、`scripts/validate_skill_architecture.py --all`、両Skillの`quick_validate.py`、`git diff --check`がすべてGREENである。`c370fe14de1641aa5ee30b3fa001f4d857078091..HEAD`のfinal diff checkとfresh final whole-branch reviewは未実施のままであり、`LOCAL_COMPLETE`は宣言しない。push、PR、merge、release、remote write、live installは未実施である。
+## [2026-08-14] spec-gate-approved | SDD portable validation と責務単純化
+
+- Humanは、[[wiki/syntheses/sdd-portable-validation-simplification|SDD portable validation と責務単純化仕様]]のcurrent bytesをWritten Specとして承認した。statusは`accepted`、review stateは`approved`であり、approval snapshot identityは`1a8d209ca01e73828043b19c8bfe22d35bd1afa64603add1b7a180a20487285c`である。
+- approved contractはstandalone / bundled generic validatorを追加せず、explicit targetへ三つのdirect Git gateを適用する。immutable `starting_head_sha..HEAD`の全commit treeをfinal gateでfresh検査し、ignored local scratchとstaged deletionを許容する。このrepository固有のmigration/history validator、regression tests、CI invocationはroot-owned surfaceとして維持する。
+- [[index|durable catalog]]を同じapprovalとsupersession stateへ同期した。parallel issue eligibilityはagent / repository-owned、unknownなdependency / conflictはsequential fallback、Human authorityはmaterial Written Spec changeと別途承認が必要なremote actionに保持する。
+- Plan Stage、implementation、push、PR、merge、release、live installはこのapproval eventでは未実施である。
+
+## [2026-08-14] plan-gate-ready | SDD portable validation と責務単純化
+
+- Fresh Plan Authorは、Human-approved [[wiki/syntheses/sdd-portable-validation-simplification|Written Spec]]を[[wiki/syntheses/sdd-portable-validation-simplification-implementation-plan|5 taskの実装計画]]へ変換した。planはapproved snapshot `1a8d209ca01e73828043b19c8bfe22d35bd1afa64603add1b7a180a20487285c`、repository baseline `0eb5d97717d644c95ad2e52c9721c6e8c29391ef`、integration branch `codex/sdd-portable-validation-simplification`へbindingされている。
+- Fresh independent Plan Reviewは`ready` / `ready`、decision request `none`、material risk `none`である。R-01〜R-13とAC-01〜AC-12の一意なprimary ownership、SPV-1〜SPV-5のacyclic dependencyとserialized integration、current-tree buildability、root migration/history ownerの維持、prohibited bodyと追加validator/adapter/state/protocolの不在を確認した。raw review artifactとtranscriptはdurable knowledgeへ複製していない。
+- [[index|durable catalog]]へrepository-ready plan entryを1件追加した。Implementation Stage entryはallowedだが、このeventではimplementation、push、PR、merge、release、live install、その他のremote writeを実施していない。
 
 ## [2026-08-14] post-merge-fix | SDD fail-closed worktree gate and transient artifact boundary
 
@@ -2400,3 +2412,55 @@ append-only で使います。すべての entry は予測しやすい header �
 
 - [[wiki/syntheses/keep-implementation-simple-plan|`KIS-PLAN-2026-08-14-V2`]]のKIS-1は`099c1df3cd35a75d838e7c66279293723f4dbbc0`と修正`e3815157b8af151d6fc5683e851eec3108dd69c3`で完了し、initial Task Reviewの2件のImportant findingはscoped re-reviewでaddressed、new Critical/Important breakageなしとなった。fresh combined verificationはSDD unittest 94/94、sole/default SDD architecture、one context contract、両Skillのquick validation、KIS-1 transient-artifact、working/range diff checkを通過した。
 - baseline/current KIS SHA-256はともに`2c2361f04ca6d2dd7433d2dfa80ff173a14f68ef401df0e98e7d4366d1d23b3f`でbaseline-to-tip diffは空である。plan、[[index|durable catalog]]、append-only logをcloseout candidateへ同期し、KIS-2 Steps 6–7を完了した。closeout candidate/commit/final-tree validationとFinal Reviewはpendingのため`LOCAL_COMPLETE`は宣言しない。push、PR、merge、release、live install、Issue/comment/projectを含むremote actionは未実施かつ未承認である。
+
+## [2026-08-14] ingest | SDD portable validation post-origin Spec Gate
+
+- Actorはrepository maintainer-delegated Spec Gate closeout worker。Humanの直接指示により`origin/main` `1515212`を取り込み、planning merge `4d67bed`上で[[wiki/syntheses/sdd-portable-validation-simplification|Human-approved Written Spec]]の重複current behaviorを整合した。authority resultはbounded amendment approved、lifecycle effectは`accepted` / `approved`の維持である。
+- portable authorityはstandalone / bundled validatorを追加しないexplicit target向け三つのdirect Git gateのまま保持した。source repositoryのcurrent authorityをroot-owned strict-zero post-policy validator / regression / CIへ同期し、過去のexact marker / path / mode / blob lineageをhistorical evidenceへ限定した。SDD First-Write fail-closed containmentとexact seven-role KIS wiringは後続deduplicationでも保持する。
+- Fresh independent reviewは`ready_for_human_review`、decision requestとmaterial riskはnoneであり、root validator 10/10、workflow contract 8/8、First-Write / KIS focused evidence 52/52を確認した。[[index|active catalog]]の既存recordをcurrent scopeへ同期した。implementation plan、source、testは変更せず、push、PR、merge、release、live installを含むremote writeは実施または承認していない。
+
+## [2026-08-14] independent-plan-rereview | SDD portable validation post-origin Plan Gate
+
+- Actorはrepository maintainer-delegated Plan Gate closeout worker。fresh independent reviewは[[wiki/syntheses/sdd-portable-validation-simplification-implementation-plan|repaired implementation plan]]を`ready` / `ready`と判定し、decision requestとmaterial riskはnoneである。lifecycle effectはplan readiness `ready`、Control Return `complete`、local Implementation Stage entry `allowed`である。
+- Reviewはbaseline `0ed5f358979ae9281fb7dde8fe47647175720ca8`、R-01〜R-15 / AC-01〜AC-14のexact-once inventoryとunique primary ownership、SPV-1〜SPV-5のacyclic chain、Task 1 `9a4e155` + fix `481d424`のcompletion、Task 2 next、current strict-zero root owner、First-Write Worktree Gate、exact seven-role KIS wiring、prohibited durable body/commandと追加mechanismの不在を確認した。
+- [[index|durable catalog]]の既存plan recordを同じcurrent lifecycleへ同期した。raw review artifact、path、transcript、command outputはrepositoryへ複製していない。spec、source、test、task scopeは変更せず、push、PR、merge、release、live install、その他remote writeは実施または承認していない。
+
+## [2026-08-14] independent-plan-rereview | SDD portable validation atomic parity cutover
+
+- Actorはrepository maintainer-delegated Plan Gate closeout worker。Task 2のserialized-integration defectを修復した[[wiki/syntheses/sdd-portable-validation-simplification-implementation-plan|implementation plan]]について、fresh independent reviewは`ready` / `ready`、decision request `none`、material risk `none`と判定した。lifecycle effectはplan readiness `ready`、Control Return `complete`、local Implementation Stage entry `allowed`である。
+- Repairはroot-owned canonical parity replacementを先にGREENにし、その後にpackage canonical-plan dependencyを除去してroot parity/package semantic/isolated closureを同じSPV-2 commit/review boundaryでGREENにするatomic cutoverである。Task 3はreview済みroot surfaceをconsumeし、current strict-zero validator/regressionsとCI/invocation contractだけをpreserve/wireする。five-task chain、unique primary ownership、Task 1 completion、Task 2 next、First-Write/KIS preservationは変更していない。
+- [[index|durable catalog]]の既存plan recordを同じcurrent lifecycleとatomic cutoverへ同期した。raw review artifact、path、transcriptはdurable knowledgeへ複製していない。spec、source、test、Task 2の未コミット実装差分、Git state、remote stateは変更していない。
+
+## [2026-08-14] implementation-closeout-candidate | SDD portable validation と責務単純化
+
+- Actorはrepository maintainer-delegated SPV-5 knowledge closeout worker。[[wiki/syntheses/sdd-portable-validation-simplification|Human-approved Written Spec]]、[[wiki/syntheses/sdd-implementation-skill-design|broader current design]]、[[wiki/syntheses/sdd-portable-validation-simplification-implementation-plan|reviewed plan]]、[[index|active catalog]]をdirect canonical closeout candidateへ同期した。authority resultは`Read: allowed` / `Write Boundary: owned`、selected authoring profileは`obsidian`である。approved scope、authority、historical provenance、`knowledge/raw/**`は変更していない。
+- Gitからrebound baseline `0ed5f358979ae9281fb7dde8fe47647175720ca8`とreviewed Task 1 `481d424`、Task 2 `42ce4df`、Task 3 `07a1e8d`、Task 4 `f29c0fd`のreachabilityを再導出した。Task 2のroot parity-first atomic cutover、Task 3のCI wiring、Task 4のthin ownership / First-Write / exact-seven KISを含む各task reviewは修正後open findingなしで完了している。
+- Fresh combined verificationはpackage 139/139、root scripts 39/39、First-Write / fail-closed / exact-seven KIS 29/29、llm-wiki 21/21、architecture validator、one context contract、warning-free context report、`sdd-implementation` Skill validationを成功させた。root suiteはcanonical parity、current strict-zero、`--post-policy-history` CI contract、reachable clean clone、no-`origin/main`、post-policy add-then-delete、shallow-history fail-closed coverageを含む。knowledge lintは本topicのindex identityを一件に保ち、stale lifecycle summaryとincomplete implementation-state evidenceだけをbounded correctionした。
+- 本eventはimplementation closeout candidateであり`LOCAL_COMPLETE`を宣言しない。knowledge commit後のfinal direct-Git / root strict-zero gateと、controllerが一度だけdispatchするfresh whole-branch reviewはpendingである。raw worker / reviewer / test transcriptとtask-local scratchはdurable knowledgeへ複製していない。push、PR、merge、release、live installは未実施かつ未承認である。
+
+## [2026-08-14] review-correction | SDD portable validation closeout current state
+
+- Review head `41c2a6359de3e7710fa1cbe13879114ac747957d` のTask 5 reviewで、[[wiki/syntheses/sdd-portable-validation-simplification-implementation-plan|current plan]]にR-11 primary-owner evidenceの不一致とpre-implementation statusの残存が確認された。R-11をSPV-2のsource-independent installed-folder / synthetic-repository evidenceへ戻し、SPV-2〜SPV-4のtask checklistとI-2〜I-4をreviewed completionへ同期した。I-5はfinal whole-branch reviewだけをpendingとして保持する。
+- [[index|active catalog]]はすでにTask 1〜4 landed / final review pendingを一件だけ示し、canonical identityとsummaryにdriftがないため変更していない。approved scope、authority、historical log、source、tests、`knowledge/raw/**`は変更していない。`LOCAL_COMPLETE`は宣言せず、push、PR、merge、release、live installは未実施かつ未承認のままである。
+
+## [2026-08-14] review-correction | SDD portable validation final-review boundary
+
+- Review head `458a52e0f47d09964758b326e2749ec4656e0782` のTask 5 re-reviewで、[[wiki/syntheses/sdd-portable-validation-simplification-implementation-plan|current plan]]にimplementation-only tip `f29c0fd`をcurrent branch tipと扱う表現、Task 5のcompleted closeout workをuncheckedのまま残す表現、knowledge commit / post-commit gateをpendingとする表現が確認された。`f29c0fd`はreviewed implementation-only provenanceとして保持し、current knowledge-closeout tipを`458a52e`としてGitから再導出した。
+- Task 5 knowledge synchronization、fresh combined verification、commits `41c2a63..458a52e`、post-commit final direct-Git / root strict-zero gatesをcompletedへ同期した。[[index|active catalog]]の既存recordも同じcurrent stateへ一件だけ更新した。pendingなのはcontroller-dispatched fresh whole-branch reviewとそのverdictに依存するstatus transitionだけであり、`LOCAL_COMPLETE`は宣言しない。approved scope / authority、historical log、source / tests、remote stateは変更していない。
+
+## [2026-08-14] review-fix-pending-rereview | SDD portable validation final review
+
+- Actorはrepository maintainer-delegated final-fix implementerである。whole-branch reviewのImportant 4件に対し、mandatory installed resourcesのrepository-only path/hash identity除去とcategory-based leakage coverage、current-state scratch first-write contract、exact `broken skill installation` classification、[[wiki/syntheses/keep-implementation-simple-spec|KIS canonical synthesis]]のpath-free provenanceを既存ownerで修復した。
+- KIS synthesisのraw runtime locationをdurable summary identityへ置換し、再流入を既存LLM Wiki authoring-boundary regressionで拒否する。[[index|active catalog]]はcanonical identity、status、summaryにdriftがないため変更していない。approved scope、Authority A、First-Write、exact-seven KIS、root/package/CI owner separationは変更していない。
+- Lifecycle effectはfinal fix applied / scoped re-review pendingである。current final-review pending statusを維持し、`LOCAL_COMPLETE`は宣言しない。push、PR、merge、release、live install、ignored scratchのdestructive cleanupは実施していない。
+
+## [2026-08-14] approval-binding-correction | Keep Implementation Simple V2
+
+- Human authorityにより、[[wiki/syntheses/keep-implementation-simple-spec|current KIS V2 Written Spec]]のpath-only amendment digest `0c9570f9d3d54821d3ce6302c0a46824192b0d5c05c3b2e03e6923a0565d4aa4`をcurrent approved specとしてbindingし、original approval snapshot digest `1a99024e9f04791a4194304d01a50c42a29b516c4c2887b144079239f09dcfbd`をhistorical provenanceとして保持した。[[wiki/syntheses/keep-implementation-simple-plan|current plan]]は両者を明示的に区別し、historical review factsは変更していない。
+- [[index|durable catalog]]はcanonical identity、status、summaryにdriftがなくexact-one recordのため変更していない。Lifecycle effectはapproval-binding correction applied / scoped re-review pendingであり、SDD portability taskのfinal-review pending statusを維持して`LOCAL_COMPLETE`を宣言しない。source、test、push、PR、merge、release、live installは変更、実施、または承認していない。
+
+## [2026-08-14] local-completion | SDD portable validation と責務単純化
+
+- Canonical whole-branch review head `9f4787f53155b359353250eb88d16b098eb9e91d`はCritical 0 / Important 4 / Minor 0を返した。one bounded final fix `e9d1bcb556f8e942b5535542d3f0b8a40546fc4e`は全四findingをaddressし、scoped re-reviewはその解消とnew Important 1のKIS spec/plan SHA binding driftを確認した。
+- Humanが一回のbounded KIS binding repairを明示承認し、`3ef7564abb49b496847087f3879afa297969d8d0`はhistorical approval snapshot `1a99024e9f04791a4194304d01a50c42a29b516c4c2887b144079239f09dcfbd`を保持しつつcurrent Human-approved KIS spec `0c9570f9d3d54821d3ce6302c0a46824192b0d5c05c3b2e03e6923a0565d4aa4`へbindingした。final scoped re-reviewはresidual finding `ADDRESSED`、new Critical 0 / Important 0とし、branchをdependent status transitionにreadyと判定した。
+- [[wiki/syntheses/sdd-portable-validation-simplification|current spec]]、[[wiki/syntheses/sdd-implementation-skill-design|current design]]、[[wiki/syntheses/sdd-portable-validation-simplification-implementation-plan|reviewed plan]]、[[index|active catalog]]を`LOCAL_COMPLETE`へ同期した。R-11 primary ownerはSPV-2、Authority A、exact-seven KIS、root/package/CI owner separationは不変である。push、PR、remote merge、release、live installは未実施かつ未承認であり、raw transcript、runtime path、ignored scratchはdurable knowledgeへ追加していない。

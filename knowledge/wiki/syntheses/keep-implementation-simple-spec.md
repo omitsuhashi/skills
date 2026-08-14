@@ -173,7 +173,7 @@ production / regressionの許可surfaceは既存の次のfileだけである。
 
 - Human authority: current conversation、2026-08-14。既存KISを変更せず、`sdd-implementation`だけで正確な7 roleへcanonical Skill read-before-workを要求するscope correction。
 - baseline: `82dcd32157ff9690ae038f982f3916009e449f80`。
-- matched behavioral evidence: `/private/tmp/keep-implementation-simple.uY2W4Z/prewrite-evidence.md`。no-guidance 5/5 scope GREEN・5/5 retention PASS、unchanged current Skill 5/5 scope GREEN・5/5 retention PASS、varianceなし、RED未成立。
+- matched behavioral evidence: 2026-08-14のcontroller-collected prewrite evaluation summary。repository-external raw artifactのruntime pathはdurable provenanceとして保持せず、no-guidance 5/5 scope GREEN・5/5 retention PASS、unchanged current Skill 5/5 scope GREEN・5/5 retention PASS、varianceなし、RED未成立。
 - repository evidence: baselineとcurrentの`skills/keep-implementation-simple/SKILL.md`は同一SHA-256 `2c2361f04ca6d2dd7433d2dfa80ff173a14f68ef401df0e98e7d4366d1d23b3f`。baseline SDD suiteは93 tests、architecture / context / KIS Skill validationはpass済み。
 - current repository authority: `AGENTS.md`、`knowledge/AGENTS.md`、`skills/AGENTS.md`。
 - V1 history: `KIS-SPEC-2026-08-14-V1`はinitial expansion proposalとそのreview historyを保持するが、current implementation authorityではない。

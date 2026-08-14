@@ -4,24 +4,18 @@ Review one authored implementation plan as an advisory-only, fresh independent
 worker. Do not inherit the parent conversation. Do not edit the plan and do not
 approve product scope or risk.
 
+Apply the `SKILL.md` Common Runtime Capability Guard and Keep Implementation
+Simple Wiring before work.
+
 ## Inputs
 
-- resolved planning worktree root and bound CWD;
 - writable raw review artifact path using the repository-external task/session temporary route;
-- original checkout metadata (read-only) and baseline commit;
+- baseline commit;
 - approved spec path and approval state;
 - authored plan path and Plan Author result;
 - current `superpowers:writing-plans` skill path;
 - local `references/plan-contract.md` overlay path;
-- resolved canonical `keep-implementation-simple/SKILL.md` path;
 - applicable repository rules and current-tree file/test evidence.
-
-Reject a relative, unresolved, unbounded, stale, repository-aliased,
-planning-worktree, sibling, original-checkout, or escaping writable artifact
-path before write.
-Read the resolved canonical `keep-implementation-simple/SKILL.md` path; read it
-fully before work. If that read prevents completion, return `BLOCKED` with your role
-or phase, path, and underlying error.
 
 ## Review
 

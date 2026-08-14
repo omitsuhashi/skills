@@ -24,6 +24,27 @@ Phase 2 は fresh coordinator verification と final whole-branch review を含�
 
 同仕様のHuman-approved transient-artifact amendmentは、Researchからknowledge closeoutまでのnormal SDD stageにおけるraw handoffをtask / session boundedなrepository外temporary locationへ移すcurrent contractである。POA-5のall-stage migration / fail-closed validator / CI integrationと、POA-6のexact three-report cleanupはindependent task reviewを通過してlandedした。current Git index / final treeは`.superpowers/**` entry zeroであり、必要なlocal copyはroot `.gitignore`のcoverage下でignored / untrackedのまま保持できる。pre-amendment ancestor historyはrewriteしない。POA-7は本書、focused context specification、canonical spec / plan、catalog、append-only logをこのlanded stateへ同期し、lifecycle correction後のfresh scoped re-reviewはprior Important 2件の解消、新規Critical / Importantなしで`ready`となった。POA-8のfresh combined verificationとcanonical whole-branch reviewもbounded fix / scoped re-reviewを経て完了し、本amendmentは`LOCAL_COMPLETE`である。authorized non-force remote branch updateはpending / unpublishedで、merge、release、live installは未承認のままである。
 
+2026-08-14の[[sdd-portable-validation-simplification|portable validation仕様]]と
+[[sdd-portable-validation-simplification-implementation-plan|reviewed implementation plan]]は、
+本設計のvalidation / execution ownership seamのcurrent successorである。reviewed
+Task 1〜4は、explicit target向け三direct-Git gate、root-only strict-zero / canonical
+parity / CI ownership、isolated package closure、thin Superpowers compositionをlandさせ、
+First-Write fail-closed containmentとexact seven-role KIS wiringを保持した。fresh local
+verificationはpackage 139、root scripts 39、First-Write / KIS 29、llm-wiki 21
+testsとarchitecture / context / Skill validatorsを成功させている。
+
+portable-validation changeはknowledge closeoutからcanonical whole-branch reviewまで完了した。
+review head `9f4787f`のCritical 0 / Important 4 / Minor 0はbounded final fix
+`e9d1bcb`で全件addressされ、scoped re-reviewが新たに検出したKIS
+spec/plan SHA binding driftはHuman-approved repair `3ef7564`が、歴史的snapshot
+`1a99024e9f04791a4194304d01a50c42a29b516c4c2887b144079239f09dcfbd`の保持と
+current approved spec `0c9570f9d3d54821d3ce6302c0a46824192b0d5c05c3b2e03e6923a0565d4aa4`
+へのbindingを分離して解消した。final scoped re-reviewはresidual `ADDRESSED`、
+new Critical 0 / Important 0と判定した。したがってcurrent local dispositionは
+`LOCAL_COMPLETE`で、residual material riskはない。本設計の既存のhistorical
+completion factは書き換えない。remote publication / merge / release / live installは
+未実施かつ未承認である。
+
 ## 調査で確認した前提
 
 Superpowers v6.2.0 では、開発フローの責任が次のように分かれている。

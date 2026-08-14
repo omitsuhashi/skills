@@ -123,6 +123,21 @@ class SkillCiWorkflowTests(unittest.TestCase):
         self.assertNotIn("--post-cleanup-history", text)
         self.assertNotIn("--migration-baseline", text)
 
+    def test_workflow_runs_root_parity_and_isolated_package_closure(self) -> None:
+        text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn(
+            "      - name: Test SDD canonical plan parity\n"
+            "        run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache "
+            "python3 scripts/test_sdd_canonical_plan_parity.py",
+            text,
+        )
+        self.assertIn(
+            "      - name: Test isolated SDD package closure\n"
+            "        run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache "
+            "python3 skills/sdd-implementation/tests/test_isolated_install.py",
+            text,
+        )
+
     def test_transient_validation_step_accepts_reachable_only_checkout(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             repository = Path(directory) / "repository"

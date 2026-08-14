@@ -13,7 +13,7 @@ from typing import List, Optional, Sequence, Tuple
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 TRANSIENT_PATHSPEC = ".superpowers"
 AUTHORIZED_SQUASH_POLICY_ROOT = "82dcd32157ff9690ae038f982f3916009e449f80"
-AUTHORIZED_PRE_POLICY_TIP = "f54c6f082ce8a1eb4dd2f8d46d2171443d143817"
+AUTHORIZED_PRE_POLICY_TIP = "40c2b67ba68febad508f902ec62dcc1bef9cf8b8"
 
 
 class ValidationFailure(Exception):

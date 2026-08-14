@@ -8,6 +8,7 @@ import unittest
 
 SKILL_DIR = Path(__file__).resolve().parents[1]
 SKILL = SKILL_DIR / "SKILL.md"
+PLANNING_CONTEXT = SKILL_DIR / "references" / "planning-context.md"
 RESEARCH_STAGE = SKILL_DIR / "references" / "research-stage.md"
 RESEARCHER_PROMPT = SKILL_DIR / "prompts" / "repository-researcher.md"
 SYNTHESIZER_PROMPT = SKILL_DIR / "prompts" / "spec-synthesizer.md"
@@ -69,6 +70,14 @@ COMPLIANT_BOUNDARY = """## Transient Artifact Boundary
 | Final review | repository-external task/session temporary | reviewed implementation plan |
 | Knowledge closeout | repository-external task/session temporary | knowledge/log.md |
 """
+
+VALIDATION_GATE_ROWS = {
+    "exceptional-local-scratch-pre-write": (
+        "before each exceptional repository-local scratch leaf's first write"
+    ),
+    "pre-commit-candidate": "immediately before each commit creation",
+    "final-closeout": "after cleanup and immediately before local completion",
+}
 
 
 def read(path: Path) -> str:
@@ -145,6 +154,31 @@ def transient_boundary_errors(text: str) -> list[str]:
     unknown_stages = set(stage_counts) - set(STAGE_DURABLE_ROUTES)
     for stage in sorted(unknown_stages):
         errors.append(f"unknown stage row: {stage}")
+    return errors
+
+
+def validation_gate_errors(text: str) -> list[str]:
+    validation = section(text, "Repository Validation Gate")
+    if not validation:
+        return ["missing Repository Validation Gate section"]
+    rows = [row for row in table_rows(validation) if row and row[0] != "Gate"]
+    counts = Counter(row[0].strip("`") for row in rows)
+    errors: list[str] = []
+    for gate, moment in VALIDATION_GATE_ROWS.items():
+        if counts[gate] != 1:
+            errors.append(f"gate row count must be one: {gate}")
+            continue
+        row = next(row for row in rows if row[0].strip("`") == gate)
+        if len(row) != 3:
+            errors.append(f"malformed validation gate row: {gate}")
+            continue
+        if row[1] != moment:
+            errors.append(f"gate moment mismatch: {gate}")
+        if not row[2]:
+            errors.append(f"missing direct Git verdict: {gate}")
+    unknown = set(counts) - set(VALIDATION_GATE_ROWS)
+    for gate in sorted(unknown):
+        errors.append(f"unknown validation gate row: {gate}")
     return errors
 
 
@@ -273,6 +307,89 @@ class TransientArtifactContractTests(unittest.TestCase):
 
     def test_compliant_fixture_has_no_contract_errors(self) -> None:
         self.assertEqual([], transient_boundary_errors(COMPLIANT_BOUNDARY))
+
+    def test_repository_validation_has_exactly_three_unambiguous_gate_moments(self) -> None:
+        self.assertEqual([], validation_gate_errors(read(SKILL)))
+
+    def test_stage_resources_reference_one_common_guard_without_copying_path_algorithms(self) -> None:
+        stage_resources = (
+            PLANNING_CONTEXT,
+            RESEARCH_STAGE,
+            RESEARCHER_PROMPT,
+            SYNTHESIZER_PROMPT,
+            SPEC_REVIEWER_PROMPT,
+            PLAN_REVIEWER_PROMPT,
+        )
+        for path in stage_resources:
+            text = read(path)
+            with self.subTest(path=path.name):
+                self.assertIn("Common Runtime Capability Guard", text)
+                for duplicated_guard in (
+                    "git worktree registration",
+                    "task-owner capability identity",
+                    "relative, unresolved, unbounded, stale",
+                    "Do not allocate, select a fallback root",
+                    "Synchronous dispatch that returns a completed result",
+                    "Asynchronous dispatch requires both wait and resume",
+                ):
+                    self.assertNotIn(duplicated_guard, text)
+        prompts = (
+            RESEARCHER_PROMPT,
+            SYNTHESIZER_PROMPT,
+            SPEC_REVIEWER_PROMPT,
+            PLAN_REVIEWER_PROMPT,
+        )
+        bare_guard_references = {
+            "Apply the `SKILL.md` Common Runtime Capability Guard before work.",
+            (
+                "Apply the `SKILL.md` Common Runtime Capability Guard and Keep "
+                "Implementation Simple Wiring before work."
+            ),
+        }
+        for path in prompts:
+            prefix = read(path).split("## Inputs", 1)[0]
+            with self.subTest(path=path.name):
+                self.assertEqual(1, prefix.count("Common Runtime Capability Guard"))
+                paragraphs = [
+                    " ".join(paragraph.split())
+                    for paragraph in prefix.strip().split("\n\n")
+                ]
+                self.assertEqual(3, len(paragraphs))
+                self.assertIn(paragraphs[-1], bare_guard_references)
+        planning = read(PLANNING_CONTEXT)
+        plan_author_guard = planning.split("## Plan Authoring", 1)[1].split(
+            "Do not inherit the parent conversation.", 1
+        )[0]
+        research_dispatch = section(read(RESEARCH_STAGE), "Dispatch")
+        self.assertEqual(
+            "For a Human-approved current specification, dispatch a fresh Plan "
+            "Author Worker. Apply the `SKILL.md` Common Runtime Capability Guard "
+            "before authoring.",
+            " ".join(plan_author_guard.split()),
+        )
+        self.assertEqual(1, research_dispatch.count("Common Runtime Capability Guard"))
+        research_tail = research_dispatch.split(
+            "- current spec path when one exists.", 1
+        )[1]
+        self.assertEqual(
+            "The first transient Research Report uses that repository-external route.",
+            " ".join(research_tail.split()),
+        )
+
+    def test_direct_git_gate_algorithms_remain_owned_only_by_the_public_contract(self) -> None:
+        stage_resources = (
+            PLANNING_CONTEXT,
+            RESEARCH_STAGE,
+            RESEARCHER_PROMPT,
+            SYNTHESIZER_PROMPT,
+            SPEC_REVIEWER_PROMPT,
+            PLAN_REVIEWER_PROMPT,
+        )
+        for path in stage_resources:
+            text = read(path)
+            with self.subTest(path=path.name):
+                for command in ("git check-ignore --no-index", "git write-tree", "git ls-tree", "git cat-file"):
+                    self.assertNotIn(command, text)
 
 
 if __name__ == "__main__":

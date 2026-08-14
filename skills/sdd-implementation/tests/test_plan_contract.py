@@ -4,16 +4,13 @@ import ast
 from pathlib import Path
 import re
 import shutil
-import subprocess
 import tempfile
 import unittest
 
 
 SKILL_DIR = Path(__file__).resolve().parents[1]
-REPOSITORY_ROOT = SKILL_DIR.parents[1]
 PLAN_CONTRACT = SKILL_DIR / "references" / "plan-contract.md"
 READY_PLAN = SKILL_DIR / "tests" / "fixtures" / "plan-contract" / "ready-plan.md"
-CANONICAL_PLAN = REPOSITORY_ROOT / "knowledge" / "wiki" / "syntheses" / "sdd-plan-ownership-alignment-implementation-plan.md"
 
 REQUIREMENT_IDS = {f"R-{number:02d}" for number in range(1, 22)}
 ACCEPTANCE_IDS = {f"AC-{number:02d}" for number in range(1, 21)}
@@ -90,33 +87,6 @@ def field_values(text: str, label: str) -> list[str]:
             flags=re.MULTILINE,
         )
     ]
-
-
-def frontmatter_value(text: str, key: str) -> str:
-    match = re.search(rf"^{re.escape(key)}:\s*(.+)$", text, flags=re.MULTILINE)
-    return match.group(1).strip() if match else ""
-
-
-def resolve_repository_path(value: str) -> Path | None:
-    candidate = (REPOSITORY_ROOT / value.strip().strip("`")).resolve()
-    try:
-        candidate.relative_to(REPOSITORY_ROOT.resolve())
-    except ValueError:
-        return None
-    return candidate
-
-
-def git_commit_is_current_ancestor(commit_sha: str) -> bool:
-    if not re.fullmatch(r"[0-9a-f]{40}", commit_sha):
-        return False
-    result = subprocess.run(
-        ["git", "merge-base", "--is-ancestor", commit_sha, "HEAD"],
-        cwd=REPOSITORY_ROOT,
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    return result.returncode == 0
 
 
 def contains_parsed_python_function(text: str) -> bool:
@@ -247,27 +217,21 @@ def plan_errors(text: str) -> list[str]:
     if field_value(north_star_identity, "Approval state") != "approved":
         errors.append("North Star is not in approved state")
 
-    spec_path = resolve_repository_path(field_value(spec_identity, "Approved spec path"))
-    north_star_path = resolve_repository_path(field_value(north_star_identity, "Approved North Star path"))
-    if spec_path is None or not spec_path.is_file():
-        errors.append("approved spec path is not a contained repository file")
-        spec_text = ""
-    else:
-        spec_text = load_plan(spec_path)
-        durable_approval_sha = frontmatter_value(spec_text, "approval_snapshot_sha256")
-        if spec_sha != durable_approval_sha:
-            errors.append("approved spec SHA-256 does not match durable approval snapshot identity")
-        if frontmatter_value(spec_text, "status") not in {"accepted", "approved"}:
-            errors.append("approved spec durable status is not accepted")
-        if frontmatter_value(spec_text, "review_state") != "approved":
-            errors.append("approved spec durable review state is not approved")
+    spec_path_value = field_value(spec_identity, "Approved spec path")
+    north_star_path_value = field_value(north_star_identity, "Approved North Star path")
+    spec_path = Path(spec_path_value.strip().strip("`"))
+    north_star_path = Path(north_star_path_value.strip().strip("`"))
+    for label, candidate in (
+        ("approved spec", spec_path),
+        ("approved North Star", north_star_path),
+    ):
+        if candidate.is_absolute() or ".." in candidate.parts:
+            errors.append(f"{label} path is not repository-relative and portable")
 
     if north_star_path != spec_path or field_value(north_star_identity, "Approved North Star anchor") != "North Star":
         errors.append("North Star identity does not resolve to the approved spec North Star")
     if north_star_sha != spec_sha:
         errors.append("North Star and Written Spec approval snapshots differ")
-    if spec_text and not section(spec_text, "North Star").strip():
-        errors.append("approved North Star anchor is absent")
 
     baseline_sha = field_value(binding, "Repository baseline")
     binding_fields = (
@@ -283,8 +247,8 @@ def plan_errors(text: str) -> list[str]:
     for field in binding_fields:
         if not field_value(binding, field):
             errors.append(f"missing plan binding field: {field}")
-    if baseline_sha and not git_commit_is_current_ancestor(baseline_sha):
-        errors.append("repository baseline is not a current-tree ancestor commit")
+    if baseline_sha and not re.fullmatch(r"[0-9a-f]{40}", baseline_sha):
+        errors.append("repository baseline is not a full commit identity")
     if field_value(binding, "Current-tree compatibility") != "compatible":
         errors.append("current-tree compatibility is not compatible")
     if field_value(binding, "Independent review verdict") != "ready":
@@ -468,6 +432,10 @@ def plan_errors(text: str) -> list[str]:
     return errors
 
 
+def fixture_plan_errors(text: str) -> list[str]:
+    return plan_errors(text)
+
+
 class PlanContractTests(unittest.TestCase):
     def copy_ready_plan(self) -> tuple[tempfile.TemporaryDirectory[str], Path]:
         self.assertTrue(
@@ -506,33 +474,15 @@ class PlanContractTests(unittest.TestCase):
             READY_PLAN.is_file(),
             f"representative ready-plan fixture is missing: {READY_PLAN}",
         )
+        self.assertEqual([], fixture_plan_errors(load_plan(READY_PLAN)))
+
+    def test_package_plan_validator_is_semantic_only(self) -> None:
         self.assertEqual([], plan_errors(load_plan(READY_PLAN)))
 
-    def test_representative_fixture_covers_the_amended_inventory_and_task_graph(self) -> None:
+    def test_representative_fixture_covers_the_complete_semantic_inventory(self) -> None:
         fixture = load_plan(READY_PLAN)
-        canonical = load_plan(CANONICAL_PLAN)
         self.assertEqual(REQUIREMENT_IDS | ACCEPTANCE_IDS, set(re.findall(r"\b(?:R|AC)-\d{2}\b", section(fixture, "Requirement And Acceptance Inventory"))))
         self.assertEqual(set(TASK_IDS), set(task_sections(fixture)))
-        self.assertEqual(
-            [row[:3] for row in coverage_rows(canonical)],
-            [row[:3] for row in coverage_rows(fixture)],
-        )
-        self.assertEqual(
-            [row[:2] for row in table_rows(section(canonical, "Dependency Graph")) if row[0] != "Task"],
-            [row[:2] for row in table_rows(section(fixture, "Dependency Graph")) if row[0] != "Task"],
-        )
-        self.assertEqual(
-            re.findall(r"^\d+\. (?:Execute )?(POA-\d+)(?!\d)", section(canonical, "Execution Order"), flags=re.MULTILINE),
-            re.findall(r"^\d+\. (?:Execute )?(POA-\d+)(?!\d)", section(fixture, "Execution Order"), flags=re.MULTILINE),
-        )
-        self.assertEqual(
-            re.findall(r"I-(\d+): (POA-\d+)", section(canonical, "Serialized Integration")),
-            re.findall(r"I-(\d+): (POA-\d+)", section(fixture, "Serialized Integration")),
-        )
-
-    def test_canonical_ready_plan_satisfies_the_same_executable_contract(self) -> None:
-        self.assertTrue(CANONICAL_PLAN.is_file(), f"canonical plan is missing: {CANONICAL_PLAN}")
-        self.assertEqual([], plan_errors(load_plan(CANONICAL_PLAN)))
 
     def test_rejects_missing_approved_spec_identity(self) -> None:
         temporary_directory, copy = self.copy_ready_plan()
@@ -547,32 +497,56 @@ class PlanContractTests(unittest.TestCase):
             )
             self.assertIn(
                 "North Star is not in approved state",
-                plan_errors(load_plan(copy)),
+                fixture_plan_errors(load_plan(copy)),
             )
 
-    def test_rejects_empty_wrong_or_non_current_binding_hashes(self) -> None:
+    def test_rejects_nonportable_approved_identity_paths(self) -> None:
+        ready_plan = load_plan(READY_PLAN)
+        absolute_probe = Path("/").joinpath(
+            "Users", "example", "private-spec.md"
+        ).as_posix()
+        for replacement in (
+            absolute_probe,
+            "../outside/private-spec.md",
+        ):
+            with self.subTest(replacement=replacement):
+                mutated = ready_plan.replace(
+                    "specifications/representative-sdd.md",
+                    replacement,
+                )
+                errors = fixture_plan_errors(mutated)
+                self.assertIn(
+                    "approved spec path is not repository-relative and portable",
+                    errors,
+                )
+                self.assertIn(
+                    "approved North Star path is not repository-relative and portable",
+                    errors,
+                )
+
+    def test_rejects_empty_wrong_or_malformed_binding_hashes(self) -> None:
         temporary_directory, copy = self.copy_ready_plan()
         with temporary_directory:
             copy.write_text(
                 load_plan(copy)
                 .replace(
-                    "- Approved spec SHA-256: 1f9a7dc5f740c51addfabde96bac6fe3fbf5036003d1783cde60ac58e5ae7559",
+                    "- Approved spec SHA-256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                     "- Approved spec SHA-256:",
                 )
                 .replace(
-                    "- Approved snapshot SHA-256: 1f9a7dc5f740c51addfabde96bac6fe3fbf5036003d1783cde60ac58e5ae7559",
+                    "- Approved snapshot SHA-256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                     "- Approved snapshot SHA-256: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
                 )
                 .replace(
-                    "- Repository baseline: c370fe14de1641aa5ee30b3fa001f4d857078091",
-                    "- Repository baseline: 1111111111111111111111111111111111111111",
+                    "- Repository baseline: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                    "- Repository baseline: 111111111111111111111111111111111111111",
                 ),
                 encoding="utf-8",
             )
-            errors = plan_errors(load_plan(copy))
+            errors = fixture_plan_errors(load_plan(copy))
             self.assertIn("missing approved-spec identity field: Approved spec SHA-256", errors)
             self.assertIn("North Star and Written Spec approval snapshots differ", errors)
-            self.assertIn("repository baseline is not a current-tree ancestor commit", errors)
+            self.assertIn("repository baseline is not a full commit identity", errors)
 
     def test_rejects_an_incomplete_requirement_acceptance_inventory(self) -> None:
         temporary_directory, copy = self.copy_ready_plan()
@@ -580,49 +554,49 @@ class PlanContractTests(unittest.TestCase):
             inventory = section(load_plan(copy), "Requirement And Acceptance Inventory")
             self.assertIn("AC-14", inventory)
             copy.write_text(load_plan(copy).replace("AC-14", "omitted acceptance", 1), encoding="utf-8")
-            self.assertIn("inventory missing ID: AC-14", plan_errors(load_plan(copy)))
+            self.assertIn("inventory missing ID: AC-14", fixture_plan_errors(load_plan(copy)))
 
     def test_rejects_an_unassigned_acceptance(self) -> None:
         temporary_directory, copy = self.copy_ready_plan()
         with temporary_directory:
             copy.write_text(load_plan(copy).replace("| AC-14 | POA-3 | POA-1, POA-2 |", ""), encoding="utf-8")
-            self.assertIn("unassigned coverage ID: AC-14", plan_errors(load_plan(copy)))
+            self.assertIn("unassigned coverage ID: AC-14", fixture_plan_errors(load_plan(copy)))
 
     def test_rejects_an_unknown_coverage_id(self) -> None:
         temporary_directory, copy = self.copy_ready_plan()
         with temporary_directory:
             copy.write_text(load_plan(copy).replace("| AC-14 | POA-3 | POA-1, POA-2 |", "| AC-99 | POA-3 | POA-1, POA-2 |"), encoding="utf-8")
-            self.assertIn("unknown coverage ID: AC-99", plan_errors(load_plan(copy)))
+            self.assertIn("unknown coverage ID: AC-99", fixture_plan_errors(load_plan(copy)))
 
     def test_rejects_an_orphan_task(self) -> None:
         temporary_directory, copy = self.copy_ready_plan()
         with temporary_directory:
             copy.write_text(load_plan(copy).replace("### Task POA-3:", "### Removed Task POA-3:"), encoding="utf-8")
-            self.assertIn("orphan task: POA-3", plan_errors(load_plan(copy)))
+            self.assertIn("orphan task: POA-3", fixture_plan_errors(load_plan(copy)))
 
     def test_rejects_an_undefined_dependency(self) -> None:
         temporary_directory, copy = self.copy_ready_plan()
         with temporary_directory:
             copy.write_text(load_plan(copy).replace("| POA-3 | POA-1, POA-2 |", "| POA-3 | POA-1, POA-9 |"), encoding="utf-8")
-            self.assertIn("undefined dependency: POA-3 -> POA-9", plan_errors(load_plan(copy)))
+            self.assertIn("undefined dependency: POA-3 -> POA-9", fixture_plan_errors(load_plan(copy)))
 
     def test_rejects_a_dependency_cycle(self) -> None:
         temporary_directory, copy = self.copy_ready_plan()
         with temporary_directory:
             copy.write_text(load_plan(copy).replace("| POA-1 | none |", "| POA-1 | POA-3 |"), encoding="utf-8")
-            self.assertIn("dependency cycle", plan_errors(load_plan(copy)))
+            self.assertIn("dependency cycle", fixture_plan_errors(load_plan(copy)))
 
     def test_rejects_an_execution_order_violation(self) -> None:
         temporary_directory, copy = self.copy_ready_plan()
         with temporary_directory:
             copy.write_text(load_plan(copy).replace("1. POA-1\n2. POA-2\n3. POA-3", "1. POA-2\n2. POA-1\n3. POA-3"), encoding="utf-8")
-            self.assertIn("execution-order violation: POA-1 must precede POA-2", plan_errors(load_plan(copy)))
+            self.assertIn("execution-order violation: POA-1 must precede POA-2", fixture_plan_errors(load_plan(copy)))
 
     def test_rejects_missing_serialized_integration_or_combined_verification(self) -> None:
         temporary_directory, copy = self.copy_ready_plan()
         with temporary_directory:
             copy.write_text(load_plan(copy).replace("I-3: POA-3", "I-3 omitted").replace("**Failure owner:**", "Failure owner:"), encoding="utf-8")
-            errors = plan_errors(load_plan(copy))
+            errors = fixture_plan_errors(load_plan(copy))
             self.assertIn("missing serialized integration order", errors)
             self.assertIn("combined verification missing Failure owner", errors)
 
@@ -654,7 +628,7 @@ class PlanContractTests(unittest.TestCase):
             with self.subTest(replacement=replacement):
                 self.assertIn(original, ready_plan)
                 mutated = ready_plan.replace(original, replacement, 1)
-                self.assertIn(expected_error, plan_errors(mutated))
+                self.assertIn(expected_error, fixture_plan_errors(mutated))
 
     def test_rejects_duplicate_contradictory_singleton_states(self) -> None:
         ready_plan = load_plan(READY_PLAN)
@@ -675,7 +649,7 @@ class PlanContractTests(unittest.TestCase):
         for original, (replacement, expected_error) in probes.items():
             with self.subTest(replacement=replacement):
                 mutated = ready_plan.replace(original, replacement, 1)
-                self.assertIn(expected_error, plan_errors(mutated))
+                self.assertIn(expected_error, fixture_plan_errors(mutated))
 
     def test_rejects_empty_singletons_and_duplicate_matching_sections(self) -> None:
         ready_plan = load_plan(READY_PLAN)
@@ -685,8 +659,8 @@ class PlanContractTests(unittest.TestCase):
             ): "missing plan binding field: Repository checks",
             ready_plan
             + "\n## Plan Binding\n\n"
-            + "- Repository baseline: c370fe14de1641aa5ee30b3fa001f4d857078091\n"
-            + "- Planning worktree: /tmp/other\n"
+            + "- Repository baseline: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
+            + "- Planning worktree: worktrees/other\n"
             + "- Integration branch: other\n"
             + "- Current-tree compatibility: incompatible\n"
             + "- Independent review verdict: issues_found\n"
@@ -700,13 +674,13 @@ class PlanContractTests(unittest.TestCase):
         }
         for mutated, expected_error in probes.items():
             with self.subTest(expected_error=expected_error):
-                self.assertIn(expected_error, plan_errors(mutated))
+                self.assertIn(expected_error, fixture_plan_errors(mutated))
 
     def test_rejects_prospective_body_and_human_plan_approval_language(self) -> None:
         temporary_directory, copy = self.copy_ready_plan()
         with temporary_directory:
             copy.write_text(load_plan(copy) + "\n```python\npass\n```\nHuman plan approval is required.\n", encoding="utf-8")
-            errors = plan_errors(load_plan(copy))
+            errors = fixture_plan_errors(load_plan(copy))
             self.assertIn("prospective body: fenced code block", errors)
             self.assertIn("Human plan-approval language", errors)
 
@@ -719,7 +693,7 @@ class PlanContractTests(unittest.TestCase):
         }
         for body, expected_error in probes.items():
             with self.subTest(expected_error=expected_error):
-                self.assertIn(expected_error, plan_errors(load_plan(READY_PLAN) + body))
+                self.assertIn(expected_error, fixture_plan_errors(load_plan(READY_PLAN) + body))
 
     def test_rejects_unfenced_production_shell_and_execution_bodies(self) -> None:
         probes = {
@@ -733,7 +707,7 @@ class PlanContractTests(unittest.TestCase):
         }
         for body, expected_error in probes.items():
             with self.subTest(expected_error=expected_error, body=body):
-                self.assertIn(expected_error, plan_errors(load_plan(READY_PLAN) + body))
+                self.assertIn(expected_error, fixture_plan_errors(load_plan(READY_PLAN) + body))
 
     def test_rejects_remaining_structural_body_and_plain_echo_forms(self) -> None:
         probes = {
@@ -747,7 +721,7 @@ class PlanContractTests(unittest.TestCase):
         }
         for body, expected_error in probes.items():
             with self.subTest(body=body):
-                self.assertIn(expected_error, plan_errors(load_plan(READY_PLAN) + body))
+                self.assertIn(expected_error, fixture_plan_errors(load_plan(READY_PLAN) + body))
 
     def test_rejects_blank_line_docstring_body_and_multi_command_inline_shell_if(self) -> None:
         probes = {
@@ -762,7 +736,7 @@ class PlanContractTests(unittest.TestCase):
         }
         for body, expected_error in probes.items():
             with self.subTest(body=body):
-                self.assertIn(expected_error, plan_errors(load_plan(READY_PLAN) + body))
+                self.assertIn(expected_error, fixture_plan_errors(load_plan(READY_PLAN) + body))
 
     def test_rejects_any_parsed_python_statement_after_optional_preamble(self) -> None:
         probes = (
@@ -795,7 +769,7 @@ class PlanContractTests(unittest.TestCase):
             with self.subTest(body=body):
                 self.assertIn(
                     "prospective body: production code",
-                    plan_errors(load_plan(READY_PLAN) + body),
+                    fixture_plan_errors(load_plan(READY_PLAN) + body),
                 )
 
     def test_prohibition_scan_allows_intent_only_narrative(self) -> None:
@@ -811,7 +785,7 @@ class PlanContractTests(unittest.TestCase):
             "The proposed interface `def build_plan(spec): returns a normalized "
             "plan in the proposed interface.` describes intent without a body.\n"
         )
-        self.assertNotIn("prospective body", " ".join(plan_errors(load_plan(READY_PLAN) + narrative)))
+        self.assertNotIn("prospective body", " ".join(fixture_plan_errors(load_plan(READY_PLAN) + narrative)))
 
 
 if __name__ == "__main__":
