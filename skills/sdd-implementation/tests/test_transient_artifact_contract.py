@@ -114,17 +114,18 @@ def transient_boundary_errors(text: str) -> list[str]:
         if values != [expected]:
             errors.append(f"invalid boundary field: {label}")
 
-    rows = [
-        row
-        for row in table_rows(boundary)
-        if row and row[0] != "Stage"
-    ]
-    stage_counts = Counter(row[0] for row in rows if len(row) == 3)
+    rows = [row for row in table_rows(boundary) if row and row[0] != "Stage"]
+    for row in rows:
+        if len(row) != 3:
+            errors.append(f"malformed stage row: {row[0] or '<empty>'}")
+    stage_counts = Counter(row[0] for row in rows)
     for stage, durable_route in STAGE_DURABLE_ROUTES.items():
         if stage_counts[stage] != 1:
             errors.append(f"stage row count must be one: {stage}")
             continue
-        row = next(row for row in rows if len(row) == 3 and row[0] == stage)
+        row = next(row for row in rows if row[0] == stage)
+        if len(row) != 3:
+            continue
         if row[1] != RAW_HANDOFF_DEFAULT:
             errors.append(f"repository-external default mismatch: {stage}")
         if row[2] != durable_route:
@@ -176,6 +177,16 @@ class TransientArtifactContractTests(unittest.TestCase):
             "stage row count must be one: Research",
             transient_boundary_errors(duplicate),
         )
+
+        valid_plus_four_cell = COMPLIANT_BOUNDARY.replace(
+            "| Research | repository-external task/session temporary | canonical specification |",
+            "| Research | repository-external task/session temporary | canonical specification |\n"
+            "| Research | repository-external task/session temporary | canonical specification | "
+            ".superpowers/research/<epic-id>/ |",
+        )
+        errors = transient_boundary_errors(valid_plus_four_cell)
+        self.assertIn("malformed stage row: Research", errors)
+        self.assertIn("stage row count must be one: Research", errors)
 
     def test_stage_contract_rejects_raw_artifacts_in_durable_spec_plan_or_log(self) -> None:
         mutations = {

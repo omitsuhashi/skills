@@ -127,6 +127,23 @@ class SddImplementationSkillContractTests(unittest.TestCase):
         self.assertIn("Do not create parallel `CONTEXT.md` or `docs/adr/` stores.", self.skill_text)
         self.assertIn("not_applicable", self.skill_text)
 
+    def test_public_contract_invokes_transient_validator_for_each_exact_git_surface(self) -> None:
+        expected_contract = (
+            "Invoke `scripts/validate_sdd_transient_artifacts.py` for every "
+            "repository validation gate.",
+            "Validate the current Git index and staging area independently.",
+            "Validate each nominated candidate tree, post-cleanup new commit, "
+            "and final tree independently.",
+            "Allow a staged deletion only when the candidate tree has no "
+            "`.superpowers/**` entry.",
+            "Do not reject a pre-amendment historical ancestor blob without a "
+            "current index or nominated-tree violation.",
+        )
+        normalized = " ".join(self.skill_text.split())
+        for statement in expected_contract:
+            with self.subTest(statement=statement):
+                self.assertIn(statement, normalized)
+
     def test_upstream_owns_model_tiers_and_local_contract_only_adds_effort(self) -> None:
         self.assertIn("Follow the current Superpowers SDD Model Selection contract.", self.skill_text)
         self.assertIn("Every subagent dispatch must state its model.", self.skill_text)

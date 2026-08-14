@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 import subprocess
 import sys
 import tempfile
@@ -42,6 +43,10 @@ def hash_blob(repository: Path, content: str) -> str:
         text=True,
         input=content,
     ).stdout.strip()
+
+
+def diagnostic_categories(output: str) -> list[str]:
+    return re.findall(r"\bcategory=([a-z][a-z0-9_]*)\b", output)
 
 
 class RepositoryFixture:
@@ -172,16 +177,19 @@ class TransientArtifactValidatorTests(unittest.TestCase):
         self.fixture.close()
 
     def run_validator(
-        self, *args: str, repository: Path | None = None
+        self,
+        *args: str,
+        repository: Path | None = None,
+        validator: Path = VALIDATOR,
     ) -> subprocess.CompletedProcess[str]:
         self.assertTrue(
-            VALIDATOR.is_file(),
-            f"repository transient-artifact validator is missing: {VALIDATOR}",
+            validator.is_file(),
+            f"repository transient-artifact validator is missing: {validator}",
         )
         return subprocess.run(
             [
                 sys.executable,
-                str(VALIDATOR),
+                str(validator),
                 "--repository",
                 str(repository or self.fixture.root),
                 *args,
@@ -191,17 +199,59 @@ class TransientArtifactValidatorTests(unittest.TestCase):
             text=True,
         )
 
-    def assert_validator_accepts(self, *args: str, repository: Path | None = None) -> None:
-        result = self.run_validator(*args, repository=repository)
+    def assert_validator_accepts(
+        self,
+        *args: str,
+        repository: Path | None = None,
+        validator: Path = VALIDATOR,
+    ) -> None:
+        result = self.run_validator(
+            *args, repository=repository, validator=validator
+        )
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
 
     def assert_validator_rejects(
-        self, category: str, *args: str, repository: Path | None = None
+        self,
+        category: str,
+        *args: str,
+        repository: Path | None = None,
+        validator: Path = VALIDATOR,
     ) -> None:
-        result = self.run_validator(*args, repository=repository)
+        result = self.run_validator(
+            *args, repository=repository, validator=validator
+        )
         output = result.stdout + result.stderr
         self.assertEqual(VALIDATION_FAILURE_EXIT, result.returncode, output)
-        self.assertIn(f"category={category}", output)
+        self.assertEqual([category], diagnostic_categories(output), output)
+
+    def write_fake_validator(
+        self, *categories: str, exit_code: int = VALIDATION_FAILURE_EXIT
+    ) -> Path:
+        validator = self.fixture.root / "fake_validator.py"
+        output_lines = "\n".join(
+            f"print('category={category}')" for category in categories
+        )
+        validator.write_text(
+            f"import sys\n{output_lines}\nsys.exit({exit_code})\n",
+            encoding="utf-8",
+        )
+        return validator
+
+    def test_rejection_contract_requires_one_exact_diagnostic_category(self) -> None:
+        exact = self.write_fake_validator("index_entry")
+        self.assert_validator_rejects("index_entry", validator=exact)
+
+        prefixed = self.write_fake_validator("index_entry_extra")
+        with self.assertRaises(AssertionError):
+            self.assert_validator_rejects("index_entry", validator=prefixed)
+
+        multiple = self.write_fake_validator("index_entry", "candidate_tree_entry")
+        with self.assertRaises(AssertionError):
+            self.assert_validator_rejects("index_entry", validator=multiple)
+
+        wrong_exit = self.write_fake_validator("index_entry", exit_code=2)
+        with self.assertRaises(AssertionError):
+            self.assert_validator_rejects("index_entry", validator=wrong_exit)
 
     def test_single_use_baseline_commit_preserves_the_exact_three_mode_blob_path_entries(self) -> None:
         actual = tuple(
