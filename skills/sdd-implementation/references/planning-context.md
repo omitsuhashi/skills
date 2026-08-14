@@ -79,14 +79,17 @@ binding returns `BLOCKED` before the worker runs.
 After all material decisions are confirmed, dispatch a fresh Spec Synthesis
 Worker with research report paths, the `Confirmed Decisions` and `Open
 Decisions` excerpts, the current spec draft path, and applicable authoring
-rules. Do not inherit the parent conversation.
+rules. Pass the resolved canonical `keep-implementation-simple/SKILL.md` path;
+the Spec Synthesizer must read it fully before work. Do not inherit the parent
+conversation.
 
 Then dispatch a separate fresh Spec Reviewer with the durable spec path,
 repository-external Research Report paths, Decision Record excerpts, and a raw
 review artifact path using the repository-external task/session temporary
-route. The reviewer is advisory-only. Integrate only its durable verdict
-summary into the canonical specification. The Human must approve the Written
-Spec before Plan Stage.
+route. Pass the same resolved canonical `keep-implementation-simple/SKILL.md`
+path; the Spec Reviewer must read it fully before work. The reviewer is
+advisory-only. Integrate only its durable verdict summary into the canonical
+specification. The Human must approve the Written Spec before Plan Stage.
 
 ## Plan Authoring
 
@@ -95,7 +98,9 @@ Do not inherit the parent conversation. Pass the resolved planning worktree root
 bound CWD, writable plan artifact path contained by that root, original checkout
 metadata (read-only), baseline commit, approved spec path, applicable repository
 rules, current `superpowers:writing-plans` skill path, and local overlay path
-`references/plan-contract.md`. Also pass explicit single writer ownership and
+`references/plan-contract.md`, plus the resolved canonical
+`keep-implementation-simple/SKILL.md` path; the Plan Author must read it fully
+before work. Also pass explicit single writer ownership and
 original-checkout preservation evidence. Reject a missing or mismatched binding,
 or a stale, sibling, original-checkout, or escaping writable plan artifact path,
 before authoring. The Plan Author Worker writes only to the bound contained plan
@@ -109,8 +114,10 @@ return, dispatch a fresh independent Plan Reviewer using
 spec path, trusted bounded paths, a raw review path using the repository-external
 task/session temporary route, local overlay path, authored plan path, Plan
 Author result, and current-tree evidence required for buildability review.
-Integrate only the durable verdict summary into the reviewed implementation
-plan; do not copy the raw review artifact or transcript.
+Pass the same resolved canonical `keep-implementation-simple/SKILL.md` path;
+the Plan Reviewer must read it fully before work. Integrate only the durable
+verdict summary into the reviewed implementation plan; do not copy the raw
+review artifact or transcript.
 
 Local override: skip the upstream `superpowers:writing-plans`
 `## Execution Handoff`. Do not offer Subagent-Driven or Inline Execution. Do
@@ -143,3 +150,6 @@ Do not allocate, select a fallback root, continue in the
 current/original checkout, or write outside the binding. Do not add a
 fallback matrix, retry scheduler, runtime state, packet schema, context
 telemetry, manual compaction, or strict word-count enforcement.
+If a required KIS read prevents Spec Synthesizer, Spec Reviewer, Plan Author, or
+Plan Reviewer completion, use the existing bounded return with the role or
+phase, path, and underlying error.

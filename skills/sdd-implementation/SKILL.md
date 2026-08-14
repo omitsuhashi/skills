@@ -98,6 +98,7 @@ Before entering a selected route, use the active runtime's skill discovery to ve
 If active discovery has no readable match, check the globally installed skill roots exposed by the runtime, including the cross-runtime alias `~/.agents/skills` when that alias is accessible. When `<root>/<required-skill>/SKILL.md` is readable, read it, use it, and continue the selected route.
 
 Report a required family as missing only after active discovery and every accessible global-root check complete with no readable match. If discovery or a root/candidate read cannot be completed, report `BLOCKED: dependency preflight failed` together with the observed phase or path and underlying error. Do not report that failure as missing.
+Check `keep-implementation-simple` as a required supporting Skill. Resolve one readable canonical `keep-implementation-simple/SKILL.md` path through that discovery and fallback, then read it fully before work. If its discovery, candidate inspection, path resolution, or read fails, return `BLOCKED: dependency preflight failed` with the failed phase, observed or attempted path, and underlying error before affected work.
 Check the Superpowers lifecycle skills for every route.
 Check `grill-with-docs` when the Spec Stage requires it.
 Check `llm-wiki` when a knowledge root exists.
@@ -107,6 +108,7 @@ If a required family is missing, return the matching result:
 - `BLOCKED: missing Superpowers lifecycle dependency`
 - `BLOCKED: missing grill-with-docs dependency`
 - `BLOCKED: missing llm-wiki dependency`
+- `BLOCKED: missing keep-implementation-simple dependency`
 
 ## Route By Input Maturity
 
@@ -242,6 +244,10 @@ wiki content in the main session.
 Use fresh implementers and independent reviewers. Do not inherit the parent
 conversation. Use the runtime's isolated fresh-context dispatch mechanism.
 Pass durable paths and missing task-local facts only.
+Pass Implementer and Task Reviewer the resolved canonical
+`keep-implementation-simple/SKILL.md` path; each must read it fully before work.
+If that read prevents completion, use the existing bounded return with the role
+or phase, path, and underlying error.
 
 Run SDD sequentially. Review only requirements fit, material simplicity, and
 material current risk. A blocking finding needs evidence of a requirement gap,
@@ -316,6 +322,10 @@ After closeout, run the Superpowers final whole-branch review over code, tests,
 the approved specification, reviewed plan, and knowledge artifacts. Return
 `LOCAL_COMPLETE` only after reviewed tasks, fresh verification, scoped commits,
 applicable closeout, and final approval.
+Pass Final Reviewer the resolved canonical `keep-implementation-simple/SKILL.md`
+path; the reviewer must read it fully before work. If that read prevents
+completion, use the existing bounded return with the role or phase, path, and
+underlying error.
 
 Do not perform any remote write without separate explicit authorization.
 This includes push, PR, merge, release, live install, issue, comment, and project changes.
