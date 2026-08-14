@@ -32,6 +32,24 @@ def section(text: str, heading: str) -> str:
     return match.group(1) if match else ""
 
 
+def sections(text: str, heading: str) -> list[str]:
+    return [
+        match.group(1)
+        for match in re.finditer(
+            rf"^## {re.escape(heading)}\n(.*?)(?=^## |\Z)",
+            text,
+            flags=re.MULTILINE | re.DOTALL,
+        )
+    ]
+
+
+def singleton_section(errors: list[str], text: str, heading: str) -> str:
+    matches = sections(text, heading)
+    if len(matches) != 1:
+        errors.append(f"duplicate section: {heading}")
+    return "\n".join(matches)
+
+
 def table_rows(text: str) -> list[list[str]]:
     return [
         [cell.strip() for cell in line.strip().strip("|").split("|")]
@@ -140,6 +158,7 @@ def contains_unfenced_production_body(text: str) -> bool:
         r"[ \t]*\([^\n]*\)[ \t]*(?:->[ \t]*[^:\n]+)?[ \t]*:[ \t]*\n"
         r"(?P=indent)(?P<bodyindent>[ \t]+)(?:[rubfRUBF]*)"
         r"(?P<quote>\"\"\"|''')[\s\S]*?(?P=quote)[ \t]*\n"
+        r"(?:[ \t]*\n)*"
         r"(?P=indent)(?P=bodyindent)(?:return\b|raise\b|yield\b|pass\b|"
         r"if\b|for\b|while\b|with\b|try\b|[A-Za-z_]\w*[ \t]*=|"
         r"[A-Za-z_]\w*[ \t]*\()",
@@ -177,9 +196,11 @@ def reject_duplicate_fields(
 
 def plan_errors(text: str) -> list[str]:
     errors: list[str] = []
-    north_star_identity = section(text, "Approved North Star Identity")
-    spec_identity = section(text, "Approved Written Spec Identity")
-    binding = section(text, "Plan Binding")
+    north_star_identity = singleton_section(
+        errors, text, "Approved North Star Identity"
+    )
+    spec_identity = singleton_section(errors, text, "Approved Written Spec Identity")
+    binding = singleton_section(errors, text, "Plan Binding")
 
     reject_duplicate_fields(
         errors,
@@ -384,7 +405,7 @@ def plan_errors(text: str) -> list[str]:
         if acceptance_id not in verification:
             errors.append(f"combined verification missing {acceptance_id}")
 
-    readiness = section(text, "Readiness Result")
+    readiness = singleton_section(errors, text, "Readiness Result")
     reject_duplicate_fields(
         errors,
         readiness,
@@ -423,7 +444,7 @@ def plan_errors(text: str) -> list[str]:
     ):
         errors.append("prospective body: shell body")
     if re.search(
-        r"^[ \t]*if\b[^\n]*;[ \t]*then\b[^\n;]+;[ \t]*fi[ \t]*$",
+        r"^[ \t]*if\b[^\n]*;[ \t]*then\b[ \t]+\S[^\n]*;[ \t]*fi[ \t]*$",
         text,
         flags=re.MULTILINE,
     ):
@@ -631,6 +652,31 @@ class PlanContractTests(unittest.TestCase):
                 mutated = ready_plan.replace(original, replacement, 1)
                 self.assertIn(expected_error, plan_errors(mutated))
 
+    def test_rejects_empty_singletons_and_duplicate_matching_sections(self) -> None:
+        ready_plan = load_plan(READY_PLAN)
+        probes = {
+            ready_plan.replace(
+                "- Repository checks: passed", "- Repository checks:", 1
+            ): "missing plan binding field: Repository checks",
+            ready_plan
+            + "\n## Plan Binding\n\n"
+            + "- Repository baseline: c370fe14de1641aa5ee30b3fa001f4d857078091\n"
+            + "- Planning worktree: /tmp/other\n"
+            + "- Integration branch: other\n"
+            + "- Current-tree compatibility: incompatible\n"
+            + "- Independent review verdict: issues_found\n"
+            + "- Repository checks: failed\n"
+            + "- Readiness evidence state: stale\n": "duplicate section: Plan Binding",
+            ready_plan
+            + "\n## Readiness Result\n\n"
+            + "- Plan readiness disposition: issues_found\n"
+            + "- Control Return status: blocked\n"
+            + "- Implementation Stage entry: forbidden\n": "duplicate section: Readiness Result",
+        }
+        for mutated, expected_error in probes.items():
+            with self.subTest(expected_error=expected_error):
+                self.assertIn(expected_error, plan_errors(mutated))
+
     def test_rejects_prospective_body_and_human_plan_approval_language(self) -> None:
         temporary_directory, copy = self.copy_ready_plan()
         with temporary_directory:
@@ -673,6 +719,21 @@ class PlanContractTests(unittest.TestCase):
             "\nfunction buildPlan(spec) { return normalize(spec); }\n": "prospective body: production code",
             "\nif [ -f \"$plan\" ]; then validate \"$plan\"; fi\n": "prospective body: shell body",
             "\necho ready\n": "prospective body: command body",
+        }
+        for body, expected_error in probes.items():
+            with self.subTest(body=body):
+                self.assertIn(expected_error, plan_errors(load_plan(READY_PLAN) + body))
+
+    def test_rejects_blank_line_docstring_body_and_multi_command_inline_shell_if(self) -> None:
+        probes = {
+            (
+                '\ndef build_plan(spec):\n    """Build a normalized plan."""\n\n'
+                "    return normalize(spec)\n"
+            ): "prospective body: production code",
+            (
+                '\nif [ -f "$plan" ]; then validate "$plan"; '
+                'echo ready; record "$plan"; fi\n'
+            ): "prospective body: shell body",
         }
         for body, expected_error in probes.items():
             with self.subTest(body=body):

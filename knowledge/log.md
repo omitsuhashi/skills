@@ -1956,3 +1956,13 @@ append-only で使います。すべての entry は予測しやすい header �
   interface proseは`return` token / executable structureを持たないため許可する。
 - authority-evidence-correctionは変更していない。Human authorityはapproved North Star / Written Spec、plan readiness /
   executionはagent ownership、remote authorizationはaction-specificな別gateのまま維持した。
+
+## [2026-08-14] review-fix | SDD Plan Ownership Alignment residual round 2
+
+- 独立re-reviewの残るImportant 2件を修正した。singleton section parserは同名sectionを全件収集し、identity、
+  `Plan Binding`、`Readiness Result`のsection / fieldがexactly oneかつnon-emptyでないplanをrejectする。second
+  `Plan Binding` / `Readiness Result`に`issues_found`、`stale`、`failed`を隠すfirst-section bypassを許さない。
+- prospective-body validationはPython docstring後のblank linesを越えたexecutable bodyと、internal semicolonを持つ
+  multi-command one-line shell-ifをstructural formでrejectする。既存のinterface prose controlは引き続き許可する。
+- approved North Star / Written Spec、agent-owned plan readiness / execution、separate remote authorization、および
+  先行authority-evidence-correctionは変更していない。
