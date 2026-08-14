@@ -42,6 +42,9 @@ jobs:
       - name: Test skill CI workflow contract
         run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 scripts/test_skill_ci_workflow.py
 
+      - name: Test SDD canonical plan parity
+        run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 scripts/test_sdd_canonical_plan_parity.py
+
       - name: Test SDD transient artifact validator
         run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 scripts/test_validate_sdd_transient_artifacts.py
 
@@ -61,6 +64,9 @@ jobs:
           PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 scripts/report_skill_context.py --all --json --fail-on-warning > .artifacts/skill-context-report.json
           python3 -m json.tool .artifacts/skill-context-report.json > /tmp/skill-context-report.pretty.json
           mv /tmp/skill-context-report.pretty.json .artifacts/skill-context-report.json
+
+      - name: Test isolated SDD package closure
+        run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 skills/sdd-implementation/tests/test_isolated_install.py
 
       - name: Run sdd-implementation tests
         run: PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 -m unittest discover -s skills/sdd-implementation/tests
