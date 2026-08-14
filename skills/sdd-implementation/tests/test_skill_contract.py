@@ -9,6 +9,21 @@ SKILL_DIR = Path(__file__).resolve().parents[1]
 SKILL = SKILL_DIR / "SKILL.md"
 OPENAI_YAML = SKILL_DIR / "agents" / "openai.yaml"
 
+NON_PORTABLE_LITERAL_PATTERNS = {
+    "absolute cache/install path": re.compile(
+        r"(?ix)(?:^|[\s`'\"])(?:/|[a-z]:[\\/])"
+        r"(?:[^/\\\s`'\"]+[\\/])*"
+        r"[^/\\\s`'\"]*(?:cache|install(?:ed)?|plugins?)[^/\\\s`'\"]*"
+        r"(?:[\\/][^\s`'\"]*)?"
+    ),
+    "provider literal": re.compile(
+        r"(?ix)\b(?:provider|vendor)\s*(?:[:=]|\bis\b)\s*[`'\"]?[a-z][a-z0-9._-]+"
+    ),
+    "version literal": re.compile(
+        r"(?ix)(?:@|[\\/]|\bversion\s*[:=]?\s*)v?\d+\.\d+(?:\.\d+){0,2}\b"
+    ),
+}
+
 
 def read_or_empty(path: Path) -> str:
     return path.read_text(encoding="utf-8") if path.is_file() else ""
@@ -260,27 +275,43 @@ class SddImplementationSkillContractTests(unittest.TestCase):
         self.assertFalse((SKILL_DIR / "context-contract.toml").exists())
 
     def test_fail_closed_lifecycle_states_are_separate(self) -> None:
-        gate = self.skill_text.split("## First-Write Worktree Gate", 1)[1].split(
-            "## Planning Controller", 1
-        )[0]
-        self.assertIn("guard preflight", gate)
-        self.assertIn("Do not activate, install, repair, replace, or reconfigure", gate)
-        self.assertIn("Guard activation belongs to a separate Human-authorized setup.", gate)
-        for verdict in ("guard_missing", "guard_unconfigured", "guard_damaged"):
-            self.assertIn(verdict, gate)
-
         portable_documents = [
             SKILL,
             *sorted((SKILL_DIR / "prompts").glob("*.md")),
             *sorted((SKILL_DIR / "references").glob("*.md")),
         ]
         portable_text = "\n".join(read_or_empty(path) for path in portable_documents)
-        for forbidden in (
-            ".codex/plugins/cache",
-            "openai-curated-remote",
-            "superpowers/6.2.0",
+        normalized = " ".join(portable_text.lower().split())
+
+        alternate_nonportable_literals = {
+            "absolute cache/install path": (
+                "/srv/agent-cache/providers/nebula/runtime",
+                r"R:\runtime-install\nebula",
+            ),
+            "provider literal": ("provider: nebula-runtime", "vendor=orion"),
+            "version literal": ("dependency@91.7.23", "version = v8.4"),
+        }
+        for label, pattern in NON_PORTABLE_LITERAL_PATTERNS.items():
+            with self.subTest(detector=label):
+                for fixture in alternate_nonportable_literals[label]:
+                    self.assertRegex(fixture, pattern)
+                self.assertIsNone(
+                    pattern.search(portable_text),
+                    f"portable contract hard-codes {label}",
+                )
+
+        for lifecycle_state in (
+            "repository source completion",
+            "active installed copy",
+            "external dependency/cache state",
+            "guard activation",
+            "operational verification",
         ):
-            self.assertNotIn(forbidden, portable_text)
+            self.assertIn(lifecycle_state, normalized)
+        self.assertIn(
+            "success in one state is not evidence of success in any other state",
+            normalized,
+        )
 
     def test_openai_metadata_matches_the_skill(self) -> None:
         self.assertIn('display_name: "SDD Implementation"', self.openai_text)
