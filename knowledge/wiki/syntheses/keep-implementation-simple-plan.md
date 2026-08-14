@@ -1,45 +1,28 @@
-# Keep Implementation Simple Implementation Plan
+# Keep Implementation Simple V2 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` to execute this plan sequentially. Each implementation task uses a fresh implementer and an independent reviewer, and checkbox steps are the progress ledger.
 
-**Goal:** Human承認済みの単純化contractを既存`keep-implementation-simple` Skillへ最小限に実装し、`sdd-implementation`が指定7 roleへcanonical Skillをread-before-workで渡すようにする。
+**Plan identity:** `KIS-PLAN-2026-08-14-V2`
 
-**Architecture:** 既存`skills/keep-implementation-simple/SKILL.md`だけがtest・fixture・guardrail policyを所有し、既存identityのままin-placeで更新する。`sdd-implementation`はDependency Preflight、resolved canonical path、7 roleへのread-before-work、fail-closed境界だけを所有し、policy本文を複製しない。behavioral RED/GREEN evidence、focused SDD contract test、既存repository gateを用い、新しいruntime machineryやfixture infrastructureは作らない。
+**Goal:** 既存`keep-implementation-simple`を変更せず、SDDの既存surfaceだけで、正確な7 roleが同じresolved canonical KIS pathを受け取り、作業前に全文readするcontractを実装する。
 
-**Tech Stack:** portable Markdown `SKILL.md` contracts、Python 3.9+ `unittest` contract tests、既存repository validators、Superpowers skill TDD、LLM Wiki single-root durable knowledge。
+**Architecture:** `skills/sdd-implementation/SKILL.md`の既存Dependency Preflightが一つのcanonical KIS pathをresolveして全文readし、その同じpathを既存dispatch surfaceへ渡す。既存test moduleの一つのinline-data regressionでdependency、7 role mapping、除外role、single-source policyをまとめて識別し、追加のprompt、fixture、resolver、schema、runtime machineryは作らない。
 
-## Global Constraints
-
-- Human authority is limited to the approved North Star and Written Spec snapshot `KIS-SPEC-2026-08-14-V1`; plan authoring, review, repair, readiness, execution, and integration are agent / repository-owned.
-- Preserve `sdd-implementation` as the sole/default user-facing implementation route; `keep-implementation-simple` remains a supporting Skill.
-- Update the existing `skills/keep-implementation-simple/SKILL.md` in place. Do not create a duplicate Skill, alias, compatibility layer, or `description.md`.
-- The existing Skill directory means the repository's Skill initializer is not applicable. Do not scaffold or reinitialize it.
-- Required portable output is the shared `SKILL.md` contract only. Do not add optional `agents/openai.yaml` or other UI metadata without a new evidenced requirement.
-- Preserve runtime-agnostic Inputs, Outputs, and Required Capabilities; runtime-specific tool names, model/provider choices, agent identities, and effort selections are not behavioral contract content.
-- The supporting Skill owns detailed minimum-change, test, fixture, and guardrail policy. SDD owns only dependency identity, resolved path delivery, applicable roles, read-before-work, and failure handling.
-- Preserve existing security, data-integrity, mechanical validation, required coverage, required suite execution, and `.superpowers/**` transient-artifact rejection. Simplicity cannot remove these boundaries.
-- Additional tests must name one observable break, use minimal inline data, and distinguish the new contract. Do not add role-by-role equivalent permutations, coverage-only assertions, a fixture family, factory, corpus, property-test framework, or durable test ledger.
-- Do not add a resolver, classifier, cache, trace, provenance model, schema, protocol, scoring system, budget table, necessity ledger, exception workflow, dedicated runtime state, retry/fallback, second validator, or recovery-free catch.
-- Raw pressure-test prompts, worker answers, rationalizations, review transcripts, and command output remain in a resolved repository-external task/session temporary root. Durable knowledge contains only summarized decisions, verdicts, and evidence identities.
-- Source, test, and durable knowledge writes stay inside the trusted planning worktree. The original checkout remains read-only and must finish at its captured starting HEAD/status.
-- Every implementation task follows RED, verified RED, minimal GREEN, verified GREEN, and independent task review before serialized integration.
-- Local plan readiness and `LOCAL_COMPLETE` do not authorize push, PR, merge, release, live install, issue/comment/project writes, or any other remote mutation.
-
----
+**Tech Stack:** portable Markdown Skill contracts、Python 3 `unittest`、既存repository validators、LLM Wiki single-root knowledge。
 
 ## Approved North Star Identity
 
 - Approved North Star path: `knowledge/wiki/syntheses/keep-implementation-simple-spec.md`
 - Approved North Star anchor: `North Star`
-- Approved snapshot identity: `KIS-SPEC-2026-08-14-V1`
-- Approval-snapshot content SHA-256: `74fb9727f9cc2f9d199b82a54101426b66596057f93b34df02d0866e1f79d23a`
+- Approved snapshot identity: `KIS-SPEC-2026-08-14-V2`
+- Approval-snapshot content SHA-256: `1a99024e9f04791a4194304d01a50c42a29b516c4c2887b144079239f09dcfbd`
 - Approval state: approved
 
 ## Approved Written Spec Identity
 
 - Approved spec path: `knowledge/wiki/syntheses/keep-implementation-simple-spec.md`
-- Approved spec snapshot identity: `KIS-SPEC-2026-08-14-V1`
-- Approved-spec content SHA-256: `74fb9727f9cc2f9d199b82a54101426b66596057f93b34df02d0866e1f79d23a`
+- Approved spec snapshot identity: `KIS-SPEC-2026-08-14-V2`
+- Approved-spec content SHA-256: `1a99024e9f04791a4194304d01a50c42a29b516c4c2887b144079239f09dcfbd`
 - Approval state: approved
 
 ## Plan Binding
@@ -49,161 +32,135 @@
 - Planning worktree: `/Users/omitsuhashi/repos/omitsuhashi/skills/.worktrees/keep-implementation-simple-planning`
 - Integration branch: `codex/keep-implementation-simple/planning`
 - Current-tree compatibility: compatible
-- Independent review verdict: ready
+- Independent review verdict: pending
 - Repository checks: passed
 - Readiness evidence state: current
 
-Current-tree evidence at the latest authoring check consists of a clean baseline ancestry check, 93 passing SDD tests including 24 passing plan-contract tests, passing architecture and context validators, successful active-runtime Skill validation for both affected Skills, a passing current-index transient-artifact candidate-tree check, and passing working/cached diff whitespace checks. The spec digest also matches both plan identity declarations, and manual semantic inspection confirms the required singleton sections, inventory/coverage/dependency mappings, and prohibited-content boundary remain intact. Detailed command output remains outside durable knowledge. A fresh independent re-review confirmed that the repaired KIS-1 sample-sufficiency contract is complete and that no material spec, scope, dependency, acceptance, or execution defect remains; it returned `ready` with no decision request or material risk.
+Authoring checks established that the baseline is an ancestor of the current planning branch, all named owner surfaces exist, the spec digest matches both approval declarations, and current KIS SHA-256 is `2c2361f04ca6d2dd7433d2dfa80ff173a14f68ef401df0e98e7d4366d1d23b3f`. Initial independent review returned `issues_found` for two execution-order gaps; both are repaired below, and a fresh independent re-review remains required before Implementation Stage entry.
+
+## Global Constraints
+
+- Human authority remains the approved North Star and Written Spec `KIS-SPEC-2026-08-14-V2`; plan repair, readiness, implementation, review, and local integration are agent / repository-owned.
+- Before work, Spec Synthesizer、Spec Reviewer、Plan Author、Plan Reviewer、Implementer、Task Reviewer、Final Reviewer must receive the same Dependency Preflight-resolved canonical `keep-implementation-simple/SKILL.md` path and read that file fully.
+- Research Worker and knowledge closeout worker are excluded from this requirement.
+- `skills/keep-implementation-simple/**` is read-only. Preserve `skills/keep-implementation-simple/SKILL.md` byte-for-byte from baseline and keep its policy the single source.
+- Production/test writes are limited to the six existing SDD files in the File Map. Do not add or rename a prompt, test file, fixture, validator, optional metadata, alias Skill, or compatibility layer.
+- Do not add resolver、classifier、cache、trace、provenance model、schema、protocol、scheduler、retry / fallback、dedicated runtime state、test-only runtime、or duplicated KIS policy.
+- Preserve sequential SDD, fresh isolated workers, explicit model selection, independent task review, fresh final whole-branch review, current security/data-integrity/mechanical validation, required coverage, and transient-artifact rejection.
+- Source, test, and durable writes stay in the trusted planning worktree. Raw reviews and command output stay in a repository-external task/session temporary path.
+- Local readiness never authorizes push、PR、merge、release、live install、Issue/comment/project mutation、or another remote write.
 
 ## File Map
 
-- `skills/keep-implementation-simple/SKILL.md`: canonical supporting policy and portable Inputs, Outputs, Required Capabilities, deletion test, and explicit test / fixture / guardrail contracts.
-- `skills/sdd-implementation/SKILL.md`: required dependency resolution, fail-closed boundary, and delivery/read contract for the implementation-stage and final-review roles.
-- `skills/sdd-implementation/references/planning-context.md`: resolved supporting-Skill path delivery for Spec Synthesis, Spec Review, Plan Authoring, and Plan Review dispatches.
-- `skills/sdd-implementation/prompts/spec-synthesizer.md`: Spec Synthesizer read-before-work input and boundary.
-- `skills/sdd-implementation/prompts/spec-reviewer.md`: Spec Reviewer read-before-work input and boundary.
-- `skills/sdd-implementation/prompts/plan-reviewer.md`: Plan Reviewer read-before-work input and boundary.
-- `skills/sdd-implementation/tests/test_preimplementation_context.py`: one focused, data-driven regression over dependency resolution and all seven required roles, using inline expected data.
-- `knowledge/wiki/syntheses/keep-implementation-simple-plan.md`: reviewed executable plan and implementation closeout summary.
-- `knowledge/index.md`: active canonical discovery records for the approved spec and reviewed plan.
-- `knowledge/log.md`: append-only Plan Stage and implementation-closeout lifecycle events.
+- `skills/sdd-implementation/SKILL.md`: require/resolve/read KIS in Dependency Preflight; deliver the same path to Implementer、Task Reviewer、Final Reviewer through the existing Implementation and Final Review sections.
+- `skills/sdd-implementation/references/planning-context.md`: carry the resolved path and read-before-work instruction for Spec Synthesizer、Spec Reviewer、Plan Author、Plan Reviewer.
+- `skills/sdd-implementation/prompts/spec-synthesizer.md`: existing Spec Synthesizer input/read/failure surface.
+- `skills/sdd-implementation/prompts/spec-reviewer.md`: existing Spec Reviewer input/read/failure surface.
+- `skills/sdd-implementation/prompts/plan-reviewer.md`: existing Plan Reviewer input/read/failure surface.
+- `skills/sdd-implementation/tests/test_preimplementation_context.py`: add exactly one focused regression with minimal inline 7-role/owner-surface data.
+- `knowledge/wiki/syntheses/keep-implementation-simple-plan.md`: reviewed execution contract and later closeout summary.
+- `knowledge/index.md`: active V2 spec/plan discovery state.
+- `knowledge/log.md`: append-only planning and later closeout events.
 
 ## Requirement And Acceptance Inventory
 
-- R-01: Preserve one independent, runtime-agnostic, portable `keep-implementation-simple` supporting Skill and update its existing canonical identity in place.
-- R-02: Map each added production change, test, fixture, and guardrail to a current requirement, acceptance criterion, reproduced regression, or actual boundary risk; remove additions that fail the deletion test.
-- R-03: Add only the minimum discriminating tests for requested observable behavior, reproduced regression, or necessary current boundary behavior, while distinguishing test-code additions from required suite execution.
-- R-04: Prefer inline data and existing fixtures; add a fixture only for behavior-intrinsic files/artifacts or actual reuse of non-trivial setup.
-- R-05: Require current evidence for a guardrail, keep one owning seam, preserve existing security/data-integrity boundaries, and reject duplicate/speculative validation or recovery-free catches.
-- R-06: Preserve `sdd-implementation` as the sole/default user-facing route and avoid architecture-policy or optional UI changes.
-- R-07: Resolve/read `keep-implementation-simple` in SDD Dependency Preflight and fail closed with phase/path and underlying error before affected work when resolution/read fails.
-- R-08: Deliver the canonical Skill path and require read-before-work for Spec Synthesizer, Spec Reviewer, Plan Author, Plan Reviewer, Implementer, Task Reviewer, and Final Reviewer without copying policy.
-- R-09: Add no scoring, budget, ledger, exception workflow, runtime state, duplicate route, resolver/classifier/cache/trace/schema/protocol, speculative fallback, or dedicated validation machinery.
-- R-10: Keep explicit portable Inputs, Outputs, Required Capabilities, current evidence categories, required validation preservation, durable knowledge synchronization, and local/remote boundaries.
-- AC-01: The supporting Skill satisfies the standard portable `SKILL.md` contract, with runtime-agnostic Inputs, Outputs, and Required Capabilities, and no required artifact beyond `SKILL.md`.
-- AC-02: The supporting Skill explicitly defines minimum coherent change, deletion test, test / fixture / guardrail contracts, and preservation of required validation.
-- AC-03: Architecture validation confirms `sdd-implementation` remains the sole/default user-facing implementation route.
-- AC-04: SDD Dependency Preflight requires the supporting Skill and fails closed on unresolved or unreadable dependency state.
-- AC-05: All seven required fresh roles read the canonical Skill before work and no SDD surface duplicates its detailed policy.
-- AC-06: One focused SDD regression distinguishes dependency plus seven-role wiring, and the exact combined pressure scenario produces verified pre-change RED followed by post-change GREEN.
-- AC-07: No equivalent-permutation or coverage-only test expansion is introduced.
-- AC-08: Fresh SDD suite, architecture, context, both Skill validations, transient-artifact Git-surface validation, and diff checks all exit successfully.
-- AC-09: `knowledge/index.md` and append-only `knowledge/log.md` are synchronized with the accepted spec and reviewed plan lifecycle.
-- AC-10: The final diff contains no scoring, budget, ledger, exception workflow, runtime state, duplicate route, or other prohibited machinery.
+- R-01: Keep canonical KIS unchanged and retain policy ownership there.
+- R-02: Use existing Dependency Preflight to resolve/read one canonical KIS path and fail closed with the required evidence.
+- R-03: Deliver that same path and full-read-before-work instruction to exactly seven approved roles through existing owner surfaces.
+- R-04: Let SDD own only dependency identity, resolved path, instruction, role set, and fail-closed boundary.
+- R-05: Add exactly one focused inline-data regression in the existing test module.
+- R-06: Preserve SDD as the sole/default implementation route and retain current required validation.
+- AC-01: Bind every implementation surface to V2 and the approved baseline.
+- AC-02: Produce an empty baseline-to-tip KIS diff.
+- AC-03: Match the baseline and final KIS SHA-256 to the approved digest.
+- AC-04: Prove single-path Dependency Preflight resolution/read and evidence-bearing fail-closed behavior.
+- AC-05: Prove same-path full-read delivery to exactly seven approved roles.
+- AC-06: Exclude Research/knowledge closeout and preserve KIS as the only policy owner.
+- AC-07: Prove the contract with one inline-data regression and no prohibited new surface.
+- AC-08: Preserve the sole/default SDD route through architecture validation.
+- AC-09: Fresh-run every required validation successfully.
+- AC-10: Synchronize the V2 plan, index, and append-only log.
 
 ## Coverage Matrix
 
 | ID | Primary owner | Contributing tasks |
 | --- | --- | --- |
-| R-01 | KIS-1 | KIS-3 |
-| R-02 | KIS-1 | KIS-2, KIS-3 |
-| R-03 | KIS-1 | KIS-2, KIS-3 |
-| R-04 | KIS-1 | KIS-2 |
-| R-05 | KIS-1 | KIS-2, KIS-3 |
-| R-06 | KIS-2 | KIS-3 |
-| R-07 | KIS-2 | KIS-3 |
-| R-08 | KIS-2 | KIS-3 |
-| R-09 | KIS-1 | KIS-2, KIS-3 |
-| R-10 | KIS-1 | KIS-2, KIS-3 |
-| AC-01 | KIS-1 | KIS-3 |
-| AC-02 | KIS-1 | KIS-3 |
-| AC-03 | KIS-2 | KIS-3 |
-| AC-04 | KIS-2 | KIS-3 |
-| AC-05 | KIS-2 | KIS-3 |
-| AC-06 | KIS-1 | KIS-2, KIS-3 |
-| AC-07 | KIS-2 | KIS-1, KIS-3 |
-| AC-08 | KIS-3 | KIS-1, KIS-2 |
-| AC-09 | KIS-3 | KIS-1, KIS-2 |
-| AC-10 | KIS-3 | KIS-1, KIS-2 |
+| R-01 | KIS-2 | none |
+| R-02 | KIS-1 | none |
+| R-03 | KIS-1 | none |
+| R-04 | KIS-1 | none |
+| R-05 | KIS-1 | none |
+| R-06 | KIS-2 | none |
+| AC-01 | KIS-2 | none |
+| AC-02 | KIS-2 | none |
+| AC-03 | KIS-2 | none |
+| AC-04 | KIS-1 | none |
+| AC-05 | KIS-1 | none |
+| AC-06 | KIS-1 | none |
+| AC-07 | KIS-1 | none |
+| AC-08 | KIS-2 | none |
+| AC-09 | KIS-2 | none |
+| AC-10 | KIS-2 | none |
 
 ## Tasks
 
-### Task 1: KIS-1 — Skill TDD and minimum supporting contract
+### Task 1: KIS-1 — SDD canonical KIS wiring and focused regression
 
-- Deliverable: Produce verified RED/GREEN behavioral evidence and update the existing canonical supporting Skill with the minimum explicit policy contract.
-- Requirement coverage: R-01, R-02, R-03, R-04, R-05, R-09, R-10.
-- Acceptance coverage: AC-01, AC-02, AC-06.
+- Deliverable: TDDで一つのcanonical KIS pathを正確な7 roleへ既存surfaceから渡し、独立Task Reviewerが承認したSDD-only changeを作る。
+- Requirement coverage: R-02, R-03, R-04, R-05.
+- Acceptance coverage: AC-04, AC-05, AC-06, AC-07.
 - Dependencies: none.
 
 **Behavioral interface:**
 
-- Consumes: accepted spec `KIS-SPEC-2026-08-14-V1`, the current 38-line Skill, current repository rules and required validation, `/private/tmp/keep-implementation-simple.uY2W4Z/research.md`, `/private/tmp/keep-implementation-simple.uY2W4Z/baseline-score.md`, and the exact combined pressure scenario in the spec.
-- Produces: one in-place portable `SKILL.md`, a repository-external RED/GREEN evidence identity, minimum discriminating test/fixture/guardrail decisions, and concrete `BLOCKED` output when a current requirement cannot be satisfied.
+- Consumes: V2 spec、baseline/current KIS、existing Dependency Preflight、planning context、three existing prompts、Implementation/Final Review sections、existing preimplementation-context test helpers.
+- Produces: one resolved/read canonical KIS path; the same path plus full-read-before-work instruction for the exact seven-role set; existing-boundary failure reporting; one focused inline-data regression; no KIS diff or new artifact family.
 
-**Verification intent:** Before any Skill write, use exactly five fresh-context outputs for a no-guidance control and exactly five for the unchanged current Skill under the same combined authority/time/sunk-cost scenario and identical repository evidence, manually score every output, and assess variance rather than trusting a single sample. After the minimal edit, use a matched five fresh-context outputs with the updated Skill and manually score every output. Score removal of unsupported duplicate/equivalent/coverage-only tests, fixture infrastructure, second validation, speculative retry/fallback, and recovery-free catches separately from retention of the genuine existing SDD suite and transient boundary; the retention check is a second manual dimension of the same scenario, not another scenario or fixture.
+**Verification intent:** The focused test must RED only because the baseline lacks the required dependency/path/read wiring, then GREEN only when all seven role-to-owner mappings share the same path, both excluded roles remain absent, and no KIS policy copy or new supporting surface is introduced.
 
-- Integration placement: I-1, before any SDD surface begins to depend on the expanded contract.
-- Failure owner: KIS-1 implementer owns baseline-evidence validity, minimal Skill wording, Skill validation, and GREEN behavioral compliance.
+- Integration placement: I-1, as the only implementation/review task before knowledge closeout.
+- Failure owner: KIS-1 implementer owns production/test defects; its independent Task Reviewer owns requirement-fit, material simplicity, and current-risk verdicts.
 
-- [ ] Step 1: Read `superpowers:writing-skills`, `superpowers:test-driven-development`, their required skill-testing/test-quality references, the approved spec, repository rules, and the current supporting Skill before any write.
-- [ ] Step 2: Resolve a bounded repository-external task/session temporary evidence path and preserve the exact accepted scenario prompt plus repository evidence inputs there; do not create a repository fixture or durable transcript.
-- [ ] Step 3: Inspect the existing raw no-guidance baseline artifacts under `/private/tmp/keep-implementation-simple.uY2W4Z/` before dispatch. Count an artifact only when it is a fresh isolated output produced with no `keep-implementation-simple` guidance, the exact accepted combined scenario, and identical repository evidence; `baseline-score.md` is a summary and never counts as a sample. Reuse each qualifying raw output once and dispatch only enough missing no-guidance samples to reach exactly five. Different parse-mode or fixture scenarios remain advisory and do not count toward this matched control.
-- [ ] Step 4: Complete the no-guidance control before any Skill write. For each of its five outputs, manually record in the repository-external evidence root the chosen change/test/fixture/guardrail set, required validation retained or dropped, exact rationalizations, the spec-defined RED/GREEN outcome, and the separate genuine-boundary-retention outcome. Automated counts may assist navigation but never replace reading and scoring an output.
-- [ ] Step 5: Before any Skill write, dispatch exactly five fresh isolated workers against the unchanged current Skill with the identical accepted scenario and repository evidence. Manually score every output using the same two outcome dimensions and record exact rationalizations outside the repository. Compare the five no-guidance and five current-Skill outcomes to identify variance and the recurring failure form; do not create a durable score, test ledger, fixture corpus, or scoring framework.
-- [ ] Step 6: Verify RED before editing `skills/keep-implementation-simple/SKILL.md`: the no-guidance control must exhibit the target failure, and the current-Skill samples must establish the spec-defined failure as an observed pattern rather than a lone unexamined outlier by retaining an unsupported duplicate test, speculative fixture, duplicate/speculative guardrail, or dropping the existing transient boundary/required suite. If the control does not fail, the current Skill has no observed failure, or variance prevents identifying a concrete recurring failure and rationalization, stop without a Skill write.
-- [ ] Step 7: Update the existing Skill in place with explicit Inputs, Outputs, Required Capabilities, minimum coherent change and deletion test, the three artifact contracts, required-validation preservation, concrete evidence/blocker categories, and counters only for observed scope rationalizations. A smaller diff alone never authorizes changing an observable error payload or other existing behavior; do not freeze whitespace/Unicode or another unrequested input policy.
-- [ ] Step 8: Keep the Skill concise and self-contained. Add no secondary file, initializer output, UI metadata, fixture, script, workflow, state, score, ledger, or exception path.
-- [ ] Step 9: Dispatch exactly five new fresh isolated workers with the updated Skill and the identical scenario prompt/evidence, matching the two pre-write variants' sample count. Manually read and score every output against both the exact accepted GREEN result and genuine-boundary retention; all five must converge on one focused discriminating test with minimal inline data, reject every named unsupported surface, and retain the existing SDD suite and transient boundary.
-- [ ] Step 10: If any updated-Skill output fails or exposes a new rationalization, add only the minimum counter matching that observed failure and rerun a complete five-sample updated-Skill variant against the identical scenario; prior outputs from superseded wording do not count toward the final five. Do not add a scenario permutation or hypothetical policy.
-- [ ] Step 11: Run the active-runtime `quick_validate.py` against `skills/keep-implementation-simple` and re-read the final Skill for portable frontmatter, Inputs, Outputs, Required Capabilities, and absence of optional files.
-- [ ] Step 12: Request independent task review of the Skill diff and summarized RED/GREEN evidence. Integrate only after the reviewer confirms the qualifying five/five pre-write samples, matched five final samples, manual score for every output, retained genuine boundary, and no requirement gap, policy duplication, observable regression, or concrete current risk.
+- [ ] Step 1: The fresh Implementer reads the resolved canonical KIS file fully before work, then reads the V2 spec and only the six production/test owner files in the File Map. Confirm the baseline-to-worktree KIS diff is empty before any source edit.
+- [ ] Step 2: Add exactly one test case to `test_preimplementation_context.py`. Keep the seven role names and their owner-file mapping as minimal inline data; use the module's existing loaded text/helpers and include the two excluded roles in the same contract rather than another test.
+- [ ] Step 3: Run only the new test and record verified RED caused by missing KIS dependency/path/full-read wiring. Stop if it fails because of syntax, missing fixture, or an unrelated contract.
+- [ ] Step 4: Extend the existing Dependency Preflight prose in `skills/sdd-implementation/SKILL.md` to require one readable canonical KIS path and read it fully. Preserve active discovery/global-root fallback; distinguish complete no-match through the existing missing-dependency result from discovery/candidate/path/read failure through `BLOCKED: dependency preflight failed` with phase, observed or attempted path, and underlying error before affected work.
+- [ ] Step 5: Extend `planning-context.md` and the three existing prompts so Spec Synthesizer、Spec Reviewer、Plan Author、Plan Reviewer receive that same resolved path, read it fully before work, and use their existing bounded return when role/phase, path, or underlying read error prevents completion.
+- [ ] Step 6: Extend only the existing Implementation Stage and Final Whole-Branch Review sections so Implementer、Task Reviewer、Final Reviewer receive that same path and full-read instruction before work. Do not route it to Research Worker or knowledge closeout.
+- [ ] Step 7: Run the focused test to verified GREEN, then run the full existing SDD unittest suite. Inspect the six-file implementation/test diff to confirm exact role membership, one inline-data test, single-source KIS policy, and absence of new prompt/fixture/resolver/schema/runtime machinery.
+- [ ] Step 8: After the focused GREEN, full SDD suite, six-file diff inspection, and empty KIS diff pass, run the existing `scripts/validate_sdd_transient_artifacts.py` against the current Git index, then materialize the exact staged candidate tree and run the same validator with `--candidate-tree <candidate-tree>`. Any failure stops before commit creation or I-1 transition.
+- [ ] Step 9: Create one scoped KIS-1 implementation commit containing only the approved six-file production/test change after Step 8 passes, and verify that the commit is reachable from the integration branch.
+- [ ] Step 10: Run `scripts/validate_sdd_transient_artifacts.py --new-commit <KIS-1-commit>` against the new scoped commit. Any failure stops before Task Review or I-1 transition.
+- [ ] Step 11: Dispatch a fresh independent Task Reviewer after it reads the same KIS path fully. Give it the exact committed range `82dcd32157ff9690ae038f982f3916009e449f80..<KIS-1-commit>` and integrate only a verdict with no requirement gap, scope excess, observable regression, or concrete current risk; any repair returns to the owning implementer, repeats the applicable index/candidate/commit validation, and receives one scoped re-review before I-1.
 
-### Task 2: KIS-2 — SDD dependency and seven-role read wiring
+### Task 2: KIS-2 — Durable closeout and combined verification
 
-- Deliverable: Make SDD resolve one canonical supporting-Skill path and pass it with read-before-work to exactly the seven approved fresh roles, backed by one focused regression.
-- Requirement coverage: R-06, R-07, R-08.
-- Acceptance coverage: AC-03, AC-04, AC-05, AC-07.
+- Deliverable: Synchronize durable V2 state, prove the unchanged-KIS and repository gates on the combined branch, and obtain the canonical final whole-branch verdict.
+- Requirement coverage: R-01, R-06.
+- Acceptance coverage: AC-01, AC-02, AC-03, AC-08, AC-09, AC-10.
 - Dependencies: KIS-1.
 
 **Behavioral interface:**
 
-- Consumes: the reviewed KIS-1 canonical Skill, active-runtime dependency discovery/global-root fallback, existing SDD fresh-worker dispatch surfaces, and the approved exact seven-role set.
-- Produces: one resolved/readable canonical Skill path, fail-closed dependency result, read-before-work delivery for the seven roles, and no duplicated supporting policy.
+- Consumes: reviewed KIS-1 result and commit, V2 spec/plan, index/log, current Git index and integrated tip, existing validators, original-checkout snapshot.
+- Produces: synchronized plan/index/log; exact unchanged-KIS evidence; fresh combined gate results; reachable reviewed commits; final review verdict; local-only completion state.
 
-**Verification intent:** A single inline-data regression must fail when the dependency is absent, unreadable, not delivered, or omitted from any approved role and must pass only when the complete seven-role contract is present; Research Worker and knowledge closeout remain outside the role set.
+**Verification intent:** Closeout succeeds only when the KIS baseline-to-tip diff is empty, both KIS digests match, the complete SDD/architecture/context/Skill/transient/diff gates pass fresh, changed paths remain within the approved SDD and durable surfaces, and final review finds no material defect.
 
-- Integration placement: I-2, after KIS-1 is reviewed so SDD never points workers at an incomplete contract.
-- Failure owner: KIS-2 implementer owns the dependency boundary, dispatch/path wiring, focused regression, and SDD suite compatibility.
+- Integration placement: I-2, after reviewed KIS-1 is reachable from the integration branch.
+- Failure owner: the knowledge worker owns plan/index/log synchronization; KIS-1 owns SDD/test regressions; the orchestrator owns candidate/new-commit/final-tree, reachability, original-checkout, and final-review gates.
 
-- [ ] Step 1: Re-read the reviewed KIS-1 Skill, the approved role list, current SDD entrypoint, planning-context reference, three affected prompts, and current SDD tests before modifying a Skill surface.
-- [ ] Step 2: Add one focused contract regression in `test_preimplementation_context.py` with the exact seven role names and their existing owning surfaces as minimal inline expected data. Name the concrete break: a required dependency/path/read instruction missing from any approved role or appearing as a duplicated policy body.
-- [ ] Step 3: Run only that focused regression and verify RED for the current missing dependency/read wiring, not for a typo, missing fixture, or unrelated assertion.
-- [ ] Step 4: Extend SDD Dependency Preflight to require and resolve/read `keep-implementation-simple`, preserve existing active/global discovery behavior, and return a concrete phase/path/underlying-error `BLOCKED` before affected work when resolution or reading cannot complete.
-- [ ] Step 5: Pass the resolved canonical Skill path through existing dispatch inputs for Spec Synthesizer, Spec Reviewer, Plan Author, and Plan Reviewer. Each affected prompt/reference requires reading that path completely before work and reports inability through its existing bounded return; do not copy test/fixture/guardrail policy.
-- [ ] Step 6: In the existing Implementation Stage and Final Whole-Branch Review surfaces, require the orchestrator to pass the same resolved path and read-before-work instruction to Implementer, Task Reviewer, and Final Reviewer. Do not create new prompts, worker packet schema, runtime state, or compatibility bridge.
-- [ ] Step 7: Keep the approved role set exact. Do not add Research Worker or knowledge closeout, and do not duplicate role-by-role tests when the one focused regression already distinguishes omission.
-- [ ] Step 8: Run the focused regression and full existing SDD unittest suite; verify GREEN with no change to existing required coverage or transient-artifact behavior.
-- [ ] Step 9: Run the active-runtime `quick_validate.py` against `skills/sdd-implementation`, then review the affected SDD prose for dependency identity/read/failure wiring only and the supporting Skill for exclusive policy ownership.
-- [ ] Step 10: Request independent task review across KIS-1 and KIS-2 combined state. Integrate only after all seven roles, sole/default route, fail-closed behavior, and policy single-source ownership are confirmed.
-
-### Task 3: KIS-3 — Durable closeout and combined repository verification
-
-- Deliverable: Synchronize the reviewed result into durable knowledge and prove the integrated branch preserves every required repository gate and prohibited-surface boundary.
-- Requirement coverage: none primary; contributes to R-01 through R-10 as declared in the Coverage Matrix.
-- Acceptance coverage: AC-08, AC-09, AC-10.
-- Dependencies: KIS-1 and KIS-2.
-
-**Behavioral interface:**
-
-- Consumes: reviewed KIS-1 and KIS-2 combined state, repository index and append-only log, current Git index/candidate tree, task commits, final tree, and repository-external evidence summaries.
-- Produces: synchronized plan/index/log lifecycle state, fresh combined verification evidence, a final whole-branch verdict, and a local-only completion result.
-
-**Verification intent:** Confirm architecture, context, Skill validity, all SDD tests, transient-artifact Git surfaces, diff hygiene, exact changed-path scope, and the absence of prohibited machinery without copying raw outputs into the wiki.
-
-- Integration placement: I-3, after both implementation tasks are reviewed and serialized into the integration branch.
-- Failure owner: KIS-3 knowledge worker owns index/log/plan synchronization; the task that owns a failing contract repairs it before closeout and receives exactly one scoped re-review.
-
-- [ ] Step 1: Use `llm-wiki` single-root ingest semantics and the selected Obsidian-compatible authoring procedure to update the reviewed plan, add or refresh its active index record, and append one closeout event without rewriting prior log entries.
-- [ ] Step 2: Summarize only landed scope, review verdicts, verification identities, remaining remote actions, and material residual risk. Do not copy pressure-test responses, rationalizations, command logs, raw reviews, agent identities, or runtime routing into durable knowledge.
-- [ ] Step 3: Run the complete `skills/sdd-implementation/tests` unittest suite fresh and require successful exit with the focused regression included.
-- [ ] Step 4: Run `scripts/validate_skill_architecture.py --all` and require the exact sole/default user-facing route to remain `sdd-implementation`.
-- [ ] Step 5: Run `scripts/validate_skill_context.py --all` and require all current context contracts to remain valid.
-- [ ] Step 6: Run the active-runtime `quick_validate.py` separately for `skills/keep-implementation-simple` and `skills/sdd-implementation`.
-- [ ] Step 7: Materialize the current Git index candidate tree and run `scripts/validate_sdd_transient_artifacts.py` for that candidate. Validate each new task/integration commit as a new commit and the integrated tip as the final tree when those surfaces exist; any `.superpowers/**` violation aborts closeout.
-- [ ] Step 8: Run `git diff --check` over the final working diff and the baseline-to-integration commit range, and inspect the exact changed-path set for optional metadata, extra fixtures/tests, duplicated policy, new runtime machinery, or removed required validation.
-- [ ] Step 9: Verify the original checkout still matches captured branch, HEAD, and staged/unstaged/untracked status; do not repair unrelated original-checkout state.
-- [ ] Step 10: Dispatch one fresh final whole-branch reviewer over baseline through the integration branch, including code, tests, approved spec, reviewed plan, and knowledge closeout. A material finding goes to its owning task for one repair and one scoped re-review before the canonical final verdict.
-- [ ] Step 11: Record `LOCAL_COMPLETE` only after all fresh gates pass, every reviewed task commit is reachable, knowledge is synchronized, and the final verdict has no material finding. Record push/PR/merge/release/live-install as unperformed absent separate authorization.
+- [ ] Step 1: Verify spec identity `KIS-SPEC-2026-08-14-V2` and baseline `82dcd32157ff9690ae038f982f3916009e449f80` across the reviewed plan and current durable discovery state.
+- [ ] Step 2: Require `git diff 82dcd32157ff9690ae038f982f3916009e449f80 -- skills/keep-implementation-simple/SKILL.md` to produce no output. Compute SHA-256 for the baseline blob and current KIS file and require both to equal `2c2361f04ca6d2dd7433d2dfa80ff173a14f68ef401df0e98e7d4366d1d23b3f`.
+- [ ] Step 3: Fresh-run `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 -m unittest discover -s skills/sdd-implementation/tests`, `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_architecture.py --all`, and `PYTHONPYCACHEPREFIX=/private/tmp/skills-pycache python3 scripts/validate_skill_context.py --all`; require success and confirm architecture reports only `sdd-implementation` as the sole/default user-facing implementation route.
+- [ ] Step 4: Fresh-run the active runtime skill-creator `quick_validate.py` separately for `skills/keep-implementation-simple` and `skills/sdd-implementation`; require both to pass.
+- [ ] Step 5: Validate the already-created KIS-1 commit with `scripts/validate_sdd_transient_artifacts.py --new-commit <KIS-1-commit>`. Run `git diff --check` for the working state and `82dcd32157ff9690ae038f982f3916009e449f80..<KIS-1-commit>`, inspect the exact changed-path set, and fail on any KIS edit, new test/prompt/fixture/validator/metadata, policy duplicate, resolver/schema/runtime machinery, weakened validation, or out-of-bound write.
+- [ ] Step 6: Only after Steps 1-5 produce actual fresh results, dispatch a fresh knowledge closeout worker under the `llm-wiki` single-root contract. Update only this plan, its existing `knowledge/index.md` entry, and one append-only `knowledge/log.md` closeout event with those actual result identities, landed scope, review verdict, remaining remote actions, and material residual risk; do not copy raw outputs or transcripts.
+- [ ] Step 7: Validate the synchronized wiki before Final Review by running the existing `skills/llm-wiki/tests` suite and inspecting the plan/index/log relation identities, append-only log effect, and allowed write set; any failure returns to the knowledge worker.
+- [ ] Step 8: Run `scripts/validate_sdd_transient_artifacts.py` against the current closeout index, materialize the exact staged closeout candidate tree, and validate it with `--candidate-tree <closeout-candidate-tree>`. Any failure stops before closeout commit creation or Final Review dispatch.
+- [ ] Step 9: Create one scoped closeout commit containing only the synchronized plan/index/log changes, validate it with `--new-commit <closeout-commit>`, and validate the integrated tip with `--final-tree <integration-tip>`. Verify the KIS-1 and closeout commits are reachable from that tip and the original checkout still matches its captured branch, HEAD, staged, unstaged, and untracked state; any failure stops before Final Review dispatch.
+- [ ] Step 10: Only after Steps 1-9 pass, dispatch one fresh Final Reviewer after it reads the same canonical KIS path fully. Review `82dcd32157ff9690ae038f982f3916009e449f80..<integration-tip>` across code, test, V2 spec, reviewed plan, and committed knowledge closeout; a material finding returns to its failure owner for one repair and one scoped re-review before the canonical verdict.
+- [ ] Step 11: Record `LOCAL_COMPLETE` only after every gate passes and final review is clean. Keep push、PR、merge、release、live install、and other remote writes unperformed absent separate authorization.
 
 ## Dependency Graph
 
@@ -211,37 +168,35 @@ Current-tree evidence at the latest authoring check consists of a clean baseline
 | --- | --- |
 | KIS-1 | none |
 | KIS-2 | KIS-1 |
-| KIS-3 | KIS-1, KIS-2 |
 
 ## Execution Order
 
 1. KIS-1
 2. KIS-2
-3. KIS-3
 
 ## Serialized Integration
 
-- I-1: KIS-1. Preconditions: before the first supporting-Skill write, exactly five qualifying no-guidance outputs and five unchanged-current-Skill outputs use the identical accepted scenario/evidence, every output is manually scored, variance is assessed, and the current Skill has verified RED; after the minimal edit, a matched final set of five updated-Skill outputs is manually scored GREEN with the genuine boundary retained. Active-runtime Skill validation passes and independent task review is clean. Combined-state expectation: one portable supporting Skill owns the complete simplicity policy with no new infrastructure.
-- I-2: KIS-2. Preconditions: I-1 is reviewed and reachable, the focused SDD regression is verified RED before SDD edits and GREEN afterward, the full SDD suite passes, and independent task review is clean. Combined-state expectation: SDD resolves and delivers the canonical Skill to exactly seven approved roles while remaining the sole/default route and without policy duplication.
-- I-3: KIS-3. Preconditions: I-1 and I-2 are reviewed and reachable, durable targets and authority remain resolved, and all combined gates are runnable. Combined-state expectation: index/log/plan are synchronized, required validation and transient boundaries are preserved, prohibited machinery is absent, and final review supports local completion.
+- I-1 — KIS-1: Preconditions are verified RED, minimal GREEN, full SDD suite success, empty KIS diff, successful current-index and nominated-candidate validation, one reachable scoped KIS-1 commit, successful new-commit validation, and independent Task Reviewer approval over the exact committed baseline-to-task range. Any repository-gate failure stops before commit creation or transition. Expected combined state is the six existing SDD production/test files implementing one-path seven-role wiring with one focused regression and no prohibited surface.
+- I-2 — KIS-2: Preconditions are reviewed KIS-1 reachability, resolved wiki authority, fresh combined results produced before durable recording, synchronized plan/index/log with successful wiki validation, successful closeout index/candidate validation, and one reachable scoped closeout commit whose new-commit and integrated final tree validations pass before Final Review. Expected combined state is committed V2 durable knowledge, fresh full verification, original-checkout preservation, and a clean final whole-branch verdict.
 
 ## Post-Integration Combined Verification
 
-**Scope:** R-01, R-02, R-03, R-04, R-05, R-06, R-07, R-08, R-09, R-10 and AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07, AC-08, AC-09, AC-10 across the integrated `82dcd32157ff9690ae038f982f3916009e449f80..codex/keep-implementation-simple/planning` change.
+**Scope:** All inventory IDs across `82dcd32157ff9690ae038f982f3916009e449f80..codex/keep-implementation-simple/planning`, including the exact six production/test owner files and three durable synchronization files.
 
-**Pass criteria:** The exact combined pressure scenario has five manually scored no-guidance controls and five manually scored unchanged-current-Skill samples before the first Skill write, plus five manually scored updated-Skill samples after the final wording; the pre-write variants establish trustworthy RED and observable variance, the matched updated variant is uniformly GREEN, and the separately scored retention dimension confirms the genuine SDD/transient boundary is preserved without adding a second scenario. One focused SDD regression covers dependency plus all seven roles; the complete SDD suite, architecture, context, both Skill validations, transient candidate/new-commit/final-tree surfaces, and diff checks pass; the changed-path review finds no optional metadata, duplicate policy, speculative test/fixture/guardrail, prohibited machinery, or weakened required boundary; knowledge is synchronized and final review has no material finding.
+**Pass criteria:** KIS remains byte-identical with the approved SHA-256 and an empty baseline-to-tip diff; the single regression proves one resolved/read path, exact seven-role delivery, and both exclusions; every fresh repository gate in KIS-2 passes; the changed-path set contains no prohibited surface or policy copy; every reviewed commit is reachable; durable state and original checkout are preserved; final review has no material finding.
 
-**Required evidence:** Repository-external RED/GREEN summary identity, fresh gate exit results, exact changed-path list, reachable reviewed task commits, synchronized index/log/plan identities, original-checkout preservation, and final whole-branch verdict. Raw outputs and transcripts remain outside durable knowledge.
+**Required evidence:** Focused RED/GREEN result, full-suite and validator exit results, KIS diff/digests, KIS-1 index/candidate/new-commit identities, exact Task Review range and verdict, closeout index/candidate/new-commit/final-tree identities, exact changed paths, reachable commits, validated plan/index/log identities, original-checkout preservation, and final verdict. Record fresh verification identities only after the corresponding runs complete, and keep raw outputs outside durable knowledge.
 
-**Failure owner:** KIS-1 owns supporting-policy and behavioral-evaluation failures; KIS-2 owns dependency/role-wiring and SDD-regression failures; KIS-3 owns knowledge, combined-gate, reachability, original-checkout, and final-review closeout failures.
+**Failure owner:** KIS-1 owns SDD wiring/test failures; KIS-2 owns unchanged-KIS, repository gate, durable synchronization, reachability, original-checkout, and final-review closeout failures.
 
 ## Author Self-Review
 
-- Spec coverage: all 10 Confirmed Decisions and all 10 numbered acceptance criteria have exactly one primary owner in the Coverage Matrix; no in-scope requirement is unassigned.
-- File compatibility: every planned file exists in the current tree except this new plan; no new implementation prompt, fixture family, validator, schema, runtime state, or UI metadata is required.
-- TDD order: five no-guidance and five unchanged-current-Skill outputs are manually scored before any supporting-Skill write; the unchanged Skill has verified RED before the matched five-output updated-Skill GREEN; genuine-boundary retention is scored separately without another scenario. The focused SDD regression is RED before SDD Skill edits; both tasks finish GREEN and independently reviewed.
-- Type and identity consistency: `KIS-1` through `KIS-3`, I-1 through I-3, `KIS-SPEC-2026-08-14-V1`, the baseline SHA, worktree, branch, canonical Skill path, and seven role names are consistent across tasks, dependencies, integration, and combined verification.
-- Placeholder and prohibited-body scan: no placeholder, prospective production/test body, script body, shell control-flow body, patch body, execution command body, scheduler/runtime machinery, or concrete runtime selection is present.
+- Observable outcome and smallest owner: unchanged KIS plus existing SDD dependency/dispatch surfaces are sufficient; the abandoned KIS edit and behavioral evaluation are absent.
+- Coverage: R-01 through R-06 and AC-01 through AC-10 each appear once in the inventory and once as one primary task assignment; no contributing assignment duplicates ownership.
+- Buildability: every named production/test/durable file exists, and the existing test module already loads all affected SDD surfaces.
+- TDD and review order: KIS-1 requires focused RED before production edits, minimal GREEN, full suite, index/candidate gates, scoped commit/new-commit validation, then independent Task Review over the committed range before I-1. KIS-2 produces fresh combined evidence before durable recording, validates wiki and the scoped closeout commit/final tree, then dispatches Final Review.
+- Scope scan: no prospective code/test body, placeholder implementation, KIS edit, new prompt/test file/fixture/resolver/schema/runtime machinery/metadata, duplicated policy, parallel issue adapter, or remote mutation is planned.
+- Identity and dependency consistency: `KIS-PLAN-2026-08-14-V2`, `KIS-SPEC-2026-08-14-V2`, baseline SHA, KIS digest, task IDs KIS-1/KIS-2, and I-1/I-2 are consistent.
 
 ## Readiness Result
 
@@ -249,4 +204,4 @@ Current-tree evidence at the latest authoring check consists of a clean baseline
 - Control Return status: complete
 - Implementation Stage entry: allowed
 
-Reviewer vocabulary is `ready` or `issues_found`. Fresh independent re-review returned `ready` after verifying the prior KIS-1 repair and the unchanged substantive plan contract. It found no decision request or material risk. Missing remote publication authorization does not change local plan readiness.
+Author self-review is complete with no gap or material risk. Fresh independent Plan Reviewer verdict `ready` and durable verdict integration are the only remaining Plan Stage gates; remote publication authorization is not a local readiness blocker.

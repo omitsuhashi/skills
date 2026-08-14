@@ -2307,3 +2307,21 @@ append-only で使います。すべての entry は予測しやすい header �
 - Actorはrepository maintainer-delegated plan finalization worker。[[wiki/syntheses/keep-implementation-simple-plan|canonical implementation plan]]をapproved snapshot `KIS-SPEC-2026-08-14-V1`へbindingしたfresh independent re-reviewが、prior KIS-1 repairとsubstantive plan contractを確認して`ready`と判定した。decision requestとmaterial riskはない。
 - Lifecycle effectはplan readiness `ready`、Control Return `complete`、local Implementation Stage entry `allowed`である。[[index|durable catalog]]へ同planのactive canonical recordを追加した。raw review本文、transcript、command outputはrepository-external temporary rootに留め、durable surfaceにはコピーしていない。
 - このreview completionはHuman plan approval、実装、remote write、push、PR、merge、release、live installを実施または承認しない。
+
+## [2026-08-14] decision | Keep Implementation Simple V2 scope correction
+
+- Human authorityにより[[wiki/syntheses/keep-implementation-simple-spec|canonical Written Spec]]を`KIS-SPEC-2026-08-14-V2`へ更新し、baseline `82dcd32157ff9690ae038f982f3916009e449f80`へbindingした。no-guidance 5/5 GREENとunchanged KIS 5/5 GREENでRED未成立のため、KIS本文は変更せずSDD-onlyの7-role read-before-workへscopeを縮小した。
+- V2は同じresolved canonical pathをSpec Synthesizer、Spec Reviewer、Plan Author、Plan Reviewer、Implementer、Task Reviewer、Final Reviewerへ既存surfaceから渡し、Research / knowledge closeoutを除外する。一つのinline-data regression以外のprompt、fixture、resolver / schema / runtime machinery、optional metadata、policy duplicateは追加しない。
+- [[index|durable catalog]]をV2へ同期し、V1-bound [[wiki/syntheses/keep-implementation-simple-plan|implementation plan]]をcurrent implementation entryから外した。plan、Skill実装、test、remote writeはこのdecision eventでは変更または実施していない。
+
+## [2026-08-14] plan-authoring | Keep Implementation Simple V2
+
+- [[wiki/syntheses/keep-implementation-simple-plan|`KIS-PLAN-2026-08-14-V2`]]をapproved `KIS-SPEC-2026-08-14-V2`とbaseline `82dcd32157ff9690ae038f982f3916009e449f80`へbindingし、SDD wiring/test-reviewとdurable closeout/combined verificationの2 taskへ再authorした。KIS edit/behavioral evaluation、新規prompt/fixture/resolver/schema/runtime machinery、Research/knowledge-closeoutへのKIS deliveryは含めない。author self-reviewは完了し、fresh independent Plan Review、Implementation Stage、remote writeは未実施である。
+
+## [2026-08-14] plan-repair | Keep Implementation Simple V2 execution order
+
+- Fresh independent Plan Reviewの`issues_found` 2件に従い、[[wiki/syntheses/keep-implementation-simple-plan|V2 plan]]のKIS-1をindex/candidate gate、scoped commit、新commit validation、committed-range Task Reviewの順へ修復し、KIS-2をfresh combined verification、actual evidence closeout、wiki validation、closeout commit/new/final-tree validation、Final Reviewの順へ修復した。2 task、exact V2 coverage、unchanged KIS、one inline-data regression、seven roles、既存surfaceだけのscopeは維持し、[[index|catalog]]をfresh independent re-review pendingへ同期した。spec、Skill、test、transient artifact、remote stateは変更していない。
+
+## [2026-08-14] independent-plan-re-review | Keep Implementation Simple V2
+
+- Independent re-reviewは[[wiki/syntheses/keep-implementation-simple-plan|`KIS-PLAN-2026-08-14-V2`]]を`ready`と判定し、decision requestとmaterial riskはない。plan readinessは`ready`、Control Returnは`complete`、local Implementation Stage entryは`allowed`へ同期した。[[index|durable catalog]]も同じcurrent lifecycleへ更新し、実装、remote write、push、PR、merge、release、live installは実施または承認していない。
