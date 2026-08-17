@@ -1,4 +1,0 @@
-interface:
-  display_name: "Decide In Order"
-  short_description: "Put purpose before constraints and choose what matters next."
-  default_prompt: "Use $decide-in-order to identify the central decision, the minimum next action, and when to review it."

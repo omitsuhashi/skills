@@ -1,4 +1,0 @@
-interface:
-  display_name: "LLM Wiki"
-  short_description: "Durable knowledge lifecycle routing"
-  default_prompt: "Use $llm-wiki to bootstrap, ingest, query, review drafts, canonicalize, or lint a durable knowledge root using the declared structural read-set."
