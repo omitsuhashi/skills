@@ -1,3 +1,11 @@
+---
+title: 原文に基づく LLM Wiki の再作成
+tags:
+  - llm-wiki
+aliases:
+  - LLM Wiki 再作成方針
+---
+
 # 原文に基づく LLM Wiki の再作成
 
 2026-09-09、Human は貼り付けた「LLM Wiki」の原文を基準に、自己完結した
@@ -9,16 +17,24 @@
 三層と、ingest / query / lint、内容別 index、追記専用 log を提示している。
 構造・ツール・出力形式は用途に応じて選ぶという原文の前提を維持する。
 
-[新しい skill](../../../skills/llm-wiki/SKILL.md) はこの三層と操作を一つの portable
+`skills/llm-wiki/SKILL.md` はこの三層と操作を一つの portable
 contract にまとめる。入力・出力・必要能力を明記し、出典、矛盾、再取り込み、
 回答の保存、リンクと index / log の検証を扱う。Obsidian や検索エンジン、画像、
-slide、他 skill は必須依存にしない。旧版の multi-root / authoring discovery /
+slide は任意とする。Human の追加指示により、Obsidian authoring 時は installed
+`obsidian-markdown` skill を使用する。plain Markdown では追加 skill を要求しない。
+旧版の multi-root / authoring discovery /
 context contract は復元しない。
 
-[local schema](../../AGENTS.md) は所有者と草案の境界、日本語、既存 Obsidian
+[[AGENTS|local schema]] は所有者と草案の境界、日本語、既存 Obsidian
 link を維持する。旧版の存在しない reference への依存を外し、draft-review と
 canonicalize のローカルな意味を明記する。旧版の設計文書は履歴として保存し、
 今回の新規 skill に過去の実装要件を自動適用しない。
+
+Obsidian の properties / wikilinks / embeds / callouts / 表示確認は
+`obsidian-markdown` に委譲し、llm-wiki は知識統合と出典・index / log を担う。
+必要な skill が見つからなければ Obsidian 書き込み前に不足を報告する。
+reading view で検証できない場合は未確認と明記する。今回の編集は構文とリンクの
+静的検証までであり、Obsidian reading view での表示確認は未実施である。
 
 検証は skill-creator validator、変更前後の repository architecture validator、
 具体例による取り込み・質問・点検の確認、および差分・main 保全確認で行う。

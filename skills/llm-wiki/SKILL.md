@@ -23,7 +23,8 @@ maintains pages, connections, and bookkeeping.
   remains useful without writes; disclose skipped persistence. If a required
   source cannot be read, report the limitation instead of inventing its contents.
   Image/PDF readers, web access, and output renderers are conditional on the
-  actual material or requested format. No other skill or service is mandatory.
+  actual material or requested format. Obsidian authoring additionally requires
+  `obsidian-markdown`, as described below; plain Markdown needs no other skill.
 
 ## Start with the local schema
 
@@ -33,6 +34,17 @@ layout, naming, links, language, authority, and review preferences. Reuse the
 existing structure; ask only when an unresolved choice affects the result.
 Read `index.md` to locate relevant pages and consult recent `log.md` entries
 when previous work matters.
+
+When the user requests Obsidian notes or the local schema selects an Obsidian
+authoring profile, resolve and read the installed `obsidian-markdown` skill
+before creating or editing notes. Follow it for properties, wikilinks, embeds,
+callouts, and reading-view verification; load its references only as needed.
+Keep knowledge integration, source provenance, index/log maintenance, and write
+authority here. Do not copy Obsidian syntax guidance into this skill.
+If the required skill is unavailable, report the missing dependency before
+Obsidian writes; read-only analysis can continue. If reading-view verification
+is unavailable, report it as unverified rather than claiming rendering success.
+Plain Markdown roots continue with the defaults below.
 
 Keep three layers distinct:
 
@@ -59,7 +71,8 @@ knowledge/
   log.md
 ```
 
-Use descriptive Markdown filenames and relative Markdown links by default.
+Use descriptive Markdown filenames and relative Markdown links for plain
+Markdown roots; Obsidian roots use the selected authoring skill's conventions.
 Create page categories only as content needs them (such as `wiki/sources/`,
 `wiki/entities/`, `wiki/concepts/`, `wiki/syntheses/`). The schema records these
 choices, the domain/language, source provenance and citation conventions, and

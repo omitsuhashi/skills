@@ -2471,3 +2471,8 @@ append-only で使います。すべての entry は予測しやすい header �
 - [[wiki/syntheses/llm-wiki-from-pattern|作成方針と検証結果]] と index を同期した。local schema は旧版 reference と authoring skill への必須依存を外し、既存の owner / draft boundary と Obsidian link を維持した。
 - skill-creator validator と authoring guidance 3 tests は成功。独立した一時 wiki で二資料の取り込み、出典付き回答の保存、再取り込み、lint の成果物を確認した。新しい出典だけで矛盾を解消せず、未確定事項を保持した。
 - 全体 architecture validator は削除済み SDD の不在による既存二件で失敗する。旧版のテストを要求する全体 CI の修復、SDD 復元、公開、live install は本変更に含めない。
+
+## [2026-09-09] skill-update | Obsidian authoring skill の使用
+
+- Human の追加指示に従い、Obsidian が選択された場合は installed `obsidian-markdown` を読み、その authoring 手順に従う契約へ変更した。plain Markdown の追加依存は増やしていない。
+- [[AGENTS|local schema]] と [[wiki/syntheses/llm-wiki-from-pattern|作成方針]]、index を同期した。構文・リンクを静的検証し、Obsidian reading view の表示確認は未実施として記録する。

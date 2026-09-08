@@ -24,7 +24,8 @@
 - `index.md` は active canonical durable wiki page の catalog として扱う
 - `log.md` は bootstrap, ingest, query, draft-review decision, canonicalize action, lint, Goal command preparation の append-only timeline として扱う
 - authoring profile: obsidian
-- 既存の internal note link は knowledge root 相対の `[[wiki/...|表示名]]` を維持し、external URL は Markdown link とする。追加の authoring skill は必須としない
+- ノートの作成・編集には installed `obsidian-markdown` skill を読み、properties / link / embed / callout と表示確認の手順に従う。構文規約はここに複製しない
+- vault の root はこの knowledge root とし、既存の internal note target identity を維持する
 - root 外への参照は既存の target identity を保持し、解決できない参照を推測で置換しない
 - wiki documentation の本文は日本語を基本にする
 - Goal command 用の長い詳細仕様、実装契約、acceptance criteria は `wiki/syntheses/` に保存する

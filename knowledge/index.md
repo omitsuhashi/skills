@@ -21,7 +21,7 @@ _現在なし。_
 
 ## シンセシス
 
-- [[wiki/syntheses/llm-wiki-from-pattern|原文に基づく LLM Wiki の再作成]] — 原文準拠の自己完結した skill と local schema の参照整合。旧版の実装要件を自動継承せず、今回に限る SDD 例外と検証範囲を記録する。
+- [[wiki/syntheses/llm-wiki-from-pattern|原文に基づく LLM Wiki の再作成]] — 原文準拠の知識統合と、Obsidian authoring 時の `obsidian-markdown` 委譲。local schema の参照整合、今回に限る SDD 例外と検証範囲を記録する。
 
 - [[wiki/syntheses/sdd-first-write-worktree-migration-spec.md|SDD first-write worktree migration 仕様]] — First-Write worktree entry規範はfail-closed minimal gate仕様にscoped supersedeされたpredecessor。後続Epicのsingle-writer integrationは参照範囲として保持し、parallel executionのHuman opt-in / Human-approved issue-plan要件はportable validation仕様にsupersedeされ、agent/repository-owned eligibilityとunknown時のsequential fallbackがcurrentである。
   検索語: sdd-implementation, first write, planning worktree, original checkout, starting_branch, starting_head_sha, binding tuple, integration_branch, parallel issue, superseded opt-in, fail closed, sequential fallback, 作業ツリー, 最初の書込み, 保全, 並列実行, 統合
