@@ -16,16 +16,25 @@
 
 - Default branch checkout is read-only for task work.
 - Before the first repository write after discovery or grilling, create or verify one task-linked worktree.
-- Reuse that worktree through Written Spec, Spec Gate, Issue Gate, Execution Plan Gate, and planning documentation sync.
-- Do not create a new worktree for every Gate.
+- Reuse that worktree through planning, implementation, review, and documentation sync.
 - Additional issue worktrees are used only when execution isolation or parallel worker review requires them.
 - If required worktree creation fails, stop before writing; do not continue in the default checkout.
 - Before delivery, verify that the PR branch contains every task commit.
 - Before completion, verify that the default checkout matches its starting HEAD/status. Never alter pre-existing unrelated changes without explicit approval.
 
-## Default implementation route
+## Agent skills
 
-- For repository changes, use `sdd-implementation` by default. It composes the Superpowers lifecycle, `grill-with-docs`, and `llm-wiki`, and skips specification or planning stages that are already Human-approved and current.
-- `sdd-implementation` is the first repository-change entry, before brainstorming, writing-plans, using-git-worktrees, domain modeling, implementation, or any other writable supporting skill.
-- A direct writable supporting-skill entry returns `BLOCKED: SDD First-Write Worktree Gate required`; it does not silently switch routes and continue.
-- Repository entry, containment, zero-write, and no-fallback rules override conflicting downstream instructions. Allocation, permission, sandbox, capability, dependency, ownership, path, or binding failure never continues in the current/original checkout.
+### Issue tracker
+
+GitHub Issues を使用し、Issue は Project #8 に登録する。
+Issue の作成・参照・更新時は `docs/agents/issue-tracker.md` を読む。
+
+### Triage labels
+
+5つの標準ラベルを使用する。
+トリアージ時は `docs/agents/triage-labels.md` を読む。
+
+### Domain docs
+
+single-context。永続文書は既存の knowledge wiki に配置する。
+ドメイン調査・設計時は `docs/agents/domain.md` を読む。
