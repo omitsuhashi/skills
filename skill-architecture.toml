@@ -2,9 +2,7 @@ schema_version = 1
 
 [families.repository-change-loop]
 description = "Repository change workflow skills that move work from requirements through specification, planning, and local implementation."
-user_facing_skills = ["sdd-implementation"]
-default_implementation_skill = "sdd-implementation"
-first_entry_skill = "sdd-implementation"
+user_facing_skills = []
 pre_gate_writable_subskill_action = "blocked"
 downstream_conflict_action = "blocked"
 forbidden_standalone_skill_names = [

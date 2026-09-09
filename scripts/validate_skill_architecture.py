@@ -27,7 +27,6 @@ EXPECTED_PLANNING_AUTHORITY_POLICY = {
     "model_selection": "host_runtime",
     "model_persistence": "forbidden",
 }
-EXPECTED_DEFAULT_IMPLEMENTATION_SKILL = "sdd-implementation"
 
 
 class PolicyError(Exception):
@@ -241,11 +240,6 @@ def validate_policy(policy: Dict[str, object]) -> List[str]:
     forbidden = _as_string_list(family, "forbidden_standalone_skill_names", errors) or []
     internal_components = _as_string_list(family, "internal_components", errors) or []
 
-    if user_facing != [EXPECTED_DEFAULT_IMPLEMENTATION_SKILL]:
-        errors.append(
-            "repository-change-loop.user_facing_skills must be exactly "
-            f"[{EXPECTED_DEFAULT_IMPLEMENTATION_SKILL!r}]"
-        )
     for duplicate in _duplicates(user_facing):
         errors.append(f"duplicate user-facing skill: {duplicate}")
     for duplicate in _duplicates(forbidden):
@@ -255,17 +249,6 @@ def validate_policy(policy: Dict[str, object]) -> List[str]:
             errors.append(f"invalid skill name: {skill_name}")
 
     actual_skills = set(_actual_skill_names())
-    default_implementation_skill = family.get("default_implementation_skill")
-    if default_implementation_skill != EXPECTED_DEFAULT_IMPLEMENTATION_SKILL:
-        errors.append(
-            "repository-change-loop.default_implementation_skill must be "
-            + EXPECTED_DEFAULT_IMPLEMENTATION_SKILL
-        )
-    elif default_implementation_skill not in actual_skills:
-        errors.append(
-            "missing default implementation skill directory: "
-            f"skills/{default_implementation_skill}/SKILL.md"
-        )
     for skill_name in user_facing:
         if skill_name not in actual_skills:
             errors.append(f"missing user-facing skill directory: skills/{skill_name}/SKILL.md")
