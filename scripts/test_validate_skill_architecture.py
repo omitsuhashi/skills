@@ -16,9 +16,6 @@ from scripts.validate_skill_architecture import (
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 VALIDATE_SKILL_ARCHITECTURE = REPO_ROOT / "scripts" / "validate_skill_architecture.py"
-REPO_ROUTER = REPO_ROOT / "AGENTS.md"
-LEGACY_GRILL_SKILL = "-".join(("grill", "to", "pr", "loop"))
-LEGACY_ISSUE_SKILL = "-".join(("issue", "implementation", "loop"))
 
 
 def run_validator(*args: str) -> subprocess.CompletedProcess[str]:
@@ -114,56 +111,20 @@ class SkillArchitecturePolicyTests(unittest.TestCase):
             },
         )
 
-class SddDefaultImplementationRouteTests(unittest.TestCase):
-    def test_legacy_implementation_skill_directories_are_absent(self) -> None:
-        self.assertFalse((REPO_ROOT / "skills" / LEGACY_GRILL_SKILL).exists())
-        self.assertFalse((REPO_ROOT / "skills" / LEGACY_ISSUE_SKILL).exists())
-
-    def test_sdd_is_the_only_user_facing_implementation_skill(self) -> None:
+class ImplementationRouteTests(unittest.TestCase):
+    def test_policy_validates_without_an_implementation_skill(self) -> None:
         family = repository_change_loop_family()
-        self.assertEqual(["sdd-implementation"], family["user_facing_skills"])
-        self.assertEqual("sdd-implementation", family["default_implementation_skill"])
+        self.assertEqual([], family["user_facing_skills"])
+        self.assertNotIn("default_implementation_skill", family)
+        self.assertNotIn("first_entry_skill", family)
+        self.assertEqual([], validate_policy(architecture_policy()))
+        self.assertEqual(0, run_validator("--all").returncode)
 
-    def test_validator_rejects_user_facing_implementation_skill_drift(self) -> None:
+    def test_validator_still_rejects_a_missing_declared_skill(self) -> None:
         policy = architecture_policy()
-        family = repository_change_loop_family(policy)
-        family["user_facing_skills"] = ["llm-wiki"]
-
+        repository_change_loop_family(policy)["user_facing_skills"] = ["missing-skill"]
         self.assertIn(
-            "repository-change-loop.user_facing_skills must be exactly "
-            "['sdd-implementation']",
-            validate_policy(policy),
-        )
-
-    def test_repository_router_uses_only_sdd_for_the_full_change_lifecycle(self) -> None:
-        router = REPO_ROUTER.read_text(encoding="utf-8")
-        self.assertIn(
-            "For repository changes, use `sdd-implementation` by default.",
-            router,
-        )
-        self.assertIn(
-            "Superpowers lifecycle, `grill-with-docs`, and `llm-wiki`",
-            router,
-        )
-        self.assertNotIn(f"Use `{LEGACY_GRILL_SKILL}`", router)
-        self.assertNotIn(f"`{LEGACY_ISSUE_SKILL}`", router)
-
-    def test_repository_change_family_describes_requirements_to_completion(self) -> None:
-        family = repository_change_loop_family()
-        self.assertEqual(
-            "Repository change workflow skills that move work from requirements "
-            "through specification, planning, and local implementation.",
-            family["description"],
-        )
-
-    def test_validator_rejects_default_implementation_skill_drift(self) -> None:
-        policy = architecture_policy()
-        family = repository_change_loop_family(policy)
-        family["default_implementation_skill"] = LEGACY_ISSUE_SKILL
-
-        self.assertIn(
-            "repository-change-loop.default_implementation_skill must be "
-            "sdd-implementation",
+            "missing user-facing skill directory: skills/missing-skill/SKILL.md",
             validate_policy(policy),
         )
 
