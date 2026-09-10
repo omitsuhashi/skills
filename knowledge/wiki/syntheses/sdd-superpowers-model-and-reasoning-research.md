@@ -107,18 +107,10 @@ rough idea から questions、constraints、success criteria、2〜3 approaches�
 この分担は README の basic workflow でも、`brainstorming` → `writing-plans` → `subagent-driven-development` / `executing-plans` として明示されている。
 出典: [README Basic Workflow](https://github.com/obra/superpowers/blob/v6.2.0/README.md#L184-L197)
 
-## repo-local `sdd-implementation` への示唆
-
-1. **Superpowers-first は維持できる。** spec refinement、plan writing、SDD execution という upstream の責任分割を backbone にする。
-2. **model selection 全体を不足機能として再実装しない。** upstream が既に所有する per-dispatch model requirement と relative capability tier を正本として使い、repo-local 側は各 host で利用可能な concrete model へ解決する薄い boundary に留める。
-3. **repo-local の純粋な追加価値は reasoning effort。** host が独立した effort control を持つ場合だけ、role / risk に応じた runtime-only effort selection、伝播、escalation、capability 不足時の停止を追加する。
-4. **Hermes は adapter 対象。** upstream の official integration と誤認せず、Hermes の actual dispatch / resume / model / effort capability を repo-local dual-host contract で検出・対応付ける必要がある。
-5. **`Grill with Docs` は spec stage の composition として置く。** upstream SDD を改変するのではなく、repo-local entrypoint が spec 定義・精緻化時に `Grill with Docs` を使い、承認後に `writing-plans`、その後に upstream SDD へ handoff する。
-
 ## 関連ページ
 
-- [SDD Implementation Skill 設計](sdd-implementation-skill-design.md) — 本調査結果を反映する対象となる repo-local composition skill の現行設計。
-- [Planning Authority Policy 仕様](planning-authority-policy/spec.md) — concrete model / reasoning choice を durable artifact に保存せず host runtime に委ねる既存方針。
+- [SDD Implementation Skill 設計](https://github.com/omitsuhashi/skills/blob/9106339aee6aba76cb92a1d74a13cf000c25a531/knowledge/wiki/syntheses/sdd-implementation-skill-design.md) — 本調査結果を反映した当時の repo-local composition skill の設計（Git 履歴）。
+- [Planning Authority Policy 仕様](https://github.com/omitsuhashi/skills/blob/9106339aee6aba76cb92a1d74a13cf000c25a531/knowledge/wiki/syntheses/planning-authority-policy/spec.md) — concrete model / reasoning choice を durable artifact に保存せず host runtime に委ねた当時の方針（Git 履歴）。
 
 ## 出典
 

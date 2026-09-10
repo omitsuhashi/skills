@@ -15,7 +15,7 @@
 - Canonical Owner は repository maintainer または maintainer-delegated actor とする
 - Read: `allowed`
 - Write Boundary は `owned` とし、owner actor だけが verified claim を直接更新できる
-- non-owner actor の durable proposal は `wiki/drafts/` に routing する
+- non-owner actor の知識ページへの durable proposal は `wiki/drafts/` に routing する。実装仕様・実装計画の草案はこの対象外とし、GitHub Issue で扱う
 - `draft-review` は草案の出典・矛盾・統合先を確認し、owner の判断を記録する。review 自体で canonical page を変更しない
 - `canonicalize` は owner またはその委任を受けた actor が承認済みの草案を既存 page に統合、または新規 page として採用する。出典を保持し、草案に統合先と処理済みの状態を残し、変更ページと実際に影響する知識の本文・探索情報・出典・リンクを整合させる
 - この repository は single-root topology として扱い、root registry は作らない
@@ -30,8 +30,8 @@
 - vault の root はこの knowledge root とし、既存の internal note target identity を維持する
 - root 外への参照は既存の target identity を保持し、解決できない参照を推測で置換しない
 - wiki documentation の本文は日本語を基本にする
-- Goal command 用の長い詳細仕様、実装契約、acceptance criteria は `wiki/syntheses/` に保存する
-- Goal prompt は短く保ち、詳細仕様ファイルを明示的に参照する
+- 実装仕様・実装設計・acceptance criteria・実装計画・ローカル Issue 台帳・実行 packet は Wiki に保存しない。保存先・更新手順は `docs/agents/issue-tracker.md` に従い、GitHub Issue 本文を正本とする
+- Goal prompt は短く保ち、詳細を持つ GitHub Issue を参照する。Wiki に実装文書のコピーや要約を作らない
 
 ## 探索手順
 
@@ -51,16 +51,15 @@ Python / 生成器が使えない場合は、`wiki/` のファイル列挙（例
 
 ## 保持する履歴
 
-- 2026-09-10 の切替以降、`log.md` は同じパスの過去履歴として保持し、通常追記を終了する。訂正は本文の「訂正履歴への入口」から該当見出しを検索できる。操作履歴を全件記録する新しい仕組みは設けない。
-- 旧 loop family の spec / packet / handoff / baseline は履歴であり restart entrypoint ではない。SDD 既定ルートも削除済みである。旧 llm-wiki の authoring discovery は [[wiki/syntheses/llm-wiki-from-pattern|再作成方針]] と現在の skill を照合する。履歴の許可を現在の操作承認へ流用しない。
-- 不変の `raw/` と切替前 `log.md` 内の index 参照は当時の目録への引用として保持する。この例外はその履歴範囲だけに適用し、維持する wiki 本文の新しい壊れたリンクは許容しない。旧目録は `git show f63ba68:knowledge/index.md` で参照できる。Git がない場合も、必要な知識・訂正・後継関係は現在の本文と保存 log からたどる。
-- 過去の sealed packet / spec digest は承認当時の bytes を指す。metadata 移行後のページで再 seal せず、必要なら当時の Git revision を参照する。
-- 旧規約の独立 branch を統合するときは index/log の追加情報を影響ページへ手動で回収し、固定目録の再導入や log 通常追記を auto-merge で残さない。切替後の探索回帰は現在のページから全件目録を生成して調べ、旧 index を復元しない。
+- `log.md` は過去履歴として保持し、通常追記しない。原資料 `raw/` も不変とする。現在の実装仕様・計画は GitHub Issue を参照する。
+- 2026-09-10 の Human 指示で既存の実装仕様・計画・設計原案の要約・台帳・実行資料を Wiki から削除した。過去版が必要なら `git show 9106339:<repository-relative-path>` を使う。削除資料を Wiki に復元したり、固定の履歴目録を作ったりしない。
+- raw と過去 log に残る削除資料・index への参照は、その記録時点の歴史的参照である。上記の Git revision で資料を、`git show f63ba68:knowledge/index.md` で旧目録を確認できる。この例外は保存された履歴に限り、新しい Wiki 本文の壊れたリンクは許容しない。
+- 旧 branch の統合時は、実装仕様・計画の追加や改訂を該当 Issue へ回収し、削除資料・index・log の通常追記を auto-merge で再導入しない。
 
 ## Local Overrides
 
 - `skills/` 配下の skill 本体は実装対象であり、knowledge root ではない
-- Goal command preparation の成果物は、直接 skill reference に混ぜず、まず `knowledge/wiki/syntheses/` に保存する
+- この保存先ルールは本 repository の方針であり、汎用 `llm-wiki` skill に他の repository 向けの Issue 利用を強制しない
 - 汎用運用ルールをここへ再掲しない
 
 ## Conflict Rule
