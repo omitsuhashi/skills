@@ -4,9 +4,15 @@ created: 2026-06-08
 updated: 2026-06-13
 source_files:
   - knowledge/raw/sources/2026-06-08 LLM Wiki Draft Review And Canonicalize Design.md
+summary: Goal command で `skills/llm-wiki` を更新するための詳細実装契約。
+knowledge_status: historical
 ---
 
 # LLM Wiki Draft Review And Canonicalize Goal Spec
+
+## 適用範囲と履歴
+
+旧 llm-wiki の設計・検証履歴であり、本文の current 表現は当時の状態を指す。[[wiki/syntheses/llm-wiki-from-pattern|LLM Wiki 再作成方針]] が旧 authoring discovery / multi-root / context contract を復元しないと定めた。現行の所有者・草案・探索ルールは [[AGENTS|local schema]] と `skills/llm-wiki/SKILL.md` を参照する。
 
 ## Historical / superseded note
 

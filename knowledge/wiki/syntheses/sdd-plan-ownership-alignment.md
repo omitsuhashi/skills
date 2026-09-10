@@ -15,11 +15,18 @@ approved_amendments:
   - sdd-transient-artifact-boundary-2026-08-14
 north_star_identity: sdd-plan-ownership-alignment#north-star@2026-08-14
 aliases:
-  - SDD execution plan ownership specification
-  - SDD plan readiness contract
+- SDD execution plan ownership specification
+- SDD plan readiness contract
+- 計画所有と人間承認
+summary: 人間の仕様承認とエージェントの計画準備判定の分担、transient handoff と Git tree の境界を確認できる。
+knowledge_status: historical
 ---
 
 # SDD Plan Ownership Alignment 仕様
+
+## 適用範囲と履歴
+
+当時の SDD 設計・実装証跡であり、本文の current / active / 実行可能は当時の範囲を指す。SDD 既定ルートは [PR #58](https://github.com/omitsuhashi/skills/pull/58)、KIS / decide-in-order 本体は commit `99fdaf2` で削除されている。現行の作業ツリー保全規約は repository root の `AGENTS.md` を参照する。部分的な仕様置換と当時の承認・未承認の区別は本文に保持する。
 
 ## 状態
 
@@ -747,3 +754,15 @@ separate authorizationがない場合は、Plan StageのStop Conditionではな�
   `skills/sdd-implementation/tests/test_preimplementation_context.py`
 - upstream method: [Superpowers Writing Plans](https://github.com/obra/superpowers/blob/v6.2.0/skills/writing-plans/SKILL.md)
 - upstream reviewer basis: [Superpowers plan reviewer](https://github.com/obra/superpowers/blob/v6.2.0/skills/writing-plans/plan-document-reviewer-prompt.md)
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+2026-08-14 Human-approved active canonical Written Spec。Human approvalをNorth Star / Written Specへ限定するcurrent Plan Stage authorityに加え、全SDD stageのtransient handoffをrepository外へ置き、`.superpowers/**`をignore確認済みの例外的local scratchだけに限定し、cleanup後のGit index / new commit / PR final treeをentry zeroにする境界を定義する。broader二仕様の競合するPlan semanticsとrepository-contained research / report / brief destinationを該当範囲でsupersedeする。
+
+## 訂正履歴への入口
+
+当時の主張・承認・検証の訂正は [[log|保存された履歴]] の次の見出しを検索して確認する。先行する完了・適用表現だけでは判断しない。
+
+- `[2026-08-14] final-review-correction | SDD Plan Ownership Alignment semantic contract`

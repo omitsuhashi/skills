@@ -11,7 +11,8 @@ tags:
   - fail-closed
   - specification
 aliases:
-  - SDD fail-closed worktree gate specification
+- SDD fail-closed worktree gate specification
+- 作業ツリーの停止条件
 status: accepted
 lifecycle_state: active
 implementation_status: local-complete-with-parked-harness-risks
@@ -30,9 +31,15 @@ provenance:
 relations:
   - "[[wiki/syntheses/sdd-first-write-worktree-migration-spec|Scoped predecessor: SDD first-write worktree migration 仕様]]"
   - "[[wiki/syntheses/sdd-plan-ownership-alignment|Composes with: SDD Plan Ownership Alignment 仕様]]"
+summary: 作業ツリーへの書込み境界を最小の fail-closed gate へ縮小した判断と、失敗時の停止条件を確認できる。
+knowledge_status: historical
 ---
 
 # SDD fail-closed worktree gate 仕様
+
+## 適用範囲と履歴
+
+当時の SDD 設計・実装証跡であり、本文の current / active / 実行可能は当時の範囲を指す。SDD 既定ルートは [PR #58](https://github.com/omitsuhashi/skills/pull/58)、KIS / decide-in-order 本体は commit `99fdaf2` で削除されている。現行の作業ツリー保全規約は repository root の `AGENTS.md` を参照する。部分的な仕様置換と当時の承認・未承認の区別は本文に保持する。
 
 > [!success] Human-approved accepted revision
 > 2026-08-14 のHuman owner decisionにより、本書は最小スコープへ改訂された。promoted draftは歴史的なproposal evidenceとして保持する。First-Write gateは本書、Plan authorityとraw transient artifact routeは[[wiki/syntheses/sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]]をcurrentな規範とする。
@@ -102,3 +109,9 @@ commit evidenceはwrite invocationと分離したgate-owned data-only `git commi
 本書は2026-08-14のHuman Written Spec approval、同日のscope-reduction owner decision、ならびに先行researchと既存 `sdd-implementation` contractを根拠とする。source implementation、active install、remote stateの完了はこのcanonical revisionから推論しない。Plan authorityとraw transient artifact boundaryは[[wiki/syntheses/sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]]を優先し、本書はsource / canonical durable repository writeとnative commitのFirst-Write bindingだけを所有する。
 
 predecessor [[wiki/syntheses/sdd-first-write-worktree-migration-spec|SDD first-write worktree migration 仕様]]のFirst-Write規範は本書がscoped supersedeする。predecessorのうち本書が扱わない後続Epicのopt-in parallel adapter部分だけは、影響を受けない参照範囲として残る。
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+repository workを`sdd-implementation`から開始し、original `main`をread-onlyに保ち、verified task-linked worktreeへのsource / canonical durable write / commit bindingとfailure時zero-write `BLOCKED`・no fallbackを定めるHuman承認済みminimal specification。raw transient handoff destinationとPlan authorityはPlan Ownership Alignmentが所有し、sourceは2件のnon-production harness riskをparkしたlocal-only completion。

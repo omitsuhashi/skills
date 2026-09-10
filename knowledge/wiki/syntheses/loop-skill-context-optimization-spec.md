@@ -1,4 +1,14 @@
+---
+summary: '`grill-to-pr-loop` と `issue-implementation-loop` の context 最適化、reference 分割、repo-local skill root 優先 hardening の実装契約。'
+knowledge_status: historical
+aliases:
+- コンテキスト最適化
+---
 # Loop Skill Context Optimization Spec
+
+## 適用範囲と履歴
+
+旧 grill-to-pr-loop / issue-implementation-loop の設計・実行証跡。[[wiki/syntheses/sdd-implementation-phase2-removal-plan|旧 loop skill の除去記録]] により executable surface / restart entrypoint ではない。本文の current 表現や packet / envelope / baseline は当時の範囲に限り、再実行には新しい承認と run を必要とする。現行の作業境界は repository root の `AGENTS.md` を参照する。
 
 ## 目的
 
@@ -113,3 +123,9 @@ git diff --check
 - historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/SKILL.md`
 - historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/scripts/_common.py`
 - historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/tests/test_issue_implementation_loop.py`
+
+## 関連する実行証跡
+
+以下は旧 run の記録であり、現在の実行契約として再利用しない。承認済み bytes / seal / digest は当時の Git revision に対するものであり、探索 metadata を追加した現在のページの digest ではない。
+
+- [[wiki/syntheses/loop-skill-context-optimization-input-packet.json|Loop Skill Context Optimization Input Packet]] — historical / non-executable な Input Packet v1。過去の実行証跡として保持し、current validator では再利用せず new approval/new run を作る。

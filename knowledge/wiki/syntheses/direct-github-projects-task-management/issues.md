@@ -1,4 +1,12 @@
+---
+summary: GitHub Projects 直接接続型 Task Management Skill Issue 台帳のローカルIssue、依存関係、実装結果、レビュー証跡と残課題を確認できる。
+knowledge_status: historical
+---
 # GitHub Projects 直接接続型 Task Management Skill Issue 台帳
+
+## 適用範囲と履歴
+
+旧 task-management 実装と当時の判断の履歴。plugin から standalone への置換範囲は [[wiki/syntheses/direct-github-projects-task-management/issues|DGPTM 台帳]] を参照する。現在の checkout に task-management 本体はなく、以下の実行手順を現行機能として扱わない。
 
 ## 状態
 
@@ -291,3 +299,16 @@ git diff --check
 ## 出典
 
 - [GitHub Projects 直接接続型 Task Management Skill 仕様](spec.md)
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+DGPTM-001からDGPTM-004へstandalone skill、direct MCP contract、旧plugin削除、historical supersessionを依存順に分解したIssue Gate承認済み台帳。
+
+## 訂正履歴への入口
+
+当時の主張・承認・検証の訂正は [[log|保存された履歴]] の次の見出しを検索して確認する。先行する完了・適用表現だけでは判断しない。
+
+- `[2026-07-23] final-review-fix-pending-evaluation | GitHub Projects Direct Task Management Skill`
+- `[2026-07-23] final-re-review-capability-and-delivery-correction | GitHub Projects Direct Task Management Skill`

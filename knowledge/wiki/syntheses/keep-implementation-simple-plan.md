@@ -1,4 +1,14 @@
+---
+summary: KIS V2 の七つの役割への wiring、承認済み binding と closeout の検証範囲を確認できる。
+knowledge_status: historical
+aliases:
+- Keep Implementation Simple V2 実装計画
+---
 # Keep Implementation Simple V2 Implementation Plan
+
+## 適用範囲と履歴
+
+当時の SDD 設計・実装証跡であり、本文の current / active / 実行可能は当時の範囲を指す。SDD 既定ルートは [PR #58](https://github.com/omitsuhashi/skills/pull/58)、KIS / decide-in-order 本体は commit `99fdaf2` で削除されている。現行の作業ツリー保全規約は repository root の `AGENTS.md` を参照する。部分的な仕様置換と当時の承認・未承認の区別は本文に保持する。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` to execute this plan sequentially. Each implementation task uses a fresh implementer and an independent reviewer, and checkbox steps are the progress ledger.
 
@@ -215,3 +225,17 @@ Authoring checks established that the baseline is an ancestor of the current pla
 - Implementation Stage entry: allowed
 
 Author self-review is complete with no gap or material risk. Fresh independent Plan Reviewer verdict `ready` and durable verdict integration are complete; remote publication authorization is not a local readiness blocker.
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+`KIS-PLAN-2026-08-14-V2`。approved six-file SDD wiring/test changeはtask review済みで、KIS-2のcombined verificationとdurable closeoutを完了したimplementation-closeout candidate。closeout commit/final-tree validationとFinal Reviewはpendingであり、`LOCAL_COMPLETE`は未宣言である。
+
+## 訂正履歴への入口
+
+当時の主張・承認・検証の訂正は [[log|保存された履歴]] の次の見出しを検索して確認する。先行する完了・適用表現だけでは判断しない。
+
+- `[2026-08-14] decision | Keep Implementation Simple V2 scope correction`
+- `[2026-08-14] readiness-correction | Keep Implementation Simple V2`
+- `[2026-08-14] approval-binding-correction | Keep Implementation Simple V2`

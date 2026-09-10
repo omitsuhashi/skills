@@ -1,4 +1,12 @@
+---
+summary: planning authority の五つの field を統合する計画と、当時の review / handoff 証跡を確認できる。
+knowledge_status: historical
+---
 # Planning Authority Policy 実装計画
+
+## 適用範囲と履歴
+
+旧 grill-to-pr-loop / issue-implementation-loop の設計・実行証跡。[[wiki/syntheses/sdd-implementation-phase2-removal-plan|旧 loop skill の除去記録]] により executable surface / restart entrypoint ではない。本文の current 表現や packet / envelope / baseline は当時の範囲に限り、再実行には新しい承認と run を必要とする。現行の作業境界は repository root の `AGENTS.md` を参照する。
 
 > **For agentic workers:** 実装は `issue-implementation-loop` の worker context だけで行う。各 Issue は TDD、fresh verification、scoped commit、別 worker による implementation review を完了してから次の blocker を release する。
 
@@ -383,3 +391,9 @@ git commit -m "docs: close planning authority policy implementation"
 - [ ] 全verificationと2種類のreviewが承認済みである。
 - [x] default checkoutが開始時snapshotから不変である。
 - [x] remote actionがゼロである。
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+Execution Plan Gate、5-field coverage fix、final branch integration、worker-only境界と未実施のPAP-004 cycle 2 reviewsを区別するlocal-only handoff。

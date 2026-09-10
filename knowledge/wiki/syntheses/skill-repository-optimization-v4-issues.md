@@ -1,4 +1,12 @@
+---
+summary: Skill Repository Optimization V4 IssuesのローカルIssue、依存関係、実装結果、レビュー証跡と残課題を確認できる。
+knowledge_status: historical
+---
 # Skill Repository Optimization V4 Issues
+
+## 適用範囲と履歴
+
+旧 grill-to-pr-loop / issue-implementation-loop の設計・実行証跡。[[wiki/syntheses/sdd-implementation-phase2-removal-plan|旧 loop skill の除去記録]] により executable surface / restart entrypoint ではない。本文の current 表現や packet / envelope / baseline は当時の範囲に限り、再実行には新しい承認と run を必要とする。現行の作業境界は repository root の `AGENTS.md` を参照する。
 
 ## 状態
 
@@ -515,3 +523,9 @@ V4 の全変更を統合し、V2 default、CI、wiki ledger を一貫させる�
 - [Skill Repository Optimization V4 Spec](skill-repository-optimization-v4-spec.md)
 - [Skill Repository Optimization V4 Design](../sources/2026-06-26-skill-repository-optimization-v4-design.md)
 - [raw/sources/2026-06-26-skill-repository-optimization-v4-design.md](../../raw/sources/2026-06-26-skill-repository-optimization-v4-design.md)
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+Skill Repository Optimization V4 の local-first integration ledger。SRO4-001 から SRO4-006 の実装状態、review range、full verification、canonical context CLI、wrapper / workflow shim 削除、remote policy、residual risks を集約する。

@@ -1,4 +1,14 @@
+---
+summary: '`epic_base` を検証可能な delivery/integration branch resource として lifecycle 管理に載せる hardening spec。'
+knowledge_status: historical
+aliases:
+- ブランチ統制
+---
 # Grill To PR Loop Epic Base Lifecycle Hardening Spec
+
+## 適用範囲と履歴
+
+旧 grill-to-pr-loop / issue-implementation-loop の設計・実行証跡。[[wiki/syntheses/sdd-implementation-phase2-removal-plan|旧 loop skill の除去記録]] により executable surface / restart entrypoint ではない。本文の current 表現や packet / envelope / baseline は当時の範囲に限り、再実行には新しい承認と run を必要とする。現行の作業境界は repository root の `AGENTS.md` を参照する。
 
 ## 目的
 

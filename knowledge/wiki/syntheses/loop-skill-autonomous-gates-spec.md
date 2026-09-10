@@ -1,4 +1,12 @@
+---
+summary: '`Execution Plan Gate` と `Live Root Gate` を agent preflight + commit boundary として自動継続し、承認済み delivery policy 内の draft final PR 作成を追加承認なしに行う Spec Gate 承認済み仕様。'
+knowledge_status: historical
+---
 # Loop Skill 自動継続 Gate 仕様
+
+## 適用範囲と履歴
+
+旧 grill-to-pr-loop / issue-implementation-loop の設計・実行証跡。[[wiki/syntheses/sdd-implementation-phase2-removal-plan|旧 loop skill の除去記録]] により executable surface / restart entrypoint ではない。本文の current 表現や packet / envelope / baseline は当時の範囲に限り、再実行には新しい承認と run を必要とする。現行の作業境界は repository root の `AGENTS.md` を参照する。
 
 ## 状態
 
@@ -185,3 +193,10 @@ GitHub auth、network、permission、branch protection、conflict、failed check
 - historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/references/remote-delivery.md`
 - [plugins/task-management/skills/task-management/references/github-mcp-projects.md](../../../plugins/task-management/skills/task-management/references/github-mcp-projects.md)
 - [knowledge/AGENTS.md](../../AGENTS.md)
+
+## 関連する実行証跡
+
+以下は旧 run の記録であり、現在の実行契約として再利用しない。承認済み bytes / seal / digest は当時の Git revision に対するものであり、探索 metadata を追加した現在のページの digest ではない。
+
+- [[wiki/syntheses/loop-skill-autonomous-gates-input-packet.json|Loop Skill 自動継続 Gate Input Packet]] — historical / non-executable な Input Packet v1。過去の LSAG 実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
+- [[wiki/syntheses/loop-skill-autonomous-gates-execution-envelope.json|Loop Skill 自動継続 Gate Execution Envelope]] — historical / non-executable な Execution Envelope v1。過去の LSAG 実行証跡として保持し、current validator では再利用せず new approval/new run を作る。

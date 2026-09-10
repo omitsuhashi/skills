@@ -1,4 +1,14 @@
+---
+summary: 承認済み spec の binding と、tracked durable root / untracked runtime root を分ける artifact lifecycle を確認できる。
+knowledge_status: historical
+aliases:
+- Loop Skill Approved Spec Binding Artifact Lifecycle Revision
+---
 # Loop Skill Approved Spec Binding Contract 仕様
+
+## 適用範囲と履歴
+
+旧 grill-to-pr-loop / issue-implementation-loop の設計・実行証跡。[[wiki/syntheses/sdd-implementation-phase2-removal-plan|旧 loop skill の除去記録]] により executable surface / restart entrypoint ではない。本文の current 表現や packet / envelope / baseline は当時の範囲に限り、再実行には新しい承認と run を必要とする。現行の作業境界は repository root の `AGENTS.md` を参照する。
 
 ## 状態
 
@@ -495,3 +505,15 @@ context contract は operation を増やさず、既存 `planning-contract.md`�
 - historical production path（Phase 2で削除済み）: `issue-implementation-loop/references/review-gate.md`
 - historical production path（Phase 2で削除済み）: `issue-implementation-loop/references/recovery.md`
 - 2026-07-21 session user decision: packet-rooted A案を採用。
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+Epic単位のtracked durable rootとGit common directory配下のuntracked runtime rootを分離し、Input Packetだけをapproval lockとしてGitに残すWritten Spec Gate承認済みrevision。
+
+## 関連する実行証跡
+
+以下は旧 run の記録であり、現在の実行契約として再利用しない。承認済み bytes / seal / digest は当時の Git revision に対するものであり、探索 metadata を追加した現在のページの digest ではない。
+
+- [[wiki/syntheses/approved-spec-binding-contract/input-packet.json|Loop Skill Approved Spec Binding Artifact Lifecycle Input Packet]] — 旧loop familyのASBC-007〜ASBC-009 execution intentを残すhistorical / non-executable Input Packet v2。current validatorで再利用せず、新しいapproval/new runを作る。

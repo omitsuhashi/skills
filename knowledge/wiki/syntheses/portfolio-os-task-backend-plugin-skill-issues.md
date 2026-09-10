@@ -1,4 +1,12 @@
+---
+summary: 旧 POTASK 実装群の依存関係、provider adapter と cross-repo blocker の当時の証跡を確認できる。
+knowledge_status: historical
+---
 # Portfolio OS タスクバックエンドプラグイン / スキル Issue Ledger
+
+## 適用範囲と履歴
+
+旧 task-management 実装と当時の判断の履歴。plugin から standalone への置換範囲は [[wiki/syntheses/direct-github-projects-task-management/issues|DGPTM 台帳]] を参照する。現在の checkout に task-management 本体はなく、以下の実行手順を現行機能として扱わない。
 
 ## 状態
 

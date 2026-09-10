@@ -1,4 +1,12 @@
+---
+summary: SDD Phase 1 の runtime routing、review と knowledge closeout の実装計画・証跡を確認できる。
+knowledge_status: historical
+---
 # SDD Implementation Skill Implementation Plan
+
+## 適用範囲と履歴
+
+当時の SDD 設計・実装証跡であり、本文の current / active / 実行可能は当時の範囲を指す。SDD 既定ルートは [PR #58](https://github.com/omitsuhashi/skills/pull/58)、KIS / decide-in-order 本体は commit `99fdaf2` で削除されている。現行の作業ツリー保全規約は repository root の `AGENTS.md` を参照する。部分的な仕様置換と当時の承認・未承認の区別は本文に保持する。
 
 > **Status:** Phase 1 の historical plan。実装済みの過去 evidence として保持する。Superpowers-first revision の実装には再利用せず、更新された Written Spec の Human approval 後に[SDD Implementation Superpowers-first Revision Implementation Plan](sdd-implementation-superpowers-first-implementation-plan.md)を作成し、2026-07-27にHuman-approved Execution Planとなった。
 
@@ -708,3 +716,9 @@ Use the outer `superpowers:subagent-driven-development` final whole-branch revie
 ```
 
 If final review is clean, report `LOCAL_COMPLETE`. If it returns a material finding, use SDD's single bounded final fix wave and scoped re-review. Do not start a second final fix wave and do not perform remote actions.
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+現行Skill本体、runtime-only routing、material review、既定repository route、日本語knowledge closeoutを実装・検証したPhase 1のhistorical plan。後継revisionには再利用しない。

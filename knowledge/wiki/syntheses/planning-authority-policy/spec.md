@@ -1,4 +1,12 @@
+---
+summary: 五つの planning authority policy field と main integration / supporting agent / human decision の役割分担を確認できる。
+knowledge_status: mixed
+---
 # Planning Authority Policy 仕様
+
+## 適用範囲と履歴
+
+五つの planning authority field は現在の `skill-architecture.toml` と一致する。旧 loop の実行手順・gate と承認記録は履歴であり、現行の repository 作業境界は repository root の `AGENTS.md` を参照する。
 
 ## 問題設定 / 成功条件
 
@@ -207,3 +215,15 @@ git diff --check
 - [Loop Skill Context Optimization Spec](../loop-skill-context-optimization-spec.md)
 - [Loop Skill 運用単純化仕様](../loop-skill-operational-simplicity-spec.md)
 - [Planning Worktree Gate 仕様](../planning-worktree-gate/spec.md)
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+planning integrationをactive-runtime-selected main context、人間をdecision authority、supporting agentをadvisory/read-onlyとし、model / reasoningをdurable artifactへ保存しないcurrent canonical仕様。
+
+## 関連する実行証跡
+
+以下は旧 run の記録であり、現在の実行契約として再利用しない。承認済み bytes / seal / digest は当時の Git revision に対するものであり、探索 metadata を追加した現在のページの digest ではない。
+
+- [[wiki/syntheses/planning-authority-policy/input-packet.json|sealed Input Packet v2]] — Execution Plan Gate、5-field coverage fix、final branch integration、worker-only境界と未実施のPAP-004 cycle 2 reviewsを区別するlocal-only handoff。

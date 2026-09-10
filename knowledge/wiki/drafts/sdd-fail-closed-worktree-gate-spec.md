@@ -11,7 +11,8 @@ tags:
   - git-guard
   - specification
 aliases:
-  - SDD fail-closed worktree gate specification proposal
+- SDD fail-closed worktree gate specification proposal
+- 作業ツリーの停止条件
 status: promoted
 lifecycle_state: promoted
 review_state: closed-promoted
@@ -33,9 +34,15 @@ owner_decision: promote
 decision_actor: Human / repository maintainer (Canonical Owner)
 decision_date: 2026-08-14
 decision_reason: Human が Written Spec として明示承認したため
+summary: 作業ツリーへの書込み境界を最小の fail-closed gate へ縮小した判断と、失敗時の停止条件を確認できる。
+knowledge_status: draft
 ---
 
 # SDD fail-closed worktree gate 仕様（昇格済み draft）
+
+## 適用範囲と履歴
+
+このページは昇格前の proposal 履歴である。metadata による再昇格は行わず、本文に記載した canonical destination を参照する。
 
 > [!success] Promoted
 > Human / repository maintainer は 2026-08-14 に Written Spec を明示承認し、

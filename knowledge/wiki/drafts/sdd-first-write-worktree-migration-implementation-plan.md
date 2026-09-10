@@ -14,10 +14,16 @@ owner_decision: promote
 decision_actor: Human / repository maintainer
 decision_date: 2026-07-30
 decision_reason: Human が implementation plan として明示承認したため
+summary: First-Write の作業ツリー移行と後続 Epic の並列 issue adapter を分けた当時の実装範囲を確認できる。
+knowledge_status: draft
 ---
 
 
 # SDD first-write worktree migration Implementation Plan
+
+## 適用範囲と履歴
+
+このページは昇格前の proposal 履歴である。metadata による再昇格は行わず、本文に記載した canonical destination を参照する。
 
 ## Draft Review Decision
 

@@ -1,4 +1,12 @@
+---
+summary: Superpowers を使う当時の SDD lifecycle、Planning Controller と worker の責任、能力解決と後継仕様の範囲を確認できる。
+knowledge_status: historical
+---
 # SDD Implementation Skill 設計
+
+## 適用範囲と履歴
+
+当時の SDD 設計・実装証跡であり、本文の current / active / 実行可能は当時の範囲を指す。SDD 既定ルートは [PR #58](https://github.com/omitsuhashi/skills/pull/58)、KIS / decide-in-order 本体は commit `99fdaf2` で削除されている。現行の作業ツリー保全規約は repository root の `AGENTS.md` を参照する。部分的な仕様置換と当時の承認・未承認の区別は本文に保持する。
 
 ## 状態
 
@@ -410,3 +418,9 @@ test outputはtransient evidenceに留め、wikiへはcurrent behaviorだけを�
 - [Superpowers Subagent-Driven Development](https://github.com/obra/superpowers/blob/v6.2.0/skills/subagent-driven-development/SKILL.md)
 - `local-skill:/Users/omitsuhashi/.agents/skills/grill-with-docs/SKILL.md`
 - [skills/llm-wiki/SKILL.md](../../../skills/llm-wiki/SKILL.md)
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+Superpowersを開発方法論の正本とし、Planning Controller、Control Return、fresh pre-implementation worker、agent-owned Plan Readinessを含むcurrent lifecycleを、入力・依存skill・active runtime capabilityだけで解決するcanonical design。raw stage handoffはrepository外temporary locationへ置き、`.superpowers/**`のcurrent direct Git gateとportable/repository ownershipは後継のportable validation仕様へ委譲する。

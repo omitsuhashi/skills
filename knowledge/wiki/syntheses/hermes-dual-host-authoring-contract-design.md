@@ -2,9 +2,15 @@
 kind: synthesis
 created: 2026-07-17
 updated: 2026-07-28
+summary: 旧 dual-host skill / plugin packaging と discovery / live load の検証境界を確認できる。
+knowledge_status: historical
 ---
 
 # Codex / Hermes Dual-host Authoring Contract 設計
+
+## 適用範囲と履歴
+
+旧 dual-host 作成契約の履歴。[[wiki/syntheses/sdd-compatibility-removal-follow-up-plan|互換性要件の削除]] と現在の `skills/AGENTS.md` / `plugins/AGENTS.md` を照合し、本文の旧 validator・導入手順を現行契約として使わない。
 
 ## 状態
 
@@ -224,3 +230,9 @@ skill 本体は作り直さない。次を追加する。
 - historical source paths（current linksではない）: `plugins/task-management/plugin.yaml`、`plugins/task-management/__init__.py`、`plugins/task-management/.codex-plugin/plugin.json`
 - 2026-07-17 read-only local evidence: `hermes skills list`（exit 0、42 enabled、`decide-in-order` row なし）
 - 2026-07-17 historical / superseded read-only evidence: `hermes plugins list --plain --no-bundled`（exit 0、`enabled user 0.1.0 task-management`）
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+skill behaviorとplugin packaging compatibilityの双方でhistorical / non-executableな旧設計。過去のdiscovery / live load evidenceを参照する場合だけ使う。

@@ -1,4 +1,12 @@
+---
+summary: Planning Controller、Research / Spec / Plan worker の分離を当時の baseline に実装する計画を確認できる。
+knowledge_status: historical
+---
 # SDD Pre-Implementation Context Isolation Implementation Plan
+
+## 適用範囲と履歴
+
+当時の SDD 設計・実装証跡であり、本文の current / active / 実行可能は当時の範囲を指す。SDD 既定ルートは [PR #58](https://github.com/omitsuhashi/skills/pull/58)、KIS / decide-in-order 本体は commit `99fdaf2` で削除されている。現行の作業ツリー保全規約は repository root の `AGENTS.md` を参照する。部分的な仕様置換と当時の承認・未承認の区別は本文に保持する。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -1098,3 +1106,9 @@ state. No remote action is included in either execution mode.
 - [sdd-implementation SKILL.md](../../../skills/sdd-implementation/SKILL.md)
 - [skill-architecture.toml](../../../skill-architecture.toml)
 - `codex-plugin-cache:openai-curated-remote/superpowers/6.2.0/skills/writing-plans/SKILL.md`
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+baseline `66d93ae`の承認済み仕様を、Planning Controller contract、fresh Research / Spec Synthesis / Spec Review / Plan Author seam、TDD、knowledge closeout、final reviewへ落とした実行可能計画。

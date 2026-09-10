@@ -1,4 +1,12 @@
+---
+summary: backend-neutral plugin から GitHub 直接接続への移行計画と、final review で見つかった operation routing の計画欠落を確認できる。
+knowledge_status: historical
+---
 # GitHub Projects Direct Task Management Skill Implementation Plan
+
+## 適用範囲と履歴
+
+旧 task-management 実装と当時の判断の履歴。plugin から standalone への置換範囲は [[wiki/syntheses/direct-github-projects-task-management/issues|DGPTM 台帳]] を参照する。現在の checkout に task-management 本体はなく、以下の実行手順を現行機能として扱わない。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -984,3 +992,20 @@ Expected: local branch contains four reviewed implementation commits plus planni
 
 - [GitHub Projects 直接接続型 Task Management Skill 仕様](spec.md)
 - [GitHub Projects 直接接続型 Task Management Skill Issue 台帳](issues.md)
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+DGPTM-001からDGPTM-004のstandalone migrationに使ったExecution Plan Gate承認済み・実行完了のhistorical plan。final reviewで判明したoperation routing等の欠落はcurrent Issue台帳とlogで補正済み。
+
+## 訂正履歴への入口
+
+当時の主張・承認・検証の訂正は [[log|保存された履歴]] の次の見出しを検索して確認する。先行する完了・適用表現だけでは判断しない。
+
+- `[2026-07-23] final-review-fix-pending-evaluation | GitHub Projects Direct Task Management Skill`
+- `[2026-07-23] final-re-review-capability-and-delivery-correction | GitHub Projects Direct Task Management Skill`
+
+## Final review による計画欠落の訂正
+
+2026-07-23 の final review は、この計画の generic default flow と operation-specific behavior test に欠落があり、read-only request が create flow に入る危険を指摘した。read / search / list は zero-write、create / register のみ新規作成、edit / comment / non-terminal update は要求プロパティだけを変更する。その後の re-review では、write mutation 前の Issue / Project capability と resolved target permission の complete preflight も補正された。本文の古い計画は承認当時の証跡であり、この欠落を解消済みの設計として読み替えない。詳細は上の二つの訂正記録と [[wiki/syntheses/direct-github-projects-task-management/issues|DGPTM 台帳]] にある。

@@ -1,4 +1,14 @@
+---
+summary: material finding に絞る review と phase 別 skill 読込みの context contract schema v3 を確認できる。
+knowledge_status: historical
+aliases:
+- フェーズ別読込と実装レビュー
+---
 # Loop Review Simplicity And Phase Skills 仕様
+
+## 適用範囲と履歴
+
+旧 grill-to-pr-loop / issue-implementation-loop の設計・実行証跡。[[wiki/syntheses/sdd-implementation-phase2-removal-plan|旧 loop skill の除去記録]] により executable surface / restart entrypoint ではない。本文の current 表現や packet / envelope / baseline は当時の範囲に限り、再実行には新しい承認と run を必要とする。現行の作業境界は repository root の `AGENTS.md` を参照する。
 
 ## 状態
 
@@ -223,3 +233,15 @@ git diff --check
 - `../../../../skills/issue-implementation-loop/references/review-gate.md`
 - `../../../../skills/issue-implementation-loop/references/mental-model.md`
 - `../../../../scripts/skill_context/contract.py`
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+material findingだけを報告するreview基準と、phase-owned workflow skillをoperation/dispatch別に分離しtask-triggered skillをcurrent phaseだけでon-demand読込するcontext contract schema v3のSpec Gate承認済み仕様。
+
+## 関連する実行証跡
+
+以下は旧 run の記録であり、現在の実行契約として再利用しない。承認済み bytes / seal / digest は当時の Git revision に対するものであり、探索 metadata を追加した現在のページの digest ではない。
+
+- [[wiki/syntheses/loop-review-simplicity-and-phase-skills/input-packet.json|Loop Review Simplicity And Phase Skills Input Packet]] — 旧loop familyの過去runを固定したhistorical / non-executable Input Packet v2。current validatorで再利用せず、新しいapproval/new runを作る。

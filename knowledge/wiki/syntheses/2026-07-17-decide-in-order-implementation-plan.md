@@ -1,4 +1,14 @@
+---
+summary: 独立した意思決定支援 skill の test-first 実装と、旧 task-management plugin integration の範囲を確認できる。
+knowledge_status: historical
+aliases:
+- Decide In Order Skill 実装計画
+---
 # Decide In Order Skill Implementation Plan
+
+## 適用範囲と履歴
+
+意思決定支援 skill の設計履歴。`decide-in-order` 本体は commit `99fdaf2` で削除されており、本文の current は当時の状態を指す。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -891,3 +901,9 @@ Expected: clean checkout; no untracked `goals/**/*.json` remains; every existing
 - `skill-creator:/Users/omitsuhashi/.codex/skills/.system/skill-creator/SKILL.md`
 - `plugin-creator:/Users/omitsuhashi/.codex/skills/.system/plugin-creator/SKILL.md`
 - `superpowers:writing-plans:/Users/omitsuhashi/.codex/plugins/cache/openai-curated-remote/superpowers/6.1.1/skills/writing-plans/SKILL.md`
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+standalone decision skillのtest-first実装とforward testを記録するhistorical plan。旧task-management plugin integrationはcurrent task contractではない。

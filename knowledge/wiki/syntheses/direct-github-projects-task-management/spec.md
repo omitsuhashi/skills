@@ -1,4 +1,12 @@
+---
+summary: GitHub Issue と一つの Project に直接接続する standalone task-management の保存先・権限・操作契約を確認できる。
+knowledge_status: historical
+---
 # GitHub Projects 直接接続型 Task Management Skill 仕様
+
+## 適用範囲と履歴
+
+旧 task-management 実装と当時の判断の履歴。plugin から standalone への置換範囲は [[wiki/syntheses/direct-github-projects-task-management/issues|DGPTM 台帳]] を参照する。現在の checkout に task-management 本体はなく、以下の実行手順を現行機能として扱わない。
 
 ## 状態
 
@@ -413,3 +421,22 @@ live write test は別の明示承認を必要とし、専用 test Issue / Proje
 - [Finding your projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects/finding-your-projects)
 - [GitHub GraphQL ProjectV2 owner reference](https://docs.github.com/en/graphql/reference/orgs#projectv2)
 - [GitHub MCP Server](https://github.com/github/github-mcp-server)
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+1個のcaller-selected Projectへ複数repositoryのIssueを集約し、standalone skillからGitHub MCPへ直接接続するWritten Spec Gate承認済みのcurrent設計。
+
+## 関連する実行証跡
+
+以下は旧 run の記録であり、現在の実行契約として再利用しない。承認済み bytes / seal / digest は当時の Git revision に対するものであり、探索 metadata を追加した現在のページの digest ではない。
+
+- [[wiki/syntheses/direct-github-projects-task-management/input-packet.json|GitHub Projects Direct Task Management Skill Input Packet]] — approved spec bindingとIssue Gate承認済みDGPTM-001〜DGPTM-004を`local_only`で固定したsealed Input Packet v2。
+
+## 訂正履歴への入口
+
+当時の主張・承認・検証の訂正は [[log|保存された履歴]] の次の見出しを検索して確認する。先行する完了・適用表現だけでは判断しない。
+
+- `[2026-07-23] final-review-fix-pending-evaluation | GitHub Projects Direct Task Management Skill`
+- `[2026-07-23] final-re-review-capability-and-delivery-correction | GitHub Projects Direct Task Management Skill`

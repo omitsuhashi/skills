@@ -4,9 +4,17 @@ created: 2026-07-17
 updated: 2026-07-17
 source_files:
   - ../../raw/sources/2026-07-17-decide-in-order-source-brief.md
+summary: 目的、守るもの、許容損失、核心の問いから始める実行支援型 skill の一次資料と設計時の解釈。
+knowledge_status: historical
+aliases:
+- 決める順番
 ---
 
 # Decide In Order Skill 原案
+
+## 適用範囲と履歴
+
+意思決定支援 skill の設計履歴。`decide-in-order` 本体は commit `99fdaf2` で削除されており、本文の current は当時の状態を指す。
 
 ## 概要
 

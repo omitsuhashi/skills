@@ -2,9 +2,17 @@
 kind: synthesis
 created: 2026-07-17
 updated: 2026-07-17
+summary: 旧 Codex / Hermes dual-host 作成契約、manifest / registration と当時の互換性検証を確認できる。
+knowledge_status: historical
+aliases:
+- Codex / Hermes Dual-host Authoring Contract 実装計画
 ---
 
 # Codex / Hermes Dual-host Authoring Contract Implementation Plan
+
+## 適用範囲と履歴
+
+旧 dual-host 作成契約の履歴。[[wiki/syntheses/sdd-compatibility-removal-follow-up-plan|互換性要件の削除]] と現在の `skills/AGENTS.md` / `plugins/AGENTS.md` を照合し、本文の旧 validator・導入手順を現行契約として使わない。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -787,3 +795,9 @@ Expected: final CI/evidence commit.
 - [Hermes Agent Skills System](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/skills.md)
 - [Build a Hermes Plugin](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/guides/build-a-hermes-plugin.md)
 - [Codex / Hermes Dual-host Authoring Contract 設計](hermes-dual-host-authoring-contract-design.md)
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+historical / non-executableな旧dual-host plan。原文は過去の実装証跡として保持し、current skill behaviorの実行指示には使わない。

@@ -1,4 +1,14 @@
+---
+summary: Superpowers-first revision の lifecycle と当時の host adapter、後続 runtime 改訂との関係を確認できる。
+knowledge_status: historical
+aliases:
+- SDD Implementation Superpowers-first Revision 実装計画
+---
 # SDD Implementation Superpowers-first Revision Implementation Plan
+
+## 適用範囲と履歴
+
+当時の SDD 設計・実装証跡であり、本文の current / active / 実行可能は当時の範囲を指す。SDD 既定ルートは [PR #58](https://github.com/omitsuhashi/skills/pull/58)、KIS / decide-in-order 本体は commit `99fdaf2` で削除されている。現行の作業ツリー保全規約は repository root の `AGENTS.md` を参照する。部分的な仕様置換と当時の承認・未承認の区別は本文に保持する。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -670,3 +680,9 @@ Task 2 full verification bundleとして、repository scripts 68 tests、skill a
 ### 未実施 remote action と residual risk
 
 push、PR作成、merge、release、live install、issue / comment / project変更を含むremote writeは実施していない。residual material riskはない。
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+実装済みbaselineを保持するhistorical / non-executable plan。runtime固有部分はagent-agnostic revisionにsupersedeされ、current runtime behaviorの実行入口には使わない。

@@ -4,9 +4,15 @@ tags:
   - llm-wiki
 aliases:
   - LLM Wiki 再作成方針
+summary: 原文に基づく知識統合の三層と Obsidian authoring の委譲、および旧 authoring discovery を復元しない判断を確認できる。
+knowledge_status: mixed
 ---
 
 # 原文に基づく LLM Wiki の再作成
+
+## 適用範囲と履歴
+
+知識統合の三層、出典・矛盾の保持と Obsidian 委譲は継続する。本文の index 同期・log 追記の運用だけは [Issue #59](https://github.com/omitsuhashi/skills/issues/59) により置換された。現行の探索と完了条件は [[AGENTS|local schema]] と `skills/llm-wiki/SKILL.md` を参照する。以下の再作成・検証記録は当時の証跡として保持する。
 
 2026-09-09、Human は貼り付けた「LLM Wiki」の原文を基準に、自己完結した
 `SKILL.md` と必要な参照整合だけを作成する方針を承認した。今回だけ SDD 必須

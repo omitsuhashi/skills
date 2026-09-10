@@ -1,4 +1,12 @@
+---
+summary: 'PR #19 後の loop skill / llm-wiki context contract、artifact freshness、CI regression 固定の source summary。'
+knowledge_status: historical
+---
 # Skill Repository Optimization V4 Design
+
+## 適用範囲と履歴
+
+旧 grill-to-pr-loop / issue-implementation-loop の設計・実行証跡。[[wiki/syntheses/sdd-implementation-phase2-removal-plan|旧 loop skill の除去記録]] により executable surface / restart entrypoint ではない。本文の current 表現や packet / envelope / baseline は当時の範囲に限り、再実行には新しい承認と run を必要とする。現行の作業境界は repository root の `AGENTS.md` を参照する。
 
 ## 概要
 

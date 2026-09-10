@@ -4,9 +4,15 @@ created: 2026-06-08
 updated: 2026-06-13
 source_files:
   - knowledge/raw/sources/2026-06-08 LLM Wiki Draft Review And Canonicalize Design.md
+summary: '`llm-wiki` skill に `draft-review` と `canonicalize` を first-class mode として追加する添付設計の source summary。'
+knowledge_status: historical
 ---
 
 # 2026-06-08 LLM Wiki Draft Review And Canonicalize Design
+
+## 適用範囲と履歴
+
+旧 llm-wiki の設計・検証履歴であり、本文の current 表現は当時の状態を指す。[[wiki/syntheses/llm-wiki-from-pattern|LLM Wiki 再作成方針]] が旧 authoring discovery / multi-root / context contract を復元しないと定めた。現行の所有者・草案・探索ルールは [[AGENTS|local schema]] と `skills/llm-wiki/SKILL.md` を参照する。
 
 ## 要約
 

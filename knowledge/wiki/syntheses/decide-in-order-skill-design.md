@@ -4,9 +4,15 @@ created: 2026-07-17
 updated: 2026-07-23
 source_files:
   - ../../raw/sources/2026-07-17-decide-in-order-source-brief.md
+summary: 目的・許容損失・核心の問いから決める順番を整える独立 state-free skill の設計を確認できる。
+knowledge_status: historical
 ---
 
 # Decide In Order Skill 設計
+
+## 適用範囲と履歴
+
+意思決定支援 skill の設計履歴。`decide-in-order` 本体は commit `99fdaf2` で削除されており、本文の current は当時の状態を指す。
 
 ## 状態
 
@@ -264,3 +270,9 @@ forward test は期待回答を渡さない新しい subagent へ skill と生�
 - [current task-management spec](direct-github-projects-task-management/spec.md)
 - [historical Portfolio OS Task Backend Plugin Skill Spec](portfolio-os-task-backend-plugin-skill-spec.md)
 - `skill-creator:/Users/omitsuhashi/.codex/skills/.system/skill-creator/SKILL.md`
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+独立state-free skillの判断順序、適応的表示、DecisionRecordを記録する設計。旧task-management plugin integrationはhistoricalであり、current skillはtask storageを所有しない。

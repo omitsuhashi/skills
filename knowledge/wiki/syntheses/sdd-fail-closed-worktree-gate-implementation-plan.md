@@ -29,9 +29,15 @@ provenance:
 relations:
   - "[[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|Implements: SDD fail-closed worktree gate 仕様]]"
   - "[[wiki/syntheses/sdd-plan-ownership-alignment|Composes with: SDD Plan Ownership Alignment 仕様]]"
+summary: guard / activation を追加しない最小 worktree gate の実装、レビュー、残存 harness risk を確認できる。
+knowledge_status: historical
 ---
 
 # SDD fail-closed worktree gate 実装計画
+
+## 適用範囲と履歴
+
+当時の SDD 設計・実装証跡であり、本文の current / active / 実行可能は当時の範囲を指す。SDD 既定ルートは [PR #58](https://github.com/omitsuhashi/skills/pull/58)、KIS / decide-in-order 本体は commit `99fdaf2` で削除されている。現行の作業ツリー保全規約は repository root の `AGENTS.md` を参照する。部分的な仕様置換と当時の承認・未承認の区別は本文に保持する。
 
 > [!success] Human-approved current plan
 > 本計画は2026-08-14のscope reductionを反映する。旧draftはhistorical proposal evidenceであり、guard/activation設計をcurrent planとして復活させない。
@@ -92,3 +98,9 @@ Task reviewはfix round 4後にclean。whole-branch reviewの4 Important finding
 2件はcontroller-parkedのnon-production harness fidelity riskとして残る。harness modelではcheck後のconcurrent target creationを`os.replace`がclobberし得ること、cleanup `unlink` failureで`.sdd-stage-*`が残りescapeし得ることである。このharnessはproduction-strength concurrent transactionではなく、いずれのriskもrepo-owned SDDからoriginal `main`へwrite/commitするpathを作らない。
 
 このためmaterial findingなしというideal acceptanceは文字どおりには満たしていない。controller adjudicationにより、最小5要件とraw Git boundaryを満たすsource resultを`LOCAL_COMPLETE_WITH_PARKED_HARNESS_RISKS`とし、無条件の`LOCAL_COMPLETE`は主張しない。withdrawn済みのguard、hook、activation、inventory、bootstrap、lifecycle、external-cache、exact-tuple、general rollback設計は不在のままである。resultはlocal-onlyで、push、PR、install、activation、`main` integrationは未実施。
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+Human承認済みのcurrent minimal plan。Task review、fresh verification、one whole-branch review、唯一のfix wave、scoped re-reviewを完了し、2件のnon-production harness riskをparkした`LOCAL_COMPLETE_WITH_PARKED_HARNESS_RISKS` / local-only。

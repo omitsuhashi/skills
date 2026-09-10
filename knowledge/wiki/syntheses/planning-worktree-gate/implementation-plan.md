@@ -1,4 +1,12 @@
+---
+summary: planning identity、main 保全と physical commit reachability の実装・検証証跡を確認できる。
+knowledge_status: historical
+---
 # Planning Worktree Gate Implementation Plan
+
+## 適用範囲と履歴
+
+旧 grill-to-pr-loop / issue-implementation-loop の設計・実行証跡。[[wiki/syntheses/sdd-implementation-phase2-removal-plan|旧 loop skill の除去記録]] により executable surface / restart entrypoint ではない。本文の current 表現や packet / envelope / baseline は当時の範囲に限り、再実行には新しい承認と run を必要とする。現行の作業境界は repository root の `AGENTS.md` を参照する。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:test-driven-development` and implement each task with RED → GREEN → REFACTOR. The execution coordinator does not implement worker scope.
 
@@ -362,3 +370,9 @@ approved specに残る`validate_dual_host_authoring.py`はhistorical plan defect
 
 - [Planning Worktree Gate 仕様](spec.md)
 - [Planning Worktree Gate Issue 台帳](issues.md)
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+PWTG-001〜PWTG-004をTDDで実装完了し、planning identity、default checkout snapshot、physical final head reachabilityの実測evidenceを記録したExecution Plan。

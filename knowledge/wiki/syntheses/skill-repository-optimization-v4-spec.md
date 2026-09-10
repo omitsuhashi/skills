@@ -1,4 +1,14 @@
+---
+summary: 'PR #19 後の read-set 正本化、推定 token budget、Worker Packet V2、Resume Brief V2、`llm-wiki` contract、CI 固定の Spec / Issue / Execution Plan Gate 承認済み契約。'
+knowledge_status: historical
+aliases:
+- コンテキスト最適化 V4
+---
 # Skill Repository Optimization V4 Spec
+
+## 適用範囲と履歴
+
+旧 grill-to-pr-loop / issue-implementation-loop の設計・実行証跡。[[wiki/syntheses/sdd-implementation-phase2-removal-plan|旧 loop skill の除去記録]] により executable surface / restart entrypoint ではない。本文の current 表現や packet / envelope / baseline は当時の範囲に限り、再実行には新しい承認と run を必要とする。現行の作業境界は repository root の `AGENTS.md` を参照する。
 
 ## Historical / superseded note
 
@@ -219,3 +229,11 @@ Spec Gate / Issue Gate / Execution Plan Gate は承認後に、承認済み loca
 - historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/context-contract.toml`
 - historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/assets/schemas/worker-packet.schema.json`
 - historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/scripts/build_resume_brief.py`
+
+## 関連する実行証跡
+
+以下は旧 run の記録であり、現在の実行契約として再利用しない。承認済み bytes / seal / digest は当時の Git revision に対するものであり、探索 metadata を追加した現在のページの digest ではない。
+
+- [[wiki/syntheses/skill-repository-optimization-v4-input-packet.json|Skill Repository Optimization V4 Input Packet]] — historical / non-executable な Input Packet v1。過去の実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
+- [[wiki/syntheses/skill-repository-optimization-v4-execution-envelope.json|Skill Repository Optimization V4 Execution Envelope]] — historical / non-executable な Execution Envelope v1。過去の実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
+- [[wiki/syntheses/skill-repository-optimization-v4-context-baseline.json|Skill Repository Optimization V4 Context Baseline]] — 削除済みloop familyのSRO4-001 context metricsを残すhistorical / non-executable baseline。current reporter / validatorのbaseline比較には使わない。

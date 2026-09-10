@@ -1,4 +1,15 @@
+---
+summary: loop 系 skill の適用基準、役割境界モデル、workflow complexity レポートを追加する Spec Gate 承認済み契約。
+knowledge_status: historical
+aliases:
+- 役割境界モデルと mental model
+- コンテキスト最適化の運用単純化
+---
 # Loop Skill 運用単純化仕様
+
+## 適用範囲と履歴
+
+旧 grill-to-pr-loop / issue-implementation-loop の設計・実行証跡。[[wiki/syntheses/sdd-implementation-phase2-removal-plan|旧 loop skill の除去記録]] により executable surface / restart entrypoint ではない。本文の current 表現や packet / envelope / baseline は当時の範囲に限り、再実行には新しい承認と run を必要とする。現行の作業境界は repository root の `AGENTS.md` を参照する。
 
 ## 状態
 
@@ -147,3 +158,10 @@ Spec Gate / Issue Gate / Execution Plan Gate は承認後に、承認済み loca
 - [skill-architecture.toml](../../../skill-architecture.toml)
 - [scripts/report_skill_context.py](../../../scripts/report_skill_context.py)
 - [scripts/validate_skill_context.py](../../../scripts/validate_skill_context.py)
+
+## 関連する実行証跡
+
+以下は旧 run の記録であり、現在の実行契約として再利用しない。承認済み bytes / seal / digest は当時の Git revision に対するものであり、探索 metadata を追加した現在のページの digest ではない。
+
+- [[wiki/syntheses/loop-skill-operational-simplicity-input-packet.json|Loop Skill 運用単純化 Input Packet]] — historical / non-executable な Input Packet v1。過去の LSOS 実行証跡として保持し、current validator では再利用せず new approval/new run を作る。
+- [[wiki/syntheses/loop-skill-operational-simplicity-execution-envelope.json|Loop Skill 運用単純化 Execution Envelope]] — historical / non-executable な Execution Envelope v1。過去の LSOS 実行証跡として保持し、current validator では再利用せず new approval/new run を作る。

@@ -1,4 +1,12 @@
+---
+summary: Planning Worktree Gate Issue 台帳のローカルIssue、依存関係、実装結果、レビュー証跡と残課題を確認できる。
+knowledge_status: historical
+---
 # Planning Worktree Gate Issue 台帳
+
+## 適用範囲と履歴
+
+旧 grill-to-pr-loop / issue-implementation-loop の設計・実行証跡。[[wiki/syntheses/sdd-implementation-phase2-removal-plan|旧 loop skill の除去記録]] により executable surface / restart entrypoint ではない。本文の current 表現や packet / envelope / baseline は当時の範囲に限り、再実行には新しい承認と run を必要とする。現行の作業境界は repository root の `AGENTS.md` を参照する。
 
 ## Epic
 
@@ -205,3 +213,9 @@ approved spec に記録された `validate_dual_host_authoring.py` は historica
 ## 出典
 
 - [Planning Worktree Gate 仕様](spec.md)
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+PWTG-001〜PWTG-004の完了状態、全commit、Acceptance 1〜8、fresh verification、review、local_only境界を集約したcanonical closeout台帳。

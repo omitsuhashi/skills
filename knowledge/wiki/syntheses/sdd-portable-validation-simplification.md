@@ -17,9 +17,15 @@ tags:
   - specification
 aliases:
   - SDD Portable Validation Simplification
+summary: portable skill と repository 検証の所有分離、direct Git gate、並列実行の eligibility と sequential fallback を確認できる。
+knowledge_status: historical
 ---
 
 # SDD portable validation と責務単純化仕様
+
+## 適用範囲と履歴
+
+当時の SDD 設計・実装証跡であり、本文の current / active / 実行可能は当時の範囲を指す。SDD 既定ルートは [PR #58](https://github.com/omitsuhashi/skills/pull/58)、KIS / decide-in-order 本体は commit `99fdaf2` で削除されている。現行の作業ツリー保全規約は repository root の `AGENTS.md` を参照する。部分的な仕様置換と当時の承認・未承認の区別は本文に保持する。
 
 > [!success] Human-approved Written Spec
 > Human は2026-08-14に本仕様全体をWritten Specとして承認し、その後current `origin/main`を取り込んで重複を整合した上で修正を継続するbounded amendmentを直接指示した。statusは`accepted`、review stateは`approved`のままとし、portable direct-Git goalと承認済みauthorityは変更しない。remote actionは別途明示承認を要する。
@@ -289,3 +295,9 @@ Human-approved direct Git amendment後のfresh independent rereviewは`ready_for
 - authority: Human-confirmed decisionsを保持したadvisory synthesis。2026-08-14にHumanはvalidator necessity reviewの結論を承認し、bundled standalone validator要件をdirect Git gateへ置換した。raw report / transcript / runtime pathはdurable pageへ複製していない。
 - Written Spec approval: 2026-08-14にHumanがcurrent spec全体を承認した。`approval_snapshot_sha256`はactivation metadata追加前のreview済みbytesを識別する。
 - origin/main incorporation amendment: Humanの直接指示により`origin/main` `15152126fe0785bcf789a9ecbfe752b9e368fc4e`を取り込み、planning baseline `4d67bed6d297ba4e9a0f44559d3ca45c9a035976`で重複current behaviorを整合した。root validatorのclean-clone boundary repairが参照するactual policy-root parent identityはrepository-owned evidenceであり、portable contract、prompt、reference、fixtureへ移さない。
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+2026-08-14 Human-approved amended active Written Spec。standalone validatorを追加せず、explicit targetに対する三つのdirect Git gateをportable contractとする。source repositoryのcurrent authorityはroot-owned strict-zero post-policy validationであり、SDD First-Write fail-closed containmentとexact seven-role KIS wiringを後続deduplicationでも保持する。agent-owned parallel eligibility、unknown時のsequential fallback、isolated package closureもcurrent contractである。

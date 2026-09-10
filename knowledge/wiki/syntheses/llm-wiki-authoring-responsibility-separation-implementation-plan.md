@@ -1,4 +1,14 @@
+---
+summary: portable contract、semantic schema、Obsidian 移行と知識 closeout の当時の実装・検証手順を確認できる。
+knowledge_status: historical
+aliases:
+- llm-wiki authoring 責務分離実装計画
+---
 # llm-wiki Authoring Responsibility Separation Implementation Plan
+
+## 適用範囲と履歴
+
+旧 llm-wiki の設計・検証履歴であり、本文の current 表現は当時の状態を指す。[[wiki/syntheses/llm-wiki-from-pattern|LLM Wiki 再作成方針]] が旧 authoring discovery / multi-root / context contract を復元しないと定めた。現行の所有者・草案・探索ルールは [[AGENTS|local schema]] と `skills/llm-wiki/SKILL.md` を参照する。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -465,3 +475,15 @@ Plan saved at `knowledge/wiki/syntheses/llm-wiki-authoring-responsibility-separa
 - Task 4 closeout後のfull fresh verificationは、LLM Wiki unittest、12 topology × modeのcontext validation / warning-free report、repository skill architecture validation、skill-creator quick validation、focused authoring-boundary suite、baseline rangeとworking treeの両diff checkをすべてexit `0`で完了した。repository checkはMarkdown / Obsidian parser、renderer、formatterを実装せず、rendering evidenceとして扱っていない。
 - 承認済みproduct responsibility boundary、各taskのacceptance criteria、`knowledge/raw/**`のbytesは変更していない。installed-skill-directed authoring reviewはstatic skill-directed reviewとして`PASS`し、Critical / Important findingはない。active runtimeにactual Obsidian reading-view controlはなく、`Obsidian reading-view rendering: unavailable`であり、rendered proofは主張しない。本executionのTask 4 historyは一件のcloseout commitと一件のscoped review-fix commitだけを保持し、本execution-policy correctionは後者へamendする。Task 1–3のreviewed commitsはamendまたはsquashしない。pendingなのはcontroller-owned Step 7 whole-branch reviewだけであり、その承認前に`LOCAL_COMPLETE`を宣言しない。
 - final whole-branch reviewの3件のImportant findingは、一回のfinal fix waveでTDD対応した。public Outputs / Required Capabilities、legacy semantic-field mappingとcreation / last-update identity、local cross-root target identity delegationを補完し、21件のLLM Wiki suite、context validation / warning-free report、architecture validation、skill-creator quick validation、37-path assertion、diff / scope checksをfreshに成功させた。product boundaryは変更せず、Step 7のfresh re-reviewはpendingのままである。
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+`Implemented / closeout verified`。承認済み仕様を、portable contract、semantic schema、Obsidian移行、durable knowledge closeout、full fresh verificationへ実装したcurrent plan。
+
+## 訂正履歴への入口
+
+当時の主張・承認・検証の訂正は [[log|保存された履歴]] の次の見出しを検索して確認する。先行する完了・適用表現だけでは判断しない。
+
+- `[2026-07-30] final-review-fix | llm-wiki authoring responsibility separation`

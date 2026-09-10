@@ -1,4 +1,14 @@
+---
+summary: '`issue-implementation-loop` の `_common.py` と単一巨大 test file を internal common lib / behavior-domain tests へ分割する後続実装契約。'
+knowledge_status: historical
+aliases:
+- コンテキスト最適化の common lib 分割
+---
 # Issue Implementation Loop Common Lib Split Spec
+
+## 適用範囲と履歴
+
+旧 grill-to-pr-loop / issue-implementation-loop の設計・実行証跡。[[wiki/syntheses/sdd-implementation-phase2-removal-plan|旧 loop skill の除去記録]] により executable surface / restart entrypoint ではない。本文の current 表現や packet / envelope / baseline は当時の範囲に限り、再実行には新しい承認と run を必要とする。現行の作業境界は repository root の `AGENTS.md` を参照する。
 
 ## 目的
 
@@ -160,3 +170,9 @@ UV_CACHE_DIR=/private/tmp/uv-cache uv run --isolated --python 3.12 --with 'PyYAM
 - historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/scripts/check_capabilities.py`
 - historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/scripts/compute_next_actions.py`
 - historical production path（Phase 2で削除済み）: `skills/issue-implementation-loop/scripts/validate_delivery_plan.py`
+
+## 関連する実行証跡
+
+以下は旧 run の記録であり、現在の実行契約として再利用しない。承認済み bytes / seal / digest は当時の Git revision に対するものであり、探索 metadata を追加した現在のページの digest ではない。
+
+- [[wiki/syntheses/issue-implementation-loop-common-lib-split-input-packet.json|Issue Implementation Loop Common Lib Split Input Packet]] — historical / non-executable な Input Packet v1。過去の実行証跡として保持し、current validator では再利用せず new approval/new run を作る。

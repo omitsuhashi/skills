@@ -13,9 +13,15 @@ implementation_state: local-complete-remote-update-pending
 aliases:
   - SDD agent-owned execution plan
   - SDD plan readiness implementation plan
+summary: Plan ownership、repository 外 handoff、cleanup / Git 検証とレビューの durable evidence を確認できる。
+knowledge_status: historical
 ---
 
 # SDD Plan Ownership Alignment 実装計画
+
+## 適用範囲と履歴
+
+当時の SDD 設計・実装証跡であり、本文の current / active / 実行可能は当時の範囲を指す。SDD 既定ルートは [PR #58](https://github.com/omitsuhashi/skills/pull/58)、KIS / decide-in-order 本体は commit `99fdaf2` で削除されている。現行の作業ツリー保全規約は repository root の `AGENTS.md` を参照する。部分的な仕様置換と当時の承認・未承認の区別は本文に保持する。
 
 ## Plan Binding
 
@@ -999,3 +1005,22 @@ separate pending action。
 - [[sdd-plan-ownership-alignment|SDD Plan Ownership Alignment 仕様]] — requirement、acceptance、authority boundary の binding source。
 - [[sdd-implementation-skill-design|SDD Implementation Skill 設計]] — broader current lifecycle contract。
 - [[sdd-preimplementation-context-isolation-spec|SDD 実装前コンテキスト分離仕様]] — Planning Controller / fresh worker boundary の current source。
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+approved specをbaseline `c370fe1`へbindingしたagent-authored canonical plan。POA-1〜POA-8のlocal work、fresh combined verification、canonical whole-branch review、bounded fix `bbfd06e`、Spec / Standards scoped re-reviewは完了し`LOCAL_COMPLETE`である。current Git index / final treeは`.superpowers/**` entry zero、3 local copiesはignored / untracked、`f07aebc`を含むancestor historyはrewriteせず保持する。authorized non-force remote branch updateはpending / unpublishedで、merge、release、live installは未承認である。
+
+## 訂正履歴への入口
+
+当時の主張・承認・検証の訂正は [[log|保存された履歴]] の次の見出しを検索して確認する。先行する完了・適用表現だけでは判断しない。
+
+- `[2026-08-14] review-correction | SDD Plan Ownership Alignment plan readiness`
+- `[2026-08-14] provenance-correction | SDD Plan Ownership Alignment plan review`
+- `[2026-08-14] final-review-correction | SDD Plan Ownership Alignment semantic contract`
+- `[2026-08-14] authority-evidence-correction | SDD Plan Ownership Alignment`
+- `[2026-08-14] evidence-correction | SDD POA-8 responsibility map and CI history gate`
+- `[2026-08-14] correction | SDD post-merge transient history validation`
+- `[2026-08-14] correction | SDD strict-zero CI validation`
+- `[2026-08-14] evidence-correction | SDD strict-zero clean-clone regression`

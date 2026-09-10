@@ -1,4 +1,12 @@
+---
+summary: Loop Skill 運用単純化 Issue 台帳のローカルIssue、依存関係、実装結果、レビュー証跡と残課題を確認できる。
+knowledge_status: historical
+---
 # Loop Skill 運用単純化 Issue 台帳
+
+## 適用範囲と履歴
+
+旧 grill-to-pr-loop / issue-implementation-loop の設計・実行証跡。[[wiki/syntheses/sdd-implementation-phase2-removal-plan|旧 loop skill の除去記録]] により executable surface / restart entrypoint ではない。本文の current 表現や packet / envelope / baseline は当時の範囲に限り、再実行には新しい承認と run を必要とする。現行の作業境界は repository root の `AGENTS.md` を参照する。
 
 ## 状態
 
@@ -317,3 +325,9 @@ LSOS-001 から LSOS-003 の成果を統合し、regression tests、wiki index/l
 実装ループ中は `local_only`。
 
 GitHub issue mirror と merge は未承認。2026-06-29 のユーザー承認により、branch push と [draft PR #22](https://github.com/omitsuhashi/skills/pull/22) 作成は実施済み。final PR merge は常に human-only。
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+loop 系 skill 運用単純化の日本語 local-first 最終台帳。LSOS-001 から LSOS-004 の実装証跡、レビュー結果、全体検証、remote boundary、draft PR #22 を集約する。

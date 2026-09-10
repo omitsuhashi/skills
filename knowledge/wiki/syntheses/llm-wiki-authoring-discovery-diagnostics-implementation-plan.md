@@ -7,10 +7,18 @@ tags:
   - authoring-discovery
   - skill-architecture
 aliases:
-  - llm-wiki authoring discovery diagnostics implementation plan
+- llm-wiki authoring discovery diagnostics implementation plan
+- evidence-bearing BLOCKED
+- unobserved candidates
+summary: 旧 authoring discovery の判定・不足診断と、post-hoc replay に関する証跡訂正を確認できる。
+knowledge_status: historical
 ---
 
 # llm-wiki Authoring Discovery Diagnostics Implementation Plan
+
+## 適用範囲と履歴
+
+旧 llm-wiki の設計・検証履歴であり、本文の current 表現は当時の状態を指す。[[wiki/syntheses/llm-wiki-from-pattern|LLM Wiki 再作成方針]] が旧 authoring discovery / multi-root / context contract を復元しないと定めた。現行の所有者・草案・探索ルールは [[AGENTS|local schema]] と `skills/llm-wiki/SKILL.md` を参照する。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. Skill-document edits also require `superpowers:writing-skills` with its required `superpowers:test-driven-development` background; durable knowledge edits require `llm-wiki` and the local `obsidian` authoring profile.
 
@@ -371,3 +379,15 @@ pending、remote writeは未実施である。
 ## 出典
 
 - [[llm-wiki-authoring-responsibility-separation-spec#Authoring discovery diagnostics focused revision|Authoring discovery diagnostics focused revision]] — semantic selector、diagnostic evidence、precedence guard、focused scopeを定めるcurrent Written Spec。
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+2026-08-08のHuman承認計画を、reviewed two-file docs-only production contractとHuman承認済みのpost-hoc old-contract replay evidence exception/correctionを記録するImplementation closeout candidateへ同期した。approved task contractは維持し、scoped final-fix re-reviewを待つ。
+
+## 訂正履歴への入口
+
+当時の主張・承認・検証の訂正は [[log|保存された履歴]] の次の見出しを検索して確認する。先行する完了・適用表現だけでは判断しない。
+
+- `[2026-08-08] implementation-plan-review-correction | llm-wiki Authoring Discovery Diagnostics`

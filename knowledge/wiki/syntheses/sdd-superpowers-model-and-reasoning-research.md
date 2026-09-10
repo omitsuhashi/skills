@@ -1,4 +1,14 @@
+---
+summary: Superpowers v6.2.0 のモデル選択、思考強度と host adapter 境界を一次情報から調べた結果を確認できる。
+knowledge_status: historical
+aliases:
+- 思考強度とモデル選択
+---
 # Superpowers SDD のモデル選択・Reasoning・Host 境界調査
+
+## 適用範囲と履歴
+
+当時の SDD 設計・実装証跡であり、本文の current / active / 実行可能は当時の範囲を指す。SDD 既定ルートは [PR #58](https://github.com/omitsuhashi/skills/pull/58)、KIS / decide-in-order 本体は commit `99fdaf2` で削除されている。現行の作業ツリー保全規約は repository root の `AGENTS.md` を参照する。部分的な仕様置換と当時の承認・未承認の区別は本文に保持する。
 
 ## 調査条件
 
@@ -118,3 +128,9 @@ rough idea から questions、constraints、success criteria、2〜3 approaches�
 - [Brainstorming skill](https://github.com/obra/superpowers/blob/v6.2.0/skills/brainstorming/SKILL.md)
 - [Writing Plans skill](https://github.com/obra/superpowers/blob/v6.2.0/skills/writing-plans/SKILL.md)
 - [Codex tool mapping](https://github.com/obra/superpowers/blob/v6.2.0/skills/using-superpowers/references/codex-tools.md)
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+Superpowers v6.2.0のdispatch model選択、reasoning effort不在、Codex/Hermes adapter境界、brainstorming・planning・SDDの責任分割を一次情報で確認した調査。

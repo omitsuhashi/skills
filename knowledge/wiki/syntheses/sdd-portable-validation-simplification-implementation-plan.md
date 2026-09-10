@@ -11,9 +11,15 @@ tags:
   - implementation-plan
 aliases:
   - SDD Portable Validation Simplification Implementation Plan
+summary: direct Git gate、isolated package closure と First-Write / seven-role wiring の統合・検証証跡を確認できる。
+knowledge_status: historical
 ---
 
 # SDD portable validation と責務単純化 実装計画
+
+## 適用範囲と履歴
+
+当時の SDD 設計・実装証跡であり、本文の current / active / 実行可能は当時の範囲を指す。SDD 既定ルートは [PR #58](https://github.com/omitsuhashi/skills/pull/58)、KIS / decide-in-order 本体は commit `99fdaf2` で削除されている。現行の作業ツリー保全規約は repository root の `AGENTS.md` を参照する。部分的な仕様置換と当時の承認・未承認の区別は本文に保持する。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` to implement this plan task-by-task. 各 task は checkbox で進捗を追跡し、task review を通過してから次へ進む。
 
@@ -413,3 +419,16 @@ installは未実施かつ未承認である。
 - Material decision request: none
 - Material risk: none
 - Remote publication state: not authorized and not required for local readiness
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+`LOCAL_COMPLETE`。Task 1〜4のreviewed tips `481d424` / `42ce4df` / `07a1e8d` / `f29c0fd`、Task 5 closeout/review chain `41c2a63..3ef7564`はreachableで、direct Git gate、root parity-first package cutover、isolated closure / CI、thin composition、First-Write、exact-seven KISがlanded。`9f4787f`のwhole-branch reviewのImportant 4件は`e9d1bcb`でaddressされ、Human-approved `3ef7564` KIS binding repair後のfinal scoped re-reviewはresidual `ADDRESSED`、new Critical 0 / Important 0と判定した。push、PR、remote merge、release、live installは未実施かつ未承認である。
+
+## 訂正履歴への入口
+
+当時の主張・承認・検証の訂正は [[log|保存された履歴]] の次の見出しを検索して確認する。先行する完了・適用表現だけでは判断しない。
+
+- `[2026-08-14] review-correction | SDD portable validation closeout current state`
+- `[2026-08-14] review-correction | SDD portable validation final-review boundary`

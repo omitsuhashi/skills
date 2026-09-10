@@ -1,4 +1,14 @@
+---
+summary: 最初の書込み前の作業ツリー分離と single-writer 統合、および並列実行条件の部分的な置換を確認できる。
+knowledge_status: draft
+aliases:
+- 作業ツリーと最初の書込み
+---
 # SDD first-write worktree migration 仕様（昇格済み draft）
+
+## 適用範囲と履歴
+
+このページは昇格前の proposal 履歴である。metadata による再昇格は行わず、本文に記載した canonical destination を参照する。
 
 ## Status
 

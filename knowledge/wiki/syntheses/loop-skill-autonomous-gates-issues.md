@@ -1,4 +1,12 @@
+---
+summary: Loop Skill 自動継続 Gate Issue 台帳のローカルIssue、依存関係、実装結果、レビュー証跡と残課題を確認できる。
+knowledge_status: historical
+---
 # Loop Skill 自動継続 Gate Issue 台帳
+
+## 適用範囲と履歴
+
+旧 grill-to-pr-loop / issue-implementation-loop の設計・実行証跡。[[wiki/syntheses/sdd-implementation-phase2-removal-plan|旧 loop skill の除去記録]] により executable surface / restart entrypoint ではない。本文の current 表現や packet / envelope / baseline は当時の範囲に限り、再実行には新しい承認と run を必要とする。現行の作業境界は repository root の `AGENTS.md` を参照する。
 
 ## 状態
 
@@ -421,3 +429,9 @@ LSAG-002、LSAG-003、LSAG-004 の実装 head を integration base に集約し�
 ## リモート方針
 
 Issue Gate 時点では GitHub issue mirror、push、PR 作成、merge は行わない。Execution Envelope で `final_pr_push_head` と `final_pr_create_draft` が approved action として固定された後、実装完了時の draft final PR 作成は追加承認なしに自動実行する。draft final PR [#26](https://github.com/omitsuhashi/skills/pull/26) は作成済み。final PR merge、ready-for-review、force push、deploy、credential / permission / billing / production / destructive action は常に自動化対象外とする。
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+`loop-skill-autonomous-gates` の Issue Gate 承認済み日本語 local-first 最終台帳。LSAG-001 から LSAG-006 の implementation evidence、review result、verification result、delivery evidence、remote 未実行境界を集約する。

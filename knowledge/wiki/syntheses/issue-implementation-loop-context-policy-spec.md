@@ -1,4 +1,12 @@
+---
+summary: '`issue-implementation-loop` の context/session policy と entrypoint budget を契約化する spec。'
+knowledge_status: historical
+---
 # Issue Implementation Loop Context Policy Spec
+
+## 適用範囲と履歴
+
+旧 grill-to-pr-loop / issue-implementation-loop の設計・実行証跡。[[wiki/syntheses/sdd-implementation-phase2-removal-plan|旧 loop skill の除去記録]] により executable surface / restart entrypoint ではない。本文の current 表現や packet / envelope / baseline は当時の範囲に限り、再実行には新しい承認と run を必要とする。現行の作業境界は repository root の `AGENTS.md` を参照する。
 
 ## 目的
 
@@ -86,3 +94,9 @@ PYTHONPYCACHEPREFIX=/tmp/skills-pycache python3 skills/issue-implementation-loop
 - `../../../skills/issue-implementation-loop/SKILL.md`
 - `../../../skills/issue-implementation-loop/references/execution-envelope.md`
 - `../../../skills/issue-implementation-loop/references/worker-contract.md`
+
+## 関連する実行証跡
+
+以下は旧 run の記録であり、現在の実行契約として再利用しない。承認済み bytes / seal / digest は当時の Git revision に対するものであり、探索 metadata を追加した現在のページの digest ではない。
+
+- [[wiki/syntheses/issue-implementation-loop-context-policy-input-packet.json|Issue Implementation Loop Context Policy Input Packet]] — historical / non-executable な Input Packet v1。過去の実行証跡として保持し、current validator では再利用せず new approval/new run を作る。

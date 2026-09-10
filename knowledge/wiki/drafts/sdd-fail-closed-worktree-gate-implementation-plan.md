@@ -30,9 +30,15 @@ decision_reason: Human が implementation plan として明示承認したため
 relations:
   - "[[wiki/syntheses/sdd-fail-closed-worktree-gate-spec|Implements: SDD fail-closed worktree gate 仕様]]"
   - "[[wiki/syntheses/sdd-first-write-worktree-migration-spec|Normative predecessor: SDD first-write worktree migration 仕様]]"
+summary: guard / activation を追加しない最小 worktree gate の実装、レビュー、残存 harness risk を確認できる。
+knowledge_status: draft
 ---
 
 # SDD fail-closed worktree gate Implementation Plan
+
+## 適用範囲と履歴
+
+このページは昇格前の proposal 履歴である。metadata による再昇格は行わず、本文に記載した canonical destination を参照する。
 
 ## Draft Review Decision
 

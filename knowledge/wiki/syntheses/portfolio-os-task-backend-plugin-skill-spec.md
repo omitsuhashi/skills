@@ -1,4 +1,12 @@
+---
+summary: 旧 task-management plugin の backend-neutral contract、provider routing と権限境界を確認できる。
+knowledge_status: historical
+---
 # Portfolio OS タスクバックエンドプラグイン / スキル仕様
+
+## 適用範囲と履歴
+
+旧 task-management 実装と当時の判断の履歴。plugin から standalone への置換範囲は [[wiki/syntheses/direct-github-projects-task-management/issues|DGPTM 台帳]] を参照する。現在の checkout に task-management 本体はなく、以下の実行手順を現行機能として扱わない。
 
 ## 状態
 
@@ -446,3 +454,11 @@ dry-run mode は作らない。`local_only` は planning / repository delivery p
 - `hermes tools --summary list`
 - `hermes mcp list`
 - `~/.hermes/config.yaml` の read-only inspection
+
+## 関連する実行証跡
+
+以下は旧 run の記録であり、現在の実行契約として再利用しない。承認済み bytes / seal / digest は当時の Git revision に対するものであり、探索 metadata を追加した現在のページの digest ではない。
+
+- [[wiki/syntheses/portfolio-os-task-backend-plugin-skill-input-packet.json|Portfolio OS Task Backend Plugin Skill Input Packet]] — historical / non-executable な Input Packet v1。旧POTASK実行証跡としてbytesを保持し、current validatorでは再利用しない。
+- [[wiki/syntheses/portfolio-os-task-backend-plugin-skill-potask-011-input-packet.json|Portfolio OS Task Backend Plugin Skill POTASK-011 Input Packet]] — historical / non-executable な Input Packet v1。旧provider adapter実行証跡としてbytesを保持し、current validatorでは再利用しない。
+- [[wiki/syntheses/portfolio-os-task-backend-plugin-skill-potask-011-execution-envelope.json|Portfolio OS Task Backend Plugin Skill POTASK-011 Execution Envelope]] — historical / non-executable な Execution Envelope v3。旧runの証跡としてbytesを保持し、resumeせずnew approval / new runを作る。

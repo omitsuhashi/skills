@@ -12,11 +12,18 @@ decision: approved-for-local-implementation
 decision_authority: Human-approved requirements plus repository plan review
 approved_on: 2026-08-14
 aliases:
-  - Global Skill Fallback And Simple Implementation Plan
-  - グローバルSkill fallbackと単純実装の計画
+- Global Skill Fallback And Simple Implementation Plan
+- グローバルSkill fallbackと単純実装の計画
+- YAGNI と global skill fallback
+summary: SDD dependency preflight の global skill fallback と単純実装 skill の当時の導入・行動検証を確認できる。
+knowledge_status: historical
 ---
 
 # Global Skill Fallback And Simple Implementation Plan
+
+## 適用範囲と履歴
+
+当時の SDD 設計・実装証跡であり、本文の current / active / 実行可能は当時の範囲を指す。SDD 既定ルートは [PR #58](https://github.com/omitsuhashi/skills/pull/58)、KIS / decide-in-order 本体は commit `99fdaf2` で削除されている。現行の作業ツリー保全規約は repository root の `AGENTS.md` を参照する。部分的な仕様置換と当時の承認・未承認の区別は本文に保持する。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` or `superpowers:executing-plans` to implement this plan. Use `superpowers:writing-skills` and `superpowers:test-driven-development` for the Skill change. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -172,3 +179,15 @@ One fresh independent task reviewer checks the Human-approved requirements, this
 
 - Human-approved requirements and independent minimalism review, 2026-08-14。
 - `AGENTS.md`、`skills/AGENTS.md`、current two Skill surfaces at baseline `c370fe14de1641aa5ee30b3fa001f4d857078091`。
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+local implementationとtask reviewを完了し、final whole-branch review待ちのone-task計画。SDD dependency preflightのactive/global readable fallbackと、独立`keep-implementation-simple` Skillを2つのfresh-agent behavior checkとfocused validatorで検証済み。
+
+## 訂正履歴への入口
+
+当時の主張・承認・検証の訂正は [[log|保存された履歴]] の次の見出しを検索して確認する。先行する完了・適用表現だけでは判断しない。
+
+- `[2026-08-14] plan-review-correction | global skill fallback and simple implementation`

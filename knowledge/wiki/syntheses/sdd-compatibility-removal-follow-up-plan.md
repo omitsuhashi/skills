@@ -1,4 +1,14 @@
+---
+summary: portable skill contract を保ちながら cross-runtime compatibility policy / validator を削除した判断と検証を確認できる。
+knowledge_status: mixed
+aliases:
+- 互換性削除
+---
 # SDD Compatibility Removal Follow-up Plan
+
+## 適用範囲と履歴
+
+portable skill の作成規約と runtime ごとの plugin packaging は現在の `skills/AGENTS.md` / `plugins/AGENTS.md` に継続する。本書の SDD 実装手順・review・完了状態は当時の履歴であり、削除済み SDD の再実行指示ではない。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -184,3 +194,15 @@ action; merge、release、and live mutation remain unauthorized.
 - `AGENTS.md`
 - `skills/AGENTS.md`
 - `plugins/AGENTS.md`
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+agent-agnostic behaviorを維持し、非要件となったcross-runtime compatibility policy、validator、CI gateを削除した`LOCAL_COMPLETE` / PR-ready plan。bounded fixのscoped re-reviewはfindingなしで承認済み。
+
+## 訂正履歴への入口
+
+当時の主張・承認・検証の訂正は [[log|保存された履歴]] の次の見出しを検索して確認する。先行する完了・適用表現だけでは判断しない。
+
+- `[2026-07-28] final-review-correction | SDD Compatibility Removal Follow-up`

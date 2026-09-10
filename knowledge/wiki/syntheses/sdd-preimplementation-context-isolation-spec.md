@@ -1,4 +1,14 @@
+---
+summary: 実装前調査・仕様作成を fresh worker に分離する設計と、Plan authority / handoff 保存先の部分的置換を確認できる。
+knowledge_status: historical
+aliases:
+- 実装前調査と重複質問の防止
+---
 # SDD 実装前コンテキスト分離仕様
+
+## 適用範囲と履歴
+
+当時の SDD 設計・実装証跡であり、本文の current / active / 実行可能は当時の範囲を指す。SDD 既定ルートは [PR #58](https://github.com/omitsuhashi/skills/pull/58)、KIS / decide-in-order 本体は commit `99fdaf2` で削除されている。現行の作業ツリー保全規約は repository root の `AGENTS.md` を参照する。部分的な仕様置換と当時の承認・未承認の区別は本文に保持する。
 
 ## 状態
 
@@ -406,3 +416,15 @@ artifact handoff、duplicate-question prevention、scope simplicityを評価す�
 - [Loop Skill Context Compaction Spec](loop-skill-context-compaction-spec.md)
 - [sdd-implementation SKILL.md](../../../skills/sdd-implementation/SKILL.md)
 - [skill-architecture.toml](../../../skill-architecture.toml)
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+Planning ControllerをHuman対話・判断・approval・routingへ限定し、repository調査、Spec Synthesis、Plan Authoring / Reviewをfresh workerへ委譲するcurrent仕様。Plan Stage semanticsとrepository-contained Research / review handoff destinationはPlan Ownership Alignmentがsupersedeし、raw pathはrepository外temporary locationへ移行済みである。
+
+## 訂正履歴への入口
+
+当時の主張・承認・検証の訂正は [[log|保存された履歴]] の次の見出しを検索して確認する。先行する完了・適用表現だけでは判断しない。
+
+- `[2026-08-14] review-correction | SDD Plan Ownership Alignment plan readiness`

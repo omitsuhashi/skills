@@ -13,9 +13,15 @@ decision: promote
 decision_authority: Human / repository maintainer
 aliases:
   - SDD first-write worktree migration implementation plan
+summary: First-Write の作業ツリー移行と後続 Epic の並列 issue adapter を分けた当時の実装範囲を確認できる。
+knowledge_status: historical
 ---
 
 # SDD first-write worktree migration 実装計画
+
+## 適用範囲と履歴
+
+当時の SDD 設計・実装証跡であり、本文の current / active / 実行可能は当時の範囲を指す。SDD 既定ルートは [PR #58](https://github.com/omitsuhashi/skills/pull/58)、KIS / decide-in-order 本体は commit `99fdaf2` で削除されている。現行の作業ツリー保全規約は repository root の `AGENTS.md` を参照する。部分的な仕様置換と当時の承認・未承認の区別は本文に保持する。
 
 ## Status
 
@@ -523,3 +529,17 @@ All approved acceptance criteria map to a named executable test in the matrix. N
 ## Execution Handoff
 
 After Plan Gate approval, implement sequentially in the existing planning worktree and branch above. The adapter is unavailable to this migration and may be selected only by a later independently approved, explicitly opted-in Epic. Remote publication is out of scope.
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+First-Write実装規範はminimal gate planにscoped supersedeされたpredecessor plan。後続Epicだけのrepository-owned thin parallel adapter / single-writer integrationは影響を受けない参照範囲として保持する。
+
+## 訂正履歴への入口
+
+当時の主張・承認・検証の訂正は [[log|保存された履歴]] の次の見出しを検索して確認する。先行する完了・適用表現だけでは判断しない。
+
+- `[2026-07-30] canonical-correction | SDD first-write worktree migration 実装計画`
+- `[2026-07-30] human-ruling-correction | SDD first-write worktree migration`
+- `[2026-07-30] correction | SDD first-write worktree migration final-review sequencing`

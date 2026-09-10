@@ -7,11 +7,20 @@ tags:
   - obsidian
   - specification
 aliases:
-  - llm-wiki structural-only specification
-  - llm-wiki authoring discovery diagnostics specification
+- llm-wiki structural-only specification
+- llm-wiki authoring discovery diagnostics specification
+- evidence-bearing BLOCKED
+- unobserved candidates
+- discovery診断
+summary: 知識統合と記法処理の責務分離、旧 Authoring Profile の semantic selector と discovery 診断の設計・適用履歴を確認できる。
+knowledge_status: historical
 ---
 
 # llm-wiki authoring 責務分離仕様
+
+## 適用範囲と履歴
+
+旧 llm-wiki の設計・検証履歴であり、本文の current 表現は当時の状態を指す。[[wiki/syntheses/llm-wiki-from-pattern|LLM Wiki 再作成方針]] が旧 authoring discovery / multi-root / context contract を復元しないと定めた。現行の所有者・草案・探索ルールは [[AGENTS|local schema]] と `skills/llm-wiki/SKILL.md` を参照する。
 
 ## 状態
 
@@ -192,7 +201,7 @@ Written Spec承認後のimplementation対象は次のportable documentation surf
 - `skills/llm-wiki/SKILL.md`
 - `skills/llm-wiki/references/core.md`
 
-durable lifecycle同期として、本canonical spec、[[index|durable catalog]]、append-only
+durable lifecycle同期として、本canonical spec、[[#切替前の補足情報|当時の目録説明]]、append-only
 `knowledge/log.md`をimplementation stateへ更新する。`knowledge/AGENTS.md`、mode reference、
 topology reference、template、validator、test、script、workflow、runtime fileは変更対象外とする。
 追加surfaceが必要ならscopeを自動拡張せず、Written Specへ戻ってHumanの再承認を得る。
@@ -479,3 +488,16 @@ implementation plan は上記候補と実際の migration target を照合し、
 - implementation plan の explicit write set 外、external installed skill、または新しい sidecar manifest の変更が必要になる。
 - selected authoring skill の文書化された確認または repository check が失敗する。この場合は commit せず isolated worktree diff を repair 対象として保持する。
 - fresh required verification が一つでも失敗する。
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+承認・実装済みの責務分離を維持しつつ、Authoring Profileのsemantic selector、evidence-bearing `BLOCKED`、current-state precedenceを追加するfocused revisionのcurrent Written Spec。reviewed two-file docs-only contractはlandedしたが、Human承認済みのpost-hoc old-contract replay evidence exceptionに合わせ、prior temporal pre-edit RED claimを訂正しscoped final-fix re-reviewを待つ。
+
+## 訂正履歴への入口
+
+当時の主張・承認・検証の訂正は [[log|保存された履歴]] の次の見出しを検索して確認する。先行する完了・適用表現だけでは判断しない。
+
+- `[2026-07-30] final-review-fix | llm-wiki authoring responsibility separation`
+- `[2026-08-08] correction | llm-wiki Authoring Discovery Diagnostics Written Spec Candidate`

@@ -1,4 +1,12 @@
+---
+summary: 旧 grill-to-pr-loop / issue-implementation-loop と専用 runtime・context surface を除去した移行証跡を確認できる。
+knowledge_status: historical
+---
 # SDD Implementation Phase 2 旧実装スキル削除計画
+
+## 適用範囲と履歴
+
+当時の SDD 設計・実装証跡であり、本文の current / active / 実行可能は当時の範囲を指す。SDD 既定ルートは [PR #58](https://github.com/omitsuhashi/skills/pull/58)、KIS / decide-in-order 本体は commit `99fdaf2` で削除されている。現行の作業ツリー保全規約は repository root の `AGENTS.md` を参照する。部分的な仕様置換と当時の承認・未承認の区別は本文に保持する。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -313,3 +321,9 @@ Final whole-branch reviewerはcode、tests、CI、architecture/context policy、
 ### Final verification and completion
 
 fresh coordinator verificationはSDD 9 tests、llm-wiki 5 tests、scripts 42 tests、architecture validator、1 context contract、warnings空かつexit 0のgeneric context report、scoped dual-host validator、skill-creator `quick_validate`でpassした。両旧directoryはabsent、non-knowledge legacy literal grepとdeleted-production Markdown link grepはmatchなし、branch diff checkはcleanである。`8ff2bdc..804c2c7`のfinal whole-branch reviewはCritical 0、Important 0、Minor 0、Ready to merge Yesである。よってPhase 2は`LOCAL_COMPLETE`である。push、PR作成、merge、release、live installは未実施であり、remote stateは変更していない。
+
+## 切替前の補足情報
+
+2026-09-10 の探索方式切替時に旧目録から回収した当時の説明（現行判定は上記の適用範囲を優先する）：
+
+SDD実run、fresh coordinator verification、final whole-branch reviewを完了し、旧loop skill本体と専用runtime/context surfaceをlocal treeから除去した`LOCAL_COMPLETE` Phase 2計画。
