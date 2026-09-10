@@ -145,6 +145,16 @@ only what the request needs. For an index/log-based root migration, read
 
 ## Ingest and save
 
+When writing YAML source-reference lists (such as `sources`), use block-style
+lists with one reference per line so concurrent edits have smaller line diffs.
+Preserve the local field name and link syntax:
+
+```yaml
+sources:
+  - "raw/source-a.md"
+  - "raw/source-b.md"
+```
+
 1. Read the source, origin, date, and relevant claims. Inspect evidence in images
    when possible and disclose unread portions. Respect requested discussion
    before editing; otherwise proceed within authorization. Process one source
