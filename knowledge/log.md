@@ -2476,3 +2476,11 @@ append-only で使います。すべての entry は予測しやすい header �
 
 - Human の追加指示に従い、Obsidian が選択された場合は installed `obsidian-markdown` を読み、その authoring 手順に従う契約へ変更した。plain Markdown の追加依存は増やしていない。
 - [[AGENTS|local schema]] と [[wiki/syntheses/llm-wiki-from-pattern|作成方針]]、index を同期した。構文・リンクを静的検証し、Obsidian reading view の表示確認は未実施として記録する。
+
+## [2026-09-10] discovery-cutover | 通常の log 追記終了
+
+[Issue #59](https://github.com/omitsuhashi/skills/issues/59) に基づき、ページの探索情報・生成目録・本文検索へ切り替えた。この追記より前の本文・見出しはそのまま履歴として保持し、以後の通常 query / lint / ingest / page update ではこの log に追記しない。
+
+探索は [[AGENTS|local schema の探索手順]] から開始する。回答に影響する訂正は該当ページの「訂正履歴への入口」から、この log の明示された見出しを検索して確認できる。新しい判断・訂正は影響する本文、またはそこへ明示リンクを持つ判断ページに記録する。
+
+旧 index の有用な説明・資料リンク・別名は該当ページへ移し、`index.md` は削除した。raw とこの案内以前の log に残る index 引用は歴史的参照であり、必要なら `git show f63ba68:knowledge/index.md` で当時の版を確認する。現在の知識を調べるために index を復元・再生成しない。

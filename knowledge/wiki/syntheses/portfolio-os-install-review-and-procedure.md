@@ -4,10 +4,16 @@ created: 2026-06-10
 updated: 2026-06-13
 source_files:
   - knowledge/AGENTS.md
-  - knowledge/wiki/syntheses/llm-wiki-draft-review-and-canonicalize-goal-spec.md
+  - https://github.com/omitsuhashi/skills/blob/9106339aee6aba76cb92a1d74a13cf000c25a531/knowledge/wiki/syntheses/llm-wiki-draft-review-and-canonicalize-goal-spec.md
+summary: '`skills` repo に Portfolio OS 固有 runtime を混ぜないためのレビュー結果と導入手順。'
+knowledge_status: unknown
 ---
 
 # Portfolio OS Install Review And Procedure
+
+## 適用範囲と履歴
+
+過去の repository 境界レビューとして保持する。本文の Wiki への計画保存は当時の方針であり、現在の実装仕様・計画の保存先は GitHub Issue である。現在の Portfolio OS / Hermes 導入先と runtime 状態はこの repository だけでは確定できないため、適用状態を unknown とする。
 
 ## 目的
 
