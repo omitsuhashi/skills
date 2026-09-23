@@ -15,3 +15,18 @@
   check, alternative, or `BLOCKED` boundary.
 - Run `scripts/validate_skill_architecture.py --all` and the skill-creator
   validator before handoff.
+
+## Instruction design
+
+- State the outcome, decision criteria, and non-obvious domain constraints.
+  Use fixed sequences only where order protects correctness or authorization.
+- Treat defaults and examples as guidance; explicit user choices govern the
+  requested scope. Keep source integrity and authorization boundaries explicit.
+- Ask only for missing information that materially changes the result and cannot
+  be reasonably inferred. Continue independent authorized work while waiting.
+  If a skill requires stopping, cite its exact rule and affected operation.
+- Keep shared essentials in `SKILL.md`; load branch-specific references only
+  when their stated condition applies. Avoid repeating host-level instructions.
+- Define completion and verification proportional to the change. Passing a
+  structural validator is not evidence of behavior on a real task; distinguish
+  observed outcomes from untested expectations.

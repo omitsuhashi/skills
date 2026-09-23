@@ -5,40 +5,25 @@ description: Use when starting a new Python project with uv and deciding the min
 
 # Python Setup With uv
 
-## 定義
+## 入力・出力・必要な能力
 
-この skill は、`uv` を前提に Python プロジェクトを始めるときの最小セットを固定するためのものです。
+- 入力: 対象ディレクトリ、Python プロジェクトの用途、既存設定、依頼されたセットアップ範囲。
+- 出力: 依頼範囲のプロジェクト設定・依存関係・lock file と、実施した検証・未完了事項。
+- 必要な能力: ファイル読取・編集、コマンド実行、利用可能な `uv`。依存取得にはネットワーク、Git hook 導入には Git が必要。利用できない能力があれば該当操作を未実施と示し、設定案や実行可能な手順を渡す。
 
-前提は次の通りです。
+## 適用と既定値
 
-- `uv` は Python 本体、仮想環境、依存解決、`uv.lock` 管理まで担当する
-- 追加パッケージは「継続開発に必要なもの」だけ入れる
-- 便利そうでも、最初から全部は入れない
+新規の継続開発プロジェクトでは `uv + ruff + pytest + pre-commit` を既定とする。既存プロジェクトでは `pyproject.toml`、lock file、テスト・hook 設定を確認し、同じ役割の仕組みを尊重する。相談のみなら推奨を示し、セットアップを依頼されていれば実行する。
 
-この skill のデフォルトは次です。
-
-- 必須: `ruff`, `pytest`, `pre-commit`
-- 条件付き推奨: `mypy`
-- 任意: `poethepoet`
-
-## 要点
-
-### 最低限の判断基準
-
-`uv` で `uv init` した直後に、まず入れるのは以下です。
-
-- `ruff`: lint と format を 1 つに寄せる
-- `pytest`: テストの土台を最初から用意する
-- `pre-commit`: `ruff` をコミット時に自動実行する
-
-次は条件付きです。
-
-- `mypy`: 型注釈を保守対象にするなら入れる。小さな捨てスクリプトなら後回しでよい
-- `poethepoet`: `uv run ruff check .` のようなコマンドが増えてから入れる。最初は不要
+- `ruff`: lint と format。
+- `pytest`: テストの入口。使い捨てスクリプトでは省略できる。
+- `pre-commit`: Git を使う継続開発でコミット前に Ruff を実行。Git を使わない実験では省略する。
+- `mypy`: 型注釈を保守対象にするときだけ追加。
+- `poethepoet`: `uv run ...` のコマンド整理が必要になったときだけ追加。
 
 ### セットアップ手順
 
-1. プロジェクトを初期化する
+1. 未初期化のプロジェクトを初期化する
 
 ```bash
 uv init
@@ -46,20 +31,20 @@ uv init
 
 Python バージョンはこの skill では固定しません。プロジェクト要件があるときだけ `uv python pin <version>` を使います。
 
-2. 最低限の開発依存を入れる
+2. 用途に合う開発依存を入れる。次は新規の継続開発プロジェクトの例であり、省略条件や既存設定に合わせて選ぶ
 
 ```bash
 uv add --dev ruff pytest pre-commit
 ```
 
-3. 必要なら追加する
+3. 上記の条件を満たすツールだけ追加する
 
 ```bash
 uv add --dev mypy
 uv add --dev poethepoet
 ```
 
-4. 環境を同期し、Git hook を入れる
+4. 環境を同期する。Git hook を導入する場合は、下記の `.pre-commit-config.yaml` を用意し、既存 hook と `git config --get core.hooksPath` を確認してからインストールする
 
 ```bash
 uv sync
@@ -68,41 +53,13 @@ uv run pre-commit install --install-hooks
 
 `pre-commit install` はリポジトリごとに必要です。`pyproject.toml` に `pre-commit` を入れただけでは Git commit 時には実行されません。
 
-ただし、コミット時に「自動修正後の内容を同じ commit に含める」挙動を採用する場合は、ここで一度止まり、後述の「自動修正を同じコミットへ含めたい場合」を先に選びます。その場合は `core.hooksPath` を `.githooks` に向けるため、標準の `.git/hooks/pre-commit` へ入れる `pre-commit install` だけでは効きません。
+既存の hook 経路と衝突する場合は上書きせず、影響しないセットアップを続ける。自動修正を同じ commit に含める運用を依頼された場合、または hook が期待どおり動かない場合だけ [Git hook の診断と自動再ステージ](references/git-hooks.md) を読む。通常のセットアップでその方式を選ばせる確認は不要。
 
-5. 最初の検証を流す
+5. 導入した設定を検証する
 
-```bash
-uv run ruff check .
-uv run ruff format --check .
-uv run pytest
-uv run pre-commit run --all-files --show-diff-on-failure
-```
+Ruff を pre-commit に設定した場合は `uv run pre-commit run --all-files --show-diff-on-failure` で確認する。hook を使わない場合は `uv run ruff check .` と `uv run ruff format --check .` を使う。同じ検証を両方の経路で繰り返す必要はない。
 
-型チェックを使うなら:
-
-```bash
-uv run mypy .
-```
-
-## 比較
-
-| ツール | この skill での扱い | 入れる理由 | 後回しにしてよい条件 |
-|---|---|---|---|
-| `uv` | 前提 | Python / venv / lock を一元化する | なし |
-| `ruff` | 必須 | lint と format を一体化できる | ほぼなし |
-| `pytest` | 必須 | テストの入口を最初から揃える | 使い捨てワンショットのみ |
-| `pre-commit` | 必須 | コミット前に `ruff` を自動化できる | Git を使わないローカル実験のみ |
-| `mypy` | 条件付き推奨 | 型注釈を壊さず育てられる | 型をまだ運用しない小規模スクリプト |
-| `poethepoet` | 任意 | 長いコマンドをタスク名へ寄せられる | `uv run ...` が数個で済む段階 |
-
-記事系の構成だと `uv + ruff + mypy + poethepoet + pre-commit` まで一括導入しがちですが、実務では最初から必須なのはそこまで多くありません。
-
-この skill では次を採用します。
-
-- まずは `uv + ruff + pytest + pre-commit`
-- 型チェックが保守対象になった時点で `mypy`
-- コマンド整理が面倒になった時点で `poethepoet`
+テストがあれば `uv run pytest`、型チェックを導入した場合は対象に対して `uv run mypy` を実行する。テスト未作成は未検証として伝え、空のテスト実行を成功扱いしない。必要な検証が通れば完了とし、新たな失敗や変更がない限り検証範囲を広げない。
 
 ## 具体例
 
@@ -152,136 +109,6 @@ repos:
 ```
 
 `rev` は固定値ではなく、その時点の最新安定版へ更新してください。導入後も `pre-commit autoupdate` で追従します。
-
-自動修正を同じ commit へ含める運用を選ぶ場合、この mutating な設定は commit hook として使いません。`pre-commit run --all-files` や CI で状態確認しやすいよう、check-only にします。
-
-```yaml
-repos:
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: vX.Y.Z
-    hooks:
-      - id: ruff-check
-        types_or: [python, pyi]
-      - id: ruff-format
-        args: [--check]
-        types_or: [python, pyi]
-```
-
-### コミット時の期待挙動
-
-標準の `pre-commit` では、hook がファイルを自動修正した場合、そのコミットは失敗します。これは異常ではなく、修正後の差分を人間が確認して `git add` し直すための安全な挙動です。
-
-期待される流れは次です。
-
-```bash
-git add .
-git commit -m "change"
-# ruff-check --fix または ruff-format がファイルを更新したら commit は止まる
-git diff
-git add .
-git commit -m "change"
-```
-
-`ruff` や `ruff-format` が走ってファイルが変更されたにもかかわらず commit が成立する場合は、設定ではなく hook 実行経路を疑います。
-
-確認点は次です。
-
-- `.git/hooks/pre-commit` が存在するか
-- `git config --get core.hooksPath` で別の hook ディレクトリへ向いていないか
-- GUI / IDE の commit が Git hook を無視する設定になっていないか
-- `git commit --no-verify` 相当で実行されていないか
-- 独自の hook wrapper が `pre-commit` の終了コードを握りつぶしていないか
-
-最低限の診断コマンドは次です。
-
-```bash
-test -f .git/hooks/pre-commit && sed -n '1,80p' .git/hooks/pre-commit
-git config --get core.hooksPath
-uv run pre-commit run --all-files --show-diff-on-failure
-```
-
-### 自動修正を同じコミットへ含めたい場合
-
-「自動修正できるものは修正して、その修正後の内容を同じコミットに含める」挙動は、標準の `pre-commit` 設定だけでは実現しません。実現するなら project-local な Git hook を明示的に管理します。
-
-ただしこの方式は、部分 staging との相性が悪いです。未 stage の変更まで formatter が触れて同じ commit に混ざるリスクがあるため、同じファイルに staged / unstaged の両方の変更がある場合は commit を止めます。
-
-このモードを選ぶ場合の基本方針は次です。
-
-- `.pre-commit-config.yaml` は check-only にする
-- commit 時の自動修正と `git add` は `.githooks/pre-commit` が担当する
-- `.githooks/pre-commit` は repo に commit する
-- `git config core.hooksPath .githooks` は clone ごとの初期設定として実行する
-- 同じファイルに staged / unstaged の両方がある場合は commit を止める
-
-`.githooks/pre-commit` 例:
-
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-files=()
-while IFS= read -r -d '' file; do
-  files+=("$file")
-done < <(git diff --cached --name-only --diff-filter=ACMR -z -- '*.py' '*.pyi')
-
-if [ "${#files[@]}" -eq 0 ]; then
-  exit 0
-fi
-
-for file in "${files[@]}"; do
-  if ! git diff --quiet -- "$file"; then
-    echo "error: $file has both staged and unstaged changes."
-    echo "Stage or stash the unstaged changes before committing."
-    exit 1
-  fi
-done
-
-uv run ruff check --fix --exit-zero --force-exclude -- "${files[@]}"
-uv run ruff format --force-exclude -- "${files[@]}"
-git add -- "${files[@]}"
-
-uv run ruff check --force-exclude -- "${files[@]}"
-uv run ruff format --check --force-exclude -- "${files[@]}"
-```
-
-有効化:
-
-```bash
-chmod +x .githooks/pre-commit
-git config core.hooksPath .githooks
-```
-
-チームで同じ挙動を共有したい場合は、`.githooks/pre-commit` をリポジトリ管理し、初期セットアップ手順に `git config core.hooksPath .githooks` を含めます。
-
-この方式を採用した repo では、次の確認を必ず行います。
-
-```bash
-git config --get core.hooksPath
-test -x .githooks/pre-commit
-.githooks/pre-commit
-uv run pre-commit run --all-files --show-diff-on-failure
-```
-
-`core.hooksPath` を設定すると、標準の `.git/hooks/pre-commit` は使われません。`.git/hooks/pre-commit` と `.githooks/pre-commit` の両方を見て判断すると誤診しやすいため、必ず `git config --get core.hooksPath` を先に見ます。
-
-`pytest` や `mypy` は、次のどちらかで回すのが無難です。
-
-- 手元で `uv run pytest`, `uv run mypy .`
-- CI で常時実行
-
-### `poethepoet` を入れる境界
-
-次のようなコマンドが増えてからで十分です。
-
-```bash
-uv run ruff check .
-uv run ruff format .
-uv run pytest
-uv run mypy .
-```
-
-この段階で長いと感じたら、`poethepoet` を追加して `lint`, `fmt`, `test`, `typecheck` に束ねます。
 
 ## References
 

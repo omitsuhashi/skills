@@ -29,7 +29,11 @@ catalogs from saved pages when needed instead of maintaining shared inventories.
 
 Read repository instructions and the selected root's schema (`AGENTS.md` or
 `CLAUDE.md`) for scope, naming, authority, drafts, language, and link conventions.
-Reuse that structure. Ask only when an unresolved choice affects the result.
+Reuse that structure. Infer the root and operation from the request and local
+context when unambiguous. Ask when missing scope, authority, or a consequential
+choice cannot be resolved from that context; pause only the affected operation.
+For reversible organizational choices, use local conventions and state any
+material assumption while proceeding within the requested scope.
 
 When Obsidian is requested or selected by the schema, resolve and read the
 installed `obsidian-markdown` skill before creating or editing notes. Follow it
