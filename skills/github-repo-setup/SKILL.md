@@ -1,9 +1,13 @@
 ---
 name: github-repo-setup
-description: Set up GitHub repository change management with PR-only protected branches, squash merges, immutable release tags, and Environment-gated deployments. Use for a new repository or an explicit request to adopt this workflow.
+description: Set up GitHub repository change management with PR-only protected branches, squash merges, immutable release tags, and Environment-gated deployments when the user explicitly requests this skill.
 ---
 
 # GitHub Repository Setup
+
+## 適用条件
+
+ユーザーが `$github-repo-setup`、skill 名、または文脈上この skill を指す明示的な参照で、セットアップや設定差分の作成にこの skill を使うよう指示した場合だけ採用する。通常の repository 作成・保護設定の依頼だけから、この skill の採用を推定しない。
 
 ## 入力・出力・必要な能力
 
