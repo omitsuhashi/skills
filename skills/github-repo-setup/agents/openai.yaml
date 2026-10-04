@@ -1,0 +1,7 @@
+interface:
+  display_name: "GitHub Repository Setup"
+  short_description: "Set up PR protection and tag-based deployments"
+  default_prompt: "Use $github-repo-setup to configure this repository for PR-only main changes, squash merges, and approved tag-based deployments."
+
+policy:
+  allow_implicit_invocation: false
