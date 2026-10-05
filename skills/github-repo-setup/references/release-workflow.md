@@ -10,6 +10,12 @@ deployment の導入・既存 workflow の修正時に読む。既存 CI・build
 4. production job に、設定 readback 済みの `environment` を明示する。Environment の資格情報をこの job 内だけで使用し、承認後も checksum / digest と commit・tag・run を照合して実際の deploy コマンドを実行する。必要な `id-token: write` 等はこの job だけに付ける。
 5. environment 単位の `concurrency`、`cancel-in-progress: false`、用途に合う timeout を設定する。commit、tag、run/attempt、artifact hash、結果を summary／必要な証跡に記録する。retention は用途に合わせ、Actions artifact の既定保持を正式な監査保管と扱わない。
 
+## GitHub Release を公開する場合
+
+GitHub Release の作成も依頼範囲にあるか、既存 workflow が Release を公開する場合に適用する。Release immutability と整合するよう、Draft 作成 → 全 assets 添付 → Publish の順序にする。全 assets のアップロード成功を確認してから公開し、公開後の追加・差替えを前提とする処理はこの順序へ修正する。修正版の導入状況は [GitHub 設定](github-settings.md#release-immutability)の有効化条件と照合する。
+
+実際の Release 発行を依頼された場合は、公開後に対象 Release の `immutable: true` と commit・tag・assets を確認する。repository 設定の readback と、個別 Release の固定確認を分けて報告する。setup の依頼だけでは検証用 Release を発行しない。
+
 ## タグ commit の検査
 
 `fetch-depth: 0` の checkout 後、build や資格情報の使用より前に置く Bash step の例。`RELEASE_BRANCH` は解決済みの保護対象 branch を workflow の `env` から渡す。式を shell 本文へ直接埋め込まず environment variable で扱う。
@@ -42,3 +48,5 @@ Environment の tag pattern や tag ruleset 自体は ancestry を検査しな�
 - [Workflow syntax](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax)
 - [Deployments and environments](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments)
 - [Reviewing deployments](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/review-deployments)
+- [Immutable releases の公開手順](https://docs.github.com/en/code-security/concepts/supply-chain-security/immutable-releases#best-practices-for-publishing-immutable-releases)
+- [Releases API](https://docs.github.com/en/rest/releases/releases)

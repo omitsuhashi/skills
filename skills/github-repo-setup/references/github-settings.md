@@ -8,6 +8,7 @@ Settings の調査・適用時に読む。以下は新規設定の例であり�
 
 ```bash
 gh api "repos/$repo"
+gh api --include "repos/$repo/immutable-releases"
 gh api --paginate "repos/$repo/rulesets?includes_parents=true&per_page=100"
 gh api "repos/$repo/rulesets/$ruleset_id"
 gh api --paginate "repos/$repo/rules/branches/$branch?per_page=100"
@@ -90,6 +91,23 @@ CI の観測後、同じ ruleset の rules に次の型の rule を統合する�
 
 PR を要求するのは `pull_request` rule。branch の `update` rule は通常の PR merge まで禁止するので、main の PR-only 制御には使わない。
 
+## Release immutability
+
+Repository setup の既定として `Enable release immutability` を有効化する。まだ Release がない repository でも、今後の公開を保護する設定として適用する。既存の Release 公開 workflow が公開後に assets を追加・置換する場合は、[Release 公開の順序](release-workflow.md#github-release-を公開する場合)へ修正し、導入済みであることを確認してから有効化する。必要な workflow の導入が未完了なら、この設定は `BLOCKED` として差分を示す。
+
+`GET /repos/{owner}/{repo}/immutable-releases` は Administration の read 権限を必要とする。HTTP 200 と `enabled: true` を確認し、`enforced_by_owner` も記録する。既に有効なら設定を維持する。404 を未有効と判断するのは、対象 repository への管理読取権限と対象 host の機能提供を確認できた場合だけにする。
+
+未有効なら Administration の write 権限で、body なしの `PUT` を行う。`gh` が利用できる場合の例:
+
+```bash
+gh api --method PUT "repos/$repo/immutable-releases"
+gh api --include "repos/$repo/immutable-releases"
+```
+
+PUT の 204 応答後、GET の 200 と `enabled: true` を確認して設定完了とする。API client が扱えない場合は Settings → General → Releases の `Enable release immutability` を UI で設定し、再表示して有効状態を確認する。適用または readback ができなければ `BLOCKED` とし、owner の保護を緩和しない。
+
+この設定は今後公開する Release に適用され、公開済み Release を遡って固定しない。Release に紐づくタグと添付 assets を保護するため、未公開の正式タグも保護する下記の tag ruleset と、Action の完全 SHA 固定は維持する。
+
 ## 正式タグ: 作成制限と immutable を分離
 
 二つの tag ruleset を作る。同じ actor に作成だけ許可しても、既存タグの更新・削除は許可しないための分離。
@@ -139,6 +157,9 @@ repository 全体の Action allowlist を導入・変更する場合は、全 wo
 ## 一次資料
 
 - [Repository API](https://docs.github.com/en/rest/repos/repos#update-a-repository)
+- [Release immutability API](https://docs.github.com/en/rest/repos/repos#check-if-immutable-releases-are-enabled-for-a-repository)
+- [Release immutability の有効化](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/establish-provenance-and-integrity/prevent-release-changes)
+- [Immutable releases](https://docs.github.com/en/code-security/concepts/supply-chain-security/immutable-releases)
 - [Rules API](https://docs.github.com/en/rest/repos/rules)
 - [Ruleset の提供範囲](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets)
 - [Environment API](https://docs.github.com/en/rest/deployments/environments)
