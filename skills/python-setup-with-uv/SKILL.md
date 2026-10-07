@@ -1,9 +1,13 @@
 ---
 name: python-setup-with-uv
-description: Use when starting a new Python project with uv and deciding the minimum development packages and setup steps for reproducible local development.
+description: Set up Python projects with uv and minimal development tooling only when the user explicitly invokes python-setup-with-uv.
 ---
 
 # Python Setup With uv
+
+## 適用条件
+
+利用環境が認識する明示的な skill 呼び出し（例: `$python-setup-with-uv` や skill 選択機能）で使用を指示された場合だけ、本文・参照資料の読み込みと手順の実行を行う。Python や uv に関する話題、一般的なプロジェクト作成・セットアップの依頼からは採用を推定しない。
 
 ## 入力・出力・必要な能力
 
