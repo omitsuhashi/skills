@@ -1,9 +1,13 @@
 ---
 name: typescript-setup-with-pnpm
-description: Use when starting a TypeScript project with pnpm and choosing a reproducible development baseline that can support CLI, API, or frontend development.
+description: Set up TypeScript projects with pnpm and a reproducible development baseline for CLI, API, or frontend development only when the user explicitly invokes typescript-setup-with-pnpm.
 ---
 
 # TypeScript Setup With pnpm
+
+## 適用条件
+
+利用環境が認識する明示的な skill 呼び出し（例: `$typescript-setup-with-pnpm` や skill 選択機能）で使用を指示された場合だけ、本文・参照資料の読み込みと手順の実行を行う。TypeScript や pnpm に関する話題、一般的なプロジェクト作成・セットアップの依頼からは採用を推定しない。
 
 ## 入力・出力・必要な能力
 
