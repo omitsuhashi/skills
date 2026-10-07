@@ -9,8 +9,11 @@
 - Do not make `description.md` a discovery requirement; must not create `description.md`
   for that purpose.
 - Keep optional metadata isolated from the portable contract. For example,
-  `agents/openai.yaml` may provide optional UI metadata but must not determine
-  skill discovery or behavior.
+  `agents/openai.yaml` may provide optional UI metadata. It must not determine
+  skill discovery or behavior, except to enforce explicit-only invocation
+  requested by the user. Declare that restriction in `SKILL.md` as well and
+  use the runtime's invocation policy (for example,
+  `policy.allow_implicit_invocation: false`) to prevent implicit loading.
 - Keep runtime-specific tool assumptions conditional and document a capability
   check, alternative, or `BLOCKED` boundary.
 - Run `scripts/validate_skill_architecture.py --all` and the skill-creator
