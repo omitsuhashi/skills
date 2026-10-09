@@ -1,0 +1,4 @@
+interface:
+  display_name: "よいイシューを設定する"
+  short_description: "事実と影響から、判断や行動を変えるイシューを設定・点検する"
+  default_prompt: "$frame-issues を使って、この課題で今答えるべき問いと、その根拠・判断へのつながりを具体化してください。"
