@@ -1,4 +1,4 @@
 interface:
   display_name: "よいイシューを設定する"
-  short_description: "まとまらない課題からイシューを提案し、提示された問いの妥当性を点検する"
-  default_prompt: "$frame-issues を使って、私の話からイシュー案を提案するか、提示したイシューの妥当性を判断し、理由を短く伝えてください。"
+  short_description: "論点の妥当性と実装Issueの内容・粒度を点検し、不足を対話で補う"
+  default_prompt: "$frame-issues を使って、課題の論点や実装Issueの内容・粒度を点検し、重要な不足を質問しながら依頼した範囲で本文を更新してください。"
