@@ -17,7 +17,7 @@ description: Set up TypeScript projects with pnpm and a reproducible development
 
 ## 適用と既定値
 
-新規の継続開発では `Node.js LTS + pnpm + TypeScript + Biome + Vitest + Lefthook` を既定とする。共通の開発基盤を整え、CLI・API・フロントエンドは必要になった用途だけを追加する。用途未定なら Node.js 向けの型チェック設定を出発点とし、フロントエンドを追加するときにその環境の設定を用意する。
+新規の継続開発では `Node.js 26 + pnpm + TypeScript + Biome + Vitest + Lefthook` を既定とする。共通の開発基盤を整え、CLI・API・フロントエンドは必要になった用途だけを追加する。用途未定なら Node.js 向けの型チェック設定を出発点とし、フロントエンドを追加するときにその環境の設定を用意する。
 
 既存プロジェクトでは manifest、lock file、Node バージョン、`tsconfig`、scripts、lint・format・テスト・hook の設定を読み、同じ役割の仕組みを尊重する。初期セットアップを理由にツール移行や major 更新を行わない。相談のみなら推奨を示し、セットアップを依頼されていれば実行する。
 
@@ -31,7 +31,7 @@ API / UI フレームワーク、monorepo、CI、公開・デプロイ設定は�
 
 ## バージョンと再現性
 
-新規では、セットアップ時点の最新 LTS の Node.js と、各ツールの最新安定版を公式配布情報で確認する。Node.js の Current や prerelease は、ユーザーの指定または要件がある場合に選ぶ。
+新規では、セットアップ時点の Node.js 26 系の最新安定版と、各ツールの最新安定版を公式配布情報で確認する。Node.js は LTS / Current の区分によらず 26 系を既定とし、別 major や prerelease は、ユーザーの指定または要件がある場合に選ぶ。
 
 - Node.js は既存の管理方法を使う。新規で指定がなければ、選んだ実バージョンを `.node-version` に記録する。このファイルだけで Node.js が切り替わるわけではないため、実行中の `node --version` も確認する。
 - pnpm は最新安定版を選び、`packageManager` に実バージョンを記録する。既存の pnpm が古ければ、プロジェクト内で使える版を用意する。マシン全体の設定変更は依頼範囲に合わせる。
@@ -132,6 +132,7 @@ pnpm exec lefthook install
 
 ## References
 
+- Node.js release index: https://nodejs.org/dist/index.json
 - Node.js release policy: https://nodejs.org/en/about/previous-releases
 - pnpm init / version pin: https://pnpm.io/cli/init
 - pnpm frozen install: https://pnpm.io/cli/install

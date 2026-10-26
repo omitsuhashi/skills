@@ -11,7 +11,7 @@ node src/main.ts
 node --watch src/main.ts
 ```
 
-実際に存在する入口を `start` / `dev` scripts へ登録する。Node.js 24 系では v24.12.0 以降の type stripping が安定しているが、`tsconfig` は実行時に読まれず、JSX、enum、parameter properties、decorator、paths による alias などはこの経路で変換されない。必要ならその要件に対応する runner / compiler を選び、型チェックは別途維持する。
+実際に存在する入口を `start` / `dev` scripts へ登録する。Node.js 26 系でも `tsconfig` は実行時に読まれず、JSX、enum、parameter properties、decorator、paths による alias などは type stripping で変換されない。必要ならその要件に対応する runner / compiler を選び、型チェックは別途維持する。
 
 API のフレームワークや CLI 引数 parser は、依頼された機能・デプロイ先・既存設定から選ぶ。開発基盤だけの依頼で API サーバーや CLI を先に生成しない。
 
