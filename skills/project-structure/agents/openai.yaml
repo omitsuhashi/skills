@@ -1,0 +1,4 @@
+interface:
+  display_name: "Project Structure"
+  short_description: "機能単位の構成を設計・適用し、採用した境界と配置の一貫性を保つ"
+  default_prompt: "$project-structure を使い、このプロジェクトの構成を設計・適用してください。"
