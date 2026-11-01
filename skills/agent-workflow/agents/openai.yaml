@@ -1,0 +1,3 @@
+interface:
+  display_name: "エージェントへ委任する仕事を整える"
+  short_description: "依頼・実行検証・失敗改善をつなぎ、必要な仕組みを小さく整える"
