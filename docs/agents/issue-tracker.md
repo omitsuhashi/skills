@@ -12,6 +12,8 @@
 
 ## Operations
 
+Issue の新規作成・要件見直しでは、内容や粒度を整理する場合に `skills/frame-issues/SKILL.md` を読む。エージェントへ委任する仕事は `skills/agent-workflow/SKILL.md` の「依頼と文脈を揃える」も読み、完了条件・検証方法・操作範囲・未決事項を本文または正本への参照で伝える。確定済み本文の登録だけなら内容を勝手に変更せず、Issue 登録と実装着手を区別する。
+
 以下の Issue 操作は `omitsuhashi/skills` の checkout 内で実行する。
 
 - 作成: `gh issue create --repo omitsuhashi/skills --title "..." --body-file <file>`
