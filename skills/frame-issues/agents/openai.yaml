@@ -1,4 +1,4 @@
 interface:
   display_name: "よいイシューを設定する"
-  short_description: "論点の妥当性と実装Issueの内容・粒度を点検し、不足を対話で補う"
-  default_prompt: "$frame-issues を使って、課題の論点や実装Issueの内容・粒度を点検し、重要な不足を質問しながら依頼した範囲で本文を更新してください。"
+  short_description: "論点・実装Issueを点検し、複数Issueの成果・到達点・依存を整える"
+  default_prompt: "$frame-issues を使って、論点や実装Issueの内容・粒度を点検し、複数Issueでは成果・マイルストーン・時点・依存も整理して、重要な不足を確認しながら依頼した範囲で本文を整えてください。"
