@@ -30,6 +30,28 @@ gh api "repos/$repo/actions/permissions/workflow"
 
 変更前の settings JSON と適用 payload を、Secret を含めず一時領域へ保存する。JSON の boolean・number・array は型を維持し、例えば `gh api --method PUT ... --input payload.json` を使う。API version は対象 host が提供する公式資料に合わせる。
 
+## Free private の設定と承認運用
+
+repository 所有者の plan と visibility が Free / private の場合に適用する。作業者個人が有料 plan でも、organization 所有の repository の機能提供は organization の plan で判断する。
+
+| 対象 | 対応 |
+| --- | --- |
+| squash のみ、Release immutability、Actions の Token 権限 | 下記の各手順で既存構成への影響を確認し、利用可能な設定を適用・readback する。Release や workflow が未作成でも、適用できる repository 設定は完了する |
+| CI・workflow | 依頼範囲の既存処理を使い、SHA 固定・最小権限・実コマンドの検証を進める。保護機能に依存しない作業は PR まで用意する。無料枠の超過や課金設定変更はセットアップに含めない |
+| branch protection、branch/tag ruleset、必須レビュー・必須 CI | Free private では利用できない。該当統制だけを `BLOCKED (plan)` とし、PR 運用や CI 実行と強制保護を区別する |
+| CODEOWNERS、Environment・Required reviewers | Free private では利用できない。CODEOWNERS ファイルや承認者名の記録だけで、自動レビュー依頼・承認ゲートが有効になったと扱わない |
+
+唯一の承認者は次のように設定する。
+
+- 現在の作業で認証しているユーザーを `GET /user`（`gh` なら `gh api user`）または同等の認証情報の読取で確認し、`login`・`id`・対象 repository へのアクセスを照合する。Git の author 名、repository owner、参照実装の個人名から推測しない。App / bot 認証や複数アカウントで人間の作業者を特定できない場合だけ質問し、他の作業は進める。
+- 対象 repository の既存の承認方針文書を更新する。なければ `AGENTS.md` に、PR merge・Release 発行・production 反映の最終承認者を解決済みの `@login` 一名に限定する方針を記載し、作業 branch の PR に含める。これは運用上の指定であり、repository のアクセス権や他の collaborator を変更する指示ではない。既存のより強い承認制約と衝突する部分は保持して差分を示し、その変更だけ確認する。
+- 承認は対象の commit SHA、Release / deployment なら tag・成果物も特定した、その本人の明示的な承認を記録する運用とする。作業者自身が PR author の場合は GitHub 上の自己承認ができないため、本人の明示的な実行指示を運用上の承認として記録する。セットアップ依頼を今後の merge・公開・deployment の承認に流用しない。
+- 利用可能なレビュー依頼機能では、その一名だけを依頼先にする。PR author 自身へのレビュー依頼など利用できない操作は繰り返さず、運用文書に指定を残す。追加の承認者や有料化をセットアップ継続の前提にしない。
+
+Environment 承認が利用できない場合も、CI・build・workflow の準備は進める。承認ゲートが必要な自動 deployment は有効化せず、該当部分の差分と不足する強制機能を残す。手動起動や actor の条件式を独立した承認ゲートの代替として追加しない。
+
+完了報告には、適用・readback 済みの設定、承認者の `@login`、承認方針のファイルと PR／導入済みの別、`BLOCKED (plan)` の一覧を含める。保護できない直接 push・未公開タグの変更・承認なし merge / deployment の可能性を明示する。公開化・契約変更は行わず、通常の権限不足や未検証の作業は plan 制約と分けて残す。
+
 ## Squash のみ
 
 `PATCH /repos/{owner}/{repo}`:
@@ -156,6 +178,9 @@ repository 全体の Action allowlist を導入・変更する場合は、全 wo
 
 ## 一次資料
 
+- [GitHub の plan と private repository の機能](https://docs.github.com/en/get-started/learning-about-github/githubs-plans)
+- [認証済みユーザーの取得](https://docs.github.com/en/rest/users/users#get-the-authenticated-user)
+- [CODEOWNERS の提供範囲](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners)
 - [Repository API](https://docs.github.com/en/rest/repos/repos#update-a-repository)
 - [Release immutability API](https://docs.github.com/en/rest/repos/repos#check-if-immutable-releases-are-enabled-for-a-repository)
 - [Release immutability の有効化](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/establish-provenance-and-integrity/prevent-release-changes)

@@ -31,7 +31,13 @@ description: Set up GitHub repository change management with PR-only protected b
 
 既存 default branch が main 以外なら、その branch を保護対象として示す。branch の改名は依頼された場合に行う。CODEOWNERS は有効な owner が解決できる場合に設定し、レビュー必須にする。
 
-一人運用では独立した PR レビュー・自己承認禁止の deployment を完了できない。承認者の追加か、ユーザーが選んだ別の運用が必要。参照実装の一時 bypass や個人名を既定値としてコピーしない。
+一人運用では独立した PR レビュー・自己承認禁止の deployment を完了できない。Free かつ private では下記の運用を採用し、それ以外では承認者の追加か、ユーザーが選んだ別の運用が必要。参照実装の一時 bypass や個人名を既定値としてコピーしない。
+
+### Free かつ private の場合
+
+利用できる設定・workflow の準備と検証をすべて完了し、利用できない統制だけを `BLOCKED` として残す。機能制限や一人運用を理由にセットアップ全体を途中終了しない。
+
+明示指定がなければ、現在の作業者の GitHub ユーザーアカウントを唯一の承認者として、対象 repository の運用文書に設定する。[Free private の設定と承認運用](references/github-settings.md#free-private-の設定と承認運用)を読み、アカウントの解決、利用可能な設定の適用、承認方針の文書化まで進める。GitHub による強制と運用上の承認者指定は区別する。
 
 ## 対象の確認と差分
 
@@ -56,6 +62,7 @@ setup の依頼だけで release tag の発行・PR merge・deployment の開始
 - repository の merge flags、release immutability の有効状態、各 ruleset の詳細と実際の保護対象 branch に適用される active rules、production の reviewers・自己承認防止・admin bypass・tag policy を再取得し、用意した差分と照合する。既存 branch protection も合わせて確認する。
 - CI の実際の check 名・発行 App・実行結果と、workflow の Git 差分・構文・テストを確認する。実際の build/deploy コマンドが不明なら workflow を成功扱いの模擬処理で埋めず、該当部分を未完了として返す。
 - 「設定 readback 済み」「workflow は PR 上／main 導入済み」「CI 観測済み」「実 deployment 検証済み」を区別する。設定成功だけで deployment 成功や監査対応を主張しない。設定変更権限を持つ管理者自身による保護変更までは防げない。
+- Free private は、利用可能な項目をすべて適用・検証し、唯一の承認者の login と承認方針の保存先・導入状況を確認して「Free で可能なセットアップ完了」とする。利用不能な統制と権限不足などで残った作業を別記し、利用可能な作業が残っていれば未完了とする。
 
 ## 呼び出し例
 
