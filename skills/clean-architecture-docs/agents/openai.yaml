@@ -1,0 +1,3 @@
+interface:
+  display_name: "ドキュメントと実装の構成設計"
+  short_description: "ユースケースから資料の正本・層別構成・公開境界・依存方向を設計する"
