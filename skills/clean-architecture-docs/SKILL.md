@@ -47,7 +47,9 @@ description: "ユースケースを起点に、設計資料の正本・読み順
 
 ### 実装の構成を設計・適用する
 
-[配置・境界・検証の判断](references/implementation.md) を読む。新規の構成候補は層別を出発点とし、層内を実在する業務責務・能力で分ける。既存構成の変更は依頼範囲に合わせ、言語・フレームワークの予約配置を保つ。空の層、DTOの複製、転送だけの窓口、DIコンテナーを一式追加しない。
+[配置・境界・検証の判断](references/implementation.md) を読む。契約を分けるときは意味の所有者と変更理由を、UCの実装を分けるときは公開操作と起動時の組み立て窓口を確認する。
+
+新規の構成候補は層別を出発点とし、層内を実在する業務責務・能力で分ける。既存構成の変更は依頼範囲に合わせ、言語・フレームワークの予約配置を保つ。空の層、DTOの複製、転送だけの窓口、DIコンテナーを一式追加しない。
 
 変更前の採用済み設計に対して、次の対応をPRまたは作業結果へ残す。既存の様式がある場合はそれを使う。
 
@@ -69,4 +71,4 @@ description: "ユースケースを起点に、設計資料の正本・読み順
 
 ## 由来
 
-[accounting-agent の clean-architecture-docs](https://github.com/the3-inc/accounting-agent/tree/419c8273e2a09882f75f78c516e0a8c3d2951c25/.agents/skills/clean-architecture-docs) から共通手順を移植した。移植元固有の正本案内は含めず、作業に必要な指針は本ディレクトリ内で完結する。移植元へのアクセスは利用条件ではない。
+[accounting-agent の clean-architecture-docs](https://github.com/the3-inc/accounting-agent/tree/65a80eea8eff8358b4d732077819fca90a4e7eef/.agents/skills/clean-architecture-docs) に基づく。利用に必要な指針は本ディレクトリ内で完結する。
