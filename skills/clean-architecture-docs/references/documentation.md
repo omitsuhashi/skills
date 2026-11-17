@@ -24,7 +24,7 @@
 
 文書の `infrastructure/` があるからといって、コードにも同名の最上位を作る必要はない。文書は読者の論点、コードは処理と変更の所有に合わせる。UC・モジュール・実行node・transactionを1対1にしない。
 
-新規なら、例えば `DESIGN.md` を全体入口とし、`docs/design/` に `application/use-cases/`、`domain/`、`architecture/`、`adapters/`、必要な `infrastructure/` と `research/` を置ける。必要な資料だけを作り、レビュー成果物は現行設計と区別した場所に置く。特定のレビュー製品名を保存先の必須条件にしない。
+新規なら、例えば `DESIGN.md` を全体入口とし、対象レイヤーに対応する `docs/design/domain.md`、`docs/design/application.md`、`docs/design/adapters.md` などへリンクする。個別UCや接続設計などの詳細資料は、必要に応じて `application/use-cases/` や `adapters/` などに置き、対応するレイヤー文書から参照する。レビュー成果物は現行設計と区別した場所に置く。特定のレビュー製品名を保存先の必須条件にしない。
 
 ## UCを具体化する観点
 
