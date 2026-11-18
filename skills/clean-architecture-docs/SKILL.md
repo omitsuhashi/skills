@@ -34,6 +34,7 @@ description: "ユースケースを起点に、設計資料の正本・読み順
 3. **依存は内側へ向ける。** domainは業務の値・不変条件、applicationは手順・契約・利用側ポート、adaptersは具体I/O、bootstrapは生成・注入を担う。実行時の呼出し方向とソースの依存方向を区別する。
 4. **分割は変更理由で説明する。** 同じ業務名・純粋な型・同じSDKという理由だけでまとめない。公開窓口、許可依存、処理・データの所有、検証入口を示し、分ける／まとめる理由を述べる。
 5. **配置だけで業務の保証を変えない。** 不可分な記録をフォルダ都合で別transactionにせず、生DBを公開して所有境界を迂回しない。未実装の能力を成功する仮処理で埋めない。
+6. **業務判定・記録の整合確認・実行遷移を分ける。** domainは確認済みの事実から業務上の可否を判定し、applicationは記録の対象・版・確定状態を確認する。ワークフローは結果を受けて次の操作を選ぶ。分岐や再開を設計するときは [業務判定と実行遷移](references/implementation.md#業務判定と実行遷移) を読む。
 
 ## 作業に応じた進め方
 
@@ -73,4 +74,4 @@ description: "ユースケースを起点に、設計資料の正本・読み順
 
 ## 由来
 
-[accounting-agent の clean-architecture-docs](https://github.com/the3-inc/accounting-agent/tree/65a80eea8eff8358b4d732077819fca90a4e7eef/.agents/skills/clean-architecture-docs) に基づく。利用に必要な指針は本ディレクトリ内で完結する。
+[accounting-agent の clean-architecture-docs](https://github.com/the3-inc/accounting-agent/tree/d73cd8dec3d305ca4bba9521025b527033c88570/.agents/skills/clean-architecture-docs) に基づく。利用に必要な指針は本ディレクトリ内で完結する。
