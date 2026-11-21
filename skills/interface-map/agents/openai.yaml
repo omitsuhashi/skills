@@ -1,0 +1,4 @@
+interface:
+  display_name: "Interface Map"
+  short_description: "階層図でインターフェースと接続を検討し、指摘から修正確認まで進める"
+  default_prompt: "$interface-map を使って、この設計の全体像と接続を図にし、気になるノードの内側を一段ずつ詰めてください。"

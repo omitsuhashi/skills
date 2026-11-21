@@ -1,0 +1,99 @@
+// 架空の開始例。実際の要求にあるノードと契約に置き換える。
+specification {
+  element operation { notation '処理'; style { shape rectangle } }
+  element data-store { notation '保管'; style { shape cylinder } }
+  element input-surface { notation '画面'; style { shape browser } }
+  relationship call { notation '呼び出し'; multiple true; line solid }
+  relationship data { notation 'データ'; multiple true; line dashed }
+}
+
+model {
+  requester = input-surface '[N1] 入力画面' {
+    description '要求を渡し、結果を受け取る。'
+    metadata { reviewId 'N1' }
+  }
+  processing = operation '[N2] 要求の処理' {
+    description '公開契約: run(Request) → Result。'
+    metadata { reviewId 'N2' }
+    parse = operation '[N4] 要求の解釈' {
+      description 'Request → ParsedRequest。'
+      metadata { reviewId 'N4' }
+    }
+    decide = operation '[N5] 判断' {
+      description '公開契約: judge(ParsedRequest) → Decision。'
+      metadata { reviewId 'N5' }
+      check = operation '[N7] 条件の確認' {
+        description 'ParsedRequest → CheckedRequest。'
+        metadata { reviewId 'N7' }
+      }
+      rules = operation '[N8] 規則の適用' {
+        description 'CheckedRequestとRuleSetから候補を作る。'
+        metadata { reviewId 'N8' }
+      }
+      select = operation '[N9] 判断結果の選択' {
+        description 'Candidate[] → Decision。'
+        metadata { reviewId 'N9' }
+      }
+    }
+    format = operation '[N6] 結果の組立' {
+      description 'Decision → Result。'
+      metadata { reviewId 'N6' }
+    }
+  }
+  consumer = operation '[N3] 結果の受取' {
+    description 'Resultを受け取る。'
+    metadata { reviewId 'N3' }
+  }
+  ruleStore = data-store '[N10] 規則の保管' {
+    description '公開契約: load() → RuleSet。'
+    metadata { reviewId 'N10' }
+  }
+
+  requester -[call]-> processing.parse '[E1] 呼出: run(Request)' {
+    metadata { reviewId 'E1' }
+  }
+  processing.parse -[call]-> processing.decide.check '[E3] 呼出: judge(ParsedRequest)' {
+    metadata { reviewId 'E3' }
+  }
+  processing.decide.check -[call]-> processing.decide.rules '[E5] 呼出: apply(CheckedRequest)' {
+    metadata { reviewId 'E5' }
+  }
+  processing.decide.rules -[data]-> processing.decide.select '[E6] データ: Candidate[]' {
+    metadata { reviewId 'E6' }
+  }
+  processing.decide.select -[data]-> processing.format '[E4] データ: Decision' {
+    metadata { reviewId 'E4' }
+  }
+  processing.format -[data]-> consumer '[E2] データ: Result' {
+    metadata { reviewId 'E2' }
+  }
+  processing.format -[data]-> requester '[E7] データ: Result (戻り)' {
+    metadata { reviewId 'E7' }
+  }
+  processing.decide.rules -[call]-> ruleStore '[E8] 呼出: load()' {
+    metadata { reviewId 'E8' }
+  }
+  ruleStore -[data]-> processing.decide.rules '[E9] データ: RuleSet (戻り)' {
+    metadata { reviewId 'E9' }
+  }
+}
+
+views {
+  view index {
+    title '全体'
+    include *
+    autoLayout LeftRight
+  }
+  view processing-internals of processing {
+    title '要求処理の内側'
+    include *
+    include requester, consumer, ruleStore
+    autoLayout LeftRight
+  }
+  view decision-internals of processing.decide {
+    title '判断の内側'
+    include *
+    include processing.parse, processing.format, ruleStore
+    autoLayout LeftRight
+  }
+}
