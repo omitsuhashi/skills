@@ -26,7 +26,10 @@ class SkillContextReportTests(unittest.TestCase):
         result = run_script(REPORT_SKILL_CONTEXT, "--all", "--json")
         self.assertEqual(result.returncode, 0, result.stderr)
         payload = json.loads(result.stdout)
-        self.assertEqual(["llm-wiki"], [skill["skill"] for skill in payload["skills"]])
+        expected_skills = sorted(
+            path.parent.name for path in (REPO_ROOT / "skills").glob("*/context-contract.toml")
+        )
+        self.assertEqual(expected_skills, [skill["skill"] for skill in payload["skills"]])
         self.assertNotIn("workflow_complexity", payload)
         self.assertNotIn("session_context", payload)
         self.assertNotIn("baseline_path", payload)

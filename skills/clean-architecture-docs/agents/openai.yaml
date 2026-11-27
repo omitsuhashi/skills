@@ -1,3 +1,3 @@
 interface:
   display_name: "ドキュメントと実装の構成設計"
-  short_description: "ユースケースから資料の正本・層別構成・公開境界・依存方向を設計する"
+  short_description: "設計資料の正本・読み順と実装の配置・公開境界を揃える"
